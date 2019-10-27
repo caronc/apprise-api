@@ -1,0 +1,22 @@
+# pull official base image
+FROM python:3.8.0-alpine
+
+# set work directory
+WORKDIR /opt/apprise
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV APPRISE_CONFIG_DIR /var/apprise/config
+
+# install dependencies
+RUN pip install --upgrade pip
+COPY ./requirements.txt etc/requirements.txt
+RUN pip install -r etc/requirements.txt \
+    gunicorn
+
+# copy project
+COPY apprise_api/ webapp
+
+EXPOSE 8000
+CMD ["gunicorn", "-c", "/opt/apprise/webapp/gunicorn.conf.py", "core.wsgi"]

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block body %}
+<h4>{% trans "The Apprise API" %}</h4>
+<p>
+  {% blocktrans %}
+  <a target="_blank" href="https://github.com/caronc/apprise">Apprise</a> allows you to send a notification to almost
+  all of the most popular notification services available to us today such as: <em>Telegram</em>, <em>Discord</em>,
+  <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, etc.
+  This API provides a simple gateway to directly access it via an HTTP interface.
+  <ul>
+    <li><i class="tiny material-icons">chevron_right</i>This project was designed to be incredibly light weight.</li>
+    <li><i class="tiny material-icons">chevron_right</i>Configuration can be persistently stored for retrieval.</li>
+  </ul>
+  {% endblocktrans %}
+</p>
+
+<div class="section">
+  <h4>{% trans "Endpoints" %}</h4>
+  <p>{% blocktrans %}All endpoints that expect posted data can be received in either JSON or in it's standard encoding.
+    You must pass along the <code>Content-Type</code> as <code>application/json</code> in order for it to be interpreted
+    properly.{% endblocktrans %}</p>
+  <table class="highlighted">
+    <thead>
+      <tr>
+        <th>{% trans "URL" %}</th>
+        <th>{% trans "Description" %}</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>/add/<em>{% trans "KEY" %}</em></code></td>
+        <td>
+          {% blocktrans %}Used to add a new Apprise configuration or a set of URLs and associates them with the
+          specified <em>KEY</em>. See the <a target="_blank"
+            href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you need help
+          constructing your URLs.{% endblocktrans %}
+          <div class="section">
+            <table>
+              <thead>
+                <tr>
+                  <th>{% trans "Parameter" %}</th>
+                  <th>{% trans "Description" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>urls</td>
+                  <td>{% blocktrans %}Used to define one or more Apprise URL(s). Use a comma and/or space to separate
+                    one URL from the next.{% endblocktrans %}</td>
+                </tr>
+                <tr>
+                  <td>config</td>
+                  <td>{% blocktrans %}Provide the contents of either a YAML or TEXT based Apprise
+                    configuration.{% endblocktrans %}</td>
+                </tr>
+                <tr>
+                  <td>format</td>
+                  <td>{% blocktrans %}This field is only required if you've specified the config option. It's purpose is
+                    to tell the server which of the supported (Apprise) configuration types you are passing. Valid
+                    options are:{% endblocktrans %}
+                    <ol>
+                      <li><code>{% trans "yaml" %}</code></li>
+                      <li><code>{% trans "text" %}</code></li>
+                    </ol>
+                    <ul>
+                      <li>{% blocktrans %}You must specify either the <code>urls</code> parameter or the
+                        <code>config</code>.{% endblocktrans %}</li>
+                      <li>{% blocktrans %}The <code>urls</code> takes priority over the <code>config</code> if both were
+                        specified.{% endblocktrans %}</li>
+                      <li>{% blocktrans %}The <code>format</code> parameter is only required if the <code>config</code>
+                        parameter was also specified.{% endblocktrans %}</li>
+                    </ul>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="collapsible">
+              <li>
+                <div class="collapsible-header"><i class="material-icons">code</i>curl example</div>
+                <div class="collapsible-body">
+                  <code>#
+								    {% blocktrans %}Load a single URL and assign it to the <em>KEY</em> of abc123{% endblocktrans %}<br/>
+								    curl -X POST -d '{"urls":"mailto://user:pass@gmail.com"}' \<br/>
+										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
+										&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/add/<em>abc123</em></code>
+                  <code><br/>
+										<br/>#{% blocktrans %}Load a simple TEXT config entry <em>KEY</em> of abc123{% endblocktrans %}<br/>
+										curl -X POST -d '{"format":"text","config":"devops=mailto://user:pass@gmail.com"}' \<br/>
+										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
+										&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/add/abc123/
+										</code>
+                </div>
+              </li>
+              <li>
+                <div class="collapsible-header"><i class="material-icons">code</i>python example</div>
+                <div class="collapsible-body"><code>Coming Soon</code></div>
+              <li>
+              <li>
+                <div class="collapsible-header"><i class="material-icons">code</i>php example</div>
+                <div class="collapsible-body"><code>Coming Soon</code></div>
+              </li>
+            </ul>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td><code>/del/<em>{% trans "KEY" %}</em></code></td>
+        <td>{% blocktrans %}There are no arguments required. If the <em>KEY</em> exists and has data associated with it,
+          it will be removed.{% endblocktrans %}</td>
+      </tr>
+      <tr>
+        <td><code>/get/<em>{% trans "KEY" %}</em></code></td>
+        <td>{% blocktrans %}This feature can be used by Apprise itself. It provides a means of remotely fetching it's
+          configuration.{% endblocktrans %}
+
+          <p><strong>{% trans "As an example:" %}</strong><br /><code>apprise --body="test message" --config={{ request.scheme }}://{{request.META.HTTP_HOST}}{{ request.path }}<em>{% trans "KEY" %}</em></p>
+					  <ul class="collapsible">
+              <li>
+                <div class="collapsible-header"><i class="material-icons">code</i>curl example</div>
+                <div class="collapsible-body"><code>
+								    # {% blocktrans %}Load a single URL and assign it to the <em>KEY</em> of abc123{% endblocktrans %}</br>
+								    curl -X POST -H "Content-Type: application/json" \<br/>
+										     &nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/get/<em>abc123</em></code>
+</div>
+</li>
+<li>
+  <div class="collapsible-header"><i class="material-icons">code</i>python example</div>
+  <div class="collapsible-body"><code>Coming Soon</code></div>
+<li>
+<li>
+  <div class="collapsible-header"><i class="material-icons">code</i>php example</div>
+  <div class="collapsible-body"><code>Coming Soon</code></div>
+</li>
+</ul>
+</td>
+</tr>
+<tr>
+  <td><code>/notify/<em>{% trans "KEY" %}</em></code></td>
+  <td>{% blocktrans %}Notifies the URLs associated with the specified <em>KEY</em>.{% endblocktrans %}
+    <div class="section">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Parameter" %}</th>
+            <th>{% trans "Description" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>body</td>
+            <td>{% blocktrans %}Defines the message body. This field is required!{% endblocktrans %}</td>
+          </tr>
+          <tr>
+            <td>title</td>
+            <td>{% blocktrans %}The title to include in the notification. This is an optional field.{% endblocktrans %}
+            </td>
+          </tr>
+          <tr>
+            <td>type</td>
+            <td>{% blocktrans %}This optional field defines the notification type. The possible options
+              are:{% endblocktrans %}
+              <ol>
+                <li><code>{% trans "info" %}</code> - <i>{% blocktrans %}this is the default option if a type isn't
+                    specified.{% endblocktrans %}</i></li>
+                <li><code>{% trans "success" %}</code></li>
+                <li><code>{% trans "warning" %}</code></li>
+                <li><code>{% trans "failure" %}</code></li>
+              </ol>
+            </td>
+          <tr>
+            <td>tags</td>
+            <td>{% blocktrans %}Apply tagging logic to the further filter your URLs. This is an optional
+              field.{% endblocktrans %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </td>
+</tr>
+</tbody>
+</table>
+
+<div class="section">
+  <h5>{% trans "Endpoint Notes" %}</h5>
+  <p>
+    The <em>KEY</em> you plan to associate your configuration with:
+    <ol>
+      <li>Can not have spaces and/or special characters in it. Both a dash (<code>-</code>) and underscore
+        (<code>_</code>) are the only exceptions to this rule.</li>
+      <li>Must start with at least 2 alpha/numeric characters.</li>
+      <li>Can not exceed 64 characters in total length.</li>
+    </ol>
+  </p>
+</div>
+</div>
+{% endblock %}

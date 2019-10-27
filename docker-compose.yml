@@ -1,0 +1,19 @@
+version: '3.3'
+
+services:
+  backend:
+    build:
+       context: .
+       dockerfile: Dockerfile-gunicorn
+    volumes:
+      - ./var:/var/apprise
+    restart: always
+
+  frontend:
+    build:
+       context: .
+       dockerfile: Dockerfile-nginx
+    ports:
+      - "8000:80"
+    links:
+      - backend

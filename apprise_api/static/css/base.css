@@ -1,0 +1,61 @@
+.nav h1 {
+  margin: 0;
+  font-size: 3.1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+code {
+	background-color: #eee;
+	font-family: monospace;
+	white-space: normal;
+	padding: 0.2rem;
+}
+
+table code {
+	background-color: inherit;
+}
+
+h1, h2, h3, h4, h5 {
+	margin-top: 0;
+}
+
+td, th {
+	vertical-align: top;
+	padding-top: 0;
+}
+.api-details ol {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+em {
+	color: #004d40;
+	font-weight:bold;
+}
+
+textarea {
+	height: 16rem;
+}
+
+.collapsible-body {
+  padding: 1rem 2rem;
+}
+
+.tabs .tab a{
+    color:#2bbbad;
+}
+.collection a.collection-item:not(.active):hover,
+.tabs .tab a:focus, .tabs .tab a:focus.active {
+	background-color: #eee;
+}
+.tabs .tab a:hover,.tabs .tab a.active {
+	background-color:transparent;
+	color:#2bbbad;
+}
+.tabs .tab.disabled a,.tabs .tab.disabled a:hover {
+	color:rgba(102,147,153,0.7);
+}
+.tabs .indicator {
+	background-color:#004d40;
+}

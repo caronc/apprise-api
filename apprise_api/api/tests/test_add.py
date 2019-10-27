@@ -1,0 +1,185 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# All rights reserved.
+#
+# This code is licensed under the MIT License.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files(the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions :
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+from django.test import SimpleTestCase
+from apprise import ConfigFormat
+from unittest.mock import patch
+import json
+
+
+class AddTests(SimpleTestCase):
+
+    def test_add_invalid_key_status_code(self):
+        """
+        Test GET requests to invalid key
+        """
+        response = self.client.get('/add/**invalid-key**')
+        assert response.status_code == 404
+
+    def test_save_config_by_urls(self):
+        """
+        Test adding an configuration by URLs
+        """
+
+        # our key to use
+        key = 'test_save_config_by_urls'
+
+        # GET returns 405 (not allowed)
+        response = self.client.get('/add/{}'.format(key))
+        assert response.status_code == 405
+
+        # no data
+        response = self.client.post('/add/{}'.format(key))
+        assert response.status_code == 400
+
+        # No entries specified
+        response = self.client.post(
+            '/add/{}'.format(key), {'urls': ''})
+        assert response.status_code == 400
+
+        # Added successfully
+        response = self.client.post(
+            '/add/{}'.format(key), {'urls': 'mailto://user:pass@yahoo.ca'})
+        assert response.status_code == 200
+
+        # URL is actually not a valid one (invalid Slack tokens specified
+        # below)
+        response = self.client.post(
+            '/add/{}'.format(key), {'urls': 'slack://TokenA/TokenB/TokenC'})
+        assert response.status_code == 400
+
+        # Test with JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({'urls': 'mailto://user:pass@yahoo.ca'}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200
+
+        # Invalid JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data='{',
+            content_type='application/json',
+        )
+        assert response.status_code == 400
+
+        # Test the handling of underlining disk/write exceptions
+        with patch('gzip.open') as mock_open:
+            mock_open.side_effect = OSError()
+            # We'll fail to write our key now
+            response = self.client.post(
+                '/add/{}'.format(key),
+                data=json.dumps({'urls': 'mailto://user:pass@yahoo.ca'}),
+                content_type='application/json',
+            )
+
+            # internal errors are correctly identified
+            assert response.status_code == 500
+
+    def test_save_config_by_config(self):
+        """
+        Test adding an configuration by a config file
+        """
+
+        # our key to use
+        key = 'test_save_config_by_config'
+
+        # Empty Text Configuration
+        config = """
+           
+        """  # noqa W293
+        response = self.client.post(
+            '/add/{}'.format(key), {
+                'format': ConfigFormat.TEXT, 'config': config})
+        assert response.status_code == 400
+
+        # Valid Text Configuration
+        config = """
+        browser,media=notica://VToken
+        home=mailto://user:pass@hotmail.com
+        """
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'format': ConfigFormat.TEXT, 'config': config})
+        assert response.status_code == 200
+
+        # Test with JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({'format': ConfigFormat.TEXT, 'config': config}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200
+
+        # Test invalid config format
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({'format': 'INVALID', 'config': config}),
+            content_type='application/json',
+        )
+        assert response.status_code == 400
+
+        with patch('tempfile._TemporaryFileWrapper') as mock_ntf:
+            mock_ntf.side_effect = OSError()
+            # we won't be able to write our retrieved configuration
+            # to disk for processing; we'll get a 500 error
+            response = self.client.post(
+                '/add/{}'.format(key),
+                data=json.dumps(
+                    {'format': ConfigFormat.TEXT, 'config': config}),
+                content_type='application/json',
+            )
+
+            # internal errors are correctly identified
+            assert response.status_code == 500
+
+        # Test the handling of underlining disk/write exceptions
+        with patch('gzip.open') as mock_open:
+            mock_open.side_effect = OSError()
+            # We'll fail to write our key now
+            response = self.client.post(
+                '/add/{}'.format(key),
+                data=json.dumps(
+                    {'format': ConfigFormat.TEXT, 'config': config}),
+                content_type='application/json',
+            )
+
+            # internal errors are correctly identified
+            assert response.status_code == 500
+
+    def test_save_with_bad_input(self):
+        """
+        Test adding with bad input in general
+        """
+
+        # our key to use
+        key = 'test_save_with_bad_input'
+        # Test with JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({'garbage': 'input'}),
+            content_type='application/json',
+        )
+        assert response.status_code == 400

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block body %}
+<h3>{% trans "Management for:" %} <em>{{ key }}</em></h3>
+  <div class="row">
+    <div class="col s12">
+      <ul class="tabs">
+        <li class="tab col s4"><a class="active" href="#overview">{% trans "Overview" %}</a></li>
+        <li class="tab col s4"><a href="#config">{%trans "Configuration" %}</a></li>
+        <li class="tab col s4"><a href="#notify">{%trans "Notifications" %}</a></li>
+      </ul>
+    </div>
+    <div id="overview" class="col s12">
+<p>
+  {% blocktrans %}
+	Here is where you can store your configuration so that it can be accessed by Apprise. You can always refer to the <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
+  You have chosen to associate your configuration with the key <code>{{key}}</code>. If anything was previously associated with this key, it will be replaced if you continue.
+  {% endblocktrans %}
+</p>
+<p>
+  {% blocktrans %}
+  In the future you can return to this configuration screen at any time by placing the following into your browser:{% endblocktrans %}
+	<br/><code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{request.path}}</code>
+</p>
+<div class="section">
+  {% blocktrans %}For example, the following command would cause apprise to retrieve the configuration loaded and send a test notification to all of your added services:{% endblocktrans %}
+	<br/><code>apprise --body="Test Message" --tag=all --config={{request.scheme}}://{{request.META.HTTP_HOST}}{% url "get" key %}</code>
+</div>
+		</div>
+    <div id="config" class="col s12">
+
+<div class="section">
+<h5>{% trans "Option 1: Add By URL" %}</h5>
+<p>
+  {% blocktrans %}
+  Use a comma and/or space to separate one Apprise URL from another.
+  {% endblocktrans %}
+<form action="#" method="post">
+{{ form_url }}
+  <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
+    <i class="material-icons right">send</i>
+  </button>
+</form>
+</p>
+</div>
+
+<div class="section">
+<h5>{% trans "Option 2: Add By Config" %}</h5>
+<p>
+  {% blocktrans %}
+  This option grants you a bit more flexability because you can additionally associate tags with your URLs.  Those using YAML configuration can also alter the Apprise Asset object as well for a more customized look and feel.
+  {% endblocktrans %}
+<form action="#" method="post">
+{{ form_cfg }}
+  <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
+    <i class="material-icons right">send</i>
+  </button>
+</form>
+</p>
+</div>
+</div>
+<div id="notify" class="col s12">
+<p>
+  {% blocktrans %}
+  You can send a notification using the loaded configuration:
+  {% endblocktrans %}
+<form action="#" method="post">
+{{ form_notify }}
+  <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
+    <i class="material-icons right">send</i>
+  </button>
+</form>
+</p>
+</div>
+  </div>
+{% endblock %}

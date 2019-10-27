@@ -1,0 +1,4 @@
+pytest
+flake8
+pytest-django
+pytest-cov
