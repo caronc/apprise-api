@@ -2,75 +2,187 @@
 {% load i18n %}
 {% block body %}
 <h3>{% trans "Management for:" %} <em>{{ key }}</em></h3>
-  <div class="row">
-    <div class="col s12">
-      <ul class="tabs">
-        <li class="tab col s4"><a class="active" href="#overview">{% trans "Overview" %}</a></li>
-        <li class="tab col s4"><a href="#config">{%trans "Configuration" %}</a></li>
-        <li class="tab col s4"><a href="#notify">{%trans "Notifications" %}</a></li>
-      </ul>
-    </div>
-    <div id="overview" class="col s12">
-<p>
-  {% blocktrans %}
-	Here is where you can store your configuration so that it can be accessed by Apprise. You can always refer to the <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
-  You have chosen to associate your configuration with the key <code>{{key}}</code>. If anything was previously associated with this key, it will be replaced if you continue.
-  {% endblocktrans %}
-</p>
-<p>
-  {% blocktrans %}
-  In the future you can return to this configuration screen at any time by placing the following into your browser:{% endblocktrans %}
-	<br/><code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{request.path}}</code>
-</p>
-<div class="section">
-  {% blocktrans %}For example, the following command would cause apprise to retrieve the configuration loaded and send a test notification to all of your added services:{% endblocktrans %}
-	<br/><code>apprise --body="Test Message" --tag=all --config={{request.scheme}}://{{request.META.HTTP_HOST}}{% url "get" key %}</code>
-</div>
-		</div>
-    <div id="config" class="col s12">
-
-<div class="section">
-<h5>{% trans "Option 1: Add By URL" %}</h5>
-<p>
-  {% blocktrans %}
-  Use a comma and/or space to separate one Apprise URL from another.
-  {% endblocktrans %}
-<form action="#" method="post">
-{{ form_url }}
-  <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
-    <i class="material-icons right">send</i>
-  </button>
-</form>
-</p>
-</div>
-
-<div class="section">
-<h5>{% trans "Option 2: Add By Config" %}</h5>
-<p>
-  {% blocktrans %}
-  This option grants you a bit more flexability because you can additionally associate tags with your URLs.  Those using YAML configuration can also alter the Apprise Asset object as well for a more customized look and feel.
-  {% endblocktrans %}
-<form action="#" method="post">
-{{ form_cfg }}
-  <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
-    <i class="material-icons right">send</i>
-  </button>
-</form>
-</p>
-</div>
-</div>
-<div id="notify" class="col s12">
-<p>
-  {% blocktrans %}
-  You can send a notification using the loaded configuration:
-  {% endblocktrans %}
-<form action="#" method="post">
-{{ form_notify }}
-  <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
-    <i class="material-icons right">send</i>
-  </button>
-</form>
-</p>
-</div>
+<div class="row">
+  <div class="col s12">
+    <ul class="tabs config-overview">
+      <li class="tab col s4"><a class="active" href="#overview">{% trans "Overview" %}</a></li>
+      <li class="tab col s4"><a href="#config">{%trans "Configuration" %}</a></li>
+      <li class="tab col s4"><a href="#notify">{%trans "Notifications" %}</a></li>
+    </ul>
   </div>
+  <div id="overview" class="col s12">
+    <p>
+      {% blocktrans %}
+      Here is where you can store your configuration so that it can be accessed by Apprise. You can always refer to the
+      <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles
+      assembling your URL(s).
+      You have chosen to associate your configuration with the key <code>{{key}}</code>. If anything was previously
+      associated with this key, it will be replaced if you continue.
+      {% endblocktrans %}
+    </p>
+    <p>
+      {% blocktrans %}
+      In the future you can return to this configuration screen at any time by placing the following into your
+      browser:{% endblocktrans %}
+      <br /><code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{request.path}}</code>
+    </p>
+    <div class="section">
+      {% blocktrans %}For example, the following command would cause apprise to retrieve the configuration loaded and
+      send a test notification to all of your added services:{% endblocktrans %}
+      <br /><code>apprise --body="Test Message" --tag=all --config={{request.scheme}}://{{request.META.HTTP_HOST}}{% url "get" key %}</code>
+    </div>
+  </div>
+  <div id="config" class="col s12">
+
+    <div class="section">
+      <h5>{% trans "Option 1: Set By URL(s)" %}</h5>
+      <p>
+        {% blocktrans %}
+        Use a comma and/or space to separate one Apprise URL from another.
+        {% endblocktrans %}
+        <form id="addurl" action="{% url "add" key %}" method="post">
+          {{ form_url }}
+          <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
+            <i class="material-icons right">send</i>
+          </button>
+        </form>
+      </p>
+    </div>
+
+    <div class="section">
+      <h5>{% trans "Option 2: Set By Config" %}</h5>
+      <p>
+        {% blocktrans %}
+        This option grants you a bit more flexability because you can additionally associate tags with your URLs. Those
+        using YAML configuration can also alter the Apprise Asset object as well for a more customized look and feel.
+        {% endblocktrans %}
+        <form id="addconfig" action="{% url "add" key %}" method="post">
+          {{ form_cfg }}
+          <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
+            <i class="material-icons right">send</i>
+          </button>
+        </form>
+      </p>
+    </div>
+  </div>
+  <div id="notify" class="col s12">
+    <p>
+      {% blocktrans %}
+      You can send a notification using the loaded configuration:
+      {% endblocktrans %}
+      <form id="donotify" action="{% url "notify" key %}" method="post">
+        {{ form_notify }}
+        <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
+          <i class="material-icons right">send</i>
+        </button>
+      </form>
+    </p>
+  </div>
+</div>
+{% endblock %}
+{% block jsfooter %}
+
+async function update() {
+
+  // disable the notification tab until we know for certain
+  // a notification is possible
+  document.querySelector('.config-overview li a[href="#notify"]')
+      .parentNode.classList.add('disabled');
+
+  // perform our status check
+  let response = await fetch('{% url "get" key %}', {
+    method: 'POST',
+  });
+
+  let result = await response;
+  if(response.status == 204)
+  {
+    // no problem; we simply have no content to retrieve
+    return '';
+  }
+  else if(response.status == 200)
+  {
+    // configuration found
+
+    // Remove our restrictions on sending notifications
+    document.querySelector('.config-overview li a[href="#notify"]')
+      .parentNode.classList.remove('disabled');
+
+    // Set our configuration so it's visible
+    response.text().then(function (text) {
+      document.querySelector('#id_config').value = text;
+    });
+
+    return response;
+  }
+  // if we reach here, we failed
+  return null;
+}
+
+update();
+
+// over-ride manual submit for a nicer user experience
+document.querySelector('#addurl').onsubmit = function(event) {
+  event.preventDefault();
+
+  const form = this;
+  const body = new URLSearchParams(new FormData(form));
+
+  // perform our status check
+  let response = fetch('{% url "add" key %}', {
+    method: 'POST',
+    body: body,
+  }).then(function(response) {
+     if(response.status == 200)
+     {
+        // update our settings
+        update();
+
+        // reset our form
+        form.reset();
+     }
+  });
+  return false;
+}
+
+// over-ride manual submit for a nicer user experience
+document.querySelector('#addconfig').onsubmit = function(event) {
+  event.preventDefault();
+  const form = this;
+  const body = new URLSearchParams(new FormData(form));
+
+  // perform our status check
+  let response = fetch('{% url "add" key %}', {
+    method: 'POST',
+    body: body,
+  }).then(function(response) {
+     if(response.status == 200)
+     {
+        // update our settings
+        update();
+     }
+  });
+  return false;
+}
+
+// over-ride manual submit for a nicer user experience
+document.querySelector('#donotify').onsubmit = function(event) {
+  event.preventDefault();
+  const form = this;
+  const body = new URLSearchParams(new FormData(form));
+
+  // perform our status check
+  let response = fetch('{% url "notify" key %}', {
+    method: 'POST',
+    body: body,
+  }).then(function(response) {
+     if(response.status == 200)
+     {
+        // update our settings
+        alert('Notification Sent');
+     }
+  });
+  return false;
+}
+
 {% endblock %}

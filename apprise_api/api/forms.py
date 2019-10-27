@@ -103,7 +103,7 @@ class NotifyForm(forms.Form):
         max_length=apprise.NotifyBase.body_maxlen,
     )
 
-    tag = forms.ChoiceField(
+    tag = forms.CharField(
         label=_('Tags'),
         widget=forms.TextInput(
             attrs={'placeholder': _('Optional_Tag1, Optional_Tag2, ...')}),

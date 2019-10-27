@@ -7,9 +7,9 @@
   <meta charset="utf-8">
   <!--Let browser know website is optimized for mobile-->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{% static 'css/materialize.min.css' %}"/>
+  <link rel="stylesheet" href="{% static 'css/materialize.min.css' %}" />
   <link rel="stylesheet" href="{% static 'iconfont/material-icons.css' %}">
-  <link rel="stylesheet" href="{% static 'css/base.css' %}"/>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}" />
   <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}" />
   <script src="{% static 'js/materialize.min.js' %}"></script>
   <title>{% block title %}{% trans "Apprise API" %}{% endblock %}</title>
@@ -17,45 +17,57 @@
 
 <body>
   <div class="content">
-  <!-- Title -->
-  <div class="nav row teal lighten-5 z-depth-2">
-    <div class="col s12">
-		  <a href="{% url 'welcome' %}">
-        <img class="left" src="{% static "logo.png" %}" alt="{% trans "Apprise Logo" %}" />
-			</a>
-      <h1>{% trans "Apprise API" %}</h1>
+    <!-- Title -->
+    <div class="nav row teal lighten-5 z-depth-2">
+      <div class="col s12">
+        <a href="{% url 'welcome' %}">
+          <img class="left" src="{% static "logo.png" %}" alt="{% trans "Apprise Logo" %}" />
+        </a>
+        <h1>{% trans "Apprise API" %}</h1>
+      </div>
+    </div>
+    <!-- Page Layout here -->
+    <div class="row">
+
+      <div class="col s3">
+        <ul class="collection z-depth-1">
+          <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="tiny material-icons">settings</i>
+            {% trans "Configuration Manager" %}</a>
+        </ul>
+        <ul class="collection z-depth-1">
+          <a class="collection-item" target="_blank"
+            href="https://github.com/caronc/apprise/wiki#notification-services">📣
+            {% trans "Notification Services" %}</a>
+          <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/config"><i
+              class="tiny material-icons">local_library</i> {% trans "Configuration Help" %}</a>
+          <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/Troubleshooting"><i
+              class="tiny material-icons">build</i> {% trans "Troubleshooting" %}</a>
+          <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/CLI_Usage"><i
+              class="tiny material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
+        </ul>
+        <ul class="collection z-depth-1">
+          <a class="collection-item" target="_blank"
+            href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E"><i
+              class="tiny material-icons">favorite</i> {% trans "Support Apprise" %}</a>
+          <a class="collection-item" target="_blank" href="https://github.com/sponsors/caronc"><i
+              class="tiny material-icons">favorite</i> {% trans "Sponsor Developer" %}</a>
+        </ul>
+        {% block menu %}{% endblock %}
+      </div>
+
+      <div class="col s9">
+        {% block body %}{% endblock %}
+      </div>
+
     </div>
   </div>
-  <!-- Page Layout here -->
-  <div class="row">
-
-    <div class="col s3">
-    <ul class="collection z-depth-1">
-      <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="tiny material-icons">settings</i> {% trans "Configuration Manager" %}</a>
-    </ul>
-    <ul class="collection z-depth-1">
-      <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki#notification-services">📣 {% trans "Notification Services" %}</a>
-      <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/config"><i class="tiny material-icons">local_library</i> {% trans "Configuration Help" %}</a>
-      <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/Troubleshooting"><i class="tiny material-icons">build</i> {% trans "Troubleshooting" %}</a>
-      <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/CLI_Usage"><i class="tiny material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
-    </ul>
-    <ul class="collection z-depth-1">
-      <a class="collection-item" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E"><i class="tiny material-icons">favorite</i> {% trans "Support Apprise" %}</a>
-      <a class="collection-item" target="_blank" href="https://github.com/sponsors/caronc"><i class="tiny material-icons">favorite</i> {% trans "Sponsor Developer" %}</a>
-    </ul>
-      {% block menu %}{% endblock %}
-    </div>
-
-    <div class="col s9">
-      {% block body %}{% endblock %}
-    </div>
-
-  </div>
-  </div>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-	   M.AutoInit();
-  });
-</script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      M.AutoInit();
+      {% block onload %} {% endblock %}
+    });
+    {% block jsfooter %} {% endblock %}
+  </script>
 </body>
+
 </html>

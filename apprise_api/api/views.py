@@ -40,8 +40,19 @@ import json
 import re
 
 # Content-Type Parsing
-FORM_CTYPE_RE = re.compile('^(.*form-(data|urlencoded))$', re.I)
-JSON_CTYPE_RE = re.compile('^.*json$', re.I)
+# application/x-www-form-urlencoded
+# application/x-www-form-urlencoded
+# multipart/form-data
+MIME_IS_FORM = re.compile(
+    r'(multipart|application)/(x-www-)?form-(data|urlencoded)', re.I)
+
+# Support JSON formats
+# text/json
+# text/x-json
+# application/json
+# application/x-json
+MIME_IS_JSON = re.compile(
+    r'(text|application)/(x-)?json', re.I)
 
 
 class ResponseCode(object):
@@ -96,21 +107,21 @@ class AddView(View):
         Handle a POST request
         """
         # Our default response type
-        content_type = 'text/plain'
+        content_type = 'text/plain; charset=utf-8'
 
         # our content
         content = {}
-        if FORM_CTYPE_RE.match(request.content_type):
+        if MIME_IS_FORM.match(request.content_type):
             content = {}
             form = AddByConfigForm(request.POST)
             if form.is_valid():
-                content.update(form.clean())
+                content.update(form.cleaned_data)
 
             form = AddByUrlForm(request.POST)
             if form.is_valid():
-                content.update(form.clean())
+                content.update(form.cleaned_data)
 
-        elif JSON_CTYPE_RE.match(request.content_type):
+        elif MIME_IS_JSON.match(request.content_type):
             # Prepare our default response
             try:
                 # load our JSON content
@@ -226,7 +237,7 @@ class DelView(View):
         Handle a POST request
         """
         # Our default response type
-        content_type = 'text/plain'
+        content_type = 'text/plain; charset=utf-8'
 
         # Clear the key
         result = ConfigCache.clear(key)
@@ -263,7 +274,7 @@ class GetView(View):
         Handle a POST request
         """
         # Our default response type
-        content_type = 'text/plain'
+        content_type = 'text/plain; charset=utf-8'
 
         config, format = ConfigCache.get(key)
         if config is None:
@@ -294,7 +305,7 @@ class GetView(View):
         # reference to it through the --config (-c) option in the CLI
         if format == apprise.ConfigFormat.YAML:
             # update our return content type from the default text
-            content_type = 'text/yaml'
+            content_type = 'text/yaml; charset=utf-8'
 
         # Return our retrieved content
         return HttpResponse(
@@ -311,17 +322,17 @@ class NotifyView(View):
         Handle a POST request
         """
         # Our default response type
-        content_type = 'text/plain'
+        content_type = 'text/plain; charset=utf-8'
 
         # our content
         content = {}
-        if FORM_CTYPE_RE.match(request.content_type):
+        if MIME_IS_FORM.match(request.content_type):
             content = {}
             form = NotifyForm(request.POST)
             if form.is_valid():
-                content.update(form.clean())
+                content.update(form.cleaned_data)
 
-        elif JSON_CTYPE_RE.match(request.content_type):
+        elif MIME_IS_JSON.match(request.content_type):
             # Prepare our default response
             try:
                 # load our JSON content
