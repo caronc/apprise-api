@@ -44,4 +44,7 @@ urlpatterns = [
     re_path(
         r'^notify/(?P<key>[\w_-]{1,64})/?',
         views.NotifyView.as_view(), name='notify'),
+    re_path(
+        r'^notify/?',
+        views.StatelessNotifyView.as_view(), name='s_notify'),
 ]

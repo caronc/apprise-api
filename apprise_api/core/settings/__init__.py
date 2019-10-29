@@ -83,3 +83,7 @@ STATIC_URL = '/s/'
 # The location to store Apprise configuration files
 APPRISE_CONFIG_DIR = os.environ.get(
     'APPRISE_CONFIG_DIR', os.path.join(BASE_DIR, 'var', 'config'))
+
+# Stateless posts to /notify/ will resort to this set of URLs if none
+# were otherwise posted with the URL request.
+APPRISE_STATELESS_URLS = os.environ.get('APPRISE_STATELESS_URLS', '')

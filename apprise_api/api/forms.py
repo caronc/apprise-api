@@ -40,6 +40,10 @@ NOTIFICATION_TYPES = (
     (apprise.NotifyType.FAILURE, _('Failure')),
 )
 
+URLS_MAX_LEN = 1024
+URLS_PLACEHOLDER = 'mailto://user:pass@domain.com, ' \
+                   'slack://tokena/tokenb/tokenc, ...'
+
 
 class AddByUrlForm(forms.Form):
     """
@@ -51,11 +55,8 @@ class AddByUrlForm(forms.Form):
     """
     urls = forms.CharField(
         label=_('URLs'),
-        widget=forms.TextInput(
-            attrs={
-                'placeholder': 'mailto://user:pass@domain.com, '
-                'slack://tokena/tokenb/tokenc, ...'}),
-        max_length=1024,
+        widget=forms.TextInput(attrs={'placeholder': URLS_PLACEHOLDER}),
+        max_length=URLS_MAX_LEN,
     )
 
 
@@ -121,17 +122,14 @@ class NotifyForm(forms.Form):
         return data
 
 
-class NotifyByUrlForm(AddByUrlForm, NotifyForm):
+class NotifyByUrlForm(NotifyForm):
     """
     Same as the NotifyForm but additionally processes a string of URLs to
     notify directly.
     """
-    pass
-
-
-class NotifyByConfigForm(AddByConfigForm, NotifyForm):
-    """
-    Same as the NotifyForm but additionally process a configuration file as
-    well.
-    """
-    pass
+    urls = forms.CharField(
+        label=_('URLs'),
+        widget=forms.TextInput(attrs={'placeholder': URLS_PLACEHOLDER}),
+        max_length=URLS_MAX_LEN,
+        required=False,
+    )

@@ -25,6 +25,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views import View
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
@@ -33,6 +34,7 @@ from .utils import ConfigCache
 from .forms import AddByUrlForm
 from .forms import AddByConfigForm
 from .forms import NotifyForm
+from .forms import NotifyByUrlForm
 
 from tempfile import NamedTemporaryFile
 import apprise
@@ -423,6 +425,87 @@ class NotifyView(View):
                 _('The configuration could not be loaded.'),
                 content_type=content_type,
                 status=ResponseCode.internal_server_error)
+
+        # Return our retrieved content
+        return HttpResponse(
+            _('Notification(s) sent.'),
+            content_type=content_type, status=ResponseCode.okay)
+
+
+@method_decorator((gzip_page, never_cache), name='dispatch')
+class StatelessNotifyView(View):
+    """
+    A Django view for sending a stateless notification
+    """
+    def post(self, request):
+        """
+        Handle a POST request
+        """
+        # Our default response type
+        content_type = 'text/plain; charset=utf-8'
+
+        # our content
+        content = {}
+        if MIME_IS_FORM.match(request.content_type):
+            content = {}
+            form = NotifyByUrlForm(request.POST)
+            if form.is_valid():
+                content.update(form.cleaned_data)
+
+        elif MIME_IS_JSON.match(request.content_type):
+            # Prepare our default response
+            try:
+                # load our JSON content
+                content = json.loads(request.body)
+
+            except (AttributeError, ValueError):
+                # could not parse JSON response...
+                return HttpResponse(
+                    _('Invalid JSON specified.'),
+                    content_type=content_type,
+                    status=ResponseCode.bad_request)
+
+        if not content:
+            # We could not handle the Content-Type
+            return HttpResponse(
+                _('The message format is not supported.'),
+                content_type=content_type,
+                status=ResponseCode.bad_request)
+
+        if not content.get('urls') and settings.APPRISE_STATELESS_URLS:
+            # fallback to settings.APPRISE_STATELESS_URLS if no urls were
+            # defined
+            content['urls'] = settings.APPRISE_STATELESS_URLS
+
+        # Some basic error checking
+        if not content.get('body') or \
+                content.get('type', apprise.NotifyType.INFO) \
+                not in apprise.NOTIFY_TYPES:
+
+            return HttpResponse(
+                _('An invalid payload was specified.'),
+                content_type=content_type,
+                status=ResponseCode.bad_request)
+
+        # Prepare our apprise object
+        a_obj = apprise.Apprise()
+
+        # Add URLs
+        a_obj.add(content.get('urls'))
+        if not len(a_obj):
+            return HttpResponse(
+                _('There was no services to notify.'),
+                content_type=content_type,
+                status=ResponseCode.no_content,
+            )
+
+        # Perform our notification at this point
+        a_obj.notify(
+            content.get('body'),
+            title=content.get('title', ''),
+            notify_type=content.get('type', apprise.NotifyType.INFO),
+            tag='all',
+        )
 
         # Return our retrieved content
         return HttpResponse(
