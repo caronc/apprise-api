@@ -11,6 +11,13 @@ Apprise API was designed to easily fit into existing (and new) eco-systems that 
 [![Paypal](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E)
 [![Discord](https://img.shields.io/discord/558793703356104724.svg?colorB=7289DA&label=Discord&logo=Discord&logoColor=7289DA&style=flat-square)](https://discord.gg/MMPeN2D)
 
+## Screenshots
+There is a small built-in *Configuration Manager* that can be accesed using `/cfg/{KEY}`:<br/>
+![Screenshot of GUI - Using Keys](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
+
+Below is a screenshot of how you can set either a series of URL's to your `{KEY}`, or set your YAML and/or TEXT configuration below.
+![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
+
 ## API Details
 
 | Path         | Description |
