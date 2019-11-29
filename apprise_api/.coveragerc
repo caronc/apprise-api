@@ -5,6 +5,6 @@ omit =
   *settings*,
   *tests/*,
   *urls.py,
-  *wsgi/*,
+  *core/wsgi.py,
   gunicorn.conf.py,
   manage.py

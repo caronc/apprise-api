@@ -63,6 +63,27 @@ class AddTests(SimpleTestCase):
             '/add/{}'.format(key), {'urls': 'mailto://user:pass@yahoo.ca'})
         assert response.status_code == 200
 
+        # No URLs loaded
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'config': 'invalid content', 'format': 'text'})
+        assert response.status_code == 400
+
+        # Test a case where we fail to load a valid configuration file
+        with patch('apprise.AppriseConfig.add', return_value=False):
+            response = self.client.post(
+                '/add/{}'.format(key),
+                {'config': 'garbage://', 'format': 'text'})
+        assert response.status_code == 400
+
+        with patch('os.remove', side_effect=OSError):
+            # We will fail to remove the device first prior to placing a new
+            # one;  This will result in a 500 error
+            response = self.client.post(
+                '/add/{}'.format(key), {
+                    'urls': 'mailto://user:newpass@gmail.com'})
+            assert response.status_code == 500
+
         # URL is actually not a valid one (invalid Slack tokens specified
         # below)
         response = self.client.post(

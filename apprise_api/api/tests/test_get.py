@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase
+from unittest.mock import patch
 
 
 class GetTests(SimpleTestCase):
@@ -56,6 +57,36 @@ class GetTests(SimpleTestCase):
             {'urls': 'mailto://user:pass@yahoo.ca'})
         assert response.status_code == 200
 
+        # Handle case when we try to retrieve our content but we have no idea
+        # what the format is in. Essentialy there had to have been disk
+        # corruption here or someone meddling with the backend.
+        with patch('gzip.open', side_effect=OSError):
+            response = self.client.post('/get/{}'.format(key))
+            assert response.status_code == 500
+
         # Now we should be able to see our content
         response = self.client.post('/get/{}'.format(key))
         assert response.status_code == 200
+
+        # Add a YAML file
+        response = self.client.post(
+            '/add/{}'.format(key), {
+                'format': 'yaml',
+                'config': """
+                urls:
+                   - dbus://"""})
+        assert response.status_code == 200
+
+        # Verify that the correct Content-Type is set in the header of the
+        # response
+        assert 'Content-Type' in response
+        assert response['Content-Type'].startswith('text/plain')
+
+        # Now retrieve our YAML configuration
+        response = self.client.post('/get/{}'.format(key))
+        assert response.status_code == 200
+
+        # Verify that the correct Content-Type is set in the header of the
+        # response
+        assert 'Content-Type' in response
+        assert response['Content-Type'].startswith('text/yaml')
