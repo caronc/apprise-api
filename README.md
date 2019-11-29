@@ -91,16 +91,6 @@ flake8 apprise_api
 pytest apprise_api
 ```
 
-## Micro-Service Integration
-
-Perhaps you run your own service and the only goal you have is to add notification support to it. Here is an example:
-```bash
-# Send your notifications
-curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}' \
-    -H "Content-Type: application/json" \
-    http://localhost:8000/notify
-```
-
 ## Apprise Integration
 
 ### Apprise CLI Pull Example
@@ -132,4 +122,21 @@ a.add(config)
 
 # Send a test message
 a.notify('test message')
+```
+
+## Micro-Service Integration
+You can trigger the API to notify your pre-created keys like so: (using `/notify/{key}`):
+```bash
+# Send notification(s) to a {key} defined as 'my-apprise-key'
+curl -X POST -d '{"body":"test message"}' \
+    -H "Content-Type: application/json" \
+    http://localhost:8000/notify/my-apprise-key
+```
+
+Here is a *stateless* example where no key is required (using `/notify/`):
+```bash
+# Send your notifications directly
+curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}' \
+    -H "Content-Type: application/json" \
+    http://localhost:8000/notify
 ```
