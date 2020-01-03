@@ -9,7 +9,8 @@ Take advantage of [Apprise](https://github.com/caronc/apprise) through your netw
 Apprise API was designed to easily fit into existing (and new) eco-systems that are looking for a simple notification solution.
 
 [![Paypal](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E)
-[![Discord](https://img.shields.io/discord/558793703356104724.svg?colorB=7289DA&label=Discord&logo=Discord&logoColor=7289DA&style=flat-square)](https://discord.gg/MMPeN2D)
+[![Discord](https://img.shields.io/discord/558793703356104724.svg?colorB=7289DA&label=Discord&logo=Discord&logoColor=7289DA&style=flat-square)](https://discord.gg/MMPeN2D)<br/>
+[![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
 ## Screenshots
 There is a small built-in *Configuration Manager* that can be accesed using `/cfg/{KEY}`:<br/>
@@ -17,6 +18,30 @@ There is a small built-in *Configuration Manager* that can be accesed using `/cf
 
 Below is a screenshot of how you can set either a series of URL's to your `{KEY}`, or set your YAML and/or TEXT configuration below.
 ![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
+
+## Installation
+The following options should allow you to access the API at: `http://localhost:8000/` from your browser.
+
+Using [dockerhub](https://hub.docker.com/r/caronc/apprise), you can do the following:
+```bash
+# Retrieve container
+docker pull caronc/apprise:latest
+
+# Start it up:
+# /config is used for a persistent store, you do not have to mount
+#         this if you don't intend to use it.
+docker run --name apprise \
+   -p 8000:8000 \
+   -v /var/lib/apprise/config:/config \
+   -d caronc/apprise:latest
+```
+
+A `docker-compose.yml` file is already set up to grant you an instant production ready simulated environment:
+
+```bash
+# Docker Compose
+docker-compose up
+```
 
 ## API Details
 
@@ -48,17 +73,6 @@ The use of environment variables allow you to provide over-rides to default sett
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more then one host.
 | `DEBUG`            | This defaults to `False` however can be set to `True`if defined with a non-zero value (such as `1`).
 
-
-## Container Support
-
-A `docker-compose.yml` file is already set up to grant you an instant production ready simulated environment:
-
-```bash
-# Docker Compose
-docker-compose up
-```
-
-You can now access the API at: `http://localhost:8000/` from your browser.
 
 ## Development Environment
 

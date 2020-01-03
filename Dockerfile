@@ -30,17 +30,17 @@ RUN curl -fL -o /tmp/s6-overlay.tar.gz \
 ENV S6_KEEP_ENV=1 \
     S6_CMD_WAIT_FOR_SERVICES=1
 
-# set work directory
-WORKDIR /opt/apprise
-
 # Copy our static content in place
 COPY apprise_api/static /usr/share/nginx/html/s/
 
-# Copy over Apprise API
-COPY apprise_api/ webapp
-
 # System Configuration
 COPY etc /etc/
+
+# set work directory
+WORKDIR /opt/apprise
+
+# Copy over Apprise API
+COPY apprise_api/ webapp
 
 # gunicorn to expose on port 8080
 # nginx to expose on port 8000
