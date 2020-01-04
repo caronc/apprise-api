@@ -29,7 +29,7 @@ from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from .utils import ConfigCache
 from .forms import AddByUrlForm
 from .forms import AddByConfigForm
@@ -127,7 +127,7 @@ class AddView(View):
             # Prepare our default response
             try:
                 # load our JSON content
-                content = json.loads(request.body)
+                content = json.loads(request.body.decode('utf-8'))
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...
@@ -338,7 +338,7 @@ class NotifyView(View):
             # Prepare our default response
             try:
                 # load our JSON content
-                content = json.loads(request.body)
+                content = json.loads(request.body.decode('utf-8'))
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...
@@ -456,7 +456,7 @@ class StatelessNotifyView(View):
             # Prepare our default response
             try:
                 # load our JSON content
-                content = json.loads(request.body)
+                content = json.loads(request.body.decode('utf-8'))
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...

@@ -10,6 +10,8 @@ Apprise API was designed to easily fit into existing (and new) eco-systems that 
 
 [![Paypal](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E)
 [![Discord](https://img.shields.io/discord/558793703356104724.svg?colorB=7289DA&label=Discord&logo=Discord&logoColor=7289DA&style=flat-square)](https://discord.gg/MMPeN2D)<br/>
+[![Build Status](https://travis-ci.org/caronc/apprise-api.svg?branch=master)](https://travis-ci.org/caronc/apprise-api)
+[![CodeCov Status](https://codecov.io/github/caronc/apprise-pai/branch/master/graph/badge.svg)](https://codecov.io/github/caronc/apprise-api)
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
 ## Screenshots
@@ -58,8 +60,8 @@ docker-compose up
 - `{KEY}` must be 1-64 alphanumeric characters in length. In addition to this, the underscore (`_`) and dash (`-`) are also accepted.
 - You must `POST` to URLs defined above in order for them to respond.
 - Specify the `Content-Type` of `application/json` to use the JSON support.
-- There is no authentication required to use this API; this is by design. It's intention is to be a lightweight and fast micro-service parked behind the systems designed to handle security.
-- There are no persistent store dependencies for the purpose of simplicity. Configuration is hashed and written straight to disk.
+- There is no authentication (or SSL encryption) required to use this API; this is by design. The intentio here to be a lightweight and fast micro-service that can be parked behind another tier that was designed to handle security.
+- There are no additional dependencies should you choose to use the optional persistent store (mounted as `/config`).
 
 ### Environment Variables
 
@@ -67,8 +69,8 @@ The use of environment variables allow you to provide over-rides to default sett
 
 | Variable             | Description |
 |--------------------- | ----------- |
-| `APPRISE_CONFIG_DIR` | Defines the persistent store location of all configuration files saved. By default:<br/> - Content is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script.
-| `APPRISE_STATELESS_URLS` | A default set of URLs to notify when using the stateless `/notify` reference (no reference to `{KEY}` variables).
+| `APPRISE_CONFIG_DIR` | Defines the persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script.
+| `APPRISE_STATELESS_URLS` | A default set of URLs to notify when using the stateless `/notify` reference (no reference to `{KEY}` variables). Use this option if you don't intend to use the persistent store at all.
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk.
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more then one host.
 | `DEBUG`            | This defaults to `False` however can be set to `True`if defined with a non-zero value (such as `1`).
