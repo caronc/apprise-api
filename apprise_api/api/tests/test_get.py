@@ -77,11 +77,6 @@ class GetTests(SimpleTestCase):
                    - dbus://"""})
         assert response.status_code == 200
 
-        # Verify that the correct Content-Type is set in the header of the
-        # response
-        assert 'Content-Type' in response
-        assert response['Content-Type'].startswith('text/plain')
-
         # Now retrieve our YAML configuration
         response = self.client.post('/get/{}'.format(key))
         assert response.status_code == 200

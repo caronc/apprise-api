@@ -24,12 +24,15 @@
 # THE SOFTWARE.
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.views import View
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
 from django.utils.translation import gettext_lazy as _
+from django.core.serializers.json import DjangoJSONEncoder
+
 from .utils import ConfigCache
 from .forms import AddByUrlForm
 from .forms import AddByConfigForm
@@ -55,6 +58,17 @@ MIME_IS_FORM = re.compile(
 # application/x-json
 MIME_IS_JSON = re.compile(
     r'(text|application)/(x-)?json', re.I)
+
+
+class JSONEncoder(DjangoJSONEncoder):
+    """
+    A wrapper to the DjangoJSONEncoder to support
+    sets() (converting them to lists).
+    """
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return super().default(obj)
 
 
 class ResponseCode(object):
@@ -108,9 +122,6 @@ class AddView(View):
         """
         Handle a POST request
         """
-        # Our default response type
-        content_type = 'text/plain; charset=utf-8'
-
         # our content
         content = {}
         if MIME_IS_FORM.match(request.content_type):
@@ -133,13 +144,11 @@ class AddView(View):
                 # could not parse JSON response...
                 return HttpResponse(
                     _('Invalid JSON specified.'),
-                    content_type=content_type,
                     status=ResponseCode.bad_request)
 
         if not content:
             return HttpResponse(
                 _('The message format is not supported.'),
-                content_type=content_type,
                 status=ResponseCode.bad_request)
 
         # Create ourselves an apprise object to work with
@@ -151,8 +160,8 @@ class AddView(View):
                 # No URLs were loaded
                 return HttpResponse(
                     _('No valid URLs were found.'),
-                    content_type=content_type,
-                    status=ResponseCode.bad_request)
+                    status=ResponseCode.bad_request,
+                )
 
             if not ConfigCache.put(
                     key, '\r\n'.join([s.url() for s in a_obj]),
@@ -160,7 +169,6 @@ class AddView(View):
 
                 return HttpResponse(
                     _('The configuration could not be saved.'),
-                    content_type=content_type,
                     status=ResponseCode.internal_server_error,
                 )
 
@@ -170,8 +178,8 @@ class AddView(View):
                 # Format must be one supported by apprise
                 return HttpResponse(
                     _('The format specified is invalid.'),
-                    content_type=content_type,
-                    status=ResponseCode.bad_request)
+                    status=ResponseCode.bad_request,
+                )
 
             # prepare our apprise config object
             ac_obj = apprise.AppriseConfig()
@@ -185,11 +193,12 @@ class AddView(View):
 
                     if not ac_obj.add(
                             'file://{}?format={}'.format(f.name, fmt)):
+
                         # Bad Configuration
                         return HttpResponse(
                             _('The configuration specified is invalid.'),
-                            content_type=content_type,
-                            status=ResponseCode.bad_request)
+                            status=ResponseCode.bad_request,
+                        )
 
                     # Add our configuration
                     a_obj.add(ac_obj)
@@ -199,34 +208,35 @@ class AddView(View):
                         # mis-configuration on the caller's part
                         return HttpResponse(
                             _('No valid URL(s) were specified.'),
-                            content_type=content_type,
-                            status=ResponseCode.bad_request)
+                            status=ResponseCode.bad_request,
+                        )
 
             except OSError:
                 # We could not write the temporary file to disk
                 return HttpResponse(
                     _('The configuration could not be loaded.'),
-                    content_type=content_type,
-                    status=ResponseCode.internal_server_error)
+                    status=ResponseCode.internal_server_error,
+                )
 
             if not ConfigCache.put(key, content['config'], fmt=fmt):
                 # Something went very wrong; return 500
                 return HttpResponse(
                     _('An error occured saving configuration.'),
-                    content_type=content_type,
                     status=ResponseCode.internal_server_error,
                 )
         else:
             # No configuration specified; we're done
             return HttpResponse(
                 _('No configuration specified.'),
-                content_type=content_type, status=ResponseCode.bad_request)
+                status=ResponseCode.bad_request,
+            )
 
         # If we reach here; we successfully loaded the configuration so we can
         # go ahead and write it to disk and alert our caller of the success.
         return HttpResponse(
             _('Successfully saved configuration.'),
-            content_type=content_type, status=ResponseCode.okay)
+            status=ResponseCode.okay,
+        )
 
 
 @method_decorator(never_cache, name='dispatch')
@@ -238,15 +248,11 @@ class DelView(View):
         """
         Handle a POST request
         """
-        # Our default response type
-        content_type = 'text/plain; charset=utf-8'
-
         # Clear the key
         result = ConfigCache.clear(key)
         if result is None:
             return HttpResponse(
                 _('There was no configuration to remove.'),
-                content_type=content_type,
                 status=ResponseCode.no_content,
             )
 
@@ -254,14 +260,12 @@ class DelView(View):
             # There was a failure at the os level
             return HttpResponse(
                 _('The configuration could not be removed.'),
-                content_type=content_type,
                 status=ResponseCode.internal_server_error,
             )
 
         # Removed content
         return HttpResponse(
             _('Successfully removed configuration.'),
-            content_type=content_type,
             status=ResponseCode.okay,
         )
 
@@ -275,8 +279,6 @@ class GetView(View):
         """
         Handle a POST request
         """
-        # Our default response type
-        content_type = 'text/plain; charset=utf-8'
 
         config, format = ConfigCache.get(key)
         if config is None:
@@ -290,28 +292,29 @@ class GetView(View):
                 # no content to return
                 return HttpResponse(
                     _('There was no configuration found.'),
-                    content_type=content_type,
                     status=ResponseCode.no_content,
                 )
 
             # Something went very wrong; return 500
             return HttpResponse(
                 _('An error occured accessing configuration.'),
-                content_type=content_type,
                 status=ResponseCode.internal_server_error,
             )
 
         # Our configuration was retrieved; now our response varies on whether
         # we are a YAML configuration or a TEXT based one.  This allows us to
         # be compatible with those using the AppriseConfig() library or the
-        # reference to it through the --config (-c) option in the CLI
-        if format == apprise.ConfigFormat.YAML:
-            # update our return content type from the default text
-            content_type = 'text/yaml; charset=utf-8'
+        # reference to it through the --config (-c) option in the CLI.
+        content_type = 'text/yaml; charset=utf-8' \
+            if format == apprise.ConfigFormat.YAML \
+            else 'text/html; charset=utf-8'
 
         # Return our retrieved content
         return HttpResponse(
-            config, content_type=content_type, status=ResponseCode.okay)
+            config,
+            content_type=content_type,
+            status=ResponseCode.okay,
+        )
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -323,9 +326,6 @@ class NotifyView(View):
         """
         Handle a POST request
         """
-        # Our default response type
-        content_type = 'text/plain; charset=utf-8'
-
         # our content
         content = {}
         if MIME_IS_FORM.match(request.content_type):
@@ -344,14 +344,12 @@ class NotifyView(View):
                 # could not parse JSON response...
                 return HttpResponse(
                     _('Invalid JSON specified.'),
-                    content_type=content_type,
                     status=ResponseCode.bad_request)
 
         if not content:
             # We could not handle the Content-Type
             return HttpResponse(
                 _('The message format is not supported.'),
-                content_type=content_type,
                 status=ResponseCode.bad_request)
 
         # Some basic error checking
@@ -361,7 +359,6 @@ class NotifyView(View):
 
             return HttpResponse(
                 _('An invalid payload was specified.'),
-                content_type=content_type,
                 status=ResponseCode.bad_request)
 
         # If we get here, we have enough information to generate a notification
@@ -378,14 +375,12 @@ class NotifyView(View):
                 # no content to return
                 return HttpResponse(
                     _('There was no configuration found.'),
-                    content_type=content_type,
                     status=ResponseCode.no_content,
                 )
 
             # Something went very wrong; return 500
             return HttpResponse(
                 _('An error occured accessing configuration.'),
-                content_type=content_type,
                 status=ResponseCode.internal_server_error,
             )
 
@@ -423,13 +418,13 @@ class NotifyView(View):
             # We could not write the temporary file to disk
             return HttpResponse(
                 _('The configuration could not be loaded.'),
-                content_type=content_type,
                 status=ResponseCode.internal_server_error)
 
         # Return our retrieved content
         return HttpResponse(
             _('Notification(s) sent.'),
-            content_type=content_type, status=ResponseCode.okay)
+            status=ResponseCode.okay
+        )
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -441,9 +436,6 @@ class StatelessNotifyView(View):
         """
         Handle a POST request
         """
-        # Our default response type
-        content_type = 'text/plain; charset=utf-8'
-
         # our content
         content = {}
         if MIME_IS_FORM.match(request.content_type):
@@ -462,14 +454,12 @@ class StatelessNotifyView(View):
                 # could not parse JSON response...
                 return HttpResponse(
                     _('Invalid JSON specified.'),
-                    content_type=content_type,
                     status=ResponseCode.bad_request)
 
         if not content:
             # We could not handle the Content-Type
             return HttpResponse(
                 _('The message format is not supported.'),
-                content_type=content_type,
                 status=ResponseCode.bad_request)
 
         if not content.get('urls') and settings.APPRISE_STATELESS_URLS:
@@ -484,7 +474,6 @@ class StatelessNotifyView(View):
 
             return HttpResponse(
                 _('An invalid payload was specified.'),
-                content_type=content_type,
                 status=ResponseCode.bad_request)
 
         # Prepare our apprise object
@@ -495,7 +484,6 @@ class StatelessNotifyView(View):
         if not len(a_obj):
             return HttpResponse(
                 _('There was no services to notify.'),
-                content_type=content_type,
                 status=ResponseCode.no_content,
             )
 
@@ -510,4 +498,112 @@ class StatelessNotifyView(View):
         # Return our retrieved content
         return HttpResponse(
             _('Notification(s) sent.'),
-            content_type=content_type, status=ResponseCode.okay)
+            status=ResponseCode.okay,
+        )
+
+
+@method_decorator((gzip_page, never_cache), name='dispatch')
+class JsonUrlView(View):
+    """
+    A Django view that lists all loaded tags and URLs for a given key
+    """
+    def get(self, request, key):
+        """
+        Handle a POST request
+        """
+
+        # Now build our tag response that identifies all of the tags
+        # and the URL's they're associated with
+        #  {
+        #    "tags": ["tag1', "tag2", "tag3"],
+        #    "urls": [
+        #       {
+        #          "url": "windows://",
+        #          "tags": [],
+        #       },
+        #       {
+        #          "url": "mailto://user:pass@gmail.com"
+        #          "tags": ["tag1", "tag2", "tag3"]
+        #       }
+        #    ]
+        #  }
+        response = {
+            'tags': set(),
+            'urls': [],
+        }
+
+        config, format = ConfigCache.get(key)
+        if config is None:
+            # The returned value of config and format tell a rather cryptic
+            # story; this portion could probably be updated in the future.
+            # but for now it reads like this:
+            #   config == None and format == None: We had an internal error
+            #   config == None and format != None: we simply have no data
+            #   config != None: we simply have no data
+            if format is not None:
+                # no content to return
+                return JsonResponse(
+                    response,
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=ResponseCode.no_content,
+                )
+
+            # Something went very wrong; return 500
+            response['error'] = _('There was no configuration found.')
+            return JsonResponse(
+                response,
+                encoder=JSONEncoder,
+                safe=False,
+                status=ResponseCode.internal_server_error,
+            )
+
+        # Prepare our apprise object
+        a_obj = apprise.Apprise()
+
+        # Create an apprise config object
+        ac_obj = apprise.AppriseConfig()
+
+        try:
+            # Write our file to a temporary file containing our configuration
+            # so that we can read it back.  In the future a change will be to
+            # Apprise so that we can just directly write the configuration as
+            # is to the AppriseConfig() object... but for now...
+            with NamedTemporaryFile() as f:
+                # Write our content to disk
+                f.write(config.encode())
+                f.flush()
+
+                # Read our configuration back in to our configuration
+                ac_obj.add('file://{}?format={}'.format(f.name, format))
+
+                # Add our configuration
+                a_obj.add(ac_obj)
+
+                for notification in a_obj:
+                    # Set Notification
+                    response['urls'].append({
+                        'url': notification.url(privacy=False),
+                        'tags': notification.tags,
+                    })
+
+                    # Store Tags
+                    response['tags'] |= notification.tags
+
+        except OSError:
+            # We could not write the temporary file to disk
+            response['error'] = _('The configuration could not be loaded.'),
+            return JsonResponse(
+                response,
+                encoder=JSONEncoder,
+                safe=False,
+                status=ResponseCode.internal_server_error,
+            )
+
+        # Return our retrieved content
+        return JsonResponse(
+            response,
+            encoder=JSONEncoder,
+            safe=False,
+            status=ResponseCode.okay
+        )

@@ -47,4 +47,7 @@ urlpatterns = [
     re_path(
         r'^notify/?',
         views.StatelessNotifyView.as_view(), name='s_notify'),
+    re_path(
+        r'^json/urls/(?P<key>[\w_-]{1,64})/?',
+        views.JsonUrlView.as_view(), name='json_urls'),
 ]
