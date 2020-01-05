@@ -4,6 +4,8 @@ omit =
   *migrations/*,
   *settings*,
   *tests/*,
+  lib/*,
+  lib64/*,
   *urls.py,
   *core/wsgi.py,
   gunicorn.conf.py,
