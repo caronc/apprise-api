@@ -140,6 +140,18 @@ document.querySelector('#addurl').onsubmit = function(event) {
 
         // reset our form
         form.reset();
+
+        Swal.fire(
+          'Save',
+          'Successfully saved the specified URL(s).',
+          'success'
+        );
+     } else {
+        Swal.fire(
+          'Save',
+          'Failed to save the specified URL(s).',
+          'error'
+        );
      }
   });
   return false;
@@ -160,6 +172,20 @@ document.querySelector('#addconfig').onsubmit = function(event) {
      {
         // update our settings
         update();
+
+        // user notification
+        Swal.fire(
+          'Save',
+          'Successfully saved the specified URL(s).',
+          'success'
+        );
+     } else {
+        // user notification
+        Swal.fire(
+          'Save',
+          'Failed to save the specified URL(s).',
+          'error'
+        );
      }
   });
   return false;
@@ -178,8 +204,19 @@ document.querySelector('#donotify').onsubmit = function(event) {
   }).then(function(response) {
      if(response.status == 200)
      {
-        // update our settings
-        alert('Notification Sent');
+        // user notification
+        Swal.fire(
+          'Notification',
+          'Successfully sent the notification(s).',
+          'success'
+        );
+     } else {
+        // user notification
+        Swal.fire(
+          'Notification',
+          'Failed to send the notification(s).',
+          'error'
+        );
      }
   });
   return false;
