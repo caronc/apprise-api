@@ -113,6 +113,39 @@ async function update() {
       document.querySelector('#id_config').value = text;
     });
 
+    // perform a tag retrieval; start with 'all'
+    let tags = [{tag: 'all'}];
+
+    let jsonResponse = fetch('{% url "json_urls" key %}', {
+      method: 'GET',
+    }).then(function(jsonResponse) {
+      return jsonResponse.json();
+
+    }).then(function (data) {
+      let instance = M.Chips.init(document.querySelectorAll('#id_tag'), {
+        placeholder: 'all',
+
+        data: tags.concat(data.tags.reduce(function(s, a){
+          s.push({tag: a});
+          return s;
+        }, [])),
+
+        autocompleteOptions: {
+          data: tags.concat(data.tags.reduce(function(s, a){
+            s.push({a: null});
+            return s;
+          }, [])),
+          limit: Infinity,
+          minLength: 1
+        }
+
+      });
+
+    }).catch(function (err) {
+      // There was an error
+      console.warn('Something went wrong.', err);
+    });
+
     return response;
   }
   // if we reach here, we failed
