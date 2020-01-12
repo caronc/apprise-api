@@ -114,7 +114,7 @@ async function update() {
     });
 
     // perform a tag retrieval; start with 'all'
-    let tags = [{tag: 'all'}];
+    let tags = ['all'];
 
     let jsonResponse = fetch('{% url "json_urls" key %}', {
       method: 'GET',
@@ -122,28 +122,24 @@ async function update() {
       return jsonResponse.json();
 
     }).then(function (data) {
-      let instance = M.Chips.init(document.querySelectorAll('#id_tag'), {
-        placeholder: 'all',
-
-        data: tags.concat(data.tags.reduce(function(s, a){
-          s.push({tag: a});
-          return s;
-        }, [])),
-
+      // Initialize our tags making it easy for an end user to
+      // choose from. Tags are based off ones found in the saved
+      // configuration.
+      M.Chips.init(document.querySelectorAll('.chips'), {
+        placeholder: 'Optional Tag',
+        secondaryPlaceholder: 'Another Tag',
         autocompleteOptions: {
-          data: tags.concat(data.tags.reduce(function(s, a){
-            s.push({a: null});
-            return s;
-          }, [])),
+          data: tags.concat(data.tags).reduce(function(result, item) {
+            result[item] = null;
+            return result;
+          }, {}),
           limit: Infinity,
           minLength: 1
         }
-
       });
 
     }).catch(function (err) {
       // There was an error
-      console.warn('Something went wrong.', err);
     });
 
     return response;
@@ -227,6 +223,50 @@ document.querySelector('#addconfig').onsubmit = function(event) {
 // over-ride manual submit for a nicer user experience
 document.querySelector('#donotify').onsubmit = function(event) {
   event.preventDefault();
+
+  const chipElement = document.querySelector('.chips');
+
+  chipElement.querySelector('.chips');
+  const chipInput = document.querySelector('.chips > input');
+  if(chipInput.value) {
+    // This code just handles text typed in the tag section that was
+    // not submitted. This forces any lingering un-commited text
+    // into a tag just prior to it's submission
+    const ev = new KeyboardEvent('keydown', {
+      altKey:false,
+      bubbles: true,
+      cancelBubble: false,
+      cancelable: true,
+      charCode: 0,
+      code: "Enter",
+      composed: true,
+      ctrlKey: false,
+      currentTarget: null,
+      defaultPrevented: true,
+      detail: 0,
+      eventPhase: 0,
+      isComposing: false,
+      isTrusted: true,
+      key: "Enter",
+      keyCode: 13,
+      location: 0,
+      metaKey: false,
+      repeat: false,
+      returnValue: false,
+      shiftKey: false,
+      type: "keydown",
+      which: 13
+    });
+    chipInput.dispatchEvent(ev);
+  }
+
+  // store tags (as comma separated string) from materialize chip type into form
+  document.querySelector('#id_tag').value = M.Chips.getInstance(chipElement).chipsData.reduce(
+    function(s, a){
+      s.push(a.tag)
+      return s;
+    }, []).join(",")
+
   const form = this;
   const body = new URLSearchParams(new FormData(form));
 
@@ -255,4 +295,21 @@ document.querySelector('#donotify').onsubmit = function(event) {
   return false;
 }
 
+{% endblock %}
+
+{% block onload %}
+{{ block.super }}
+document.querySelector('label [for="id_tag"]')
+
+{
+  // create a new div with the class 'chips' assigned to it
+  const element = document.createElement('div')
+  let refNode = document.querySelector('label[for="id_tag"]')
+  element.classList.add("chips")
+  element.style.margin = '0'
+  refNode.parentNode.insertBefore(element, refNode.nextSibling)
+}
+
+// Hide tag field since we use the pretty Materialize Chip setup instead
+document.querySelector('#id_tag').style.display = 'none';
 {% endblock %}
