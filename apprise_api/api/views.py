@@ -39,7 +39,7 @@ from .forms import AddByConfigForm
 from .forms import NotifyForm
 from .forms import NotifyByUrlForm
 
-from tempfile import NamedTemporaryFile
+import tempfile
 import apprise
 import json
 import re
@@ -186,7 +186,7 @@ class AddView(View):
 
             try:
                 # Write our file to a temporary file
-                with NamedTemporaryFile() as f:
+                with tempfile.NamedTemporaryFile() as f:
                     # Write our content to disk
                     f.write(content['config'].encode())
                     f.flush()
@@ -395,7 +395,7 @@ class NotifyView(View):
             # so that we can read it back.  In the future a change will be to
             # Apprise so that we can just directly write the configuration as
             # is to the AppriseConfig() object... but for now...
-            with NamedTemporaryFile() as f:
+            with tempfile.NamedTemporaryFile() as f:
                 # Write our content to disk
                 f.write(config.encode())
                 f.flush()
@@ -569,7 +569,7 @@ class JsonUrlView(View):
             # so that we can read it back.  In the future a change will be to
             # Apprise so that we can just directly write the configuration as
             # is to the AppriseConfig() object... but for now...
-            with NamedTemporaryFile() as f:
+            with tempfile.NamedTemporaryFile() as f:
                 # Write our content to disk
                 f.write(config.encode())
                 f.flush()
