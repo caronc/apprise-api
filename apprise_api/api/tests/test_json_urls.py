@@ -126,8 +126,8 @@ class JsonUrlsTests(SimpleTestCase):
         # Handle case when we try to retrieve our content but we have no idea
         # what the format is in. Essentialy there had to have been disk
         # corruption here or someone meddling with the backend.
-        with patch('tempfile._TemporaryFileWrapper') as mock_ntf:
-            mock_ntf.side_effect = OSError()
+        with patch('tempfile.NamedTemporaryFile') as mock_ntf:
+            mock_ntf.side_effect = OSError
             # Now retrieve our JSON resonse
             response = self.client.get('/json/urls/{}'.format(key))
             assert response.status_code == 500

@@ -162,8 +162,8 @@ class AddTests(SimpleTestCase):
         )
         assert response.status_code == 400
 
-        with patch('tempfile._TemporaryFileWrapper') as mock_ntf:
-            mock_ntf.side_effect = OSError()
+        with patch('tempfile.NamedTemporaryFile') as mock_ntf:
+            mock_ntf.side_effect = OSError
             # we won't be able to write our retrieved configuration
             # to disk for processing; we'll get a 500 error
             response = self.client.post(
