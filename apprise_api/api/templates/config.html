@@ -126,16 +126,24 @@ async function update() {
       // Initialize our tags making it easy for an end user to
       // choose from. Tags are based off ones found in the saved
       // configuration.
+      let external_data = tags.concat(data.tags).reduce(function(result, item) {
+        result[item] = null;
+        return result;
+      }, {})
+
       M.Chips.init(document.querySelectorAll('.chips'), {
         placeholder: 'Optional Tag',
         secondaryPlaceholder: 'Another Tag',
         autocompleteOptions: {
-          data: tags.concat(data.tags).reduce(function(result, item) {
-            result[item] = null;
-            return result;
-          }, {}),
-          limit: Infinity,
-          minLength: 1
+          data: external_data,
+          minLength: 0
+        },
+        onChipAdd: function(e, chip) {
+          var $this = this;
+          $this.chipsData.forEach(function(e, index) {
+            if(!(e.tag in external_data))
+              $this.deleteChip(index);
+          })
         }
       });
 
