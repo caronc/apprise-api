@@ -29,7 +29,8 @@
     <div class="section">
       {% blocktrans %}For example, the following command would cause apprise to retrieve the configuration loaded and
       send a test notification to all of your added services:{% endblocktrans %}
-      <br /><code>apprise --body="Test Message" --tag=all --config={{request.scheme}}://{{request.META.HTTP_HOST}}{% url "get" key %}</code>
+      <br /><pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{% url "get" key %}</code></pre>
     </div>
   </div>
   <div id="config" class="col s12">
