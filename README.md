@@ -22,6 +22,11 @@ There is a small built-in *Configuration Manager* that can be optionally accesse
 Below is a screenshot of how you can set either a series of URL's to your `{KEY}`, or set your YAML and/or TEXT configuration below.
 ![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
 
+Once you've saved your configuration, you'll be able to use the *Notification* tab to send to messages to one or more of the services defined in your configuration. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them.
+![Screenshot of GUI - Notifications](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-3.png)
+
+At the end of the day, the GUI just simply offers a user friendly interface to the API developers can directly interface with if they wish to.
+
 ## Installation
 The following options should allow you to access the API at: `http://localhost:8000/` from your browser.
 
