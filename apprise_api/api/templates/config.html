@@ -5,9 +5,9 @@
 <div class="row">
   <div class="col s12">
     <ul class="tabs config-overview">
-      <li class="tab col s4"><a class="active" href="#overview">{% trans "Overview" %}</a></li>
-      <li class="tab col s4"><a href="#config">{%trans "Configuration" %}</a></li>
-      <li class="tab col s4"><a href="#notify">{%trans "Notifications" %}</a></li>
+      <li class="tab col s4"><a class="active" href="#overview"><i class="material-icons">info</i> {% trans "Overview" %}</a></li>
+      <li class="tab col s4"><a href="#config"><i class="material-icons">settings</i> {%trans "Configuration" %}</a></li>
+      <li class="tab col s4"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a></li>
     </ul>
   </div>
   <div id="overview" class="col s12">
@@ -34,37 +34,15 @@
     </div>
   </div>
   <div id="config" class="col s12">
-
-    <div class="section">
-      <h5>{% trans "Option 1: Set By URL(s)" %}</h5>
-      <p>
-        {% blocktrans %}
-        Use a comma and/or space to separate one Apprise URL from another.
-        {% endblocktrans %}
-        <form id="addurl" action="{% url "add" key %}" method="post">
-          {{ form_url }}
-          <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
-            <i class="material-icons right">send</i>
-          </button>
-        </form>
-      </p>
-    </div>
-
-    <div class="section">
-      <h5>{% trans "Option 2: Set By Config" %}</h5>
-      <p>
-        {% blocktrans %}
-        This option grants you a bit more flexability because you can additionally associate tags with your URLs. Those
-        using YAML configuration can also alter the Apprise Asset object as well for a more customized look and feel.
-        {% endblocktrans %}
-        <form id="addconfig" action="{% url "add" key %}" method="post">
-          {{ form_cfg }}
-          <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
-            <i class="material-icons right">send</i>
-          </button>
-        </form>
-      </p>
-    </div>
+    <p>
+      {% blocktrans %}Define your configuration below:{% endblocktrans %}
+      <form id="addconfig" action="{% url "add" key %}" method="post">
+        {{ form_cfg }}
+        <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Submit" %}
+          <i class="material-icons right">send</i>
+        </button>
+      </form>
+    </p>
   </div>
   <div id="notify" class="col s12">
     <p>
@@ -160,42 +138,6 @@ async function update() {
 update();
 
 // over-ride manual submit for a nicer user experience
-document.querySelector('#addurl').onsubmit = function(event) {
-  event.preventDefault();
-
-  const form = this;
-  const body = new URLSearchParams(new FormData(form));
-
-  // perform our status check
-  let response = fetch('{% url "add" key %}', {
-    method: 'POST',
-    body: body,
-  }).then(function(response) {
-     if(response.status == 200)
-     {
-        // update our settings
-        update();
-
-        // reset our form
-        form.reset();
-
-        Swal.fire(
-          'Save',
-          'Successfully saved the specified URL(s).',
-          'success'
-        );
-     } else {
-        Swal.fire(
-          'Save',
-          'Failed to save the specified URL(s).',
-          'error'
-        );
-     }
-  });
-  return false;
-}
-
-// over-ride manual submit for a nicer user experience
 document.querySelector('#addconfig').onsubmit = function(event) {
   event.preventDefault();
   const form = this;
@@ -279,7 +221,12 @@ document.querySelector('#donotify').onsubmit = function(event) {
   const form = this;
   const body = new URLSearchParams(new FormData(form));
 
-  // perform our status check
+  // perform our notification
+  Swal.fire(
+    'Notification',
+    'Sending notification(s)...',
+  );
+  Swal.showLoading()
   let response = fetch('{% url "notify" key %}', {
     method: 'POST',
     body: body,
@@ -303,7 +250,6 @@ document.querySelector('#donotify').onsubmit = function(event) {
   });
   return false;
 }
-
 {% endblock %}
 
 {% block onload %}

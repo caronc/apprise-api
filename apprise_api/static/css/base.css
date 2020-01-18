@@ -1,6 +1,6 @@
 .nav h1 {
-  margin: 0;
-  font-size: 3.1rem;
+  margin: 0.4rem;
+  font-size: 2.1rem;
   font-weight: bold;
   text-transform: uppercase;
 }
@@ -43,6 +43,7 @@ textarea {
 }
 
 .tabs .tab a{
+	border-radius: 25px 25px 0 0;
     color:#2bbbad;
 }
 .collection a.collection-item:not(.active):hover,
@@ -51,11 +52,18 @@ textarea {
 }
 .tabs .tab a:hover,.tabs .tab a.active {
 	background-color:transparent;
-	color:#2bbbad;
+/*	color:#2bbbad;*/
+	color:#004d40;
+	font-weight: bold;
+	background-color: #eee;
 }
 .tabs .tab.disabled a,.tabs .tab.disabled a:hover {
 	color:rgba(102,147,153,0.7);
 }
 .tabs .indicator {
 	background-color:#004d40;
+}
+.material-icons{
+    display: inline-flex;
+    vertical-align: middle;
 }
