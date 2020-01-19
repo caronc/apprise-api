@@ -67,3 +67,11 @@ textarea {
     display: inline-flex;
     vertical-align: middle;
 }
+#url-list code {
+	display: block;
+	background-color: inherit;
+}
+#url-list .chip {
+	background-color: inherit;
+	border: 1px solid #e4e4e4;
+}

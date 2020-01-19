@@ -85,7 +85,20 @@ class JsonUrlsTests(SimpleTestCase):
         assert 'tags' in response.json()
         assert 'urls' in response.json()
 
-        # No errors occured, therefore no error entry
+        # No errors occurred, therefore no error entry
+        assert 'error' not in response.json()
+
+        # No tags (but can be assumed "all") is always present
+        assert len(response.json()['tags']) == 0
+
+        # Same request as above but we set the privacy flag
+        response = self.client.get('/json/urls/{}?privacy=1'.format(key))
+        assert response.status_code == 200
+        assert response['Content-Type'].startswith('application/json')
+        assert 'tags' in response.json()
+        assert 'urls' in response.json()
+
+        # No errors occurred, therefore no error entry
         assert 'error' not in response.json()
 
         # No tags (but can be assumed "all") is always present

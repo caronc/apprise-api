@@ -532,6 +532,9 @@ class JsonUrlView(View):
             'urls': [],
         }
 
+        # Privacy flag
+        privacy = bool(request.GET.get('privacy', False))
+
         config, format = ConfigCache.get(key)
         if config is None:
             # The returned value of config and format tell a rather cryptic
@@ -583,7 +586,7 @@ class JsonUrlView(View):
                 for notification in a_obj:
                     # Set Notification
                     response['urls'].append({
-                        'url': notification.url(privacy=False),
+                        'url': notification.url(privacy=privacy),
                         'tags': notification.tags,
                     })
 
