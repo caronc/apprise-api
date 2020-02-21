@@ -6,7 +6,7 @@ Take advantage of [Apprise](https://github.com/caronc/apprise) through your netw
 - An incredibly lightweight gateway to Apprise.
 - A production ready micro-service at your disposal.
 
-Apprise API was designed to easily fit into existing (and new) eco-systems that is looking for a simple notification solution.
+Apprise API was designed to easily fit into existing (and new) eco-systems that are looking for a simple notification solution.
 
 [![Paypal](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E)
 [![Follow](https://img.shields.io/twitter/follow/l2gnux)](https://twitter.com/l2gnux/)<br/>
@@ -16,21 +16,21 @@ Apprise API was designed to easily fit into existing (and new) eco-systems that 
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
 ## Screenshots
-There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser accessible via `/cfg/{KEY}`:<br/>
+There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser allowing you to create and save as many configurations as you'd like. Each configuration is differentiated by a unique `{KEY}` that you decide on:<br/>
 ![Screenshot of GUI - Using Keys](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
 
-Below is a screenshot of how you can set either a series of URL's to your `{KEY}`, or set your YAML and/or TEXT configuration below.
+Below is a screenshot of how you can assign your Apprise URLs to your `{KEY}`. You can define both TEXT or YAML [Apprise configurations](https://github.com/caronc/apprise/wiki/config).<br/>
 ![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
 
-Once you've saved your configuration, you'll be able to use the *Notification* tab to send to messages to one or more of the services defined in your configuration. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them.
+Once you've saved your configuration, you'll be able to use the *Notification* tab to send you're messages to one or more of the services you defined in your configuration. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them.
 ![Screenshot of GUI - Notifications](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-3.png)
 
-At the end of the day, the GUI just simply offers a user friendly interface to the API developers can directly interface with if they wish to.
+At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
 
 ## Installation
 The following options should allow you to access the API at: `http://localhost:8000/` from your browser.
 
-Using [dockerhub](https://hub.docker.com/r/caronc/apprise), you can do the following:
+Using [dockerhub](https://hub.docker.com/r/caronc/apprise) you can do the following:
 ```bash
 # Retrieve container
 docker pull caronc/apprise:latest
@@ -52,7 +52,7 @@ docker-compose up
 ```
 
 ## Apprise URLs
-📣 In order to trigger a notifications, you first need to create one or more [Apprise URLs](https://github.com/caronc/apprise/wiki). Apprise supports well over 50 notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see all of the supported Apprise services and how you can generate your own URLs from them.
+📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you want to send to. Apprise supports well over 50 notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
 
 ## API Details
 
@@ -62,7 +62,7 @@ Some people may wish to only have a sidecar solution that does require use of an
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/notify/` |  POST  | Sends one or more notifications to the URLs either specified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `error`. If no *type* is specified then `info` is the default value used.
+| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `error`. If no *type* is specified then `info` is the default value used.
 
 Here is a *stateless* example of how one might send a notification (using `/notify/`):
 ```bash
