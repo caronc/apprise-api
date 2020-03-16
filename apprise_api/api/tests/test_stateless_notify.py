@@ -58,6 +58,33 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
+    @patch('apprise.NotifyBase.notify')
+    def test_partial_notify(self, mock_notify):
+        """
+        Test sending multiple notifications where one fails
+        """
+
+        # Set our return value; first we return a true, then we fail
+        # on the second call
+        mock_notify.side_effect = (True, False)
+
+        # Preare our form data
+        form_data = {
+            'urls': ', '.join([
+                'mailto://user:pass@hotmail.com',
+                'mailto://user:pass@gmail.com',
+                ]),
+            'body': 'test notifiction',
+        }
+
+        # At a minimum 'body' is requred
+        form = NotifyByUrlForm(data=form_data)
+        assert form.is_valid()
+
+        response = self.client.post('/notify', form.cleaned_data)
+        assert response.status_code == 424
+        assert mock_notify.call_count == 2
+
     @override_settings(APPRISE_STATELESS_URLS="windows://")
     @patch('apprise.Apprise.notify')
     def test_notify_default_urls(self, mock_notify):

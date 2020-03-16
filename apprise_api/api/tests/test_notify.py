@@ -70,6 +70,50 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
+    @patch('apprise.NotifyBase.notify')
+    def test_partial_notify_by_loaded_urls(self, mock_notify):
+        """
+        Test notification handling when one or more of the services
+        can not be notified.
+        """
+
+        # our key to use
+        key = 'test_partial_notify_by_loaded_urls'
+
+        # Add some content
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {
+                'urls': ', '.join([
+                    'mailto://user:pass@hotmail.com',
+                    'mailto://user:pass@gmail.com',
+                    ],
+                ),
+            })
+        assert response.status_code == 200
+
+        # Preare our form data
+        form_data = {
+            'body': 'test notifiction',
+        }
+
+        # At a minimum, just a body is required
+        form = NotifyForm(data=form_data)
+        assert form.is_valid()
+
+        # we always set a type if one wasn't done so already
+        assert form.cleaned_data['type'] == apprise.NotifyType.INFO
+
+        # Set our return value; first we return a true, then we fail
+        # on the second call
+        mock_notify.side_effect = (True, False)
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form.cleaned_data)
+        assert response.status_code == 424
+        assert mock_notify.call_count == 2
+
     @patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """

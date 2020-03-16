@@ -80,6 +80,7 @@ class ResponseCode(object):
     bad_request = 400
     not_found = 404
     method_not_allowed = 405
+    failed_dependency = 424
     internal_server_error = 500
 
 
@@ -407,12 +408,19 @@ class NotifyView(View):
                 a_obj.add(ac_obj)
 
                 # Perform our notification at this point
-                a_obj.notify(
+                result = a_obj.notify(
                     content.get('body'),
                     title=content.get('title', ''),
                     notify_type=content.get('type', apprise.NotifyType.INFO),
                     tag=content.get('tag'),
                 )
+
+                if not result:
+                    # If at least one notification couldn't be sent; change up
+                    # the response to a 424 error code
+                    return HttpResponse(
+                        _('One or more notification could not be sent.'),
+                        status=ResponseCode.failed_dependency)
 
         except OSError:
             # We could not write the temporary file to disk
@@ -488,12 +496,19 @@ class StatelessNotifyView(View):
             )
 
         # Perform our notification at this point
-        a_obj.notify(
+        result = a_obj.notify(
             content.get('body'),
             title=content.get('title', ''),
             notify_type=content.get('type', apprise.NotifyType.INFO),
             tag='all',
         )
+
+        if not result:
+            # If at least one notification couldn't be sent; change up the
+            # response to a 424 error code
+            return HttpResponse(
+                _('One or more notification could not be sent.'),
+                status=ResponseCode.failed_dependency)
 
         # Return our retrieved content
         return HttpResponse(
