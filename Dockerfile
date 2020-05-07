@@ -4,7 +4,6 @@ FROM nginx
 # set version label
 ARG BUILD_DATE
 ARG VERSION
-ARG HEALTHCHECKS_RELEASE
 LABEL build_version="Apprise API version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="Chris-Caron"
 
