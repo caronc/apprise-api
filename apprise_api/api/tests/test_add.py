@@ -87,7 +87,7 @@ class AddTests(SimpleTestCase):
         # URL is actually not a valid one (invalid Slack tokens specified
         # below)
         response = self.client.post(
-            '/add/{}'.format(key), {'urls': 'slack://TokenA/TokenB/TokenC'})
+            '/add/{}'.format(key), {'urls': 'slack://-/-/-'})
         assert response.status_code == 400
 
         # Test with JSON
