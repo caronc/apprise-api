@@ -401,7 +401,7 @@
                     </td>
                   </tr>
                   <tr>
-                    <td>tags</td>
+                    <td>tag</td>
                     <td>{% blocktrans %}Apply tagging logic to the further filter your URLs. This is an optional
                       field.{% endblocktrans %}</td>
                   </tr>
@@ -413,7 +413,7 @@
                   <div class="collapsible-body">
                     <pre><code class="bash">
 								    # {% blocktrans %}Notifies all URLs assigned the <em>devops</em> tag{% endblocktrans %}<br/>
-								    curl -X POST -d '{"tags":"devops","body":"test body","title":"test title"}' \<br/>
+								    curl -X POST -d '{"tag":"devops","body":"test body","title":"test title"}' \<br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/notify/<em>KEY</em></code></pre>
                   </div>
@@ -426,7 +426,7 @@
                         from urllib.request import Request<br/>
                         <br/>
                         payload = {<br/>
-                        &nbsp;&nbsp;&nbsp;&nbsp;'tags': 'devops',<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;'tag': 'devops',<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;'title': 'test title',<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;'body': 'test body',<br/>
                         }<br/>
@@ -453,7 +453,7 @@
                        <br/>
                       //The JSON data.<br/>
                       $jsonData = array(<br/>
-                      &nbsp;&nbsp;&nbsp;&nbsp;'tags' => 'devops',<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;'tag' => 'devops',<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;'title' => 'test title',<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;'body' => 'test body'<br/>
                       );<br/>
