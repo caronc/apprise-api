@@ -43,6 +43,10 @@ bind = [
 # Workers are relative to the number of CPU's provided by hosting server
 workers = multiprocessing.cpu_count() * 2 + 1
 
+# Increase worker timeout value to give upstream services time to
+# respond
+timeout = 90
+
 # Logging
 # '-' means log to stdout.
 errorlog = '-'
