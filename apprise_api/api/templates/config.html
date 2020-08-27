@@ -117,9 +117,11 @@ async function update() {
   // perform our status check
   let response = await fetch('{% url "get" key %}', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8'
+    },
   });
 
-  let result = await response;
   if(response.status == 204)
   {
     // no problem; we simply have no content to retrieve
@@ -133,10 +135,22 @@ async function update() {
     document.querySelector('.config-overview li a[href="#notify"]')
       .parentNode.classList.remove('disabled');
 
+    // get our results
+    let result = await response.json();
+
     // Set our configuration so it's visible
-    response.text().then(function (text) {
-      document.querySelector('#id_config').value = text;
-    });
+    document.querySelector('#id_config').value = result.config;
+    // Set our format
+    document.querySelector('#id_format').value = result.format;
+
+    // dispatch our event to update our select box
+    if (typeof(Event) === 'function') {
+        var event = new Event('change');
+    } else {  // for IE11
+        var event = document.createEvent('Event');
+        event.initEvent('change', true, true);
+    }
+    document.querySelector('#id_format').dispatchEvent(event);
 
     // Ensure has-config sections are visible
     document.querySelector('.has-config')

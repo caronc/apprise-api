@@ -108,6 +108,10 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 Here is an example using `curl` as to how someone might send a notification to everyone associated with the tag `abc123` (using `/notify/{key}`):
 ```bash
 # Send notification(s) to a {key} defined as 'abc123'
+curl -X POST -d "body=test message" \
+    http://localhost:8000/notify/abc123
+
+# Here is the same request but using JSON instead:
 curl -X POST -d '{"body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/abc123
@@ -118,6 +122,10 @@ curl -X POST -d '{"body":"test message"}' \
 ```bash
 # Send notification(s) to a {key} defined as 'abc123'
 # but only notify the URLs associated with the 'devops' tag
+curl -X POST -d 'tag=devops&body=test message' \
+    http://localhost:8000/notify/abc123
+
+# Here is the same request but using JSON instead:
 curl -X POST -d '{"tag":"devops", "body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/abc123

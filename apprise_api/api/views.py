@@ -38,8 +38,9 @@ from .forms import AddByUrlForm
 from .forms import AddByConfigForm
 from .forms import NotifyForm
 from .forms import NotifyByUrlForm
+from .forms import CONFIG_FORMATS
+from .forms import AUTO_DETECT_CONFIG_KEYWORD
 
-import tempfile
 import apprise
 import json
 import re
@@ -175,7 +176,7 @@ class AddView(View):
 
         elif 'config' in content:
             fmt = content.get('format', '').lower()
-            if fmt not in apprise.CONFIG_FORMATS:
+            if fmt not in [i[0] for i in CONFIG_FORMATS]:
                 # Format must be one supported by apprise
                 return HttpResponse(
                     _('The format specified is invalid.'),
@@ -185,8 +186,18 @@ class AddView(View):
             # prepare our apprise config object
             ac_obj = apprise.AppriseConfig()
 
+            if fmt == AUTO_DETECT_CONFIG_KEYWORD:
+                # By setting format to None, it is automatically detected from
+                # within the add_config() call
+                fmt = None
+
             # Load our configuration
-            ac_obj.add_config(content['config'], format=fmt)
+            if not ac_obj.add_config(content['config'], format=fmt):
+                # The format could not be detected
+                return HttpResponse(
+                    _('The configuration format could not be detected.'),
+                    status=ResponseCode.bad_request,
+                )
 
             # Add our configuration
             a_obj.add(ac_obj)
@@ -199,7 +210,8 @@ class AddView(View):
                     status=ResponseCode.bad_request,
                 )
 
-            if not ConfigCache.put(key, content['config'], fmt=fmt):
+            if not ConfigCache.put(
+                    key, content['config'], fmt=ac_obj[0].config_format):
                 # Something went very wrong; return 500
                 return HttpResponse(
                     _('An error occured saving configuration.'),
@@ -261,6 +273,9 @@ class GetView(View):
         Handle a POST request
         """
 
+        # Detect the format our response should be in
+        json_response = MIME_IS_JSON.match(request.content_type) is not None
+
         config, format = ConfigCache.get(key)
         if config is None:
             # The returned value of config and format tell a rather cryptic
@@ -274,11 +289,23 @@ class GetView(View):
                 return HttpResponse(
                     _('There was no configuration found.'),
                     status=ResponseCode.no_content,
+                ) if not json_response else JsonResponse({
+                        'error': _('There was no configuration found.')
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=ResponseCode.no_content,
                 )
 
             # Something went very wrong; return 500
             return HttpResponse(
                 _('An error occured accessing configuration.'),
+                status=ResponseCode.internal_server_error,
+            ) if not json_response else JsonResponse({
+                    'error': _('There was no configuration found.')
+                },
+                encoder=JSONEncoder,
+                safe=False,
                 status=ResponseCode.internal_server_error,
             )
 
@@ -294,6 +321,13 @@ class GetView(View):
         return HttpResponse(
             config,
             content_type=content_type,
+            status=ResponseCode.okay,
+        ) if not json_response else JsonResponse({
+                'format': format,
+                'config': config,
+            },
+            encoder=JSONEncoder,
+            safe=False,
             status=ResponseCode.okay,
         )
 

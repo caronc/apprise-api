@@ -27,8 +27,12 @@ import apprise
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+# Auto-Detect Keyword
+AUTO_DETECT_CONFIG_KEYWORD = 'auto'
+
 # Define our potential configuration types
 CONFIG_FORMATS = (
+    (AUTO_DETECT_CONFIG_KEYWORD, _('Auto-Detect')),
     (apprise.ConfigFormat.TEXT, _('TEXT')),
     (apprise.ConfigFormat.YAML, _('YAML')),
 )
