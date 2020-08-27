@@ -212,20 +212,6 @@ class NotifyTests(SimpleTestCase):
             'body': 'test message'
         }
 
-        with patch('tempfile.NamedTemporaryFile') as mock_ntf:
-            mock_ntf.side_effect = OSError
-            # we won't be able to write our retrieved configuration
-            # to disk for processing; we'll get a 500 error
-            response = self.client.post(
-                '/notify/{}'.format(key),
-                data=json.dumps(json_data),
-                content_type='application/json',
-            )
-
-            # internal errors are correctly identified
-            assert response.status_code == 500
-            assert mock_notify.call_count == 0
-
         # Test the handling of underlining disk/write exceptions
         with patch('gzip.open') as mock_open:
             mock_open.side_effect = OSError()

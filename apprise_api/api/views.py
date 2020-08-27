@@ -185,38 +185,18 @@ class AddView(View):
             # prepare our apprise config object
             ac_obj = apprise.AppriseConfig()
 
-            try:
-                # Write our file to a temporary file
-                with tempfile.NamedTemporaryFile() as f:
-                    # Write our content to disk
-                    f.write(content['config'].encode())
-                    f.flush()
+            # Load our configuration
+            ac_obj.add_config(content['config'], format=fmt)
 
-                    if not ac_obj.add(
-                            'file://{}?format={}'.format(f.name, fmt)):
+            # Add our configuration
+            a_obj.add(ac_obj)
 
-                        # Bad Configuration
-                        return HttpResponse(
-                            _('The configuration specified is invalid.'),
-                            status=ResponseCode.bad_request,
-                        )
-
-                    # Add our configuration
-                    a_obj.add(ac_obj)
-
-                    if not len(a_obj):
-                        # No specified URL(s) were loaded due to
-                        # mis-configuration on the caller's part
-                        return HttpResponse(
-                            _('No valid URL(s) were specified.'),
-                            status=ResponseCode.bad_request,
-                        )
-
-            except OSError:
-                # We could not write the temporary file to disk
+            if not len(a_obj):
+                # No specified URL(s) were loaded due to
+                # mis-configuration on the caller's part
                 return HttpResponse(
-                    _('The configuration could not be loaded.'),
-                    status=ResponseCode.internal_server_error,
+                    _('No valid URL(s) were specified.'),
+                    status=ResponseCode.bad_request,
                 )
 
             if not ConfigCache.put(key, content['config'], fmt=fmt):
@@ -391,42 +371,26 @@ class NotifyView(View):
         # Create an apprise config object
         ac_obj = apprise.AppriseConfig()
 
-        try:
-            # Write our file to a temporary file containing our configuration
-            # so that we can read it back.  In the future a change will be to
-            # Apprise so that we can just directly write the configuration as
-            # is to the AppriseConfig() object... but for now...
-            with tempfile.NamedTemporaryFile() as f:
-                # Write our content to disk
-                f.write(config.encode())
-                f.flush()
+        # Load our configuration
+        ac_obj.add_config(config, format=format)
 
-                # Read our configuration back in to our configuration
-                ac_obj.add('file://{}?format={}'.format(f.name, format))
+        # Add our configuration
+        a_obj.add(ac_obj)
 
-                # Add our configuration
-                a_obj.add(ac_obj)
+        # Perform our notification at this point
+        result = a_obj.notify(
+            content.get('body'),
+            title=content.get('title', ''),
+            notify_type=content.get('type', apprise.NotifyType.INFO),
+            tag=content.get('tag'),
+        )
 
-                # Perform our notification at this point
-                result = a_obj.notify(
-                    content.get('body'),
-                    title=content.get('title', ''),
-                    notify_type=content.get('type', apprise.NotifyType.INFO),
-                    tag=content.get('tag'),
-                )
-
-                if not result:
-                    # If at least one notification couldn't be sent; change up
-                    # the response to a 424 error code
-                    return HttpResponse(
-                        _('One or more notification could not be sent.'),
-                        status=ResponseCode.failed_dependency)
-
-        except OSError:
-            # We could not write the temporary file to disk
+        if not result:
+            # If at least one notification couldn't be sent; change up
+            # the response to a 424 error code
             return HttpResponse(
-                _('The configuration could not be loaded.'),
-                status=ResponseCode.internal_server_error)
+                _('One or more notification could not be sent.'),
+                status=ResponseCode.failed_dependency)
 
         # Return our retrieved content
         return HttpResponse(
@@ -582,41 +546,21 @@ class JsonUrlView(View):
         # Create an apprise config object
         ac_obj = apprise.AppriseConfig()
 
-        try:
-            # Write our file to a temporary file containing our configuration
-            # so that we can read it back.  In the future a change will be to
-            # Apprise so that we can just directly write the configuration as
-            # is to the AppriseConfig() object... but for now...
-            with tempfile.NamedTemporaryFile() as f:
-                # Write our content to disk
-                f.write(config.encode())
-                f.flush()
+        # Load our configuration
+        ac_obj.add_config(config, format=format)
 
-                # Read our configuration back in to our configuration
-                ac_obj.add('file://{}?format={}'.format(f.name, format))
+        # Add our configuration
+        a_obj.add(ac_obj)
 
-                # Add our configuration
-                a_obj.add(ac_obj)
+        for notification in a_obj:
+            # Set Notification
+            response['urls'].append({
+                'url': notification.url(privacy=privacy),
+                'tags': notification.tags,
+            })
 
-                for notification in a_obj:
-                    # Set Notification
-                    response['urls'].append({
-                        'url': notification.url(privacy=privacy),
-                        'tags': notification.tags,
-                    })
-
-                    # Store Tags
-                    response['tags'] |= notification.tags
-
-        except OSError:
-            # We could not write the temporary file to disk
-            response['error'] = _('The configuration could not be loaded.'),
-            return JsonResponse(
-                response,
-                encoder=JSONEncoder,
-                safe=False,
-                status=ResponseCode.internal_server_error,
-            )
+            # Store Tags
+            response['tags'] |= notification.tags
 
         # Return our retrieved content
         return JsonResponse(

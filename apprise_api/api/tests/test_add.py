@@ -162,20 +162,6 @@ class AddTests(SimpleTestCase):
         )
         assert response.status_code == 400
 
-        with patch('tempfile.NamedTemporaryFile') as mock_ntf:
-            mock_ntf.side_effect = OSError
-            # we won't be able to write our retrieved configuration
-            # to disk for processing; we'll get a 500 error
-            response = self.client.post(
-                '/add/{}'.format(key),
-                data=json.dumps(
-                    {'format': ConfigFormat.TEXT, 'config': config}),
-                content_type='application/json',
-            )
-
-            # internal errors are correctly identified
-            assert response.status_code == 500
-
         # Test the handling of underlining disk/write exceptions
         with patch('gzip.open') as mock_open:
             mock_open.side_effect = OSError()
