@@ -1,5 +1,5 @@
-# Use the standard Nginx image from Docker Hub
-FROM nginx
+ARG ARCH
+FROM ${ARCH}python:3.8-slim
 
 # set version label
 ARG BUILD_DATE
@@ -12,28 +12,23 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV APPRISE_CONFIG_DIR /config
 
-# Install Python Dependencies
-COPY ./requirements.txt etc/requirements.txt
+# Install requirements and gunicorn
+COPY ./requirements.txt /etc/requirements.txt
+RUN pip3 install -r /etc/requirements.txt gunicorn
 
-# Install Python
+# Install nginx and supervisord
 RUN apt-get update && \
-    apt-get install -y curl python3 python3-pip && \
-    pip3 install -r etc/requirements.txt gunicorn
+    apt-get install -y nginx supervisor
 
-# Install s6-overlay
-RUN curl -fL -o /tmp/s6-overlay.tar.gz \
-         https://github.com/just-containers/s6-overlay/releases/download/v1.22.1.0/s6-overlay-amd64.tar.gz \
- && tar -xzf /tmp/s6-overlay.tar.gz -C / \
- && rm -rf /tmp/*
-
-ENV S6_KEEP_ENV=1 \
-    S6_CMD_WAIT_FOR_SERVICES=1
+# Nginx configuration
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+COPY /etc/nginx.conf /etc/nginx/conf.d/nginx.conf
 
 # Copy our static content in place
 COPY apprise_api/static /usr/share/nginx/html/s/
 
-# System Configuration
-COPY etc /etc/
+# Supervisor configuration
+COPY /etc/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # set work directory
 WORKDIR /opt/apprise
@@ -41,16 +36,10 @@ WORKDIR /opt/apprise
 # Copy over Apprise API
 COPY apprise_api/ webapp
 
-# gunicorn to expose on port 8080
-# nginx to expose on port 8000
-# disable logging on gunicorn
-RUN \
-   sed -i -e 's/backend:8000/localhost:8080/g' \
-          -e 's/listen\([ \t]\+\)[^;]\+;/listen\18000;/g' \
-                     /etc/nginx/conf.d/default.conf && \
-   sed -i -e 's/:8000/:8080/g' /opt/apprise/webapp/gunicorn.conf.py
+# Change port of gunicorn
+RUN sed -i -e 's/:8000/:8080/g' /opt/apprise/webapp/gunicorn.conf.py
 
 EXPOSE 8000
 VOLUME /config
 
-ENTRYPOINT ["/init"]
+CMD ["/usr/bin/supervisord"]

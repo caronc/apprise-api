@@ -1,8 +1,0 @@
-# pull official base image
-FROM nginx
-
-# Copy our customized NginX configuration (for container usage)
-COPY etc/nginx /etc/nginx/
-
-# Copy our static content in place
-COPY apprise_api/static /usr/share/nginx/html/s/
