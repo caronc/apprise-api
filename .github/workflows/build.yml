@@ -1,8 +1,8 @@
-name: Build Apprise API image
+name: Build Apprise API Image
 
 on:
   push:
-    branches: container-rework
+    branches: master
     tags:
       - v*
 
@@ -17,7 +17,7 @@ jobs:
         name: Prepare
         id: prepare
         run: |
-          DOCKER_IMAGE=georgegedox/apprise-api
+          DOCKER_IMAGE=caronc/apprise
           DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386
           VERSION=edge
 
