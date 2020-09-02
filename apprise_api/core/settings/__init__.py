@@ -87,3 +87,9 @@ APPRISE_CONFIG_DIR = os.environ.get(
 # Stateless posts to /notify/ will resort to this set of URLs if none
 # were otherwise posted with the URL request.
 APPRISE_STATELESS_URLS = os.environ.get('APPRISE_STATELESS_URLS', '')
+
+# Defines the stateful mode; possible values are:
+# - hash (default): content is hashed and zipped
+# - simple: content is just written straight to disk 'as-is'
+# - disabled: disable all stateful functionality
+APPRISE_STATEFUL_MODE = os.environ.get('APPRISE_STATEFUL_MODE', 'hash')

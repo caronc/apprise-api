@@ -24,20 +24,23 @@
 # THE SOFTWARE.
 import os
 from ..utils import AppriseConfigCache
+from ..utils import AppriseStoreMode
+from ..utils import SimpleFileExtension
 from apprise import ConfigFormat
 from unittest.mock import patch
+from unittest.mock import mock_open
 import errno
 
 
-def test_apprise_config_io(tmpdir):
+def test_apprise_config_io_hash_mode(tmpdir):
     """
-    Test Apprise Config Disk Put/Get
+    Test Apprise Config Disk Put/Get using HASH mode
     """
     content = 'mailto://test:pass@gmail.com'
-    key = 'test_apprise_config_io'
+    key = 'test_apprise_config_io_hash'
 
     # Create our object to work with
-    acc_obj = AppriseConfigCache(str(tmpdir))
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
 
     # Verify that the content doesn't already exist
     assert acc_obj.get(key) == (None, '')
@@ -46,8 +49,8 @@ def test_apprise_config_io(tmpdir):
     assert acc_obj.put(key, content, ConfigFormat.TEXT)
 
     # Test the handling of underlining disk/write exceptions
-    with patch('gzip.open') as mock_open:
-        mock_open.side_effect = OSError()
+    with patch('gzip.open') as mock_gzopen:
+        mock_gzopen.side_effect = OSError()
         # We'll fail to write our key now
         assert not acc_obj.put(key, content, ConfigFormat.TEXT)
 
@@ -65,8 +68,8 @@ def test_apprise_config_io(tmpdir):
     assert acc_obj.get(key) == (content, ConfigFormat.TEXT)
 
     # Test the handling of underlining disk/read exceptions
-    with patch('gzip.open') as mock_open:
-        mock_open.side_effect = OSError()
+    with patch('gzip.open') as mock_gzopen:
+        mock_gzopen.side_effect = OSError()
         # We'll fail to read our key now
         assert acc_obj.get(key) == (None, None)
 
@@ -80,6 +83,10 @@ def test_apprise_config_io(tmpdir):
         mock_remove.side_effect = OSError(errno.EPERM)
         # OSError
         assert acc_obj.clear(key) is False
+
+        # If we try to put the same file, we'll fail since
+        # one exists there already
+        assert not acc_obj.put(key, content, ConfigFormat.TEXT)
 
     # Now test with YAML file
     content = """
@@ -103,3 +110,119 @@ def test_apprise_config_io(tmpdir):
 
     # Verify that the content is retrievable
     assert acc_obj.get(key) == (content, ConfigFormat.YAML)
+
+
+def test_apprise_config_io_simple_mode(tmpdir):
+    """
+    Test Apprise Config Disk Put/Get using SIMPLE mode
+    """
+    content = 'mailto://test:pass@gmail.com'
+    key = 'test_apprise_config_io_simple'
+
+    # Create our object to work with
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+
+    # Verify that the content doesn't already exist
+    assert acc_obj.get(key) == (None, '')
+
+    # Write our content assigned to our key
+    assert acc_obj.put(key, content, ConfigFormat.TEXT)
+
+    m = mock_open()
+    m.side_effect = OSError()
+    with patch('builtins.open', m):
+        # We'll fail to write our key now
+        assert not acc_obj.put(key, content, ConfigFormat.TEXT)
+
+    # Get path details
+    conf_dir, _ = acc_obj.path(key)
+
+    # List content of directory
+    contents = os.listdir(conf_dir)
+
+    # There should be just 1 new file in this directory
+    assert len(contents) == 1
+    assert contents[0].endswith('.{}'.format(SimpleFileExtension.TEXT))
+
+    # Verify that the content is retrievable
+    assert acc_obj.get(key) == (content, ConfigFormat.TEXT)
+
+    # Test the handling of underlining disk/read exceptions
+    with patch('builtins.open', m) as mock__open:
+        mock__open.side_effect = OSError()
+        # We'll fail to read our key now
+        assert acc_obj.get(key) == (None, None)
+
+    # Tidy up our content
+    assert acc_obj.clear(key) is True
+
+    # But the second time is okay as it no longer exists
+    assert acc_obj.clear(key) is None
+
+    with patch('os.remove') as mock_remove:
+        mock_remove.side_effect = OSError(errno.EPERM)
+        # OSError
+        assert acc_obj.clear(key) is False
+
+        # If we try to put the same file, we'll fail since
+        # one exists there already
+        assert not acc_obj.put(key, content, ConfigFormat.TEXT)
+
+    # Now test with YAML file
+    content = """
+    version: 1
+
+    urls:
+       - windows://
+    """
+
+    # Write our content assigned to our key
+    # This should gracefully clear the TEXT entry that was
+    # previously in the spot
+    assert acc_obj.put(key, content, ConfigFormat.YAML)
+
+    # List content of directory
+    contents = os.listdir(conf_dir)
+
+    # There should STILL be just 1 new file in this directory
+    assert len(contents) == 1
+    assert contents[0].endswith('.{}'.format(SimpleFileExtension.YAML))
+
+    # Verify that the content is retrievable
+    assert acc_obj.get(key) == (content, ConfigFormat.YAML)
+
+
+def test_apprise_config_io_disabled_mode(tmpdir):
+    """
+    Test Apprise Config Disk Put/Get using DISABLED mode
+    """
+    content = 'mailto://test:pass@gmail.com'
+    key = 'test_apprise_config_io_disabled'
+
+    # Create our object to work with using an invalid mode
+    acc_obj = AppriseConfigCache(str(tmpdir), mode="invalid")
+
+    # We always fall back to disabled if we can't interpret the mode
+    assert acc_obj.mode is AppriseStoreMode.DISABLED
+
+    # Create our object to work with
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED)
+
+    # Verify that the content doesn't already exist
+    assert acc_obj.get(key) == (None, '')
+
+    # Write our content assigned to our key
+    # This isn't allowed
+    assert acc_obj.put(key, content, ConfigFormat.TEXT) is False
+
+    # Get path details
+    conf_dir, _ = acc_obj.path(key)
+
+    # List content of directory
+    contents = os.listdir(conf_dir)
+
+    # There should never be an entry
+    assert len(contents) == 0
+
+    # Content never exists
+    assert acc_obj.clear(key) is None
