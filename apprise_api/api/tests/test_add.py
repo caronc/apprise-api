@@ -25,6 +25,7 @@
 from django.test import SimpleTestCase
 from apprise import ConfigFormat
 from unittest.mock import patch
+from ..forms import AUTO_DETECT_CONFIG_KEYWORD
 import json
 
 
@@ -129,7 +130,7 @@ class AddTests(SimpleTestCase):
 
         # Empty Text Configuration
         config = """
-           
+
         """  # noqa W293
         response = self.client.post(
             '/add/{}'.format(key), {
@@ -138,7 +139,7 @@ class AddTests(SimpleTestCase):
 
         # Valid Text Configuration
         config = """
-        browser,media=notica://VToken
+        browser,media=notica://VTokenC
         home=mailto://user:pass@hotmail.com
         """
         response = self.client.post(
@@ -154,6 +155,27 @@ class AddTests(SimpleTestCase):
         )
         assert response.status_code == 200
 
+        # Valid Yaml Configuration
+        config = """
+        urls:
+          - notica://VTokenD:
+              tag: browser,media
+          - mailto://user:pass@hotmail.com:
+              tag: home
+        """
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'format': ConfigFormat.YAML, 'config': config})
+        assert response.status_code == 200
+
+        # Test with JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({'format': ConfigFormat.YAML, 'config': config}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200
+
         # Test invalid config format
         response = self.client.post(
             '/add/{}'.format(key),
@@ -162,20 +184,6 @@ class AddTests(SimpleTestCase):
         )
         assert response.status_code == 400
 
-        with patch('tempfile.NamedTemporaryFile') as mock_ntf:
-            mock_ntf.side_effect = OSError
-            # we won't be able to write our retrieved configuration
-            # to disk for processing; we'll get a 500 error
-            response = self.client.post(
-                '/add/{}'.format(key),
-                data=json.dumps(
-                    {'format': ConfigFormat.TEXT, 'config': config}),
-                content_type='application/json',
-            )
-
-            # internal errors are correctly identified
-            assert response.status_code == 500
-
         # Test the handling of underlining disk/write exceptions
         with patch('gzip.open') as mock_open:
             mock_open.side_effect = OSError()
@@ -183,12 +191,88 @@ class AddTests(SimpleTestCase):
             response = self.client.post(
                 '/add/{}'.format(key),
                 data=json.dumps(
-                    {'format': ConfigFormat.TEXT, 'config': config}),
+                    {'format': ConfigFormat.YAML, 'config': config}),
                 content_type='application/json',
             )
 
             # internal errors are correctly identified
             assert response.status_code == 500
+
+    def test_save_auto_detect_config_format(self):
+        """
+        Test adding an configuration and using the autodetect feature
+        """
+
+        # our key to use
+        key = 'test_save_auto_detect_config_format'
+
+        # Empty Text Configuration
+        config = """
+
+        """  # noqa W293
+        response = self.client.post(
+            '/add/{}'.format(key), {
+                'format': AUTO_DETECT_CONFIG_KEYWORD, 'config': config})
+        assert response.status_code == 400
+
+        # Valid Text Configuration
+        config = """
+        browser,media=notica://VTokenA
+        home=mailto://user:pass@hotmail.com
+        """
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'format': AUTO_DETECT_CONFIG_KEYWORD, 'config': config})
+        assert response.status_code == 200
+
+        # Test with JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({'format': ConfigFormat.TEXT, 'config': config}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200
+
+        # Valid Yaml Configuration
+        config = """
+        urls:
+          - notica://VTokenB:
+              tag: browser,media
+
+          - mailto://user:pass@hotmail.com:
+              tag: home
+        """
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'format': AUTO_DETECT_CONFIG_KEYWORD, 'config': config})
+        assert response.status_code == 200
+
+        # Test with JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps(
+                {'format': AUTO_DETECT_CONFIG_KEYWORD, 'config': config}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200
+
+        # Test invalid config format that can not be auto-detected
+        config = """
+        42
+        """
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'format': AUTO_DETECT_CONFIG_KEYWORD, 'config': config})
+        assert response.status_code == 400
+
+        # Test with JSON
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps(
+                {'format': AUTO_DETECT_CONFIG_KEYWORD, 'config': config}),
+            content_type='application/json',
+        )
+        assert response.status_code == 400
 
     def test_save_with_bad_input(self):
         """

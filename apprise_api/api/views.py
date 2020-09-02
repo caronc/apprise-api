@@ -38,8 +38,9 @@ from .forms import AddByUrlForm
 from .forms import AddByConfigForm
 from .forms import NotifyForm
 from .forms import NotifyByUrlForm
+from .forms import CONFIG_FORMATS
+from .forms import AUTO_DETECT_CONFIG_KEYWORD
 
-import tempfile
 import apprise
 import json
 import re
@@ -175,7 +176,7 @@ class AddView(View):
 
         elif 'config' in content:
             fmt = content.get('format', '').lower()
-            if fmt not in apprise.CONFIG_FORMATS:
+            if fmt not in [i[0] for i in CONFIG_FORMATS]:
                 # Format must be one supported by apprise
                 return HttpResponse(
                     _('The format specified is invalid.'),
@@ -185,41 +186,32 @@ class AddView(View):
             # prepare our apprise config object
             ac_obj = apprise.AppriseConfig()
 
-            try:
-                # Write our file to a temporary file
-                with tempfile.NamedTemporaryFile() as f:
-                    # Write our content to disk
-                    f.write(content['config'].encode())
-                    f.flush()
+            if fmt == AUTO_DETECT_CONFIG_KEYWORD:
+                # By setting format to None, it is automatically detected from
+                # within the add_config() call
+                fmt = None
 
-                    if not ac_obj.add(
-                            'file://{}?format={}'.format(f.name, fmt)):
-
-                        # Bad Configuration
-                        return HttpResponse(
-                            _('The configuration specified is invalid.'),
-                            status=ResponseCode.bad_request,
-                        )
-
-                    # Add our configuration
-                    a_obj.add(ac_obj)
-
-                    if not len(a_obj):
-                        # No specified URL(s) were loaded due to
-                        # mis-configuration on the caller's part
-                        return HttpResponse(
-                            _('No valid URL(s) were specified.'),
-                            status=ResponseCode.bad_request,
-                        )
-
-            except OSError:
-                # We could not write the temporary file to disk
+            # Load our configuration
+            if not ac_obj.add_config(content['config'], format=fmt):
+                # The format could not be detected
                 return HttpResponse(
-                    _('The configuration could not be loaded.'),
-                    status=ResponseCode.internal_server_error,
+                    _('The configuration format could not be detected.'),
+                    status=ResponseCode.bad_request,
                 )
 
-            if not ConfigCache.put(key, content['config'], fmt=fmt):
+            # Add our configuration
+            a_obj.add(ac_obj)
+
+            if not len(a_obj):
+                # No specified URL(s) were loaded due to
+                # mis-configuration on the caller's part
+                return HttpResponse(
+                    _('No valid URL(s) were specified.'),
+                    status=ResponseCode.bad_request,
+                )
+
+            if not ConfigCache.put(
+                    key, content['config'], fmt=ac_obj[0].config_format):
                 # Something went very wrong; return 500
                 return HttpResponse(
                     _('An error occured saving configuration.'),
@@ -281,6 +273,9 @@ class GetView(View):
         Handle a POST request
         """
 
+        # Detect the format our response should be in
+        json_response = MIME_IS_JSON.match(request.content_type) is not None
+
         config, format = ConfigCache.get(key)
         if config is None:
             # The returned value of config and format tell a rather cryptic
@@ -294,11 +289,23 @@ class GetView(View):
                 return HttpResponse(
                     _('There was no configuration found.'),
                     status=ResponseCode.no_content,
+                ) if not json_response else JsonResponse({
+                        'error': _('There was no configuration found.')
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=ResponseCode.no_content,
                 )
 
             # Something went very wrong; return 500
             return HttpResponse(
                 _('An error occured accessing configuration.'),
+                status=ResponseCode.internal_server_error,
+            ) if not json_response else JsonResponse({
+                    'error': _('There was no configuration found.')
+                },
+                encoder=JSONEncoder,
+                safe=False,
                 status=ResponseCode.internal_server_error,
             )
 
@@ -314,6 +321,13 @@ class GetView(View):
         return HttpResponse(
             config,
             content_type=content_type,
+            status=ResponseCode.okay,
+        ) if not json_response else JsonResponse({
+                'format': format,
+                'config': config,
+            },
+            encoder=JSONEncoder,
+            safe=False,
             status=ResponseCode.okay,
         )
 
@@ -391,42 +405,26 @@ class NotifyView(View):
         # Create an apprise config object
         ac_obj = apprise.AppriseConfig()
 
-        try:
-            # Write our file to a temporary file containing our configuration
-            # so that we can read it back.  In the future a change will be to
-            # Apprise so that we can just directly write the configuration as
-            # is to the AppriseConfig() object... but for now...
-            with tempfile.NamedTemporaryFile() as f:
-                # Write our content to disk
-                f.write(config.encode())
-                f.flush()
+        # Load our configuration
+        ac_obj.add_config(config, format=format)
 
-                # Read our configuration back in to our configuration
-                ac_obj.add('file://{}?format={}'.format(f.name, format))
+        # Add our configuration
+        a_obj.add(ac_obj)
 
-                # Add our configuration
-                a_obj.add(ac_obj)
+        # Perform our notification at this point
+        result = a_obj.notify(
+            content.get('body'),
+            title=content.get('title', ''),
+            notify_type=content.get('type', apprise.NotifyType.INFO),
+            tag=content.get('tag'),
+        )
 
-                # Perform our notification at this point
-                result = a_obj.notify(
-                    content.get('body'),
-                    title=content.get('title', ''),
-                    notify_type=content.get('type', apprise.NotifyType.INFO),
-                    tag=content.get('tag'),
-                )
-
-                if not result:
-                    # If at least one notification couldn't be sent; change up
-                    # the response to a 424 error code
-                    return HttpResponse(
-                        _('One or more notification could not be sent.'),
-                        status=ResponseCode.failed_dependency)
-
-        except OSError:
-            # We could not write the temporary file to disk
+        if not result:
+            # If at least one notification couldn't be sent; change up
+            # the response to a 424 error code
             return HttpResponse(
-                _('The configuration could not be loaded.'),
-                status=ResponseCode.internal_server_error)
+                _('One or more notification could not be sent.'),
+                status=ResponseCode.failed_dependency)
 
         # Return our retrieved content
         return HttpResponse(
@@ -582,41 +580,21 @@ class JsonUrlView(View):
         # Create an apprise config object
         ac_obj = apprise.AppriseConfig()
 
-        try:
-            # Write our file to a temporary file containing our configuration
-            # so that we can read it back.  In the future a change will be to
-            # Apprise so that we can just directly write the configuration as
-            # is to the AppriseConfig() object... but for now...
-            with tempfile.NamedTemporaryFile() as f:
-                # Write our content to disk
-                f.write(config.encode())
-                f.flush()
+        # Load our configuration
+        ac_obj.add_config(config, format=format)
 
-                # Read our configuration back in to our configuration
-                ac_obj.add('file://{}?format={}'.format(f.name, format))
+        # Add our configuration
+        a_obj.add(ac_obj)
 
-                # Add our configuration
-                a_obj.add(ac_obj)
+        for notification in a_obj:
+            # Set Notification
+            response['urls'].append({
+                'url': notification.url(privacy=privacy),
+                'tags': notification.tags,
+            })
 
-                for notification in a_obj:
-                    # Set Notification
-                    response['urls'].append({
-                        'url': notification.url(privacy=privacy),
-                        'tags': notification.tags,
-                    })
-
-                    # Store Tags
-                    response['tags'] |= notification.tags
-
-        except OSError:
-            # We could not write the temporary file to disk
-            response['error'] = _('The configuration could not be loaded.'),
-            return JsonResponse(
-                response,
-                encoder=JSONEncoder,
-                safe=False,
-                status=ResponseCode.internal_server_error,
-            )
+            # Store Tags
+            response['tags'] |= notification.tags
 
         # Return our retrieved content
         return JsonResponse(

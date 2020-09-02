@@ -136,25 +136,6 @@ class JsonUrlsTests(SimpleTestCase):
         assert 'tags' in response.json()['urls'][0]
         assert len(response.json()['urls'][0]['tags']) == 2
 
-        # Handle case when we try to retrieve our content but we have no idea
-        # what the format is in. Essentialy there had to have been disk
-        # corruption here or someone meddling with the backend.
-        with patch('tempfile.NamedTemporaryFile') as mock_ntf:
-            mock_ntf.side_effect = OSError
-            # Now retrieve our JSON resonse
-            response = self.client.get('/json/urls/{}'.format(key))
-            assert response.status_code == 500
-            assert response['Content-Type'].startswith('application/json')
-            assert 'tags' in response.json()
-            assert 'urls' in response.json()
-
-            # has error directive
-            assert 'error' in response.json()
-
-            # entries exist by are empty
-            assert len(response.json()['tags']) == 0
-            assert len(response.json()['urls']) == 0
-
         # Verify that the correct Content-Type is set in the header of the
         # response
         assert 'Content-Type' in response
