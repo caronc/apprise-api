@@ -139,7 +139,7 @@ class AddTests(SimpleTestCase):
 
         # Valid Text Configuration
         config = """
-        browser,media=notica://VToken
+        browser,media=notica://VTokenC
         home=mailto://user:pass@hotmail.com
         """
         response = self.client.post(
@@ -158,9 +158,9 @@ class AddTests(SimpleTestCase):
         # Valid Yaml Configuration
         config = """
         urls:
-          - notica://VToken:
+          - notica://VTokenD:
               tag: browser,media
-          - mailto://user:pass@hotmail.com
+          - mailto://user:pass@hotmail.com:
               tag: home
         """
         response = self.client.post(
@@ -191,7 +191,7 @@ class AddTests(SimpleTestCase):
             response = self.client.post(
                 '/add/{}'.format(key),
                 data=json.dumps(
-                    {'format': ConfigFormat.TEXT, 'config': config}),
+                    {'format': ConfigFormat.YAML, 'config': config}),
                 content_type='application/json',
             )
 
@@ -217,7 +217,7 @@ class AddTests(SimpleTestCase):
 
         # Valid Text Configuration
         config = """
-        browser,media=notica://VToken
+        browser,media=notica://VTokenA
         home=mailto://user:pass@hotmail.com
         """
         response = self.client.post(
@@ -236,8 +236,11 @@ class AddTests(SimpleTestCase):
         # Valid Yaml Configuration
         config = """
         urls:
-          - browser,media=notica://VToken
-          - home=mailto://user:pass@hotmail.com
+          - notica://VTokenB:
+              tag: browser,media
+
+          - mailto://user:pass@hotmail.com:
+              tag: home
         """
         response = self.client.post(
             '/add/{}'.format(key),
