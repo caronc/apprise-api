@@ -52,7 +52,7 @@ docker-compose up
 ```
 
 ## Apprise URLs
-📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you want to send to. Apprise supports well over 50 notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
+📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you want to send to. Apprise supports over 60+ notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
 
 ## API Details
 
@@ -67,6 +67,10 @@ Some people may wish to only have a sidecar solution that does require use of an
 Here is a *stateless* example of how one might send a notification (using `/notify/`):
 ```bash
 # Send your notifications directly
+curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
+    http://localhost:8000/notify
+
+# Send your notifications directly using JSON
 curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify
@@ -146,8 +150,8 @@ The use of environment variables allow you to provide over-rides to default sett
 |--------------------- | ----------- |
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
-| `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 `hash`: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 `simple`: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 `disabled`: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
-| `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk.
+| `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
+| `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
 | `DEBUG`            | This defaults to `False` however can be set to `True` if defined with a non-zero value (such as `1`).
 
@@ -196,7 +200,7 @@ apprise --body="test message" --config=http://localhost:8000/get/{KEY}
 
 ### AppriseConfig() Pull Example
 
-Using the [Apprise Python library](https://github.com/caronc/apprise), you can easily pull your saved configuration off of the API to use for future notifications.
+Using the [Apprise Python library](https://github.com/caronc/apprise), you can easily access and load your saved configuration off of this API in order to use for future notifications.
 
 ```python
 import apprise
