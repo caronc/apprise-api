@@ -70,6 +70,8 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
+                'core.context_processors.base_url',
+                'api.context_processors.stateful_mode',
             ],
         },
     },
@@ -77,8 +79,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+# Define our base URL
+# The default value is to be a single slash
+BASE_URL = os.environ.get('BASE_URL', '')
+
 # Static files relative path (CSS, JavaScript, Images)
-STATIC_URL = '/s/'
+STATIC_URL = BASE_URL + '/s/'
 
 # The location to store Apprise configuration files
 APPRISE_CONFIG_DIR = os.environ.get(

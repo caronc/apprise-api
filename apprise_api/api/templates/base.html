@@ -40,10 +40,12 @@
     <div class="row">
 
       <div class="col s3">
+{% if STATEFUL_MODE != 'disabled' %}
         <ul class="collection z-depth-1">
           <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="tiny material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
         </ul>
+{% endif %}
         <ul class="collection z-depth-1">
           <a class="collection-item" target="_blank"
             href="https://github.com/caronc/apprise/wiki#notification-services">📣
