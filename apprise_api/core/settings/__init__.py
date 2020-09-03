@@ -98,4 +98,4 @@ APPRISE_STATELESS_URLS = os.environ.get('APPRISE_STATELESS_URLS', '')
 # - hash (default): content is hashed and zipped
 # - simple: content is just written straight to disk 'as-is'
 # - disabled: disable all stateful functionality
-APPRISE_STATEFUL_MODE = os.environ.get('APPRISE_STATEFUL_MODE', 'disabled')
+APPRISE_STATEFUL_MODE = os.environ.get('APPRISE_STATEFUL_MODE', 'hash')
