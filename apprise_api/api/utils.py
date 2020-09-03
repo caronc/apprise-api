@@ -32,6 +32,56 @@ import errno
 
 from django.conf import settings
 
+# import the logging library
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
+
+class AppriseStoreMode(object):
+    """
+    Defines the store modes of configuration
+    """
+    # This is the default option. Content is cached and written by
+    # it's key
+    HASH = 'hash'
+
+    # Content is written straight to disk using it's key
+    # there is nothing further done
+    SIMPLE = 'simple'
+
+    # When set to disabled; stateful functionality is disabled
+    DISABLED = 'disabled'
+
+
+STORE_MODES = (
+    AppriseStoreMode.HASH,
+    AppriseStoreMode.SIMPLE,
+    AppriseStoreMode.DISABLED,
+)
+
+
+class SimpleFileExtension(object):
+    """
+    Defines the simple file exension lookups
+    """
+    # Simple Configuration file
+    TEXT = 'cfg'
+
+    # YAML Configuration file
+    YAML = 'yml'
+
+
+SIMPLE_FILE_EXTENSION_MAPPING = {
+    apprise.ConfigFormat.TEXT: SimpleFileExtension.TEXT,
+    apprise.ConfigFormat.YAML: SimpleFileExtension.YAML,
+    SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
+    SimpleFileExtension.YAML: SimpleFileExtension.YAML,
+}
+
+SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+
 
 class AppriseConfigCache(object):
     """
@@ -39,12 +89,18 @@ class AppriseConfigCache(object):
     type structure that is fast.
     """
 
-    def __init__(self, cache_root, salt="apprise"):
+    def __init__(self, cache_root, salt="apprise", mode=AppriseStoreMode.HASH):
         """
         Works relative to the cache_root
         """
         self.root = cache_root
         self.salt = salt.encode()
+        self.mode = mode.strip().lower()
+        if self.mode not in STORE_MODES:
+            self.mode = AppriseStoreMode.DISABLED
+            logger.error(
+                'APPRISE_STATEFUL_MODE {} is not supported; '
+                'reverted to {}.'.format(mode, self.mode))
 
     def put(self, key, content, fmt):
         """
@@ -58,6 +114,9 @@ class AppriseConfigCache(object):
         """
         # There isn't a lot of error handling done here as it is presumed most
         # of the checking has been done higher up.
+        if self.mode == AppriseStoreMode.DISABLED:
+            # Do nothing
+            return False
 
         # First two characters are reserved for cache level directory writing.
         path, filename = self.path(key)
@@ -65,26 +124,49 @@ class AppriseConfigCache(object):
 
         # Write our file to a temporary file
         _, tmp_path = tempfile.mkstemp(suffix='.tmp', dir=path)
-        try:
-            with gzip.open(tmp_path, 'wb') as f:
-                # Write our content to disk
-                f.write(content.encode())
+        if self.mode == AppriseStoreMode.HASH:
+            try:
+                with gzip.open(tmp_path, 'wb') as f:
+                    # Write our content to disk
+                    f.write(content.encode())
 
-        except OSError:
-            # Handle failure
-            os.remove(tmp_path)
-            return False
+            except OSError:
+                # Handle failure
+                os.remove(tmp_path)
+                return False
+
+        else:  # AppriseStoreMode.SIMPLE
+            # Update our file extenion based on our fmt
+            fmt = SIMPLE_FILE_EXTENSION_MAPPING[fmt]
+            try:
+                with open(tmp_path, 'wb') as f:
+                    # Write our content to disk
+                    f.write(content.encode())
+
+            except OSError:
+                # Handle failure
+                os.remove(tmp_path)
+                return False
 
         # If we reach here we successfully wrote the content. We now safely
         # move our configuration into place. The following writes our content
-        # to disk as /xx/key.fmt
+        # to disk
         shutil.move(tmp_path, os.path.join(
             path, '{}.{}'.format(filename, fmt)))
 
         # perform tidy of any other lingering files of other type in case
         # configuration changed from TEXT -> YAML or YAML -> TEXT
-        if self.clear(key, set(apprise.CONFIG_FORMATS) - {fmt}) is False:
-            # We couldn't remove an existing entry; clear what we just created
+        if self.mode == AppriseStoreMode.HASH:
+            if self.clear(key, set(apprise.CONFIG_FORMATS) - {fmt}) is False:
+                # We couldn't remove an existing entry; clear what we just
+                # created
+                self.clear(key, {fmt})
+                # fail
+                return False
+
+        elif self.clear(key, set(SIMPLE_FILE_EXTENSIONS) - {fmt}) is False:
+            # We couldn't remove an existing entry; clear what we just
+            # created
             self.clear(key, {fmt})
             # fail
             return False
@@ -105,6 +187,10 @@ class AppriseConfigCache(object):
         If no data was found, then (None, None) is returned.
         """
 
+        if self.mode == AppriseStoreMode.DISABLED:
+            # Do nothing
+            return (None, '')
+
         # There isn't a lot of error handling done here as it is presumed most
         # of the checking has been done higher up.
 
@@ -115,10 +201,17 @@ class AppriseConfigCache(object):
         fmt = None
 
         # Test the only possible hashed files we expect to find
-        text_file = os.path.join(
-            path, '{}.{}'.format(filename, apprise.ConfigFormat.TEXT))
-        yaml_file = os.path.join(
-            path, '{}.{}'.format(filename, apprise.ConfigFormat.YAML))
+        if self.mode == AppriseStoreMode.HASH:
+            text_file = os.path.join(
+                path, '{}.{}'.format(filename, apprise.ConfigFormat.TEXT))
+            yaml_file = os.path.join(
+                path, '{}.{}'.format(filename, apprise.ConfigFormat.YAML))
+
+        else:  # AppriseStoreMode.SIMPLE
+            text_file = os.path.join(
+                path, '{}.{}'.format(filename, SimpleFileExtension.TEXT))
+            yaml_file = os.path.join(
+                path, '{}.{}'.format(filename, SimpleFileExtension.YAML))
 
         if os.path.isfile(text_file):
             fmt = apprise.ConfigFormat.TEXT
@@ -136,14 +229,27 @@ class AppriseConfigCache(object):
 
         # Initialize our content
         content = None
-        try:
-            with gzip.open(path, 'rb') as f:
-                # Write our content to disk
-                content = f.read().decode()
+        if self.mode == AppriseStoreMode.HASH:
+            try:
+                with gzip.open(path, 'rb') as f:
+                    # Write our content to disk
+                    content = f.read().decode()
 
-        except OSError:
-            # all none return means to let upstream know we had a hard failure
-            return (None, None)
+            except OSError:
+                # all none return means to let upstream know we had a hard
+                # failure
+                return (None, None)
+
+        else:  # AppriseStoreMode.SIMPLE
+            try:
+                with open(path, 'rb') as f:
+                    # Write our content to disk
+                    content = f.read().decode()
+
+            except OSError:
+                # all none return means to let upstream know we had a hard
+                # failure
+                return (None, None)
 
         # return our read content
         return (content, fmt)
@@ -161,6 +267,10 @@ class AppriseConfigCache(object):
         # Default our response None
         response = None
 
+        if self.mode == AppriseStoreMode.DISABLED:
+            # Do nothing
+            return response
+
         if formats is None:
             formats = apprise.CONFIG_FORMATS
 
@@ -169,7 +279,10 @@ class AppriseConfigCache(object):
             # Eliminate any existing content if present
             try:
                 # Handle failure
-                os.remove(os.path.join(path, '{}.{}'.format(filename, fmt)))
+                os.remove(os.path.join(path, '{}.{}'.format(
+                    filename,
+                    fmt if self.mode == AppriseStoreMode.HASH
+                    else SIMPLE_FILE_EXTENSION_MAPPING[fmt])))
 
                 # If we reach here, an element was removed
                 response = True
@@ -186,11 +299,16 @@ class AppriseConfigCache(object):
         returns the path and filename content should be written to based on the
         specified key
         """
-        encoded_key = hashlib.sha224(self.salt + key.encode()).hexdigest()
-        path = os.path.join(self.root, encoded_key[0:2])
-        return (path, encoded_key[2:])
+        if self.mode == AppriseStoreMode.HASH:
+            encoded_key = hashlib.sha224(self.salt + key.encode()).hexdigest()
+            path = os.path.join(self.root, encoded_key[0:2])
+            return (path, encoded_key[2:])
+
+        else:   # AppriseStoreMode.SIMPLE
+            return (self.root, key)
 
 
 # Initialize our singleton
 ConfigCache = AppriseConfigCache(
-    settings.APPRISE_CONFIG_DIR, salt=settings.SECRET_KEY)
+    settings.APPRISE_CONFIG_DIR, salt=settings.SECRET_KEY,
+    mode=settings.APPRISE_STATEFUL_MODE)
