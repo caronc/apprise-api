@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block body %}
 <h4>{% trans "The Apprise API" %}</h4>
 <p>
@@ -31,7 +32,7 @@
 
     <tbody>
       <tr>
-        <td><code>/notify/</code></td>
+        <td><code>{{BASE_URL}}/notify/</code></td>
         <td>
           {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank"
             href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you need help
@@ -88,7 +89,7 @@
 								    # {% blocktrans %}Notifies an email address{% endblocktrans %}<br/>
 								    curl -X POST -d '{"urls":"mailto://user:pass@gmail.com","body":"test body","title":"test title"}' \<br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
-										&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/notify/</code></pre>
+										&nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/</code></pre>
                 </div>
               </li>
               <li>
@@ -105,7 +106,7 @@
                     }<br/>
                     <br/># The URL<br/>
                     req = Request(<br/>
-                    &nbsp;&nbsp;&nbsp;&nbsp;"http://localhost:8000/notify/",<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/",<br/>
                     &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br/>
                     &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br/>
                     &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br/>
@@ -119,7 +120,7 @@
                   <pre><code class="php">&lt;?php<br/>
                   <br/>
                   // The URL<br/>
-                  $url = 'http://localhost:8000/notify/';<br/>
+                  $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/';<br/>
                   <br/>
                   //Initiate cURL.<br/>
                   $ch = curl_init($url);<br/>
@@ -155,6 +156,7 @@
     </tbody>
   </table>
 
+{% if STATEFUL_MODE != 'disabled' %}
   <div class="section">
     <h4>{% trans "Persistent Store Endpoints" %}</h4>
     <p>{% blocktrans %}Those wishing to use the persistent store may do so. This section is a set it and forget it type
@@ -176,7 +178,7 @@
 
       <tbody>
         <tr>
-          <td><code>/add/<em>{% trans "KEY" %}</em></code></td>
+          <td><code>{{BASE_URL}}/add/<em>{% trans "KEY" %}</em></code></td>
           <td>
             {% blocktrans %}Used to add a new Apprise configuration or a set of URLs and associates them with the
             specified <em>KEY</em>. See the <a target="_blank"
@@ -233,12 +235,12 @@
 								    # {% blocktrans %}Load a single URL and assign it to the <em>KEY</em> of abc123{% endblocktrans %}<br/>
 								    curl -X POST -d '{"urls":"mailto://user:pass@gmail.com"}' \<br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
-										&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/add/<em>abc123</em></code></pre>
+										&nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>abc123</em></code></pre>
                     <pre><code class="bash">
 						        # {% blocktrans %}Load a simple TEXT config entry <em>KEY</em> abc123{% endblocktrans %}<br/>
 										curl -X POST -d '{"format":"text","config":"devops=mailto://user:pass@gmail.com"}' \<br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
-										&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/add/abc123/
+										&nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/abc123/
 										</code></pre>
                   </div>
                 </li>
@@ -254,7 +256,7 @@
                         }<br/>
                         <br/># The URL if the key was <em>abc123</em><br/>
                         req = Request(<br/>
-                        &nbsp;&nbsp;&nbsp;&nbsp;"http://localhost:8000/add/<em>abc123</em>",<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>abc123</em>",<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br/>
@@ -268,7 +270,7 @@
                     <pre><code class="php">&lt;?php<br/>
                         <br/>
                         // The URL if the key was <em>abc123</em><br/>
-                        $url = 'http://localhost:8000/add/<em>abc123</em>';<br/>
+                        $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>abc123</em>';<br/>
                         <br/>
                         //Initiate cURL.<br/>
                         $ch = curl_init($url);<br/>
@@ -300,7 +302,7 @@
           </td>
         </tr>
         <tr>
-          <td><code>/del/<em>{% trans "KEY" %}</em></code></td>
+          <td><code>{{BASE_URL}}/del/<em>{% trans "KEY" %}</em></code></td>
           <td>{% blocktrans %}There are no arguments required. If the <em>KEY</em> exists and has data associated with
             it,
             it will be removed.{% endblocktrans %}
@@ -310,7 +312,7 @@
                 <div class="collapsible-body">
                   <pre><code class="bash">
 								    # {% blocktrans %}Remove previously loaded configuration associated with the <em>KEY</em> of abc123{% endblocktrans %}<br/>
-								    curl -X POST http://localhost:8000/del/<em>abc123</em></code></pre>
+								    curl -X POST {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>abc123</em></code></pre>
                 </div>
               </li>
               <li>
@@ -321,7 +323,7 @@
                       from urllib.request import Request<br/>
                       <br/># The request if the key was <em>abc123</em><br/>
                       req = Request(<br/>
-                      &nbsp;&nbsp;&nbsp;&nbsp;"http://localhost:8000/del/<em>abc123</em>",<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>abc123</em>",<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br/>
@@ -335,7 +337,7 @@
                   <pre><code class="php">&lt;?php<br/>
                       <br/>
                       // The URL if the key was <em>abc123</em><br/>
-                      $url = 'http://localhost:8000/del/<em>abc123</em>';<br/>
+                      $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>abc123</em>';<br/>
                       <br/>
                       //Initiate cURL.<br/>
                       $ch = curl_init($url);<br/>
@@ -352,16 +354,16 @@
           </td>
         </tr>
         <tr>
-          <td><code>/get/<em>{% trans "KEY" %}</em></code></td>
+          <td><code>{{BASE_URL}}/get/<em>{% trans "KEY" %}</em></code></td>
           <td>{% blocktrans %}This feature can be used by Apprise itself. It provides a means of remotely fetching it's
             configuration.{% endblocktrans %}<br />
             <pre><code lang="bash"># Use Apprise to retrieve your configuration:<br/>
-                apprise --body="test message" --config={{ request.scheme }}://{{request.META.HTTP_HOST}}{{ request.path }}<em>{% trans "KEY" %}</em></code></pre>
+                apprise --body="test message" --config={{ request.scheme }}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{% trans "KEY" %}</em></code></pre>
             </p>
           </td>
         </tr>
         <tr>
-          <td><code>/notify/<em>{% trans "KEY" %}</em></code></td>
+          <td><code>{{BASE_URL}}/notify/<em>{% trans "KEY" %}</em></code></td>
           <td>{% blocktrans %}Notifies the URLs associated with the specified <em>KEY</em>.{% endblocktrans %}
             <div class="section">
               <table>
@@ -415,7 +417,7 @@
 								    # {% blocktrans %}Notifies all URLs assigned the <em>devops</em> tag{% endblocktrans %}<br/>
 								    curl -X POST -d '{"tag":"devops","body":"test body","title":"test title"}' \<br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
-										&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8000/notify/<em>KEY</em></code></pre>
+										&nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>KEY</em></code></pre>
                   </div>
                 </li>
                 <li>
@@ -432,7 +434,7 @@
                         }<br/>
                         <br/># The URL if the key was <em>abc123</em><br/>
                         req = Request(<br/>
-                        &nbsp;&nbsp;&nbsp;&nbsp;"http://localhost:8000/notify/<em>abc123</em>",<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>abc123</em>",<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br/>
@@ -446,7 +448,7 @@
                     <pre><code class="php">&lt;?php<br/>
                       <br/>
                       // The URL if the key was <em>abc123</em><br/>
-                      $url = 'http://localhost:8000/notify/<em>abc123</em>';<br/>
+                      $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>abc123</em>';<br/>
                       <br/>
                       //Initiate cURL.<br/>
                       $ch = curl_init($url);<br/>
@@ -495,4 +497,10 @@
       </p>
     </div>
   </div>
-  {% endblock %}
+{% else %}
+  <div class="section">
+    <h4>{% trans "Persistent Store Endpoints" %}</h4>
+    <p>{% blocktrans %}The administrator of this system has disabled persistent storage.{% endblocktrans %}</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% block body %}
+{% if STATEFUL_MODE != 'disabled' %}
 <h4>{% trans "Management for:" %} <em>{{ key }}</em></h4>
 <div class="row">
   <div class="col s12">
@@ -35,7 +36,7 @@
           In the future you can return to this configuration screen at any time by placing the following into your
           browser:
           {% endblocktrans %}
-          <code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{request.path}}</code>
+          <code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/config/{{key}}</code>
         </li>
       </ol>
     </div>
@@ -56,7 +57,7 @@
         send a test notification to all of your added services:{% endblocktrans %}
         <br />
         <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{% url "get" key %}</code></pre>
+        &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/{{key}}</code></pre>
       </div>
       <div class="section">
         <h5>{% trans "Loaded Configuration" %}</h5>
@@ -92,6 +93,12 @@
     </p>
   </div>
 </div>
+{% else %}
+<div class="section">
+  <h4>{% trans "Persistent Store Endpoints" %}</h4>
+  <p>{% blocktrans %}The administrator of this system has disabled persistent storage.{% endblocktrans %}</p>
+</div>
+{% endif %}
 {% endblock %}
 {% block jsfooter %}
 
