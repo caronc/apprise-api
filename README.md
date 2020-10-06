@@ -51,8 +51,15 @@ A `docker-compose.yml` file is already set up to grant you an instant production
 docker-compose up
 ```
 
+## Dockerfile Details
+
+The following architectures are supported: `386`, `amd64`, `arm/v6`, `arm/v7`, and `arm64`. The following tags can be used:
+* `latest`: Points to the latest stable build.
+* `edge`: Points to the last push to the master branch.
+
 ## Apprise URLs
-📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you want to send to. Apprise supports over 60+ notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
+
+📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you wish to leverage. Apprise supports over 65+ notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
 
 ## API Details
 
@@ -62,9 +69,10 @@ Some people may wish to only have a sidecar solution that does require use of an
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.
+| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.
 
 Here is a *stateless* example of how one might send a notification (using `/notify/`):
+
 ```bash
 # Send your notifications directly
 curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
@@ -78,17 +86,18 @@ curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}
 
 ### Persistent Storage Solution
 
-You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://github.com/caronc/apprise/wiki/CLI_Usage). The built in website associated with comes with a user interface that you can usse to leverage these API calls. However those who wish to build their own application around this can use the following API end points:
+You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://github.com/caronc/apprise/wiki/CLI_Usage) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the _config_ parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are _text_ and _yaml_.
+| `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the _config_ parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are _text_ and _yaml_.
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store.
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://github.com/caronc/apprise/wiki/config)).
-| `/notify/{KEY}` |  POST  | Sends a notification based on the Apprise Configuration associated with the specified *{KEY}*.<br/>*Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly.
+| `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
 
 As an example, the `/json/urls/{KEY}` response might return something like this:
+
 ```json
 {
    "tags": ["devops", "admin", "me"],
@@ -110,6 +119,7 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 ```
 
 Here is an example using `curl` as to how someone might send a notification to everyone associated with the tag `abc123` (using `/notify/{key}`):
+
 ```bash
 # Send notification(s) to a {key} defined as 'abc123'
 curl -X POST -d "body=test message" \
@@ -121,10 +131,10 @@ curl -X POST -d '{"body":"test message"}' \
     http://localhost:8000/notify/abc123
 ```
 
-🏷️ You can also leverage _tagging_ which allows you to associate one or more tags with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same _tag_ allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://github.com/caronc/apprise/wiki/config)) that can be saved to the persistent storage (Apprise API) supports.
+🏷️ You can also leverage _tagging_ which allows you to associate one or more tags with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same _tag_ allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://github.com/caronc/apprise/wiki/config)) that can be saved to the persistent storage previously associated with a `{KEY}`.
 
 ```bash
-# Send notification(s) to a {key} defined as 'abc123'
+# Send notification(s) to a {KEY} defined as 'abc123'
 # but only notify the URLs associated with the 'devops' tag
 curl -X POST -d 'tag=devops&body=test message' \
     http://localhost:8000/notify/abc123
@@ -138,9 +148,9 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
 ### API Notes
 
 - `{KEY}` must be 1-64 alphanumeric characters in length. In addition to this, the underscore (`_`) and dash (`-`) are also accepted.
-- Specify the `Content-Type` of `application/json` to use the JSON support.
-- There is no authentication (or SSL encryption) required to use this API; this is by design. The intention here to be a lightweight and fast micro-service.
-- There are no additional dependencies should you choose to use the optional persistent store (mounted as `/config`).
+- Specify the `Content-Type` of `application/json` to use the JSON support otherwise the default expected format is `application/x-www-form-urlencoded` (whether it is specified or not).
+- There is no authentication (or SSL encryption) required to use this API; this is by design. The intention here is to be a light-weight and fast micro-service.
+- There are no additional dependencies (such as database requirements, etc) should you choose to use the optional persistent store (mounted as `/config`).
 
 ### Environment Variables
 
@@ -197,6 +207,30 @@ A scenario where you want to poll the API for your configuration:
 # A simple example of the Apprise CLI
 # pulling down previously stored configuration
 apprise --body="test message" --config=http://localhost:8000/get/{KEY}
+```
+
+You can also leverage the `import` parameter supported in Apprise configuration files.
+
+```nginx
+# Linux users can place this in ~/.apprise
+# Windows users can place this info in %APPDATA%/Apprise/apprise
+
+# Swap {KEY} with your apprise key you configured on your API
+import http://localhost:8000/get/{KEY}
+```
+
+Now you'll just automatically source the configuration file without the need of the `--config` switch:
+
+```bash
+# Configuration is automatically loaded from our server.
+apprise --body="my notification"
+```
+
+If you used tagging, then you can notify the specific service like so:
+
+```bash
+# Configuration is automatically loaded from our server.
+apprise --tag=devops --body="Tell James GitLab is down again."
 ```
 
 ### AppriseConfig() Pull Example
