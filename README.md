@@ -199,6 +199,13 @@ pytest apprise_api
 
 ## Apprise Integration
 
+
+First you'll need to have it installed:
+```bash
+# install apprise into your environment
+pip install apprise
+```
+
 ### Apprise CLI Pull Example
 
 A scenario where you want to poll the API for your configuration:
