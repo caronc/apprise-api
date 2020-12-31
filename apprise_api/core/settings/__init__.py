@@ -92,6 +92,9 @@ LOGGING = {
         },
     },
     'loggers': {
+        'django': {
+            'handlers': ['console'],
+        },
         'apprise': {
             'handlers': ['console'],
             'level': os.environ.get(
