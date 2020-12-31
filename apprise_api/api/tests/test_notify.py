@@ -64,6 +64,9 @@ class NotifyTests(SimpleTestCase):
         # we always set a type if one wasn't done so already
         assert form.cleaned_data['type'] == apprise.NotifyType.INFO
 
+        # we always set a format if one wasn't done so already
+        assert form.cleaned_data['format'] == apprise.NotifyFormat.TEXT
+
         # Send our notification
         response = self.client.post(
             '/notify/{}'.format(key), form.cleaned_data)
@@ -103,6 +106,9 @@ class NotifyTests(SimpleTestCase):
 
         # we always set a type if one wasn't done so already
         assert form.cleaned_data['type'] == apprise.NotifyType.INFO
+
+        # we always set a format if one wasn't done so already
+        assert form.cleaned_data['format'] == apprise.NotifyFormat.TEXT
 
         # Set our return value; first we return a true, then we fail
         # on the second call
@@ -225,3 +231,56 @@ class NotifyTests(SimpleTestCase):
             # internal errors are correctly identified
             assert response.status_code == 500
             assert mock_notify.call_count == 0
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # Test with invalid format
+        json_data = {
+            'body': 'test message',
+            'format': 'invalid'
+        }
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # If an empty format is specified, it is accepted and
+        # no imput format is specified
+        json_data = {
+            'body': 'test message',
+            'format': None,
+        }
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # Same results for any empty string:
+        json_data['format'] = ''
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1

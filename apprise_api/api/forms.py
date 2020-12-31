@@ -44,6 +44,15 @@ NOTIFICATION_TYPES = (
     (apprise.NotifyType.FAILURE, _('Failure')),
 )
 
+# Define our potential input text categories
+INPUT_FORMATS = (
+    (apprise.NotifyFormat.TEXT, _('TEXT')),
+    (apprise.NotifyFormat.MARKDOWN, _('MARKDOWN')),
+    (apprise.NotifyFormat.HTML, _('HTML')),
+    # As-is - do not interpret it
+    (None, _('IGNORE')),
+)
+
 URLS_MAX_LEN = 1024
 URLS_PLACEHOLDER = 'mailto://user:pass@domain.com, ' \
                    'slack://tokena/tokenb/tokenc, ...'
@@ -88,6 +97,13 @@ class NotifyForm(forms.Form):
     potential asset information (if yaml file) and tag details.
     """
 
+    format = forms.ChoiceField(
+        label=_('Process As'),
+        initial=INPUT_FORMATS[0][0],
+        choices=INPUT_FORMATS,
+        required=False,
+    )
+
     type = forms.ChoiceField(
         label=_('Type'),
         choices=NOTIFICATION_TYPES,
@@ -123,6 +139,16 @@ class NotifyForm(forms.Form):
         if not data:
             # Always set a type
             data = apprise.NotifyType.INFO
+        return data
+
+    def clean_format(self):
+        """
+        We just ensure there is a format always set
+        """
+        data = self.cleaned_data['format']
+        if not data:
+            # Always set a type
+            data = apprise.NotifyFormat.TEXT
         return data
 
 

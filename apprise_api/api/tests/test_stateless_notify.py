@@ -58,6 +58,31 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
+        # Reset our count
+        mock_notify.reset_mock()
+        form_data = {
+            'urls': 'mailto://user:pass@hotmail.com',
+            'body': 'test notifiction',
+            'format': apprise.NotifyFormat.MARKDOWN,
+        }
+        form = NotifyByUrlForm(data=form_data)
+        assert form.is_valid()
+
+        response = self.client.post('/notify', form.cleaned_data)
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        # Reset our count
+        mock_notify.reset_mock()
+        form_data = {
+            'urls': 'mailto://user:pass@hotmail.com',
+            'body': 'test notifiction',
+            # Invalid formats cause an error
+            'format': 'invalid'
+        }
+        form = NotifyByUrlForm(data=form_data)
+        assert not form.is_valid()
+
     @patch('apprise.NotifyBase.notify')
     def test_partial_notify(self, mock_notify):
         """
@@ -200,5 +225,27 @@ class StatelessNotifyTests(SimpleTestCase):
             content_type='application/json',
         )
 
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # Preare our JSON data
+        json_data = {
+            'urls': 'mailto://user:pass@yahoo.ca',
+            'body': 'test notifiction',
+            # invalid server side format
+            'format': 'invalid'
+        }
+
+        # Send our notification as a JSON object
+        response = self.client.post(
+            '/notify',
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+
+        # Still supported
         assert response.status_code == 400
         assert mock_notify.call_count == 0
