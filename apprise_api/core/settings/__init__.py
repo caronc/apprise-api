@@ -77,6 +77,29 @@ TEMPLATES = [
     },
 ]
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard'
+        },
+    },
+    'loggers': {
+        'apprise': {
+            'handlers': ['console'],
+            'level': os.environ.get(
+                'LOG_LEVEL', 'debug' if DEBUG else 'info').upper(),
+        },
+    }
+}
+
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Define our base URL
