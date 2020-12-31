@@ -376,6 +376,13 @@ class NotifyView(View):
                 _('An invalid payload was specified.'),
                 status=ResponseCode.bad_request)
 
+        # Acquire our body format (if identified)
+        body_format = content.get('format', apprise.NotifyFormat.TEXT)
+        if body_format and body_format not in apprise.NOTIFY_FORMATS:
+            return HttpResponse(
+                _('An invalid body input format was specified.'),
+                status=ResponseCode.bad_request)
+
         # If we get here, we have enough information to generate a notification
         # with.
         config, format = ConfigCache.get(key)
@@ -400,9 +407,8 @@ class NotifyView(View):
             )
 
         # Prepare ourselves a default Asset
-        asset = apprise.AppriseAsset(
-            body_format=apprise.NotifyFormat.TEXT,
-        )
+        asset = None if not body_format else \
+            apprise.AppriseAsset(body_format=body_format)
 
         # Prepare our apprise object
         a_obj = apprise.Apprise(asset=asset)
@@ -487,10 +493,16 @@ class StatelessNotifyView(View):
                 _('An invalid payload was specified.'),
                 status=ResponseCode.bad_request)
 
+        # Acquire our body format (if identified)
+        body_format = content.get('format', apprise.NotifyFormat.TEXT)
+        if body_format and body_format not in apprise.NOTIFY_FORMATS:
+            return HttpResponse(
+                _('An invalid (body) format was specified.'),
+                status=ResponseCode.bad_request)
+
         # Prepare ourselves a default Asset
-        asset = apprise.AppriseAsset(
-            body_format=apprise.NotifyFormat.TEXT,
-        )
+        asset = None if not body_format else \
+            apprise.AppriseAsset(body_format=body_format)
 
         # Prepare our apprise object
         a_obj = apprise.Apprise(asset=asset)
