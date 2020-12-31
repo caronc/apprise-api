@@ -27,6 +27,7 @@ from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views import View
 from django.conf import settings
+from django.utils.html import escape
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
@@ -422,25 +423,78 @@ class NotifyView(View):
         # Add our configuration
         a_obj.add(ac_obj)
 
-        # Perform our notification at this point
-        result = a_obj.notify(
-            content.get('body'),
-            title=content.get('title', ''),
-            notify_type=content.get('type', apprise.NotifyType.INFO),
-            tag=content.get('tag'),
-        )
+        content_type = \
+            'text/html' if re.search(r'\/(\*|html)',
+                                     request.headers.get('Accept', ''),
+                                     re.IGNORECASE) \
+            else 'text/plain'
+
+        level = request.headers.get('X-Apprise-Log-Level', 'none').upper()
+        if level in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG',
+                     'TRACE'):
+            level = getattr(apprise.logging, level)
+
+            esc = '<!!-!ESC!-!!>'
+            fmt = '<li class="log_%(levelname)s">' \
+                '<div class="log_time">%(asctime)s</div>' \
+                '<div class="log_level">%(levelname)s</div>' \
+                f'<div class="log_msg">{esc}%(message)s{esc}</div></li>' \
+                if content_type == 'text/html' else \
+                settings.LOGGING['formatters']['standard']['format']
+
+            # Now specify our format (and over-ride the default):
+            with apprise.LogCapture(level=level, fmt=fmt) as logs:
+                # Perform our notification at this point
+                result = a_obj.notify(
+                    content.get('body'),
+                    title=content.get('title', ''),
+                    notify_type=content.get('type', apprise.NotifyType.INFO),
+                    tag=content.get('tag'),
+                )
+
+            if content_type == 'text/html':
+                # Iterate over our entries so that we can prepare to escape
+                # things to be presented as HTML
+                esc = re.escape(esc)
+                entries = re.findall(
+                    r'(?P<head><li .+?){}(?P<to_escape>.*?)'
+                    r'{}(?P<tail>.+li>$)(?=$|<li .+{})'.format(
+                        esc, esc, esc), logs.getvalue(),
+                    re.DOTALL)
+
+                # Wrap logs in `<ul>` tag and escape our message body:
+                response = '<ul class="logs">{}</ul>'.format(
+                    ''.join([e[0] + escape(e[1]) + e[2] for e in entries]))
+
+            if content_type == 'text/plain':
+                response = logs.getvalue()
+
+        else:
+            response = None
+
+            # Perform our notification at this point without logging
+            result = a_obj.notify(
+                content.get('body'),
+                title=content.get('title', ''),
+                notify_type=content.get('type', apprise.NotifyType.INFO),
+                tag=content.get('tag'),
+            )
 
         if not result:
             # If at least one notification couldn't be sent; change up
             # the response to a 424 error code
             return HttpResponse(
+                response if response else
                 _('One or more notification could not be sent.'),
+                content_type=content_type,
                 status=ResponseCode.failed_dependency)
 
         # Return our retrieved content
         return HttpResponse(
+            response if response else
             _('Notification(s) sent.'),
-            status=ResponseCode.okay
+            content_type=content_type,
+            status=ResponseCode.okay,
         )
 
 

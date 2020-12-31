@@ -338,23 +338,37 @@ document.querySelector('#donotify').onsubmit = function(event) {
   let response = fetch('{% url "notify" key %}', {
     method: 'POST',
     body: body,
+    headers: {
+      'Accept': 'text/html',
+      'X-Apprise-Log-Level': 'info'
+    }
   }).then(function(response) {
-     if(response.status == 200)
-     {
-        // user notification
-        Swal.fire(
-          '{% trans "Notification" %}',
-          '{% trans "Successfully sent the notification(s)." %}',
-          'success'
-        );
-     } else {
-        // user notification
-        Swal.fire(
-          '{% trans "Notification" %}',
-          '{% trans "Failed to send the notification(s)." %}',
-          'error'
-        );
-     }
+     response.text().then(function (html) {
+       if(response.status == 200)
+       {
+          // user notification
+          Swal.fire(
+            '{% trans "Notification" %}',
+            '{% trans "Successfully sent the notification(s)." %}' + html,
+            'success'
+          );
+       } else if(response.status == 424)
+       {
+          // user notification
+          Swal.fire(
+            '{% trans "Notification" %}',
+            '{% trans "One or more of the notification(s) were not sent." %}' + html,
+            'warning'
+          );
+       } else {
+          // user notification
+          Swal.fire(
+            '{% trans "Notification" %}',
+            '{% trans "Failed to send the notification(s)." %}' + html,
+            'error'
+          );
+       }
+     });
   });
   return false;
 }
