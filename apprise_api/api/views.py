@@ -399,8 +399,13 @@ class NotifyView(View):
                 status=ResponseCode.internal_server_error,
             )
 
+        # Prepare ourselves a default Asset
+        asset = apprise.AppriseAsset(
+            body_format=apprise.NotifyFormat.TEXT,
+        )
+
         # Prepare our apprise object
-        a_obj = apprise.Apprise()
+        a_obj = apprise.Apprise(asset=asset)
 
         # Create an apprise config object
         ac_obj = apprise.AppriseConfig()
@@ -482,8 +487,13 @@ class StatelessNotifyView(View):
                 _('An invalid payload was specified.'),
                 status=ResponseCode.bad_request)
 
+        # Prepare ourselves a default Asset
+        asset = apprise.AppriseAsset(
+            body_format=apprise.NotifyFormat.TEXT,
+        )
+
         # Prepare our apprise object
-        a_obj = apprise.Apprise()
+        a_obj = apprise.Apprise(asset=asset)
 
         # Add URLs
         a_obj.add(content.get('urls'))
