@@ -41,7 +41,10 @@ SECRET_KEY = os.environ.get(
 #
 #    export DJANGO_SETTINGS_MODULE=core.settings.debug
 #    ./manage.py runserver
-DEBUG = bool(os.environ.get("DEBUG", False))
+#
+# Support 'yes', '1', 'true', 'enable', 'active', and +
+DEBUG = os.environ.get("DEBUG", 'No')[0].lower() in (
+    'a', 'y', '1', 't', 'e', '+')
 
 # allow all hosts by default otherwise read from the
 # ALLOWED_HOSTS environment variable

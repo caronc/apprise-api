@@ -241,7 +241,7 @@ class NotifyTests(SimpleTestCase):
             'format': 'invalid'
         }
 
-        # Test referencing a key that doesn't exist
+        # Test case with format set to invalid
         response = self.client.post(
             '/notify/{}'.format(key),
             data=json.dumps(json_data),
@@ -261,7 +261,7 @@ class NotifyTests(SimpleTestCase):
             'format': None,
         }
 
-        # Test referencing a key that doesn't exist
+        # Test case with format changed
         response = self.client.post(
             '/notify/{}'.format(key),
             data=json.dumps(json_data),
@@ -284,3 +284,61 @@ class NotifyTests(SimpleTestCase):
 
         assert response.status_code == 200
         assert mock_notify.call_count == 1
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        headers = {
+            'HTTP_X_APPRISE_LOG_LEVEL': 'debug',
+            'HTTP_ACCEPT': 'text/plain',
+        }
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+            **headers,
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert response['content-type'] == 'text/plain'
+
+        headers = {
+            'HTTP_X_APPRISE_LOG_LEVEL': 'debug',
+            'HTTP_ACCEPT': 'text/html',
+        }
+
+        mock_notify.reset_mock()
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+            **headers,
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert response['content-type'] == 'text/html'
+
+        headers = {
+            'HTTP_X_APPRISE_LOG_LEVEL': 'invalid',
+            'HTTP_ACCEPT': 'text/*',
+        }
+
+        mock_notify.reset_mock()
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+            **headers,
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert response['content-type'] == 'text/html'

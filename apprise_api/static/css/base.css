@@ -75,3 +75,47 @@ textarea {
 	background-color: inherit;
 	border: 1px solid #e4e4e4;
 }
+
+/* Notification Details */
+ul.logs {
+  font-family: monospace, monospace;
+  height: 60%;
+  overflow: auto;
+}
+
+ul.logs li {
+  display: flex;
+  text-align: left;
+  width: 50em;
+}
+
+ul.logs li div.log_time {
+  font-weight: normal;
+  flex: 0 15em;
+}
+
+ul.logs li div.log_level {
+  font-weight: bold;
+  align: right;
+  flex: 0 5em;
+}
+
+ul.logs li div.log_msg {
+  flex: 1;
+}
+
+ul.logs li.log_INFO {
+  color: black;
+}
+
+ul.logs li.log_DEBUG {
+  color: #606060;
+}
+
+ul.logs li.log_WARNING {
+  color: orange;
+}
+
+ul.logs li.log_ERROR {
+  color: #8B0000;
+}

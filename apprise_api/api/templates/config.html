@@ -267,11 +267,18 @@ document.querySelector('#addconfig').onsubmit = function(event) {
           '{% trans "Successfully saved the specified URL(s)." %}',
           'success'
         );
+     } else if(response.status > 500) {
+        // Disk issue
+        Swal.fire(
+          '{% trans "Save" %}',
+          '{% trans "There was an issue writing the configuration to your filesystem. Check your file permissions and try again." %}',
+          'error'
+        );
      } else {
         // user notification
         Swal.fire(
           '{% trans "Save" %}',
-          '{% trans "Failed to save the specified URL(s)." %}',
+          '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
           'error'
         );
      }
@@ -338,23 +345,36 @@ document.querySelector('#donotify').onsubmit = function(event) {
   let response = fetch('{% url "notify" key %}', {
     method: 'POST',
     body: body,
+    headers: {
+      'Accept': 'text/html',
+      'X-Apprise-Log-Level': 'info'
+    }
   }).then(function(response) {
-     if(response.status == 200)
-     {
-        // user notification
-        Swal.fire(
-          '{% trans "Notification" %}',
-          '{% trans "Successfully sent the notification(s)." %}',
-          'success'
-        );
-     } else {
-        // user notification
-        Swal.fire(
-          '{% trans "Notification" %}',
-          '{% trans "Failed to send the notification(s)." %}',
-          'error'
-        );
-     }
+     response.text().then(function (html) {
+       if(response.status == 200)
+       {
+          // user notification
+          Swal.fire(
+            '{% trans "Notification" %}',
+            '{% trans "Successfully sent the notification(s)." %}' + html,
+            'success'
+          );
+       } else if(response.status == 424) {
+          // user notification
+          Swal.fire(
+            '{% trans "Notification" %}',
+            '{% trans "One or more of the notification(s) were not sent." %}' + html,
+            'warning'
+          );
+       } else {
+          // user notification
+          Swal.fire(
+            '{% trans "Notification" %}',
+            '{% trans "Failed to send the notification(s)." %}' + html,
+            'error'
+          );
+       }
+     });
   });
   return false;
 }
