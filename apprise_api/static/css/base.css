@@ -78,6 +78,7 @@ textarea {
 
 /* Notification Details */
 ul.logs {
+  font-family: monospace, monospace;
   height: 60%;
   overflow: auto;
 }
@@ -90,7 +91,7 @@ ul.logs li {
 
 ul.logs li div.log_time {
   font-weight: normal;
-  flex: 0 12em;
+  flex: 0 15em;
 }
 
 ul.logs li div.log_level {
@@ -100,7 +101,7 @@ ul.logs li div.log_level {
 }
 
 ul.logs li div.log_msg {
-  flex: max-content;
+  flex: 1;
 }
 
 ul.logs li.log_INFO {
@@ -108,7 +109,7 @@ ul.logs li.log_INFO {
 }
 
 ul.logs li.log_DEBUG {
-  color: blue;
+  color: #606060;
 }
 
 ul.logs li.log_WARNING {

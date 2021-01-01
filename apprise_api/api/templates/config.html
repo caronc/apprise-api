@@ -267,11 +267,18 @@ document.querySelector('#addconfig').onsubmit = function(event) {
           '{% trans "Successfully saved the specified URL(s)." %}',
           'success'
         );
+     } else if(response.status > 500) {
+        // Disk issue
+        Swal.fire(
+          '{% trans "Save" %}',
+          '{% trans "There was an issue writing the configuration to your filesystem. Check your file permissions and try again." %}',
+          'error'
+        );
      } else {
         // user notification
         Swal.fire(
           '{% trans "Save" %}',
-          '{% trans "Failed to save the specified URL(s)." %}',
+          '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
           'error'
         );
      }
@@ -352,8 +359,7 @@ document.querySelector('#donotify').onsubmit = function(event) {
             '{% trans "Successfully sent the notification(s)." %}' + html,
             'success'
           );
-       } else if(response.status == 424)
-       {
+       } else if(response.status == 424) {
           // user notification
           Swal.fire(
             '{% trans "Notification" %}',

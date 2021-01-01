@@ -423,15 +423,27 @@ class NotifyView(View):
         # Add our configuration
         a_obj.add(ac_obj)
 
+        # Our return content type can be controlled by the Accept keyword
+        # If it includes /* or /html somewhere then we return html, otherwise
+        # we return the logs as they're processed in their text format.
+        # The HTML response type has a bit of overhead where as it's not
+        # the case with text/plain
         content_type = \
-            'text/html' if re.search(r'\/(\*|html)',
+            'text/html' if re.search(r'text\/(\*|html)',
                                      request.headers.get('Accept', ''),
                                      re.IGNORECASE) \
             else 'text/plain'
 
-        level = request.headers.get('X-Apprise-Log-Level', 'none').upper()
-        if level in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG',
-                     'TRACE'):
+        # Acquire our log level from headers if defined, otherwise use
+        # the global one set in the settings
+        level = request.headers.get(
+            'X-Apprise-Log-Level',
+            settings.LOGGING['loggers']['apprise']['level']).upper()
+
+        # Initialize our response object
+        response = None
+
+        if level in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG'):
             level = getattr(apprise.logging, level)
 
             esc = '<!!-!ESC!-!!>'
@@ -466,12 +478,10 @@ class NotifyView(View):
                 response = '<ul class="logs">{}</ul>'.format(
                     ''.join([e[0] + escape(e[1]) + e[2] for e in entries]))
 
-            if content_type == 'text/plain':
+            else:  # content_type == 'text/plain'
                 response = logs.getvalue()
 
         else:
-            response = None
-
             # Perform our notification at this point without logging
             result = a_obj.notify(
                 content.get('body'),
@@ -484,14 +494,14 @@ class NotifyView(View):
             # If at least one notification couldn't be sent; change up
             # the response to a 424 error code
             return HttpResponse(
-                response if response else
+                response if response is not None else
                 _('One or more notification could not be sent.'),
                 content_type=content_type,
                 status=ResponseCode.failed_dependency)
 
         # Return our retrieved content
         return HttpResponse(
-            response if response else
+            response if response is not None else
             _('Notification(s) sent.'),
             content_type=content_type,
             status=ResponseCode.okay,

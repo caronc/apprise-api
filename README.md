@@ -164,7 +164,7 @@ The use of environment variables allow you to provide over-rides to default sett
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
 | `BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
-| `LOG_LEVEL`    | Adjust the log level to the console; the default value is `DEBUG` if the `DEBUG` is set below otherwise the default is `INFO`. Possible values are `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
+| `LOG_LEVEL`    | Adjust the log level to the console. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
 | `DEBUG`            | This defaults to `False` however can be set to `True` if defined with a non-zero value (such as `1`).
 
 
