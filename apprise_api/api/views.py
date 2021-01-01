@@ -632,7 +632,12 @@ class JsonUrlView(View):
         }
 
         # Privacy flag
-        privacy = bool(request.GET.get('privacy', False))
+        # Support 'yes', '1', 'true', 'enable', 'active', and +
+        privacy = request.GET.get('privacy', 'no')[0] in (
+            'a', 'y', '1', 't', 'e', '+')
+
+        # Optionally filter on tags. Use comma to identify more then one
+        tag = request.GET.get('tag', 'all')
 
         config, format = ConfigCache.get(key)
         if config is None:
@@ -672,7 +677,7 @@ class JsonUrlView(View):
         # Add our configuration
         a_obj.add(ac_obj)
 
-        for notification in a_obj:
+        for notification in a_obj.find(tag):
             # Set Notification
             response['urls'].append({
                 'url': notification.url(privacy=privacy),
