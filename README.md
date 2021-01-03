@@ -118,7 +118,7 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 }
 ```
 
-You can pass in attributes to the `/json/urls/{KEY}` such as `privacy=` which escapes the passwords and secret tokens when returning the response.  You can also set `tag=` and filter the returned results based on the tags you specify (delimited by a comma if more the one).
+You can pass in attributes to the `/json/urls/{KEY}` such as `privacy=1` which hides the passwords and secret tokens when returning the response.  You can also set `tag=` and filter the returned results based on a comma separated set of tags. if no `tag=` is specified, then `tag=all` is used as the default.
 
 Here is an example using `curl` as to how someone might send a notification to everyone associated with the tag `abc123` (using `/notify/{key}`):
 
