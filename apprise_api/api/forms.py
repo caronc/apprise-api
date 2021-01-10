@@ -82,6 +82,8 @@ class AddByConfigForm(forms.Form):
     format = forms.ChoiceField(
         label=_('Format'),
         choices=CONFIG_FORMATS,
+        initial=CONFIG_FORMATS[0][0],
+        required=False,
     )
 
     config = forms.CharField(
@@ -89,6 +91,16 @@ class AddByConfigForm(forms.Form):
         widget=forms.Textarea(),
         max_length=4096,
     )
+
+    def clean_format(self):
+        """
+        We just ensure there is a format always set and it defaults to auto
+        """
+        data = self.cleaned_data['format']
+        if not data:
+            # Set to auto
+            data = CONFIG_FORMATS[0][0]
+        return data
 
 
 class NotifyForm(forms.Form):
