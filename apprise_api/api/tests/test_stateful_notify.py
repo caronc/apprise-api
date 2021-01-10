@@ -25,6 +25,8 @@
 from django.test import SimpleTestCase
 from unittest.mock import patch
 from ..forms import NotifyForm
+from ..utils import ConfigCache
+import os
 import re
 import apprise
 
@@ -92,6 +94,57 @@ class StatefulNotifyTests(SimpleTestCase):
             assert response.status_code == 200
 
             # A second call; but there is nothing to remove
+            response = self.client.post('/del/{}'.format(key))
+            assert response.status_code == 204
+
+            # Reset our count
+            mock_notify.reset_mock()
+
+
+        # Now we do a similar approach as the above except we remove the
+        # configuration from under the application
+        for _ in range(10):
+            # No content saved to the location yet
+            response = self.client.post('/get/{}'.format(key))
+            assert response.status_code == 204
+
+            # Add our content
+            response = self.client.post(
+                '/add/{}'.format(key),
+                {'config': '\r\n'.join(urls)})
+            assert response.status_code == 200
+
+            # Now we should be able to see our content
+            response = self.client.post('/get/{}'.format(key))
+            assert response.status_code == 200
+
+            entries = re.split(r'[\r*\n]+', response.content.decode('utf-8'))
+            assert len(entries) == 3
+
+            form_data = {
+                'body': '## test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+            }
+
+            form = NotifyForm(data=form_data)
+            assert form.is_valid()
+
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
+            # Now remove the file directly (as though one
+            # removed the configuration directory)
+            result = ConfigCache.path(key)
+            entry = os.path.join(result[0], '{}.text'.format(result[1]))
+            assert os.path.isfile(entry)
+            # The removal
+            os.unlink(entry)
+            # Verify
+            assert not os.path.isfile(entry)
+
+            # Call /del/ but now there is nothing to remove
             response = self.client.post('/del/{}'.format(key))
             assert response.status_code == 204
 
