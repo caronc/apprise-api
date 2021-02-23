@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED 1
 ENV APPRISE_CONFIG_DIR /config
 
 # Install nginx and supervisord
-RUN apt-get update && \
+RUN apt-get update -qq && \
     apt-get install -y -qq nginx supervisor build-essential libffi-dev libssl-dev python-dev rustc
 
 # Install requirements and gunicorn
