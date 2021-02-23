@@ -18,7 +18,7 @@ RUN pip3 install -r /etc/requirements.txt gunicorn
 
 # Install nginx and supervisord
 RUN apt-get update && \
-    apt-get install -y nginx supervisor build-essential
+    apt-get install -y nginx supervisor build-essential apt-get install libffi-dev libssl-dev python-dev
 
 # Nginx configuration
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
