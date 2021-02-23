@@ -18,7 +18,7 @@ RUN apt-get update && \
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
-RUN pip3 install -r /etc/requirements.txt gunicorn
+RUN pip3 install -qq -r /etc/requirements.txt gunicorn
 
 # Nginx configuration
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
