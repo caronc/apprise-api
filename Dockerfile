@@ -18,7 +18,7 @@ RUN pip3 install -r /etc/requirements.txt gunicorn
 
 # Install nginx and supervisord
 RUN apt-get update && \
-    apt-get install -y nginx supervisor
+    apt-get install -y nginx supervisor build-essentials
 
 # Nginx configuration
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
@@ -38,6 +38,12 @@ COPY apprise_api/ webapp
 
 # Change port of gunicorn
 RUN sed -i -e 's/:8000/:8080/g' /opt/apprise/webapp/gunicorn.conf.py
+
+# Cleanup
+RUN apt-get remove -y build-essentials && \
+    apt-get clean autoclean && \
+    apt-get autoremove --yes && \
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 EXPOSE 8000
 VOLUME /config
