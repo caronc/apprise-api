@@ -40,7 +40,7 @@ COPY apprise_api/ webapp
 RUN sed -i -e 's/:8000/:8080/g' /opt/apprise/webapp/gunicorn.conf.py
 
 # Cleanup
-RUN apt-get remove -y build-essentials && \
+RUN apt-get remove -y build-essential && \
     apt-get clean autoclean && \
     apt-get autoremove --yes && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/
