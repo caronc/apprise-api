@@ -11,14 +11,15 @@ LABEL maintainer="Chris-Caron"
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV APPRISE_CONFIG_DIR /config
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 # Install nginx and supervisord
 RUN apt-get update -qq && \
-    apt-get install -y -qq nginx supervisor build-essential libffi-dev libssl-dev python-dev rustc
+    apt-get install -y -qq nginx supervisor build-essential libffi-dev libssl-dev python-dev
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
-RUN pip3 install -qq -r /etc/requirements.txt gunicorn
+RUN pip3 install -q -r /etc/requirements.txt gunicorn
 
 # Nginx configuration
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
@@ -40,7 +41,7 @@ COPY apprise_api/ webapp
 RUN sed -i -e 's/:8000/:8080/g' /opt/apprise/webapp/gunicorn.conf.py
 
 # Cleanup
-RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python-dev rustc && \
+RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python-dev && \
     apt-get clean autoclean && \
     apt-get autoremove --yes && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/
