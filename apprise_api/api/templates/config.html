@@ -267,11 +267,11 @@ document.querySelector('#addconfig').onsubmit = function(event) {
           '{% trans "Successfully saved the specified URL(s)." %}',
           'success'
         );
-     } else if(response.status > 500) {
+     } else if(response.status == 500) {
         // Disk issue
         Swal.fire(
           '{% trans "Save" %}',
-          '{% trans "There was an issue writing the configuration to your filesystem. Check your file permissions and try again." %}',
+          '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
           'error'
         );
      } else {
