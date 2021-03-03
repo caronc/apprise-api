@@ -51,6 +51,38 @@ A `docker-compose.yml` file is already set up to grant you an instant production
 docker-compose up
 ```
 
+### Config Directory Permissions
+Under the hood, An NginX services is reading/writing your configuration files as the user (and group) `www-data` which generally has the id of `33`.  In preparation so that you don't get the error: `An error occured saving configuration.` consider also setting up your local `/var/lib/apprise/config` permissions as:
+
+```bash
+# Create a user/group (if one doesn't already exist) owned
+# by the user and group id of 33
+id 33 &>/dev/null || sudo useradd \
+   --system --no-create-home --shell /bin/false \
+    -u 33 -g 33 www-data
+
+# Securely set the directory limiting access to only those who
+# are part of the www-data group:
+sudo chmod 770 -R /var/lib/apprise/config
+sudo chown 33:33 -R /var/lib/apprise/config
+
+# Now optionally add yourself to the group if you wish to be able to view
+# contents.
+sudo usermod -a -G 33 $(whoami)
+
+# You may need to log out and back in again for the above usermod
+# to reflect on you.  Alternatively you can just type the following
+# and it will work as a temporary solution:
+sudo su - $(whoami)
+```
+
+Alternatively a dirty solution is to just set the directory with full read/write permissions (which is not ideal in a production environment):
+```bash
+# Grant full permission to the local directory you're saving your
+# Apprise configuration to:
+chmod 777 /var/lib/apprise/config
+```
+
 ## Dockerfile Details
 
 The following architectures are supported: `386`, `amd64`, `arm/v6`, `arm/v7`, and `arm64`. The following tags can be used:
