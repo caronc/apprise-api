@@ -100,7 +100,6 @@ class StatefulNotifyTests(SimpleTestCase):
             # Reset our count
             mock_notify.reset_mock()
 
-
         # Now we do a similar approach as the above except we remove the
         # configuration from under the application
         for _ in range(10):
