@@ -30,7 +30,7 @@
     <!-- Title -->
     <div class="nav row teal lighten-5 z-depth-2">
       <div class="col s12">
-        <a href="{% url %}">
+        <a href="{{BASE_URL}}">
           <img class="left" src="{% static "logo.png" %}" alt="{% trans "Apprise Logo" %}" />
         </a>
         <h1>{% trans "Apprise API" %}</h1>
@@ -42,7 +42,7 @@
       <div class="col s3">
 {% if STATEFUL_MODE != 'disabled' %}
         <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'cfg' 'apprise' %}"><i class="tiny material-icons">settings</i>
+          <a class="collection-item" href="{{BASE_URL}}/cfg/apprise"><i class="tiny material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
         </ul>
 {% endif %}

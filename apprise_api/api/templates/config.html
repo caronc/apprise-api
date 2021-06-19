@@ -71,7 +71,7 @@
   <div id="config" class="col s12">
     <p>
       {% blocktrans %}Define your configuration below:{% endblocktrans %}
-      <form id="addconfig" action="{% url "add" key %}" method="post">
+      <form id="addconfig" action="{{BASE_URL}}/add/{{key}}" method="post">
         {{ form_cfg }}
         <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Save Configuration" %}
           <i class="material-icons right">save</i>
@@ -84,7 +84,7 @@
       {% blocktrans %}
       You can send a notification using the loaded configuration:
       {% endblocktrans %}
-      <form id="donotify" action="{% url "notify" key %}" method="post">
+      <form id="donotify" action="{{BASE_URL}}/notify/{{key}}" method="post">
         {{ form_notify }}
         <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Send Notification" %}
           <i class="material-icons right">send</i>
@@ -122,7 +122,7 @@ async function update() {
       .style.display = null;
 
   // perform our status check
-  let response = await fetch('{% url "get" key %}', {
+  let response = await fetch('{{BASE_URL}}/get/{{key}}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=utf-8'
@@ -170,7 +170,7 @@ async function update() {
     // perform a tag retrieval; start with 'all'
     let tags = ['all'];
 
-    let jsonResponse = fetch('{% url "json_urls" key %}?privacy=1', {
+    let jsonResponse = fetch('{{BASE_URL}}/json_urls/{{key}}?privacy=1', {
       method: 'GET',
     }).then(function(jsonResponse) {
       return jsonResponse.json();
@@ -252,7 +252,7 @@ document.querySelector('#addconfig').onsubmit = function(event) {
   const body = new URLSearchParams(new FormData(form));
 
   // perform our status check
-  let response = fetch('{% url "add" key %}', {
+  let response = fetch('{{BASE_URL}}/add/{{key}}', {
     method: 'POST',
     body: body,
   }).then(function(response) {
@@ -342,7 +342,7 @@ document.querySelector('#donotify').onsubmit = function(event) {
     '{% trans "Sending notification(s)..." %}',
   );
   Swal.showLoading()
-  let response = fetch('{% url "notify" key %}', {
+  let response = fetch('{{BASE_URL}}/notify/{{key}}', {
     method: 'POST',
     body: body,
     headers: {
