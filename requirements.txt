@@ -1,2 +1,2 @@
 django
-apprise == 0.9.3
+apprise == 0.9.4
