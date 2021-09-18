@@ -8,8 +8,6 @@ matrix:
       env: TOXENV=py37
     - python: "3.8"
       env: TOXENV=py38
-    - python: "pypy3.5-6.0"
-      env: TOXENV=pypy3
 
 install:
   - pip install codecov
