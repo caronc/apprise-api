@@ -1,2 +1,7 @@
 django
-apprise == 0.9.4
+apprise == 0.9.5.1
+
+# 3rd party service support
+slixmpp
+paho-mqtt
+gntp
