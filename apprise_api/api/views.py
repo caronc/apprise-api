@@ -694,3 +694,18 @@ class JsonUrlView(View):
             safe=False,
             status=ResponseCode.okay
         )
+
+
+class HealthCheckView(View):
+    """
+    A Django view that renders plain text "OK" for service discovery tools
+    """
+    def get(self, request):
+        """
+        Handle a GET request
+        """
+        return HttpResponse(
+            'OK',
+            content_type='text/plain',
+            status=ResponseCode.okay
+        )

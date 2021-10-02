@@ -22,35 +22,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.urls import re_path
-from . import views
+from django.test import SimpleTestCase
 
-urlpatterns = [
-    re_path(
-        r'^$',
-        views.WelcomeView.as_view(), name='welcome'),
-    re_path(
-        r'^cfg/(?P<key>[\w_-]{1,64})/?',
-        views.ConfigView.as_view(), name='config'),
-    re_path(
-        r'^add/(?P<key>[\w_-]{1,64})/?',
-        views.AddView.as_view(), name='add'),
-    re_path(
-        r'^del/(?P<key>[\w_-]{1,64})/?',
-        views.DelView.as_view(), name='del'),
-    re_path(
-        r'^get/(?P<key>[\w_-]{1,64})/?',
-        views.GetView.as_view(), name='get'),
-    re_path(
-        r'^notify/(?P<key>[\w_-]{1,64})/?',
-        views.NotifyView.as_view(), name='notify'),
-    re_path(
-        r'^notify/?',
-        views.StatelessNotifyView.as_view(), name='s_notify'),
-    re_path(
-        r'^json/urls/(?P<key>[\w_-]{1,64})/?',
-        views.JsonUrlView.as_view(), name='json_urls'),
-    re_path(
-        r'^health/?',
-        views.HealthCheckView.as_view(), name='healthcheck'),
-]
+
+class HealthCheckTests(SimpleTestCase):
+
+    def test_health_check_status_code(self):
+        response = self.client.get('/health')
+        assert response.status_code == 200
+
+    def test_health_check_response_body(self):
+        response = self.client.get('/health')
+        assert response.content == b'OK'
