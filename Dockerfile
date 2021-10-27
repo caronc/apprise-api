@@ -21,15 +21,8 @@ RUN apt-get update -qq && \
 COPY ./requirements.txt /etc/requirements.txt
 RUN pip3 install -q -r /etc/requirements.txt gunicorn
 
-# Nginx configuration
-RUN echo "daemon off;" >> /etc/nginx/nginx.conf
-COPY /etc/nginx.conf /etc/nginx/conf.d/nginx.conf
-
 # Copy our static content in place
 COPY apprise_api/static /usr/share/nginx/html/s/
-
-# Supervisor configuration
-COPY /etc/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # set work directory
 WORKDIR /opt/apprise
@@ -37,16 +30,19 @@ WORKDIR /opt/apprise
 # Copy over Apprise API
 COPY apprise_api/ webapp
 
-# Change port of gunicorn
-RUN sed -i -e 's/:8000/:8080/g' /opt/apprise/webapp/gunicorn.conf.py
-
 # Cleanup
 RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python-dev && \
     apt-get clean autoclean && \
     apt-get autoremove --yes && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-EXPOSE 8000
-VOLUME /config
+# Configuration Permissions (to run nginx as a non-root user)
+RUN umask 0002 && \
+    mkdir -p /config /run/apprise && \
+    chown www-data:www-data -R /run/apprise /var/lib/nginx /config
 
-CMD ["/usr/bin/supervisord"]
+# Handle running as a non-root user (www-data is id/gid 33)
+USER www-data
+VOLUME /config
+EXPOSE 8000
+CMD ["/usr/bin/supervisord", "-c", "/opt/apprise/webapp/etc/supervisord.conf"]

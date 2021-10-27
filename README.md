@@ -51,6 +51,7 @@ A `docker-compose.yml` file is already set up to grant you an instant production
 docker-compose up
 ```
 
+
 ### Config Directory Permissions
 Under the hood, An NginX services is reading/writing your configuration files as the user (and group) `www-data` which generally has the id of `33`.  In preparation so that you don't get the error: `An error occured saving configuration.` consider also setting up your local `/var/lib/apprise/config` permissions as:
 
