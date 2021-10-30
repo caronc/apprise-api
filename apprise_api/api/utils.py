@@ -36,7 +36,7 @@ from django.conf import settings
 import logging
 
 # Get an instance of a logger
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('django')
 
 
 class AppriseStoreMode(object):
@@ -120,7 +120,13 @@ class AppriseConfigCache(object):
 
         # First two characters are reserved for cache level directory writing.
         path, filename = self.path(key)
-        os.makedirs(path, exist_ok=True)
+        try:
+            os.makedirs(path, exist_ok=True)
+
+        except OSError:
+            # Permission error
+            logger.error('Could not create directory {}'.format(path))
+            return False
 
         # Write our file to a temporary file
         _, tmp_path = tempfile.mkstemp(suffix='.tmp', dir=path)
