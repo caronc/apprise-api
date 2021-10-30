@@ -108,6 +108,19 @@ class AddTests(SimpleTestCase):
         assert response.status_code == 400
 
         # Test the handling of underlining disk/write exceptions
+        with patch('os.makedirs') as mock_mkdirs:
+            mock_mkdirs.side_effect = OSError()
+            # We'll fail to write our key now
+            response = self.client.post(
+                '/add/{}'.format(key),
+                data=json.dumps({'urls': 'mailto://user:pass@yahoo.ca'}),
+                content_type='application/json',
+            )
+
+            # internal errors are correctly identified
+            assert response.status_code == 500
+
+        # Test the handling of underlining disk/write exceptions
         with patch('gzip.open') as mock_open:
             mock_open.side_effect = OSError()
             # We'll fail to write our key now
