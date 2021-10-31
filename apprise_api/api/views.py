@@ -89,6 +89,7 @@ class ResponseCode(object):
     no_access = 403
     not_found = 404
     method_not_allowed = 405
+    method_not_accepted = 406
     failed_dependency = 424
     internal_server_error = 500
 
@@ -623,6 +624,41 @@ class NotifyView(View):
                         'APPRISE_DENY_SERVICES plugin %s:// was not found -'
                         ' ignoring.', name)
 
+        # Prepare our keyword arguments (to be passed into an AppriseAsset
+        # object)
+        kwargs = {}
+
+        if body_format:
+            # Store our defined body format
+            kwargs['body_format'] = body_format
+
+        # Acquire our recursion count (if defined)
+        try:
+            recursion = \
+                int(request.headers.get('X-Apprise-Recursion-Count', 0))
+
+            if recursion < 0:
+                # We do not accept negative numbers
+                raise TypeError("Invalid Recursion Value")
+
+            if recursion > settings.APPRISE_RECURSION_MAX:
+                return HttpResponse(
+                    _('The recursion limit has been reached.'),
+                    status=ResponseCode.method_not_accepted)
+
+            # Store our recursion value for our AppriseAsset() initialization
+            kwargs['_recursion'] = recursion
+
+        except (TypeError, ValueError):
+            return HttpResponse(
+                _('An invalid recursion value was specified.'),
+                status=ResponseCode.bad_request)
+
+        # Acquire our unique identifier (if defined)
+        uid = request.headers.get('X-Apprise-ID', '').strip()
+        if uid:
+            kwargs['_uid'] = uid
+
         # Prepare ourselves a default Asset
         asset = None if not body_format else \
             apprise.AppriseAsset(body_format=body_format)
@@ -784,6 +820,41 @@ class StatelessNotifyView(View):
             return HttpResponse(
                 _('An invalid (body) format was specified.'),
                 status=ResponseCode.bad_request)
+
+        # Prepare our keyword arguments (to be passed into an AppriseAsset
+        # object)
+        kwargs = {}
+
+        if body_format:
+            # Store our defined body format
+            kwargs['body_format'] = body_format
+
+        # Acquire our recursion count (if defined)
+        try:
+            recursion = \
+                int(request.headers.get('X-Apprise-Recursion-Count', 0))
+
+            if recursion < 0:
+                # We do not accept negative numbers
+                raise TypeError("Invalid Recursion Value")
+
+            if recursion > settings.APPRISE_RECURSION_MAX:
+                return HttpResponse(
+                    _('The recursion limit has been reached.'),
+                    status=ResponseCode.method_not_accepted)
+
+            # Store our recursion value for our AppriseAsset() initialization
+            kwargs['_recursion'] = recursion
+
+        except (TypeError, ValueError):
+            return HttpResponse(
+                _('An invalid recursion value was specified.'),
+                status=ResponseCode.bad_request)
+
+        # Acquire our unique identifier (if defined)
+        uid = request.headers.get('X-Apprise-ID', '').strip()
+        if uid:
+            kwargs['_uid'] = uid
 
         # Prepare ourselves a default Asset
         asset = None if not body_format else \
