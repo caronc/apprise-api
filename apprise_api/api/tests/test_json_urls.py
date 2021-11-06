@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase
+from django.test.utils import override_settings
 from unittest.mock import patch
 
 
@@ -109,6 +110,23 @@ class JsonUrlsTests(SimpleTestCase):
         assert 'url' in response.json()['urls'][0]
         assert 'tags' in response.json()['urls'][0]
         assert len(response.json()['urls'][0]['tags']) == 0
+
+        # We can see that th URLs are not the same when the privacy flag is set
+        without_privacy = \
+            self.client.get('/json/urls/{}?privacy=1'.format(key))
+        with_privacy = self.client.get('/json/urls/{}'.format(key))
+        assert with_privacy.json()['urls'][0] != \
+            without_privacy.json()['urls'][0]
+
+        with override_settings(APPRISE_CONFIG_LOCK=True):
+            # When our configuration lock is set, our result set enforces the
+            # privacy flag even if it was otherwise set:
+            with_privacy = \
+                self.client.get('/json/urls/{}?privacy=1'.format(key))
+
+            # But now they're the same under this new condition
+            assert with_privacy.json()['urls'][0] == \
+                without_privacy.json()['urls'][0]
 
         # Add a YAML file
         response = self.client.post(

@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase
+from django.test.utils import override_settings
 from unittest.mock import patch
 from ..forms import NotifyForm
 from ..utils import ConfigCache
@@ -35,6 +36,20 @@ class StatefulNotifyTests(SimpleTestCase):
     """
     Test stateless notifications
     """
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_stateful_configuration_with_lock(self):
+        """
+        Test the retrieval of configuration when the lock is set
+        """
+        # our key to use
+        key = 'test_stateful_with_lock'
+
+        # It doesn't matter if there is or isn't any configuration; when this
+        # flag is set. All that overhead is skipped and we're denied access
+        # right off the bat
+        response = self.client.post('/get/{}'.format(key))
+        assert response.status_code == 403
 
     @patch('apprise.Apprise.notify')
     def test_stateful_configuration_io(self, mock_notify):

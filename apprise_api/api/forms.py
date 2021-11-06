@@ -90,6 +90,7 @@ class AddByConfigForm(forms.Form):
         label=_('Configuration'),
         widget=forms.Textarea(),
         max_length=4096,
+        required=False,
     )
 
     def clean_format(self):

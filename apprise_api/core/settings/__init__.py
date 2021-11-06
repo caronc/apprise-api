@@ -75,6 +75,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'core.context_processors.base_url',
                 'api.context_processors.stateful_mode',
+                'api.context_processors.config_lock',
             ],
         },
     },
@@ -118,6 +119,15 @@ STATIC_URL = BASE_URL + '/s/'
 # The location to store Apprise configuration files
 APPRISE_CONFIG_DIR = os.environ.get(
     'APPRISE_CONFIG_DIR', os.path.join(BASE_DIR, 'var', 'config'))
+
+# When set Apprise API Locks itself down so that future (configuration) changes can not be
+# made or accessed.  It disables access to:
+# - the configuration screen: /cfg/{token}
+#    - this in turn makes it so the Apprise CLI tool can not use it's --config= (-c)
+#      options against this server.
+# - the /json/urls/{token} URL would continue to work but always enforce privacy mode
+APPRISE_CONFIG_LOCK = os.environ.get("APPRISE_CONFIG_LOCK", 'no')[0].lower() in (
+    'a', 'y', '1', 't', 'e', '+')
 
 # Stateless posts to /notify/ will resort to this set of URLs if none
 # were otherwise posted with the URL request.

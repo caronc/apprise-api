@@ -8,13 +8,14 @@
     <ul class="tabs config-overview">
       <li class="tab col s4"><a class="active" href="#overview"><i class="material-icons">info</i>
           {% trans "Overview" %}</a></li>
-      <li class="tab col s4"><a href="#config"><i class="material-icons">settings</i> {%trans "Configuration" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s4"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
       </li>
       <li class="tab col s4"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a>
       </li>
     </ul>
   </div>
   <div id="overview" class="col s12">
+    {% if not CONFIG_LOCK %}
     <div class="section">
       <h5>{% trans "Getting Started" %}</h5>
       <ol>
@@ -27,8 +28,7 @@
           {% blocktrans %}
           You can always refer to the
           <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having
-          troubles
-          assembling your URL(s).
+          troubles assembling your URL(s).
           {% endblocktrans %}
         </li>
         <li>
@@ -44,20 +44,40 @@
       <div class="divider"></div>
       <p><strong>
           {% blocktrans %}To get started, the first thing you want to do is define your configuration. Do this by
-          clicking
-          on the <i>Configuration tab</i>.
+          clicking on the <i>Configuration tab</i>.
           {% endblocktrans %}
         </strong></p>
       <div class="divider"></div>
     </div>
+    {% else %}
+      <div class="section">
+        <h5>{% trans "Apprise Configuration is Locked" %}</h5>
+        <p>
+        {% blocktrans %}At this time, the administrator of this server has locked down all configuration. This means
+        That pre-created configuration is securely hidden for the purpose of notification transmission only.
+
+        New configuration can not be set, and existing configuration can not be modified or viewed.
+        {% endblocktrans %}</p>
+      </div>
+    {% endif %}
     <div class="has-config">
       <div class="section">
         <h5>{% trans "Working With Your Configuration" %}</h5>
+        <p>
+        {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
+        <br />
+        <pre><code class="bash">apprise --body="Test Message" \<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/{{key}}?tags=all</code></pre>
+        </p>
+        {% if not CONFIG_LOCK %}
+        <p>
         {% blocktrans %}The following command would cause apprise to retrieve the configuration loaded and
         send a test notification to all of your added services:{% endblocktrans %}
         <br />
         <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
         &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/{{key}}</code></pre>
+        </p>
+        {% endif %}
       </div>
       <div class="section">
         <h5>{% trans "Loaded Configuration" %}</h5>
@@ -69,6 +89,7 @@
     </div>
   </div>
   <div id="config" class="col s12">
+    {% if not CONFIG_LOCK %}
     <p>
       {% blocktrans %}Define your configuration below:{% endblocktrans %}
       <form id="addconfig" action="{% url "add" key %}" method="post">
@@ -78,7 +99,13 @@
         </button>
       </form>
     </p>
+    {% else %}
+    <h5>{% trans "Your Configuration Is Locked" %}</h5>
+    <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}
+
+    {% endif %}
   </div>
+
   <div id="notify" class="col s12">
     <p>
       {% blocktrans %}
@@ -102,7 +129,8 @@
 {% endblock %}
 {% block jsfooter %}
 
-async function update() {
+{% if STATEFUL_MODE != 'disabled' %}
+async function main_init(){
 
   // disable the notification tab until we know for certain
   // a notification is possible
@@ -117,273 +145,322 @@ async function update() {
   document.querySelector('#url-list').textContent = ''
   document.querySelector('#url-list-progress').style.display = null;
 
+{% if not CONFIG_LOCK %}
   // Ensure no-config sections are visible
   document.querySelector('.no-config')
       .style.display = null;
+{% endif %}
 
-  // perform our status check
-  let response = await fetch('{% url "get" key %}', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json;charset=utf-8'
+  // perform a tag retrieval; start with 'all'
+  let tags = ['all'];
+
+  let jsonResponse = await fetch('{% url "json_urls" key %}/?privacy=1', {
+    method: 'GET',
+  })
+  if(jsonResponse.status != 200) {
+    // Take an early exit
+    document.querySelector('#url-list-progress').style.display = 'none';
+    document.querySelector('#url-list').textContent = '{% trans "An error occurred retrieving the list of loaded Apprise URL(s)" %}'
+    return;
+  }
+
+  // Initialize our tags making it easy for an end user to
+  // choose from. Tags are based off ones found in the saved
+  // configuration.
+  const data = await jsonResponse.json();
+  let external_data = tags.concat(data.tags).reduce(function(result, item) {
+    result[item] = null;
+    return result;
+  }, {})
+
+  M.Chips.init(document.querySelectorAll('.chips'), {
+    placeholder: 'Optional Tag',
+    secondaryPlaceholder: 'Another Tag',
+    autocompleteOptions: {
+      data: external_data,
+      minLength: 0
     },
+    onChipAdd: function(e, chip) {
+      var $this = this;
+      $this.chipsData.forEach(function(e, index) {
+        if(!(e.tag in external_data))
+          $this.deleteChip(index);
+      })
+    }
   });
 
-  if(response.status == 204)
-  {
-    // no problem; we simply have no content to retrieve
-    return '';
-  }
-  else if(response.status == 200)
-  {
-    // configuration found
+  // Now build our our loaded list of configuration for our welcome page
+  let urlList = document.createElement('ul');
 
-    // Remove our restrictions on sending notifications
-    document.querySelector('.config-overview li a[href="#notify"]')
-      .parentNode.classList.remove('disabled');
+  // Create a list item for each url retrieved
+  data.urls.forEach(function (entry) {
+    let code = document.createElement('code');
+    let li = document.createElement('li');
+    code.textContent = entry.url;
+    li.setAttribute('class', 'card-panel');
+    li.appendChild(code);
 
-    // get our results
-    let result = await response.json();
+    // Get our tags associate with the URL
+    entry.tags.forEach(function (tag) {
+      let chip = document.createElement('div');
+      chip.setAttribute('class', 'chip');
+      chip.textContent = `🏷️ ${tag}`;
+      li.appendChild(chip);
+    });
 
-    // Set our configuration so it's visible
-    document.querySelector('#id_config').value = result.config;
-    // Set our format
-    document.querySelector('#id_format').value = result.format;
+    urlList.appendChild(li);
+  });
 
-    // dispatch our event to update our select box
-    if (typeof(Event) === 'function') {
-        var event = new Event('change');
-    } else {  // for IE11
-        var event = document.createEvent('Event');
-        event.initEvent('change', true, true);
-    }
-    document.querySelector('#id_format').dispatchEvent(event);
+  // Store our new list
+  document.querySelector('#url-list-progress').style.display = 'none';
+  document.querySelector('#url-list').textContent = ''
+  if(urlList.childNodes.length > 0) {
 
     // Ensure has-config sections are visible
     document.querySelector('.has-config')
         .style.display = null;
 
+    // Remove our restrictions on sending notifications
+    document.querySelector('.config-overview li a[href="#notify"]')
+      .parentNode.classList.remove('disabled');
+
+    {% if not CONFIG_LOCK %}
     // Disable any no-config entries
     document.querySelector('.no-config')
         .style.display = 'none';
+    {% endif %}
 
-    // perform a tag retrieval; start with 'all'
-    let tags = ['all'];
+    // Save our list to the screen
+    document.querySelector('#url-list').appendChild(urlList);
 
-    let jsonResponse = fetch('{% url "json_urls" key %}?privacy=1', {
-      method: 'GET',
-    }).then(function(jsonResponse) {
-      return jsonResponse.json();
-
-    }).then(function (data) {
-      // Initialize our tags making it easy for an end user to
-      // choose from. Tags are based off ones found in the saved
-      // configuration.
-      let external_data = tags.concat(data.tags).reduce(function(result, item) {
-        result[item] = null;
-        return result;
-      }, {})
-
-      M.Chips.init(document.querySelectorAll('.chips'), {
-        placeholder: 'Optional Tag',
-        secondaryPlaceholder: 'Another Tag',
-        autocompleteOptions: {
-          data: external_data,
-          minLength: 0
-        },
-        onChipAdd: function(e, chip) {
-          var $this = this;
-          $this.chipsData.forEach(function(e, index) {
-            if(!(e.tag in external_data))
-              $this.deleteChip(index);
-          })
-        }
-      });
-
-      // Now build our our loaded list of configuration for our welcome page
-      let urlList = document.createElement('ul');
-
-      // Create a list item for each url retrieved
-      data.urls.forEach(function (entry) {
-        let code = document.createElement('code');
-        let li = document.createElement('li');
-        code.textContent = entry.url;
-        li.setAttribute('class', 'card-panel');
-        li.appendChild(code);
-
-        // Get our tags associate with the URL
-        entry.tags.forEach(function (tag) {
-          let chip = document.createElement('div');
-          chip.setAttribute('class', 'chip');
-          chip.textContent = `🏷️ ${tag}`;
-          li.appendChild(chip);
-        });
-
-        urlList.appendChild(li);
-      });
-
-      // Store our new list
-      document.querySelector('#url-list-progress').style.display = 'none';
-      document.querySelector('#url-list').textContent = ''
-      if(urlList.childNodes.length > 0) {
-          document.querySelector('#url-list').appendChild(urlList);
-      } else {
-        document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
-      }
-
-    }).catch(function (err) {
-      // There was an error
-      document.querySelector('#url-list-progress').style.display = 'none';
-      document.querySelector('#url-list').textContent = '{% trans "An error occurred retrieving the list of loaded Apprise URL(s)" %}'
+    {% if not CONFIG_LOCK %}
+    //
+    // Load our configuration now into the configuration tab
+    //
+    let response = await fetch('{% url "get" key %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      },
     });
 
-    return response;
+    if(response.status == 204)
+    {
+      // no problem; we simply have no content to retrieve
+      return '';
+    }
+    else if(response.status == 200)
+    {
+      // configuration found
+
+      // get our results
+      let result = await response.json();
+
+      // Set our configuration so it's visible
+      document.querySelector('#id_config').value = result.config;
+      // Set our format
+      document.querySelector('#id_format').value = result.format;
+
+      // dispatch our event to update our select box
+      if (typeof(Event) === 'function') {
+          var event = new Event('change');
+      } else {  // for IE11
+          var event = document.createEvent('Event');
+          event.initEvent('change', true, true);
+      }
+      document.querySelector('#id_format').dispatchEvent(event);
+    }
+    {% endif %}
+  } else {
+    document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
   }
-  // if we reach here, we failed
+
   return null;
 }
 
-update();
+function config_init() {
+  // over-ride manual submit for a nicer user experience
+  document.querySelector('#addconfig').onsubmit = function(event) {
+    event.preventDefault();
+    const form = this;
+    const body = new URLSearchParams(new FormData(form));
 
-// over-ride manual submit for a nicer user experience
-document.querySelector('#addconfig').onsubmit = function(event) {
-  event.preventDefault();
-  const form = this;
-  const body = new URLSearchParams(new FormData(form));
+    content = document.querySelector('#id_config')
+        .value.replace(/^\s+|\s+$/gm,'');
+    if(content.length) {
+      // perform our status check
+      let response = fetch('{% url "add" key %}', {
+        method: 'POST',
+        body: body,
+      }).then(function(response) {
+         if(response.status == 200)
+         {
+            // update our settings
+            main_init();
 
-  // perform our status check
-  let response = fetch('{% url "add" key %}', {
-    method: 'POST',
-    body: body,
-  }).then(function(response) {
-     if(response.status == 200)
-     {
-        // update our settings
-        update();
+            // user notification
+            Swal.fire(
+              '{% trans "Save" %}',
+              '{% trans "Successfully saved the specified URL(s)." %}',
+              'success'
+            );
+         } else if(response.status == 500) {
+            // Disk issue
+            Swal.fire(
+              '{% trans "Save" %}',
+              '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
+              'error'
+            );
+         } else {
+            // user notification
+            Swal.fire(
+              '{% trans "Save" %}',
+              '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
+              'error'
+            );
+         }
+      });
+    } else {
+       // Perform Delete
+      // perform our status check
+      let response = fetch('{% url "del" key %}', {
+        method: 'POST',
+        body: body,
+      }).then(function(response) {
+         if(response.status == 200 || response.status == 204)
+         {
+            // update our settings
+            main_init();
 
-        // user notification
-        Swal.fire(
-          '{% trans "Save" %}',
-          '{% trans "Successfully saved the specified URL(s)." %}',
-          'success'
-        );
-     } else if(response.status == 500) {
-        // Disk issue
-        Swal.fire(
-          '{% trans "Save" %}',
-          '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
-          'error'
-        );
-     } else {
-        // user notification
-        Swal.fire(
-          '{% trans "Save" %}',
-          '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
-          'error'
-        );
-     }
-  });
-  return false;
-}
-
-// over-ride manual submit for a nicer user experience
-document.querySelector('#donotify').onsubmit = function(event) {
-  event.preventDefault();
-
-  const chipElement = document.querySelector('.chips');
-
-  chipElement.querySelector('.chips');
-  const chipInput = document.querySelector('.chips > input');
-  if(chipInput.value) {
-    // This code just handles text typed in the tag section that was
-    // not submitted. This forces any lingering un-committed text
-    // into a tag just prior to it's submission
-    const ev = new KeyboardEvent('keydown', {
-      altKey:false,
-      bubbles: true,
-      cancelBubble: false,
-      cancelable: true,
-      charCode: 0,
-      code: "Enter",
-      composed: true,
-      ctrlKey: false,
-      currentTarget: null,
-      defaultPrevented: true,
-      detail: 0,
-      eventPhase: 0,
-      isComposing: false,
-      isTrusted: true,
-      key: "Enter",
-      keyCode: 13,
-      location: 0,
-      metaKey: false,
-      repeat: false,
-      returnValue: false,
-      shiftKey: false,
-      type: "keydown",
-      which: 13
-    });
-    chipInput.dispatchEvent(ev);
-  }
-
-  // store tags (as comma separated string) from materialize chip type into form
-  document.querySelector('#id_tag').value = M.Chips.getInstance(chipElement).chipsData.reduce(
-    function(s, a){
-      s.push(a.tag)
-      return s;
-    }, []).join(",")
-
-  const form = this;
-  const body = new URLSearchParams(new FormData(form));
-
-  // perform our notification
-  Swal.fire(
-    '{% trans "Notification" %}',
-    '{% trans "Sending notification(s)..." %}',
-  );
-  Swal.showLoading()
-  let response = fetch('{% url "notify" key %}', {
-    method: 'POST',
-    body: body,
-    headers: {
-      'Accept': 'text/html',
-      'X-Apprise-Log-Level': 'info'
+            // user notification
+            Swal.fire(
+              '{% trans "Delete" %}',
+              '{% trans "Successfully removed configuration." %}',
+              'success'
+            );
+         } else {
+            // user notification
+            Swal.fire(
+              '{% trans "Delete" %}',
+              '{% trans "There was an issue removing the configuration." %}',
+              'error'
+            );
+         }
+      });
     }
-  }).then(function(response) {
-     response.text().then(function (html) {
-       if(response.status == 200)
-       {
-          // user notification
-          Swal.fire(
-            '{% trans "Notification" %}',
-            '{% trans "Successfully sent the notification(s)." %}' + html,
-            'success'
-          );
-       } else if(response.status == 424) {
-          // user notification
-          Swal.fire(
-            '{% trans "Notification" %}',
-            '{% trans "One or more of the notification(s) were not sent." %}' + html,
-            'warning'
-          );
-       } else {
-          // user notification
-          Swal.fire(
-            '{% trans "Notification" %}',
-            '{% trans "Failed to send the notification(s)." %}' + html,
-            'error'
-          );
-       }
-     });
-  });
-  return false;
+    return false;
+  }
 }
+
+function notify_init() {
+  // over-ride manual submit for a nicer user experience
+  document.querySelector('#donotify').onsubmit = function(event) {
+    event.preventDefault();
+
+    const chipElement = document.querySelector('.chips');
+
+    chipElement.querySelector('.chips');
+    const chipInput = document.querySelector('.chips > input');
+    if(chipInput.value) {
+      // This code just handles text typed in the tag section that was
+      // not submitted. This forces any lingering un-committed text
+      // into a tag just prior to it's submission
+      const ev = new KeyboardEvent('keydown', {
+        altKey:false,
+        bubbles: true,
+        cancelBubble: false,
+        cancelable: true,
+        charCode: 0,
+        code: "Enter",
+        composed: true,
+        ctrlKey: false,
+        currentTarget: null,
+        defaultPrevented: true,
+        detail: 0,
+        eventPhase: 0,
+        isComposing: false,
+        isTrusted: true,
+        key: "Enter",
+        keyCode: 13,
+        location: 0,
+        metaKey: false,
+        repeat: false,
+        returnValue: false,
+        shiftKey: false,
+        type: "keydown",
+        which: 13
+      });
+      chipInput.dispatchEvent(ev);
+    }
+
+    // store tags (as comma separated string) from materialize chip type into form
+    document.querySelector('#id_tag').value = M.Chips.getInstance(chipElement).chipsData.reduce(
+      function(s, a){
+        s.push(a.tag)
+        return s;
+      }, []).join(",")
+
+    const form = this;
+    const body = new URLSearchParams(new FormData(form));
+
+    // perform our notification
+    Swal.fire(
+      '{% trans "Notification" %}',
+      '{% trans "Sending notification(s)..." %}',
+    );
+    Swal.showLoading()
+    let response = fetch('{% url "notify" key %}', {
+      method: 'POST',
+      body: body,
+      headers: {
+        'Accept': 'text/html',
+        'X-Apprise-Log-Level': 'info'
+      }
+    }).then(function(response) {
+       response.text().then(function (html) {
+         if(response.status == 200)
+         {
+            // user notification
+            Swal.fire(
+              '{% trans "Notification" %}',
+              '{% trans "Successfully sent the notification(s)." %}' + html,
+              'success'
+            );
+         } else if(response.status == 424) {
+            // user notification
+            Swal.fire(
+              '{% trans "Notification" %}',
+              '{% trans "One or more of the notification(s) were not sent." %}' + html,
+              'warning'
+            );
+         } else {
+            // user notification
+            Swal.fire(
+              '{% trans "Notification" %}',
+              '{% trans "Failed to send the notification(s)." %}' + html,
+              'error'
+            );
+         }
+       });
+    });
+    return false;
+  }
+}
+
+/* Initialize our page */
+main_init();
+{% if not CONFIG_LOCK %}
+/* Initialze our configuration */
+config_init();
+{% endif %}
+notify_init();
+{% endif %}
 {% endblock %}
 
 {% block onload %}
+{% if STATEFUL_MODE != 'disabled' %}
 {{ block.super }}
 document.querySelector('label [for="id_tag"]')
-
 {
   // create a new div with the class 'chips' assigned to it
   const element = document.createElement('div')
@@ -395,4 +472,5 @@ document.querySelector('label [for="id_tag"]')
 
 // Hide tag field since we use the pretty Materialize Chip setup instead
 document.querySelector('#id_tag').style.display = 'none';
+{% endif %}
 {% endblock %}
