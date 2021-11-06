@@ -113,6 +113,22 @@ class AddTests(SimpleTestCase):
         )
         assert response.status_code == 200
 
+        # Test with JSON (and no payload provided)
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        assert response.status_code == 400
+
+        # Test with XML which simply isn't supported
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data='<urls><url>mailto://user:pass@yahoo.ca</url></urls>',
+            content_type='application/xml',
+        )
+        assert response.status_code == 400
+
         # Invalid JSON
         response = self.client.post(
             '/add/{}'.format(key),
