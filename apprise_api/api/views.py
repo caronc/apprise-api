@@ -80,6 +80,7 @@ class ResponseCode(object):
     okay = 200
     no_content = 204
     bad_request = 400
+    no_access = 403
     not_found = 404
     method_not_allowed = 405
     failed_dependency = 424
@@ -125,6 +126,22 @@ class AddView(View):
         """
         Handle a POST request
         """
+        # Detect the format our response should be in
+        json_response = MIME_IS_JSON.match(request.content_type) is not None
+
+        if settings.APPRISE_CONFIG_LOCK:
+            # General Access Control
+            msg = _('The site has been configured to deny this request.')
+            status = ResponseCode.no_access
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
+
         # our content
         content = {}
         if MIME_IS_FORM.match(request.content_type):
@@ -137,7 +154,7 @@ class AddView(View):
             if form.is_valid():
                 content.update(form.cleaned_data)
 
-        elif MIME_IS_JSON.match(request.content_type):
+        elif json_response:
             # Prepare our default response
             try:
                 # load our JSON content
@@ -145,14 +162,26 @@ class AddView(View):
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...
-                return HttpResponse(
-                    _('Invalid JSON specified.'),
-                    status=ResponseCode.bad_request)
+                return JsonResponse({
+                        'error': _('Invalid JSON specified.'),
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=ResponseCode.bad_request,
+                )
 
         if not content:
-            return HttpResponse(
-                _('The message format is not supported.'),
-                status=ResponseCode.bad_request)
+            # No information was posted
+            msg = _('The message format is not supported.')
+            status = ResponseCode.bad_request
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
 
         # Create ourselves an apprise object to work with
         a_obj = apprise.Apprise()
@@ -161,27 +190,45 @@ class AddView(View):
             a_obj.add(content['urls'])
             if not len(a_obj):
                 # No URLs were loaded
-                return HttpResponse(
-                    _('No valid URLs were found.'),
-                    status=ResponseCode.bad_request,
+                msg = _('No valid URLs were found.')
+                status = ResponseCode.bad_request
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
                 )
 
             if not ConfigCache.put(
                     key, '\r\n'.join([s.url() for s in a_obj]),
                     apprise.ConfigFormat.TEXT):
 
-                return HttpResponse(
-                    _('The configuration could not be saved.'),
-                    status=ResponseCode.internal_server_error,
+                msg = _('The configuration could not be saved.')
+                status = ResponseCode.internal_server_error
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
                 )
 
         elif 'config' in content:
             fmt = content.get('format', '').lower()
             if fmt not in [i[0] for i in CONFIG_FORMATS]:
                 # Format must be one supported by apprise
-                return HttpResponse(
-                    _('The format specified is invalid.'),
-                    status=ResponseCode.bad_request,
+                msg = _('The format specified is invalid.')
+                status = ResponseCode.bad_request
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
                 )
 
             # prepare our apprise config object
@@ -195,9 +242,15 @@ class AddView(View):
             # Load our configuration
             if not ac_obj.add_config(content['config'], format=fmt):
                 # The format could not be detected
-                return HttpResponse(
-                    _('The configuration format could not be detected.'),
-                    status=ResponseCode.bad_request,
+                msg = _('The configuration format could not be detected.')
+                status = ResponseCode.bad_request
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
                 )
 
             # Add our configuration
@@ -206,24 +259,44 @@ class AddView(View):
             if not len(a_obj):
                 # No specified URL(s) were loaded due to
                 # mis-configuration on the caller's part
-                return HttpResponse(
-                    _('No valid URL(s) were specified.'),
-                    status=ResponseCode.bad_request,
+                msg = _('No valid URL(s) were specified.')
+                status = ResponseCode.bad_request
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
                 )
 
             if not ConfigCache.put(
                     key, content['config'], fmt=ac_obj[0].config_format):
                 # Something went very wrong; return 500
-                return HttpResponse(
-                    _('An error occured saving configuration.'),
-                    status=ResponseCode.internal_server_error,
+                msg = _('An error occured saving configuration.')
+                status = ResponseCode.internal_server_error
+
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
                 )
+
         else:
             # No configuration specified; we're done
-            return HttpResponse(
-                _('No configuration specified.'),
-                status=ResponseCode.bad_request,
-            )
+            msg = _('No configuration specified.')
+            status = ResponseCode.bad_request
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                       'error': msg,
+                   },
+                   encoder=JSONEncoder,
+                   safe=False,
+                   status=status,
+               )
 
         # If we reach here; we successfully loaded the configuration so we can
         # go ahead and write it to disk and alert our caller of the success.
@@ -242,19 +315,47 @@ class DelView(View):
         """
         Handle a POST request
         """
+        # Detect the format our response should be in
+        json_response = MIME_IS_JSON.match(request.content_type) is not None
+
+        if settings.APPRISE_CONFIG_LOCK:
+            # General Access Control
+            msg = _('The site has been configured to deny this request.')
+            status = ResponseCode.no_access
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
+
         # Clear the key
         result = ConfigCache.clear(key)
         if result is None:
-            return HttpResponse(
-                _('There was no configuration to remove.'),
-                status=ResponseCode.no_content,
+            msg = _('There was no configuration to remove.')
+            status = ResponseCode.no_content
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
             )
 
         elif result is False:
             # There was a failure at the os level
-            return HttpResponse(
-                _('The configuration could not be removed.'),
-                status=ResponseCode.internal_server_error,
+            msg = _('The configuration could not be removed.')
+            status = ResponseCode.internal_server_error
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
             )
 
         # Removed content
@@ -276,6 +377,20 @@ class GetView(View):
 
         # Detect the format our response should be in
         json_response = MIME_IS_JSON.match(request.content_type) is not None
+
+        if settings.APPRISE_CONFIG_LOCK:
+            # General Access Control
+            return HttpResponse(
+                _('The site has been configured to deny this request.'),
+                status=ResponseCode.no_access,
+            ) if not json_response else JsonResponse({
+                    'error':
+                    _('The site has been configured to deny this request.')
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=ResponseCode.no_access,
+            )
 
         config, format = ConfigCache.get(key)
         if config is None:
@@ -299,15 +414,15 @@ class GetView(View):
                 )
 
             # Something went very wrong; return 500
-            return HttpResponse(
-                _('An error occured accessing configuration.'),
-                status=ResponseCode.internal_server_error,
-            ) if not json_response else JsonResponse({
-                    'error': _('There was no configuration found.')
+            msg = _('An error occured accessing configuration.')
+            status = ResponseCode.internal_server_error
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
                 },
                 encoder=JSONEncoder,
                 safe=False,
-                status=ResponseCode.internal_server_error,
+                status=status,
             )
 
         # Our configuration was retrieved; now our response varies on whether
@@ -342,6 +457,9 @@ class NotifyView(View):
         """
         Handle a POST request
         """
+        # Detect the format our response should be in
+        json_response = MIME_IS_JSON.match(request.content_type) is not None
+
         # our content
         content = {}
         if MIME_IS_FORM.match(request.content_type):
@@ -350,7 +468,7 @@ class NotifyView(View):
             if form.is_valid():
                 content.update(form.cleaned_data)
 
-        elif MIME_IS_JSON.match(request.content_type):
+        elif json_response:
             # Prepare our default response
             try:
                 # load our JSON content
@@ -358,31 +476,54 @@ class NotifyView(View):
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...
-                return HttpResponse(
+                return JsonResponse(
                     _('Invalid JSON specified.'),
+                    encoder=JSONEncoder,
+                    safe=False,
                     status=ResponseCode.bad_request)
 
         if not content:
             # We could not handle the Content-Type
-            return HttpResponse(
-                _('The message format is not supported.'),
-                status=ResponseCode.bad_request)
+            msg = _('The message format is not supported.')
+            status = ResponseCode.bad_request
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
 
         # Some basic error checking
         if not content.get('body') or \
                 content.get('type', apprise.NotifyType.INFO) \
                 not in apprise.NOTIFY_TYPES:
 
-            return HttpResponse(
-                _('An invalid payload was specified.'),
-                status=ResponseCode.bad_request)
+            msg = _('An invalid payload was specified.')
+            status = ResponseCode.bad_request
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
 
         # Acquire our body format (if identified)
         body_format = content.get('format', apprise.NotifyFormat.TEXT)
         if body_format and body_format not in apprise.NOTIFY_FORMATS:
-            return HttpResponse(
-                _('An invalid body input format was specified.'),
-                status=ResponseCode.bad_request)
+            msg = _('An invalid body input format was specified.')
+            status = ResponseCode.bad_request
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
 
         # If we get here, we have enough information to generate a notification
         # with.
@@ -396,15 +537,27 @@ class NotifyView(View):
             #   config != None: we simply have no data
             if format is not None:
                 # no content to return
-                return HttpResponse(
-                    _('There was no configuration found.'),
-                    status=ResponseCode.no_content,
+                msg = _('There was no configuration found.')
+                status = ResponseCode.no_content
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
                 )
 
             # Something went very wrong; return 500
-            return HttpResponse(
-                _('An error occured accessing configuration.'),
-                status=ResponseCode.internal_server_error,
+            msg = _('An error occured accessing configuration.')
+            status = ResponseCode.internal_server_error
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
             )
 
         # Prepare ourselves a default Asset
@@ -493,11 +646,16 @@ class NotifyView(View):
         if not result:
             # If at least one notification couldn't be sent; change up
             # the response to a 424 error code
-            return HttpResponse(
-                response if response is not None else
-                _('One or more notification could not be sent.'),
-                content_type=content_type,
-                status=ResponseCode.failed_dependency)
+            msg = _('One or more notification could not be sent.')
+            status = ResponseCode.failed_dependency
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
 
         # Return our retrieved content
         return HttpResponse(
@@ -633,8 +791,9 @@ class JsonUrlView(View):
 
         # Privacy flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
-        privacy = request.GET.get('privacy', 'no')[0] in (
-            'a', 'y', '1', 't', 'e', '+')
+        privacy = settings.APPRISE_CONFIG_LOCK or \
+            request.GET.get('privacy', 'no')[0] in (
+                'a', 'y', '1', 't', 'e', '+')
 
         # Optionally filter on tags. Use comma to identify more then one
         tag = request.GET.get('tag', 'all')

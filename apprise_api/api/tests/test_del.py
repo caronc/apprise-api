@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase
+from django.test.utils import override_settings
 from unittest.mock import patch
 
 
@@ -34,6 +35,18 @@ class DelTests(SimpleTestCase):
         """
         response = self.client.get('/del/**invalid-key**')
         assert response.status_code == 404
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_del_with_lock(self):
+        """
+        Test deleting a configuration by URLs with lock set won't work
+        """
+        # our key to use
+        key = 'test_delete_with_lock'
+
+        # We simply do not have permission to do so
+        response = self.client.post('/del/{}'.format(key))
+        assert response.status_code == 403
 
     def test_del_post(self):
         """

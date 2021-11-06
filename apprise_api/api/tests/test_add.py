@@ -25,6 +25,7 @@
 from django.test import SimpleTestCase
 from apprise import ConfigFormat
 from unittest.mock import patch
+from django.test.utils import override_settings
 from ..forms import AUTO_DETECT_CONFIG_KEYWORD
 import json
 
@@ -37,6 +38,19 @@ class AddTests(SimpleTestCase):
         """
         response = self.client.get('/add/**invalid-key**')
         assert response.status_code == 404
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_save_config_by_urls_with_lock(self):
+        """
+        Test adding a configuration by URLs with lock set won't work
+        """
+        # our key to use
+        key = 'test_save_config_by_urls_with_lock'
+
+        # We simply do not have permission to do so
+        response = self.client.post(
+            '/add/{}'.format(key), {'urls': 'mailto://user:pass@yahoo.ca'})
+        assert response.status_code == 403
 
     def test_save_config_by_urls(self):
         """
@@ -98,6 +112,22 @@ class AddTests(SimpleTestCase):
             content_type='application/json',
         )
         assert response.status_code == 200
+
+        # Test with JSON (and no payload provided)
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        assert response.status_code == 400
+
+        # Test with XML which simply isn't supported
+        response = self.client.post(
+            '/add/{}'.format(key),
+            data='<urls><url>mailto://user:pass@yahoo.ca</url></urls>',
+            content_type='application/xml',
+        )
+        assert response.status_code == 400
 
         # Invalid JSON
         response = self.client.post(

@@ -196,11 +196,12 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
 | `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
+| `APPRISE_CONFIG_LOCK` | Locks down your API hosting so that you can no longer delete/update/access stateful information. Your configuration is still referenced when stateful calls are made to `/notify`.  The idea of this switch is to allow someone to set their (Apprise) configuration up and then as an added security tactic, they may choose to lock their configuration down (in a read-only state). Those who use the Apprise CLI tool may still do it, however the `--config` (`-c`) switch will not successfully reference this access point anymore. You can however use the `apprise://` plugin without any problem ([see here for more details](https://github.com/caronc/apprise/wiki/Notify_apprise_api)). This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
 | `BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
 | `LOG_LEVEL`    | Adjust the log level to the console. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
-| `DEBUG`            | This defaults to `False` however can be set to `True` if defined with a non-zero value (such as `1`).
+| `DEBUG`            | This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 
 
 ## Development Environment
@@ -249,10 +250,10 @@ A scenario where you want to poll the API for your configuration:
 ```bash
 # A simple example of the Apprise CLI
 # pulling down previously stored configuration
-apprise --body="test message" --config=http://localhost:8000/get/{KEY}
+apprise -vvv --body="test message" --config=http://localhost:8000/get/{KEY}
 ```
 
-You can also leverage the `import` parameter supported in Apprise configuration files.
+You can also leverage the `import` parameter supported in Apprise configuration files if `APPRISE_CONFIG_LOCK` isn't set on the server you're accessing:
 
 ```nginx
 # Linux users can place this in ~/.apprise
@@ -266,14 +267,41 @@ Now you'll just automatically source the configuration file without the need of 
 
 ```bash
 # Configuration is automatically loaded from our server.
-apprise --body="my notification"
+apprise -vvv --body="my notification"
 ```
 
 If you used tagging, then you can notify the specific service like so:
 
 ```bash
 # Configuration is automatically loaded from our server.
-apprise --tag=devops --body="Tell James GitLab is down again."
+apprise -vvv --tag=devops --body="Tell James GitLab is down again."
+```
+
+
+If you're server has the `APPRISE_CONFIG_LOCK` set, you can still leverage [the `apprise://` plugin](https://github.com/caronc/apprise/wiki/Notify_apprise_api) to trigger our pre-saved notifications:
+```bash
+# Swap {KEY} with your apprise key you configured on your API
+apprise -vvv --body="There are donut's in the front hall if anyone wants any" \
+   apprise://localhost:8000/{KEY}
+```
+
+Alternatively we can set this up in a configuration file and even tie our local tags to our upstream ones like so:
+```nginx
+# Linux users can place this in ~/.apprise
+# Windows users can place this info in %APPDATA%/Apprise/apprise
+
+# Swap {KEY} with your apprise key you configured on your API
+devteam=apprise://localhost:8000/{KEY}?tags=devteam
+
+# the only catch is you need to map your tags on the local server to the tags
+# you want to pass upstream to your Apprise server using this method.
+# In the above we tied the local keyword `friends` to the apprise server using the tag `friends`
+```
+
+We could trigger our notification to our friends now like:
+```bash
+# Trigger our service:
+apprise -vvv --tag=devteam --body="Guys, don't forget about the audit tomorrow morning."
 ```
 
 ### AppriseConfig() Pull Example

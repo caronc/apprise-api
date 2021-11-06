@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from .utils import ConfigCache
+from django.conf import settings
 
 
 def stateful_mode(request):
@@ -30,3 +31,10 @@ def stateful_mode(request):
     Returns our loaded Stateful Mode
     """
     return {'STATEFUL_MODE': ConfigCache.mode}
+
+
+def config_lock(request):
+    """
+    Returns the state of our global configuration lock
+    """
+    return {'CONFIG_LOCK': settings.APPRISE_CONFIG_LOCK}

@@ -52,7 +52,6 @@ textarea {
 }
 .tabs .tab a:hover,.tabs .tab a.active {
 	background-color:transparent;
-/*	color:#2bbbad;*/
 	color:#004d40;
 	font-weight: bold;
 	background-color: #eee;
@@ -63,6 +62,15 @@ textarea {
 .tabs .indicator {
 	background-color:#004d40;
 }
+.tabs .tab-locked a {
+  /* Handle locked out tabs */
+	color:rgba(212, 161, 157, 0.7);
+}
+.tabs .tab-locked a:hover,.tabs .tab-locked a.active {
+  /* Handle locked out tabs */
+	color: #6b0900;
+}
+
 .material-icons{
     display: inline-flex;
     vertical-align: middle;
