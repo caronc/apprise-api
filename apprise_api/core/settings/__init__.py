@@ -125,8 +125,17 @@ APPRISE_CONFIG_DIR = os.environ.get(
 # - the configuration screen: /cfg/{token}
 #    - this in turn makes it so the Apprise CLI tool can not use it's
 #        --config= (-c) options against this server.
-# - the /json/urls/{token} URL would continue to work but always enforce
-# privacy mode
+# - All notifications (both persistent and non persistent) continue to work
+#   as they did before. This includes both /notify/{token}/ and /notify/
+# - Certain API calls no longer work such as:
+#    - /del/{token}/
+#    - /add/{token}/
+# - the /json/urls/{token} API location will continue to work but will always
+#   enforce it's privacy mode.
+#
+# The idea here is that someone has set up the configuration they way they want
+# and do not want this information exposed any more then it needs to be.
+# it's a lock down mode if you will.
 APPRISE_CONFIG_LOCK = \
     os.environ.get("APPRISE_CONFIG_LOCK", 'no')[0].lower() in (
         'a', 'y', '1', 't', 'e', '+')
