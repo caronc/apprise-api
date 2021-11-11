@@ -3,6 +3,14 @@
   font-size: 2.1rem;
   font-weight: bold;
   text-transform: uppercase;
+  float: left;
+}
+
+/* Apprise Version */
+.nav i {
+  float: right;
+	font-style: normal;
+  font-size: 0.7rem;
 }
 
 code {
@@ -40,6 +48,12 @@ textarea {
 
 .collapsible-body {
   padding: 1rem 2rem;
+}
+
+#overview strong {
+	color: #004d40;
+	display: inline-block;
+  background-color: #eee;
 }
 
 .tabs .tab a{

@@ -26,17 +26,28 @@
         </li>
         <li>
           {% blocktrans %}
-          You can always refer to the
-          <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having
-          troubles assembling your URL(s).
-          {% endblocktrans %}
-        </li>
-        <li>
-          {% blocktrans %}
           In the future you can return to this configuration screen at any time by placing the following into your
           browser:
           {% endblocktrans %}
           <code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/{{key}}</code>
+        </li>
+        <li>
+          {% blocktrans %}
+          Use the <strong><i class="material-icons">settings</i> Configuration</strong> section to prepare and save your Apprise configuration.
+          {% endblocktrans %}
+      <ul>
+        <li>
+          {% blocktrans %}
+          <i class="material-icons">lightbulb_outline</i>You can always refer to the
+          <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
+          {% endblocktrans %}
+        </li>
+      </ul>
+        </li>
+        <li>
+          {% blocktrans %}
+          Use the <strong><i class="material-icons">announcement</i> Notifications</strong> section to test out your saved configuration.
+          {% endblocktrans %}
         </li>
       </ol>
     </div>
@@ -62,7 +73,7 @@
     {% endif %}
     <div class="has-config">
       <div class="section">
-        <h5>{% trans "Working With Your Configuration" %}</h5>
+        <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
         <p>
         {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
         <br />
