@@ -76,6 +76,7 @@ TEMPLATES = [
                 'core.context_processors.base_url',
                 'api.context_processors.stateful_mode',
                 'api.context_processors.config_lock',
+                'api.context_processors.apprise_version',
             ],
         },
     },

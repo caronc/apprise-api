@@ -24,6 +24,7 @@
 # THE SOFTWARE.
 from .utils import ConfigCache
 from django.conf import settings
+import apprise
 
 
 def stateful_mode(request):
@@ -38,3 +39,10 @@ def config_lock(request):
     Returns the state of our global configuration lock
     """
     return {'CONFIG_LOCK': settings.APPRISE_CONFIG_LOCK}
+
+
+def apprise_version(request):
+    """
+    Returns the current version of apprise loaded under the hood
+    """
+    return {'APPRISE_VERSION': apprise.__version__}
