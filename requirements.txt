@@ -1,4 +1,5 @@
 django
+cryptography == 3.3
 apprise == 0.9.5.1
 
 # 3rd party service support
