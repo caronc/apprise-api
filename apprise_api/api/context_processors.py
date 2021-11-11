@@ -40,6 +40,7 @@ def config_lock(request):
     """
     return {'CONFIG_LOCK': settings.APPRISE_CONFIG_LOCK}
 
+
 def apprise_version(request):
     """
     Returns the current version of apprise loaded under the hood
