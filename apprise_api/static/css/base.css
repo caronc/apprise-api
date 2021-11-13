@@ -42,6 +42,12 @@ em {
 	font-weight:bold;
 }
 
+.no-config .info {
+	color: #004d40;
+  font-size: 3.3rem;
+
+}
+
 textarea {
 	height: 16rem;
 }
