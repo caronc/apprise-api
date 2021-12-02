@@ -41,7 +41,7 @@ class GetTests(SimpleTestCase):
         """
 
         # our key to use
-        key = 'test_get_config'
+        key = 'test_get_config_'
 
         # GET returns 405 (not allowed)
         response = self.client.get('/get/{}'.format(key))
@@ -49,7 +49,7 @@ class GetTests(SimpleTestCase):
 
         # No content saved to the location yet
         response = self.client.post('/get/{}'.format(key))
-        assert response.status_code == 204
+        self.assertEqual(response.status_code, 204)
 
         # Add some content
         response = self.client.post(

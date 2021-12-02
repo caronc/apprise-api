@@ -89,6 +89,9 @@ class StatelessNotifyTests(SimpleTestCase):
         Test sending multiple notifications where one fails
         """
 
+        # Ensure we're enabled for the purpose of our testing
+        apprise.plugins.SCHEMA_MAP['mailto'].enabled = True
+
         # Set our return value; first we return a true, then we fail
         # on the second call
         mock_notify.side_effect = (True, False)
@@ -110,7 +113,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 424
         assert mock_notify.call_count == 2
 
-    @override_settings(APPRISE_STATELESS_URLS="windows://")
+    @override_settings(APPRISE_STATELESS_URLS="mailto://user:pass@localhost")
     @patch('apprise.Apprise.notify')
     def test_notify_default_urls(self, mock_notify):
         """
@@ -249,3 +252,152 @@ class StatelessNotifyTests(SimpleTestCase):
         # Still supported
         assert response.status_code == 400
         assert mock_notify.call_count == 0
+
+    @patch('apprise.plugins.NotifyJSON.send')
+    def test_notify_with_filters(self, mock_send):
+        """
+        Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES
+        """
+
+        # Set our return value
+        mock_send.return_value = True
+
+        # Preare our JSON data
+        json_data = {
+            'urls': 'json://user:pass@yahoo.ca',
+            'body': 'test notifiction',
+            'type': apprise.NotifyType.WARNING,
+        }
+
+        # Send our notification as a JSON object
+        response = self.client.post(
+            '/notify',
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+
+        # Ensure we're enabled for the purpose of our testing
+        apprise.plugins.SCHEMA_MAP['json'].enabled = True
+
+        # Send our service with the `json://` denied
+        with override_settings(APPRISE_ALLOW_SERVICES=""):
+            with override_settings(APPRISE_DENY_SERVICES="json"):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify',
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # json:// is disabled
+                assert response.status_code == 204
+                assert mock_send.call_count == 0
+
+                # What actually took place behind close doors:
+                assert apprise.plugins.SCHEMA_MAP['json'].enabled is False
+
+                # Reset our flag (for next test)
+                apprise.plugins.SCHEMA_MAP['json'].enabled = True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `json://` denied
+        with override_settings(APPRISE_ALLOW_SERVICES=""):
+            with override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify',
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # json:// is enabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # Verify that json was never turned off
+                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `json://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="json"):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify',
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # json:// is enabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # Verify email was never turned off
+                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `json://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="invalid, jsons"):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify',
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # json:// is enabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # Verify email was never turned off
+                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `json://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="syslog"):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify',
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # json:// is disabled
+                assert response.status_code == 204
+                assert mock_send.call_count == 0
+
+                # What actually took place behind close doors:
+                assert apprise.plugins.SCHEMA_MAP['json'].enabled is False
+
+                # Reset our flag (for next test)
+                apprise.plugins.SCHEMA_MAP['json'].enabled = True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Test case where there is simply no over-rides defined
+        with override_settings(APPRISE_ALLOW_SERVICES=""):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify',
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # json:// is disabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # nothing was changed
+                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True

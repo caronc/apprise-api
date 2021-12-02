@@ -150,3 +150,16 @@ APPRISE_STATELESS_URLS = os.environ.get('APPRISE_STATELESS_URLS', '')
 # - simple: content is just written straight to disk 'as-is'
 # - disabled: disable all stateful functionality
 APPRISE_STATEFUL_MODE = os.environ.get('APPRISE_STATEFUL_MODE', 'hash')
+
+# Our Apprise Deny List
+# - By default we disable all non-remote calling servicess
+# - You do not need to identify every schema supported by the service you
+#   wish to disable (only one).  For example, if you were to specify
+#   xml, that would include the xmls entry as well (or vs versa)
+APPRISE_DENY_SERVICES = os.environ.get('APPRISE_DENY_SERVICES', ','.join((
+    'windows', 'dbus', 'gnome', 'macosx', 'syslog')))
+
+# Our Apprise Exclusive Allow List
+#  - anything not identified here is denied/disabled)
+#  - this list trumps the APPRISE_DENY_SERVICES identified above
+APPRISE_ALLOW_SERVICES = os.environ.get('APPRISE_ALLOW_SERVICES', '')
