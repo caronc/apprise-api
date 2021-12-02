@@ -113,6 +113,93 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 424
         assert mock_notify.call_count == 2
 
+    @override_settings(APPRISE_RECURSION_MAX=1)
+    @patch('apprise.Apprise.notify')
+    def test_stateless_notify_recursion(self, mock_notify):
+        """
+        Test recursion an id header details as part of post
+        """
+
+        # Set our return value
+        mock_notify.return_value = True
+
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            'HTTP_X-APPRISE-RECURSION-COUNT': str(1),
+        }
+
+        # Preare our form data (without url specified)
+        # content will fall back to default configuration
+        form_data = {
+            'urls': 'mailto://user:pass@hotmail.com',
+            'body': 'test notifiction',
+        }
+
+        # At a minimum 'body' is requred
+        form = NotifyByUrlForm(data=form_data)
+        assert form.is_valid()
+
+        # recursion value is within correct limits
+        response = self.client.post('/notify', form.cleaned_data, **headers)
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        headers = {
+            # Header specified but with whitespace
+            'HTTP_X-APPRISE-ID': '  ',
+            # No Recursion value specified
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # Recursion limit reached
+        response = self.client.post('/notify', form.cleaned_data, **headers)
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            # Recursion Limit hit
+            'HTTP_X-APPRISE-RECURSION-COUNT': str(2),
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # Recursion limit reached
+        response = self.client.post('/notify', form.cleaned_data, **headers)
+        assert response.status_code == 406
+        assert mock_notify.call_count == 0
+
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            # Negative recursion value (bad request)
+            'HTTP_X-APPRISE-RECURSION-COUNT': str(-1),
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # invalid recursion specified
+        response = self.client.post('/notify', form.cleaned_data, **headers)
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            # Invalid recursion value (bad request)
+            'HTTP_X-APPRISE-RECURSION-COUNT': 'invalid',
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # invalid recursion specified
+        response = self.client.post('/notify', form.cleaned_data, **headers)
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
     @override_settings(APPRISE_STATELESS_URLS="mailto://user:pass@localhost")
     @patch('apprise.Apprise.notify')
     def test_notify_default_urls(self, mock_notify):

@@ -492,3 +492,99 @@ class NotifyTests(SimpleTestCase):
 
                 # nothing was changed
                 assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+
+    @override_settings(APPRISE_RECURSION_MAX=1)
+    @patch('apprise.Apprise.notify')
+    def test_stateful_notify_recursion(self, mock_notify):
+        """
+        Test recursion an id header details as part of post
+        """
+
+        # Set our return value
+        mock_notify.return_value = True
+
+        # our key to use
+        key = 'test_stateful_notify_recursion'
+
+        # Add some content
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'urls': 'mailto://user:pass@yahoo.ca'})
+        assert response.status_code == 200
+
+        # Form data
+        form_data = {
+            'body': 'test notifiction',
+        }
+
+        # Define our headers we plan to pass along with our request
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            'HTTP_X-APPRISE-RECURSION-COUNT': str(1),
+        }
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), data=form_data, **headers)
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        headers = {
+            # Header specified but with whitespace
+            'HTTP_X-APPRISE-ID': '  ',
+            # No Recursion value specified
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # Recursion limit reached
+        response = self.client.post(
+            '/notify/{}'.format(key), data=form_data, **headers)
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            # Recursion Limit hit
+            'HTTP_X-APPRISE-RECURSION-COUNT': str(2),
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # Recursion limit reached
+        response = self.client.post(
+            '/notify/{}'.format(key), data=form_data, **headers)
+        assert response.status_code == 406
+        assert mock_notify.call_count == 0
+
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            # Negative recursion value (bad request)
+            'HTTP_X-APPRISE-RECURSION-COUNT': str(-1),
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # invalid recursion specified
+        response = self.client.post(
+            '/notify/{}'.format(key), data=form_data, **headers)
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        headers = {
+            'HTTP_X-APPRISE-ID': 'abc123',
+            # Invalid recursion value (bad request)
+            'HTTP_X-APPRISE-RECURSION-COUNT': 'invalid',
+        }
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        # invalid recursion specified
+        response = self.client.post(
+            '/notify/{}'.format(key), data=form_data, **headers)
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0

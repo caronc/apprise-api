@@ -163,3 +163,9 @@ APPRISE_DENY_SERVICES = os.environ.get('APPRISE_DENY_SERVICES', ','.join((
 #  - anything not identified here is denied/disabled)
 #  - this list trumps the APPRISE_DENY_SERVICES identified above
 APPRISE_ALLOW_SERVICES = os.environ.get('APPRISE_ALLOW_SERVICES', '')
+
+# Define the number of recursive calls your system will allow users to make
+# The idea here is to prevent people from defining apprise:// URL's triggering
+# a call to the same server again, and again and again. By default we allow
+# 1 level of recursion
+APPRISE_RECURSION_MAX = int(os.environ.get('APPRISE_RECURSION_MAX', 1))
