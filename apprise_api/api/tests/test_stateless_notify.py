@@ -200,7 +200,6 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
-
     @override_settings(APPRISE_STATELESS_URLS="mailto://user:pass@localhost")
     @patch('apprise.Apprise.notify')
     def test_notify_default_urls(self, mock_notify):
