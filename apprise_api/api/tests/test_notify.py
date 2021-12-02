@@ -22,7 +22,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from unittest.mock import patch
 from ..forms import NotifyForm
 import json
@@ -342,3 +342,153 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
         assert response['content-type'] == 'text/html'
+
+    @patch('apprise.plugins.NotifyEmail.send')
+    def test_notify_with_filters(self, mock_send):
+        """
+        Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES
+        """
+
+        # Set our return value
+        mock_send.return_value = True
+
+        # our key to use
+        key = 'test_notify_with_restrictions'
+
+        # Add some content
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'urls': 'mailto://user:pass@yahoo.ca'})
+        assert response.status_code == 200
+
+        # Preare our JSON data
+        json_data = {
+            'body': 'test notifiction',
+            'type': apprise.NotifyType.WARNING,
+        }
+
+        # Verify by default email is enabled
+        assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+
+        # Send our service with the `mailto://` denied
+        with override_settings(APPRISE_ALLOW_SERVICES=""):
+            with override_settings(APPRISE_DENY_SERVICES="mailto"):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify/{}'.format(key),
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # mailto:// is disabled
+                assert response.status_code == 424
+                assert mock_send.call_count == 0
+
+                # What actually took place behind close doors:
+                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is False
+
+                # Reset our flag (for next test)
+                apprise.plugins.SCHEMA_MAP['mailto'].enabled = True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `mailto://` denied
+        with override_settings(APPRISE_ALLOW_SERVICES=""):
+            with override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify/{}'.format(key),
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # mailto:// is enabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # Verify that mailto was never turned off
+                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `mailto://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="mailto"):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify/{}'.format(key),
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # mailto:// is enabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # Verify email was never turned off
+                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `mailto://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="invalid, mailtos"):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify/{}'.format(key),
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # mailto:// is enabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # Verify email was never turned off
+                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `mailto://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="syslog"):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify/{}'.format(key),
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # mailto:// is disabled
+                assert response.status_code == 424
+                assert mock_send.call_count == 0
+
+                # What actually took place behind close doors:
+                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is False
+
+                # Reset our flag (for next test)
+                apprise.plugins.SCHEMA_MAP['mailto'].enabled = True
+
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Test case where there is simply no over-rides defined
+        with override_settings(APPRISE_ALLOW_SERVICES=""):
+            with override_settings(APPRISE_DENY_SERVICES=""):
+                # Send our notification as a JSON object
+                response = self.client.post(
+                    '/notify/{}'.format(key),
+                    data=json.dumps(json_data),
+                    content_type='application/json',
+                )
+
+                # json:// is disabled
+                assert response.status_code == 200
+                assert mock_send.call_count == 1
+
+                # nothing was changed
+                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True

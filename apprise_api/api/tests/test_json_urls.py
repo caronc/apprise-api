@@ -54,7 +54,7 @@ class JsonUrlsTests(SimpleTestCase):
 
         # Nothing to return
         response = self.client.get('/json/urls/{}'.format(key))
-        assert response.status_code == 204
+        self.assertEqual(response.status_code, 204)
 
         # Add some content
         response = self.client.post(

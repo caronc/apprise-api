@@ -46,6 +46,12 @@ import apprise
 import json
 import re
 
+# import the logging library
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger('django')
+
 # Content-Type Parsing
 # application/x-www-form-urlencoded
 # application/x-www-form-urlencoded
@@ -560,6 +566,63 @@ class NotifyView(View):
                 status=status,
             )
 
+        #
+        # Apply Any Global Filters (if identified)
+        #
+        if settings.APPRISE_ALLOW_SERVICES:
+            alphanum_re = re.compile(
+                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
+            entries = \
+                [alphanum_re.match(x).group('name').lower()
+                 for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
+                 if alphanum_re.match(x)]
+
+            for plugin in set(apprise.plugins.SCHEMA_MAP.values()):
+                if entries:
+                    # Get a list of the current schema's associated with
+                    # a given plugin
+                    schemas = set(apprise.plugins.details(plugin)
+                                  ['tokens']['schema']['values'])
+
+                    # Check what was defined and see if there is a hit
+                    for entry in entries:
+                        if entry in schemas:
+                            # We had a hit; we're done
+                            break
+
+                    if entry in schemas:
+                        entries.remove(entry)
+                        # We can keep this plugin enabled and move along to the
+                        # next one...
+                        continue
+
+                # if we reach here, we have to block our plugin
+                plugin.enabled = False
+
+            for entry in entries:
+                # Generate some noise for those who have bad configurations
+                logger.warning(
+                    'APPRISE_ALLOW_SERVICES plugin %s:// was not found - '
+                    'ignoring.', entry)
+
+        elif settings.APPRISE_DENY_SERVICES:
+            alphanum_re = re.compile(
+                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
+            entries = \
+                [alphanum_re.match(x).group('name').lower()
+                 for x in re.split(r'[ ,]+', settings.APPRISE_DENY_SERVICES)
+                 if alphanum_re.match(x)]
+
+            for name in entries:
+                try:
+                    # Force plugin to be disabled
+                    apprise.plugins.SCHEMA_MAP[name].enabled = False
+
+                except KeyError:
+                    logger.warning(
+                        'APPRISE_DENY_SERVICES plugin %s:// was not found -'
+                        ' ignoring.', name)
+
         # Prepare ourselves a default Asset
         asset = None if not body_format else \
             apprise.AppriseAsset(body_format=body_format)
@@ -648,7 +711,7 @@ class NotifyView(View):
             # the response to a 424 error code
             msg = _('One or more notification could not be sent.')
             status = ResponseCode.failed_dependency
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(response if response else msg, status=status) \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -725,6 +788,63 @@ class StatelessNotifyView(View):
         # Prepare ourselves a default Asset
         asset = None if not body_format else \
             apprise.AppriseAsset(body_format=body_format)
+
+        #
+        # Apply Any Global Filters (if identified)
+        #
+        if settings.APPRISE_ALLOW_SERVICES:
+            alphanum_re = re.compile(
+                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
+            entries = \
+                [alphanum_re.match(x).group('name').lower()
+                 for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
+                 if alphanum_re.match(x)]
+
+            for plugin in set(apprise.plugins.SCHEMA_MAP.values()):
+                if entries:
+                    # Get a list of the current schema's associated with
+                    # a given plugin
+                    schemas = set(apprise.plugins.details(plugin)
+                                  ['tokens']['schema']['values'])
+
+                    # Check what was defined and see if there is a hit
+                    for entry in entries:
+                        if entry in schemas:
+                            # We had a hit; we're done
+                            break
+
+                    if entry in schemas:
+                        entries.remove(entry)
+                        # We can keep this plugin enabled and move along to the
+                        # next one...
+                        continue
+
+                # if we reach here, we have to block our plugin
+                plugin.enabled = False
+
+            for entry in entries:
+                # Generate some noise for those who have bad configurations
+                logger.warning(
+                    'APPRISE_ALLOW_SERVICES plugin %s:// was not found - '
+                    'ignoring.', entry)
+
+        elif settings.APPRISE_DENY_SERVICES:
+            alphanum_re = re.compile(
+                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
+            entries = \
+                [alphanum_re.match(x).group('name').lower()
+                 for x in re.split(r'[ ,]+', settings.APPRISE_DENY_SERVICES)
+                 if alphanum_re.match(x)]
+
+            for name in entries:
+                try:
+                    # Force plugin to be disabled
+                    apprise.plugins.SCHEMA_MAP[name].enabled = False
+
+                except KeyError:
+                    logger.warning(
+                        'APPRISE_DENY_SERVICES plugin %s:// was not found -'
+                        ' ignoring.', name)
 
         # Prepare our apprise object
         a_obj = apprise.Apprise(asset=asset)
