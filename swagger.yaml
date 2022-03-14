@@ -1,0 +1,198 @@
+openapi: '3.0.3'
+info:
+  title: Apprise API
+  description: https://github.com/caronc/apprise-api
+  version: 0.7.0
+paths:
+  /notify:
+    post:
+      operationId: Stateless_SendNotification
+      summary: Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable APPRISE_STATELESS_URLS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/StatelessNotificationRequest'
+      responses:
+        200:
+          description: OK
+      tags:
+        - Stateless
+  /add/{key}:
+    post:
+      operationId: Persistent_AddConfiguration
+      summary: Saves Apprise Configuration (or set of URLs) to the persistent store.
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+          description: Configuration key
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/AddConfigurationRequest'
+      responses:
+        200:
+          description: OK
+      tags:
+        - Persistent
+  /del/{key}:
+    post:
+      operationId: Persistent_RemoveConfiguration
+      summary: Removes Apprise Configuration from the persistent store.
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        200:
+          description: OK
+      tags:
+        - Persistent
+  /get/{key}:
+    post:
+      operationId: Persistent_GetConfiguration
+      summary: Returns the Apprise Configuration from the persistent store.
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+      tags:
+        - Persistent
+  /notify/{key}:
+    post:
+      operationId: Persistent_SendNotification
+      summary: Sends notification(s) to all of the end points you've previously configured associated with a {KEY}.
+      parameters:
+        - $ref: '#/components/parameters/key'
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/PersistentNotificationRequest'
+      responses:
+        200:
+          description: OK
+      tags:
+        - Persistent
+  /json/urls/{key}:
+    get:
+      operationId: Persistent_GetUrls
+      summary: Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - in: query
+          name: privacy
+          schema:
+            type: integer
+            enum: [0, 1]
+            # This should be changed to use 'oneOf' when upgrading to OpenApi 3.1
+            x-enumNames: ["ShowSecrets", "HideSecrets"]
+          required: false
+        - in: query
+          name: tag
+          schema:
+            type: string
+            default: all
+          required: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonUrlsResponse'
+      tags:
+        - Persistent
+      
+components:
+  parameters:
+    key:
+      in: path
+      name: key
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: Configuration key
+  schemas:
+    NotificationType:
+      type: string
+      enum: [info, warning, failure]
+      default: info
+    NotificationFormat:
+      type: string
+      enum: [text, markdown, html]
+      default: text
+    StatelessNotificationRequest:
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+        body:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        format:
+          $ref: '#/components/schemas/NotificationFormat'
+        tag:
+          type: string
+      required:
+        - body
+    AddConfigurationRequest:
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          default: null
+        config:
+          type: string
+        format:
+          type: string
+          enum: [text, yaml]
+    PersistentNotificationRequest:
+      properties:
+        body:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        format:
+          $ref: '#/components/schemas/NotificationFormat'
+        tag:
+          type: string
+          default: all
+      required:
+        - body
+    JsonUrlsResponse:
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+        urls:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/url'
+    url:
+      properties:
+        url:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
