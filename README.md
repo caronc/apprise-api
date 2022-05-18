@@ -22,7 +22,7 @@ There is a small built-in *Configuration Manager* that can be optionally accesse
 Below is a screenshot of how you can assign your Apprise URLs to your `{KEY}`. You can define both TEXT or YAML [Apprise configurations](https://github.com/caronc/apprise/wiki/config).<br/>
 ![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
 
-Once you've saved your configuration, you'll be able to use the *Notification* tab to send you're messages to one or more of the services you defined in your configuration. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them.
+Once you've saved your configuration, you'll be able to use the *Notification* tab to send your messages to one or more of the services you defined in your configuration. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them.
 ![Screenshot of GUI - Notifications](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-3.png)
 
 At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
