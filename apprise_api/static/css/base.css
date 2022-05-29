@@ -50,6 +50,7 @@ em {
 
 textarea {
 	height: 16rem;
+  font-family: monospace;
 }
 
 .collapsible-body {
