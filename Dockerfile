@@ -1,5 +1,5 @@
 ARG ARCH
-FROM ${ARCH}python:3.8-slim
+FROM ${ARCH}python:3.10-slim
 
 # set version label
 ARG BUILD_DATE
