@@ -2,7 +2,7 @@
 
 Take advantage of [Apprise](https://github.com/caronc/apprise) through your network with a user-friendly API.
 
-- Send notifications to more then 70+ services.
+- Send notifications to more then 80+ services.
 - An incredibly lightweight gateway to Apprise.
 - A production ready micro-service at your disposal.
 
@@ -92,7 +92,7 @@ The following architectures are supported: `386`, `amd64`, `arm/v6`, `arm/v7`, a
 
 ## Apprise URLs
 
-📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you wish to leverage. Apprise supports over 65+ notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
+📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you wish to leverage. Apprise supports over 80+ notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
 
 ## API Details
 
