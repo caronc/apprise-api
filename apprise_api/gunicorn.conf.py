@@ -22,6 +22,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import os
 import multiprocessing
 
 # This file is launched with the call:
@@ -41,7 +42,8 @@ bind = [
 ]
 
 # Workers are relative to the number of CPU's provided by hosting server
-workers = multiprocessing.cpu_count() * 2 + 1
+workers = int(os.environ.get(
+    'APPRISE_WORKER_COUNT', multiprocessing.cpu_count() * 2 + 1))
 
 # Increase worker timeout value to give upstream services time to
 # respond
