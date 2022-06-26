@@ -471,6 +471,7 @@ class NotifyView(View):
         content = {}
         if MIME_IS_FORM.match(request.content_type):
             content = {}
+
             form = NotifyForm(request.POST)
             if form.is_valid():
                 content.update(form.cleaned_data)
@@ -501,6 +502,34 @@ class NotifyView(View):
                 safe=False,
                 status=status,
             )
+
+        #
+        # Allow 'tag' value to be specified as part of the URL parameters
+        # if not found otherwise defined.
+        #
+        if not content.get('tag') and 'tag' in request.GET:
+            content['tag'] = request.GET['tag']
+
+        #
+        # Allow 'format' value to be specified as part of the URL
+        # parameters if not found otherwise defined.
+        #
+        if not content.get('format') and 'format' in request.GET:
+            content['format'] = request.GET['format']
+
+        #
+        # Allow 'type' value to be specified as part of the URL parameters
+        # if not found otherwise defined.
+        #
+        if not content.get('type') and 'type' in request.GET:
+            content['type'] = request.GET['type']
+
+        #
+        # Allow 'title' value to be specified as part of the URL parameters
+        # if not found otherwise defined.
+        #
+        if not content.get('title') and 'title' in request.GET:
+            content['title'] = request.GET['title']
 
         # Some basic error checking
         if not content.get('body') or \

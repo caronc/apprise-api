@@ -24,6 +24,7 @@
 # THE SOFTWARE.
 from django.test import SimpleTestCase, override_settings
 from unittest.mock import patch
+import requests
 from ..forms import NotifyForm
 import json
 import apprise
@@ -72,6 +73,98 @@ class NotifyTests(SimpleTestCase):
             '/notify/{}'.format(key), form.cleaned_data)
         assert response.status_code == 200
         assert mock_notify.call_count == 1
+
+    @patch('requests.post')
+    def test_notify_with_tags(self, mock_post):
+        """
+        Test notification handling when setting tags
+        """
+
+        # Disable Throttling to speed testing
+        apprise.plugins.NotifyBase.request_rate_per_sec = 0
+        # Ensure we're enabled for the purpose of our testing
+        apprise.plugins.SCHEMA_MAP['json'].enabled = True
+
+        # Prepare our response
+        response = requests.Request()
+        response.status_code = requests.codes.ok
+        mock_post.return_value = response
+
+        # our key to use
+        key = 'test_notify_with_tags'
+
+        # Valid Yaml Configuration
+        config = """
+        urls:
+          - json://user:pass@localhost:
+              tag: home
+        """
+
+        # Load our configuration (it will be detected as YAML)
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'config': config})
+        assert response.status_code == 200
+
+        # Preare our form data
+        form_data = {
+            'body': 'test notifiction',
+            'type': apprise.NotifyType.INFO,
+            'format': apprise.NotifyFormat.TEXT,
+        }
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        # Nothing could be notified as there were no tag matches
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Now let's send our notification by specifying the tag in the
+        # parameters
+        response = self.client.post(
+            '/notify/{}?tag=home'.format(key), form_data)
+
+        # Our notification was sent
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+
+        # Preare our form data (body is actually the minimum requirement)
+        # All of the rest of the variables can actually be over-ridden
+        # by the GET Parameter (ONLY if not otherwise identified in the
+        # payload). The Payload contents of the POST request always take
+        # priority to eliminate any ambiguity
+        form_data = {
+            'body': 'test notifiction',
+        }
+
+        # Reset our count
+        mock_post.reset_mock()
+
+        # Send our notification by specifying the tag in the parameters
+        response = self.client.post(
+            '/notify/{}?tag=home&format={}&type={}&title={}&body=ignored'
+            .format(
+                key, apprise.NotifyFormat.TEXT,
+                apprise.NotifyType.WARNING, "Test Title"),
+            form_data,
+            content_type='application/json')
+
+        # Our notification was sent
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        assert response['title'] == "Test Title"
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.WARNING
 
     @patch('apprise.NotifyBase.notify')
     def test_partial_notify_by_loaded_urls(self, mock_notify):
