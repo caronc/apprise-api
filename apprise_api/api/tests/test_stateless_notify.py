@@ -366,6 +366,9 @@ class StatelessNotifyTests(SimpleTestCase):
         # Ensure we're enabled for the purpose of our testing
         apprise.plugins.SCHEMA_MAP['json'].enabled = True
 
+        # Reset Mock
+        mock_send.reset_mock()
+
         # Send our service with the `json://` denied
         with override_settings(APPRISE_ALLOW_SERVICES=""):
             with override_settings(APPRISE_DENY_SERVICES="json"):
