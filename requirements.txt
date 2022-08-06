@@ -1,7 +1,6 @@
 django
-apprise == 0.9.9
+apprise == 1.0.0
 
 # 3rd party service support
-slixmpp
 paho-mqtt
 gntp
