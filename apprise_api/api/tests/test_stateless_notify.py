@@ -90,7 +90,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
 
         # Ensure we're enabled for the purpose of our testing
-        apprise.plugins.SCHEMA_MAP['mailto'].enabled = True
+        apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled = True
 
         # Set our return value; first we return a true, then we fail
         # on the second call
@@ -364,7 +364,7 @@ class StatelessNotifyTests(SimpleTestCase):
         )
 
         # Ensure we're enabled for the purpose of our testing
-        apprise.plugins.SCHEMA_MAP['json'].enabled = True
+        apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -384,10 +384,11 @@ class StatelessNotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 0
 
                 # What actually took place behind close doors:
-                assert apprise.plugins.SCHEMA_MAP['json'].enabled is False
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled is False
 
                 # Reset our flag (for next test)
-                apprise.plugins.SCHEMA_MAP['json'].enabled = True
+                apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -407,7 +408,7 @@ class StatelessNotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # Verify that json was never turned off
-                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True
+                assert apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -427,7 +428,7 @@ class StatelessNotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # Verify email was never turned off
-                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True
+                assert apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -447,7 +448,7 @@ class StatelessNotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # Verify email was never turned off
-                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True
+                assert apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -467,10 +468,11 @@ class StatelessNotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 0
 
                 # What actually took place behind close doors:
-                assert apprise.plugins.SCHEMA_MAP['json'].enabled is False
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled is False
 
                 # Reset our flag (for next test)
-                apprise.plugins.SCHEMA_MAP['json'].enabled = True
+                apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -490,4 +492,4 @@ class StatelessNotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # nothing was changed
-                assert apprise.plugins.SCHEMA_MAP['json'].enabled is True
+                assert apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled is True

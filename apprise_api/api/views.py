@@ -607,7 +607,7 @@ class NotifyView(View):
                  for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
                  if alphanum_re.match(x)]
 
-            for plugin in set(apprise.plugins.SCHEMA_MAP.values()):
+            for plugin in set(apprise.common.NOTIFY_SCHEMA_MAP.values()):
                 if entries:
                     # Get a list of the current schema's associated with
                     # a given plugin
@@ -646,7 +646,7 @@ class NotifyView(View):
             for name in entries:
                 try:
                     # Force plugin to be disabled
-                    apprise.plugins.SCHEMA_MAP[name].enabled = False
+                    apprise.common.NOTIFY_SCHEMA_MAP[name].enabled = False
 
                 except KeyError:
                     logger.warning(
@@ -900,7 +900,7 @@ class StatelessNotifyView(View):
                  for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
                  if alphanum_re.match(x)]
 
-            for plugin in set(apprise.plugins.SCHEMA_MAP.values()):
+            for plugin in set(apprise.common.NOTIFY_SCHEMA_MAP.values()):
                 if entries:
                     # Get a list of the current schema's associated with
                     # a given plugin
@@ -939,7 +939,7 @@ class StatelessNotifyView(View):
             for name in entries:
                 try:
                     # Force plugin to be disabled
-                    apprise.plugins.SCHEMA_MAP[name].enabled = False
+                    apprise.common.NOTIFY_SCHEMA_MAP[name].enabled = False
 
                 except KeyError:
                     logger.warning(
