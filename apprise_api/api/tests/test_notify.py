@@ -83,7 +83,7 @@ class NotifyTests(SimpleTestCase):
         # Disable Throttling to speed testing
         apprise.plugins.NotifyBase.request_rate_per_sec = 0
         # Ensure we're enabled for the purpose of our testing
-        apprise.plugins.SCHEMA_MAP['json'].enabled = True
+        apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled = True
 
         # Prepare our response
         response = requests.Request()
@@ -461,7 +461,7 @@ class NotifyTests(SimpleTestCase):
         }
 
         # Verify by default email is enabled
-        assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+        assert apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled is True
 
         # Send our service with the `mailto://` denied
         with override_settings(APPRISE_ALLOW_SERVICES=""):
@@ -478,10 +478,11 @@ class NotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 0
 
                 # What actually took place behind close doors:
-                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is False
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled is False
 
                 # Reset our flag (for next test)
-                apprise.plugins.SCHEMA_MAP['mailto'].enabled = True
+                apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -501,7 +502,8 @@ class NotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # Verify that mailto was never turned off
-                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -521,7 +523,8 @@ class NotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # Verify email was never turned off
-                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -541,7 +544,8 @@ class NotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # Verify email was never turned off
-                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -561,10 +565,12 @@ class NotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 0
 
                 # What actually took place behind close doors:
-                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is False
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['mailto']\
+                    .enabled is False
 
                 # Reset our flag (for next test)
-                apprise.plugins.SCHEMA_MAP['mailto'].enabled = True
+                apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
@@ -584,7 +590,8 @@ class NotifyTests(SimpleTestCase):
                 assert mock_send.call_count == 1
 
                 # nothing was changed
-                assert apprise.plugins.SCHEMA_MAP['mailto'].enabled is True
+                assert \
+                    apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled is True
 
     @override_settings(APPRISE_RECURSION_MAX=1)
     @patch('apprise.Apprise.notify')
