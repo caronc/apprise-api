@@ -2,7 +2,7 @@
 
 Take advantage of [Apprise](https://github.com/caronc/apprise) through your network with a user-friendly API.
 
-- Send notifications to more then 80+ services.
+- Send notifications to more than 80+ services.
 - An incredibly lightweight gateway to Apprise.
 - A production ready micro-service at your disposal.
 
