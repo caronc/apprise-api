@@ -1,5 +1,5 @@
 django
-apprise == 1.1.0
+apprise == 1.2.0
 
 # 3rd party service support
 paho-mqtt
