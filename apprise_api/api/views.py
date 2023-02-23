@@ -68,6 +68,21 @@ MIME_IS_FORM = re.compile(
 MIME_IS_JSON = re.compile(
     r'(text|application)/(x-)?json', re.I)
 
+# Tags separated by space , &, or + are and'ed together
+# Tags separated by commas (even commas wrapped in spaces) are "or'ed" together
+# We start with a regular expression used to clean up provided tags
+TAG_VALIDATION_RE = re.compile(r'^\s*[a-z0-9\s| ,_-]+\s*$', re.IGNORECASE)
+
+# In order to separate our tags only by comma's or '|' entries found
+TAG_DETECT_RE = re.compile(
+    r'\s*([a-z0-9\s_&+-]+)(?=$|\s*[|,]\s*[a-z0-9\s&+_-|,])', re.I)
+
+# Break apart our objects anded together
+TAG_AND_DELIM_RE = re.compile(r'[\s&+]+')
+
+MIME_IS_JSON = re.compile(
+    r'(text|application)/(x-)?json', re.I)
+
 
 class JSONEncoder(DjangoJSONEncoder):
     """
@@ -595,6 +610,43 @@ class NotifyView(View):
         #
         if not content.get('tag') and 'tag' in request.GET:
             content['tag'] = request.GET['tag']
+
+        if content.get('tag'):
+            # Validation - Tag Logic:
+            # "TagA"                        : TagA
+            # "TagA, TagB"                  : TagA OR TagB
+            # ['TagA', 'TagB']              : TagA OR TagB
+            # [('TagA', 'TagC'), 'TagB']    : (TagA AND TagC) OR TagB
+            # [('TagB', 'TagC')]            : TagB AND TagC
+
+            if not TAG_VALIDATION_RE.match(content.get('tag')):
+                msg = _('Unsupported characters found in tag definition.')
+                status = ResponseCode.bad_request
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+
+            # If we get here, our specified tag was valid
+            tags = []
+            for _tag in TAG_DETECT_RE.findall(content.get('tag')):
+                tag = _tag.strip()
+                if not tag:
+                    continue
+
+                # Disect our results
+                group = TAG_AND_DELIM_RE.split(tag)
+                if len(group) > 1:
+                    tags.append(tuple(group))
+                else:
+                    tags.append(tag)
+
+            # Update our tag block
+            content['tag'] = tags
 
         #
         # Allow 'format' value to be specified as part of the URL
