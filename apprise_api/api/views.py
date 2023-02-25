@@ -124,7 +124,8 @@ class DetailsView(View):
         # Detect the format our response should be in
         json_response = MIME_IS_JSON.match(request.content_type \
             if request.content_type \
-            else request.headers.get('content-type', '')) is not None
+            else request.headers.get(
+                'accept', request.headers.get('content-type', ''))) is not None
 
         # Show All flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
@@ -188,7 +189,8 @@ class AddView(View):
         # Detect the format our response should be in
         json_response = MIME_IS_JSON.match(request.content_type \
             if request.content_type \
-            else request.headers.get('content-type', '')) is not None
+            else request.headers.get(
+                'accept', request.headers.get('content-type', ''))) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -379,7 +381,8 @@ class DelView(View):
         # Detect the format our response should be in
         json_response = MIME_IS_JSON.match(request.content_type \
             if request.content_type \
-            else request.headers.get('content-type', '')) is not None
+            else request.headers.get(
+                'accept', request.headers.get('content-type', ''))) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -441,7 +444,8 @@ class GetView(View):
         # Detect the format our response should be in
         json_response = MIME_IS_JSON.match(request.content_type \
             if request.content_type \
-            else request.headers.get('content-type', '')) is not None
+            else request.headers.get(
+                'accept', request.headers.get('content-type', ''))) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -525,7 +529,8 @@ class NotifyView(View):
         # Detect the format our response should be in
         json_response = MIME_IS_JSON.match(request.content_type \
             if request.content_type \
-            else request.headers.get('content-type', '')) is not None
+            else request.headers.get(
+                'accept', request.headers.get('content-type', ''))) is not None
 
         # our content
         content = {}

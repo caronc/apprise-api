@@ -24,6 +24,9 @@
 # THE SOFTWARE.
 import os
 
+# Disable Timezones
+USE_TZ = False
+
 # Base Directory (relative to settings)
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -52,6 +52,13 @@ class DetailTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         assert response['Content-Type'].startswith('application/json')
 
+        # JSON Response
+        response = self.client.get(
+            '/details', content_type='application/json',
+            **{'HTTP_ACCEPT': 'application/json'})
+        self.assertEqual(response.status_code, 200)
+        assert response['Content-Type'].startswith('application/json')
+
         response = self.client.get('/details?all=yes')
         self.assertEqual(response.status_code, 200)
         assert response['Content-Type'].startswith('text/html')
@@ -60,5 +67,12 @@ class DetailTests(SimpleTestCase):
         response = self.client.get(
             '/details?all=yes', content_type='application/json',
             **{'HTTP_CONTENT_TYPE': 'application/json'})
+        self.assertEqual(response.status_code, 200)
+        assert response['Content-Type'].startswith('application/json')
+
+        # JSON Response
+        response = self.client.get(
+            '/details?all=yes', content_type='application/json',
+            **{'HTTP_ACCEPT': 'application/json'})
         self.assertEqual(response.status_code, 200)
         assert response['Content-Type'].startswith('application/json')
