@@ -76,7 +76,7 @@
         <div class="collapsible-body">
           <pre><code class="bash">
               #{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
-              curl -H "Content-Type: application/json" \<br />
+              curl -H "Accept: application/json" \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"
             </code></pre>
         </div>
@@ -93,7 +93,7 @@
               req = Request(<br />
               &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
               &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{"Accept": "application/json"},<br />
               &nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
               )
             </code></pre>
@@ -114,7 +114,7 @@
               $ch = curl_init($url);<br />
               <br />
               //Set the content type to application/json<br />
-              curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));<br />
+              curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));<br />
               <br />
               //Execute the request<br />
               $result = curl_exec($ch);
