@@ -77,7 +77,7 @@
           <pre><code class="bash">
               #{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
               curl -H "Content-Type: application/json" \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/
+              &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"
             </code></pre>
         </div>
       </li>
@@ -91,7 +91,7 @@
               from urllib.request import Request<br />
               <br /># The URL<br />
               req = Request(<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/",<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
               &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
               &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
               &nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
@@ -108,7 +108,7 @@
               &lt;?php<br />
               <br />
               // The URL<br />
-              $url = '{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/';<br />
+              $url = '{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
               <br />
               //Initiate cURL.<br />
               $ch = curl_init($url);<br />
