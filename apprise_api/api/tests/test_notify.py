@@ -311,7 +311,7 @@ class NotifyTests(SimpleTestCase):
         # Reset our object
         mock_post.reset_mock()
 
-        # Trigger on high OR emergency (some empty garbage at the end to tidy/ignore
+        # Trigger on notify OR cris
         form_data['tag'] = 'notify, cris'
 
         # Send our notification
@@ -339,6 +339,19 @@ class NotifyTests(SimpleTestCase):
         assert response['type'] == apprise.NotifyType.INFO
         # Verify we matched the first entry only
         assert headers['url'] == '3'
+
+        # Reset our object
+        mock_post.reset_mock()
+
+        # Trigger on notify AND cris (should not match anything)
+        form_data['tag'] = 'notify cris'
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
 
         # Reset our object
         mock_post.reset_mock()
