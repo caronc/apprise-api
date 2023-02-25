@@ -76,6 +76,10 @@ class JSONEncoder(DjangoJSONEncoder):
     def default(self, obj):
         if isinstance(obj, set):
             return list(obj)
+
+        elif isinstance(obj, apprise.AppriseLocale.LazyTranslation):
+            return str(obj)
+
         return super().default(obj)
 
 
@@ -102,6 +106,54 @@ class WelcomeView(View):
 
     def get(self, request):
         return render(request, self.template_name, {})
+
+
+@method_decorator((gzip_page, never_cache), name='dispatch')
+class DetailsView(View):
+    """
+    A Django view used to list all supported endpoints
+    """
+
+    template_name = 'details.html'
+
+    def get(self, request):
+        """
+        Handle a GET request
+        """
+
+        # Detect the format our response should be in
+        json_response = MIME_IS_JSON.match(request.content_type \
+            if request.content_type \
+            else request.headers.get('content-type', '')) is not None
+
+        # Show All flag
+        # Support 'yes', '1', 'true', 'enable', 'active', and +
+        show_all = request.GET.get('all', 'no')[0].lower() in (
+                'a', 'y', '1', 't', 'e', '+')
+
+        # Our status
+        status = ResponseCode.okay
+
+        # Create an Apprise Object
+        a_obj = apprise.Apprise()
+
+        # Load our details
+        details = a_obj.details(show_disabled=show_all)
+
+        # Sort our result set
+        details['schemas'] = sorted(
+            details['schemas'], key=lambda i: str(i['service_name']))
+
+        # Return our content
+        return render(request, self.template_name, {
+            'show_all': show_all,
+            'details': details,
+            }, status=status) if not json_response else \
+            JsonResponse(
+                    details,
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status)
 
 
 @method_decorator(never_cache, name='dispatch')
@@ -134,7 +186,9 @@ class AddView(View):
         Handle a POST request
         """
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type) is not None
+        json_response = MIME_IS_JSON.match(request.content_type \
+            if request.content_type \
+            else request.headers.get('content-type', '')) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -323,7 +377,9 @@ class DelView(View):
         Handle a POST request
         """
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type) is not None
+        json_response = MIME_IS_JSON.match(request.content_type \
+            if request.content_type \
+            else request.headers.get('content-type', '')) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -383,7 +439,9 @@ class GetView(View):
         """
 
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type) is not None
+        json_response = MIME_IS_JSON.match(request.content_type \
+            if request.content_type \
+            else request.headers.get('content-type', '')) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -465,7 +523,9 @@ class NotifyView(View):
         Handle a POST request
         """
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type) is not None
+        json_response = MIME_IS_JSON.match(request.content_type \
+            if request.content_type \
+            else request.headers.get('content-type', '')) is not None
 
         # our content
         content = {}
@@ -1012,7 +1072,7 @@ class JsonUrlView(View):
         # Privacy flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
         privacy = settings.APPRISE_CONFIG_LOCK or \
-            request.GET.get('privacy', 'no')[0] in (
+            request.GET.get('privacy', 'no')[0].lower() in (
                 'a', 'y', '1', 't', 'e', '+')
 
         # Optionally filter on tags. Use comma to identify more then one
