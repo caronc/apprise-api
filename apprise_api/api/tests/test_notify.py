@@ -311,6 +311,38 @@ class NotifyTests(SimpleTestCase):
         # Reset our object
         mock_post.reset_mock()
 
+        # Trigger on high OR emergency (some empty garbage at the end to tidy/ignore
+        form_data['tag'] = 'notify, cris'
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        # Our notification was sent
+        assert response.status_code == 200
+        # We'll trigger on 2 entries
+        assert mock_post.call_count == 2
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        headers = mock_post.call_args_list[0][1]['headers']
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+        # Verify we matched the first entry only
+        assert headers['url'] == '1'
+
+        response = json.loads(mock_post.call_args_list[1][1]['data'])
+        headers = mock_post.call_args_list[1][1]['headers']
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+        # Verify we matched the first entry only
+        assert headers['url'] == '3'
+
+        # Reset our object
+        mock_post.reset_mock()
+
         # Invalid characters in our tag
         form_data['tag'] = '$'
 
