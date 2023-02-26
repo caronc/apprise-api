@@ -22,6 +22,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import re
 import os
 import tempfile
 import shutil
@@ -318,3 +319,62 @@ class AppriseConfigCache(object):
 ConfigCache = AppriseConfigCache(
     settings.APPRISE_CONFIG_DIR, salt=settings.SECRET_KEY,
     mode=settings.APPRISE_STATEFUL_MODE)
+
+
+def apply_global_filters():
+    #
+    # Apply Any Global Filters (if identified)
+    #
+    if settings.APPRISE_ALLOW_SERVICES:
+        alphanum_re = re.compile(
+            r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
+        entries = \
+            [alphanum_re.match(x).group('name').lower()
+             for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
+             if alphanum_re.match(x)]
+
+        for plugin in set(apprise.common.NOTIFY_SCHEMA_MAP.values()):
+            if entries:
+                # Get a list of the current schema's associated with
+                # a given plugin
+                schemas = set(apprise.plugins.details(plugin)
+                              ['tokens']['schema']['values'])
+
+                # Check what was defined and see if there is a hit
+                for entry in entries:
+                    if entry in schemas:
+                        # We had a hit; we're done
+                        break
+
+                if entry in schemas:
+                    entries.remove(entry)
+                    # We can keep this plugin enabled and move along to the
+                    # next one...
+                    continue
+
+            # if we reach here, we have to block our plugin
+            plugin.enabled = False
+
+        for entry in entries:
+            # Generate some noise for those who have bad configurations
+            logger.warning(
+                'APPRISE_ALLOW_SERVICES plugin %s:// was not found - '
+                'ignoring.', entry)
+
+    elif settings.APPRISE_DENY_SERVICES:
+        alphanum_re = re.compile(
+            r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
+        entries = \
+            [alphanum_re.match(x).group('name').lower()
+             for x in re.split(r'[ ,]+', settings.APPRISE_DENY_SERVICES)
+             if alphanum_re.match(x)]
+
+        for name in entries:
+            try:
+                # Force plugin to be disabled
+                apprise.common.NOTIFY_SCHEMA_MAP[name].enabled = False
+
+            except KeyError:
+                logger.warning(
+                    'APPRISE_DENY_SERVICES plugin %s:// was not found -'
+                    ' ignoring.', name)

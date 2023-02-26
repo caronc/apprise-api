@@ -35,6 +35,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .utils import ConfigCache
+from .utils import apply_global_filters
 from .forms import AddByUrlForm
 from .forms import AddByConfigForm
 from .forms import NotifyForm
@@ -122,10 +123,13 @@ class DetailsView(View):
         """
 
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type \
-            if request.content_type \
-            else request.headers.get(
-                'accept', request.headers.get('content-type', ''))) is not None
+        json_response = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'accept', request.headers.get(
+                        'content-type', ''))) is not None
 
         # Show All flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
@@ -134,6 +138,11 @@ class DetailsView(View):
 
         # Our status
         status = ResponseCode.okay
+
+        #
+        # Apply Any Global Filters (if identified)
+        #
+        apply_global_filters()
 
         # Create an Apprise Object
         a_obj = apprise.Apprise()
@@ -187,10 +196,13 @@ class AddView(View):
         Handle a POST request
         """
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type \
-            if request.content_type \
-            else request.headers.get(
-                'accept', request.headers.get('content-type', ''))) is not None
+        json_response = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'accept', request.headers.get(
+                        'content-type', ''))) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -379,10 +391,13 @@ class DelView(View):
         Handle a POST request
         """
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type \
-            if request.content_type \
-            else request.headers.get(
-                'accept', request.headers.get('content-type', ''))) is not None
+        json_response = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'accept', request.headers.get(
+                        'content-type', ''))) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -442,10 +457,13 @@ class GetView(View):
         """
 
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type \
-            if request.content_type \
-            else request.headers.get(
-                'accept', request.headers.get('content-type', ''))) is not None
+        json_response = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'accept', request.headers.get(
+                        'content-type', ''))) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -527,10 +545,13 @@ class NotifyView(View):
         Handle a POST request
         """
         # Detect the format our response should be in
-        json_response = MIME_IS_JSON.match(request.content_type \
-            if request.content_type \
-            else request.headers.get(
-                'accept', request.headers.get('content-type', ''))) is not None
+        json_response = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'accept', request.headers.get(
+                        'content-type', ''))) is not None
 
         # our content
         content = {}
@@ -664,59 +685,7 @@ class NotifyView(View):
         #
         # Apply Any Global Filters (if identified)
         #
-        if settings.APPRISE_ALLOW_SERVICES:
-            alphanum_re = re.compile(
-                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
-            entries = \
-                [alphanum_re.match(x).group('name').lower()
-                 for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
-                 if alphanum_re.match(x)]
-
-            for plugin in set(apprise.common.NOTIFY_SCHEMA_MAP.values()):
-                if entries:
-                    # Get a list of the current schema's associated with
-                    # a given plugin
-                    schemas = set(apprise.plugins.details(plugin)
-                                  ['tokens']['schema']['values'])
-
-                    # Check what was defined and see if there is a hit
-                    for entry in entries:
-                        if entry in schemas:
-                            # We had a hit; we're done
-                            break
-
-                    if entry in schemas:
-                        entries.remove(entry)
-                        # We can keep this plugin enabled and move along to the
-                        # next one...
-                        continue
-
-                # if we reach here, we have to block our plugin
-                plugin.enabled = False
-
-            for entry in entries:
-                # Generate some noise for those who have bad configurations
-                logger.warning(
-                    'APPRISE_ALLOW_SERVICES plugin %s:// was not found - '
-                    'ignoring.', entry)
-
-        elif settings.APPRISE_DENY_SERVICES:
-            alphanum_re = re.compile(
-                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
-            entries = \
-                [alphanum_re.match(x).group('name').lower()
-                 for x in re.split(r'[ ,]+', settings.APPRISE_DENY_SERVICES)
-                 if alphanum_re.match(x)]
-
-            for name in entries:
-                try:
-                    # Force plugin to be disabled
-                    apprise.common.NOTIFY_SCHEMA_MAP[name].enabled = False
-
-                except KeyError:
-                    logger.warning(
-                        'APPRISE_DENY_SERVICES plugin %s:// was not found -'
-                        ' ignoring.', name)
+        apply_global_filters()
 
         # Prepare our keyword arguments (to be passed into an AppriseAsset
         # object)
@@ -957,59 +926,7 @@ class StatelessNotifyView(View):
         #
         # Apply Any Global Filters (if identified)
         #
-        if settings.APPRISE_ALLOW_SERVICES:
-            alphanum_re = re.compile(
-                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
-            entries = \
-                [alphanum_re.match(x).group('name').lower()
-                 for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
-                 if alphanum_re.match(x)]
-
-            for plugin in set(apprise.common.NOTIFY_SCHEMA_MAP.values()):
-                if entries:
-                    # Get a list of the current schema's associated with
-                    # a given plugin
-                    schemas = set(apprise.plugins.details(plugin)
-                                  ['tokens']['schema']['values'])
-
-                    # Check what was defined and see if there is a hit
-                    for entry in entries:
-                        if entry in schemas:
-                            # We had a hit; we're done
-                            break
-
-                    if entry in schemas:
-                        entries.remove(entry)
-                        # We can keep this plugin enabled and move along to the
-                        # next one...
-                        continue
-
-                # if we reach here, we have to block our plugin
-                plugin.enabled = False
-
-            for entry in entries:
-                # Generate some noise for those who have bad configurations
-                logger.warning(
-                    'APPRISE_ALLOW_SERVICES plugin %s:// was not found - '
-                    'ignoring.', entry)
-
-        elif settings.APPRISE_DENY_SERVICES:
-            alphanum_re = re.compile(
-                r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
-            entries = \
-                [alphanum_re.match(x).group('name').lower()
-                 for x in re.split(r'[ ,]+', settings.APPRISE_DENY_SERVICES)
-                 if alphanum_re.match(x)]
-
-            for name in entries:
-                try:
-                    # Force plugin to be disabled
-                    apprise.common.NOTIFY_SCHEMA_MAP[name].enabled = False
-
-                except KeyError:
-                    logger.warning(
-                        'APPRISE_DENY_SERVICES plugin %s:// was not found -'
-                        ' ignoring.', name)
+        apply_global_filters()
 
         # Prepare our apprise object
         a_obj = apprise.Apprise(asset=asset)
