@@ -28,6 +28,7 @@ import requests
 from ..forms import NotifyForm
 import json
 import apprise
+from inspect import cleandoc
 
 
 class NotifyTests(SimpleTestCase):
@@ -165,6 +166,207 @@ class NotifyTests(SimpleTestCase):
         assert response['title'] == "Test Title"
         assert response['message'] == form_data['body']
         assert response['type'] == apprise.NotifyType.WARNING
+
+    @patch('requests.post')
+    def test_advanced_notify_with_tags(self, mock_post):
+        """
+        Test advanced notification handling when setting tags
+        """
+
+        # Disable Throttling to speed testing
+        apprise.plugins.NotifyBase.request_rate_per_sec = 0
+        # Ensure we're enabled for the purpose of our testing
+        apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled = True
+
+        # Prepare our response
+        response = requests.Request()
+        response.status_code = requests.codes.ok
+        mock_post.return_value = response
+
+        # our key to use
+        key = 'test_adv_notify_with_tags'
+
+        # Valid Yaml Configuration
+        config = cleandoc("""
+        version: 1
+        tag: panic
+
+        urls:
+          - json://user:pass@localhost?+url=1:
+             tag: devops, notify
+          - json://user:pass@localhost?+url=2:
+             tag: devops, high
+          - json://user:pass@localhost?+url=3:
+             tag: cris, emergency
+        """)
+
+        # Load our configuration (it will be detected as YAML)
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'config': config})
+        assert response.status_code == 200
+
+        # Preare our form data
+        form_data = {
+            'body': 'test notifiction',
+            'type': apprise.NotifyType.INFO,
+            'format': apprise.NotifyFormat.TEXT,
+        }
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        # Nothing could be notified as there were no tag matches
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Let's identify a tag, but note that it won't match anything
+        # parameters
+        response = self.client.post(
+            '/notify/{}?tag=nomatch'.format(key), form_data)
+
+        # Nothing could be notified as there were no tag matches
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Now let's do devops AND notify
+        response = self.client.post(
+            '/notify/{}?tag=devops notify'.format(key), form_data)
+
+        # Our notification was sent
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        headers = mock_post.call_args_list[0][1]['headers']
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+        # Verify we matched the first entry only
+        assert headers['url'] == '1'
+
+        # Reset our object
+        mock_post.reset_mock()
+
+        # Now let's do panic
+        response = self.client.post(
+            '/notify/{}?tag=panic'.format(key), form_data)
+
+        # Our notification was sent to each match
+        assert response.status_code == 200
+        assert mock_post.call_count == 3
+
+        # Reset our object
+        mock_post.reset_mock()
+
+        # Let's store our tag in our form
+        form_data = {
+            'body': 'test notifiction',
+            'type': apprise.NotifyType.INFO,
+            'format': apprise.NotifyFormat.TEXT,
+            # (devops AND cris) OR (notify AND high)
+            'tag': 'devops cris, notify high'
+        }
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        # Nothing could be notified as there were no tag matches in our
+        # form body that matched the anded comnbination
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Trigger on high OR emergency (some empty garbage at the end to tidy/ignore
+        form_data['tag'] = 'high, emergency, , ,'
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        # Our notification was sent
+        assert response.status_code == 200
+        # We'll trigger on 2 entries
+        assert mock_post.call_count == 2
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        headers = mock_post.call_args_list[0][1]['headers']
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+        # Verify we matched the first entry only
+        assert headers['url'] == '2'
+
+        response = json.loads(mock_post.call_args_list[1][1]['data'])
+        headers = mock_post.call_args_list[1][1]['headers']
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+        # Verify we matched the first entry only
+        assert headers['url'] == '3'
+
+        # Reset our object
+        mock_post.reset_mock()
+
+        # Trigger on notify OR cris
+        form_data['tag'] = 'notify, cris'
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        # Our notification was sent
+        assert response.status_code == 200
+        # We'll trigger on 2 entries
+        assert mock_post.call_count == 2
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        headers = mock_post.call_args_list[0][1]['headers']
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+        # Verify we matched the first entry only
+        assert headers['url'] == '1'
+
+        response = json.loads(mock_post.call_args_list[1][1]['data'])
+        headers = mock_post.call_args_list[1][1]['headers']
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+        # Verify we matched the first entry only
+        assert headers['url'] == '3'
+
+        # Reset our object
+        mock_post.reset_mock()
+
+        # Trigger on notify AND cris (should not match anything)
+        form_data['tag'] = 'notify cris'
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Reset our object
+        mock_post.reset_mock()
+
+        # Invalid characters in our tag
+        form_data['tag'] = '$'
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+
+        # Our notification was sent
+        assert response.status_code == 400
+        # We'll trigger on 2 entries
+        assert mock_post.call_count == 0
 
     @patch('apprise.NotifyBase.notify')
     def test_partial_notify_by_loaded_urls(self, mock_notify):
