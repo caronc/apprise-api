@@ -148,3 +148,10 @@ ul.logs li.log_WARNING {
 ul.logs li.log_ERROR {
   color: #8B0000;
 }
+
+.url-enabled {
+  color:#004d40;
+}
+.url-disabled {
+  color: #8B0000;
+}
