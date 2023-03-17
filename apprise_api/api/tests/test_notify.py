@@ -168,6 +168,108 @@ class NotifyTests(SimpleTestCase):
         assert response['type'] == apprise.NotifyType.WARNING
 
     @patch('requests.post')
+    def test_notify_with_tags_via_apprise(self, mock_post):
+        """
+        Test notification handling when setting tags via the Apprise CLI
+        """
+
+        # Disable Throttling to speed testing
+        apprise.plugins.NotifyBase.request_rate_per_sec = 0
+        # Ensure we're enabled for the purpose of our testing
+        apprise.common.NOTIFY_SCHEMA_MAP['json'].enabled = True
+
+        # Prepare our response
+        response = requests.Request()
+        response.status_code = requests.codes.ok
+        mock_post.return_value = response
+
+        # our key to use
+        key = 'test_notify_with_tags_via_apprise'
+
+        # Valid Yaml Configuration
+        config = """
+        urls:
+          - json://user:pass@localhost:
+              tag: home
+        """
+
+        # Load our configuration (it will be detected as YAML)
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'config': config})
+        assert response.status_code == 200
+
+        # Preare our form data
+        form_data = {
+            'body': 'test notifiction',
+            'type': apprise.NotifyType.INFO,
+            'format': apprise.NotifyFormat.TEXT,
+            # Support Array
+            'tag': [('home', 'summer-home')],
+        }
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
+
+        # Nothing could be notified as there were no tag matches for 'home'
+        # AND 'summer-home'
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Update our tags
+        form_data['tag'] = ['home', 'summer-home']
+
+        # Now let's send our notification by specifying the tag in the
+        # parameters
+        response = self.client.post(
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
+
+        # Send our notification
+
+        # Our notification was sent (as we matched 'home' OR' 'summer-home')
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+
+        # Preare our form data (body is actually the minimum requirement)
+        # All of the rest of the variables can actually be over-ridden
+        # by the GET Parameter (ONLY if not otherwise identified in the
+        # payload). The Payload contents of the POST request always take
+        # priority to eliminate any ambiguity
+        form_data = {
+            'body': 'test notifiction',
+        }
+
+        # Reset our count
+        mock_post.reset_mock()
+
+        # Send our notification by specifying the tag in the parameters
+        response = self.client.post(
+            '/notify/{}?tag=home&format={}&type={}&title={}&body=ignored'
+            .format(
+                key, apprise.NotifyFormat.TEXT,
+                apprise.NotifyType.WARNING, "Test Title"),
+            form_data,
+            content_type='application/json')
+
+        # Our notification was sent
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        assert response['title'] == "Test Title"
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.WARNING
+
+    @patch('requests.post')
     def test_advanced_notify_with_tags(self, mock_post):
         """
         Test advanced notification handling when setting tags
@@ -279,7 +381,8 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 424
         assert mock_post.call_count == 0
 
-        # Trigger on high OR emergency (some empty garbage at the end to tidy/ignore
+        # Trigger on high OR emergency (some empty garbage at the end to
+        # tidy/ignore
         form_data['tag'] = 'high, emergency, , ,'
 
         # Send our notification

@@ -615,35 +615,43 @@ class NotifyView(View):
             # Validation - Tag Logic:
             # "TagA"                        : TagA
             # "TagA, TagB"                  : TagA OR TagB
+            # "TagA TagB"                  : TagA AND TagB
+            # "TagA TagC, TagB"             : (TagA AND TagC) OR TagB
             # ['TagA', 'TagB']              : TagA OR TagB
             # [('TagA', 'TagC'), 'TagB']    : (TagA AND TagC) OR TagB
             # [('TagB', 'TagC')]            : TagB AND TagC
 
-            if not TAG_VALIDATION_RE.match(content.get('tag')):
-                msg = _('Unsupported characters found in tag definition.')
-                status = ResponseCode.bad_request
-                return HttpResponse(msg, status=status) \
-                    if not json_response else JsonResponse({
-                        'error': msg,
-                    },
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+            tag = content.get('tag')
+            if isinstance(tag, (list, set, tuple)):
+                # Assign our tags as they were provided
+                tags = tag
 
-            # If we get here, our specified tag was valid
-            tags = []
-            for _tag in TAG_DETECT_RE.findall(content.get('tag')):
-                tag = _tag.strip()
-                if not tag:
-                    continue
+            elif isinstance(tag, str):
+                if not TAG_VALIDATION_RE.match(content.get('tag')):
+                    msg = _('Unsupported characters found in tag definition.')
+                    status = ResponseCode.bad_request
+                    return HttpResponse(msg, status=status) \
+                        if not json_response else JsonResponse({
+                            'error': msg,
+                        },
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status,
+                    )
 
-                # Disect our results
-                group = TAG_AND_DELIM_RE.split(tag)
-                if len(group) > 1:
-                    tags.append(tuple(group))
-                else:
-                    tags.append(tag)
+                # If we get here, our specified tag was valid
+                tags = []
+                for _tag in TAG_DETECT_RE.findall(content.get('tag')):
+                    tag = _tag.strip()
+                    if not tag:
+                        continue
+
+                    # Disect our results
+                    group = TAG_AND_DELIM_RE.split(tag)
+                    if len(group) > 1:
+                        tags.append(tuple(group))
+                    else:
+                        tags.append(tag)
 
             # Update our tag block
             content['tag'] = tags
