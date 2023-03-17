@@ -16,6 +16,7 @@ Apprise API was designed to easily fit into existing (and new) eco-systems that 
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
 ## Screenshots
+
 There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser allowing you to create and save as many configurations as you'd like. Each configuration is differentiated by a unique `{KEY}` that you decide on:<br/>
 ![Screenshot of GUI - Using Keys](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
 
@@ -28,9 +29,11 @@ Once you've saved your configuration, you'll be able to use the *Notification* t
 At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
 
 ## Installation
+
 The following options should allow you to access the API at: `http://localhost:8000/` from your browser.
 
 Using [dockerhub](https://hub.docker.com/r/caronc/apprise) you can do the following:
+
 ```bash
 # Retrieve container
 docker pull caronc/apprise:latest
@@ -38,9 +41,12 @@ docker pull caronc/apprise:latest
 # Start it up:
 # /config is used for a persistent store, you do not have to mount
 #         this if you don't intend to use it.
+# /plugin is used for a location you can add your own custom apprise plugins.
+#         You do not have to mount this if you don't intend to use it.
 docker run --name apprise \
    -p 8000:8000 \
    -v /var/lib/apprise/config:/config \
+   -v /var/lib/apprise/plugin:/plugin \
    -d caronc/apprise:latest
 ```
 
@@ -51,8 +57,8 @@ A `docker-compose.yml` file is already set up to grant you an instant production
 docker-compose up
 ```
 
-
 ### Config Directory Permissions
+
 Under the hood, An NginX services is reading/writing your configuration files as the user (and group) `www-data` which generally has the id of `33`.  In preparation so that you don't get the error: `An error occured saving configuration.` consider also setting up your local `/var/lib/apprise/config` permissions as:
 
 ```bash
@@ -78,6 +84,7 @@ sudo su - $(whoami)
 ```
 
 Alternatively a dirty solution is to just set the directory with full read/write permissions (which is not ideal in a production environment):
+
 ```bash
 # Grant full permission to the local directory you're saving your
 # Apprise configuration to:
@@ -87,12 +94,12 @@ chmod 777 /var/lib/apprise/config
 ## Dockerfile Details
 
 The following architectures are supported: `386`, `amd64`, `arm/v6`, `arm/v7`, and `arm64`. The following tags can be used:
-* `latest`: Points to the latest stable build.
-* `edge`: Points to the last push to the master branch.
+- `latest`: Points to the latest stable build.
+- `edge`: Points to the last push to the master branch.
 
 ## Apprise URLs
 
-📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you wish to leverage. Apprise supports over 80+ notification services today and is always expanding to add support for more! Visit https://github.com/caronc/apprise/wiki to see the ever-growing list of the services supported today.
+📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you wish to leverage. Apprise supports over 80+ notification services today and is always expanding to add support for more! Visit <https://github.com/caronc/apprise/wiki> to see the ever-growing list of the services supported today.
 
 ## API Details
 
@@ -142,7 +149,7 @@ You can pre-save all of your Apprise configuration and/or set of Apprise URLs an
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the _config_ parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are _text_ and _yaml_. This path does not work if `APPRISE_CONFIG_LOCK` is set.
+| `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the *config* parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are *text* and *yaml*. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://github.com/caronc/apprise/wiki/config)). This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
@@ -196,7 +203,7 @@ curl -X POST \
     http://localhost:8000/notify/abc123
 ```
 
-🏷️ You can also leverage _tagging_ which allows you to associate one or more tags with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same _tag_ allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://github.com/caronc/apprise/wiki/config)) that can be saved to the persistent storage previously associated with a `{KEY}`.
+🏷️ You can also leverage *tagging* which allows you to associate one or more tags with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same *tag* allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://github.com/caronc/apprise/wiki/config)) that can be saved to the persistent storage previously associated with a `{KEY}`.
 
 ```bash
 # Send notification(s) to a {KEY} defined as 'abc123'
@@ -214,10 +221,10 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
 
 Leveraging tagging is one of the things that makes Apprise great.  Not only can you group one or more notifications together (all sharing the same tag), but you can assign multiple tags to the same URL and trigger it through crafted and selected tag expressions.
 
-|  Example     | Effect|
-| -------------------------------- | ------------------------------ |
-| TagA                          |  TagA
-| TagA, TagB                     |  TagA **OR** TagB
+|  Example              | Effect                         |
+| --------------------- | ------------------------------ |
+| TagA                  |  TagA
+| TagA, TagB            |  TagA **OR** TagB
 | TagA TagC, TagB       |  (TagA **AND** TagC) **OR** TagB
 | TagB TagC              |  TagB **AND** TagC
 
@@ -274,6 +281,7 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_ALLOW_SERVICES` | A comma separated set of entries identifying what plugins to allow access to. You may only use alpha-numeric characters as is the restriction of Apprise Schemas (schema://) anyway.  To exclusively include more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified.
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
+| `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://github.com/caronc/apprise/wiki/decorator_notify). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
 | `APPRISE_RECURSION_MAX` | This defines the number of times one Apprise API Server can (recursively) call another.  This is to both support and mitigate abuse through [the `apprise://` schema](https://github.com/caronc/apprise/wiki/Notify_apprise_api) for those who choose to use it. When leveraged properly, you can increase this (recursion max) value and successfully load balance the handling of many notification requests through many additional API Servers.  By default this value is set to `1` (one).
 | `APPRISE_WORKER_COUNT` | Defines the number of workers to run.  by default this is calculated based on the number of threads detected.
 | `BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
@@ -312,7 +320,6 @@ pytest apprise_api
 ```
 
 ## Apprise Integration
-
 
 First you'll need to have it installed:
 ```bash
@@ -363,6 +370,7 @@ apprise -vvv --body="There are donut's in the front hall if anyone wants any" \
 ```
 
 Alternatively we can set this up in a configuration file and even tie our local tags to our upstream ones like so:
+
 ```nginx
 # Linux users can place this in ~/.apprise
 # Windows users can place this info in %APPDATA%/Apprise/apprise
@@ -376,6 +384,7 @@ devteam=apprise://localhost:8000/{KEY}?tags=devteam
 ```
 
 We could trigger our notification to our friends now like:
+
 ```bash
 # Trigger our service:
 apprise -vvv --tag=devteam --body="Guys, don't forget about the audit tomorrow morning."
@@ -405,3 +414,4 @@ a.add(config)
 # Send a test message
 a.notify('test message')
 ```
+
