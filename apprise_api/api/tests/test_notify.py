@@ -167,7 +167,6 @@ class NotifyTests(SimpleTestCase):
         assert response['message'] == form_data['body']
         assert response['type'] == apprise.NotifyType.WARNING
 
-
     @patch('requests.post')
     def test_notify_with_tags_via_apprise(self, mock_post):
         """
@@ -211,7 +210,8 @@ class NotifyTests(SimpleTestCase):
 
         # Send our notification
         response = self.client.post(
-            '/notify/{}/'.format(key), content_type='application/json', data=form_data)
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
 
         # Nothing could be notified as there were no tag matches for 'home'
         # AND 'summer-home'
@@ -224,7 +224,8 @@ class NotifyTests(SimpleTestCase):
         # Now let's send our notification by specifying the tag in the
         # parameters
         response = self.client.post(
-            '/notify/{}/'.format(key), content_type='application/json', data=form_data)
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
 
         # Send our notification
 
@@ -267,7 +268,6 @@ class NotifyTests(SimpleTestCase):
         assert response['title'] == "Test Title"
         assert response['message'] == form_data['body']
         assert response['type'] == apprise.NotifyType.WARNING
-
 
     @patch('requests.post')
     def test_advanced_notify_with_tags(self, mock_post):
@@ -381,7 +381,8 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 424
         assert mock_post.call_count == 0
 
-        # Trigger on high OR emergency (some empty garbage at the end to tidy/ignore
+        # Trigger on high OR emergency (some empty garbage at the end to
+        # tidy/ignore
         form_data['tag'] = 'high, emergency, , ,'
 
         # Send our notification
