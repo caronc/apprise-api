@@ -10,6 +10,7 @@ services:
     volumes:
       - ./apprise_api:/opt/apprise/webapp:ro
       # if uncommenting the below, you will need to type the following
+      # Note: if you opt for bind mount config file consider setting env var APPRISE_STATEFUL_MODE to simple with appropriate file format
       # otherwise the django instance won't have permissions to write
       # to the directory correctly:
       #   $> chown -R 33:33 ./config
