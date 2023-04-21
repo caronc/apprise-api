@@ -131,6 +131,10 @@ class AppriseConfigCache(object):
 
         # Write our file to a temporary file
         _, tmp_path = tempfile.mkstemp(suffix='.tmp', dir=path)
+        # Close the file handle provided by mkstemp()
+        # We're reopening it, and it can't be renamed while open on Windows
+        os.close(_)
+
         if self.mode == AppriseStoreMode.HASH:
             try:
                 with gzip.open(tmp_path, 'wb') as f:
