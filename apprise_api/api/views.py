@@ -572,9 +572,7 @@ class NotifyView(View):
         # our content
         content = {}
         if MIME_IS_FORM.match(request.content_type):
-            content = {}
-
-            form = NotifyForm(request.POST)
+            form = NotifyForm(data=request.POST, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -607,8 +605,8 @@ class NotifyView(View):
 
         # Handle Attachments
         attach = None
-        if 'attachments' in content:
-            attach = parse_attachments(content.get('attachments', []))
+        if 'attachments' in content or request.FILES:
+            attach = parse_attachments(content.get('attachments'), request.FILES)
 
         #
         # Allow 'tag' value to be specified as part of the URL parameters
@@ -909,7 +907,7 @@ class StatelessNotifyView(View):
         content = {}
         if MIME_IS_FORM.match(request.content_type):
             content = {}
-            form = NotifyByUrlForm(request.POST)
+            form = NotifyByUrlForm(request.POST, request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -1009,8 +1007,8 @@ class StatelessNotifyView(View):
 
         # Handle Attachments
         attach = None
-        if 'attachments' in content:
-            attach = parse_attachments(content.get('attachments', []))
+        if 'attachments' in content or request.FILES:
+            attach = parse_attachments(content.get('attachments'), request.FILES)
 
         # Perform our notification at this point
         result = a_obj.notify(

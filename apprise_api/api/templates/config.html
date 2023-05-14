@@ -122,7 +122,7 @@
       {% blocktrans %}
       You can send a notification using the loaded configuration:
       {% endblocktrans %}
-      <form id="donotify" action="{% url "notify" key %}" method="post">
+      <form id="donotify" enctype="multipart/form-data" action="{% url "notify" key %}" method="post">
         {{ form_notify }}
         <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Send Notification" %}
           <i class="material-icons right">send</i>
@@ -411,8 +411,8 @@ function notify_init() {
         return s;
       }, []).join(",")
 
-    const form = this;
-    const body = new URLSearchParams(new FormData(form));
+    // our Form
+    const form = new FormData(this);
 
     // perform our notification
     Swal.fire(
@@ -422,7 +422,7 @@ function notify_init() {
     Swal.showLoading()
     let response = fetch('{% url "notify" key %}', {
       method: 'POST',
-      body: body,
+      body: form,
       headers: {
         'Accept': 'text/html',
         'X-Apprise-Log-Level': 'info'

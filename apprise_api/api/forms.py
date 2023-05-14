@@ -138,6 +138,12 @@ class NotifyForm(forms.Form):
         max_length=apprise.NotifyBase.body_maxlen,
     )
 
+    # Attachment Support
+    attachment = forms.FileField(
+        label=_('Attachment'),
+        required=False,
+    )
+
     tag = forms.CharField(
         label=_('Tags'),
         widget=forms.TextInput(

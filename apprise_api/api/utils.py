@@ -124,7 +124,7 @@ class Attachment(apprise.attachment.AttachFile):
                 pass
 
 
-def parse_attachments(attachment_payload):
+def parse_attachments(attachment_payload, files_request):
     """
     Takes the payload provided in a `/notify` call and extracts the
     attachments out of it.
@@ -134,20 +134,91 @@ def parse_attachments(attachment_payload):
     """
     attachments = []
 
+    # Attachment Count
+    count = sum([
+        0 if not isinstance(attachment_payload, (tuple, list))
+        else len(attachment_payload),
+        0 if not isinstance(files_request, dict) else len(files_request),
+    ])
+
     if settings.APPRISE_MAX_ATTACHMENTS > 0 and \
-            len(attachment_payload) > settings.APPRISE_MAX_ATTACHMENTS:
+            count > settings.APPRISE_MAX_ATTACHMENTS:
         raise ValueError(
             "There is a maximum of %d attachments" %
             settings.APPRISE_MAX_ATTACHMENTS)
 
-    for no, entry in enumerate(attachment_payload, start=1):
+    if isinstance(attachment_payload, (tuple, list)):
+        for no, entry in enumerate(attachment_payload, start=1):
 
-        if isinstance(entry, str):
-            filename = "attachment.%.3d" % no
+            if isinstance(entry, str):
+                filename = "attachment.%.3d" % no
 
-        elif isinstance(entry, dict):
+            elif isinstance(entry, dict):
+                try:
+                    filename = entry.get("filename", "").strip()
+
+                    # Max filename size is 250
+                    if len(filename) > 250:
+                        raise ValueError(
+                            "The filename associated with attachment "
+                            "%d is too long" % no)
+
+                    elif not filename:
+                        filename = "attachment.%.3d" % no
+
+                except TypeError:
+                    raise ValueError(
+                        "An invalid filename was provided for attachment %d" %
+                        no)
+
+            else:
+                # you must pass in a base64 string, or a dict containing our
+                # required parameters
+                raise ValueError(
+                    "An invalid filename was provided for attachment %d" % no)
+
+            #
+            # Prepare our Attachment
+            #
+            attachment = Attachment(filename)
+
             try:
-                filename = entry.get("filename", "").strip()
+                with open(attachment.path, 'wb') as f:
+                    # Write our content to disk
+                    f.write(base64.b64decode(entry["base64"]))
+
+            except binascii.Error:
+                # The file ws not base64 encoded
+                raise ValueError(
+                    "Invalid filecontent was provided for attachment %s" %
+                    filename)
+
+            except OSError:
+                raise ValueError(
+                    "Could not write attachment %s to disk" % filename)
+
+            #
+            # Some Validation
+            #
+            if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
+                    attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
+                raise ValueError(
+                    "attachment %s's filesize is to large" % filename)
+
+            # Add our attachment
+            attachments.append(attachment)
+
+    #
+    # Now handle the request.FILES
+    #
+    if isinstance(files_request, dict):
+        for no, (key, meta) in enumerate(
+                files_request.items(), start=len(attachments) + 1):
+
+            try:
+                # Filetype is presumed to be of base class
+                # django.core.files.UploadedFile
+                filename = meta.name.strip()
 
                 # Max filename size is 250
                 if len(filename) > 250:
@@ -158,49 +229,34 @@ def parse_attachments(attachment_payload):
                 elif not filename:
                     filename = "attachment.%.3d" % no
 
-            except TypeError:
+            except (AttributeError, TypeError):
                 raise ValueError(
-                    "An invalid filename was provided for attachment %d" % no)
+                    "An invalid filename was provided for attachment %d" %
+                    no)
 
-                try:
-                    # Max filename size is 250
-                    filename = entry.get("filename", "").strip()[:246]
-                    if not filename:
-                        filename = "attachment.%.3d" % no
+            #
+            # Prepare our Attachment
+            #
+            attachment = Attachment(filename)
+            try:
+                with open(attachment.path, 'wb') as f:
+                    # Write our content to disk
+                    f.write(meta.read())
 
-                except TypeError:
-                    raise ValueError(
-                        "An invalid filename was provided for "
-                        "attachment %d" % no)
+            except OSError:
+                raise ValueError(
+                    "Could not write attachment %s to disk" % filename)
 
-        else:
-            # you must pass in a base64 string, or a dict containing our
-            # required parameters
-            raise ValueError(
-                "An invalid filename was provided for attachment %d" % no)
+            #
+            # Some Validation
+            #
+            if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
+                    attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
+                raise ValueError(
+                    "attachment %s's filesize is to large" % filename)
 
-        attachment = Attachment(filename)
-
-        try:
-            with open(attachment.path, 'wb') as f:
-                # Write our content to disk
-                f.write(base64.b64decode(entry["base64"]))
-
-        except (binascii.Error):
-            # The file ws not base64 encoded
-            raise ValueError(
-                "Invalid filecontent was provided for attachment %s" %
-                filename)
-
-        #
-        # Some Validation
-        #
-        if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
-                attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
-            raise ValueError("attachment %s's filesize is to large" % filename)
-
-        # Add our attachment
-        attachments.append(attachment)
+            # Add our attachment
+            attachments.append(attachment)
 
     return attachments
 
