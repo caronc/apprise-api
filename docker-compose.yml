@@ -16,3 +16,7 @@ services:
       #   $> chown -R 33:33 ./config
       #   $> chmod -R 775 ./config
       # - ./config:/config:rw
+      # Note: The attachment directory can be exposed outside of the container if required
+      #   $> chown -R 33:33 ./attach
+      #   $> chmod -R 775 ./attach
+      # - ./attach:/attach:rw

@@ -34,6 +34,7 @@ from django.views.decorators.gzip import gzip_page
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 
+from .utils import parse_attachments
 from .utils import ConfigCache
 from .utils import apply_global_filters
 from .forms import AddByUrlForm
@@ -604,6 +605,11 @@ class NotifyView(View):
                 status=status,
             )
 
+        # Handle Attachments
+        attach = None
+        if 'attachments' in content:
+            attach = parse_attachments(content.get('attachments', []))
+
         #
         # Allow 'tag' value to be specified as part of the URL parameters
         # if not found otherwise defined.
@@ -837,6 +843,7 @@ class NotifyView(View):
                     title=content.get('title', ''),
                     notify_type=content.get('type', apprise.NotifyType.INFO),
                     tag=content.get('tag'),
+                    attach=attach,
                 )
 
             if content_type == 'text/html':
@@ -863,6 +870,7 @@ class NotifyView(View):
                 title=content.get('title', ''),
                 notify_type=content.get('type', apprise.NotifyType.INFO),
                 tag=content.get('tag'),
+                attach=attach,
             )
 
         if not result:
@@ -999,12 +1007,18 @@ class StatelessNotifyView(View):
                 status=ResponseCode.no_content,
             )
 
+        # Handle Attachments
+        attach = None
+        if 'attachments' in content:
+            attach = parse_attachments(content.get('attachments', []))
+
         # Perform our notification at this point
         result = a_obj.notify(
             content.get('body'),
             title=content.get('title', ''),
             notify_type=content.get('type', apprise.NotifyType.INFO),
             tag='all',
+            attach=attach,
         )
 
         if not result:
