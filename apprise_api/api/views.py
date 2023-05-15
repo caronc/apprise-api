@@ -122,7 +122,12 @@ class WelcomeView(View):
     template_name = 'welcome.html'
 
     def get(self, request):
-        return render(request, self.template_name, {})
+        default_key = 'KEY'
+        key = request.GET.get('key', default_key).strip()
+        return render(request, self.template_name, {
+            'secure': request.scheme[-1].lower() == 's',
+            'key': key if key else default_key,
+        })
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
