@@ -752,14 +752,11 @@ class NotifyView(View):
                 status=status,
             )
 
-        #
-        # Apply Any Global Filters (if identified)
-        #
-        apply_global_filters()
-
         # Prepare our keyword arguments (to be passed into an AppriseAsset
         # object)
-        kwargs = {}
+        kwargs = {
+            'plugin_paths': settings.APPRISE_PLUGIN_PATHS,
+        }
 
         if body_format:
             # Store our defined body format
@@ -792,9 +789,13 @@ class NotifyView(View):
         if uid:
             kwargs['_uid'] = uid
 
+        #
+        # Apply Any Global Filters (if identified)
+        #
+        apply_global_filters()
+
         # Prepare ourselves a default Asset
-        asset = None if not body_format else \
-            apprise.AppriseAsset(body_format=body_format)
+        asset = apprise.AppriseAsset(**kwargs)
 
         # Prepare our apprise object
         a_obj = apprise.Apprise(asset=asset)
@@ -958,7 +959,9 @@ class StatelessNotifyView(View):
 
         # Prepare our keyword arguments (to be passed into an AppriseAsset
         # object)
-        kwargs = {}
+        kwargs = {
+            'plugin_paths': settings.APPRISE_PLUGIN_PATHS,
+        }
 
         if body_format:
             # Store our defined body format
@@ -991,14 +994,13 @@ class StatelessNotifyView(View):
         if uid:
             kwargs['_uid'] = uid
 
-        # Prepare ourselves a default Asset
-        asset = None if not body_format else \
-            apprise.AppriseAsset(body_format=body_format)
-
         #
         # Apply Any Global Filters (if identified)
         #
         apply_global_filters()
+
+        # Prepare ourselves a default Asset
+        asset = apprise.AppriseAsset(**kwargs)
 
         # Prepare our apprise object
         a_obj = apprise.Apprise(asset=asset)
