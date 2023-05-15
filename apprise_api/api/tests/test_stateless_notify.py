@@ -54,6 +54,9 @@ class StatelessNotifyTests(SimpleTestCase):
         form = NotifyByUrlForm(data=form_data)
         assert form.is_valid()
 
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
+
         response = self.client.post('/notify', form.cleaned_data)
         assert response.status_code == 200
         assert mock_notify.call_count == 1
@@ -67,6 +70,9 @@ class StatelessNotifyTests(SimpleTestCase):
         }
         form = NotifyByUrlForm(data=form_data)
         assert form.is_valid()
+
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
 
         response = self.client.post('/notify', form.cleaned_data)
         assert response.status_code == 200
@@ -109,6 +115,9 @@ class StatelessNotifyTests(SimpleTestCase):
         form = NotifyByUrlForm(data=form_data)
         assert form.is_valid()
 
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
+
         response = self.client.post('/notify', form.cleaned_data)
         assert response.status_code == 424
         assert mock_notify.call_count == 2
@@ -138,6 +147,9 @@ class StatelessNotifyTests(SimpleTestCase):
         # At a minimum 'body' is requred
         form = NotifyByUrlForm(data=form_data)
         assert form.is_valid()
+
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
 
         # recursion value is within correct limits
         response = self.client.post('/notify', form.cleaned_data, **headers)
@@ -220,6 +232,9 @@ class StatelessNotifyTests(SimpleTestCase):
         # At a minimum 'body' is requred
         form = NotifyByUrlForm(data=form_data)
         assert form.is_valid()
+
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
 
         # This still works as the environment variable kicks in
         response = self.client.post('/notify', form.cleaned_data)
@@ -340,7 +355,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
-    @patch('apprise.plugins.NotifyJSON.send')
+    @patch('apprise.plugins.NotifyJSON.NotifyJSON.send')
     def test_notify_with_filters(self, mock_send):
         """
         Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES

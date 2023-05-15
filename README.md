@@ -43,10 +43,12 @@ docker pull caronc/apprise:latest
 #         this if you don't intend to use it.
 # /plugin is used for a location you can add your own custom apprise plugins.
 #         You do not have to mount this if you don't intend to use it.
+# /attach is used for file attachments
 docker run --name apprise \
    -p 8000:8000 \
    -v /var/lib/apprise/config:/config \
    -v /var/lib/apprise/plugin:/plugin \
+   -v /var/lib/apprise/attach:/attach \
    -d caronc/apprise:latest
 ```
 

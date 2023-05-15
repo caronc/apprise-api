@@ -63,6 +63,9 @@ class NotifyTests(SimpleTestCase):
         form = NotifyForm(data=form_data)
         assert form.is_valid()
 
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
+
         # we always set a type if one wasn't done so already
         assert form.cleaned_data['type'] == apprise.NotifyType.INFO
 
@@ -502,6 +505,9 @@ class NotifyTests(SimpleTestCase):
         form = NotifyForm(data=form_data)
         assert form.is_valid()
 
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
+
         # we always set a type if one wasn't done so already
         assert form.cleaned_data['type'] == apprise.NotifyType.INFO
 
@@ -741,7 +747,7 @@ class NotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 1
         assert response['content-type'] == 'text/html'
 
-    @patch('apprise.plugins.NotifyEmail.send')
+    @patch('apprise.plugins.NotifyEmail.NotifyEmail.send')
     def test_notify_with_filters(self, mock_send):
         """
         Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES

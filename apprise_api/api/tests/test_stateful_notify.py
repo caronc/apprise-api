@@ -99,6 +99,9 @@ class StatefulNotifyTests(SimpleTestCase):
             form = NotifyForm(data=form_data)
             assert form.is_valid()
 
+            # Required to prevent None from being passed into self.client.post()
+            del form.cleaned_data['attachment']
+
             response = self.client.post(
                 '/notify/{}'.format(key), form.cleaned_data)
             assert response.status_code == 200
@@ -142,6 +145,9 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form = NotifyForm(data=form_data)
             assert form.is_valid()
+
+            # Required to prevent None from being passed into self.client.post()
+            del form.cleaned_data['attachment']
 
             response = self.client.post(
                 '/notify/{}'.format(key), form.cleaned_data)
