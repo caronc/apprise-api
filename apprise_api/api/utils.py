@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
+import binascii
 import os
 import tempfile
 import shutil
@@ -30,6 +31,7 @@ import gzip
 import apprise
 import hashlib
 import errno
+import base64
 
 from django.conf import settings
 
@@ -61,6 +63,202 @@ STORE_MODES = (
     AppriseStoreMode.SIMPLE,
     AppriseStoreMode.DISABLED,
 )
+
+
+class Attachment(apprise.attachment.AttachFile):
+    """
+    A Light Weight Attachment Object for Auto-cleanup that wraps the Apprise
+    Attachments
+    """
+
+    def __init__(self, filename, path=None, delete=True):
+        """
+        Initialize our attachment
+        """
+        self._filename = filename
+        try:
+            os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+
+        except OSError:
+            # Permission error
+            raise ValueError('Could not create directory {}'.format(
+                settings.APPRISE_ATTACH_DIR))
+
+        if not path:
+            try:
+                d, path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
+                # Close our file descriptor
+                os.close(d)
+
+            except FileNotFoundError:
+                raise ValueError(
+                    'Could not prepare {} attachment in {}'.format(
+                        filename, settings.APPRISE_ATTACH_DIR))
+
+        self._path = path
+        self.delete = delete
+
+        # Prepare our item
+        super().__init__(path=self._path, name=filename)
+
+    @property
+    def filename(self):
+        return self._filename
+
+    @property
+    def size(self):
+        """
+        Return filesize
+        """
+        return os.stat(self._path).st_size
+
+    def __del__(self):
+        """
+        De-Construtor is used to tidy up files during garbage collection
+        """
+        if self.delete:
+            try:
+                os.remove(self._path)
+            except FileNotFoundError:
+                # no problem
+                pass
+
+
+def parse_attachments(attachment_payload, files_request):
+    """
+    Takes the payload provided in a `/notify` call and extracts the
+    attachments out of it.
+
+    Content is written to a temporary directory until the garbage
+    collection kicks in.
+    """
+    attachments = []
+
+    # Attachment Count
+    count = sum([
+        0 if not isinstance(attachment_payload, (tuple, list))
+        else len(attachment_payload),
+        0 if not isinstance(files_request, dict) else len(files_request),
+    ])
+
+    if settings.APPRISE_MAX_ATTACHMENTS > 0 and \
+            count > settings.APPRISE_MAX_ATTACHMENTS:
+        raise ValueError(
+            "There is a maximum of %d attachments" %
+            settings.APPRISE_MAX_ATTACHMENTS)
+
+    if isinstance(attachment_payload, (tuple, list)):
+        for no, entry in enumerate(attachment_payload, start=1):
+
+            if isinstance(entry, str):
+                filename = "attachment.%.3d" % no
+
+            elif isinstance(entry, dict):
+                try:
+                    filename = entry.get("filename", "").strip()
+
+                    # Max filename size is 250
+                    if len(filename) > 250:
+                        raise ValueError(
+                            "The filename associated with attachment "
+                            "%d is too long" % no)
+
+                    elif not filename:
+                        filename = "attachment.%.3d" % no
+
+                except TypeError:
+                    raise ValueError(
+                        "An invalid filename was provided for attachment %d" %
+                        no)
+
+            else:
+                # you must pass in a base64 string, or a dict containing our
+                # required parameters
+                raise ValueError(
+                    "An invalid filename was provided for attachment %d" % no)
+
+            #
+            # Prepare our Attachment
+            #
+            attachment = Attachment(filename)
+
+            try:
+                with open(attachment.path, 'wb') as f:
+                    # Write our content to disk
+                    f.write(base64.b64decode(entry["base64"]))
+
+            except binascii.Error:
+                # The file ws not base64 encoded
+                raise ValueError(
+                    "Invalid filecontent was provided for attachment %s" %
+                    filename)
+
+            except OSError:
+                raise ValueError(
+                    "Could not write attachment %s to disk" % filename)
+
+            #
+            # Some Validation
+            #
+            if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
+                    attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
+                raise ValueError(
+                    "attachment %s's filesize is to large" % filename)
+
+            # Add our attachment
+            attachments.append(attachment)
+
+    #
+    # Now handle the request.FILES
+    #
+    if isinstance(files_request, dict):
+        for no, (key, meta) in enumerate(
+                files_request.items(), start=len(attachments) + 1):
+
+            try:
+                # Filetype is presumed to be of base class
+                # django.core.files.UploadedFile
+                filename = meta.name.strip()
+
+                # Max filename size is 250
+                if len(filename) > 250:
+                    raise ValueError(
+                        "The filename associated with attachment "
+                        "%d is too long" % no)
+
+                elif not filename:
+                    filename = "attachment.%.3d" % no
+
+            except (AttributeError, TypeError):
+                raise ValueError(
+                    "An invalid filename was provided for attachment %d" %
+                    no)
+
+            #
+            # Prepare our Attachment
+            #
+            attachment = Attachment(filename)
+            try:
+                with open(attachment.path, 'wb') as f:
+                    # Write our content to disk
+                    f.write(meta.read())
+
+            except OSError:
+                raise ValueError(
+                    "Could not write attachment %s to disk" % filename)
+
+            #
+            # Some Validation
+            #
+            if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
+                    attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
+                raise ValueError(
+                    "attachment %s's filesize is to large" % filename)
+
+            # Add our attachment
+            attachments.append(attachment)
+
+    return attachments
 
 
 class SimpleFileExtension(object):
@@ -130,10 +328,10 @@ class AppriseConfigCache(object):
             return False
 
         # Write our file to a temporary file
-        _, tmp_path = tempfile.mkstemp(suffix='.tmp', dir=path)
+        d, tmp_path = tempfile.mkstemp(suffix='.tmp', dir=path)
         # Close the file handle provided by mkstemp()
         # We're reopening it, and it can't be renamed while open on Windows
-        os.close(_)
+        os.close(d)
 
         if self.mode == AppriseStoreMode.HASH:
             try:

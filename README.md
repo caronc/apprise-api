@@ -111,6 +111,25 @@ Here is a *stateless* example of how one might send a notification (using `/noti
 curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
     http://localhost:8000/notify
 
+# Send a notification with an attachment
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F 'body=test message' \
+    -F attach=@Screenshot-1.png \
+    http://localhost:8000/notify
+
+# Send multiple attachments; just make sure the attach keyword is unique:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F 'body=test message' \
+    -F attach1=@Screenshot-1.png \
+    -F attach2=@/my/path/to/Apprise.doc \
+    http://localhost:8000/notify
+
+curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
+    -F @/path/to/your/attachment \
+    http://localhost:8000/notify
+
 # Send your notifications directly using JSON
 curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}' \
     -H "Content-Type: application/json" \
@@ -166,6 +185,14 @@ curl -X POST -d "body=test message" \
 # Here is the same request but using JSON instead:
 curl -X POST -d '{"body":"test message"}' \
     -H "Content-Type: application/json" \
+    http://localhost:8000/notify/abc123
+
+# Send attachments:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F 'body=test message' \
+    -F attach1=@Screenshot-1.png \
+    -F attach2=@/my/path/to/Apprise.doc \
     http://localhost:8000/notify/abc123
 ```
 
@@ -239,6 +266,7 @@ The use of environment variables allow you to provide over-rides to default sett
 | Variable             | Description |
 |--------------------- | ----------- |
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
+| `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
 | `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
 | `APPRISE_CONFIG_LOCK` | Locks down your API hosting so that you can no longer delete/update/access stateful information. Your configuration is still referenced when stateful calls are made to `/notify`.  The idea of this switch is to allow someone to set their (Apprise) configuration up and then as an added security tactic, they may choose to lock their configuration down (in a read-only state). Those who use the Apprise CLI tool may still do it, however the `--config` (`-c`) switch will not successfully reference this access point anymore. You can however use the `apprise://` plugin without any problem ([see here for more details](https://github.com/caronc/apprise/wiki/Notify_apprise_api)). This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.

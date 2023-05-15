@@ -23,6 +23,7 @@
           {% blocktrans %}
           Here is where you can store your Apprise configuration associated with the key <code>{{key}}</code>.
           {% endblocktrans %}
+          For some examples on how to build a development environment around this, <strong><a href="{% url 'welcome'%}?key={{key}}">click here</a></strong>.
         </li>
         <li>
           {% blocktrans %}
@@ -78,7 +79,14 @@
         {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
         <br />
         <pre><code class="bash">apprise --body="Test Message" \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/{{key}}?tags=all</code></pre>
+        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
+        <br />
+        {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
+        <pre><code class="bash">apprise --body="Test Message" \<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br/>
+        </code></pre>
         </p>
         {% if not CONFIG_LOCK %}
         <p>
@@ -86,7 +94,7 @@
         send a test notification to all of your added services:{% endblocktrans %}
         <br />
         <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/{{key}}</code></pre>
+        &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
         </p>
         {% endif %}
       </div>
@@ -122,7 +130,7 @@
       {% blocktrans %}
       You can send a notification using the loaded configuration:
       {% endblocktrans %}
-      <form id="donotify" action="{% url "notify" key %}" method="post">
+      <form id="donotify" enctype="multipart/form-data" action="{% url "notify" key %}" method="post">
         {{ form_notify }}
         <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Send Notification" %}
           <i class="material-icons right">send</i>
@@ -411,8 +419,8 @@ function notify_init() {
         return s;
       }, []).join(",")
 
-    const form = this;
-    const body = new URLSearchParams(new FormData(form));
+    // our Form
+    const form = new FormData(this);
 
     // perform our notification
     Swal.fire(
@@ -422,7 +430,7 @@ function notify_init() {
     Swal.showLoading()
     let response = fetch('{% url "notify" key %}', {
       method: 'POST',
-      body: body,
+      body: form,
       headers: {
         'Accept': 'text/html',
         'X-Apprise-Log-Level': 'info'

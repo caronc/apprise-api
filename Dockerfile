@@ -11,6 +11,7 @@ LABEL maintainer="Chris-Caron"
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV APPRISE_CONFIG_DIR /config
+ENV APPRISE_ATTACH_DIR /attach
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 # Install nginx and supervisord
@@ -38,11 +39,12 @@ RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python-dev && \
 
 # Configuration Permissions (to run nginx as a non-root user)
 RUN umask 0002 && \
-    mkdir -p /config /run/apprise && \
-    chown www-data:www-data -R /run/apprise /var/lib/nginx /config
+    mkdir -p /attach /config /run/apprise && \
+    chown www-data:www-data -R /run/apprise /var/lib/nginx /attach /config
 
 # Handle running as a non-root user (www-data is id/gid 33)
 USER www-data
 VOLUME /config
+VOLUME /attach
 EXPOSE 8000
 CMD ["/usr/bin/supervisord", "-c", "/opt/apprise/webapp/etc/supervisord.conf"]

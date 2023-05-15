@@ -124,6 +124,10 @@ STATIC_URL = BASE_URL + '/s/'
 APPRISE_CONFIG_DIR = os.environ.get(
     'APPRISE_CONFIG_DIR', os.path.join(BASE_DIR, 'var', 'config'))
 
+# The location to place file attachments
+APPRISE_ATTACH_DIR = os.environ.get(
+    'APPRISE_ATTACH_DIR', os.path.join(BASE_DIR, 'var', 'attach'))
+
 # When set Apprise API Locks itself down so that future (configuration)
 # changes can not be made or accessed.  It disables access to:
 # - the configuration screen: /cfg/{token}
@@ -155,7 +159,7 @@ APPRISE_STATELESS_URLS = os.environ.get('APPRISE_STATELESS_URLS', '')
 APPRISE_STATEFUL_MODE = os.environ.get('APPRISE_STATEFUL_MODE', 'hash')
 
 # Our Apprise Deny List
-# - By default we disable all non-remote calling servicess
+# - By default we disable all non-remote calling services
 # - You do not need to identify every schema supported by the service you
 #   wish to disable (only one).  For example, if you were to specify
 #   xml, that would include the xmls entry as well (or vs versa)
@@ -172,3 +176,16 @@ APPRISE_ALLOW_SERVICES = os.environ.get('APPRISE_ALLOW_SERVICES', '')
 # a call to the same server again, and again and again. By default we allow
 # 1 level of recursion
 APPRISE_RECURSION_MAX = int(os.environ.get('APPRISE_RECURSION_MAX', 1))
+
+# Provided optional plugin paths to scan for custom schema definitions
+APPRISE_PLUGIN_PATHS = os.environ.get(
+    'APPRISE_PLUGIN_PATHS', os.path.join(BASE_DIR, 'var', 'plugin')).split(',')
+
+# Define the number of attachments that can exist as part of a payload
+# Setting this to zero disables the limit
+APPRISE_MAX_ATTACHMENTS = int(os.environ.get('APPRISE_MAX_ATTACHMENTS', 6))
+
+# Defines the maximum size each attachment can be
+# 8388608 == 8MB
+APPRISE_MAX_ATTACHMENT_SIZE = int(
+    os.environ.get('APPRISE_MAX_ATTACHMENT_SIZE', 8388608))

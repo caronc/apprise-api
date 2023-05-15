@@ -34,6 +34,7 @@ from django.views.decorators.gzip import gzip_page
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 
+from .utils import parse_attachments
 from .utils import ConfigCache
 from .utils import apply_global_filters
 from .forms import AddByUrlForm
@@ -121,7 +122,12 @@ class WelcomeView(View):
     template_name = 'welcome.html'
 
     def get(self, request):
-        return render(request, self.template_name, {})
+        default_key = 'KEY'
+        key = request.GET.get('key', default_key).strip()
+        return render(request, self.template_name, {
+            'secure': request.scheme[-1].lower() == 's',
+            'key': key if key else default_key,
+        })
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -571,9 +577,7 @@ class NotifyView(View):
         # our content
         content = {}
         if MIME_IS_FORM.match(request.content_type):
-            content = {}
-
-            form = NotifyForm(request.POST)
+            form = NotifyForm(data=request.POST, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -603,6 +607,12 @@ class NotifyView(View):
                 safe=False,
                 status=status,
             )
+
+        # Handle Attachments
+        attach = None
+        if 'attachments' in content or request.FILES:
+            attach = parse_attachments(
+                content.get('attachments'), request.FILES)
 
         #
         # Allow 'tag' value to be specified as part of the URL parameters
@@ -837,6 +847,7 @@ class NotifyView(View):
                     title=content.get('title', ''),
                     notify_type=content.get('type', apprise.NotifyType.INFO),
                     tag=content.get('tag'),
+                    attach=attach,
                 )
 
             if content_type == 'text/html':
@@ -863,6 +874,7 @@ class NotifyView(View):
                 title=content.get('title', ''),
                 notify_type=content.get('type', apprise.NotifyType.INFO),
                 tag=content.get('tag'),
+                attach=attach,
             )
 
         if not result:
@@ -901,7 +913,7 @@ class StatelessNotifyView(View):
         content = {}
         if MIME_IS_FORM.match(request.content_type):
             content = {}
-            form = NotifyByUrlForm(request.POST)
+            form = NotifyByUrlForm(request.POST, request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -999,12 +1011,19 @@ class StatelessNotifyView(View):
                 status=ResponseCode.no_content,
             )
 
+        # Handle Attachments
+        attach = None
+        if 'attachments' in content or request.FILES:
+            attach = parse_attachments(
+                content.get('attachments'), request.FILES)
+
         # Perform our notification at this point
         result = a_obj.notify(
             content.get('body'),
             title=content.get('title', ''),
             notify_type=content.get('type', apprise.NotifyType.INFO),
             tag='all',
+            attach=attach,
         )
 
         if not result:
