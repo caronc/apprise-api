@@ -89,7 +89,16 @@
 								    # {% blocktrans %}Notifies an email address{% endblocktrans %}<br/>
 								    curl -X POST -d '{"urls":"mailto://user:pass@gmail.com","body":"test body","title":"test title"}' \<br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
-										&nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/</code></pre>
+										&nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"
+                    <br/><br/>
+								    # {% blocktrans %}Notifies an email address with attachment{% endblocktrans %}<br/>
+								    curl -X POST -F 'urls=mailto://user:pass@gmail.com' \<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;-F 'title=test title' \<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;-F 'body=test body' \<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@Screenshot-2.png \ <br/>
+										&nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"
+                  </code></pre>
                 </div>
               </li>
               <li>

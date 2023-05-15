@@ -111,6 +111,25 @@ Here is a *stateless* example of how one might send a notification (using `/noti
 curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
     http://localhost:8000/notify
 
+# Send a notification with an attachment
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F 'body=test message' \
+    -F attach=@Screenshot-1.png \
+    http://localhost:8000/notify
+
+# Send multiple attachments; just make sure the attach keyword is unique:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F 'body=test message' \
+    -F attach1=@Screenshot-1.png \
+    -F attach2=@/my/path/to/Apprise.doc \
+    http://localhost:8000/notify
+
+curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
+    -F @/path/to/your/attachment \
+    http://localhost:8000/notify
+
 # Send your notifications directly using JSON
 curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}' \
     -H "Content-Type: application/json" \
@@ -166,6 +185,14 @@ curl -X POST -d "body=test message" \
 # Here is the same request but using JSON instead:
 curl -X POST -d '{"body":"test message"}' \
     -H "Content-Type: application/json" \
+    http://localhost:8000/notify/abc123
+
+# Send attachments:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F 'body=test message' \
+    -F attach1=@Screenshot-1.png \
+    -F attach2=@/my/path/to/Apprise.doc \
     http://localhost:8000/notify/abc123
 ```
 

@@ -606,7 +606,8 @@ class NotifyView(View):
         # Handle Attachments
         attach = None
         if 'attachments' in content or request.FILES:
-            attach = parse_attachments(content.get('attachments'), request.FILES)
+            attach = parse_attachments(
+                content.get('attachments'), request.FILES)
 
         #
         # Allow 'tag' value to be specified as part of the URL parameters
@@ -1008,7 +1009,8 @@ class StatelessNotifyView(View):
         # Handle Attachments
         attach = None
         if 'attachments' in content or request.FILES:
-            attach = parse_attachments(content.get('attachments'), request.FILES)
+            attach = parse_attachments(
+                content.get('attachments'), request.FILES)
 
         # Perform our notification at this point
         result = a_obj.notify(
