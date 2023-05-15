@@ -79,7 +79,14 @@
         {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
         <br />
         <pre><code class="bash">apprise --body="Test Message" \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/{{key}}?tags=all</code></pre>
+        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
+        <br />
+        {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
+        <pre><code class="bash">apprise --body="Test Message" \<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br/>
+        </code></pre>
         </p>
         {% if not CONFIG_LOCK %}
         <p>
@@ -87,7 +94,7 @@
         send a test notification to all of your added services:{% endblocktrans %}
         <br />
         <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/{{key}}</code></pre>
+        &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
         </p>
         {% endif %}
       </div>
