@@ -12,11 +12,12 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV APPRISE_CONFIG_DIR /config
 ENV APPRISE_ATTACH_DIR /attach
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+ENV APPRISE_PLUGIN_PATHS /plugin
 
 # Install nginx and supervisord
 RUN apt-get update -qq && \
-    apt-get install -y -qq nginx supervisor build-essential libffi-dev libssl-dev python-dev
+    apt-get install -y -qq nginx supervisor build-essential libffi-dev libssl-dev \
+    python-dev rustc
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
@@ -32,19 +33,20 @@ WORKDIR /opt/apprise
 COPY apprise_api/ webapp
 
 # Cleanup
-RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python-dev && \
+RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python-dev rustc && \
     apt-get clean autoclean && \
     apt-get autoremove --yes && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Configuration Permissions (to run nginx as a non-root user)
 RUN umask 0002 && \
-    mkdir -p /attach /config /run/apprise && \
-    chown www-data:www-data -R /run/apprise /var/lib/nginx /attach /config
+    mkdir -p /attach /config /plugin /run/apprise && \
+    chown www-data:www-data -R /run/apprise /var/lib/nginx /attach /config /plugin
 
 # Handle running as a non-root user (www-data is id/gid 33)
 USER www-data
 VOLUME /config
 VOLUME /attach
+VOLUME /plugin
 EXPOSE 8000
 CMD ["/usr/bin/supervisord", "-c", "/opt/apprise/webapp/etc/supervisord.conf"]
