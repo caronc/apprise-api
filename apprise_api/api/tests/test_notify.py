@@ -491,8 +491,7 @@ class NotifyTests(SimpleTestCase):
                 'urls': ', '.join([
                     'mailto://user:pass@hotmail.com',
                     'mailto://user:pass@gmail.com',
-                    ],
-                ),
+                ]),
             })
         assert response.status_code == 200
 
