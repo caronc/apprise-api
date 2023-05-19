@@ -155,7 +155,7 @@ class DetailsView(View):
         # Show All flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
         show_all = request.GET.get('all', 'no')[0].lower() in (
-                'a', 'y', '1', 't', 'e', '+')
+            'a', 'y', '1', 't', 'e', '+')
 
         # Our status
         status = ResponseCode.okay
@@ -179,12 +179,12 @@ class DetailsView(View):
         return render(request, self.template_name, {
             'show_all': show_all,
             'details': details,
-            }, status=status) if not json_response else \
+        }, status=status) if not json_response else \
             JsonResponse(
-                    details,
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status)
+                details,
+                encoder=JSONEncoder,
+                safe=False,
+                status=status)
 
 
 @method_decorator(never_cache, name='dispatch')
@@ -259,8 +259,8 @@ class AddView(View):
             except (AttributeError, ValueError):
                 # could not parse JSON response...
                 return JsonResponse({
-                        'error': _('Invalid JSON specified.'),
-                    },
+                    'error': _('Invalid JSON specified.'),
+                },
                     encoder=JSONEncoder,
                     safe=False,
                     status=ResponseCode.bad_request,
@@ -387,12 +387,12 @@ class AddView(View):
             status = ResponseCode.bad_request
             return HttpResponse(msg, status=status) \
                 if not json_response else JsonResponse({
-                       'error': msg,
-                   },
-                   encoder=JSONEncoder,
-                   safe=False,
-                   status=status,
-               )
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
 
         # If we reach here; we successfully loaded the configuration so we can
         # go ahead and write it to disk and alert our caller of the success.
@@ -492,9 +492,9 @@ class GetView(View):
                 _('The site has been configured to deny this request.'),
                 status=ResponseCode.no_access,
             ) if not json_response else JsonResponse({
-                    'error':
-                    _('The site has been configured to deny this request.')
-                },
+                'error':
+                _('The site has been configured to deny this request.')
+            },
                 encoder=JSONEncoder,
                 safe=False,
                 status=ResponseCode.no_access,
@@ -514,8 +514,7 @@ class GetView(View):
                     _('There was no configuration found.'),
                     status=ResponseCode.no_content,
                 ) if not json_response else JsonResponse({
-                        'error': _('There was no configuration found.')
-                    },
+                    'error': _('There was no configuration found.')},
                     encoder=JSONEncoder,
                     safe=False,
                     status=ResponseCode.no_content,
@@ -547,9 +546,8 @@ class GetView(View):
             content_type=content_type,
             status=ResponseCode.okay,
         ) if not json_response else JsonResponse({
-                'format': format,
-                'config': config,
-            },
+            'format': format,
+            'config': config},
             encoder=JSONEncoder,
             safe=False,
             status=ResponseCode.okay,

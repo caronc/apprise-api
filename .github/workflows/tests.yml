@@ -1,0 +1,82 @@
+name: Tests
+
+on:
+
+  # On which repository actions to trigger the build.
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allow job to be triggered manually.
+  workflow_dispatch:
+
+# Cancel in-progress jobs when pushing to the same branch.
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+
+  tests:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+
+      # Run all jobs to completion (false), or cancel
+      # all jobs once the first one fails (true).
+      fail-fast: true
+
+      # Define a minimal test matrix, it will be
+      # expanded using subsequent `include` items.
+      matrix:
+        os: ["ubuntu-latest"]
+        python-version: ["3.10"]
+        bare: [false]
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+      BARE: ${{ matrix.bare }}
+
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} ${{ matrix.bare && '(bare)' || '' }}
+    steps:
+
+    - name: Acquire sources
+      uses: actions/checkout@v3
+
+    - name: Install prerequisites (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+
+    - name: Install project dependencies (Baseline)
+      run: |
+        pip install -r requirements.txt -r dev-requirements.txt
+
+    # For saving resources, code style checking is
+    # only invoked within the `bare` environment.
+    - name: Check code style
+      if: matrix.bare == true
+      run: |
+        flake8 apprise_api --count --show-source --statistics
+
+    - name: Run tests
+      run: |
+        coverage run -m pytest apprise_api
+
+    - name: Process coverage data
+      run: |
+        coverage xml
+        coverage report
+
+    - name: Upload coverage data
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}

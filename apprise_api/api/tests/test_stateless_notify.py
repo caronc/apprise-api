@@ -107,7 +107,7 @@ class StatelessNotifyTests(SimpleTestCase):
             'urls': ', '.join([
                 'mailto://user:pass@hotmail.com',
                 'mailto://user:pass@gmail.com',
-                ]),
+            ]),
             'body': 'test notifiction',
         }
 
