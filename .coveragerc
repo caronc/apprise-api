@@ -5,14 +5,14 @@ concurrency = multiprocessing
 include = apprise_api
 omit =
   *apps.py,
-  *migrations/*,
-  *settings*,
+  */migrations/*,
+  */core/settings/*,
   lib/*,
   lib64/*,
   *urls.py,
-  *core/wsgi.py,
+  */core/wsgi.py,
   gunicorn.conf.py,
-  manage.py
+  */manage.py
 
 disable_warnings = no-data-collected
 
