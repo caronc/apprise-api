@@ -1,5 +1,5 @@
 ARG ARCH
-FROM ${ARCH}python:3.10-slim
+FROM ${ARCH}python:3.11-slim
 
 # set version label
 ARG BUILD_DATE
@@ -14,14 +14,17 @@ ENV APPRISE_CONFIG_DIR /config
 ENV APPRISE_ATTACH_DIR /attach
 ENV APPRISE_PLUGIN_PATHS /plugin
 
-# Install nginx and supervisord
+# Install nginx, supervisord, and cryptography dependencies
 RUN apt-get update -qq && \
-    apt-get install -y -qq nginx supervisor build-essential libffi-dev libssl-dev \
-    pkg-config python-dev rustc
+    apt-get install -y -qq nginx supervisor \
+    build-essential libffi-dev libssl-dev cargo pkg-config python3-dev rustc
+
+# Cryptography documents that the latest version of pip3 must always be used
+RUN pip3 install --upgrade pip
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
-RUN pip3 install -q -r /etc/requirements.txt gunicorn
+RUN pip3 install --no-cache-dir -q -r /etc/requirements.txt gunicorn --no-binary cryptography
 
 # Copy our static content in place
 COPY apprise_api/static /usr/share/nginx/html/s/
@@ -33,7 +36,7 @@ WORKDIR /opt/apprise
 COPY apprise_api/ webapp
 
 # Cleanup
-RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python-dev rustc pkg-config && \
+RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python3-dev cargo rustc pkg-config && \
     apt-get clean autoclean && \
     apt-get autoremove --yes && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/
