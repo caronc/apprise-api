@@ -2,7 +2,7 @@
 
 Take advantage of [Apprise](https://github.com/caronc/apprise) through your network with a user-friendly API.
 
-- Send notifications to more than 80+ services.
+- Send notifications to more than 90+ services.
 - An incredibly lightweight gateway to Apprise.
 - A production ready micro-service at your disposal.
 
@@ -95,7 +95,7 @@ chmod 777 /var/lib/apprise/config
 
 ## Dockerfile Details
 
-The following architectures are supported: `386`, `amd64`, `arm/v6`, `arm/v7`, and `arm64`. The following tags can be used:
+The following architectures are supported: `amd64`, `arm/v7`, and `arm64`. The following tags can be used:
 - `latest`: Points to the latest stable build.
 - `edge`: Points to the last push to the master branch.
 
@@ -285,7 +285,8 @@ The use of environment variables allow you to provide over-rides to default sett
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
 | `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://github.com/caronc/apprise/wiki/decorator_notify). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
 | `APPRISE_RECURSION_MAX` | This defines the number of times one Apprise API Server can (recursively) call another.  This is to both support and mitigate abuse through [the `apprise://` schema](https://github.com/caronc/apprise/wiki/Notify_apprise_api) for those who choose to use it. When leveraged properly, you can increase this (recursion max) value and successfully load balance the handling of many notification requests through many additional API Servers.  By default this value is set to `1` (one).
-| `APPRISE_WORKER_COUNT` | Defines the number of workers to run.  by default this is calculated based on the number of threads detected.
+| `APPRISE_WORKER_COUNT` | Over-ride the number of workers to run.  by default this is `(2 * CPUS) + 1` as advised by Gunicorn's website.
+| `APPRISE_WORKER_TIMEOUT` | Over-ride the worker timeout value; by default this is `300` (5 min) which should be more than enough time to send all pending notifications.
 | `BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
 | `LOG_LEVEL`    | Adjust the log level to the console. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
 | `DEBUG`            | This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.

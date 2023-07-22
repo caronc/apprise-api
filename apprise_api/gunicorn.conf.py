@@ -46,8 +46,8 @@ workers = int(os.environ.get(
     'APPRISE_WORKER_COUNT', multiprocessing.cpu_count() * 2 + 1))
 
 # Increase worker timeout value to give upstream services time to
-# respond
-timeout = int(os.environ.get('APPRISE_WORKER_TIMEOUT', 600))
+# respond.
+timeout = int(os.environ.get('APPRISE_WORKER_TIMEOUT', 300))
 
 # Our worker type to use; over-ride the default `sync`
 worker_class = 'gevent'
