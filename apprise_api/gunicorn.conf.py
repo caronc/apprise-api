@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -46,8 +46,16 @@ workers = int(os.environ.get(
     'APPRISE_WORKER_COUNT', multiprocessing.cpu_count() * 2 + 1))
 
 # Increase worker timeout value to give upstream services time to
-# respond
-timeout = 90
+# respond.
+timeout = int(os.environ.get('APPRISE_WORKER_TIMEOUT', 300))
+
+# Our worker type to use; over-ride the default `sync`
+worker_class = 'gevent'
+
+# Get workers memory consumption under control by leveraging gunicorn worker recycling
+# timeout
+max_requests = 1000
+max_requests_jitter = 50
 
 # Logging
 # '-' means log to stdout.

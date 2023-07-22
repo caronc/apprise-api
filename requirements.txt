@@ -1,5 +1,6 @@
 django
 apprise == 1.4.5
+gevent
 gunicorn
 
 # 3rd party service support
