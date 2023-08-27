@@ -29,7 +29,7 @@ import multiprocessing
 # gunicorn --config <this file> core.wsgi:application
 
 raw_env = [
-    'LANG=en_US.UTF-8',
+    'LANG={}'.format(os.environ.get('LANG', 'en_US.UTF-8')),
     'DJANGO_SETTINGS_MODULE=core.settings',
 ]
 
@@ -38,7 +38,10 @@ pythonpath = '/opt/apprise/webapp'
 
 # bind to port 8000
 bind = [
+    # ipv4
     '0.0.0.0:8000',
+    # ipv6
+    '[::]:8000'
 ]
 
 # Workers are relative to the number of CPU's provided by hosting server
