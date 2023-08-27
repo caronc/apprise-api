@@ -16,7 +16,7 @@ ENV APPRISE_PLUGIN_PATHS /plugin
 
 # Install nginx, supervisord, and cryptography dependencies
 RUN apt-get update -qq && \
-    apt-get install -y -qq nginx supervisor \
+    apt-get install -y -qq nginx supervisor git \
     build-essential libffi-dev libssl-dev cargo pkg-config python3-dev rustc
 
 # Cryptography documents that the latest version of pip3 must always be used
