@@ -52,6 +52,17 @@ docker run --name apprise \
    -d caronc/apprise:latest
 ```
 
+You can also choose to build yourself a custom version after checking out the source code. This is sometimes useful when you want to make a change to the source code and try it out.
+A common change one might make is to update the Dockerfile to point to the master branch of Apprise instead of using the stable version.
+```bash
+# Setup your environment the way you like
+docker build -t apprise/local:latest -f Dockerfile .
+
+# Launch your instance
+docker run --name apprise \
+   -p 8000:8000 \
+   -d  apprise/local:latest
+```
 A `docker-compose.yml` file is already set up to grant you an instant production ready simulated environment:
 
 ```bash
