@@ -101,6 +101,9 @@ class Attachment(apprise.attachment.AttachFile):
         # Prepare our item
         super().__init__(path=self._path, name=filename)
 
+        # Update our file size based on the settings value
+        self.max_file_size = settings.APPRISE_ATTACH_SIZE
+
     @property
     def filename(self):
         return self._filename

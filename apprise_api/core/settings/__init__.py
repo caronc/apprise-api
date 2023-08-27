@@ -128,6 +128,9 @@ APPRISE_CONFIG_DIR = os.environ.get(
 APPRISE_ATTACH_DIR = os.environ.get(
     'APPRISE_ATTACH_DIR', os.path.join(BASE_DIR, 'var', 'attach'))
 
+# The file attachment size allowed by the API
+APPRISE_ATTACH_SIZE = int(os.environ.get('APPRISE_ATTACH_SIZE', 200)) * 1048576
+
 # When set Apprise API Locks itself down so that future (configuration)
 # changes can not be made or accessed.  It disables access to:
 # - the configuration screen: /cfg/{token}
