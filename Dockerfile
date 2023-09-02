@@ -16,15 +16,18 @@ ENV APPRISE_PLUGIN_PATHS /plugin
 
 # Install nginx, supervisord, and cryptography dependencies
 RUN apt-get update -qq && \
-    apt-get install -y -qq nginx supervisor git \
-    build-essential libffi-dev libssl-dev cargo pkg-config python3-dev rustc
+    apt-get install -y -qq nginx supervisor git curl \
+    build-essential libffi-dev libssl-dev pkg-config python3-dev
 
 # Cryptography documents that the latest version of pip3 must always be used
 RUN pip3 install --upgrade pip
 
+# Pull in bleeding edge of rust to keep up with cryptography build requirements
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
-RUN pip3 install --no-cache-dir -q -r /etc/requirements.txt gunicorn --no-binary cryptography
+RUN . "$HOME/.cargo/env" && pip3 install --no-cache-dir -q -r /etc/requirements.txt gunicorn --no-binary cryptography
 
 # Copy our static content in place
 COPY apprise_api/static /usr/share/nginx/html/s/
@@ -36,12 +39,13 @@ WORKDIR /opt/apprise
 COPY apprise_api/ webapp
 
 # Cleanup
-RUN apt-get remove -y -qq build-essential libffi-dev libssl-dev python3-dev cargo rustc pkg-config && \
-    apt-get clean autoclean && \
-    apt-get autoremove --yes && \
-    rm -rf /var/lib/{apt,dpkg,cache,log}/
-
-# Configuration Permissions (to run nginx as a non-root user)
+ RUN . "$HOME/.cargo/env" && rustup self uninstall -y && \
+     apt-get remove -y -qq curl build-essential libffi-dev libssl-dev python3-dev pkg-config && \
+     apt-get clean autoclean && \
+     apt-get autoremove --yes && \
+         rm -rf /var/lib/{apt,dpkg,cache,log}/
+#
+# # Configuration Permissions (to run nginx as a non-root user)
 RUN umask 0002 && \
     mkdir -p /attach /config /plugin /run/apprise && \
     chown www-data:www-data -R /run/apprise /var/lib/nginx /attach /config /plugin
