@@ -46,29 +46,29 @@
       <div class="col s3" style="width:20em">
 {% if STATEFUL_MODE != 'disabled' %}
         <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="tiny material-icons">settings</i>
+          <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
         </ul>
 {% endif %}
         <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'details' %}"><i class="tiny material-icons">settings</i>
+          <a class="collection-item" href="{% url 'details' %}"><i class="material-icons">settings</i>
             {% trans "Apprise Details" %}</a>
           <a class="collection-item" target="_blank"
             href="https://github.com/caronc/apprise/wiki#notification-services">📣
             {% trans "Notification Services" %}</a>
           <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/config"><i
-              class="tiny material-icons">local_library</i> {% trans "Configuration Help" %}</a>
+              class="material-icons">local_library</i> {% trans "Configuration Help" %}</a>
           <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/Troubleshooting"><i
-              class="tiny material-icons">build</i> {% trans "Troubleshooting" %}</a>
+              class="material-icons">build</i> {% trans "Troubleshooting" %}</a>
           <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/CLI_Usage"><i
-              class="tiny material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
+              class="material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
         </ul>
         <ul class="collection z-depth-1">
           <a class="collection-item" target="_blank"
             href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E"><i
-              class="tiny material-icons" style="color: maroon;">free_breakfast</i> <strong>{% trans "Buy Developer A Coffee" %}</strong></a>
+              class="material-icons" style="color: maroon;">free_breakfast</i> <strong>{% trans "Buy Developer A Coffee" %}</strong></a>
           <a class="collection-item" target="_blank" href="https://github.com/sponsors/caronc"><i
-              class="tiny material-icons" style="color: red;">favorite</i> <strong>{% trans "Sponsor Apprise Development" %}</strong></a>
+              class="material-icons" style="color: red;">favorite</i> <strong>{% trans "Sponsor Apprise Development" %}</strong></a>
         </ul>
         {% block menu %}{% endblock %}
       </div>
