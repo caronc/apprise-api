@@ -7,10 +7,15 @@
 }
 
 /* Apprise Version */
-.nav i {
+.nav ul {
   float: right;
 	font-style: normal;
   font-size: 0.7rem;
+}
+.theme {
+	 text-align: right;
+	 display: block;
+	 float:right;
 }
 
 input {
