@@ -285,6 +285,7 @@ The use of environment variables allow you to provide over-rides to default sett
 
 | Variable             | Description |
 |--------------------- | ----------- |
+| `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
 | `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
 | `APPRISE_ATTACH_SIZE` | Over-ride the attachment size (defined in MB). By default it is set to `200` (Megabytes). You can set this up to a maximum value of `500` which is the restriction in place for NginX (internal hosting ervice) at this time.  If you set this to zero (`0`) then attachments will not be passed along even if provided.

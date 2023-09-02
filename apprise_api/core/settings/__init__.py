@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import os
+from core.themes import SiteTheme
 
 # Disable Timezones
 USE_TZ = False
@@ -64,6 +65,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
+    'core.middleware.theme.AutoThemeMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -111,6 +113,7 @@ LOGGING = {
     }
 }
 
+
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Define our base URL
@@ -119,6 +122,10 @@ BASE_URL = os.environ.get('BASE_URL', '')
 
 # Static files relative path (CSS, JavaScript, Images)
 STATIC_URL = BASE_URL + '/s/'
+
+# Default theme can be either 'light' or 'dark'
+APPRISE_DEFAULT_THEME = \
+    os.environ.get('APPRISE_DEFAULT_THEME', SiteTheme.LIGHT)
 
 # The location to store Apprise configuration files
 APPRISE_CONFIG_DIR = os.environ.get(

@@ -7,14 +7,14 @@
   <meta charset="utf-8">
   <!--Let browser know website is optimized for mobile-->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!--highlightjs-->
-  <link rel="stylesheet" href="{% static 'css/highlight.min.css' %}">
   <!--materialize-->
-  <link rel="stylesheet" href="{% static 'css/materialize.min.css' %}" />
+  <link rel="stylesheet" href="{% get_static_prefix %}css/{{request.theme|safe}}/materialize.min.css" />
   <!--material-design-icons-->
   <link rel="stylesheet" href="{% static 'iconfont/material-icons.css' %}">
   <!--common-->
   <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+  <!--highlightjs-->
+  <link rel="stylesheet" href="{% get_static_prefix %}css/{{request.theme|safe}}/highlight.min.css">
   <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}" />
   <!--materialize-->
   <script src="{% static 'js/materialize.min.js' %}"></script>
@@ -28,13 +28,16 @@
 <body>
   <div class="content">
     <!-- Title -->
-    <div class="nav row teal lighten-5 z-depth-2">
+    <div class="nav row nav-color z-depth-2">
       <div class="col s12">
         <a href="{% url 'welcome' %}">
           <img class="left" src="{% static "logo.png" %}" alt="{% trans "Apprise Logo" %}" />
         </a>
         <h1>{% trans "Apprise API" %}</h1>
-        <i>APPRISE v{{APPRISE_VERSION}}</i>
+        <ul>
+				   <li>APPRISE v{{APPRISE_VERSION}}</li>
+				   <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><span class="tiny material-icons">invert_colors</span></a></li>
+				</ul>
       </div>
     </div>
     <!-- Page Layout here -->
@@ -43,29 +46,29 @@
       <div class="col s3" style="width:20em">
 {% if STATEFUL_MODE != 'disabled' %}
         <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="tiny material-icons">settings</i>
+          <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
         </ul>
 {% endif %}
         <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'details' %}"><i class="tiny material-icons">settings</i>
+          <a class="collection-item" href="{% url 'details' %}"><i class="material-icons">settings</i>
             {% trans "Apprise Details" %}</a>
           <a class="collection-item" target="_blank"
             href="https://github.com/caronc/apprise/wiki#notification-services">📣
             {% trans "Notification Services" %}</a>
           <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/config"><i
-              class="tiny material-icons">local_library</i> {% trans "Configuration Help" %}</a>
+              class="material-icons">local_library</i> {% trans "Configuration Help" %}</a>
           <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/Troubleshooting"><i
-              class="tiny material-icons">build</i> {% trans "Troubleshooting" %}</a>
+              class="material-icons">build</i> {% trans "Troubleshooting" %}</a>
           <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/CLI_Usage"><i
-              class="tiny material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
+              class="material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
         </ul>
         <ul class="collection z-depth-1">
           <a class="collection-item" target="_blank"
             href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E"><i
-              class="tiny material-icons" style="color: maroon;">free_breakfast</i> <strong>{% trans "Buy Developer A Coffee" %}</strong></a>
+              class="material-icons" style="color: maroon;">free_breakfast</i> <strong>{% trans "Buy Developer A Coffee" %}</strong></a>
           <a class="collection-item" target="_blank" href="https://github.com/sponsors/caronc"><i
-              class="tiny material-icons" style="color: red;">favorite</i> <strong>{% trans "Sponsor Apprise Development" %}</strong></a>
+              class="material-icons" style="color: red;">favorite</i> <strong>{% trans "Sponsor Apprise Development" %}</strong></a>
         </ul>
         {% block menu %}{% endblock %}
       </div>
