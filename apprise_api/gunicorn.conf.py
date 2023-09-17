@@ -55,8 +55,8 @@ timeout = int(os.environ.get('APPRISE_WORKER_TIMEOUT', 300))
 # Our worker type to use; over-ride the default `sync`
 worker_class = 'gevent'
 
-# Get workers memory consumption under control by leveraging gunicorn worker recycling
-# timeout
+# Get workers memory consumption under control by leveraging gunicorn
+# worker recycling timeout
 max_requests = 1000
 max_requests_jitter = 50
 
