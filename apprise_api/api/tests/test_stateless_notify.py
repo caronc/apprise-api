@@ -144,6 +144,9 @@ class StatelessNotifyTests(SimpleTestCase):
             'body': 'test notifiction',
         }
 
+        # Monkey Patch
+        apprise.plugins.NotifyEmail.NotifyEmail.enabled = True
+
         # At a minimum 'body' is requred
         form = NotifyByUrlForm(data=form_data)
         assert form.is_valid()

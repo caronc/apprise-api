@@ -24,12 +24,13 @@
 # THE SOFTWARE.
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from ..forms import NotifyForm
 from ..utils import ConfigCache
 import os
 import re
 import apprise
+import requests
 
 
 class StatefulNotifyTests(SimpleTestCase):
@@ -51,8 +52,8 @@ class StatefulNotifyTests(SimpleTestCase):
         response = self.client.post('/get/{}'.format(key))
         assert response.status_code == 403
 
-    @patch('apprise.Apprise.notify')
-    def test_stateful_configuration_io(self, mock_notify):
+    @patch('requests.post')
+    def test_stateful_configuration_io(self, mock_post):
         """
         Test the writing, removal, writing and removal of configuration to
         verify it persists and is removed when expected
@@ -61,15 +62,25 @@ class StatefulNotifyTests(SimpleTestCase):
         # our key to use
         key = 'test_stateful'
 
-        # Set our return value
-        mock_notify.return_value = True
+        request = Mock()
+        request.content = b'ok'
+        request.status_code = requests.codes.ok
+        mock_post.return_value = request
+
+        # Monkey Patch
+        apprise.plugins.NotifyEmail.NotifyEmail.enabled = True
 
         # Preare our list of URLs we want to save
         urls = [
-            'mail=mailto://user:pass@hotmail.com',
             'devops=slack://TokenA/TokenB/TokenC',
             'pusbullet=pbul://tokendetails',
+            'general,json=json://hostname',
         ]
+
+        # Monkey Patch
+        apprise.plugins.NotifySlack.NotifySlack.enabled = True
+        apprise.plugins.NotifyPushBullet.NotifyPushBullet.enabled = True
+        apprise.plugins.NotifyJSON.NotifyJSON.enabled = True
 
         # For 10 iterations, repeat these tests to verify that don't change
         # and our saved content is not different on subsequent calls.
@@ -94,6 +105,7 @@ class StatefulNotifyTests(SimpleTestCase):
             form_data = {
                 'body': '## test notifiction',
                 'format': apprise.NotifyFormat.MARKDOWN,
+                'tag': 'general',
             }
 
             form = NotifyForm(data=form_data)
@@ -103,10 +115,34 @@ class StatefulNotifyTests(SimpleTestCase):
             # self.client.post()
             del form.cleaned_data['attachment']
 
+            # We sent the notification successfully
             response = self.client.post(
                 '/notify/{}'.format(key), form.cleaned_data)
             assert response.status_code == 200
-            assert mock_notify.call_count == 1
+            assert mock_post.call_count == 1
+
+            mock_post.reset_mock()
+
+            form_data = {
+                'body': '## test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+                'tag': 'no-on-with-this-tag',
+            }
+
+            form = NotifyForm(data=form_data)
+            assert form.is_valid()
+
+            # Required to prevent None from being passed into
+            # self.client.post()
+            del form.cleaned_data['attachment']
+
+            # No one to notify
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+            assert response.status_code == 424
+            assert mock_post.call_count == 0
+
+            mock_post.reset_mock()
 
             # Now empty our data
             response = self.client.post('/del/{}'.format(key))
@@ -117,7 +153,7 @@ class StatefulNotifyTests(SimpleTestCase):
             assert response.status_code == 204
 
             # Reset our count
-            mock_notify.reset_mock()
+            mock_post.reset_mock()
 
         # Now we do a similar approach as the above except we remove the
         # configuration from under the application
@@ -151,10 +187,103 @@ class StatefulNotifyTests(SimpleTestCase):
             # self.client.post()
             del form.cleaned_data['attachment']
 
+            # No one to notify (no tag specified)
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+            assert response.status_code == 424
+            assert mock_post.call_count == 0
+
+            # Reset our configuration
+            mock_post.reset_mock()
+
+            #
+            # Test tagging now
+            #
+            form_data = {
+                'body': '## test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+                'tag': 'general+json',
+            }
+
+            form = NotifyForm(data=form_data)
+            assert form.is_valid()
+
+            # Required to prevent None from being passed into
+            # self.client.post()
+            del form.cleaned_data['attachment']
+
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+            # + (plus) not supported at this time
+            assert response.status_code == 400
+            assert mock_post.call_count == 0
+
+            # Reset our configuration
+            mock_post.reset_mock()
+
+            form_data = {
+                'body': '## test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+                # Plus with space inbetween
+                'tag': 'general + json',
+            }
+
+            form = NotifyForm(data=form_data)
+            assert form.is_valid()
+
+            # Required to prevent None from being passed into
+            # self.client.post()
+            del form.cleaned_data['attachment']
+
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+            # + (plus) not supported at this time
+            assert response.status_code == 400
+            assert mock_post.call_count == 0
+
+            mock_post.reset_mock()
+
+            form_data = {
+                'body': '## test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+                # Space (AND)
+                'tag': 'general json',
+            }
+
+            form = NotifyForm(data=form_data)
+            assert form.is_valid()
+
+            # Required to prevent None from being passed into
+            # self.client.post()
+            del form.cleaned_data['attachment']
+
             response = self.client.post(
                 '/notify/{}'.format(key), form.cleaned_data)
             assert response.status_code == 200
-            assert mock_notify.call_count == 1
+            assert mock_post.call_count == 1
+
+            mock_post.reset_mock()
+
+            form_data = {
+                'body': '## test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+                # Comma (OR)
+                'tag': 'general, devops',
+            }
+
+            form = NotifyForm(data=form_data)
+            assert form.is_valid()
+
+            # Required to prevent None from being passed into
+            # self.client.post()
+            del form.cleaned_data['attachment']
+
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+            assert response.status_code == 200
+
+            # 2 endpoints hit
+            assert mock_post.call_count == 2
 
             # Now remove the file directly (as though one
             # removed the configuration directory)
@@ -171,4 +300,4 @@ class StatefulNotifyTests(SimpleTestCase):
             assert response.status_code == 204
 
             # Reset our count
-            mock_notify.reset_mock()
+            mock_post.reset_mock()
