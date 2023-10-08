@@ -25,6 +25,7 @@
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from unittest.mock import patch
+import hashlib
 
 
 class DelTests(SimpleTestCase):
@@ -35,6 +36,36 @@ class DelTests(SimpleTestCase):
         """
         response = self.client.get('/del/**invalid-key**')
         assert response.status_code == 404
+
+    def test_key_lengths(self):
+        """
+        Test our key lengths
+        """
+
+        # our key to use
+        h = hashlib.sha512()
+        h.update(b'string')
+        key = h.hexdigest()
+
+        # Our limit
+        assert len(key) == 128
+
+        # Add our URL
+        response = self.client.post(
+            '/add/{}'.format(key), {'urls': 'mailto://user:pass@yahoo.ca'})
+        assert response.status_code == 200
+
+        # remove a key that is too long
+        response = self.client.post('/del/{}'.format(key + 'x'))
+        assert response.status_code == 404
+
+        # remove the key
+        response = self.client.post('/del/{}'.format(key))
+        assert response.status_code == 200
+
+        # Test again; key is gone
+        response = self.client.post('/del/{}'.format(key))
+        assert response.status_code == 204
 
     @override_settings(APPRISE_CONFIG_LOCK=True)
     def test_del_with_lock(self):
@@ -77,3 +108,7 @@ class DelTests(SimpleTestCase):
         # We can now remove the key
         response = self.client.post('/del/{}'.format(key))
         assert response.status_code == 200
+
+        # Key has already been removed
+        response = self.client.post('/del/{}'.format(key))
+        assert response.status_code == 204

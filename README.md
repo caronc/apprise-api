@@ -274,7 +274,8 @@ curl -X POST -d '{"tag":"leaders teamA, leaders teamB", "body":"meeting now"}' \
 
 ### API Notes
 
-- `{KEY}` must be 1-64 alphanumeric characters in length. In addition to this, the underscore (`_`) and dash (`-`) are also accepted.
+- `{KEY}` must be 1-128 alphanumeric characters in length. In addition to this, the underscore (`_`) and dash (`-`) are also accepted.
+  - Consider using keys like `sha1`, `sha512`, `uuid`, etc to secure shared namespaces if you wish to open your platform to others. Or keep it simple in a controlled environment and just use the default string `apprise` as your key (and as illustrated in the examples above).
 - Specify the `Content-Type` of `application/json` to use the JSON support otherwise the default expected format is `application/x-www-form-urlencoded` (whether it is specified or not).
 - There is no authentication (or SSL encryption) required to use this API; this is by design. The intention here is to be a light-weight and fast micro-service.
 - There are no additional dependencies (such as database requirements, etc) should you choose to use the optional persistent store (mounted as `/config`).
@@ -323,6 +324,7 @@ pip install -r dev-requirements.txt -r requirements.txt
 # Run a dev server (debug mode) accessible from your browser at:
 # -> http://localhost:8000/
 ./manage.py runserver
+
 ```
 
 Some other useful development notes:
