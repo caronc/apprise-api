@@ -17,6 +17,9 @@ django
 gevent
 gunicorn
 
+## for webhook support
+requests
+
 ## 3rd Party Service support
 paho-mqtt
 gntp

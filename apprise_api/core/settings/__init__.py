@@ -127,6 +127,12 @@ STATIC_URL = BASE_URL + '/s/'
 APPRISE_DEFAULT_THEME = \
     os.environ.get('APPRISE_DEFAULT_THEME', SiteTheme.LIGHT)
 
+# Webhook that is posted to upon executed results
+# Set it to something like https://myserver.com/path/
+# Requets are done as a POST
+APPRISE_WEBHOOK_RESULTS_URL = \
+    os.environ.get('APPRISE_WEBHOOK_RESULTS_URL', '')
+
 # The location to store Apprise configuration files
 APPRISE_CONFIG_DIR = os.environ.get(
     'APPRISE_CONFIG_DIR', os.path.join(BASE_DIR, 'var', 'config'))

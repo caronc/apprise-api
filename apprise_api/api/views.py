@@ -37,6 +37,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .utils import parse_attachments
 from .utils import ConfigCache
 from .utils import apply_global_filters
+from .utils import send_webhook
 from .forms import AddByUrlForm
 from .forms import AddByConfigForm
 from .forms import NotifyForm
@@ -823,51 +824,25 @@ class NotifyView(View):
         level = request.headers.get(
             'X-Apprise-Log-Level',
             settings.LOGGING['loggers']['apprise']['level']).upper()
+        if level not in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG'):
+            level = settings.LOGGING['loggers']['apprise']['level'].upper()
 
         # Initialize our response object
         response = None
 
-        if level in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG'):
-            level = getattr(apprise.logging, level)
+        esc = '<!!-!ESC!-!!>'
 
-            esc = '<!!-!ESC!-!!>'
-            fmt = '<li class="log_%(levelname)s">' \
-                '<div class="log_time">%(asctime)s</div>' \
-                '<div class="log_level">%(levelname)s</div>' \
-                f'<div class="log_msg">{esc}%(message)s{esc}</div></li>' \
-                if content_type == 'text/html' else \
-                settings.LOGGING['formatters']['standard']['format']
+        # Format is only updated if the content_type is html
+        fmt = '<li class="log_%(levelname)s">' \
+            '<div class="log_time">%(asctime)s</div>' \
+            '<div class="log_level">%(levelname)s</div>' \
+            f'<div class="log_msg">{esc}%(message)s{esc}</div></li>' \
+            if content_type == 'text/html' else \
+            settings.LOGGING['formatters']['standard']['format']
 
-            # Now specify our format (and over-ride the default):
-            with apprise.LogCapture(level=level, fmt=fmt) as logs:
-                # Perform our notification at this point
-                result = a_obj.notify(
-                    content.get('body'),
-                    title=content.get('title', ''),
-                    notify_type=content.get('type', apprise.NotifyType.INFO),
-                    tag=content.get('tag'),
-                    attach=attach,
-                )
-
-            if content_type == 'text/html':
-                # Iterate over our entries so that we can prepare to escape
-                # things to be presented as HTML
-                esc = re.escape(esc)
-                entries = re.findall(
-                    r'(?P<head><li .+?){}(?P<to_escape>.*?)'
-                    r'{}(?P<tail>.+li>$)(?=$|<li .+{})'.format(
-                        esc, esc, esc), logs.getvalue(),
-                    re.DOTALL)
-
-                # Wrap logs in `<ul>` tag and escape our message body:
-                response = '<ul class="logs">{}</ul>'.format(
-                    ''.join([e[0] + escape(e[1]) + e[2] for e in entries]))
-
-            else:  # content_type == 'text/plain'
-                response = logs.getvalue()
-
-        else:
-            # Perform our notification at this point without logging
+        # Now specify our format (and over-ride the default):
+        with apprise.LogCapture(level=level, fmt=fmt) as logs:
+            # Perform our notification at this point
             result = a_obj.notify(
                 content.get('body'),
                 title=content.get('title', ''),
@@ -875,6 +850,34 @@ class NotifyView(View):
                 tag=content.get('tag'),
                 attach=attach,
             )
+
+        if content_type == 'text/html':
+            # Iterate over our entries so that we can prepare to escape
+            # things to be presented as HTML
+            esc = re.escape(esc)
+            entries = re.findall(
+                r'(?P<head><li .+?){}(?P<to_escape>.*?)'
+                r'{}(?P<tail>.+li>$)(?=$|<li .+{})'.format(
+                    esc, esc, esc), logs.getvalue(),
+                re.DOTALL)
+
+            # Wrap logs in `<ul>` tag and escape our message body:
+            response = '<ul class="logs">{}</ul>'.format(
+                ''.join([e[0] + escape(e[1]) + e[2] for e in entries]))
+
+        else:  # content_type == 'text/plain'
+            response = logs.getvalue()
+
+        if settings.APPRISE_WEBHOOK_RESULTS_URL:
+            webhook_payload = {
+                'source': request.META['REMOTE_ADDR'],
+                'status': 0 if result else 1,
+                'output': response,
+            }
+
+            # Send our webhook (pass or fail)
+            send_webhook(
+                webhook_payload, settings.APPRISE_WEBHOOK_RESULTS_TIMEOUT)
 
         if not result:
             # If at least one notification couldn't be sent; change up
@@ -1017,14 +1020,47 @@ class StatelessNotifyView(View):
             attach = parse_attachments(
                 content.get('attachments'), request.FILES)
 
-        # Perform our notification at this point
-        result = a_obj.notify(
-            content.get('body'),
-            title=content.get('title', ''),
-            notify_type=content.get('type', apprise.NotifyType.INFO),
-            tag='all',
-            attach=attach,
-        )
+        # Acquire our log level from headers if defined, otherwise use
+        # the global one set in the settings
+        level = request.headers.get(
+            'X-Apprise-Log-Level',
+            settings.LOGGING['loggers']['apprise']['level']).upper()
+        if level not in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG'):
+            level = settings.LOGGING['loggers']['apprise']['level'].upper()
+
+        if settings.APPRISE_WEBHOOK_RESULTS_URL:
+            fmt = settings.LOGGING['formatters']['standard']['format']
+            with apprise.LogCapture(level=level, fmt=fmt) as logs:
+                # Perform our notification at this point
+                result = a_obj.notify(
+                    content.get('body'),
+                    title=content.get('title', ''),
+                    notify_type=content.get('type', apprise.NotifyType.INFO),
+                    tag='all',
+                    attach=attach,
+                )
+
+                response = logs.getvalue()
+
+                webhook_payload = {
+                    'source': request.META['REMOTE_ADDR'],
+                    'status': 0 if result else 1,
+                    'output': response,
+                }
+
+                # Send our webhook (pass or fail)
+                send_webhook(
+                    webhook_payload, settings.APPRISE_WEBHOOK_RESULTS_TIMEOUT)
+
+        else:
+            # Perform our notification at this point
+            result = a_obj.notify(
+                content.get('body'),
+                title=content.get('title', ''),
+                notify_type=content.get('type', apprise.NotifyType.INFO),
+                tag='all',
+                attach=attach,
+            )
 
         if not result:
             # If at least one notification couldn't be sent; change up the
