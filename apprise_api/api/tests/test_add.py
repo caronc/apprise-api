@@ -28,6 +28,7 @@ from unittest.mock import patch
 from django.test.utils import override_settings
 from ..forms import AUTO_DETECT_CONFIG_KEYWORD
 import json
+import hashlib
 
 
 class AddTests(SimpleTestCase):
@@ -37,6 +38,30 @@ class AddTests(SimpleTestCase):
         Test GET requests to invalid key
         """
         response = self.client.get('/add/**invalid-key**')
+        assert response.status_code == 404
+
+    def test_key_lengths(self):
+        """
+        Test our key lengths
+        """
+
+        # our key to use
+        h = hashlib.sha512()
+        h.update(b'string')
+        key = h.hexdigest()
+
+        # Our limit
+        assert len(key) == 128
+
+        # Add our URL
+        response = self.client.post(
+            '/add/{}'.format(key), {'urls': 'mailto://user:pass@yahoo.ca'})
+        assert response.status_code == 200
+
+        # However adding just 1 more character exceeds our limit and the save
+        # will fail
+        response = self.client.post(
+            '/add/{}'.format(key + 'x'), {'urls': 'mailto://user:pass@yahoo.ca'})
         assert response.status_code == 404
 
     @override_settings(APPRISE_CONFIG_LOCK=True)

@@ -30,27 +30,27 @@ urlpatterns = [
         r'^$',
         views.WelcomeView.as_view(), name='welcome'),
     re_path(
-        r'^details/?',
+        r'^details/?$',
         views.DetailsView.as_view(), name='details'),
     re_path(
-        r'^cfg/(?P<key>[\w_-]{1,64})/?',
+        r'^cfg/(?P<key>[\w_-]{1,128})/?$',
         views.ConfigView.as_view(), name='config'),
     re_path(
-        r'^add/(?P<key>[\w_-]{1,64})/?',
+        r'^add/(?P<key>[\w_-]{1,128})/?$',
         views.AddView.as_view(), name='add'),
     re_path(
-        r'^del/(?P<key>[\w_-]{1,64})/?',
+        r'^del/(?P<key>[\w_-]{1,128})/?$',
         views.DelView.as_view(), name='del'),
     re_path(
-        r'^get/(?P<key>[\w_-]{1,64})/?',
+        r'^get/(?P<key>[\w_-]{1,128})/?$',
         views.GetView.as_view(), name='get'),
     re_path(
-        r'^notify/(?P<key>[\w_-]{1,64})/?',
+        r'^notify/(?P<key>[\w_-]{1,128})/?$',
         views.NotifyView.as_view(), name='notify'),
     re_path(
-        r'^notify/?',
+        r'^notify/?$',
         views.StatelessNotifyView.as_view(), name='s_notify'),
     re_path(
-        r'^json/urls/(?P<key>[\w_-]{1,64})/?',
+        r'^json/urls/(?P<key>[\w_-]{1,128})/?$',
         views.JsonUrlView.as_view(), name='json_urls'),
 ]
