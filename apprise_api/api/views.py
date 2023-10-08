@@ -868,7 +868,7 @@ class NotifyView(View):
         else:  # content_type == 'text/plain'
             response = logs.getvalue()
 
-        if settings.APPRISE_WEBHOOK_RESULTS_URL:
+        if settings.APPRISE_WEBHOOK_URL:
             webhook_payload = {
                 'source': request.META['REMOTE_ADDR'],
                 'status': 0 if result else 1,
@@ -877,7 +877,7 @@ class NotifyView(View):
 
             # Send our webhook (pass or fail)
             send_webhook(
-                webhook_payload, settings.APPRISE_WEBHOOK_RESULTS_TIMEOUT)
+                webhook_payload, settings.APPRISE_WEBHOOK_TIMEOUT)
 
         if not result:
             # If at least one notification couldn't be sent; change up
@@ -1028,7 +1028,7 @@ class StatelessNotifyView(View):
         if level not in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG'):
             level = settings.LOGGING['loggers']['apprise']['level'].upper()
 
-        if settings.APPRISE_WEBHOOK_RESULTS_URL:
+        if settings.APPRISE_WEBHOOK_URL:
             fmt = settings.LOGGING['formatters']['standard']['format']
             with apprise.LogCapture(level=level, fmt=fmt) as logs:
                 # Perform our notification at this point
@@ -1050,7 +1050,7 @@ class StatelessNotifyView(View):
 
                 # Send our webhook (pass or fail)
                 send_webhook(
-                    webhook_payload, settings.APPRISE_WEBHOOK_RESULTS_TIMEOUT)
+                    webhook_payload, settings.APPRISE_WEBHOOK_TIMEOUT)
 
         else:
             # Perform our notification at this point
