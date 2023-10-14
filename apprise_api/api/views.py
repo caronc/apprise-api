@@ -45,12 +45,10 @@ from .forms import NotifyByUrlForm
 from .forms import CONFIG_FORMATS
 from .forms import AUTO_DETECT_CONFIG_KEYWORD
 
+import logging
 import apprise
 import json
 import re
-
-# import the logging library
-import logging
 
 # Get an instance of a logger
 logger = logging.getLogger('django')
@@ -558,7 +556,7 @@ class GetView(View):
 @method_decorator((gzip_page, never_cache), name='dispatch')
 class NotifyView(View):
     """
-    A Django view for sending a notification
+    A Django view for sending a notification in a stateful manner
     """
     def post(self, request, key):
         """
@@ -609,9 +607,15 @@ class NotifyView(View):
 
         # Handle Attachments
         attach = None
-        if 'attachments' in content or request.FILES:
-            attach = parse_attachments(
-                content.get('attachments'), request.FILES)
+        if 'attachment' in content or request.FILES:
+            try:
+                attach = parse_attachments(
+                    content.get('attachment'), request.FILES)
+
+            except (TypeError, ValueError):
+                return HttpResponse(
+                    _('Bad attachment'),
+                    status=ResponseCode.bad_request)
 
         #
         # Allow 'tag' value to be specified as part of the URL parameters
@@ -824,8 +828,28 @@ class NotifyView(View):
         level = request.headers.get(
             'X-Apprise-Log-Level',
             settings.LOGGING['loggers']['apprise']['level']).upper()
-        if level not in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG'):
+        if level not in (
+                'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE'):
             level = settings.LOGGING['loggers']['apprise']['level'].upper()
+
+        # Convert level to it's integer value
+        if level == 'CRITICAL':
+            level = logging.CRITICAL
+
+        elif level == 'ERROR':
+            level = logging.ERROR
+
+        elif level == 'WARNING':
+            level = logging.WARNING
+
+        elif level == 'INFO':
+            level = logging.INFO
+
+        elif level == 'DEBUG':
+            level = logging.DEBUG
+
+        elif level == 'TRACE':
+            level = logging.DEBUG - 1
 
         # Initialize our response object
         response = None
@@ -876,8 +900,7 @@ class NotifyView(View):
             }
 
             # Send our webhook (pass or fail)
-            send_webhook(
-                webhook_payload, settings.APPRISE_WEBHOOK_TIMEOUT)
+            send_webhook(webhook_payload)
 
         if not result:
             # If at least one notification couldn't be sent; change up
@@ -1016,17 +1039,43 @@ class StatelessNotifyView(View):
 
         # Handle Attachments
         attach = None
-        if 'attachments' in content or request.FILES:
-            attach = parse_attachments(
-                content.get('attachments'), request.FILES)
+        if 'attachment' in content or request.FILES:
+            try:
+                attach = parse_attachments(
+                    content.get('attachment'), request.FILES)
+
+            except (TypeError, ValueError):
+                return HttpResponse(
+                    _('Bad attachment'),
+                    status=ResponseCode.bad_request)
 
         # Acquire our log level from headers if defined, otherwise use
         # the global one set in the settings
         level = request.headers.get(
             'X-Apprise-Log-Level',
             settings.LOGGING['loggers']['apprise']['level']).upper()
-        if level not in ('CRITICAL', 'ERROR' 'WARNING', 'INFO', 'DEBUG'):
+        if level not in (
+                'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE'):
             level = settings.LOGGING['loggers']['apprise']['level'].upper()
+
+        # Convert level to it's integer value
+        if level == 'CRITICAL':
+            level = logging.CRITICAL
+
+        elif level == 'ERROR':
+            level = logging.ERROR
+
+        elif level == 'WARNING':
+            level = logging.WARNING
+
+        elif level == 'INFO':
+            level = logging.INFO
+
+        elif level == 'DEBUG':
+            level = logging.DEBUG
+
+        elif level == 'TRACE':
+            level = logging.DEBUG - 1
 
         if settings.APPRISE_WEBHOOK_URL:
             fmt = settings.LOGGING['formatters']['standard']['format']
@@ -1049,8 +1098,7 @@ class StatelessNotifyView(View):
                 }
 
                 # Send our webhook (pass or fail)
-                send_webhook(
-                    webhook_payload, settings.APPRISE_WEBHOOK_TIMEOUT)
+                send_webhook(webhook_payload)
 
         else:
             # Perform our notification at this point

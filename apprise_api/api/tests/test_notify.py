@@ -23,7 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase, override_settings
-from unittest.mock import patch
+from django.core.files.uploadedfile import SimpleUploadedFile
+from unittest import mock
 import requests
 from ..forms import NotifyForm
 import json
@@ -36,7 +37,7 @@ class NotifyTests(SimpleTestCase):
     Test notifications
     """
 
-    @patch('apprise.Apprise.notify')
+    @mock.patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls(self, mock_notify):
         """
         Test adding a simple notification and notifying it
@@ -78,7 +79,146 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
-    @patch('requests.post')
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Preare our form data
+        form_data = {
+            'body': 'test notifiction',
+        }
+        attach_data = {
+            'attachment': SimpleUploadedFile(
+                "attach.txt", b"content here", content_type="text/plain")
+        }
+
+        # At a minimum, just a body is required
+        form = NotifyForm(form_data, attach_data)
+        assert form.is_valid()
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form.cleaned_data)
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Test Headers
+        for level in ('CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG',
+                      'TRACE', 'INVALID'):
+
+            # Preare our form data
+            form_data = {
+                'body': 'test notifiction',
+            }
+            attach_data = {
+                'attachment': SimpleUploadedFile(
+                    "attach.txt", b"content here", content_type="text/plain")
+            }
+
+            # At a minimum, just a body is required
+            form = NotifyForm(form_data, attach_data)
+            assert form.is_valid()
+
+            # Prepare our header
+            headers = {
+                'HTTP_X-APPRISE-LOG-LEVEL': level,
+            }
+
+            # Send our notification
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data, **headers)
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
+            # Reset our mock object
+            mock_notify.reset_mock()
+
+        # Long Filename
+        attach_data = {
+            'attachment': SimpleUploadedFile(
+                "{}.txt".format('a' * 2000),
+                b"content here", content_type="text/plain")
+        }
+
+        # At a minimum, just a body is required
+        form = NotifyForm(form_data, attach_data)
+        assert form.is_valid()
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form.cleaned_data)
+
+        # We fail because the filename is too long
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        with override_settings(APPRISE_MAX_ATTACHMENTS=0):
+
+            # Preare our form data
+            form_data = {
+                'body': 'test notifiction',
+            }
+            attach_data = {
+                'attachment': SimpleUploadedFile(
+                    "attach.txt", b"content here", content_type="text/plain")
+            }
+
+            # At a minimum, just a body is required
+            form = NotifyForm(form_data, attach_data)
+            assert form.is_valid()
+
+            # Send our notification
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+
+            # No attachments allowed
+            assert response.status_code == 400
+            assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Test Webhooks
+        with mock.patch('requests.post') as mock_post:
+            # Response object
+            response = mock.Mock()
+            response.status_code = requests.codes.ok
+            mock_post.return_value = response
+
+            with override_settings(
+                    APPRISE_WEBHOOK_URL='http://localhost/webhook/'):
+
+                # Preare our form data
+                form_data = {
+                    'body': 'test notifiction',
+                }
+
+                # At a minimum, just a body is required
+                form = NotifyForm(data=form_data)
+                assert form.is_valid()
+
+                # Required to prevent None from being passed into
+                # self.client.post()
+                del form.cleaned_data['attachment']
+
+                # Send our notification
+                response = self.client.post(
+                    '/notify/{}'.format(key), form.cleaned_data)
+
+                # Test our results
+                assert response.status_code == 200
+                assert mock_notify.call_count == 1
+                assert mock_post.call_count == 1
+
+                # Reset our mock object
+                mock_notify.reset_mock()
+
+    @mock.patch('requests.post')
     def test_notify_with_tags(self, mock_post):
         """
         Test notification handling when setting tags
@@ -170,7 +310,7 @@ class NotifyTests(SimpleTestCase):
         assert response['message'] == form_data['body']
         assert response['type'] == apprise.NotifyType.WARNING
 
-    @patch('requests.post')
+    @mock.patch('requests.post')
     def test_notify_with_tags_via_apprise(self, mock_post):
         """
         Test notification handling when setting tags via the Apprise CLI
@@ -272,7 +412,7 @@ class NotifyTests(SimpleTestCase):
         assert response['message'] == form_data['body']
         assert response['type'] == apprise.NotifyType.WARNING
 
-    @patch('requests.post')
+    @mock.patch('requests.post')
     def test_advanced_notify_with_tags(self, mock_post):
         """
         Test advanced notification handling when setting tags
@@ -474,7 +614,7 @@ class NotifyTests(SimpleTestCase):
         # We'll trigger on 2 entries
         assert mock_post.call_count == 0
 
-    @patch('apprise.NotifyBase.notify')
+    @mock.patch('apprise.NotifyBase.notify')
     def test_partial_notify_by_loaded_urls(self, mock_notify):
         """
         Test notification handling when one or more of the services
@@ -523,7 +663,7 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 424
         assert mock_notify.call_count == 2
 
-    @patch('apprise.Apprise.notify')
+    @mock.patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """
         Test adding a simple notification and notifying it using JSON
@@ -622,7 +762,7 @@ class NotifyTests(SimpleTestCase):
         }
 
         # Test the handling of underlining disk/write exceptions
-        with patch('gzip.open') as mock_open:
+        with mock.patch('gzip.open') as mock_open:
             mock_open.side_effect = OSError()
             # We'll fail to write our key now
             response = self.client.post(
@@ -746,7 +886,7 @@ class NotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 1
         assert response['content-type'] == 'text/html'
 
-    @patch('apprise.plugins.NotifyEmail.NotifyEmail.send')
+    @mock.patch('apprise.plugins.NotifyEmail.NotifyEmail.send')
     def test_notify_with_filters(self, mock_send):
         """
         Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES
@@ -904,7 +1044,7 @@ class NotifyTests(SimpleTestCase):
                     apprise.common.NOTIFY_SCHEMA_MAP['mailto'].enabled is True
 
     @override_settings(APPRISE_RECURSION_MAX=1)
-    @patch('apprise.Apprise.notify')
+    @mock.patch('apprise.Apprise.notify')
     def test_stateful_notify_recursion(self, mock_notify):
         """
         Test recursion an id header details as part of post

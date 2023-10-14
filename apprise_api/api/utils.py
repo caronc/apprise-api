@@ -145,11 +145,13 @@ def parse_attachments(attachment_payload, files_request):
         0 if not isinstance(files_request, dict) else len(files_request),
     ])
 
-    if settings.APPRISE_MAX_ATTACHMENTS > 0 and \
-            count > settings.APPRISE_MAX_ATTACHMENTS:
+    if settings.APPRISE_MAX_ATTACHMENTS <= 0 or \
+            (settings.APPRISE_MAX_ATTACHMENTS > 0 and
+                count > settings.APPRISE_MAX_ATTACHMENTS):
         raise ValueError(
             "There is a maximum of %d attachments" %
-            settings.APPRISE_MAX_ATTACHMENTS)
+            settings.APPRISE_MAX_ATTACHMENTS
+            if settings.APPRISE_MAX_ATTACHMENTS > 0 else 0)
 
     if isinstance(attachment_payload, (tuple, list)):
         for no, entry in enumerate(attachment_payload, start=1):
@@ -598,13 +600,13 @@ def send_webhook(payload):
     }
 
     if not apprise.utils.VALID_URL_RE.match(
-            settings.APPRISE_WEBHOOK_RESULTS_URL):
+            settings.APPRISE_WEBHOOK_URL):
         logger.warning(
             'The Apprise Webhook Result URL is not a valid web based URI')
         return
 
     # Parse our URL
-    results = apprise.URLBase.parse_url(settings.APPRISE_WEBHOOK_RESULTS_URL)
+    results = apprise.URLBase.parse_url(settings.APPRISE_WEBHOOK_URL)
     if not results:
         logger.warning('The Apprise Webhook Result URL is not parseable')
         return

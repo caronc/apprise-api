@@ -44,7 +44,7 @@ class WebhookTests(SimpleTestCase):
         mock_post.return_value = response
 
         with override_settings(
-                APPRISE_WEBHOOK_RESULTS_URL='https://'
+                APPRISE_WEBHOOK_URL='https://'
                 'user:pass@localhost/webhook'):
             send_webhook({})
             assert mock_post.call_count == 1
@@ -64,7 +64,7 @@ class WebhookTests(SimpleTestCase):
         mock_post.reset_mock()
 
         with override_settings(
-                APPRISE_WEBHOOK_RESULTS_URL='http://'
+                APPRISE_WEBHOOK_URL='http://'
                 'user@localhost/webhook/here'
                 '?verify=False&key=value&cto=2.0&rto=1.0'):
             send_webhook({})
@@ -84,7 +84,7 @@ class WebhookTests(SimpleTestCase):
 
         mock_post.reset_mock()
 
-        with override_settings(APPRISE_WEBHOOK_RESULTS_URL='invalid'):
+        with override_settings(APPRISE_WEBHOOK_URL='invalid'):
             # Invalid wbhook defined
             send_webhook({})
             assert mock_post.call_count == 0
@@ -92,7 +92,7 @@ class WebhookTests(SimpleTestCase):
         mock_post.reset_mock()
 
         with override_settings(
-                APPRISE_WEBHOOK_RESULTS_URL='invalid://hostname'):
+                APPRISE_WEBHOOK_URL='invalid://hostname'):
             # Invalid wbhook defined
             send_webhook({})
             assert mock_post.call_count == 0
@@ -103,7 +103,7 @@ class WebhookTests(SimpleTestCase):
         response.status_code = requests.codes.internal_server_error
         mock_post.return_value = response
         with override_settings(
-                APPRISE_WEBHOOK_RESULTS_URL='http://localhost'):
+                APPRISE_WEBHOOK_URL='http://localhost'):
 
             send_webhook({})
             assert mock_post.call_count == 1
@@ -114,7 +114,7 @@ class WebhookTests(SimpleTestCase):
         mock_post.return_value = None
         mock_post.side_effect = requests.RequestException("error")
         with override_settings(
-                APPRISE_WEBHOOK_RESULTS_URL='http://localhost'):
+                APPRISE_WEBHOOK_URL='http://localhost'):
 
             send_webhook({})
             assert mock_post.call_count == 1
