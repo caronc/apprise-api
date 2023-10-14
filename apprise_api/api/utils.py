@@ -77,6 +77,7 @@ class Attachment(apprise.attachment.AttachFile):
         Initialize our attachment
         """
         self._filename = filename
+        self.delete = delete
         try:
             os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
 
@@ -97,7 +98,6 @@ class Attachment(apprise.attachment.AttachFile):
                         filename, settings.APPRISE_ATTACH_DIR))
 
         self._path = path
-        self.delete = delete
 
         # Prepare our item
         super().__init__(path=self._path, name=filename)

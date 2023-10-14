@@ -7,6 +7,7 @@ omit =
   *apps.py,
   */migrations/*,
   */core/settings/*,
+  */*/tests/*,
   lib/*,
   lib64/*,
   *urls.py,
