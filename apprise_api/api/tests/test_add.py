@@ -61,7 +61,8 @@ class AddTests(SimpleTestCase):
         # However adding just 1 more character exceeds our limit and the save
         # will fail
         response = self.client.post(
-            '/add/{}'.format(key + 'x'), {'urls': 'mailto://user:pass@yahoo.ca'})
+            '/add/{}'.format(key + 'x'),
+            {'urls': 'mailto://user:pass@yahoo.ca'})
         assert response.status_code == 404
 
     @override_settings(APPRISE_CONFIG_LOCK=True)

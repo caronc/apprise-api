@@ -23,9 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.utils import override_settings
-from unittest.mock import patch
+from unittest import mock
 from ..forms import NotifyByUrlForm
+import requests
 import json
 import apprise
 
@@ -35,7 +37,7 @@ class StatelessNotifyTests(SimpleTestCase):
     Test stateless notifications
     """
 
-    @patch('apprise.Apprise.notify')
+    @mock.patch('apprise.Apprise.notify')
     def test_notify(self, mock_notify):
         """
         Test sending a simple notification
@@ -78,8 +80,102 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Test Headers
+        for level in ('CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG',
+                      'TRACE', 'INVALID'):
+
+            form_data = {
+                'urls': 'mailto://user:pass@hotmail.com',
+                'body': 'test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+            }
+
+            attach_data = {
+                'attachment': SimpleUploadedFile(
+                    "attach.txt", b"content here", content_type="text/plain")
+            }
+
+            # At a minimum, just a body is required
+            form = NotifyByUrlForm(form_data, attach_data)
+            assert form.is_valid()
+
+            # Prepare our header
+            headers = {
+                'HTTP_X-APPRISE-LOG-LEVEL': level,
+            }
+
+            # Send our notification
+            response = self.client.post(
+                '/notify', form.cleaned_data, **headers)
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
+            # Reset our mock object
+            mock_notify.reset_mock()
+
+        # Long Filename
+        attach_data = {
+            'attachment': SimpleUploadedFile(
+                "{}.txt".format('a' * 2000),
+                b"content here", content_type="text/plain")
+        }
+
+        # At a minimum, just a body is required
+        form = NotifyByUrlForm(form_data, attach_data)
+        assert form.is_valid()
+
+        # Send our notification
+        response = self.client.post('/notify', form.cleaned_data)
+
+        # We fail because the filename is too long
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Test Webhooks
+        with mock.patch('requests.post') as mock_post:
+            # Response object
+            response = mock.Mock()
+            response.status_code = requests.codes.ok
+            mock_post.return_value = response
+
+            with override_settings(
+                    APPRISE_WEBHOOK_URL='http://localhost/webhook/'):
+
+                # Preare our form data
+                form_data = {
+                    'urls': 'mailto://user:pass@hotmail.com',
+                    'body': 'test notifiction',
+                    'format': apprise.NotifyFormat.MARKDOWN,
+                }
+
+                # At a minimum, just a body is required
+                form = NotifyByUrlForm(data=form_data)
+                assert form.is_valid()
+
+                # Required to prevent None from being passed into
+                # self.client.post()
+                del form.cleaned_data['attachment']
+
+                # Send our notification
+                response = self.client.post('/notify', form.cleaned_data)
+
+                # Test our results
+                assert response.status_code == 200
+                assert mock_notify.call_count == 1
+                assert mock_post.call_count == 1
+
+                # Reset our mock object
+                mock_notify.reset_mock()
+
         # Reset our count
         mock_notify.reset_mock()
+
         form_data = {
             'urls': 'mailto://user:pass@hotmail.com',
             'body': 'test notifiction',
@@ -89,7 +185,17 @@ class StatelessNotifyTests(SimpleTestCase):
         form = NotifyByUrlForm(data=form_data)
         assert not form.is_valid()
 
-    @patch('apprise.NotifyBase.notify')
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data['attachment']
+
+        # Send our notification
+        response = self.client.post('/notify', form.cleaned_data)
+
+        # Test our results
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+    @mock.patch('apprise.NotifyBase.notify')
     def test_partial_notify(self, mock_notify):
         """
         Test sending multiple notifications where one fails
@@ -123,7 +229,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 2
 
     @override_settings(APPRISE_RECURSION_MAX=1)
-    @patch('apprise.Apprise.notify')
+    @mock.patch('apprise.Apprise.notify')
     def test_stateless_notify_recursion(self, mock_notify):
         """
         Test recursion an id header details as part of post
@@ -216,7 +322,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 0
 
     @override_settings(APPRISE_STATELESS_URLS="mailto://user:pass@localhost")
-    @patch('apprise.Apprise.notify')
+    @mock.patch('apprise.Apprise.notify')
     def test_notify_default_urls(self, mock_notify):
         """
         Test fallback to default URLS if none were otherwise specified
@@ -244,7 +350,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
-    @patch('apprise.Apprise.notify')
+    @mock.patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """
         Test sending a simple notification using JSON
@@ -358,7 +464,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
-    @patch('apprise.plugins.NotifyJSON.NotifyJSON.send')
+    @mock.patch('apprise.plugins.NotifyJSON.NotifyJSON.send')
     def test_notify_with_filters(self, mock_send):
         """
         Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES

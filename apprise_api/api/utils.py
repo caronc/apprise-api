@@ -32,7 +32,8 @@ import apprise
 import hashlib
 import errno
 import base64
-
+import requests
+from json import dumps
 from django.conf import settings
 
 # import the logging library
@@ -76,6 +77,7 @@ class Attachment(apprise.attachment.AttachFile):
         Initialize our attachment
         """
         self._filename = filename
+        self.delete = delete
         try:
             os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
 
@@ -96,7 +98,6 @@ class Attachment(apprise.attachment.AttachFile):
                         filename, settings.APPRISE_ATTACH_DIR))
 
         self._path = path
-        self.delete = delete
 
         # Prepare our item
         super().__init__(path=self._path, name=filename)
@@ -144,11 +145,13 @@ def parse_attachments(attachment_payload, files_request):
         0 if not isinstance(files_request, dict) else len(files_request),
     ])
 
-    if settings.APPRISE_MAX_ATTACHMENTS > 0 and \
-            count > settings.APPRISE_MAX_ATTACHMENTS:
+    if settings.APPRISE_MAX_ATTACHMENTS <= 0 or \
+            (settings.APPRISE_MAX_ATTACHMENTS > 0 and
+                count > settings.APPRISE_MAX_ATTACHMENTS):
         raise ValueError(
             "There is a maximum of %d attachments" %
-            settings.APPRISE_MAX_ATTACHMENTS)
+            settings.APPRISE_MAX_ATTACHMENTS
+            if settings.APPRISE_MAX_ATTACHMENTS > 0 else 0)
 
     if isinstance(attachment_payload, (tuple, list)):
         for no, entry in enumerate(attachment_payload, start=1):
@@ -583,3 +586,59 @@ def apply_global_filters():
                 logger.warning(
                     'APPRISE_DENY_SERVICES plugin %s:// was not found -'
                     ' ignoring.', name)
+
+
+def send_webhook(payload):
+    """
+    POST our webhook results
+    """
+
+    # Prepare HTTP Headers
+    headers = {
+        'User-Agent': 'Apprise-API',
+        'Content-Type': 'application/json',
+    }
+
+    if not apprise.utils.VALID_URL_RE.match(
+            settings.APPRISE_WEBHOOK_URL):
+        logger.warning(
+            'The Apprise Webhook Result URL is not a valid web based URI')
+        return
+
+    # Parse our URL
+    results = apprise.URLBase.parse_url(settings.APPRISE_WEBHOOK_URL)
+    if not results:
+        logger.warning('The Apprise Webhook Result URL is not parseable')
+        return
+
+    if results['schema'] not in ('http', 'https'):
+        logger.warning(
+            'The Apprise Webhook Result URL is not using the HTTP protocol')
+        return
+
+    # Load our URL
+    base = apprise.URLBase(**results)
+
+    # Our Query String Dictionary; we use this to track arguments
+    # specified that aren't otherwise part of this class
+    params = {k: v for k, v in results.get('qsd', {}).items()
+              if k not in base.template_args}
+
+    try:
+        requests.post(
+            base.request_url,
+            data=dumps(payload),
+            params=params,
+            headers=headers,
+            auth=base.request_auth,
+            verify=base.verify_certificate,
+            timeout=base.request_timeout,
+        )
+
+    except requests.RequestException as e:
+        logger.warning(
+            'A Connection error occurred sending the Apprise Webhook '
+            'results to %s.' % base.url(privacy=True))
+        logger.debug('Socket Exception: %s' % str(e))
+
+    return
