@@ -78,7 +78,7 @@ class AutoThemeMiddleware:
             datetime.timedelta(seconds=max_age)
 
         # Set our cookie
-        response.set_cookie('theme', theme, expires=expires.utctimetuple())
+        response.set_cookie('theme', theme, expires=expires)
 
         # return our response
         return response
