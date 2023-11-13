@@ -20,3 +20,24 @@ services:
       #   $> chown -R 33:33 ./attach
       #   $> chmod -R 775 ./attach
       # - ./attach:/attach:rw
+
+  ## Un-comment the below and then access a testing environment with:
+  ##    docker-compose run --service-ports --rm test.py310 bash
+  ##
+  ## From here you
+  ## > Check for any lint errors
+  ##    flake8 apprise_api
+  ##
+  ## > Run unit tests
+  ##    pytest apprise_api
+  ##
+  ## > Host service (visit http://localhost on host pc to access):
+  ##   ./manage.py runserver 0.0.0.0:8000
+  #test.py310:
+  #  ports:
+  #    - 8000:8000
+  #  build:
+  #    context: .
+  #    dockerfile: Dockerfile.py310
+  #  volumes:
+  #    - ./:/apprise-api
