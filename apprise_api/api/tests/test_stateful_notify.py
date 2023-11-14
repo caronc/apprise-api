@@ -304,13 +304,13 @@ class StatefulNotifyTests(SimpleTestCase):
             mock_post.reset_mock()
 
     @patch('requests.post')
-    def test_stateful_group_notify(self, mock_post):
+    def test_stateful_group_dict_notify(self, mock_post):
         """
-        Test the writing, removal, writing of a group based configuration
+        Test the handling of a group defined as a dictionary
         """
 
         # our key to use
-        key = 'test_stateful_group_notify'
+        key = 'test_stateful_group_notify_dict'
 
         request = Mock()
         request.content = b'ok'
@@ -363,10 +363,11 @@ class StatefulNotifyTests(SimpleTestCase):
             response = self.client.post(
                 '/notify/{}'.format(key), form.cleaned_data)
             assert response.status_code == 200
+
+            # Our single endpoint is notified
             assert mock_post.call_count == 1
 
             mock_post.reset_mock()
-
 
         # Now let's notify by our group
         form_data = {
@@ -386,7 +387,106 @@ class StatefulNotifyTests(SimpleTestCase):
         response = self.client.post(
             '/notify/{}'.format(key), form.cleaned_data)
         assert response.status_code == 200
-        assert mock_post.call_count == 1
+
+        # Our 2 endpoints are notified
+        assert mock_post.call_count == 2
+
+        mock_post.reset_mock()
+
+        # Now empty our data
+        response = self.client.post('/del/{}'.format(key))
+        assert response.status_code == 200
+
+        # Reset our count
+        mock_post.reset_mock()
+
+    @patch('requests.post')
+    def test_stateful_group_dictlist_notify(self, mock_post):
+        """
+        Test the handling of a group defined as a list of dictionaries
+        """
+
+        # our key to use
+        key = 'test_stateful_group_notify_list_dict'
+
+        request = Mock()
+        request.content = b'ok'
+        request.status_code = requests.codes.ok
+        mock_post.return_value = request
+
+        # Monkey Patch
+        apprise.plugins.NotifyEmail.NotifyEmail.enabled = True
+
+        config = inspect.cleandoc("""
+        version: 1
+        groups:
+          - mygroup: user1, user2
+
+        urls:
+          - json:///user:pass@localhost:
+            - to: user1@example.com
+              tag: user1
+            - to: user2@example.com
+              tag: user2
+        """)
+
+        # Monkey Patch
+        apprise.plugins.NotifyJSON.NotifyJSON.enabled = True
+
+        # Add our content
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'config': config})
+        assert response.status_code == 200
+
+        # Now we should be able to see our content
+        response = self.client.post('/get/{}'.format(key))
+        assert response.status_code == 200
+
+        for tag in ('user1', 'user2'):
+            form_data = {
+                'body': '## test notifiction',
+                'format': apprise.NotifyFormat.MARKDOWN,
+                'tag': tag,
+            }
+            form = NotifyForm(data=form_data)
+            assert form.is_valid()
+
+            # Required to prevent None from being passed into
+            # self.client.post()
+            del form.cleaned_data['attachment']
+
+            # We sent the notification successfully
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+            assert response.status_code == 200
+
+            # Our single endpoint is notified
+            assert mock_post.call_count == 1
+
+            mock_post.reset_mock()
+
+        # Now let's notify by our group
+        form_data = {
+            'body': '## test notifiction',
+            'format': apprise.NotifyFormat.MARKDOWN,
+            'tag': 'mygroup',
+        }
+
+        form = NotifyForm(data=form_data)
+        assert form.is_valid()
+
+        # Required to prevent None from being passed into
+        # self.client.post()
+        del form.cleaned_data['attachment']
+
+        # We sent the notification successfully
+        response = self.client.post(
+            '/notify/{}'.format(key), form.cleaned_data)
+        assert response.status_code == 200
+
+        # Our 2 endpoints are notified
+        assert mock_post.call_count == 2
 
         mock_post.reset_mock()
 
