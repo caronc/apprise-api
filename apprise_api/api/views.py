@@ -172,7 +172,7 @@ class DetailsView(View):
 
         # Sort our result set
         details['schemas'] = sorted(
-            details['schemas'], key=lambda i: str(i['service_name']))
+            details['schemas'], key=lambda i: str(i['service_name']).upper())
 
         # Return our content
         return render(request, self.template_name, {
