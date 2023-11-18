@@ -35,6 +35,7 @@ import base64
 import requests
 from json import dumps
 from django.conf import settings
+from datetime import datetime
 
 # import the logging library
 import logging
@@ -586,6 +587,17 @@ def apply_global_filters():
                 logger.warning(
                     'APPRISE_DENY_SERVICES plugin %s:// was not found -'
                     ' ignoring.', name)
+
+
+def gen_unique_config_id():
+    """
+    Generates a unique configuration ID
+    """
+    # our key to use
+    h = hashlib.sha256()
+    h.update(datetime.now().strftime('%Y%m%d%H%M%S%f').encode('utf-8'))
+    h.update(settings.SECRET_KEY.encode('utf-8'))
+    return h.hexdigest()
 
 
 def send_webhook(payload):

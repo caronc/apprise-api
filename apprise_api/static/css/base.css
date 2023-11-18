@@ -46,6 +46,15 @@ td, th {
 	margin-bottom: 0;
 }
 
+h4 em {
+  font-size: 2.0rem;
+  display: inline-block;
+	margin: 0;
+	padding: 0;
+  word-break: break-all;
+	line-height: 1.0em;
+}
+
 em {
 	color: #004d40;
 	font-weight:bold;
@@ -163,4 +172,10 @@ ul.logs li.log_ERROR {
 }
 .url-disabled {
   color: #8B0000;
+}
+h6 {
+	font-weight: bold;
+}
+#overview pre {
+	margin-left: 2.0rem
 }

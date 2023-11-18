@@ -79,6 +79,8 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.request',
                 'core.context_processors.base_url',
+                'api.context_processors.default_config_id',
+                'api.context_processors.unique_config_id',
                 'api.context_processors.stateful_mode',
                 'api.context_processors.config_lock',
                 'api.context_processors.apprise_version',
@@ -119,6 +121,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Define our base URL
 # The default value is to be a single slash
 BASE_URL = os.environ.get('BASE_URL', '')
+
+# Define our default configuration ID to use
+APPRISE_DEFAULT_CONFIG_ID = \
+    os.environ.get('APPRISE_DEFAULT_CONFIG_ID', 'apprise')
 
 # Static files relative path (CSS, JavaScript, Images)
 STATIC_URL = BASE_URL + '/s/'

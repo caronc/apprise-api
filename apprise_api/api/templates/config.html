@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block body %}
 {% if STATEFUL_MODE != 'disabled' %}
-<h4>{% trans "Management for:" %} <em>{{ key }}</em></h4>
+<h4>{% trans "Management for Config ID:" %} <em>{{ key }}</em></h4>
 <div class="row">
   <div class="col s12">
     <ul class="tabs config-overview">
@@ -75,12 +75,11 @@
     <div class="has-config">
       <div class="section">
         <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
+        <h6>{% trans "Using The Apprise CLI" %}</h6>
         <p>
         {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
-        <br />
         <pre><code class="bash">apprise --body="Test Message" \<br/>
         &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
-        <br />
         {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
         <pre><code class="bash">apprise --body="Test Message" \<br/>
         &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br/>
@@ -95,8 +94,28 @@
         <br />
         <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
         &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
+        {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+        <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
+        {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
+        <pre><code class="bash">apprise --body="Test Message" --tag=all</em></code></pre>
         </p>
+
         {% endif %}
+        <h6>{% trans "Using CURL" %}</h6>
+        <p>
+        {% blocktrans %}The following command would cause the apprise api to notify all of your services:{% endblocktrans %}
+        <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+        {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
+        <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+        </p>
       </div>
       <div class="section">
         <h5>{% trans "Loaded Configuration" %}</h5>
