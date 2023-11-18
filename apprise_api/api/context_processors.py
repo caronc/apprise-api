@@ -22,6 +22,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from .utils import gen_unique_config_id
 from .utils import ConfigCache
 from django.conf import settings
 import apprise
@@ -46,3 +47,17 @@ def apprise_version(request):
     Returns the current version of apprise loaded under the hood
     """
     return {'APPRISE_VERSION': apprise.__version__}
+
+
+def default_config_id(request):
+    """
+    Returns a unique config identifier
+    """
+    return {'DEFAULT_CONFIG_ID': settings.APPRISE_DEFAULT_CONFIG_ID}
+
+
+def unique_config_id(request):
+    """
+    Returns a unique config identifier
+    """
+    return {'UNIQUE_CONFIG_ID': gen_unique_config_id()}

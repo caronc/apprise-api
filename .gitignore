@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging / virtualenv
 .Python
+.bash_history
 env/
 build/
 develop-eggs/

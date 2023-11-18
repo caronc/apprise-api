@@ -36,7 +36,7 @@
         <h1>{% trans "Apprise API" %}</h1>
         <ul>
 				   <li>APPRISE v{{APPRISE_VERSION}}</li>
-				   <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><span class="tiny material-icons">invert_colors</span></a></li>
+				   <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><i class="material-icons">invert_colors</i></a></li>
 				</ul>
       </div>
     </div>
@@ -46,8 +46,10 @@
       <div class="col s3" style="width:20em">
 {% if STATEFUL_MODE != 'disabled' %}
         <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'config' 'apprise' %}"><i class="material-icons">settings</i>
+          <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
+          <a class="collection-item" href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
+            {% trans "New Configuration" %}</a>
         </ul>
 {% endif %}
         <ul class="collection z-depth-1">
