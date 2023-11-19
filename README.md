@@ -354,7 +354,8 @@ A scenario where you want to poll the API for your configuration:
 ```bash
 # A simple example of the Apprise CLI
 # pulling down previously stored configuration
-apprise -vvv --body="test message" --config=http://localhost:8000/get/{KEY}
+apprise -vvv --body="test message" \
+   --config=http://localhost:8000/get/{KEY}
 ```
 
 You can also leverage the `import` parameter supported in Apprise configuration files if `APPRISE_CONFIG_LOCK` isn't set on the server you're accessing:
@@ -378,7 +379,8 @@ If you used tagging, then you can notify the specific service like so:
 
 ```bash
 # Configuration is automatically loaded from our server.
-apprise -vvv --tag=devops --body="Tell James GitLab is down again."
+apprise -vvv --tag=devops \
+   --body="Tell James GitLab is down again."
 ```
 
 
@@ -407,12 +409,13 @@ We could trigger our notification to our friends now like:
 
 ```bash
 # Trigger our service:
-apprise -vvv --tag=devteam --body="Guys, don't forget about the audit tomorrow morning."
+apprise -vvv --tag=devteam \
+    --body="Guys, don't forget about the audit tomorrow morning."
 ```
 
 ### AppriseConfig() Pull Example
 
-Using the [Apprise Python library](https://github.com/caronc/apprise), you can easily access and load your saved configuration off of this API in order to use for future notifications.
+Using the [Apprise Python library](https://github.com/caronc/apprise), you can easily access and load your saved configuration from this API in order to use for future notifications.
 
 ```python
 import apprise
