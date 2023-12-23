@@ -691,7 +691,7 @@ class NotifyView(View):
             content['title'] = request.GET['title']
 
         # Some basic error checking
-        if not content.get('body') or \
+        if not content.get('body') and not attach or \
                 content.get('type', apprise.NotifyType.INFO) \
                 not in apprise.NOTIFY_TYPES:
 
