@@ -83,6 +83,26 @@ class NotifyTests(SimpleTestCase):
         mock_notify.reset_mock()
 
         # Preare our form data
+        form_data = {}
+        attach_data = {
+            'attachment': SimpleUploadedFile(
+                "attach.txt", b"content here", content_type="text/plain")
+        }
+
+        # At a minimum, just an attachment is required
+        form = NotifyForm(form_data, attach_data)
+        assert form.is_valid()
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form.cleaned_data)
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Preare our form data
         form_data = {
             'body': 'test notifiction',
         }

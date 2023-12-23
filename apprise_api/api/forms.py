@@ -136,6 +136,7 @@ class NotifyForm(forms.Form):
         widget=forms.Textarea(
             attrs={'placeholder': _('Define your message body here...')}),
         max_length=apprise.NotifyBase.body_maxlen,
+        required=False,
     )
 
     # Attachment Support
