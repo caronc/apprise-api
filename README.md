@@ -240,7 +240,7 @@ Leveraging tagging is one of the things that makes Apprise great.  Not only can 
 | TagA                  |  TagA
 | TagA, TagB            |  TagA **OR** TagB
 | TagA TagC, TagB       |  (TagA **AND** TagC) **OR** TagB
-| TagB TagC              |  TagB **AND** TagC
+| TagB TagC             |  TagB **AND** TagC
 
 ```bash
 # 'AND' Example
@@ -272,6 +272,17 @@ curl -X POST -d '{"tag":"leaders teamA, leaders teamB", "body":"meeting now"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/projectX
 ```
+### API Response Codes
+
+|  HTTP Code | Name                  | Effect                         |
+| ---------- | --------------------- | ------------------------------ |
+| 200        | ok                    | Notification was sent
+| 204        | no content            | There was no configuration (or it was empty) found by the specified `{KEY}`
+| 400        | bad request           | Your API call did not conform to what was documented here
+| 405        | method not accepted   | Your API call identified an action that has been disabled due to the Server configuration (such as a `apprise://` `APPRISE_RECURSION_MAX` being exceeded).
+| 424        | failed dependency     | At least one notification could not be sent.  This can be due to<br/> - Not all notifications intended to be actioned could follow through (due to upstrem failures).<br/>You didn't idenify a tag associated with what was defined in your configuration.<br/>The tag(s) you specified do not match with those defined in your configuration.
+| 500        | internal server error | This can occur if there was an issue saving your configuration to disk (usually the cause of permission issues).
+
 
 ### API Notes
 
