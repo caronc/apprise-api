@@ -33,6 +33,9 @@ import apprise
 import requests
 import inspect
 
+# Grant access to our Notification Manager Singleton
+N_MGR = apprise.NotificationManager.NotificationManager()
+
 
 class StatefulNotifyTests(SimpleTestCase):
     """
@@ -69,19 +72,19 @@ class StatefulNotifyTests(SimpleTestCase):
         mock_post.return_value = request
 
         # Monkey Patch
-        apprise.plugins.NotifyEmail.NotifyEmail.enabled = True
+        N_MGR['mailto'].enabled = True
 
         # Preare our list of URLs we want to save
         urls = [
             'devops=slack://TokenA/TokenB/TokenC',
-            'pusbullet=pbul://tokendetails',
+            'pushbullet=pbul://tokendetails',
             'general,json=json://hostname',
         ]
 
         # Monkey Patch
-        apprise.plugins.NotifySlack.NotifySlack.enabled = True
-        apprise.plugins.NotifyPushBullet.NotifyPushBullet.enabled = True
-        apprise.plugins.NotifyJSON.NotifyJSON.enabled = True
+        N_MGR['slack'].enabled = True
+        N_MGR['pbul'].enabled = True
+        N_MGR['json'].enabled = True
 
         # For 10 iterations, repeat these tests to verify that don't change
         # and our saved content is not different on subsequent calls.
@@ -318,7 +321,7 @@ class StatefulNotifyTests(SimpleTestCase):
         mock_post.return_value = request
 
         # Monkey Patch
-        apprise.plugins.NotifyEmail.NotifyEmail.enabled = True
+        N_MGR['mailto'].enabled = True
 
         config = inspect.cleandoc("""
         version: 1
@@ -334,7 +337,7 @@ class StatefulNotifyTests(SimpleTestCase):
         """)
 
         # Monkey Patch
-        apprise.plugins.NotifyJSON.NotifyJSON.enabled = True
+        N_MGR['json'].enabled = True
 
         # Add our content
         response = self.client.post(
@@ -415,7 +418,7 @@ class StatefulNotifyTests(SimpleTestCase):
         mock_post.return_value = request
 
         # Monkey Patch
-        apprise.plugins.NotifyEmail.NotifyEmail.enabled = True
+        N_MGR['mailto'].enabled = True
 
         config = inspect.cleandoc("""
         version: 1
@@ -431,7 +434,7 @@ class StatefulNotifyTests(SimpleTestCase):
         """)
 
         # Monkey Patch
-        apprise.plugins.NotifyJSON.NotifyJSON.enabled = True
+        N_MGR['json'].enabled = True
 
         # Add our content
         response = self.client.post(
