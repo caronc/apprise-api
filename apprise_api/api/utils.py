@@ -66,8 +66,14 @@ STORE_MODES = (
     AppriseStoreMode.DISABLED,
 )
 
+# Access our Attachment Manager Singleton
+A_MGR = apprise.AttachmentManager.AttachmentManager()
 
-class Attachment(apprise.attachment.AttachFile):
+# Access our Notification Manager Singleton
+N_MGR = apprise.NotificationManager.NotificationManager()
+
+
+class Attachment(A_MGR['file']):
     """
     A Light Weight Attachment Object for Auto-cleanup that wraps the Apprise
     Attachments
@@ -79,6 +85,7 @@ class Attachment(apprise.attachment.AttachFile):
         """
         self._filename = filename
         self.delete = delete
+        self._path = None
         try:
             os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
 
@@ -121,7 +128,7 @@ class Attachment(apprise.attachment.AttachFile):
         """
         De-Construtor is used to tidy up files during garbage collection
         """
-        if self.delete:
+        if self.delete and self._path:
             try:
                 os.remove(self._path)
             except FileNotFoundError:
@@ -542,33 +549,7 @@ def apply_global_filters():
              for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
              if alphanum_re.match(x)]
 
-        for plugin in set(apprise.common.NOTIFY_SCHEMA_MAP.values()):
-            if entries:
-                # Get a list of the current schema's associated with
-                # a given plugin
-                schemas = set(apprise.plugins.details(plugin)
-                              ['tokens']['schema']['values'])
-
-                # Check what was defined and see if there is a hit
-                for entry in entries:
-                    if entry in schemas:
-                        # We had a hit; we're done
-                        break
-
-                if entry in schemas:
-                    entries.remove(entry)
-                    # We can keep this plugin enabled and move along to the
-                    # next one...
-                    continue
-
-            # if we reach here, we have to block our plugin
-            plugin.enabled = False
-
-        for entry in entries:
-            # Generate some noise for those who have bad configurations
-            logger.warning(
-                'APPRISE_ALLOW_SERVICES plugin %s:// was not found - '
-                'ignoring.', entry)
+        N_MGR.enable_only(*entries)
 
     elif settings.APPRISE_DENY_SERVICES:
         alphanum_re = re.compile(
@@ -578,15 +559,7 @@ def apply_global_filters():
              for x in re.split(r'[ ,]+', settings.APPRISE_DENY_SERVICES)
              if alphanum_re.match(x)]
 
-        for name in entries:
-            try:
-                # Force plugin to be disabled
-                apprise.common.NOTIFY_SCHEMA_MAP[name].enabled = False
-
-            except KeyError:
-                logger.warning(
-                    'APPRISE_DENY_SERVICES plugin %s:// was not found -'
-                    ' ignoring.', name)
+        N_MGR.disable(*entries)
 
 
 def gen_unique_config_id():
