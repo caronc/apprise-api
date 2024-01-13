@@ -312,7 +312,33 @@ class NotifyTests(SimpleTestCase):
             'body': 'test notifiction',
         }
 
-        # Reset our count
+        # Reset our mock object
+        mock_post.reset_mock()
+
+        # tags keyword is also supported
+        response = self.client.post(
+            '/notify/{}?tags=home'.format(key), form_data)
+
+        # Our notification was sent
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+
+        # Preare our form data (body is actually the minimum requirement)
+        # All of the rest of the variables can actually be over-ridden
+        # by the GET Parameter (ONLY if not otherwise identified in the
+        # payload). The Payload contents of the POST request always take
+        # priority to eliminate any ambiguity
+        form_data = {
+            'body': 'test notifiction',
+        }
+
+        # Reset our mock object
         mock_post.reset_mock()
 
         # Send our notification by specifying the tag in the parameters
@@ -365,6 +391,9 @@ class NotifyTests(SimpleTestCase):
             {'config': config})
         assert response.status_code == 200
 
+        # Reset our mock object
+        mock_post.reset_mock()
+
         # Preare our form data
         form_data = {
             'body': 'test notifiction',
@@ -384,16 +413,19 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 424
         assert mock_post.call_count == 0
 
+        # Reset our mock object
+        mock_post.reset_mock()
+
         # Update our tags
         form_data['tag'] = ['home', 'summer-home']
 
         # Now let's send our notification by specifying the tag in the
         # parameters
+
+        # Send our notification
         response = self.client.post(
             '/notify/{}/'.format(key), content_type='application/json',
             data=form_data)
-
-        # Send our notification
 
         # Our notification was sent (as we matched 'home' OR' 'summer-home')
         assert response.status_code == 200
@@ -405,6 +437,119 @@ class NotifyTests(SimpleTestCase):
         assert response['message'] == form_data['body']
         assert response['type'] == apprise.NotifyType.INFO
 
+        # Reset our mock object
+        mock_post.reset_mock()
+
+        # use the `tags` keyword instead which is also supported
+        del form_data['tag']
+        form_data['tags'] = ['home', 'summer-home']
+
+        # Now let's send our notification by specifying the tag in the
+        # parameters
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
+
+        # Our notification was sent (as we matched 'home' OR' 'summer-home')
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+
+        # Reset our mock object
+        mock_post.reset_mock()
+
+        # use the `tag` and `tags` keyword causes tag to always take priority
+        form_data['tag'] = ['invalid']
+        form_data['tags'] = ['home', 'summer-home']
+
+        # Now let's send our notification by specifying the tag in the
+        # parameters
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
+
+        # Our notification failed because 'tag' took priority over 'tags' and
+        # it contains an invalid entry
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Reset our mock object
+        mock_post.reset_mock()
+
+        # integers or non string not accepted
+        form_data['tag'] = 42
+        del form_data['tags']
+
+        # Now let's send our notification by specifying the tag in the
+        # parameters
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
+
+        # Our notification failed because no tags were loaded
+        assert response.status_code == 400
+        assert mock_post.call_count == 0
+
+        # Reset our mock object
+        mock_post.reset_mock()
+
+        # integers or non string not accepted
+        form_data['tag'] = [42, 'valid', 5.4]
+
+        # Now let's send our notification by specifying the tag in the
+        # parameters
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
+
+        # Our notification makes it through the list check and into the
+        # Apprise library. It will be at that level that the tags will fail
+        # validation so there will be no match
+        assert response.status_code == 424
+        assert mock_post.call_count == 0
+
+        # Reset our mock object
+        mock_post.reset_mock()
+
+        # continued to verify the use of the `tag` and `tags` keyword
+        # where tag priorities over tags
+        form_data['tags'] = ['invalid']
+        form_data['tag'] = ['home', 'summer-home']
+
+        # Now let's send our notification by specifying the tag in the
+        # parameters
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}/'.format(key), content_type='application/json',
+            data=form_data)
+
+        # Our notification was sent (as we matched 'home' OR' 'summer-home')
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        # Test our posted data
+        response = json.loads(mock_post.call_args_list[0][1]['data'])
+        assert response['title'] == ''
+        assert response['message'] == form_data['body']
+        assert response['type'] == apprise.NotifyType.INFO
+
+        # Reset our mock object
+        mock_post.reset_mock()
+
         # Preare our form data (body is actually the minimum requirement)
         # All of the rest of the variables can actually be over-ridden
         # by the GET Parameter (ONLY if not otherwise identified in the
@@ -413,9 +558,6 @@ class NotifyTests(SimpleTestCase):
         form_data = {
             'body': 'test notifiction',
         }
-
-        # Reset our count
-        mock_post.reset_mock()
 
         # Send our notification by specifying the tag in the parameters
         response = self.client.post(
@@ -721,7 +863,7 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # Test referencing a key that doesn't exist
@@ -798,7 +940,7 @@ class NotifyTests(SimpleTestCase):
             assert response.status_code == 500
             assert mock_notify.call_count == 0
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # Test with invalid format
@@ -817,7 +959,7 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # If an empty format is specified, it is accepted and
@@ -837,7 +979,7 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # Same results for any empty string:
@@ -851,7 +993,7 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         headers = {
@@ -1101,7 +1243,7 @@ class NotifyTests(SimpleTestCase):
             # No Recursion value specified
         }
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # Recursion limit reached
@@ -1116,7 +1258,7 @@ class NotifyTests(SimpleTestCase):
             'HTTP_X-APPRISE-RECURSION-COUNT': str(2),
         }
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # Recursion limit reached
@@ -1131,7 +1273,7 @@ class NotifyTests(SimpleTestCase):
             'HTTP_X-APPRISE-RECURSION-COUNT': str(-1),
         }
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # invalid recursion specified
@@ -1146,7 +1288,7 @@ class NotifyTests(SimpleTestCase):
             'HTTP_X-APPRISE-RECURSION-COUNT': 'invalid',
         }
 
-        # Reset our count
+        # Reset our mock object
         mock_notify.reset_mock()
 
         # invalid recursion specified

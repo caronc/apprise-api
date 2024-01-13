@@ -370,7 +370,6 @@ class AddView(View):
                 # Something went very wrong; return 500
                 msg = _('An error occured saving configuration.')
                 status = ResponseCode.internal_server_error
-
                 return HttpResponse(msg, status=status) \
                     if not json_response else JsonResponse({
                         'error': msg,
@@ -487,17 +486,14 @@ class GetView(View):
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
-            return HttpResponse(
-                _('The site has been configured to deny this request.'),
-                status=ResponseCode.no_access,
-            ) if not json_response else JsonResponse({
-                'error':
-                _('The site has been configured to deny this request.')
-            },
-                encoder=JSONEncoder,
-                safe=False,
-                status=ResponseCode.no_access,
-            )
+            msg = _('The site has been configured to deny this request.')
+            status = ResponseCode.no_access
+            return HttpResponse(msg, status=status) \
+                if not json_response else JsonResponse(
+                    {'error': msg},
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status)
 
         config, format = ConfigCache.get(key)
         if config is None:
@@ -509,15 +505,14 @@ class GetView(View):
             #   config != None: we simply have no data
             if format is not None:
                 # no content to return
-                return HttpResponse(
-                    _('There was no configuration found.'),
-                    status=ResponseCode.no_content,
-                ) if not json_response else JsonResponse({
-                    'error': _('There was no configuration found.')},
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=ResponseCode.no_content,
-                )
+                msg = _('There was no configuration found.')
+                status = ResponseCode.no_content
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse(
+                        {'error': msg},
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status)
 
             # Something went very wrong; return 500
             msg = _('An error occured accessing configuration.')
@@ -586,15 +581,23 @@ class NotifyView(View):
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...
+                logger.warning(
+                    'NOTIFY - %s - Invalid JSON Payload provided',
+                    request.META['REMOTE_ADDR'])
+
                 return JsonResponse(
-                    _('Invalid JSON specified.'),
+                    _('Invalid JSON provided.'),
                     encoder=JSONEncoder,
                     safe=False,
                     status=ResponseCode.bad_request)
 
         if not content:
             # We could not handle the Content-Type
-            msg = _('The message format is not supported.')
+            logger.warning(
+                'NOTIFY - %s - Invalid FORM Payload provided',
+                request.META['REMOTE_ADDR'])
+
+            msg = _('Bad FORM Payload provided.')
             status = ResponseCode.bad_request
             return HttpResponse(msg, status=status) \
                 if not json_response else JsonResponse({
@@ -602,7 +605,7 @@ class NotifyView(View):
                 },
                 encoder=JSONEncoder,
                 safe=False,
-                status=status,
+                status=status
             )
 
         # Handle Attachments
@@ -613,6 +616,11 @@ class NotifyView(View):
                     content.get('attachment'), request.FILES)
 
             except (TypeError, ValueError):
+                # Invalid entry found in list
+                logger.warning(
+                    'NOTIFY - %s - Bad attachment specified',
+                    request.META['REMOTE_ADDR'])
+
                 return HttpResponse(
                     _('Bad attachment'),
                     status=ResponseCode.bad_request)
@@ -621,26 +629,36 @@ class NotifyView(View):
         # Allow 'tag' value to be specified as part of the URL parameters
         # if not found otherwise defined.
         #
-        if not content.get('tag') and 'tag' in request.GET:
-            content['tag'] = request.GET['tag']
+        tag = content.get('tag', content.get('tags'))
+        if not tag:
+            # Allow GET parameter over-rides
+            if 'tag' in request.GET:
+                tag = request.GET['tag']
 
-        if content.get('tag'):
-            # Validation - Tag Logic:
-            # "TagA"                        : TagA
-            # "TagA, TagB"                  : TagA OR TagB
-            # "TagA TagB"                  : TagA AND TagB
-            # "TagA TagC, TagB"             : (TagA AND TagC) OR TagB
-            # ['TagA', 'TagB']              : TagA OR TagB
-            # [('TagA', 'TagC'), 'TagB']    : (TagA AND TagC) OR TagB
-            # [('TagB', 'TagC')]            : TagB AND TagC
+            elif 'tags' in request.GET:
+                tag = request.GET['tags']
 
-            tag = content.get('tag')
+        # Validation - Tag Logic:
+        # "TagA"                        : TagA
+        # "TagA, TagB"                  : TagA OR TagB
+        # "TagA TagB"                  : TagA AND TagB
+        # "TagA TagC, TagB"             : (TagA AND TagC) OR TagB
+        # ['TagA', 'TagB']              : TagA OR TagB
+        # [('TagA', 'TagC'), 'TagB']    : (TagA AND TagC) OR TagB
+        # [('TagB', 'TagC')]            : TagB AND TagC
+        if tag:
             if isinstance(tag, (list, set, tuple)):
                 # Assign our tags as they were provided
-                tags = tag
+                content['tag'] = tag
 
             elif isinstance(tag, str):
-                if not TAG_VALIDATION_RE.match(content.get('tag')):
+                if not TAG_VALIDATION_RE.match(tag):
+                    # Invalid entry found in list
+                    logger.warning(
+                        'NOTIFY - %s - Ignored invalid tag specified '
+                        '(type %s): %s', request.META['REMOTE_ADDR'],
+                        str(type(tag)), str(tag)[:12])
+
                     msg = _('Unsupported characters found in tag definition.')
                     status = ResponseCode.bad_request
                     return HttpResponse(msg, status=status) \
@@ -654,7 +672,7 @@ class NotifyView(View):
 
                 # If we get here, our specified tag was valid
                 tags = []
-                for _tag in TAG_DETECT_RE.findall(content.get('tag')):
+                for _tag in TAG_DETECT_RE.findall(tag):
                     tag = _tag.strip()
                     if not tag:
                         continue
@@ -666,9 +684,25 @@ class NotifyView(View):
                     else:
                         tags.append(tag)
 
-            # Update our tag block
-            content['tag'] = tags
+                # Assign our tags
+                content['tag'] = tags
 
+            else:  # Could be int, float or some other unsupported type
+                logger.warning(
+                    'NOTIFY - %s - Ignored invalid tag specified (type %s): '
+                    '%s', request.META['REMOTE_ADDR'],
+                    str(type(tag)), str(tag)[:12])
+
+                msg = _('Unsupported characters found in tag definition.')
+                status = ResponseCode.bad_request
+                return HttpResponse(msg, status=status) \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
         #
         # Allow 'format' value to be specified as part of the URL
         # parameters if not found otherwise defined.
@@ -695,20 +729,26 @@ class NotifyView(View):
                 content.get('type', apprise.NotifyType.INFO) \
                 not in apprise.NOTIFY_TYPES:
 
-            msg = _('An invalid payload was specified.')
-            status = ResponseCode.bad_request
+            logger.warning(
+                'NOTIFY - %s - Payload lacks minimum requirements',
+                request.META['REMOTE_ADDR'])
+
             return HttpResponse(msg, status=status) \
                 if not json_response else JsonResponse({
-                    'error': msg,
+                    'error': _('Payload lacks minimum requirements.'),
                 },
                 encoder=JSONEncoder,
                 safe=False,
-                status=status,
+                status=ResponseCode.bad_request,
             )
 
         # Acquire our body format (if identified)
         body_format = content.get('format', apprise.NotifyFormat.TEXT)
         if body_format and body_format not in apprise.NOTIFY_FORMATS:
+            logger.warning(
+                'NOTIFY - %s - Format parameter contains an unsupported '
+                'value (%s)', request.META['REMOTE_ADDR'], str(body_format))
+
             msg = _('An invalid body input format was specified.')
             status = ResponseCode.bad_request
             return HttpResponse(msg, status=status) \
@@ -732,6 +772,9 @@ class NotifyView(View):
             #   config != None: we simply have no data
             if format is not None:
                 # no content to return
+                logger.debug(
+                    'NOTIFY - %s - Empty configuration found using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
                 msg = _('There was no configuration found.')
                 status = ResponseCode.no_content
                 return HttpResponse(msg, status=status) \
@@ -746,6 +789,9 @@ class NotifyView(View):
             # Something went very wrong; return 500
             msg = _('An error occured accessing configuration.')
             status = ResponseCode.internal_server_error
+            logger.error(
+                'NOTIFY - %s - I/O error accessing configuration '
+                'using KEY: %s', request.META['REMOTE_ADDR'], key)
             return HttpResponse(msg, status=status) \
                 if not json_response else JsonResponse({
                     'error': msg,
@@ -766,15 +812,19 @@ class NotifyView(View):
             kwargs['body_format'] = body_format
 
         # Acquire our recursion count (if defined)
+        recursion = request.headers.get('X-Apprise-Recursion-Count', 0)
         try:
-            recursion = \
-                int(request.headers.get('X-Apprise-Recursion-Count', 0))
+            recursion = int(recursion)
 
             if recursion < 0:
                 # We do not accept negative numbers
                 raise TypeError("Invalid Recursion Value")
 
             if recursion > settings.APPRISE_RECURSION_MAX:
+                logger.warning(
+                    'NOTIFY - %s - Recursion limit reached (%d > %d)',
+                    request.META['REMOTE_ADDR'], recursion,
+                    settings.APPRISE_RECURSION_MAX)
                 return HttpResponse(
                     _('The recursion limit has been reached.'),
                     status=ResponseCode.method_not_accepted)
@@ -783,6 +833,9 @@ class NotifyView(View):
             kwargs['_recursion'] = recursion
 
         except (TypeError, ValueError):
+            logger.warning(
+                'NOTIFY - %s - Invalid recursion value (%s) provided',
+                request.META['REMOTE_ADDR'], str(recursion))
             return HttpResponse(
                 _('An invalid recursion value was specified.'),
                 status=ResponseCode.bad_request)
@@ -907,6 +960,10 @@ class NotifyView(View):
             # the response to a 424 error code
             msg = _('One or more notification could not be sent.')
             status = ResponseCode.failed_dependency
+            logger.warning(
+                'NOTIFY - %s - One or more notifications not '
+                'sent%s using KEY: %s', request.META['REMOTE_ADDR'],
+                '' if not tag else f' (Tags: {tag})', key)
             return HttpResponse(response if response else msg, status=status) \
                 if not json_response else JsonResponse({
                     'error': msg,
@@ -915,6 +972,10 @@ class NotifyView(View):
                 safe=False,
                 status=status,
             )
+
+        logger.info(
+            'NOTIFY - %s - Proccessed%s KEY: %s', request.META['REMOTE_ADDR'],
+            '' if not tag else f' (Tags: {tag}),', key)
 
         # Return our retrieved content
         return HttpResponse(
