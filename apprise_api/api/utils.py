@@ -60,6 +60,17 @@ class AppriseStoreMode(object):
     DISABLED = 'disabled'
 
 
+class AttachmentPayload(object):
+    """
+    Defines the supported Attachment Payload Types
+    """
+    # BASE64
+    BASE64 = 'base64'
+
+    # URL request
+    URL = 'url'
+
+
 STORE_MODES = (
     AppriseStoreMode.HASH,
     AppriseStoreMode.SIMPLE,
@@ -79,7 +90,7 @@ class Attachment(A_MGR['file']):
     Attachments
     """
 
-    def __init__(self, filename, path=None, delete=True):
+    def __init__(self, filename, path=None, delete=True, **kwargs):
         """
         Initialize our attachment
         """
@@ -108,7 +119,7 @@ class Attachment(A_MGR['file']):
         self._path = path
 
         # Prepare our item
-        super().__init__(path=self._path, name=filename)
+        super().__init__(path=self._path, name=filename, **kwargs)
 
         # Update our file size based on the settings value
         self.max_file_size = settings.APPRISE_ATTACH_SIZE
@@ -136,6 +147,69 @@ class Attachment(A_MGR['file']):
                 pass
 
 
+class HTTPAttachment(A_MGR['http']):
+    """
+    A Light Weight Attachment Object for Auto-cleanup that wraps the Apprise
+    Web Attachments
+    """
+
+    def __init__(self, filename, path=None, delete=True, **kwargs):
+        """
+        Initialize our attachment
+        """
+        self._filename = filename
+        self.delete = delete
+        self._path = None
+        try:
+            os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+
+        except OSError:
+            # Permission error
+            raise ValueError('Could not create directory {}'.format(
+                settings.APPRISE_ATTACH_DIR))
+
+        if not path:
+            try:
+                d, path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
+                # Close our file descriptor
+                os.close(d)
+
+            except FileNotFoundError:
+                raise ValueError(
+                    'Could not prepare {} attachment in {}'.format(
+                        filename, settings.APPRISE_ATTACH_DIR))
+
+        self._path = path
+
+        # Prepare our item
+        super().__init__(path=self._path, name=filename, **kwargs)
+
+        # Update our file size based on the settings value
+        self.max_file_size = settings.APPRISE_ATTACH_SIZE
+
+    @property
+    def filename(self):
+        return self._filename
+
+    @property
+    def size(self):
+        """
+        Return filesize
+        """
+        return 0 if not self else os.stat(self._path).st_size
+
+    def __del__(self):
+        """
+        De-Construtor is used to tidy up files during garbage collection
+        """
+        if self.delete and self._path:
+            try:
+                os.remove(self._path)
+            except FileNotFoundError:
+                # no problem
+                pass
+
+
 def parse_attachments(attachment_payload, files_request):
     """
     Takes the payload provided in a `/notify` call and extracts the
@@ -148,10 +222,15 @@ def parse_attachments(attachment_payload, files_request):
 
     # Attachment Count
     count = sum([
-        0 if not isinstance(attachment_payload, (tuple, list))
+        0 if not isinstance(attachment_payload, (set, tuple, list))
         else len(attachment_payload),
         0 if not isinstance(files_request, dict) else len(files_request),
     ])
+
+    if isinstance(attachment_payload, (dict, str, bytes)):
+        # Convert and adjust counter
+        attachment_payload = (attachment_payload, )
+        count += 1
 
     if settings.APPRISE_MAX_ATTACHMENTS <= 0 or \
             (settings.APPRISE_MAX_ATTACHMENTS > 0 and
@@ -161,10 +240,9 @@ def parse_attachments(attachment_payload, files_request):
             settings.APPRISE_MAX_ATTACHMENTS
             if settings.APPRISE_MAX_ATTACHMENTS > 0 else 0)
 
-    if isinstance(attachment_payload, (tuple, list)):
+    if isinstance(attachment_payload, (tuple, list, set)):
         for no, entry in enumerate(attachment_payload, start=1):
-
-            if isinstance(entry, str):
+            if isinstance(entry, (str, bytes)):
                 filename = "attachment.%.3d" % no
 
             elif isinstance(entry, dict):
@@ -180,7 +258,8 @@ def parse_attachments(attachment_payload, files_request):
                     elif not filename:
                         filename = "attachment.%.3d" % no
 
-                except TypeError:
+                except AttributeError:
+                    # not a string that was provided
                     raise ValueError(
                         "An invalid filename was provided for attachment %d" %
                         no)
@@ -194,30 +273,70 @@ def parse_attachments(attachment_payload, files_request):
             #
             # Prepare our Attachment
             #
-            attachment = Attachment(filename)
+            if isinstance(entry, str):
+                if not re.match(r'^https?://.+', entry[:10], re.I):
+                    # We failed to retrieve the product
+                    raise ValueError(
+                        "Failed to load attachment "
+                        "%d (not web request): %s" % (no, entry))
 
-            try:
-                with open(attachment.path, 'wb') as f:
-                    # Write our content to disk
-                    f.write(base64.b64decode(entry["base64"]))
+                attachment = HTTPAttachment(
+                    filename, **A_MGR['http'].parse_url(entry))
+                if not attachment:
+                    # We failed to retrieve the attachment
+                    raise ValueError(
+                        "Failed to retrieve attachment %d: %s" % (no, entry))
 
-            except binascii.Error:
-                # The file ws not base64 encoded
-                raise ValueError(
-                    "Invalid filecontent was provided for attachment %s" %
-                    filename)
+            else:   # web, base64 or raw
+                attachment = Attachment(filename)
+                try:
+                    with open(attachment.path, 'wb') as f:
+                        # Write our content to disk
+                        if isinstance(entry, dict) and \
+                                AttachmentPayload.BASE64 in entry:
+                            # BASE64
+                            f.write(
+                                base64.b64decode(
+                                    entry[AttachmentPayload.BASE64]))
 
-            except OSError:
-                raise ValueError(
-                    "Could not write attachment %s to disk" % filename)
+                        elif isinstance(entry, dict) and \
+                                AttachmentPayload.URL in entry:
 
-            #
-            # Some Validation
-            #
-            if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
-                    attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
-                raise ValueError(
-                    "attachment %s's filesize is to large" % filename)
+                            attachment = HTTPAttachment(
+                                filename, **A_MGR['http']
+                                .parse_url(entry[AttachmentPayload.URL]))
+                            if not attachment:
+                                # We failed to retrieve the attachment
+                                raise ValueError(
+                                    "Failed to retrieve attachment "
+                                    "%d: %s" % (no, entry))
+
+                        elif isinstance(entry, bytes):
+                            # RAW
+                            f.write(entry)
+
+                        else:
+                            raise ValueError(
+                                "Invalid filetype was provided for "
+                                "attachment %s" % filename)
+
+                except binascii.Error:
+                    # The file ws not base64 encoded
+                    raise ValueError(
+                        "Invalid filecontent was provided for attachment %s" %
+                        filename)
+
+                except OSError:
+                    raise ValueError(
+                        "Could not write attachment %s to disk" % filename)
+
+                #
+                # Some Validation
+                #
+                if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
+                        attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
+                    raise ValueError(
+                        "attachment %s's filesize is to large" % filename)
 
             # Add our attachment
             attachments.append(attachment)
@@ -245,8 +364,7 @@ def parse_attachments(attachment_payload, files_request):
 
             except (AttributeError, TypeError):
                 raise ValueError(
-                    "An invalid filename was provided for attachment %d" %
-                    no)
+                    "An invalid filename was provided for attachment %d" % no)
 
             #
             # Prepare our Attachment
