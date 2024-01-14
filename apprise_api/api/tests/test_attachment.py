@@ -245,7 +245,7 @@ class AttachmentTests(SimpleTestCase):
             'filename': 'a' * 1000,
         }
         with self.assertRaises(ValueError):
-            result = parse_attachments(attachment_payload, {})
+            parse_attachments(attachment_payload, {})
 
         # filename invalid
         attachment_payload = {
@@ -253,35 +253,35 @@ class AttachmentTests(SimpleTestCase):
             'filename': 1,
         }
         with self.assertRaises(ValueError):
-            result = parse_attachments(attachment_payload, {})
+            parse_attachments(attachment_payload, {})
 
         attachment_payload = {
             'base64': base64.b64encode(b'data to be encoded').decode('utf-8'),
             'filename': None,
         }
         with self.assertRaises(ValueError):
-            result = parse_attachments(attachment_payload, {})
+            parse_attachments(attachment_payload, {})
 
         attachment_payload = {
             'base64': base64.b64encode(b'data to be encoded').decode('utf-8'),
             'filename': object(),
         }
         with self.assertRaises(ValueError):
-            result = parse_attachments(attachment_payload, {})
+            parse_attachments(attachment_payload, {})
 
         # List Entry with bad data
         attachment_payload = [
             None,
         ]
         with self.assertRaises(ValueError):
-            result = parse_attachments(attachment_payload, {})
+            parse_attachments(attachment_payload, {})
 
         # We expect at least a 'base64' or something in our dict
         attachment_payload = [
             {},
         ]
         with self.assertRaises(ValueError):
-            result = parse_attachments(attachment_payload, {})
+            parse_attachments(attachment_payload, {})
 
         # We can't parse entries that are not base64 but specified as
         # though they are
@@ -289,7 +289,7 @@ class AttachmentTests(SimpleTestCase):
             'base64': 'not-base-64',
         }
         with self.assertRaises(ValueError):
-            result = parse_attachments(attachment_payload, {})
+            parse_attachments(attachment_payload, {})
 
         # Support string; these become web requests
         attachment_payload = \
@@ -316,7 +316,7 @@ class AttachmentTests(SimpleTestCase):
         with patch('builtins.open', m):
             with self.assertRaises(ValueError):
                 attachment_payload = b"some data to work with."
-                result = parse_attachments(attachment_payload, {})
+                parse_attachments(attachment_payload, {})
 
         # Test a case where our attachment exceeds the maximum size we allow
         # for
@@ -324,7 +324,7 @@ class AttachmentTests(SimpleTestCase):
             attachment_payload = \
                 b"some content more then 1 byte in length to pass along."
             with self.assertRaises(ValueError):
-                result = parse_attachments(attachment_payload, {})
+                parse_attachments(attachment_payload, {})
 
         # Support byte data
         attachment_payload = b"some content to pass along as an attachment."
@@ -341,6 +341,16 @@ class AttachmentTests(SimpleTestCase):
         assert isinstance(result, list)
         assert len(result) == 2
 
+        attachment_payload = [{
+            # Request several images
+            'url': "https://localhost/myotherfile.png",
+        }, {
+            'url': "https://localhost/myfile.png"
+        }]
+        result = parse_attachments(attachment_payload, {})
+        assert isinstance(result, list)
+        assert len(result) == 2
+
         # Test pure binary payload (raw)
         attachment_payload = [
             b"some content to pass along as an attachment.",
@@ -349,3 +359,28 @@ class AttachmentTests(SimpleTestCase):
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 2
+
+    def test_direct_attachment_parsing_nw(self):
+        """
+        Test the parsing of file attachments with network availability
+        We test web requests that do not work or in accessible to access
+        this part of the test cases
+        """
+        attachment_payload = [
+            # While we have a network in place, we're intentionally requesting
+            # URLs that do not exist (hopefully they don't anyway) as we want
+            # this test to fail.
+            "https://localhost/garbage/abcd1.png",
+            "https://localhost/garbage/abcd2.png",
+        ]
+        with self.assertRaises(ValueError):
+            parse_attachments(attachment_payload, {})
+
+        # Support url encoding
+        attachment_payload = [{
+            'url': "https://localhost/garbage/abcd1.png",
+        }, {
+            'url': "https://localhost/garbage/abcd2.png",
+        }]
+        with self.assertRaises(ValueError):
+            parse_attachments(attachment_payload, {})

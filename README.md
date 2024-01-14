@@ -172,6 +172,12 @@ curl -X POST \
     -F attachment=https://i.redd.it/my2t4d2fx0u31.jpg \
     http://localhost:8000/notify
 
+# To send more then one URL, the following would work:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F attachment=https://i.redd.it/my2t4d2fx0u31.jpg \
+    -F attachment=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
+    http://localhost:8000/notify
 ```
 
 ### Persistent Storage Solution
