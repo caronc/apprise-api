@@ -147,13 +147,44 @@ curl -X POST \
     -F attach2=@/my/path/to/Apprise.doc \
     http://localhost:8000/notify
 
+# This example shows how you can place the body among other parameters
+# in the GET parameter and not the payload as another option.
 curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
+    -F @/path/to/your/attachment \
+    http://localhost:8000/notify
+
+# The body is not required if an attachment is provided:
+curl -X POST -d 'urls=mailto://user:pass@gmail.com' \
     -F @/path/to/your/attachment \
     http://localhost:8000/notify
 
 # Send your notifications directly using JSON
 curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}' \
     -H "Content-Type: application/json" \
+    http://localhost:8000/notify
+```
+
+You can also send notifications that are URLs.  Apprise will download the item so that it can send it along to all end points that should be notified about it.
+```bash
+# Use the 'attachment' parameter and send along a web request
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F attachment=https://i.redd.it/my2t4d2fx0u31.jpg \
+    http://localhost:8000/notify
+
+# To send more then one URL, the following would work:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F attachment=https://i.redd.it/my2t4d2fx0u31.jpg \
+    -F attachment=https://path/to/another/remote/file.pdf \
+    http://localhost:8000/notify
+
+# Finally feel free to mix and match local files with external ones:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F attachment=https://i.redd.it/my2t4d2fx0u31.jpg \
+    -F attachment=https://path/to/another/remote/file.pdf \
+    -F @/path/to/your/local/file/attachment \
     http://localhost:8000/notify
 ```
 

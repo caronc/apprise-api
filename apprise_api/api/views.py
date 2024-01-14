@@ -610,6 +610,10 @@ class NotifyView(View):
 
         # Handle Attachments
         attach = None
+        if not content.get('attachment') and 'attachment' in request.POST:
+            # Acquire attachments to work with them
+            content['attachment'] = request.POST.getlist('attachment')
+
         if 'attachment' in content or request.FILES:
             try:
                 attach = parse_attachments(
@@ -974,8 +978,9 @@ class NotifyView(View):
             )
 
         logger.info(
-            'NOTIFY - %s - Proccessed%s KEY: %s', request.META['REMOTE_ADDR'],
-            '' if not tag else f' (Tags: {tag}),', key)
+            'NOTIFY - %s - Delivered Notification(s) - %sKEY: %s',
+            request.META['REMOTE_ADDR'],
+            '' if not tag else f'Tags: {tag}, ', key)
 
         # Return our retrieved content
         return HttpResponse(
@@ -1011,14 +1016,22 @@ class StatelessNotifyView(View):
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...
+                logger.warning(
+                    'NOTIFY - %s - Invalid JSON Payload provided',
+                    request.META['REMOTE_ADDR'])
+
                 return HttpResponse(
                     _('Invalid JSON specified.'),
                     status=ResponseCode.bad_request)
 
         if not content:
             # We could not handle the Content-Type
+            logger.warning(
+                'NOTIFY - %s - Invalid FORM Payload provided',
+                request.META['REMOTE_ADDR'])
+    
             return HttpResponse(
-                _('The message format is not supported.'),
+                _('Bad FORM Payload provided.'),
                 status=ResponseCode.bad_request)
 
         if not content.get('urls') and settings.APPRISE_STATELESS_URLS:
@@ -1031,15 +1044,22 @@ class StatelessNotifyView(View):
                 content.get('type', apprise.NotifyType.INFO) \
                 not in apprise.NOTIFY_TYPES:
 
+            logger.warning(
+                'NOTIFY - %s - Payload lacks minimum requirements',
+                request.META['REMOTE_ADDR'])
+
             return HttpResponse(
-                _('An invalid payload was specified.'),
+                _('Payload lacks minimum requirements.'),
                 status=ResponseCode.bad_request)
 
         # Acquire our body format (if identified)
         body_format = content.get('format', apprise.NotifyFormat.TEXT)
         if body_format and body_format not in apprise.NOTIFY_FORMATS:
+            logger.warning(
+                'NOTIFY - %s - Format parameter contains an unsupported '
+                'value (%s)', request.META['REMOTE_ADDR'], str(body_format))
             return HttpResponse(
-                _('An invalid (body) format was specified.'),
+                _('An invalid body input format was specified.'),
                 status=ResponseCode.bad_request)
 
         # Prepare our keyword arguments (to be passed into an AppriseAsset
@@ -1053,15 +1073,19 @@ class StatelessNotifyView(View):
             kwargs['body_format'] = body_format
 
         # Acquire our recursion count (if defined)
+        recursion = request.headers.get('X-Apprise-Recursion-Count', 0)
         try:
-            recursion = \
-                int(request.headers.get('X-Apprise-Recursion-Count', 0))
+            recursion = int(recursion)
 
             if recursion < 0:
                 # We do not accept negative numbers
                 raise TypeError("Invalid Recursion Value")
 
             if recursion > settings.APPRISE_RECURSION_MAX:
+                logger.warning(
+                    'NOTIFY - %s - Recursion limit reached (%d > %d)',
+                    request.META['REMOTE_ADDR'], recursion,
+                    settings.APPRISE_RECURSION_MAX)
                 return HttpResponse(
                     _('The recursion limit has been reached.'),
                     status=ResponseCode.method_not_accepted)
@@ -1070,6 +1094,9 @@ class StatelessNotifyView(View):
             kwargs['_recursion'] = recursion
 
         except (TypeError, ValueError):
+            logger.warning(
+                'NOTIFY - %s - Invalid recursion value (%s) provided',
+                request.META['REMOTE_ADDR'], str(recursion))
             return HttpResponse(
                 _('An invalid recursion value was specified.'),
                 status=ResponseCode.bad_request)
@@ -1100,6 +1127,10 @@ class StatelessNotifyView(View):
 
         # Handle Attachments
         attach = None
+        if not content.get('attachment') and 'attachment' in request.POST:
+            # Acquire attachments to work with them
+            content['attachment'] = request.POST.getlist('attachment')
+
         if 'attachment' in content or request.FILES:
             try:
                 attach = parse_attachments(
@@ -1177,6 +1208,10 @@ class StatelessNotifyView(View):
             return HttpResponse(
                 _('One or more notification could not be sent.'),
                 status=ResponseCode.failed_dependency)
+
+        logger.info(
+            'NOTIFY - %s - Delivered Stateless Notification(s)',
+            request.META['REMOTE_ADDR'])
 
         # Return our retrieved content
         return HttpResponse(
