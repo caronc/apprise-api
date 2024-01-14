@@ -176,7 +176,15 @@ curl -X POST \
 curl -X POST \
     -F 'urls=mailto://user:pass@gmail.com' \
     -F attachment=https://i.redd.it/my2t4d2fx0u31.jpg \
-    -F attachment=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
+    -F attachment=https://path/to/another/remote/file.pdf \
+    http://localhost:8000/notify
+
+# Finally feel free to mix and match local files with external ones:
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F attachment=https://i.redd.it/my2t4d2fx0u31.jpg \
+    -F attachment=https://path/to/another/remote/file.pdf \
+    -F @/path/to/your/local/file/attachment \
     http://localhost:8000/notify
 ```
 
