@@ -153,7 +153,7 @@ class HTTPAttachment(A_MGR['http']):
     Web Attachments
     """
 
-    def __init__(self, filename, path=None, delete=True, **kwargs):
+    def __init__(self, filename, delete=True, **kwargs):
         """
         Initialize our attachment
         """
@@ -168,21 +168,19 @@ class HTTPAttachment(A_MGR['http']):
             raise ValueError('Could not create directory {}'.format(
                 settings.APPRISE_ATTACH_DIR))
 
-        if not path:
-            try:
-                d, path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
-                # Close our file descriptor
-                os.close(d)
+        try:
+            d, self._path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
+            # Close our file descriptor
+            os.close(d)
 
-            except FileNotFoundError:
-                raise ValueError(
-                    'Could not prepare {} attachment in {}'.format(
-                        filename, settings.APPRISE_ATTACH_DIR))
+        except FileNotFoundError:
+            raise ValueError(
+                'Could not prepare {} attachment in {}'.format(
+                    filename, settings.APPRISE_ATTACH_DIR))
 
-        self._path = path
 
         # Prepare our item
-        super().__init__(path=self._path, name=filename, **kwargs)
+        super().__init__(name=filename, **kwargs)
 
         # Update our file size based on the settings value
         self.max_file_size = settings.APPRISE_ATTACH_SIZE
