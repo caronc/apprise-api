@@ -45,11 +45,17 @@ docker pull caronc/apprise:latest
 # /plugin is used for a location you can add your own custom apprise plugins.
 #         You do not have to mount this if you don't intend to use it.
 # /attach is used for file attachments
+#
+# The below example sets a the APPRISE_WORKER_COUNT to a small value (over-riding
+# a full production environment setting).  This may be all that is needed for
+# a light-weight self hosted solution.
+#
 docker run --name apprise \
    -p 8000:8000 \
    -v /var/lib/apprise/config:/config \
    -v /var/lib/apprise/plugin:/plugin \
    -v /var/lib/apprise/attach:/attach \
+   -e APPRISE_WORKER_COUNT=1 \
    -d caronc/apprise:latest
 ```
 
@@ -344,7 +350,7 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://github.com/caronc/apprise/wiki/decorator_notify). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
 | `APPRISE_RECURSION_MAX` | This defines the number of times one Apprise API Server can (recursively) call another.  This is to both support and mitigate abuse through [the `apprise://` schema](https://github.com/caronc/apprise/wiki/Notify_apprise_api) for those who choose to use it. When leveraged properly, you can increase this (recursion max) value and successfully load balance the handling of many notification requests through many additional API Servers.  By default this value is set to `1` (one).
 | `APPRISE_WEBHOOK_URL` | Define a Webhook that Apprise should `POST` results to upon each notification call made.  This must be in the format of an `http://` or `https://` URI.  By default no URL is specified and no webhook is actioned.
-| `APPRISE_WORKER_COUNT` | Over-ride the number of workers to run.  by default this is `(2 * CPUS) + 1` as advised by Gunicorn's website.
+| `APPRISE_WORKER_COUNT` | Over-ride the number of workers to run.  by default this is calculated `(2 * CPUS_DETECTED) + 1` [as advised by Gunicorn's website](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Hobby enthusiasts and/or users who are simply setting up Apprise to support their home (light-weight usage) may wish to set this value to `1` to limit the resources the Apprise server prepares for itself.
 | `APPRISE_WORKER_TIMEOUT` | Over-ride the worker timeout value; by default this is `300` (5 min) which should be more than enough time to send all pending notifications.
 | `BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
 | `LOG_LEVEL`    | Adjust the log level to the console. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
@@ -480,3 +486,4 @@ a.add(config)
 # Send a test message
 a.notify('test message')
 ```
+
