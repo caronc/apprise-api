@@ -373,6 +373,33 @@ class StatelessNotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 1
 
     @mock.patch('apprise.Apprise.notify')
+    def test_notify_with_get_parameters(self, mock_notify):
+        """
+        Test sending a simple notification using JSON with GET
+        parameters
+        """
+
+        # Set our return value
+        mock_notify.return_value = True
+
+        # Preare our JSON data
+        json_data = {
+            'urls': 'json://user@my.domain.ca',
+            'body': 'test notifiction',
+        }
+
+        # Send our notification as a JSON object
+        response = self.client.post(
+            '/notify/?title=my%20title&format=text&type=info',
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+
+        # Still supported
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+    @mock.patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """
         Test sending a simple notification using JSON

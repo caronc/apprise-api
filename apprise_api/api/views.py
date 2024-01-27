@@ -1039,6 +1039,27 @@ class StatelessNotifyView(View):
             # defined
             content['urls'] = settings.APPRISE_STATELESS_URLS
 
+        #
+        # Allow 'format' value to be specified as part of the URL
+        # parameters if not found otherwise defined.
+        #
+        if not content.get('format') and 'format' in request.GET:
+            content['format'] = request.GET['format']
+
+        #
+        # Allow 'type' value to be specified as part of the URL parameters
+        # if not found otherwise defined.
+        #
+        if not content.get('type') and 'type' in request.GET:
+            content['type'] = request.GET['type']
+
+        #
+        # Allow 'title' value to be specified as part of the URL parameters
+        # if not found otherwise defined.
+        #
+        if not content.get('title') and 'title' in request.GET:
+            content['title'] = request.GET['title']
+
         # Some basic error checking
         if not content.get('body') or \
                 content.get('type', apprise.NotifyType.INFO) \
