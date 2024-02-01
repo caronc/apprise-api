@@ -178,7 +178,6 @@ class HTTPAttachment(A_MGR['http']):
                 'Could not prepare {} attachment in {}'.format(
                     filename, settings.APPRISE_ATTACH_DIR))
 
-
         # Prepare our item
         super().__init__(name=filename, **kwargs)
 
@@ -272,6 +271,14 @@ def parse_attachments(attachment_payload, files_request):
             # Prepare our Attachment
             #
             if isinstance(entry, str):
+                if not entry.strip():
+                    # ignore blank entries; these can come from using the
+                    # api/website and submitting without an element defined.
+                    # There is no need have a bad outcome; just decrement our
+                    # counter and move along
+                    count -= 1
+                    continue
+
                 if not re.match(r'^https?://.+', entry[:10], re.I):
                     # We failed to retrieve the product
                     raise ValueError(

@@ -283,6 +283,10 @@ class AttachmentTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
 
+        # We allow empty entries, this is okay; there is just nothing
+        # returned at the end of the day
+        assert parse_attachments({''}, {}) == []
+
         # We can't parse entries that are not base64 but specified as
         # though they are
         attachment_payload = {
