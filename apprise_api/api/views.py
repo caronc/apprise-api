@@ -633,7 +633,7 @@ class NotifyView(View):
         # Allow 'tag' value to be specified as part of the URL parameters
         # if not found otherwise defined.
         #
-        tag = content.get('tag', content.get('tags'))
+        tag = content.get('tag') if content.get('tag') else content.get('tags')
         if not tag:
             # Allow GET parameter over-rides
             if 'tag' in request.GET:
