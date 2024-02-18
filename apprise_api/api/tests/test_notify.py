@@ -847,6 +847,22 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Preare our form data
+        form_data = {
+            'body': 'test notifiction',
+            'attach': 'https://localhost/invalid/path/to/image.png',
+        }
+
+        # Send our notification
+        response = self.client.post(
+            '/notify/{}'.format(key), form_data)
+        # We fail because we couldn't retrieve our attachment
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
     @mock.patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """
@@ -998,11 +1014,38 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
+
         # Reset our mock object
         mock_notify.reset_mock()
 
+        # If an empty format is specified, it is accepted and
+        # no imput format is specified
+        json_data = {
+            'body': 'test message',
+            'format': None,
+            'attach': 'https://localhost/invalid/path/to/image.png',
+        }
+
+        # Test case with format changed
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+
+        # We failed to send notification because we couldn't fetch the
+        # attachment
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        json_data = {
+            'body': 'test message',
+        }
+
         # Same results for any empty string:
-        json_data['format'] = ''
         response = self.client.post(
             '/notify/{}'.format(key),
             data=json.dumps(json_data),

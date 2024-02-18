@@ -99,6 +99,11 @@
                     &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@Screenshot-2.png \ <br/>
 										&nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"
                   </code></pre>
+	                <pre><code class="bash">
+                    # {% blocktrans %}Send an web based file attachment to a <a href="https://github.com/caronc/apprise/wiki/Notify_discord" target="_blank">Discord</a> server:{% endblocktrans %}<br/>
+                    curl -X POST -F 'urls=discord://credentials' \<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
                 </div>
               </li>
               <li>
@@ -492,6 +497,12 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;-F "body=test body" \ <br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;-F "title=test title" \ <br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
+	                    <pre><code class="bash">
+                        # {% blocktrans %}Sends a notification to our endpoints with an attachment{% endblocktrans %}<br/>
+                        curl -X POST \<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
                     <pre><code class="bash">
 								    # {% blocktrans %}Notifies all URLs assigned the <em>devops</em> tag{% endblocktrans %}<br/>

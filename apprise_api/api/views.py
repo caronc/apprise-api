@@ -610,9 +610,19 @@ class NotifyView(View):
 
         # Handle Attachments
         attach = None
-        if not content.get('attachment') and 'attachment' in request.POST:
-            # Acquire attachments to work with them
-            content['attachment'] = request.POST.getlist('attachment')
+        if not content.get('attachment'):
+            if 'attachment' in request.POST:
+                # Acquire attachments to work with them
+                content['attachment'] = request.POST.getlist('attachment')
+
+            elif 'attach' in request.POST:
+                # Acquire kw (alias) attach to work with them
+                content['attachment'] = request.POST.getlist('attach')
+
+            elif content.get('attach'):
+                # Acquire kw (alias) attach from payload to work with
+                content['attachment'] = content['attach']
+                del content['attach']
 
         if 'attachment' in content or request.FILES:
             try:
@@ -1029,7 +1039,7 @@ class StatelessNotifyView(View):
             logger.warning(
                 'NOTIFY - %s - Invalid FORM Payload provided',
                 request.META['REMOTE_ADDR'])
-    
+
             return HttpResponse(
                 _('Bad FORM Payload provided.'),
                 status=ResponseCode.bad_request)
@@ -1148,9 +1158,19 @@ class StatelessNotifyView(View):
 
         # Handle Attachments
         attach = None
-        if not content.get('attachment') and 'attachment' in request.POST:
-            # Acquire attachments to work with them
-            content['attachment'] = request.POST.getlist('attachment')
+        if not content.get('attachment'):
+            if 'attachment' in request.POST:
+                # Acquire attachments to work with them
+                content['attachment'] = request.POST.getlist('attachment')
+
+            elif 'attach' in request.POST:
+                # Acquire kw (alias) attach to work with them
+                content['attachment'] = request.POST.getlist('attach')
+
+            elif content.get('attach'):
+                # Acquire kw (alias) attach from payload to work with
+                content['attachment'] = content['attach']
+                del content['attach']
 
         if 'attachment' in content or request.FILES:
             try:
@@ -1158,6 +1178,11 @@ class StatelessNotifyView(View):
                     content.get('attachment'), request.FILES)
 
             except (TypeError, ValueError):
+                # Invalid entry found in list
+                logger.warning(
+                    'NOTIFY - %s - Bad attachment specified',
+                    request.META['REMOTE_ADDR'])
+
                 return HttpResponse(
                     _('Bad attachment'),
                     status=ResponseCode.bad_request)
