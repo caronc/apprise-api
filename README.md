@@ -168,6 +168,13 @@ curl -X POST -d 'urls=mailto://user:pass@gmail.com' \
 curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify
+
+# attach= is an alias of attachment=
+# Send a notification with a URL based attachment
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F attach=attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
+    http://localhost:8000/notify
 ```
 
 You can also send notifications that are URLs.  Apprise will download the item so that it can send it along to all end points that should be notified about it.
@@ -251,6 +258,13 @@ curl -X POST \
     -F 'body=test message' \
     -F attach1=@Screenshot-1.png \
     -F attach2=@/my/path/to/Apprise.doc \
+    http://localhost:8000/notify/abc123
+
+# attach= is an alias of attachment=
+# Send a notification with a URL based attachment
+curl -X POST \
+    -F 'urls=mailto://user:pass@gmail.com' \
+    -F attach=attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
     http://localhost:8000/notify/abc123
 ```
 
