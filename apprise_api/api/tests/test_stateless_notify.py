@@ -293,7 +293,6 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
-
     @override_settings(APPRISE_RECURSION_MAX=1)
     @mock.patch('apprise.Apprise.notify')
     def test_stateless_notify_recursion(self, mock_notify):

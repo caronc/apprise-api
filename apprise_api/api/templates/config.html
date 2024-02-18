@@ -115,6 +115,12 @@
 				&nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
 				&nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
 				&nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+        {% blocktrans %}Sends a notification to our endpoints with an attachment{% endblocktrans %}
+	      <pre><code class="bash">
+        curl -X POST \<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
         </p>
       </div>
       <div class="section">

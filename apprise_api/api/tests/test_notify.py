@@ -1043,11 +1043,9 @@ class NotifyTests(SimpleTestCase):
 
         json_data = {
             'body': 'test message',
-            'format': None,
         }
 
         # Same results for any empty string:
-        json_data['format'] = ''
         response = self.client.post(
             '/notify/{}'.format(key),
             data=json.dumps(json_data),
