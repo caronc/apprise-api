@@ -68,6 +68,7 @@ docker build -t apprise/local:latest -f Dockerfile .
 # Launch your instance
 docker run --name apprise \
    -p 8000:8000 \
+   -e APPRISE_WORKER_COUNT=1 \
    -d  apprise/local:latest
 ```
 A `docker-compose.yml` file is already set up to grant you an instant production ready simulated environment:
