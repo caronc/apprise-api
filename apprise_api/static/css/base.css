@@ -184,3 +184,18 @@ code.config-id {
 	font-size: 0.7em;
 	background: none;
 }
+
+#url-list .card-panel {
+	padding: 0.5rem;
+	margin: 0.1rem 0;
+	border-radius: 12px;
+}
+#url-list .chip {
+	margin: 0.3rem;
+}
+#url-list code {
+	overflow-x: hidden;
+	overflow-y: hidden;
+	white-space: wrap;
+	border-radius: 5px;
+}
