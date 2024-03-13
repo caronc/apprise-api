@@ -179,3 +179,8 @@ h6 {
 #overview pre {
 	margin-left: 2.0rem
 }
+
+code.config-id {
+	font-size: 0.7em;
+	background: none;
+}

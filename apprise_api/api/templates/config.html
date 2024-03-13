@@ -2,15 +2,17 @@
 {% load i18n %}
 {% block body %}
 {% if STATEFUL_MODE != 'disabled' %}
-<h4>{% trans "Management for Config ID:" %} <em>{{ key }}</em></h4>
+<h4>{% trans "Management for Config ID:" %} <code class="config-id">{{ key }}</code></h4>
 <div class="row">
   <div class="col s12">
     <ul class="tabs config-overview">
-      <li class="tab col s4"><a class="active" href="#overview"><i class="material-icons">info</i>
+      <li class="tab col s3"><a class="active" href="#overview"><i class="material-icons">info</i>
           {% trans "Overview" %}</a></li>
-      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s4"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s3"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
       </li>
-      <li class="tab col s4"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s3"><a href="#review"><i class="material-icons">{% if not CONFIG_LOCK %}web{% else %}lock{% endif %}</i> {%trans "Review" %}</a>
+      </li>
+      <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a>
       </li>
     </ul>
   </div>
@@ -123,13 +125,6 @@
         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
         </p>
       </div>
-      <div class="section">
-        <h5>{% trans "Loaded Configuration" %}</h5>
-        <div id="url-list"></div>
-        <div id="url-list-progress" class="progress" style="width:70%">
-          <div class="indeterminate"></div>
-        </div>
-      </div>
     </div>
   </div>
   <div id="config" class="col s12">
@@ -147,6 +142,24 @@
     <h5>{% trans "Your Configuration Is Locked" %}</h5>
     <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}
 
+    {% endif %}
+  </div>
+
+  <div id="review" class="col s12">
+    {% if not CONFIG_LOCK %}
+    <p>
+      {% blocktrans %}The following URLs have been detected:{% endblocktrans %}
+    </p>
+    <div class="section">
+      <h5>{% trans "Loaded Configuration" %}</h5>
+      <div id="url-list"></div>
+      <div id="url-list-progress" class="progress" style="width:70%">
+        <div class="indeterminate"></div>
+      </div>
+    </div>
+    {% else %}
+    <h5>{% trans "Your Configuration Is Locked" %}</h5>
+    <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}
     {% endif %}
   </div>
 
