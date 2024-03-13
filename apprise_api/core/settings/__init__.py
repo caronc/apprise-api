@@ -146,7 +146,7 @@ APPRISE_CONFIG_DIR = os.environ.get(
 APPRISE_ATTACH_DIR = os.environ.get(
     'APPRISE_ATTACH_DIR', os.path.join(BASE_DIR, 'var', 'attach'))
 
-# The file attachment size allowed by the API
+# The maximum file attachment size allowed by the API (defined in MB)
 APPRISE_ATTACH_SIZE = int(os.environ.get('APPRISE_ATTACH_SIZE', 200)) * 1048576
 
 # When set Apprise API Locks itself down so that future (configuration)
@@ -205,8 +205,3 @@ APPRISE_PLUGIN_PATHS = os.environ.get(
 # Define the number of attachments that can exist as part of a payload
 # Setting this to zero disables the limit
 APPRISE_MAX_ATTACHMENTS = int(os.environ.get('APPRISE_MAX_ATTACHMENTS', 6))
-
-# Defines the maximum size each attachment can be
-# 8388608 == 8MB
-APPRISE_MAX_ATTACHMENT_SIZE = int(
-    os.environ.get('APPRISE_MAX_ATTACHMENT_SIZE', 8388608))

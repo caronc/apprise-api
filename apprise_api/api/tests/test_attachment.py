@@ -121,11 +121,12 @@ class AttachmentTests(SimpleTestCase):
 
         # Test a case where our attachment exceeds the maximum size we allow
         # for
-        with override_settings(APPRISE_MAX_ATTACHMENT_SIZE=1):
+        with override_settings(APPRISE_ATTACH_SIZE=1):
             files_request = {
                 'file1': SimpleUploadedFile(
                     "attach.txt",
-                    b"some content more then 1 byte in length to pass along.",
+                    # More then 1 MB in size causing error to trip
+                    ("content" * 1024 * 1024).encode('utf-8'),
                     content_type="text/plain")
             }
             with self.assertRaises(ValueError):
@@ -324,9 +325,10 @@ class AttachmentTests(SimpleTestCase):
 
         # Test a case where our attachment exceeds the maximum size we allow
         # for
-        with override_settings(APPRISE_MAX_ATTACHMENT_SIZE=1):
+        with override_settings(APPRISE_ATTACH_SIZE=1):
+            # More then 1 MB in size causing error to trip
             attachment_payload = \
-                b"some content more then 1 byte in length to pass along."
+                ("content" * 1024 * 1024).encode('utf-8')
             with self.assertRaises(ValueError):
                 parse_attachments(attachment_payload, {})
 
