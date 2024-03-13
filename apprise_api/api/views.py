@@ -629,11 +629,11 @@ class NotifyView(View):
                 attach = parse_attachments(
                     content.get('attachment'), request.FILES)
 
-            except (TypeError, ValueError):
+            except (TypeError, ValueError) as e:
                 # Invalid entry found in list
                 logger.warning(
-                    'NOTIFY - %s - Bad attachment specified',
-                    request.META['REMOTE_ADDR'])
+                    'NOTIFY - %s - Bad attachment: %s',
+                    request.META['REMOTE_ADDR'], str(e))
 
                 return HttpResponse(
                     _('Bad attachment'),
@@ -1177,11 +1177,11 @@ class StatelessNotifyView(View):
                 attach = parse_attachments(
                     content.get('attachment'), request.FILES)
 
-            except (TypeError, ValueError):
+            except (TypeError, ValueError) as e:
                 # Invalid entry found in list
                 logger.warning(
-                    'NOTIFY - %s - Bad attachment specified',
-                    request.META['REMOTE_ADDR'])
+                    'NOTIFY - %s - Bad attachment: %s',
+                    request.META['REMOTE_ADDR'], str(e))
 
                 return HttpResponse(
                     _('Bad attachment'),

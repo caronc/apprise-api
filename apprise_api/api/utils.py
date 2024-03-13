@@ -338,8 +338,8 @@ def parse_attachments(attachment_payload, files_request):
                 #
                 # Some Validation
                 #
-                if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
-                        attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
+                if settings.APPRISE_ATTACH_SIZE > 0 and \
+                        attachment.size > settings.APPRISE_ATTACH_SIZE:
                     raise ValueError(
                         "attachment %s's filesize is to large" % filename)
 
@@ -387,8 +387,8 @@ def parse_attachments(attachment_payload, files_request):
             #
             # Some Validation
             #
-            if settings.APPRISE_MAX_ATTACHMENT_SIZE > 0 and \
-                    attachment.size > settings.APPRISE_MAX_ATTACHMENT_SIZE:
+            if settings.APPRISE_ATTACH_SIZE > 0 and \
+                    attachment.size > settings.APPRISE_ATTACH_SIZE:
                 raise ValueError(
                     "attachment %s's filesize is to large" % filename)
 
