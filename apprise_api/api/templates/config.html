@@ -214,10 +214,16 @@ async function main_init(){
   let jsonResponse = await fetch('{% url "json_urls" key %}/?privacy=1', {
     method: 'GET',
   })
-  if(jsonResponse.status != 200) {
+  if(jsonResponse.status == 204) {
     // Take an early exit
     document.querySelector('#url-list-progress').style.display = 'none';
-    document.querySelector('#url-list').textContent = '{% trans "An error occurred retrieving the list of loaded Apprise URL(s)" %}'
+    document.querySelector('#url-list').textContent = '{% trans "There are no URLs defined. Click on the ⚙️ Configuration tab and define some." %}'
+    return;
+
+	} else if(jsonResponse.status != 200) {
+    // Take an early exit
+    document.querySelector('#url-list-progress').style.display = 'none';
+    document.querySelector('#url-list').textContent = '{% trans "💣 An error occurred retrieving the list of loaded Apprise URL(s)" %}'
     return;
   }
 

@@ -40,12 +40,12 @@
             <hr/>
 
             <ul class="detail-buttons">
-              <li><strong>{% blocktrans %}Category{% endblocktrans %}:</strong> {{entry.category}}</li>
+              <li><strong>{% blocktrans %}Category{% endblocktrans %}:</strong> <code>{{entry.category}}</code></li>
               {% if entry.protocols %}
-              <li><strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong> {{ entry.protocols|join:", " }}</li>
+              <li><strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong> <code>{{ entry.protocols|join:", " }}</code></li>
               {% endif %}
               {% if entry.secure_protocols %}
-              <li><strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong> {{ entry.secure_protocols|join:", " }}</li>
+              <li><strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong> <code>{{ entry.secure_protocols|join:", " }}</code></li>
               {% endif %}
               <li><pre><code class="bash">
                   # {% blocktrans %}Apprise URL Formatting{% endblocktrans %}</br>
