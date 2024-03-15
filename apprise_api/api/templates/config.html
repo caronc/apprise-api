@@ -107,18 +107,18 @@
         <p>
         {% blocktrans %}The following command would cause the apprise api to notify all of your services:{% endblocktrans %}
         <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
         <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         {% blocktrans %}Sends a notification to our endpoints with an attachment{% endblocktrans %}
-	      <pre><code class="bash">
+         <pre><code class="bash">
         curl -X POST \<br/>
         &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
         &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
@@ -220,7 +220,7 @@ async function main_init(){
     document.querySelector('#url-list').textContent = '{% trans "There are no URLs defined. Click on the ⚙️ Configuration tab and define some." %}'
     return;
 
-	} else if(jsonResponse.status != 200) {
+   } else if(jsonResponse.status != 200) {
     // Take an early exit
     document.querySelector('#url-list-progress').style.display = 'none';
     document.querySelector('#url-list').textContent = '{% trans "💣 An error occurred retrieving the list of loaded Apprise URL(s)" %}'
@@ -231,12 +231,13 @@ async function main_init(){
   // choose from. Tags are based off ones found in the saved
   // configuration.
   const data = await jsonResponse.json();
-  let external_data = tags.concat(data.tags).reduce(function(result, item) {
+  const external_data = tags.concat(data.tags).reduce(function(result, item) {
     result[item] = null;
     return result;
   }, {})
 
-  M.Chips.init(document.querySelectorAll('.chips'), {
+  const chipElement = document.querySelector('.chips');
+  M.Chips.init(chipElement, {
     placeholder: 'Optional Tag',
     secondaryPlaceholder: 'Another Tag',
     autocompleteOptions: {
@@ -252,6 +253,16 @@ async function main_init(){
     }
   });
 
+	// our GET parameters
+	var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
+	const params = new Proxy(new URLSearchParams(window.location.search), {
+	  get: (searchParams, prop) => searchParams.get(prop),
+	});
+	if (params.tag) {
+	  params.tag.split(tagRe).forEach(function (tag, index) {
+  	   M.Chips.getInstance(chipElement).addChip({tag: tag, image: ''});
+		});
+  }
   // Now build our our loaded list of configuration for our welcome page
   let urlList = document.createElement('ul');
 
@@ -267,8 +278,19 @@ async function main_init(){
     entry.tags.forEach(function (tag) {
       let chip = document.createElement('div');
       chip.setAttribute('class', 'chip');
+      chip.setAttribute('name', tag);
+      chip.setAttribute('href', `?tag=${tag}#notify`);
       chip.textContent = `🏷️ ${tag}`;
       li.appendChild(chip);
+
+      chip.addEventListener('click', function(e) {
+      e.preventDefault();
+       window.history.pushState(null, null, this.getAttribute('href'));
+       document.querySelector('.config-overview li a[href="#notify"]').click()
+
+       const chipElement = document.querySelector('.chips');
+       M.Chips.getInstance(chipElement).addChip({tag: this.getAttribute('name'), image: ''});
+      }, false);
     });
 
     urlList.appendChild(li);
@@ -421,8 +443,6 @@ function notify_init() {
     event.preventDefault();
 
     const chipElement = document.querySelector('.chips');
-
-    chipElement.querySelector('.chips');
     const chipInput = document.querySelector('.chips > input');
     if(chipInput.value) {
       // This code just handles text typed in the tag section that was
@@ -515,6 +535,7 @@ main_init();
 {% if not CONFIG_LOCK %}
 /* Initialze our configuration */
 config_init();
+
 {% endif %}
 notify_init();
 {% endif %}

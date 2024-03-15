@@ -129,6 +129,7 @@ textarea {
 	margin: 0.3rem;
 	background-color: inherit;
 	border: 1px solid #e4e4e4;
+	cursor: pointer;
 }
 
 #url-list code {
