@@ -8,9 +8,9 @@
     <ul class="tabs config-overview">
       <li class="tab col s3"><a class="active" href="#overview"><i class="material-icons">info</i>
           {% trans "Overview" %}</a></li>
-      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s3"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
       </li>
-      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s3"><a href="#review"><i class="material-icons">{% if not CONFIG_LOCK %}web{% else %}lock{% endif %}</i> {%trans "Review" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3"><a href="#review"><i class="material-icons">{% if not CONFIG_LOCK %}web{% else %}lock{% endif %}</i> {%trans "Review" %}</a>
       </li>
       <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a>
       </li>
@@ -49,19 +49,15 @@
         </li>
         <li>
           {% blocktrans %}
+          Use the <strong><i class="material-icons">web</i> Review</strong> section to review what was parsed/detected from your defined configuration.
+          {% endblocktrans %}
+        </li>
+        <li>
+          {% blocktrans %}
           Use the <strong><i class="material-icons">announcement</i> Notifications</strong> section to test out your saved configuration.
           {% endblocktrans %}
         </li>
       </ol>
-    </div>
-    <div class="section no-config">
-      <div class="divider"></div>
-      <p>
-      <i class="material-icons info">info</i>
-      {% blocktrans %}Once you have successfully load <i>at least one Apprise URL</i> on the <strong><i class="material-icons">settings</i> Configuration</strong> section, your loaded entries will display here.
-      {% endblocktrans %}
-      </p>
-      <div class="divider"></div>
     </div>
     {% else %}
       <div class="section">
@@ -147,11 +143,18 @@
 
   <div id="review" class="col s12">
     {% if not CONFIG_LOCK %}
-    <p>
-      {% blocktrans %}The following URLs have been detected:{% endblocktrans %}
-    </p>
-    <div class="section">
+    <div class="section no-config">
+      <div class="divider"></div>
+      <p>
+      <i class="material-icons info">info</i>
+      {% blocktrans %}Once you have successfully loaded <i>at least one Apprise URL</i> on the <strong><i class="material-icons">settings</i> Configuration</strong> section, your loaded entries will display here.
+      {% endblocktrans %}
+      </p>
+      <div class="divider"></div>
+    </div>
+    <div class="section has-config">
       <h5>{% trans "Loaded Configuration" %}</h5>
+       <p>{% blocktrans %}<strong>Tip:</strong> Click on a tag (🏷️) to pre-select in the <strong><i class="material-icons">announcement</i>Notifications</strong> section with the tag already pre-selected.{% endblocktrans %}</p>
       <div id="url-list"></div>
       <div id="url-list-progress" class="progress" style="width:70%">
         <div class="indeterminate"></div>
@@ -189,24 +192,35 @@
 {% if STATEFUL_MODE != 'disabled' %}
 async function main_init(){
 
+  const params = new Proxy(new URLSearchParams(window.location.search), {
+    get: (searchParams, prop) => searchParams.get(prop),
+  });
+
+  if (params.title) {
+      document.querySelector('#id_title').value = params.title;
+  }
+  if (params.body) {
+      document.querySelector('#id_body').value = params.body;
+  }
+
+{% if not CONFIG_LOCK %}
   // disable the notification tab until we know for certain
   // a notification is possible
   document.querySelector('.config-overview li a[href="#notify"]')
-      .parentNode.classList.add('disabled');
+   .parentNode.classList.add('disabled');
 
   // Disable any has-config entries
-  document.querySelector('.has-config')
-      .style.display = 'none';
-
+  document.querySelectorAll('.has-config').forEach(function(e){
+      e.style.display = 'none'
+   });
   // Ensure we show our progress loader and reset our url list
   document.querySelector('#url-list').textContent = ''
   document.querySelector('#url-list-progress').style.display = null;
 
-{% if not CONFIG_LOCK %}
   // Ensure no-config sections are visible
-  document.querySelector('.no-config')
-      .style.display = null;
-{% endif %}
+  document.querySelectorAll('.no-config').forEach(function(e){
+      e.style.display = null;
+  });
 
   // perform a tag retrieval; start with 'all'
   let tags = ['all'];
@@ -217,7 +231,7 @@ async function main_init(){
   if(jsonResponse.status == 204) {
     // Take an early exit
     document.querySelector('#url-list-progress').style.display = 'none';
-    document.querySelector('#url-list').textContent = '{% trans "There are no URLs defined. Click on the ⚙️ Configuration tab and define some." %}'
+    document.querySelector('#url-list').textContent = ''
     return;
 
    } else if(jsonResponse.status != 200) {
@@ -234,42 +248,71 @@ async function main_init(){
   const external_data = tags.concat(data.tags).reduce(function(result, item) {
     result[item] = null;
     return result;
-  }, {})
+}, {})
 
   const chipElement = document.querySelector('.chips');
   M.Chips.init(chipElement, {
-    placeholder: 'Optional Tag',
-    secondaryPlaceholder: 'Another Tag',
+    placeholder: '{% trans "Optional Tag" %}',
+    secondaryPlaceholder: '{% trans "Another Tag" %}',
     autocompleteOptions: {
       data: external_data,
       minLength: 0
     },
-    onChipAdd: function(e, chip) {
+    onChipAdd: function(e, data) {
       var $this = this;
+      const chip = data.childNodes[0].textContent;
+      document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function(e){
+        if (!e.classList.contains('selected')) {
+          e.classList.add('selected');
+        }
+        })
+      document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function(e){
+        if (e.classList.contains('selected')) {
+          e.classList.remove('selected');
+        }
+      })
       $this.chipsData.forEach(function(e, index) {
         if(!(e.tag in external_data))
           $this.deleteChip(index);
       })
+    },
+    onChipDelete: function(e, data) {
+      var $this = this;
+      const chip = data.childNodes[0].textContent;
+      document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function(e){
+        if (e.classList.contains('selected')) {
+          e.classList.remove('selected');
+        }
+        })
+        if ($this.chipsData.length == 0){
+          // last item
+          document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function(e){
+            if (!e.classList.contains('selected')) {
+              e.classList.add('selected');
+            }
+          })
+        }
     }
   });
-
-  // our GET parameters to be treated as template values
-  var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
-  const params = new Proxy(new URLSearchParams(window.location.search), {
-    get: (searchParams, prop) => searchParams.get(prop),
+{% else %}
+  {# Empty external data set #}
+   const data = {
+      urls: []
+   };
+  M.Chips.init(chipElement, {
+    placeholder: '{% trans "Optional Tag" %}',
+    secondaryPlaceholder: '{% trans "Another Tag" %}'
   });
+{% endif %}
+  const chipInstance =  M.Chips.getInstance(chipElement);
   if (params.tag) {
+    // our GET parameters to be treated as template values
+    var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
     params.tag.split(tagRe).forEach(function (tag, index) {
-       M.Chips.getInstance(chipElement).addChip({tag: tag, image: ''});
+       chipInstance.addChip({tag: tag, image: ''});
     });
   }
-  if (params.title) {
-      document.querySelector('#id_title').value = params.title;
-  }
-  if (params.body) {
-      document.querySelector('#id_body').value = params.body;
-  }
-
+{% if not CONFIG_LOCK %}
   // Now build our our loaded list of configuration for our welcome page
   let urlList = document.createElement('ul');
 
@@ -281,51 +324,86 @@ async function main_init(){
     li.setAttribute('class', 'card-panel');
     li.appendChild(code);
 
+    urlList.appendChild(li);
+    // Store `all` tag
+    entry.tags.unshift('all')
+
+    if (entry.tags.length === 1){
+      // This entry triggers when no tags are defined
+      // Store '' (empty) tag for notice generation
+      entry.tags.unshift('')
+
+    }
     // Get our tags associate with the URL
     entry.tags.forEach(function (tag) {
       let chip = document.createElement('div');
-      chip.setAttribute('class', 'chip');
-      chip.setAttribute('name', tag);
-      chip.setAttribute('href', `?tag=${tag}#notify`);
-      chip.textContent = `🏷️ ${tag}`;
-      li.appendChild(chip);
+      chip.setAttribute('class', `chip`);
+      if(tag.length > 0) {
+        // we're dealing with a valid tag
+        chip.setAttribute('name', tag);
+        chip.textContent = `🏷️ ${tag}`;
 
-      chip.addEventListener('click', function(e) {
-      e.preventDefault();
-       window.history.pushState(null, null, this.getAttribute('href'));
-       document.querySelector('.config-overview li a[href="#notify"]').click()
+        const index = chipInstance.chipsData.findIndex(function (e) {
+        return e.tag === tag;})
+        if (index >= 0) {
+          chip.classList.add('selected');
+        }
+        li.appendChild(chip);
 
-       const chipElement = document.querySelector('.chips');
-       M.Chips.getInstance(chipElement).addChip({tag: this.getAttribute('name'), image: ''});
-      }, false);
+        chip.addEventListener('click', function(e) {
+          e.preventDefault();
+          const index = chipInstance.chipsData.findIndex(function (e) {
+            return e.tag === tag;
+          });
+          if(index < 0) {
+            chipInstance.addChip({tag: this.getAttribute('name'), image: ''});
+          } else {
+            chipInstance.deleteChip(index);
+          }
+        }, false);
+      } else {
+        // no tags were defined for this element
+        chip.classList.add('chip-notag');
+        chip.textContent = '🔖 ' + 'no-tag';
+        if (chipInstance.chipsData.length === 0) {
+           chip.classList.add('selected');
+        }
+        li.appendChild(chip);
+        chip.addEventListener('click', function(e) {
+        e.preventDefault();
+        while(chipInstance.chipsData.length > 0){
+        chipInstance.deleteChip(0);
+        }
+        chip.classList.add('selected');
+        }, false);
+      }
     });
-
-    urlList.appendChild(li);
   });
+{% endif %}
 
+{% if not CONFIG_LOCK %}
   // Store our new list
   document.querySelector('#url-list-progress').style.display = 'none';
   document.querySelector('#url-list').textContent = ''
   if(urlList.childNodes.length > 0) {
 
     // Ensure has-config sections are visible
-    document.querySelector('.has-config')
-        .style.display = null;
+    document.querySelectorAll('.has-config').forEach(function(e){
+        e.style.display = null;
+     });
 
     // Remove our restrictions on sending notifications
     document.querySelector('.config-overview li a[href="#notify"]')
       .parentNode.classList.remove('disabled');
 
-    {% if not CONFIG_LOCK %}
     // Disable any no-config entries
-    document.querySelector('.no-config')
-        .style.display = 'none';
-    {% endif %}
+    document.querySelectorAll('.no-config').forEach(function(e){
+        e.style.display = 'none';
+    });
 
     // Save our list to the screen
     document.querySelector('#url-list').appendChild(urlList);
 
-    {% if not CONFIG_LOCK %}
     //
     // Load our configuration now into the configuration tab
     //
@@ -362,14 +440,15 @@ async function main_init(){
       }
       document.querySelector('#id_format').dispatchEvent(event);
     }
-    {% endif %}
   } else {
     document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
   }
+  {% endif %}
 
   return null;
 }
 
+{% if not CONFIG_LOCK %}
 function config_init() {
   // over-ride manual submit for a nicer user experience
   document.querySelector('#addconfig').onsubmit = function(event) {
@@ -443,6 +522,7 @@ function config_init() {
     return false;
   }
 }
+{% endif %}
 
 function form_file_input_hack() {
   /*
@@ -478,7 +558,8 @@ function form_file_input_hack() {
       selected.textContent = file.name;
      });
    });
- }
+}
+
 function notify_init() {
   // over-ride manual submit for a nicer user experience
   document.querySelector('#donotify').onsubmit = function(event) {
@@ -571,16 +652,6 @@ function notify_init() {
     return false;
   }
 }
-
-/* Initialize our page */
-main_init();
-{% if not CONFIG_LOCK %}
-/* Initialze our configuration */
-config_init();
-
-{% endif %}
-notify_init();
-form_file_input_hack();
 {% endif %}
 {% endblock %}
 
@@ -599,5 +670,14 @@ document.querySelector('label [for="id_tag"]')
 
 // Hide tag field since we use the pretty Materialize Chip setup instead
 document.querySelector('#id_tag').style.display = 'none';
+/* Initialize our page */
+main_init();
+
+{% if not CONFIG_LOCK %}
+/* Initialze our configuration */
+config_init();
+{% endif %}
+notify_init();
+form_file_input_hack();
 {% endif %}
 {% endblock %}

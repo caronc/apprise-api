@@ -1324,3 +1324,8 @@ input[type=range]::-ms-thumb {
 	color: #ebcb8b;
 	background-color: #2e3440;
 }
+
+.chip.selected {
+	color: #fff;
+	background-color: #258528!important;
+}
