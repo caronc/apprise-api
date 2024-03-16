@@ -9,65 +9,66 @@
 /* Apprise Version */
 .nav ul {
   float: right;
-	font-style: normal;
+  font-style: normal;
   font-size: 0.7rem;
 }
 .theme {
-	 text-align: right;
-	 display: block;
-	 float:right;
+  text-align: right;
+  display: block;
+  float:right;
 }
 
 input {
   display: block;
 }
 
-code {
-	background-color: #eee;
-	font-family: monospace;
-	white-space: normal;
-	padding: 0.2rem;
-}
+.tabs .tab.disabled a,.tabs .tab.disabled a:hover{font-weight: inherit}
 
-table code {
-	background-color: inherit;
+code {
+  font-family: monospace;
+  white-space: normal;
+  padding: 0.2rem;
 }
 
 h1, h2, h3, h4, h5 {
-	margin-top: 0;
+  margin-top: 0;
 }
 
 td, th {
-	vertical-align: top;
-	padding-top: 0;
+  vertical-align: top;
+  padding-top: 0;
 }
 .api-details ol {
-	margin-top: 0;
-	margin-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+ul.detail-buttons strong {
+  font-weight: 800;
 }
 
 h4 em {
   font-size: 2.0rem;
   display: inline-block;
-	margin: 0;
-	padding: 0;
+  margin: 0;
+  padding: 0;
   word-break: break-all;
-	line-height: 1.0em;
+  line-height: 1.0em;
 }
 
 em {
-	color: #004d40;
-	font-weight:bold;
+  color: #004d40;
+  font-weight:bold;
 }
 
 .no-config .info {
-	color: #004d40;
+  color: #004d40;
   font-size: 3.3rem;
 
 }
 
 textarea {
-	height: 16rem;
+  height: 16rem;
   font-family: monospace;
 }
 
@@ -76,51 +77,69 @@ textarea {
 }
 
 #overview strong {
-	color: #004d40;
-	display: inline-block;
+  color: #004d40;
+  display: inline-block;
   background-color: #eee;
 }
 
 .tabs .tab a{
-	border-radius: 25px 25px 0 0;
-    color:#2bbbad;
+  border-radius: 25px 25px 0 0;
+  color:#2bbbad;
 }
 .collection a.collection-item:not(.active):hover,
 .tabs .tab a:focus, .tabs .tab a:focus.active {
-	background-color: #eee;
+  background-color: #eee;
 }
 .tabs .tab a:hover,.tabs .tab a.active {
-	background-color:transparent;
-	color:#004d40;
-	font-weight: bold;
-	background-color: #eee;
+  background-color:transparent;
+  color:#004d40;
+  font-weight: bold;
+  background-color: #eee;
 }
 .tabs .tab.disabled a,.tabs .tab.disabled a:hover {
-	color:rgba(102,147,153,0.7);
+  color:rgba(102,147,153,0.7);
 }
 .tabs .indicator {
-	background-color:#004d40;
+  background-color:#004d40;
 }
 .tabs .tab-locked a {
   /* Handle locked out tabs */
-	color:rgba(212, 161, 157, 0.7);
+  color:rgba(212, 161, 157, 0.7);
 }
 .tabs .tab-locked a:hover,.tabs .tab-locked a.active {
   /* Handle locked out tabs */
-	color: #6b0900;
+  color: #6b0900;
 }
 
 .material-icons{
-    display: inline-flex;
-    vertical-align: middle;
+  display: inline-flex;
+  vertical-align: middle;
 }
-#url-list code {
-	display: block;
-	background-color: inherit;
+
+#url-list .card-panel {
+  padding: 0.5rem;
+  margin: 0.1rem 0;
+  border-radius: 12px;
+  width: 50%;
+  min-width: 35rem;
+  float: left;
 }
+
 #url-list .chip {
-	background-color: inherit;
-	border: 1px solid #e4e4e4;
+  margin: 0.3rem;
+  background-color: inherit;
+  border: 1px solid #e4e4e4;
+  cursor: pointer;
+}
+
+#url-list code {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  white-space: wrap;
+  text-wrap: wrap;
+  overflow-wrap: break-word;
+  border-radius: 5px;
+  display: block;
 }
 
 /* Notification Details */
@@ -174,8 +193,42 @@ ul.logs li.log_ERROR {
   color: #8B0000;
 }
 h6 {
-	font-weight: bold;
+  font-weight: bold;
 }
 #overview pre {
-	margin-left: 2.0rem
+  margin-left: 2.0rem
+}
+
+code.config-id {
+  font-size: 0.7em;
+}
+
+/* file button styled */
+.btn-file {
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+}
+.btn-file input[type=file] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 100%;
+  min-height: 100%;
+  font-size: 100px;
+  text-align: right;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  outline: none;
+  background: white;
+  cursor: inherit;
+  display: block;
+}
+
+.file-selected {
+  line-height: 2.0em;
+  font-size: 1.2rem;
+  border-radius: 5px;
+  padding: 0 1em;
+  overflow: hidden;
 }

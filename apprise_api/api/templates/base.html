@@ -7,21 +7,23 @@
   <meta charset="utf-8">
   <!--Let browser know website is optimized for mobile-->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}" />
   <!--materialize-->
-  <link rel="stylesheet" href="{% get_static_prefix %}css/{{request.theme|safe}}/materialize.min.css" />
+  <link rel="stylesheet" href="{% get_static_prefix %}css/materialize.min.css" />
   <!--material-design-icons-->
   <link rel="stylesheet" href="{% static 'iconfont/material-icons.css' %}">
+  <!--highlightjs-->
+  <link rel="stylesheet" href="{% get_static_prefix %}css/highlight.min.css">
   <!--common-->
   <link rel="stylesheet" href="{% static 'css/base.css' %}" />
-  <!--highlightjs-->
-  <link rel="stylesheet" href="{% get_static_prefix %}css/{{request.theme|safe}}/highlight.min.css">
-  <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}" />
   <!--materialize-->
   <script src="{% static 'js/materialize.min.js' %}"></script>
   <!--sweetalert2-->
   <script src="{% static 'js/sweetalert2.all.min.js' %}"></script>
   <!--highlightjs-->
   <script src="{% static 'js/highlight.pack.js' %}"></script>
+  <!--theme-->
+  <link rel="stylesheet" href="{% get_static_prefix %}css/theme-{{request.theme|safe}}.min.css">
   <title>{% block title %}{% trans "Apprise API" %}{% endblock %}</title>
 </head>
 

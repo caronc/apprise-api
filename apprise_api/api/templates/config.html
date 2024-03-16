@@ -2,15 +2,17 @@
 {% load i18n %}
 {% block body %}
 {% if STATEFUL_MODE != 'disabled' %}
-<h4>{% trans "Management for Config ID:" %} <em>{{ key }}</em></h4>
+<h4>{% trans "Management for Config ID:" %} <code class="config-id">{{ key }}</code></h4>
 <div class="row">
   <div class="col s12">
     <ul class="tabs config-overview">
-      <li class="tab col s4"><a class="active" href="#overview"><i class="material-icons">info</i>
+      <li class="tab col s3"><a class="active" href="#overview"><i class="material-icons">info</i>
           {% trans "Overview" %}</a></li>
-      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s4"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s3"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
       </li>
-      <li class="tab col s4"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}tab-locked {% endif %}col s3"><a href="#review"><i class="material-icons">{% if not CONFIG_LOCK %}web{% else %}lock{% endif %}</i> {%trans "Review" %}</a>
+      </li>
+      <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a>
       </li>
     </ul>
   </div>
@@ -105,30 +107,23 @@
         <p>
         {% blocktrans %}The following command would cause the apprise api to notify all of your services:{% endblocktrans %}
         <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
         <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         {% blocktrans %}Sends a notification to our endpoints with an attachment{% endblocktrans %}
-	      <pre><code class="bash">
+         <pre><code class="bash">
         curl -X POST \<br/>
         &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
         &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
         </p>
-      </div>
-      <div class="section">
-        <h5>{% trans "Loaded Configuration" %}</h5>
-        <div id="url-list"></div>
-        <div id="url-list-progress" class="progress" style="width:70%">
-          <div class="indeterminate"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -147,6 +142,24 @@
     <h5>{% trans "Your Configuration Is Locked" %}</h5>
     <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}
 
+    {% endif %}
+  </div>
+
+  <div id="review" class="col s12">
+    {% if not CONFIG_LOCK %}
+    <p>
+      {% blocktrans %}The following URLs have been detected:{% endblocktrans %}
+    </p>
+    <div class="section">
+      <h5>{% trans "Loaded Configuration" %}</h5>
+      <div id="url-list"></div>
+      <div id="url-list-progress" class="progress" style="width:70%">
+        <div class="indeterminate"></div>
+      </div>
+    </div>
+    {% else %}
+    <h5>{% trans "Your Configuration Is Locked" %}</h5>
+    <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}
     {% endif %}
   </div>
 
@@ -201,10 +214,16 @@ async function main_init(){
   let jsonResponse = await fetch('{% url "json_urls" key %}/?privacy=1', {
     method: 'GET',
   })
-  if(jsonResponse.status != 200) {
+  if(jsonResponse.status == 204) {
     // Take an early exit
     document.querySelector('#url-list-progress').style.display = 'none';
-    document.querySelector('#url-list').textContent = '{% trans "An error occurred retrieving the list of loaded Apprise URL(s)" %}'
+    document.querySelector('#url-list').textContent = '{% trans "There are no URLs defined. Click on the ⚙️ Configuration tab and define some." %}'
+    return;
+
+   } else if(jsonResponse.status != 200) {
+    // Take an early exit
+    document.querySelector('#url-list-progress').style.display = 'none';
+    document.querySelector('#url-list').textContent = '{% trans "💣 An error occurred retrieving the list of loaded Apprise URL(s)" %}'
     return;
   }
 
@@ -212,12 +231,13 @@ async function main_init(){
   // choose from. Tags are based off ones found in the saved
   // configuration.
   const data = await jsonResponse.json();
-  let external_data = tags.concat(data.tags).reduce(function(result, item) {
+  const external_data = tags.concat(data.tags).reduce(function(result, item) {
     result[item] = null;
     return result;
   }, {})
 
-  M.Chips.init(document.querySelectorAll('.chips'), {
+  const chipElement = document.querySelector('.chips');
+  M.Chips.init(chipElement, {
     placeholder: 'Optional Tag',
     secondaryPlaceholder: 'Another Tag',
     autocompleteOptions: {
@@ -232,6 +252,23 @@ async function main_init(){
       })
     }
   });
+
+  // our GET parameters to be treated as template values
+  var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
+  const params = new Proxy(new URLSearchParams(window.location.search), {
+    get: (searchParams, prop) => searchParams.get(prop),
+  });
+  if (params.tag) {
+    params.tag.split(tagRe).forEach(function (tag, index) {
+       M.Chips.getInstance(chipElement).addChip({tag: tag, image: ''});
+    });
+  }
+  if (params.title) {
+      document.querySelector('#id_title').value = params.title;
+  }
+  if (params.body) {
+      document.querySelector('#id_body').value = params.body;
+  }
 
   // Now build our our loaded list of configuration for our welcome page
   let urlList = document.createElement('ul');
@@ -248,8 +285,19 @@ async function main_init(){
     entry.tags.forEach(function (tag) {
       let chip = document.createElement('div');
       chip.setAttribute('class', 'chip');
+      chip.setAttribute('name', tag);
+      chip.setAttribute('href', `?tag=${tag}#notify`);
       chip.textContent = `🏷️ ${tag}`;
       li.appendChild(chip);
+
+      chip.addEventListener('click', function(e) {
+      e.preventDefault();
+       window.history.pushState(null, null, this.getAttribute('href'));
+       document.querySelector('.config-overview li a[href="#notify"]').click()
+
+       const chipElement = document.querySelector('.chips');
+       M.Chips.getInstance(chipElement).addChip({tag: this.getAttribute('name'), image: ''});
+      }, false);
     });
 
     urlList.appendChild(li);
@@ -396,14 +444,47 @@ function config_init() {
   }
 }
 
+function form_file_input_hack() {
+  /*
+  A small hack to remformat all `<input file>` upload options to a more cleaner
+  and presentable look by wrapping it like this:
+
+  <span class="btn btn-file">
+    <i class="material-icons left">cloud_upload</i>
+    Browse<input type="file">
+   </span>
+  */
+  document.querySelectorAll('input[type=file]').forEach(function (entry) {
+     const div = document.createElement('div');
+     const selected = document.createElement('div');
+     selected.style.display = 'none';
+     selected.setAttribute('class', 'file-selected');
+     const span = document.createElement('span')
+     span.setAttribute('class', 'btn btn-file waves-effect waves-light');
+     const i = document.createElement('i')
+     span.textContent = '{% trans "Browse" %}';
+     i.setAttribute('class', 'material-icons right');
+     i.textContent = 'folder';
+     div.appendChild(span);
+     span.appendChild(i);
+     entry.before(div)
+     span.appendChild(entry);
+     span.after(selected);
+
+    entry.addEventListener('change', function(e){
+      const selected = this.parentNode.nextElementSibling;
+      const file = e.target.files[0];
+      selected.style.display = 'block'
+      selected.textContent = file.name;
+     });
+   });
+ }
 function notify_init() {
   // over-ride manual submit for a nicer user experience
   document.querySelector('#donotify').onsubmit = function(event) {
     event.preventDefault();
 
     const chipElement = document.querySelector('.chips');
-
-    chipElement.querySelector('.chips');
     const chipInput = document.querySelector('.chips > input');
     if(chipInput.value) {
       // This code just handles text typed in the tag section that was
@@ -496,8 +577,10 @@ main_init();
 {% if not CONFIG_LOCK %}
 /* Initialze our configuration */
 config_init();
+
 {% endif %}
 notify_init();
+form_file_input_hack();
 {% endif %}
 {% endblock %}
 
