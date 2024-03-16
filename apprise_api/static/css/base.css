@@ -125,10 +125,11 @@ textarea {
   float: left;
 }
 
-#url-list .chip {
+.chip {
   margin: 0.3rem;
   background-color: inherit;
-  border: 1px solid #e4e4e4;
+  border: 1px solid #464646;
+  color: #464646;
   cursor: pointer;
 }
 
@@ -231,4 +232,8 @@ code.config-id {
   border-radius: 5px;
   padding: 0 1em;
   overflow: hidden;
+}
+
+.chip.selected {
+	font-weight: 600;
 }
