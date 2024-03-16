@@ -1,3 +1,7 @@
 .tabs .tab a {background-color: #f3f3f3;}
 .tabs.tabs-transparent .tab a,.tabs.tabs-transparent .tab.disabled a,.tabs.tabs-transparent .tab.disabled a:hover, .tab.disabled i.material-icons{color:#a7a7a7}
 .tabs .tab.disabled a,.tabs .tab.disabled a:hover{background-color: #f3f3f3; color:#a7a7a7}
+.file-selected {
+	color: #039be5;
+	background-color: #f3f3f3;
+}

@@ -253,16 +253,23 @@ async function main_init(){
     }
   });
 
-	// our GET parameters
-	var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
-	const params = new Proxy(new URLSearchParams(window.location.search), {
-	  get: (searchParams, prop) => searchParams.get(prop),
-	});
-	if (params.tag) {
-	  params.tag.split(tagRe).forEach(function (tag, index) {
-  	   M.Chips.getInstance(chipElement).addChip({tag: tag, image: ''});
-		});
+  // our GET parameters to be treated as template values
+  var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
+  const params = new Proxy(new URLSearchParams(window.location.search), {
+    get: (searchParams, prop) => searchParams.get(prop),
+  });
+  if (params.tag) {
+    params.tag.split(tagRe).forEach(function (tag, index) {
+       M.Chips.getInstance(chipElement).addChip({tag: tag, image: ''});
+    });
   }
+  if (params.title) {
+      document.querySelector('#id_title').value = params.title;
+  }
+  if (params.body) {
+      document.querySelector('#id_body').value = params.body;
+  }
+
   // Now build our our loaded list of configuration for our welcome page
   let urlList = document.createElement('ul');
 
@@ -437,6 +444,41 @@ function config_init() {
   }
 }
 
+function form_file_input_hack() {
+  /*
+  A small hack to remformat all `<input file>` upload options to a more cleaner
+  and presentable look by wrapping it like this:
+
+  <span class="btn btn-file">
+    <i class="material-icons left">cloud_upload</i>
+    Browse<input type="file">
+   </span>
+  */
+  document.querySelectorAll('input[type=file]').forEach(function (entry) {
+     const div = document.createElement('div');
+     const selected = document.createElement('div');
+     selected.style.display = 'none';
+     selected.setAttribute('class', 'file-selected');
+     const span = document.createElement('span')
+     span.setAttribute('class', 'btn btn-file waves-effect waves-light');
+     const i = document.createElement('i')
+     span.textContent = '{% trans "Browse" %}';
+     i.setAttribute('class', 'material-icons right');
+     i.textContent = 'folder';
+     div.appendChild(span);
+     span.appendChild(i);
+     entry.before(div)
+     span.appendChild(entry);
+     span.after(selected);
+
+    entry.addEventListener('change', function(e){
+      const selected = this.parentNode.nextElementSibling;
+      const file = e.target.files[0];
+      selected.style.display = 'block'
+      selected.textContent = file.name;
+     });
+   });
+ }
 function notify_init() {
   // over-ride manual submit for a nicer user experience
   document.querySelector('#donotify').onsubmit = function(event) {
@@ -538,6 +580,7 @@ config_init();
 
 {% endif %}
 notify_init();
+form_file_input_hack();
 {% endif %}
 {% endblock %}
 
