@@ -7,8 +7,6 @@ services:
     ports:
       - 8000:8000
     user: "www-data:www-data"
-    environment:
-      - APPRISE_WORKER_COUNT=1
     volumes:
       - ./apprise_api:/opt/apprise/webapp:ro
       # if uncommenting the below, you will need to type the following
@@ -35,11 +33,11 @@ services:
   ##
   ## > Host service (visit http://localhost on host pc to access):
   ##   ./manage.py runserver 0.0.0.0:8000
-  test.py310:
-    ports:
-      - 8000:8000
-    build:
-      context: .
-      dockerfile: Dockerfile.py310
-    volumes:
-      - ./:/apprise-api
+  #test.py310:
+  #  ports:
+  #    - 8000:8000
+  #  build:
+  #    context: .
+  #    dockerfile: Dockerfile.py310
+  #  volumes:
+  #    - ./:/apprise-api
