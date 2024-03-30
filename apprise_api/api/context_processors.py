@@ -53,7 +53,7 @@ def default_config_id(request):
     """
     Returns a unique config identifier
     """
-    return {'DEFAULT_CONFIG_ID': settings.APPRISE_DEFAULT_CONFIG_ID}
+    return {'DEFAULT_CONFIG_ID': request.default_config_id}
 
 
 def unique_config_id(request):

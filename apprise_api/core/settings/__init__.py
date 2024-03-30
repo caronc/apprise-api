@@ -66,6 +66,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'core.middleware.theme.AutoThemeMiddleware',
+    'core.middleware.config.DetectConfigMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
