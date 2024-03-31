@@ -163,7 +163,7 @@ class AttachmentTests(SimpleTestCase):
 
         def iter_content(chunk_size=1024, *args, **kwargs):
             if not ref['io']:
-                ref['io'] = open(SAMPLE_FILE)
+                ref['io'] = open(SAMPLE_FILE, 'rb')
             block = ref['io'].read(chunk_size)
             if not block:
                 # Close for re-use
