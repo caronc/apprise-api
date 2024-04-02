@@ -24,10 +24,10 @@ There is a small built-in *Configuration Manager* that can be optionally accesse
 Below is a screenshot of how you can assign your Apprise URLs to your `{KEY}`. You can define both TEXT or YAML [Apprise configurations](https://github.com/caronc/apprise/wiki/config).<br/>
 ![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
 
-Below is a screenshot of the review tab where you can preview what Apprise URL(s) got loaded from your defined configuration. It also allows you to view the tags associated with them (if any).<br/>
+Below is a screenshot of the review tab where you can preview what Apprise URL(s) got loaded from your defined configuration. It also allows you to view the tags associated with them (if any). Should you chose to send a test notification via this API, you can select the tags in advance you wish to target from here.<br/>
 ![Screenshot of GUI - Review](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-3.png)
 
-Once you've saved your configuration, you'll be able to use the *Notification* tab to send your messages to one or more of the services you defined in your configuration. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them.<br/>
+With configuration in place, you'll be able to use the *Notification* tab to send a test message to one or more of the services you defined in your configuration. You can also select from the tags (if any) you pre-assigned to your URLs defined. If you did not define any tags with you configured URLs, then you do not need to identify any here. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them (if any at all).<br/>
 ![Screenshot of GUI - Notifications](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-4.png)
 
 At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
@@ -72,7 +72,7 @@ docker build -t apprise/local:latest -f Dockerfile .
 docker run --name apprise \
    -p 8000:8000 \
    -e APPRISE_WORKER_COUNT=1 \
-   -d  apprise/local:latest
+   -d apprise/local:latest
 ```
 A `docker-compose.yml` file is already set up to grant you an instant production ready simulated environment:
 
@@ -142,7 +142,7 @@ Here is a *stateless* example of how one might send a notification (using `/noti
 curl -X POST -d 'urls=mailto://user:pass@gmail.com&body=test message' \
     http://localhost:8000/notify
 
-# Send a notification with an attachment
+# Send a notification with an attachment:
 curl -X POST \
     -F 'urls=mailto://user:pass@gmail.com' \
     -F 'body=test message' \
@@ -272,7 +272,7 @@ curl -X POST \
     http://localhost:8000/notify/abc123
 ```
 
-🏷️ You can also leverage *tagging* which allows you to associate one or more tags with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same *tag* allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://github.com/caronc/apprise/wiki/config)) that can be saved to the persistent storage previously associated with a `{KEY}`.
+🏷️ Leveraging *tagging* allows you to associate one or more tags (or categories) with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same *tag* allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://github.com/caronc/apprise/wiki/config)) that can be saved to the persistent storage previously associated with a `{KEY}`.
 
 ```bash
 # Send notification(s) to a {KEY} defined as 'abc123'
@@ -288,7 +288,7 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
 
 ### Tagging
 
-Leveraging tagging is one of the things that makes Apprise great.  Not only can you group one or more notifications together (all sharing the same tag), but you can assign multiple tags to the same URL and trigger it through crafted and selected tag expressions.
+Tagging is one of the things that makes Apprise super handy and easy to use.  Not only can you group one or more notifications together (all sharing the same tag), but you can assign multiple tags to the same URL and trigger it through crafted and selected tag expressions.
 
 |  Example              | Effect                         |
 | --------------------- | ------------------------------ |
@@ -369,7 +369,7 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_RECURSION_MAX` | This defines the number of times one Apprise API Server can (recursively) call another.  This is to both support and mitigate abuse through [the `apprise://` schema](https://github.com/caronc/apprise/wiki/Notify_apprise_api) for those who choose to use it. When leveraged properly, you can increase this (recursion max) value and successfully load balance the handling of many notification requests through many additional API Servers.  By default this value is set to `1` (one).
 | `APPRISE_WEBHOOK_URL` | Define a Webhook that Apprise should `POST` results to upon each notification call made.  This must be in the format of an `http://` or `https://` URI.  By default no URL is specified and no webhook is actioned.
 | `APPRISE_WORKER_COUNT` | Over-ride the number of workers to run.  by default this is calculated `(2 * CPUS_DETECTED) + 1` [as advised by Gunicorn's website](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Hobby enthusiasts and/or users who are simply setting up Apprise to support their home (light-weight usage) may wish to set this value to `1` to limit the resources the Apprise server prepares for itself.
-| `APPRISE_WORKER_TIMEOUT` | Over-ride the worker timeout value; by default this is `300` (5 min) which should be more than enough time to send all pending notifications.
+| `APPRISE_WORKER_TIMEOUT` | Over-ride the worker timeout value (in seconds); by default this is `300` (5 min) which should be more than enough time to send all pending notifications.
 | `BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
 | `LOG_LEVEL`    | Adjust the log level to the console. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
 | `DEBUG`            | This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
@@ -469,10 +469,10 @@ devteam=apprise://localhost:8000/{KEY}?tags=devteam
 
 # the only catch is you need to map your tags on the local server to the tags
 # you want to pass upstream to your Apprise server using this method.
-# In the above we tied the local keyword `friends` to the apprise server using the tag `friends`
+# In the above we tied the local keyword `devteam` to the apprise server using the tag `devteam`
 ```
 
-We could trigger our notification to our friends now like:
+We could trigger our notification to our devteam now like:
 
 ```bash
 # Trigger our service:

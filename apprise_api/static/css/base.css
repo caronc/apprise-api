@@ -122,6 +122,7 @@ textarea {
   border-radius: 12px;
   width: 50%;
   min-width: 35rem;
+  min-height: 12em;
   float: left;
 }
 

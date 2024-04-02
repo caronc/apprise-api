@@ -502,6 +502,10 @@ em {
     background-color: #fff
 }
 
+#url-list .card-panel.selected {
+  background-color: #a0c8ef;
+}
+
 .chip {
     color: #d8dee9;
     background-color: #2e3440 !important;
