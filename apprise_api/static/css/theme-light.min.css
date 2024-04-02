@@ -15,6 +15,14 @@
 	background-color: #f3f3f3;
 }
 
+#url-list .card-panel.selected {
+  background-color: #fff8dc;
+}
+
+.chip {
+	background-color: #fff!important;
+}
+
 .chip.selected {
 	color: #fff;
 	background-color: #258528!important;

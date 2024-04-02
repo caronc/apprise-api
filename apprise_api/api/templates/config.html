@@ -12,7 +12,7 @@
       </li>
       <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3"><a href="#review"><i class="material-icons">{% if not CONFIG_LOCK %}web{% else %}lock{% endif %}</i> {%trans "Review" %}</a>
       </li>
-      <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}</a>
+      <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %} <span class="card-count"></span></a>
       </li>
     </ul>
   </div>
@@ -190,6 +190,13 @@
 {% block jsfooter %}
 
 {% if STATEFUL_MODE != 'disabled' %}
+function update_count() {
+  const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
+  document.querySelectorAll(".card-count").forEach(function(e){
+    e.textContent = `(${p_count})`;
+  })
+}
+
 async function main_init(){
 
   const params = new Proxy(new URLSearchParams(window.location.search), {
@@ -263,26 +270,43 @@ async function main_init(){
       const chip = data.childNodes[0].textContent;
       document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function(e){
         if (!e.classList.contains('selected')) {
-          e.classList.add('selected');
-        }
+            e.classList.add('selected');
+            const p = e.parentNode;
+            if (!p.classList.contains('selected')) {
+              p.classList.add('selected');
+            }
+          }
         })
       document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function(e){
         if (e.classList.contains('selected')) {
           e.classList.remove('selected');
+          const p = e.parentNode;
+          if (!p.querySelector('.selected')) {
+            if (p.classList.contains('selected')) {
+               p.classList.remove('selected');
+            }
+          }
         }
       })
       $this.chipsData.forEach(function(e, index) {
         if(!(e.tag in external_data))
           $this.deleteChip(index);
       })
+      update_count();
     },
     onChipDelete: function(e, data) {
       var $this = this;
       const chip = data.childNodes[0].textContent;
       document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function(e){
-        if (e.classList.contains('selected')) {
-          e.classList.remove('selected');
-        }
+          if (e.classList.contains('selected')) {
+            e.classList.remove('selected');
+          }
+          const p = e.parentNode;
+          if (!p.querySelector('.selected')) {
+            if (p.classList.contains('selected')) {
+              p.classList.remove('selected');
+            }
+           }
         })
         if ($this.chipsData.length == 0){
           // last item
@@ -290,8 +314,13 @@ async function main_init(){
             if (!e.classList.contains('selected')) {
               e.classList.add('selected');
             }
+            const p = e.parentNode;
+            if (!p.classList.contains('selected')) {
+              p.classList.add('selected');
+            }
           })
         }
+        update_count();
     }
   });
 {% else %}
@@ -332,8 +361,8 @@ async function main_init(){
       // This entry triggers when no tags are defined
       // Store '' (empty) tag for notice generation
       entry.tags.unshift('')
-
     }
+
     // Get our tags associate with the URL
     entry.tags.forEach(function (tag) {
       let chip = document.createElement('div');
@@ -347,6 +376,7 @@ async function main_init(){
         return e.tag === tag;})
         if (index >= 0) {
           chip.classList.add('selected');
+          li.classList.add('selected');
         }
         li.appendChild(chip);
 
@@ -364,18 +394,26 @@ async function main_init(){
       } else {
         // no tags were defined for this element
         chip.classList.add('chip-notag');
-        chip.textContent = '🔖 ' + 'no-tag';
+        chip.textContent = '🔖 no-tag';
         if (chipInstance.chipsData.length === 0) {
            chip.classList.add('selected');
+           if (!li.classList.contains('selected')) {
+             li.classList.add('selected');
+           }
         }
         li.appendChild(chip);
+
         chip.addEventListener('click', function(e) {
-        e.preventDefault();
-        while(chipInstance.chipsData.length > 0){
-        chipInstance.deleteChip(0);
-        }
-        chip.classList.add('selected');
-        }, false);
+          e.preventDefault();
+          while(chipInstance.chipsData.length > 0){
+            chipInstance.deleteChip(0);
+          }
+          chip.classList.add('selected');
+          if (!li.classList.contains('selected')) {
+            li.classList.add('selected');
+          }
+          update_count();
+        });
       }
     });
   });
@@ -444,7 +482,7 @@ async function main_init(){
     document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
   }
   {% endif %}
-
+  update_count();
   return null;
 }
 
