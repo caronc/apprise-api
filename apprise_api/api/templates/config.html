@@ -12,7 +12,7 @@
       </li>
       <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3"><a href="#review"><i class="material-icons">{% if not CONFIG_LOCK %}web{% else %}lock{% endif %}</i> {%trans "Review" %}</a>
       </li>
-      <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %} <span class="card-count"></span></a>
+      <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}{% if not CONFIG_LOCK %} <span class="card-count"></span>{% endif %}</a>
       </li>
     </ul>
   </div>
@@ -60,68 +60,68 @@
       </ol>
     </div>
     {% else %}
-      <div class="section">
-        <h5>{% trans "Apprise Configuration is Locked" %}</h5>
-        <p>
-        {% blocktrans %}At this time, the administrator of this server has locked down all configuration. This means
-        That pre-created configuration is securely hidden for the purpose of notification transmission only.
+    <div class="section">
+      <h5>{% trans "Apprise Configuration is Locked" %}</h5>
+      <p>
+      {% blocktrans %}At this time, the administrator of this server has locked down all configuration. This means
+      That pre-created configuration is securely hidden for the purpose of notification transmission only.
 
-        New configuration can not be set, and existing configuration can not be modified or viewed.
-        {% endblocktrans %}</p>
-      </div>
-    {% endif %}
-    <div class="has-config">
-      <div class="section">
-        <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
-        <h6>{% trans "Using The Apprise CLI" %}</h6>
-        <p>
-        {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
-        <pre><code class="bash">apprise --body="Test Message" \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
-        {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
-        <pre><code class="bash">apprise --body="Test Message" \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br/>
-        </code></pre>
-        </p>
-        {% if not CONFIG_LOCK %}
-        <p>
-        {% blocktrans %}The following command would cause apprise to retrieve the configuration loaded and
-        send a test notification to all of your added services:{% endblocktrans %}
-        <br />
-        <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
-        {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
-        <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
-        {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
-        <pre><code class="bash">apprise --body="Test Message" --tag=all</em></code></pre>
-        </p>
-
-        {% endif %}
-        <h6>{% trans "Using CURL" %}</h6>
-        <p>
-        {% blocktrans %}The following command would cause the apprise api to notify all of your services:{% endblocktrans %}
-        <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
-        {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
-        <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
-        {% blocktrans %}Sends a notification to our endpoints with an attachment{% endblocktrans %}
-         <pre><code class="bash">
-        curl -X POST \<br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
-        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
-        </p>
-      </div>
+      New configuration can not be set, and existing configuration can not be modified or viewed.
+      {% endblocktrans %}</p>
     </div>
+    {% endif %}
+		{% if not CONFIG_LOCK %}
+    <div class="section has-config">
+      <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
+      <h6>{% trans "Using The Apprise CLI" %}</h6>
+      <p>
+      {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
+      <pre><code class="bash">apprise --body="Test Message" \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
+      {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
+      <pre><code class="bash">apprise --body="Test Message" \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br/>
+      </code></pre>
+      </p>
+      {% if not CONFIG_LOCK %}
+      <p>
+      {% blocktrans %}The following command would cause apprise to retrieve the configuration loaded and
+      send a test notification to all of your added services:{% endblocktrans %}
+      <br />
+      <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
+      {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+      <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
+      {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
+      <pre><code class="bash">apprise --body="Test Message" --tag=all</em></code></pre>
+      </p>
+
+      {% endif %}
+      <h6>{% trans "Using CURL" %}</h6>
+      <p>
+      {% blocktrans %}The following command would cause the apprise api to notify all of your services:{% endblocktrans %}
+      <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+      {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
+      <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+      {% blocktrans %}Sends a notification to our endpoints with an attachment{% endblocktrans %}
+       <pre><code class="bash">
+      curl -X POST \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
+      </p>
+    </div>
+    {% endif %}
   </div>
   <div id="config" class="col s12">
     {% if not CONFIG_LOCK %}
@@ -328,6 +328,7 @@ async function main_init(){
    const data = {
       urls: []
    };
+  const chipElement = document.querySelector('.chips');
   M.Chips.init(chipElement, {
     placeholder: '{% trans "Optional Tag" %}',
     secondaryPlaceholder: '{% trans "Another Tag" %}'

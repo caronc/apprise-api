@@ -1014,7 +1014,6 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
 
-
         # Reset our mock object
         mock_notify.reset_mock()
 
