@@ -50,8 +50,10 @@
         <ul class="collection z-depth-1">
           <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
+					{% if not CONFIG_LOCK %}
           <a class="collection-item" href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
             {% trans "New Configuration" %}</a>
+					{% endif %}
         </ul>
 {% endif %}
         <ul class="collection z-depth-1">

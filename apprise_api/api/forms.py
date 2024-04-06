@@ -152,8 +152,9 @@ class NotifyForm(forms.Form):
         required=False,
     )
 
-    # Allow support for tags keyword in addition to tag; the 'tag' field will always take priority over this
-    # however adding `tags` gives the user more flexibilty to use either/or keyword
+    # Allow support for tags keyword in addition to tag; the 'tag' field will
+    # always take priority over this however adding `tags` gives the user more
+    # flexibilty to use either/or keyword
     tags = forms.CharField(
         label=_('Tags'),
         widget=forms.HiddenInput(),

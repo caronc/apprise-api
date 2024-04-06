@@ -25,7 +25,6 @@
 #
 import re
 from django.conf import settings
-from core.themes import SiteTheme, SITE_THEMES
 import datetime
 
 
