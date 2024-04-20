@@ -150,6 +150,11 @@ APPRISE_ATTACH_DIR = os.environ.get(
 # The maximum file attachment size allowed by the API (defined in MB)
 APPRISE_ATTACH_SIZE = int(os.environ.get('APPRISE_ATTACH_SIZE', 200)) * 1048576
 
+# The maximum size in bytes that a request body may be before raising an error
+# (defined in MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = abs(int(os.environ.get(
+    'APPRISE_UPLOAD_MAX_MEMORY_SIZE', 3))) * 1048576
+
 # When set Apprise API Locks itself down so that future (configuration)
 # changes can not be made or accessed.  It disables access to:
 # - the configuration screen: /cfg/{token}

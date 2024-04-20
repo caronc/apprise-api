@@ -24,6 +24,7 @@
 # THE SOFTWARE.
 from django.test import SimpleTestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import RequestDataTooBig
 from django.test.utils import override_settings
 from unittest import mock
 from ..forms import NotifyByUrlForm
@@ -441,6 +442,22 @@ class StatelessNotifyTests(SimpleTestCase):
         # Still supported
         assert response.status_code == 200
         assert mock_notify.call_count == 1
+
+        # Reset our count
+        mock_notify.reset_mock()
+
+        with mock.patch('json.loads') as mock_loads:
+            mock_loads.side_effect = RequestDataTooBig()
+            # Send our notification
+            response = self.client.post(
+                '/notify/?title=my%20title&format=text&type=info',
+                data=json.dumps(json_data),
+                content_type='application/json',
+            )
+
+            # Our notification failed
+            assert response.status_code == 431
+            assert mock_notify.call_count == 0
 
     @mock.patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls_with_json(self, mock_notify):

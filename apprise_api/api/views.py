@@ -27,6 +27,7 @@ from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views import View
 from django.conf import settings
+from django.core.exceptions import RequestDataTooBig
 from django.utils.html import escape
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
@@ -55,7 +56,6 @@ logger = logging.getLogger('django')
 
 # Content-Type Parsing
 # application/x-www-form-urlencoded
-# application/x-www-form-urlencoded
 # multipart/form-data
 MIME_IS_FORM = re.compile(
     r'(multipart|application)/(x-www-)?form-(data|urlencoded)', re.I)
@@ -67,6 +67,11 @@ MIME_IS_FORM = re.compile(
 # application/x-json
 MIME_IS_JSON = re.compile(
     r'(text|application)/(x-)?json', re.I)
+
+# Parsing of Accept; the following amounts to Accept All
+# */*
+# <blank>
+ACCEPT_ALL = re.compile(r'^\s*([*]/[*]|)\s*$', re.I)
 
 # Tags separated by space , &, or + are and'ed together
 # Tags separated by commas (even commas wrapped in spaces) are "or'ed" together
@@ -111,6 +116,7 @@ class ResponseCode(object):
     method_not_allowed = 405
     method_not_accepted = 406
     failed_dependency = 424
+    fields_too_large = 431
     internal_server_error = 500
 
 
@@ -215,20 +221,27 @@ class AddView(View):
         """
         Handle a POST request
         """
-        # Detect the format our response should be in
-        json_response = \
+        # Detect the format our incoming payload
+        json_payload = \
             MIME_IS_JSON.match(
                 request.content_type
                 if request.content_type
                 else request.headers.get(
-                    'accept', request.headers.get(
-                        'content-type', ''))) is not None
+                    'content-type', '')) is not None
+
+        # Detect the format our response should be in
+        json_response = True if json_payload \
+            and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
+            MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
-            msg = _('The site has been configured to deny this request.')
+            logger.warning(
+                'ADD - %s - Config Lock Active - Request Denied',
+                request.META['REMOTE_ADDR'])
+            msg = _('The site has been configured to deny this request')
             status = ResponseCode.no_access
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -239,7 +252,7 @@ class AddView(View):
 
         # our content
         content = {}
-        if MIME_IS_FORM.match(request.content_type):
+        if not json_payload:
             content = {}
             form = AddByConfigForm(request.POST)
             if form.is_valid():
@@ -249,27 +262,49 @@ class AddView(View):
             if form.is_valid():
                 content.update(form.cleaned_data)
 
-        elif json_response:
+        else:  # JSON Payload
             # Prepare our default response
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
 
+            except (RequestDataTooBig):
+                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
+                # when there is a very large flie attachment that can't be pulled out of the
+                # payload without exceeding memory limitations (default is 3MB)
+                logger.warning(
+                    'ADD - %s - JSON Payload Exceeded %dMB; operaton aborted using KEY: %s',
+                    request.META['REMOTE_ADDR'], (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576), key)
+
+                status = ResponseCode.fields_too_large
+                msg = _('JSON Payload provided is to large')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
+
             except (AttributeError, ValueError):
                 # could not parse JSON response...
-                return JsonResponse({
-                    'error': _('Invalid JSON specified.'),
-                },
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=ResponseCode.bad_request,
-                )
+                logger.warning(
+                    'ADD - %s - Invalid JSON Payload provided using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
+
+                status = ResponseCode.bad_request
+                msg = _('Invalid JSON Payload provided')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
         if not content:
             # No information was posted
-            msg = _('The message format is not supported.')
+            logger.warning(
+                'ADD - %s - Invalid payload structure provided using KEY: %s',
+                request.META['REMOTE_ADDR'], key)
+
+            msg = _('Invalid payload structure provided')
             status = ResponseCode.bad_request
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -285,9 +320,13 @@ class AddView(View):
             a_obj.add(content['urls'])
             if not len(a_obj):
                 # No URLs were loaded
-                msg = _('No valid URLs were found.')
+                logger.warning(
+                    'ADD - %s - No valid URLs defined using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
+
+                msg = _('No valid URLs defined')
                 status = ResponseCode.bad_request
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -300,9 +339,12 @@ class AddView(View):
                     key, '\r\n'.join([s.url() for s in a_obj]),
                     apprise.ConfigFormat.TEXT):
 
-                msg = _('The configuration could not be saved.')
+                logger.warning(
+                    'ADD - %s - configuration could not be saved using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
+                msg = _('The configuration could not be saved')
                 status = ResponseCode.internal_server_error
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -315,9 +357,12 @@ class AddView(View):
             fmt = content.get('format', '').lower()
             if fmt not in [i[0] for i in CONFIG_FORMATS]:
                 # Format must be one supported by apprise
-                msg = _('The format specified is invalid.')
+                logger.warning(
+                    'ADD - %s - Invalid configuration format specified (%s) using KEY: %s',
+                    request.META['REMOTE_ADDR'], fmt, key)
+                msg = _('Invalid configuration format specified')
                 status = ResponseCode.bad_request
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -337,9 +382,12 @@ class AddView(View):
             # Load our configuration
             if not ac_obj.add_config(content['config'], format=fmt):
                 # The format could not be detected
-                msg = _('The configuration format could not be detected.')
+                logger.warning(
+                    'ADD - %s - The configuration format could not be auto-detected using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
+                msg = _('The configuration format could not be auto-detected')
                 status = ResponseCode.bad_request
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -354,9 +402,12 @@ class AddView(View):
             if not len(a_obj):
                 # No specified URL(s) were loaded due to
                 # mis-configuration on the caller's part
-                msg = _('No valid URL(s) were specified.')
+                logger.warning(
+                    'ADD - %s - No valid URL(s) defined using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
+                msg = _('No valid URL(s) defined')
                 status = ResponseCode.bad_request
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -368,9 +419,12 @@ class AddView(View):
             if not ConfigCache.put(
                     key, content['config'], fmt=ac_obj[0].config_format):
                 # Something went very wrong; return 500
-                msg = _('An error occured saving configuration.')
+                logger.error(
+                    'ADD - %s - Configuration could not be saved using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
+                msg = _('An error occured saving configuration')
                 status = ResponseCode.internal_server_error
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -381,9 +435,12 @@ class AddView(View):
 
         else:
             # No configuration specified; we're done
-            msg = _('No configuration specified.')
+            msg = _('No configuration provided')
+            logger.warning(
+                'ADD - %s - No configuration provided using KEY: %s',
+                request.META['REMOTE_ADDR'], key)
             status = ResponseCode.bad_request
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -394,10 +451,16 @@ class AddView(View):
 
         # If we reach here; we successfully loaded the configuration so we can
         # go ahead and write it to disk and alert our caller of the success.
-        return HttpResponse(
-            _('Successfully saved configuration.'),
-            status=ResponseCode.okay,
-        )
+        logger.info(
+            'ADD - %s - Configuration saved using KEY: %s',
+            request.META['REMOTE_ADDR'], key)
+
+        status = ResponseCode.okay
+        msg = _('Successfully saved configuration')
+        return HttpResponse(msg, status=status, content_type='text/plain') \
+            if not json_response else JsonResponse({
+                "error": None,
+            }, encoder=JSONEncoder, safe=False, status=status)
 
 
 @method_decorator(never_cache, name='dispatch')
@@ -420,9 +483,12 @@ class DelView(View):
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
-            msg = _('The site has been configured to deny this request.')
+            logger.warning(
+                'DEL - %s - Config Lock Active - Request Denied',
+                request.META['REMOTE_ADDR'])
+            msg = _('The site has been configured to deny this request')
             status = ResponseCode.no_access
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -434,9 +500,12 @@ class DelView(View):
         # Clear the key
         result = ConfigCache.clear(key)
         if result is None:
-            msg = _('There was no configuration to remove.')
+            logger.warning(
+                'DEL - %s - No configuration associated using KEY: %s',
+                request.META['REMOTE_ADDR'], key)
+            msg = _('There was no configuration to remove')
             status = ResponseCode.no_content
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -447,9 +516,13 @@ class DelView(View):
 
         elif result is False:
             # There was a failure at the os level
-            msg = _('The configuration could not be removed.')
+            logger.error(
+                'DEL - %s - Configuration could not be removed associated using KEY: %s',
+                request.META['REMOTE_ADDR'], key)
+
+            msg = _('The configuration could not be removed')
             status = ResponseCode.internal_server_error
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -459,10 +532,16 @@ class DelView(View):
             )
 
         # Removed content
-        return HttpResponse(
-            _('Successfully removed configuration.'),
-            status=ResponseCode.okay,
-        )
+        logger.info(
+            'DEL - %s - Removed configuration associated using KEY: %s',
+            request.META['REMOTE_ADDR'], key)
+
+        status = ResponseCode.okay
+        msg = _('Successfully removed configuration')
+        return HttpResponse(msg, status=status, content_type='text/plain') \
+            if not json_response else JsonResponse({
+                "error": None,
+            }, encoder=JSONEncoder, safe=False, status=status)
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -486,9 +565,13 @@ class GetView(View):
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
-            msg = _('The site has been configured to deny this request.')
+            logger.warning(
+                'VIEW - %s - Config Lock Active - Request Denied',
+                request.META['REMOTE_ADDR'])
+
+            msg = _('The site has been configured to deny this request')
             status = ResponseCode.no_access
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse(
                     {'error': msg},
                     encoder=JSONEncoder,
@@ -505,9 +588,12 @@ class GetView(View):
             #   config != None: we simply have no data
             if format is not None:
                 # no content to return
-                msg = _('There was no configuration found.')
+                logger.warning(
+                    'VIEW - %s - No configuration associated using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
+                msg = _('There was no configuration found')
                 status = ResponseCode.no_content
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse(
                         {'error': msg},
                         encoder=JSONEncoder,
@@ -515,9 +601,12 @@ class GetView(View):
                         status=status)
 
             # Something went very wrong; return 500
-            msg = _('An error occured accessing configuration.')
+            logger.error(
+                'VIEW - %s - Configuration could not be accessed associated using KEY: %s',
+                request.META['REMOTE_ADDR'], key)
+            msg = _('An error occured accessing configuration')
             status = ResponseCode.internal_server_error
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -532,9 +621,12 @@ class GetView(View):
         # reference to it through the --config (-c) option in the CLI.
         content_type = 'text/yaml; charset=utf-8' \
             if format == apprise.ConfigFormat.YAML \
-            else 'text/html; charset=utf-8'
+            else 'text/plain; charset=utf-8'
 
         # Return our retrieved content
+        logger.info(
+            'VIEW - %s - Retrieved configuration associated using KEY: %s',
+            request.META['REMOTE_ADDR'], key)
         return HttpResponse(
             config,
             content_type=content_type,
@@ -557,49 +649,69 @@ class NotifyView(View):
         """
         Handle a POST request
         """
-        # Detect the format our response should be in
-        json_response = \
+        # Detect the format our incoming payload
+        json_payload = \
             MIME_IS_JSON.match(
                 request.content_type
                 if request.content_type
                 else request.headers.get(
-                    'accept', request.headers.get(
-                        'content-type', ''))) is not None
+                    'content-type', '')) is not None
+
+        # Detect the format our response should be in
+        json_response = True if json_payload \
+            and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
+            MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
         # our content
         content = {}
-        if MIME_IS_FORM.match(request.content_type):
+        if not json_payload:
             form = NotifyForm(data=request.POST, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
-        elif json_response:
+        else:  # JSON Payload
             # Prepare our default response
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
 
+            except (RequestDataTooBig):
+                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
+                # when there is a very large flie attachment that can't be pulled out of the
+                # payload without exceeding memory limitations (default is 3MB)
+                logger.warning(
+                    'NOTIFY - %s - JSON Payload Exceeded %dMB using KEY: %s',
+                    request.META['REMOTE_ADDR'], (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576), key)
+
+                status = ResponseCode.fields_too_large
+                msg = _('JSON Payload provided is to large')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
+
             except (AttributeError, ValueError):
                 # could not parse JSON response...
                 logger.warning(
-                    'NOTIFY - %s - Invalid JSON Payload provided',
-                    request.META['REMOTE_ADDR'])
+                    'NOTIFY - %s - Invalid JSON Payload provided using KEY: %s',
+                    request.META['REMOTE_ADDR'], key)
 
-                return JsonResponse(
-                    _('Invalid JSON provided.'),
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=ResponseCode.bad_request)
+                status = ResponseCode.bad_request
+                msg = _('Invalid JSON Payload provided')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
         if not content:
             # We could not handle the Content-Type
             logger.warning(
-                'NOTIFY - %s - Invalid FORM Payload provided',
-                request.META['REMOTE_ADDR'])
+                'NOTIFY - %s - Invalid FORM Payload provided using KEY: %s',
+                request.META['REMOTE_ADDR'], key)
 
-            msg = _('Bad FORM Payload provided.')
+            msg = _('Bad FORM Payload provided')
             status = ResponseCode.bad_request
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -632,12 +744,15 @@ class NotifyView(View):
             except (TypeError, ValueError) as e:
                 # Invalid entry found in list
                 logger.warning(
-                    'NOTIFY - %s - Bad attachment: %s',
-                    request.META['REMOTE_ADDR'], str(e))
+                    'NOTIFY - %s - Bad attachment using KEY: %s - %s',
+                    request.META['REMOTE_ADDR'], key, str(e))
 
-                return HttpResponse(
-                    _('Bad attachment'),
-                    status=ResponseCode.bad_request)
+                status = ResponseCode.bad_request
+                msg = _('Bad Attachment')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
         #
         # Allow 'tag' value to be specified as part of the URL parameters
@@ -670,12 +785,12 @@ class NotifyView(View):
                     # Invalid entry found in list
                     logger.warning(
                         'NOTIFY - %s - Ignored invalid tag specified '
-                        '(type %s): %s', request.META['REMOTE_ADDR'],
-                        str(type(tag)), str(tag)[:12])
+                        '(type %s): %s using KEY: %s', request.META['REMOTE_ADDR'],
+                        str(type(tag)), str(tag)[:12], key)
 
-                    msg = _('Unsupported characters found in tag definition.')
+                    msg = _('Unsupported characters found in tag definition')
                     status = ResponseCode.bad_request
-                    return HttpResponse(msg, status=status) \
+                    return HttpResponse(msg, status=status, content_type='text/plain') \
                         if not json_response else JsonResponse({
                             'error': msg,
                         },
@@ -704,12 +819,12 @@ class NotifyView(View):
             else:  # Could be int, float or some other unsupported type
                 logger.warning(
                     'NOTIFY - %s - Ignored invalid tag specified (type %s): '
-                    '%s', request.META['REMOTE_ADDR'],
-                    str(type(tag)), str(tag)[:12])
+                    '%s using KEY: %s', request.META['REMOTE_ADDR'],
+                    str(type(tag)), str(tag)[:12], key)
 
-                msg = _('Unsupported characters found in tag definition.')
+                msg = _('Unsupported characters found in tag definition')
                 status = ResponseCode.bad_request
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -744,12 +859,14 @@ class NotifyView(View):
                 not in apprise.NOTIFY_TYPES:
 
             logger.warning(
-                'NOTIFY - %s - Payload lacks minimum requirements',
-                request.META['REMOTE_ADDR'])
+                'NOTIFY - %s - Payload lacks minimum requirements using KEY: %s',
+                request.META['REMOTE_ADDR'], key)
 
-            return HttpResponse(msg, status=status) \
+            status = ResponseCode.bad_request
+            msg = _('Payload lacks minimum requirements')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
-                    'error': _('Payload lacks minimum requirements.'),
+                    'error': msg,
                 },
                 encoder=JSONEncoder,
                 safe=False,
@@ -761,11 +878,11 @@ class NotifyView(View):
         if body_format and body_format not in apprise.NOTIFY_FORMATS:
             logger.warning(
                 'NOTIFY - %s - Format parameter contains an unsupported '
-                'value (%s)', request.META['REMOTE_ADDR'], str(body_format))
+                'value (%s) using KEY: %s', request.META['REMOTE_ADDR'], str(body_format), key)
 
-            msg = _('An invalid body input format was specified.')
+            msg = _('An invalid body input format was specified')
             status = ResponseCode.bad_request
-            return HttpResponse(msg, status=status) \
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -789,9 +906,10 @@ class NotifyView(View):
                 logger.debug(
                     'NOTIFY - %s - Empty configuration found using KEY: %s',
                     request.META['REMOTE_ADDR'], key)
-                msg = _('There was no configuration found.')
+
+                msg = _('There was no configuration found')
                 status = ResponseCode.no_content
-                return HttpResponse(msg, status=status) \
+                return HttpResponse(msg, status=status, content_type='text/plain') \
                     if not json_response else JsonResponse({
                         'error': msg,
                     },
@@ -800,13 +918,14 @@ class NotifyView(View):
                     status=status,
                 )
 
-            # Something went very wrong; return 500
-            msg = _('An error occured accessing configuration.')
-            status = ResponseCode.internal_server_error
             logger.error(
                 'NOTIFY - %s - I/O error accessing configuration '
                 'using KEY: %s', request.META['REMOTE_ADDR'], key)
-            return HttpResponse(msg, status=status) \
+
+            # Something went very wrong; return 500
+            msg = _('An error occured accessing configuration')
+            status = ResponseCode.internal_server_error
+            return HttpResponse(msg, status=status, content_type='text/plain') \
                 if not json_response else JsonResponse({
                     'error': msg,
                 },
@@ -839,9 +958,13 @@ class NotifyView(View):
                     'NOTIFY - %s - Recursion limit reached (%d > %d)',
                     request.META['REMOTE_ADDR'], recursion,
                     settings.APPRISE_RECURSION_MAX)
-                return HttpResponse(
-                    _('The recursion limit has been reached.'),
-                    status=ResponseCode.method_not_accepted)
+
+                status = ResponseCode.method_not_accepted
+                msg = _('The recursion limit has been reached')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
             # Store our recursion value for our AppriseAsset() initialization
             kwargs['_recursion'] = recursion
@@ -850,9 +973,13 @@ class NotifyView(View):
             logger.warning(
                 'NOTIFY - %s - Invalid recursion value (%s) provided',
                 request.META['REMOTE_ADDR'], str(recursion))
-            return HttpResponse(
-                _('An invalid recursion value was specified.'),
-                status=ResponseCode.bad_request)
+
+            status = ResponseCode.bad_request
+            msg = _('An invalid recursion value was specified')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                }, encoder=JSONEncoder, safe=False, status=status)
 
         # Acquire our unique identifier (if defined)
         uid = request.headers.get('X-Apprise-ID', '').strip()
@@ -884,11 +1011,15 @@ class NotifyView(View):
         # we return the logs as they're processed in their text format.
         # The HTML response type has a bit of overhead where as it's not
         # the case with text/plain
-        content_type = \
-            'text/html' if re.search(r'text\/(\*|html)',
-                                     request.headers.get('Accept', ''),
-                                     re.IGNORECASE) \
-            else 'text/plain'
+        if not json_response:
+            content_type = \
+                'text/html' if re.search(r'text\/(\*|html)',
+                                         request.headers.get('Accept', ''),
+                                         re.IGNORECASE) \
+                else 'text/plain'
+
+        else:
+            content_type = 'application/json'
 
         # Acquire our log level from headers if defined, otherwise use
         # the global one set in the settings
@@ -923,13 +1054,17 @@ class NotifyView(View):
 
         esc = '<!!-!ESC!-!!>'
 
-        # Format is only updated if the content_type is html
-        fmt = '<li class="log_%(levelname)s">' \
-            '<div class="log_time">%(asctime)s</div>' \
-            '<div class="log_level">%(levelname)s</div>' \
-            f'<div class="log_msg">{esc}%(message)s{esc}</div></li>' \
-            if content_type == 'text/html' else \
-            settings.LOGGING['formatters']['standard']['format']
+        if json_response:
+            fmt = f'["%(levelname)s","%(asctime)s","{esc}%(message)s{esc}"]'
+
+        else:
+            # Format is only updated if the content_type is html
+            fmt = '<li class="log_%(levelname)s">' \
+                '<div class="log_time">%(asctime)s</div>' \
+                '<div class="log_level">%(levelname)s</div>' \
+                f'<div class="log_msg">{esc}%(message)s{esc}</div></li>' \
+                if content_type == 'text/html' else \
+                settings.LOGGING['formatters']['standard']['format']
 
         # Now specify our format (and over-ride the default):
         with apprise.LogCapture(level=level, fmt=fmt) as logs:
@@ -942,15 +1077,25 @@ class NotifyView(View):
                 attach=attach,
             )
 
-        if content_type == 'text/html':
+        if json_response:
+            esc = re.escape(esc)
+            entries = re.findall(
+                r'\r*\n?(?P<head>\["[^"]+","[^"]+",)"{}(?P<to_escape>.+?)'
+                r'{}"(?P<tail>\]\r*\n?$)(?=$|\r*\n?\["[^"]+","[^"]+","{})'.format(
+                    esc, esc, esc), logs.getvalue(), re.DOTALL | re.MULTILINE)
+
+            # Prepare ourselves a JSON Response
+            response = json.loads('[{}]'.format(
+                ','.join([e[0] + json.dumps(e[1].rstrip()) + e[2] for e in entries])))
+
+        elif content_type == 'text/html':
             # Iterate over our entries so that we can prepare to escape
             # things to be presented as HTML
             esc = re.escape(esc)
             entries = re.findall(
-                r'(?P<head><li .+?){}(?P<to_escape>.*?)'
-                r'{}(?P<tail>.+li>$)(?=$|<li .+{})'.format(
-                    esc, esc, esc), logs.getvalue(),
-                re.DOTALL)
+                r'\r*\n?(?P<head><li class="log_.+?){}(?P<to_escape>.+?)'
+                r'{}(?P<tail></div></li>\r*\n?$)(?=$|\r*\n?<li class="log_.+{})'.format(
+                    esc, esc, esc), logs.getvalue(), re.DOTALL | re.MULTILINE)
 
             # Wrap logs in `<ul>` tag and escape our message body:
             response = '<ul class="logs">{}</ul>'.format(
@@ -972,15 +1117,16 @@ class NotifyView(View):
         if not result:
             # If at least one notification couldn't be sent; change up
             # the response to a 424 error code
-            msg = _('One or more notification could not be sent.')
+            msg = _('One or more notification could not be sent')
             status = ResponseCode.failed_dependency
             logger.warning(
                 'NOTIFY - %s - One or more notifications not '
                 'sent%s using KEY: %s', request.META['REMOTE_ADDR'],
                 '' if not tag else f' (Tags: {tag})', key)
-            return HttpResponse(response if response else msg, status=status) \
+            return HttpResponse(response if response else msg, status=status, content_type=content_type) \
                 if not json_response else JsonResponse({
                     'error': msg,
+                    'details': response,
                 },
                 encoder=JSONEncoder,
                 safe=False,
@@ -992,13 +1138,13 @@ class NotifyView(View):
             request.META['REMOTE_ADDR'],
             '' if not tag else f'Tags: {tag}, ', key)
 
-        # Return our retrieved content
-        return HttpResponse(
-            response if response is not None else
-            _('Notification(s) sent.'),
-            content_type=content_type,
-            status=ResponseCode.okay,
-        )
+        # Return our success message
+        status = ResponseCode.okay
+        return HttpResponse(response, status=status, content_type=content_type) \
+            if not json_response else JsonResponse({
+                'error': None,
+                'details': response,
+            }, encoder=JSONEncoder, safe=False, status=status)
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -1010,19 +1156,47 @@ class StatelessNotifyView(View):
         """
         Handle a POST request
         """
+        # Detect the format our incoming payload
+        json_payload = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'content-type', '')) is not None
+
+        # Detect the format our response should be in
+        json_response = True if json_payload \
+            and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
+            MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
+
         # our content
         content = {}
-        if MIME_IS_FORM.match(request.content_type):
+        if not json_payload:
             content = {}
             form = NotifyByUrlForm(request.POST, request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
-        elif MIME_IS_JSON.match(request.content_type):
+        else:  # JSON Payload
             # Prepare our default response
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
+
+            except (RequestDataTooBig):
+                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
+                # when there is a very large flie attachment that can't be pulled out of the
+                # payload without exceeding memory limitations (default is 3MB)
+                logger.warning(
+                    'NOTIFY - %s - JSON Payload Exceeded %dMB; operaton aborted',
+                    request.META['REMOTE_ADDR'], (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576))
+
+                status = ResponseCode.fields_too_large
+                msg = _('JSON Payload provided is to large')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
             except (AttributeError, ValueError):
                 # could not parse JSON response...
@@ -1030,9 +1204,12 @@ class StatelessNotifyView(View):
                     'NOTIFY - %s - Invalid JSON Payload provided',
                     request.META['REMOTE_ADDR'])
 
-                return HttpResponse(
-                    _('Invalid JSON specified.'),
-                    status=ResponseCode.bad_request)
+                status = ResponseCode.bad_request
+                msg = _('Invalid JSON Payload provided')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
         if not content:
             # We could not handle the Content-Type
@@ -1040,9 +1217,12 @@ class StatelessNotifyView(View):
                 'NOTIFY - %s - Invalid FORM Payload provided',
                 request.META['REMOTE_ADDR'])
 
-            return HttpResponse(
-                _('Bad FORM Payload provided.'),
-                status=ResponseCode.bad_request)
+            status = ResponseCode.bad_request
+            msg = _('Bad FORM Payload provided')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                }, encoder=JSONEncoder, safe=False, status=status)
 
         if not content.get('urls') and settings.APPRISE_STATELESS_URLS:
             # fallback to settings.APPRISE_STATELESS_URLS if no urls were
@@ -1079,9 +1259,12 @@ class StatelessNotifyView(View):
                 'NOTIFY - %s - Payload lacks minimum requirements',
                 request.META['REMOTE_ADDR'])
 
-            return HttpResponse(
-                _('Payload lacks minimum requirements.'),
-                status=ResponseCode.bad_request)
+            status = ResponseCode.bad_request
+            msg = _('Payload lacks minimum requirements')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                }, encoder=JSONEncoder, safe=False, status=status)
 
         # Acquire our body format (if identified)
         body_format = content.get('format', apprise.NotifyFormat.TEXT)
@@ -1089,9 +1272,13 @@ class StatelessNotifyView(View):
             logger.warning(
                 'NOTIFY - %s - Format parameter contains an unsupported '
                 'value (%s)', request.META['REMOTE_ADDR'], str(body_format))
-            return HttpResponse(
-                _('An invalid body input format was specified.'),
-                status=ResponseCode.bad_request)
+
+            status = ResponseCode.bad_request
+            msg = _('An invalid body input format was specified')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                }, encoder=JSONEncoder, safe=False, status=status)
 
         # Prepare our keyword arguments (to be passed into an AppriseAsset
         # object)
@@ -1117,9 +1304,13 @@ class StatelessNotifyView(View):
                     'NOTIFY - %s - Recursion limit reached (%d > %d)',
                     request.META['REMOTE_ADDR'], recursion,
                     settings.APPRISE_RECURSION_MAX)
-                return HttpResponse(
-                    _('The recursion limit has been reached.'),
-                    status=ResponseCode.method_not_accepted)
+
+                status = ResponseCode.method_not_accepted
+                msg = _('The recursion limit has been reached')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
             # Store our recursion value for our AppriseAsset() initialization
             kwargs['_recursion'] = recursion
@@ -1128,9 +1319,13 @@ class StatelessNotifyView(View):
             logger.warning(
                 'NOTIFY - %s - Invalid recursion value (%s) provided',
                 request.META['REMOTE_ADDR'], str(recursion))
-            return HttpResponse(
-                _('An invalid recursion value was specified.'),
-                status=ResponseCode.bad_request)
+
+            status = ResponseCode.bad_request
+            msg = _('An invalid recursion value was specified')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                }, encoder=JSONEncoder, safe=False, status=status)
 
         # Acquire our unique identifier (if defined)
         uid = request.headers.get('X-Apprise-ID', '').strip()
@@ -1151,10 +1346,16 @@ class StatelessNotifyView(View):
         # Add URLs
         a_obj.add(content.get('urls'))
         if not len(a_obj):
-            return HttpResponse(
-                _('There was no services to notify.'),
-                status=ResponseCode.no_content,
-            )
+            logger.warning(
+                'NOTIFY - %s - No valid URLs provided',
+                request.META['REMOTE_ADDR'])
+
+            status = ResponseCode.no_content
+            msg = _('There was no valid URLs provided to notify')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                }, encoder=JSONEncoder, safe=False, status=status)
 
         # Handle Attachments
         attach = None
@@ -1183,9 +1384,12 @@ class StatelessNotifyView(View):
                     'NOTIFY - %s - Bad attachment: %s',
                     request.META['REMOTE_ADDR'], str(e))
 
-                return HttpResponse(
-                    _('Bad attachment'),
-                    status=ResponseCode.bad_request)
+                status = ResponseCode.bad_request
+                msg = _('Bad Attachment')
+                return HttpResponse(msg, status=status, content_type='text/plain') \
+                    if not json_response else JsonResponse({
+                        'error': msg,
+                    }, encoder=JSONEncoder, safe=False, status=status)
 
         # Acquire our log level from headers if defined, otherwise use
         # the global one set in the settings
@@ -1216,7 +1420,8 @@ class StatelessNotifyView(View):
             level = logging.DEBUG - 1
 
         if settings.APPRISE_WEBHOOK_URL:
-            fmt = settings.LOGGING['formatters']['standard']['format']
+            esc = '<!!-!ESC!-!!>'
+            fmt = f'["%(levelname)s","%(asctime)s","{esc}%(message)s{esc}"]'
             with apprise.LogCapture(level=level, fmt=fmt) as logs:
                 # Perform our notification at this point
                 result = a_obj.notify(
@@ -1227,7 +1432,15 @@ class StatelessNotifyView(View):
                     attach=attach,
                 )
 
-                response = logs.getvalue()
+                esc = re.escape(esc)
+                entries = re.findall(
+                    r'\r*\n?(?P<head>\["[^"]+","[^"]+",)"{}(?P<to_escape>.+?)'
+                    r'{}"(?P<tail>\]\r*\n?$)(?=$|\r*\n?\["[^"]+","[^"]+","{})'.format(
+                        esc, esc, esc), logs.getvalue(), re.DOTALL | re.MULTILINE)
+
+                # Prepare ourselves a JSON Response
+                response = json.loads('[{}]'.format(
+                    ','.join([e[0] + json.dumps(e[1].rstrip()) + e[2] for e in entries])))
 
                 webhook_payload = {
                     'source': request.META['REMOTE_ADDR'],
@@ -1251,19 +1464,27 @@ class StatelessNotifyView(View):
         if not result:
             # If at least one notification couldn't be sent; change up the
             # response to a 424 error code
-            return HttpResponse(
-                _('One or more notification could not be sent.'),
-                status=ResponseCode.failed_dependency)
+            logger.warning(
+                'NOTIFY - %s - One or more stateless notification(s) could not be actioned',
+                request.META['REMOTE_ADDR'])
+
+            status = ResponseCode.failed_dependency
+            msg = _('One or more notification could not be sent')
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                }, encoder=JSONEncoder, safe=False, status=status)
 
         logger.info(
             'NOTIFY - %s - Delivered Stateless Notification(s)',
             request.META['REMOTE_ADDR'])
 
-        # Return our retrieved content
-        return HttpResponse(
-            _('Notification(s) sent.'),
-            status=ResponseCode.okay,
-        )
+        # Return our success message
+        status = ResponseCode.okay
+        msg = _('Notification(s) sent')
+        return HttpResponse(msg, status=status, content_type='text/plain') \
+            if not json_response else JsonResponse({
+            }, encoder=JSONEncoder, safe=False, status=status)
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -1323,7 +1544,7 @@ class JsonUrlView(View):
                 )
 
             # Something went very wrong; return 500
-            response['error'] = _('There was no configuration found.')
+            response['error'] = _('There was no configuration found')
             return JsonResponse(
                 response,
                 encoder=JSONEncoder,
