@@ -24,6 +24,7 @@
 # THE SOFTWARE.
 from django.test import SimpleTestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import RequestDataTooBig
 from unittest import mock
 import requests
 from ..forms import NotifyForm
@@ -577,6 +578,22 @@ class NotifyTests(SimpleTestCase):
         assert response['message'] == form_data['body']
         assert response['type'] == apprise.NotifyType.WARNING
 
+        # Test case where RequestDataTooBig thrown
+        # Reset our mock object
+        mock_post.reset_mock()
+
+        with mock.patch('json.loads') as mock_loads:
+            mock_loads.side_effect = RequestDataTooBig()
+            # Send our notification by specifying the tag in the parameters
+            response = self.client.post(
+                f'/notify/{key}?tag=home&body=test',
+                form_data,
+                content_type='application/json')
+
+            # Our notification failed
+            assert response.status_code == 431
+            assert mock_post.call_count == 0
+
     @mock.patch('requests.post')
     def test_advanced_notify_with_tags(self, mock_post):
         """
@@ -883,7 +900,7 @@ class NotifyTests(SimpleTestCase):
 
         # Preare our JSON data
         json_data = {
-            'body': 'test notifiction',
+            'body': 'test notification',
             'type': apprise.NotifyType.WARNING,
         }
 
@@ -1059,6 +1076,7 @@ class NotifyTests(SimpleTestCase):
 
         headers = {
             'HTTP_X_APPRISE_LOG_LEVEL': 'debug',
+            # Accept is over-ridden to be that of the content type
             'HTTP_ACCEPT': 'text/plain',
         }
 
@@ -1074,12 +1092,13 @@ class NotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 1
         assert response['content-type'] == 'text/plain'
 
+        mock_notify.reset_mock()
+
         headers = {
             'HTTP_X_APPRISE_LOG_LEVEL': 'debug',
+            # Accept is over-ridden to be that of the content type
             'HTTP_ACCEPT': 'text/html',
         }
-
-        mock_notify.reset_mock()
 
         # Test referencing a key that doesn't exist
         response = self.client.post(
@@ -1092,6 +1111,38 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
         assert response['content-type'] == 'text/html'
+
+        mock_notify.reset_mock()
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data={'body': 'test'},
+            **headers,
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert response['content-type'].startswith('text/html')
+
+        mock_notify.reset_mock()
+
+        headers = {
+            'HTTP_X_APPRISE_LOG_LEVEL': 'debug',
+            'HTTP_ACCEPT': '*/*',
+        }
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps(json_data),
+            content_type='application/json',
+            **headers,
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert response['content-type'] == 'application/json'
 
         headers = {
             'HTTP_X_APPRISE_LOG_LEVEL': 'invalid',
@@ -1111,6 +1162,19 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
         assert response['content-type'] == 'text/html'
+
+        mock_notify.reset_mock()
+
+        # Test referencing a key that doesn't exist
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json_data,
+            **headers,
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert response['content-type'].startswith('text/html')
 
     @mock.patch('apprise.plugins.NotifyEmail.NotifyEmail.send')
     def test_notify_with_filters(self, mock_send):

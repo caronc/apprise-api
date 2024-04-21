@@ -23,8 +23,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase
+from django.core.exceptions import RequestDataTooBig
 from apprise import ConfigFormat
 from unittest.mock import patch
+from unittest import mock
 from django.test.utils import override_settings
 from ..forms import AUTO_DETECT_CONFIG_KEYWORD
 import json
@@ -138,6 +140,18 @@ class AddTests(SimpleTestCase):
             content_type='application/json',
         )
         assert response.status_code == 200
+
+        with mock.patch('json.loads') as mock_loads:
+            mock_loads.side_effect = RequestDataTooBig()
+            # Send our notification by specifying the tag in the parameters
+            response = self.client.post(
+                '/add/{}'.format(key),
+                data=json.dumps({'urls': 'mailto://user:pass@yahoo.ca'}),
+                content_type='application/json',
+            )
+
+            # Our notification failed
+            assert response.status_code == 431
 
         # Test with JSON (and no payload provided)
         response = self.client.post(
