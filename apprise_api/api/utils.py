@@ -229,6 +229,9 @@ def parse_attachments(attachment_payload, files_request):
         attachment_payload = (attachment_payload, )
         count += 1
 
+    if settings.APPRISE_ATTACH_SIZE <= 0:
+        raise ValueError("The attachment size is restricted to 0MB")
+
     if settings.APPRISE_MAX_ATTACHMENTS <= 0 or \
             (settings.APPRISE_MAX_ATTACHMENTS > 0 and
                 count > settings.APPRISE_MAX_ATTACHMENTS):
@@ -707,8 +710,11 @@ def send_webhook(payload):
         'Content-Type': 'application/json',
     }
 
-    if not apprise.utils.VALID_URL_RE.match(
-            settings.APPRISE_WEBHOOK_URL):
+    try:
+        if not apprise.utils.VALID_URL_RE.match(settings.APPRISE_WEBHOOK_URL).group('schema'):
+            raise AttributeError()
+
+    except (AttributeError, TypeError):
         logger.warning(
             'The Apprise Webhook Result URL is not a valid web based URI')
         return
@@ -750,3 +756,88 @@ def send_webhook(payload):
         logger.debug('Socket Exception: %s' % str(e))
 
     return
+
+
+def healthcheck(lazy=True):
+    """
+    Runs a status check on the data and returns the statistics
+    """
+
+    # Some status variables we can flip
+    response = {
+        'can_write_config': False,
+        'can_write_attach': False,
+        'details': [],
+    }
+
+    if not (settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED or settings.APPRISE_CONFIG_LOCK):
+        # Update our Configuration Check Block
+        path = os.path.join(ConfigCache.root, '.tmp_healthcheck')
+        if lazy:
+            try:
+                modify_date = datetime.fromtimestamp(os.path.getmtime(path))
+                delta = (datetime.now() - modify_date).total_seconds()
+                if delta <= 7200.00:  # 2hrs
+                    response['can_write_config'] = True
+
+            except FileNotFoundError:
+                # No worries... continue with below testing
+                pass
+
+        if not response['can_write_config']:
+            try:
+                os.makedirs(path, exist_ok=True)
+
+                # Write a small file
+                with tempfile.TemporaryFile(mode='w+b', dir=path) as fp:
+                    # Test writing 1 block
+                    fp.write(b'.')
+                    # Read it back
+                    fp.seek(0)
+                    fp.read(1) == b'.'
+                    # Toggle our status
+                    response['can_write_config'] = True
+
+            except OSError:
+                # We can take an early exit
+                response['details'].append('CONFIG_PERMISSION_ISSUE')
+
+    if settings.APPRISE_MAX_ATTACHMENTS > 0 and settings.APPRISE_ATTACH_SIZE > 0:
+        # Test our ability to access write attachments
+
+        # Update our Configuration Check Block
+        path = os.path.join(settings.APPRISE_ATTACH_DIR, '.tmp_healthcheck')
+        if lazy:
+            try:
+                modify_date = datetime.fromtimestamp(os.path.getmtime(path))
+                delta = (datetime.now() - modify_date).total_seconds()
+                if delta <= 7200.00:  # 2hrs
+                    response['can_write_attach'] = True
+
+            except FileNotFoundError:
+                # No worries... continue with below testing
+                pass
+
+        if not response['can_write_attach']:
+            # No lazy mode set or content require a refresh
+            try:
+                os.makedirs(path, exist_ok=True)
+
+                # Write a small file
+                with tempfile.TemporaryFile(mode='w+b', dir=path) as fp:
+                    # Test writing 1 block
+                    fp.write(b'.')
+                    # Read it back
+                    fp.seek(0)
+                    fp.read(1) == b'.'
+                    # Toggle our status
+                    response['can_write_attach'] = True
+
+            except OSError:
+                # We can take an early exit
+                response['details'].append('ATTACH_PERMISSION_ISSUE')
+
+    if not response['details']:
+        response['details'].append('OK')
+
+    return response

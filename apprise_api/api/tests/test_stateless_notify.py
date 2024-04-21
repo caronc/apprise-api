@@ -129,7 +129,7 @@ class StatelessNotifyTests(SimpleTestCase):
             # We sent the notification successfully (use our rule mapping)
             # FORM
             response = self.client.post(
-                f'/notify/?:payload=body&:fmt=format&:extra=urls',
+                '/notify/?:payload=body&:fmt=format&:extra=urls',
                 form_data)
             assert response.status_code == 200
             assert mock_notify.call_count == 1

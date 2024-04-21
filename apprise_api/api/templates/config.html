@@ -22,15 +22,15 @@
       <h5>{% trans "Getting Started" %}</h5>
       <ol>
         <li>
-          {% blocktrans %}
-          Here is where you can store your Apprise configuration associated with the key <code>{{key}}</code>.
-          {% endblocktrans %}
-          For some examples on how to build a development environment around this, <strong><a href="{% url 'welcome'%}?key={{key}}">click here</a></strong>.
+          {% trans "Verify your Apprise API Status:" %} <strong><a href="{% url 'health' %}">click here</a></strong>
+        </li>
+        <li>
+          {% trans "Here is where you can store your Apprise configuration associated with the key:" %} <code>{{key}}</code>
+          {% trans "For some examples on how to build a development environment around this:" %} <strong><a href="{% url 'welcome'%}?key={{key}}">click here</a></strong>
         </li>
         <li>
           {% blocktrans %}
-          In the future you can return to this configuration screen at any time by placing the following into your
-          browser:
+          In the future you can return to this configuration screen at any time by placing the following into your browser:
           {% endblocktrans %}
           <code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/{{key}}</code>
         </li>

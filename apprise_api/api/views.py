@@ -40,6 +40,7 @@ from .utils import parse_attachments
 from .utils import ConfigCache
 from .utils import apply_global_filters
 from .utils import send_webhook
+from .utils import healthcheck
 from .forms import AddByUrlForm
 from .forms import AddByConfigForm
 from .forms import NotifyForm
@@ -116,6 +117,7 @@ class ResponseCode(object):
     not_found = 404
     method_not_allowed = 405
     method_not_accepted = 406
+    expectation_failed = 417
     failed_dependency = 424
     fields_too_large = 431
     internal_server_error = 500
@@ -134,6 +136,44 @@ class WelcomeView(View):
             'secure': request.scheme[-1].lower() == 's',
             'key': key if key else default_key,
         })
+
+
+@method_decorator((gzip_page, never_cache), name='dispatch')
+class HealthCheckView(View):
+    """
+    A Django view used to return a simple status/healthcheck
+    """
+
+    def get(self, request):
+        """
+        Handle a GET request
+        """
+        # Detect the format our incoming payload
+        json_payload = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'content-type', '')) is not None
+
+        # Detect the format our response should be in
+        json_response = True if json_payload \
+            and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
+            MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
+
+        # Run our healthcheck
+        response = healthcheck()
+
+        # Prepare our response
+        status = ResponseCode.okay if 'OK' in response['details'] else ResponseCode.expectation_failed
+        if not json_response:
+            response = ','.join(response['details'])
+
+        return HttpResponse(response, status=status, content_type='text/plain') \
+            if not json_response else JsonResponse({
+                'config_lock': settings.APPRISE_CONFIG_LOCK,
+                'status': response,
+            }, encoder=JSONEncoder, safe=False, status=status)
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -664,7 +704,7 @@ class NotifyView(View):
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
         # rules
-        rules = {k[1:]: v for k,v in request.GET.items() if k[0] == ':'}
+        rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ':'}
 
         # our content
         content = {}
@@ -1187,7 +1227,7 @@ class StatelessNotifyView(View):
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
         # rules
-        rules = {k[1:]: v for k,v in request.GET.items() if k[0] == ':'}
+        rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ':'}
 
         # our content
         content = {}
