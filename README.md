@@ -53,11 +53,15 @@ docker pull caronc/apprise:latest
 # a full production environment setting).  This may be all that is needed for
 # a light-weight self hosted solution.
 #
+# setting APPRISE_STATEFUL_MODE to simple allows you to map your defined {key}
+# straight to a file found in the `/config` path.  In simple home configurations
+# this is sometimes the ideal expectation.
 docker run --name apprise \
    -p 8000:8000 \
    -v /var/lib/apprise/config:/config \
    -v /var/lib/apprise/plugin:/plugin \
    -v /var/lib/apprise/attach:/attach \
+   -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -d caronc/apprise:latest
 ```
@@ -71,6 +75,7 @@ docker build -t apprise/local:latest -f Dockerfile .
 # Launch your instance
 docker run --name apprise \
    -p 8000:8000 \
+   -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -d apprise/local:latest
 ```

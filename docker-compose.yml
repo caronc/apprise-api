@@ -4,6 +4,8 @@ services:
   apprise:
     build: .
     container_name: apprise
+    environment:
+      - APPRISE_STATEFUL_MODE=simple
     ports:
       - 8000:8000
     user: "www-data:www-data"
