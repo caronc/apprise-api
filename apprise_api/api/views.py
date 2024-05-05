@@ -35,6 +35,7 @@ from django.views.decorators.gzip import gzip_page
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 
+from .payload_mapper import remap_fields
 from .utils import parse_attachments
 from .utils import ConfigCache
 from .utils import apply_global_filters
@@ -662,6 +663,9 @@ class NotifyView(View):
             and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
+        # rules
+        rules = {k[1:]: v for k,v in request.GET.items() if k[0] == ':'}
+
         # our content
         content = {}
         if not json_payload:
@@ -719,6 +723,10 @@ class NotifyView(View):
                 safe=False,
                 status=status
             )
+
+        # Apply content rules
+        if rules:
+            remap_fields(rules, content)
 
         # Handle Attachments
         attach = None
@@ -1169,6 +1177,9 @@ class StatelessNotifyView(View):
             and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
+        # rules
+        rules = {k[1:]: v for k,v in request.GET.items() if k[0] == ':'}
+
         # our content
         content = {}
         if not json_payload:
@@ -1223,6 +1234,10 @@ class StatelessNotifyView(View):
                 if not json_response else JsonResponse({
                     'error': msg,
                 }, encoder=JSONEncoder, safe=False, status=status)
+
+        # Apply content rules
+        if rules:
+            remap_fields(rules, content)
 
         if not content.get('urls') and settings.APPRISE_STATELESS_URLS:
             # fallback to settings.APPRISE_STATELESS_URLS if no urls were
