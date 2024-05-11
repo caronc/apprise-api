@@ -35,6 +35,7 @@ from django.views.decorators.gzip import gzip_page
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 
+from .payload_mapper import remap_fields
 from .utils import parse_attachments
 from .utils import ConfigCache
 from .utils import apply_global_filters
@@ -662,10 +663,22 @@ class NotifyView(View):
             and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
+        # rules
+        rules = {k[1:]: v for k,v in request.GET.items() if k[0] == ':'}
+
         # our content
         content = {}
         if not json_payload:
-            form = NotifyForm(data=request.POST, files=request.FILES)
+            if rules:
+                # Create a copy
+                data = request.POST.copy()
+                remap_fields(rules, data)
+
+            else:
+                # Just create a pointer
+                data = request.POST
+
+            form = NotifyForm(data=data, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -674,6 +687,10 @@ class NotifyView(View):
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
+
+                # Apply content rules
+                if rules:
+                    remap_fields(rules, content)
 
             except (RequestDataTooBig):
                 # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
@@ -1169,11 +1186,22 @@ class StatelessNotifyView(View):
             and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
+        # rules
+        rules = {k[1:]: v for k,v in request.GET.items() if k[0] == ':'}
+
         # our content
         content = {}
         if not json_payload:
-            content = {}
-            form = NotifyByUrlForm(request.POST, request.FILES)
+            if rules:
+                # Create a copy
+                data = request.POST.copy()
+                remap_fields(rules, data, form=NotifyByUrlForm())
+
+            else:
+                # Just create a pointer
+                data = request.POST
+
+            form = NotifyByUrlForm(data=data, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -1182,6 +1210,10 @@ class StatelessNotifyView(View):
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
+
+                # Apply content rules
+                if rules:
+                    remap_fields(rules, content, form=NotifyByUrlForm())
 
             except (RequestDataTooBig):
                 # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case

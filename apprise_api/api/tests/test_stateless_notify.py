@@ -120,6 +120,39 @@ class StatelessNotifyTests(SimpleTestCase):
             # Reset our mock object
             mock_notify.reset_mock()
 
+            form_data = {
+                'payload': '## test notification',
+                'fmt': apprise.NotifyFormat.MARKDOWN,
+                'extra': 'mailto://user:pass@hotmail.com',
+            }
+
+            # We sent the notification successfully (use our rule mapping)
+            # FORM
+            response = self.client.post(
+                f'/notify/?:payload=body&:fmt=format&:extra=urls',
+                form_data)
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
+            mock_notify.reset_mock()
+
+            form_data = {
+                'payload': '## test notification',
+                'fmt': apprise.NotifyFormat.MARKDOWN,
+                'extra': 'mailto://user:pass@hotmail.com',
+            }
+
+            # We sent the notification successfully (use our rule mapping)
+            # JSON
+            response = self.client.post(
+                '/notify/?:payload=body&:fmt=format&:extra=urls',
+                json.dumps(form_data),
+                content_type="application/json")
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
+            mock_notify.reset_mock()
+
         # Long Filename
         attach_data = {
             'attachment': SimpleUploadedFile(
