@@ -33,7 +33,7 @@ import apprise
 from inspect import cleandoc
 
 # Grant access to our Notification Manager Singleton
-N_MGR = apprise.NotificationManager.NotificationManager()
+N_MGR = apprise.manager_plugins.NotificationManager()
 
 
 class NotifyTests(SimpleTestCase):
@@ -1176,7 +1176,7 @@ class NotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 1
         assert response['content-type'].startswith('text/html')
 
-    @mock.patch('apprise.plugins.NotifyEmail.NotifyEmail.send')
+    @mock.patch('apprise.plugins.email.NotifyEmail.send')
     def test_notify_with_filters(self, mock_send):
         """
         Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES

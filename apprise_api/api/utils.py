@@ -78,10 +78,10 @@ STORE_MODES = (
 )
 
 # Access our Attachment Manager Singleton
-A_MGR = apprise.AttachmentManager.AttachmentManager()
+A_MGR = apprise.manager_attachment.AttachmentManager()
 
 # Access our Notification Manager Singleton
-N_MGR = apprise.NotificationManager.NotificationManager()
+N_MGR = apprise.manager_plugins.NotificationManager()
 
 
 class Attachment(A_MGR['file']):

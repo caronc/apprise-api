@@ -100,7 +100,7 @@ class JSONEncoder(DjangoJSONEncoder):
         if isinstance(obj, set):
             return list(obj)
 
-        elif isinstance(obj, apprise.AppriseLocale.LazyTranslation):
+        elif isinstance(obj, apprise.locale.LazyTranslation):
             return str(obj)
 
         return super().default(obj)

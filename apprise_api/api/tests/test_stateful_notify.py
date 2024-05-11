@@ -35,7 +35,7 @@ import requests
 import inspect
 
 # Grant access to our Notification Manager Singleton
-N_MGR = apprise.NotificationManager.NotificationManager()
+N_MGR = apprise.manager_plugins.NotificationManager()
 
 
 class StatefulNotifyTests(SimpleTestCase):
