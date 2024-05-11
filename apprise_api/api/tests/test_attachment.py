@@ -132,6 +132,18 @@ class AttachmentTests(SimpleTestCase):
             with self.assertRaises(ValueError):
                 parse_attachments(None, files_request)
 
+        # Test Attachment Size seto t zer0
+        with override_settings(APPRISE_ATTACH_SIZE=0):
+            files_request = {
+                'file1': SimpleUploadedFile(
+                    "attach.txt",
+                    # More then 1 MB in size causing error to trip
+                    ("content" * 1024 * 1024).encode('utf-8'),
+                    content_type="text/plain")
+            }
+            with self.assertRaises(ValueError):
+                parse_attachments(None, files_request)
+
         # Bad data provided in filename field
         files_request = {
             'file1': SimpleUploadedFile(

@@ -132,6 +132,45 @@ The following architectures are supported: `amd64`, `arm/v7`, and `arm64`. The f
 
 ## API Details
 
+### Health Checks
+
+You can perform status or health checks on your server configuration by accessing `/status`.
+
+| Path         | Method | Description |
+|------------- | ------ | ----------- |
+| `/status` |  GET  | Simply returns a server status.  The server http response code is a `200` if the server is working correcty and a `417` if there was an unexpected issue.  You can set the `Accept` header to `application/json` or `text/plain` for different response outputs.
+
+Below is a sample of just a simple text response:
+```bash
+# Request a general text response
+# Output will read `OK` if everything is fine, otherwise it will return
+# one or more of the following separated by a comma:
+#  - ATTACH_PERMISSION_ISSUE: Can not write attachments (likely a permission issue)
+#  - CONFIG_PERMISSION_ISSUE: Can not write configuration (likely a permission issue)
+curl -X GET http://localhost:8000/status
+```
+
+Below is a sample of a JSON response:
+```bash
+curl -X GET -H "Accept: application/json" http://localhost:8000/status
+```
+The above output may look like this:
+```json
+{
+  "config_lock": false,
+  "status": {
+    "can_write_config": true,
+    "can_write_attach": true,
+    "details": ["OK"]
+  }
+}
+```
+
+- The `config_lock` always cross references if the `APPRISE_CONFIG_LOCK` is enabled or not.
+- The `status.can_write_config` defines if the configuration directory is writable or not.  If the environment variable `APPRISE_STATEFUL_MODE` is set to `disabled`, this value will always read `false` and it will not impact the `status.details`
+- The `status.can_write_attach` defines if the attachment directory is writable or not.  If the environment variable `APPRISE_ATTACH_SIZE` or `APPRISE_MAX_ATTACHMENTS` is set to `0` (zero) or lower, this value will always read `false` and it will not impact the `status.details`.
+- The `status.details` identifies the overall status. If there is more then 1 issue to report here, they will all show in this list.  In a working orderly environment, this will always be set to `OK` and the http response type will be `200`.
+
 ### Stateless Solution
 
 Some people may wish to only have a sidecar solution that does require use of any persistent storage.  The following API endpoint can be used to directly send a notification of your choice to any of the [supported services by Apprise](https://github.com/caronc/apprise/wiki) without any storage based requirements:

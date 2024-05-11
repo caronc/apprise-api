@@ -197,7 +197,6 @@ class NotifyPayloadMapper(SimpleTestCase):
             'body': 'the message',
         }
 
-
         #
         # mapping of fields don't align - test 6
         #

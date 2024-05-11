@@ -30,6 +30,9 @@ urlpatterns = [
         r'^$',
         views.WelcomeView.as_view(), name='welcome'),
     re_path(
+        r'^status/?$',
+        views.HealthCheckView.as_view(), name='health'),
+    re_path(
         r'^details/?$',
         views.DetailsView.as_view(), name='details'),
     re_path(

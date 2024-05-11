@@ -85,7 +85,21 @@ class WebhookTests(SimpleTestCase):
         mock_post.reset_mock()
 
         with override_settings(APPRISE_WEBHOOK_URL='invalid'):
-            # Invalid wbhook defined
+            # Invalid webhook defined
+            send_webhook({})
+            assert mock_post.call_count == 0
+
+        mock_post.reset_mock()
+
+        with override_settings(APPRISE_WEBHOOK_URL=None):
+            # Invalid webhook defined
+            send_webhook({})
+            assert mock_post.call_count == 0
+
+        mock_post.reset_mock()
+
+        with override_settings(APPRISE_WEBHOOK_URL='http://$#@'):
+            # Invalid hostname defined
             send_webhook({})
             assert mock_post.call_count == 0
 
@@ -93,7 +107,7 @@ class WebhookTests(SimpleTestCase):
 
         with override_settings(
                 APPRISE_WEBHOOK_URL='invalid://hostname'):
-            # Invalid wbhook defined
+            # Invalid webhook defined
             send_webhook({})
             assert mock_post.call_count == 0
 
