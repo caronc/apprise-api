@@ -196,3 +196,31 @@ class NotifyPayloadMapper(SimpleTestCase):
             'format': 'markdown',
             'body': 'the message',
         }
+
+
+        #
+        # mapping of fields don't align - test 6
+        #
+        rules = {
+            'payload': 'body',
+            'fmt': 'format',
+            'extra': 'tag',
+        }
+        payload = {
+            'format': 'markdown',
+            'type': 'info',
+            'title': '',
+            'body': '## test notifiction',
+            'attachment': None,
+            'tag': 'general',
+            'tags': '',
+        }
+
+        # Make a copy of our original payload
+        payload_orig = payload.copy()
+
+        # Map our fields
+        remap_fields(rules, payload)
+
+        # There are no rules applied since nothing aligned
+        assert payload == payload_orig

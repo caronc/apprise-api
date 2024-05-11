@@ -210,7 +210,7 @@ curl -X POST \
     http://localhost:8000/notify
 ```
 
-### Persistent Storage Solution
+### Persistent (Stateful) Storage Solution
 
 You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://github.com/caronc/apprise/wiki/CLI_Usage) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
 
@@ -511,4 +511,48 @@ a.add(config)
 # Send a test message
 a.notify('test message')
 ```
+
+## Third Party Webhook Support
+It can be understandable that third party applications can't always publish the format expected by this API tool.  To work-around this, you can re-map the fields just before they're processed.  For example; consider that we expect the follow minimum payload items for a stateful notification:
+```json
+{
+    "body": "Message body"
+}
+```
+
+But what if your tool you're using is only capable of sending:
+```json
+{
+   "subject": "My Title",
+   "payload": "My Body"
+}
+```
+
+We would want to map `subject` to `title` in this case and `payload` to `body`.  This can easily be done using the `:` (colon) argument when we prepare our payload:
+
+```bash
+# Note the keyword arguments prefixed with a `:` (colon).   These
+# instruct the API to map the payload (which we may not have control over)
+# to align with what the Apprise API expects.
+#
+# We also convert `subject` to `title` too:
+curl -X POST \
+    -F "subject=Mesage Title" \
+    -F "payload=Message Body" \
+    "http://localhost:8000/notify/{KEY}?:subject=title&:payload=body"
+
+```
+
+Here is the JSON Version and tests out the Stateless query (which requires at a minimum the `urls` and `body`:
+```bash
+# We also convert `subject` to `title` too:
+curl -X POST -d '{"href": "mailto://user:pass@gmail.com", "subject":"My Title", "payload":"Body"}' \
+    -H "Content-Type: application/json" \
+    "http://localhost:8000/notify/{KEY}?:subject=title&:payload=body&:href=urls"
+```
+
+The colon `:` prefix is the switch that starts the re-mapping rule engine.  You can do 3 possible things with the rule engine:
+1. `:existing_key=expected_key`: Rename an existing (expected) payload key to one Apprise expects
+1. `:existing_key=`: By setting no value, the existing key is simply removed from the payload entirely
+1. `:expected_key=A value to give it`: You can also fix an expected apprise key to a pre-generated string value.
 

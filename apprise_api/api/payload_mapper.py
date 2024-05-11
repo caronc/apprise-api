@@ -31,7 +31,7 @@ import logging
 logger = logging.getLogger('django')
 
 
-def remap_fields(rules, payload):
+def remap_fields(rules, payload, form=None):
     """
     Remaps fields in the payload provided based on the rules provided
 
@@ -48,8 +48,11 @@ def remap_fields(rules, payload):
 
     """
 
-    # First generate our allowed keys; only these can be mapped
-    allowed_keys = set(NotifyForm().fields.keys())
+    # Prepare our Form (identifies our expected keys)
+    form = NotifyForm() if form is None else form
+
+    # First generate our expected keys; only these can be mapped
+    expected_keys = set(form.fields.keys())
     for _key, value in rules.items():
 
         key = _key.lower()
@@ -59,8 +62,8 @@ def remap_fields(rules, payload):
             continue
 
         vkey = value.lower()
-        if vkey in allowed_keys:
-            if key not in allowed_keys or vkey not in payload:
+        if vkey in expected_keys and key in payload:
+            if key not in expected_keys or vkey not in payload:
                 # replace
                 payload[vkey] = payload[key]
                 del payload[key]
@@ -71,8 +74,8 @@ def remap_fields(rules, payload):
                 payload[vkey] = payload[key]
                 payload[key] = _tmp
 
-        else:
-            # store
+        elif key in expected_keys or key in payload:
+            # assignment
             payload[key] = value
 
     return True

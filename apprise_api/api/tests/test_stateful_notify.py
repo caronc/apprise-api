@@ -27,6 +27,7 @@ from django.test.utils import override_settings
 from unittest.mock import patch, Mock
 from ..forms import NotifyForm
 from ..utils import ConfigCache
+from json import dumps
 import os
 import re
 import apprise
@@ -107,7 +108,7 @@ class StatefulNotifyTests(SimpleTestCase):
             assert len(entries) == 3
 
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 'tag': 'general',
             }
@@ -128,7 +129,40 @@ class StatefulNotifyTests(SimpleTestCase):
             mock_post.reset_mock()
 
             form_data = {
-                'body': '## test notifiction',
+                'payload': '## test notification',
+                'fmt': apprise.NotifyFormat.MARKDOWN,
+                'extra': 'general',
+            }
+
+            # We sent the notification successfully (use our rule mapping)
+            # FORM
+            response = self.client.post(
+                f'/notify/{key}/?:payload=body&:fmt=format&:extra=tag',
+                form_data)
+            assert response.status_code == 200
+            assert mock_post.call_count == 1
+
+            mock_post.reset_mock()
+
+            form_data = {
+                'payload': '## test notification',
+                'fmt': apprise.NotifyFormat.MARKDOWN,
+                'extra': 'general',
+            }
+
+            # We sent the notification successfully (use our rule mapping)
+            # JSON
+            response = self.client.post(
+                f'/notify/{key}/?:payload=body&:fmt=format&:extra=tag',
+                dumps(form_data),
+                content_type="application/json")
+            assert response.status_code == 200
+            assert mock_post.call_count == 1
+
+            mock_post.reset_mock()
+
+            form_data = {
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 'tag': 'no-on-with-this-tag',
             }
@@ -180,7 +214,7 @@ class StatefulNotifyTests(SimpleTestCase):
             assert len(entries) == 3
 
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
             }
 
@@ -204,7 +238,7 @@ class StatefulNotifyTests(SimpleTestCase):
             # Test tagging now
             #
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 'tag': 'general+json',
             }
@@ -226,7 +260,7 @@ class StatefulNotifyTests(SimpleTestCase):
             mock_post.reset_mock()
 
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 # Plus with space inbetween
                 'tag': 'general + json',
@@ -248,7 +282,7 @@ class StatefulNotifyTests(SimpleTestCase):
             mock_post.reset_mock()
 
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 # Space (AND)
                 'tag': 'general json',
@@ -269,7 +303,7 @@ class StatefulNotifyTests(SimpleTestCase):
             mock_post.reset_mock()
 
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 # Comma (OR)
                 'tag': 'general, devops',
@@ -351,7 +385,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
         for tag in ('user1', 'user2'):
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 'tag': tag,
             }
@@ -374,7 +408,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
         # Now let's notify by our group
         form_data = {
-            'body': '## test notifiction',
+            'body': '## test notification',
             'format': apprise.NotifyFormat.MARKDOWN,
             'tag': 'mygroup',
         }
@@ -448,7 +482,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
         for tag in ('user1', 'user2'):
             form_data = {
-                'body': '## test notifiction',
+                'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 'tag': tag,
             }
@@ -471,7 +505,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
         # Now let's notify by our group
         form_data = {
-            'body': '## test notifiction',
+            'body': '## test notification',
             'format': apprise.NotifyFormat.MARKDOWN,
             'tag': 'mygroup',
         }

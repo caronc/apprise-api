@@ -669,7 +669,16 @@ class NotifyView(View):
         # our content
         content = {}
         if not json_payload:
-            form = NotifyForm(data=request.POST, files=request.FILES)
+            if rules:
+                # Create a copy
+                data = request.POST.copy()
+                remap_fields(rules, data)
+
+            else:
+                # Just create a pointer
+                data = request.POST
+
+            form = NotifyForm(data=data, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -678,6 +687,10 @@ class NotifyView(View):
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
+
+                # Apply content rules
+                if rules:
+                    remap_fields(rules, content)
 
             except (RequestDataTooBig):
                 # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
@@ -723,10 +736,6 @@ class NotifyView(View):
                 safe=False,
                 status=status
             )
-
-        # Apply content rules
-        if rules:
-            remap_fields(rules, content)
 
         # Handle Attachments
         attach = None
@@ -1183,8 +1192,16 @@ class StatelessNotifyView(View):
         # our content
         content = {}
         if not json_payload:
-            content = {}
-            form = NotifyByUrlForm(request.POST, request.FILES)
+            if rules:
+                # Create a copy
+                data = request.POST.copy()
+                remap_fields(rules, data, form=NotifyByUrlForm())
+
+            else:
+                # Just create a pointer
+                data = request.POST
+
+            form = NotifyByUrlForm(data=data, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -1193,6 +1210,10 @@ class StatelessNotifyView(View):
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
+
+                # Apply content rules
+                if rules:
+                    remap_fields(rules, content, form=NotifyByUrlForm())
 
             except (RequestDataTooBig):
                 # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
@@ -1234,10 +1255,6 @@ class StatelessNotifyView(View):
                 if not json_response else JsonResponse({
                     'error': msg,
                 }, encoder=JSONEncoder, safe=False, status=status)
-
-        # Apply content rules
-        if rules:
-            remap_fields(rules, content)
 
         if not content.get('urls') and settings.APPRISE_STATELESS_URLS:
             # fallback to settings.APPRISE_STATELESS_URLS if no urls were
