@@ -61,12 +61,17 @@ INSTALLED_APPS = [
 
     # Apprise API
     'api',
+
+    # Prometheus
+    'django_prometheus',
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.common.CommonMiddleware',
     'core.middleware.theme.AutoThemeMiddleware',
     'core.middleware.config.DetectConfigMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
