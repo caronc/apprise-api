@@ -595,3 +595,9 @@ The colon `:` prefix is the switch that starts the re-mapping rule engine.  You 
 1. `:existing_key=`: By setting no value, the existing key is simply removed from the payload entirely
 1. `:expected_key=A value to give it`: You can also fix an expected apprise key to a pre-generated string value.
 
+
+### Infrastructure model
+![Infrastructure main model](.infragenie/infrastructure_main_model.svg)
+- [apprise component model](.infragenie/apprise_component_model.svg)
+
+---
