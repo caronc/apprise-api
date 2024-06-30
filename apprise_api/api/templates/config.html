@@ -188,7 +188,7 @@
 {% endif %}
 {% endblock %}
 {% block jsfooter %}
-
+{{ block.super }}
 {% if STATEFUL_MODE != 'disabled' %}
 function update_count() {
   const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
@@ -695,8 +695,8 @@ function notify_init() {
 {% endblock %}
 
 {% block onload %}
-{% if STATEFUL_MODE != 'disabled' %}
 {{ block.super }}
+{% if STATEFUL_MODE != 'disabled' %}
 document.querySelector('label [for="id_tag"]')
 {
   // create a new div with the class 'chips' assigned to it

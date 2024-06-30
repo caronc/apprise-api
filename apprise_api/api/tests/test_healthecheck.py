@@ -64,6 +64,7 @@ class HealthCheckTests(SimpleTestCase):
         content = loads(response.content)
         assert content == {
             'config_lock': False,
+            'attach_lock': False,
             'status': {
                 'can_write_config': True,
                 'can_write_attach': True,
@@ -87,6 +88,7 @@ class HealthCheckTests(SimpleTestCase):
             content = loads(response.content)
             assert content == {
                 'config_lock': True,
+                'attach_lock': False,
                 'status': {
                     'can_write_config': False,
                     'can_write_attach': True,
@@ -109,6 +111,7 @@ class HealthCheckTests(SimpleTestCase):
             content = loads(response.content)
             assert content == {
                 'config_lock': False,
+                'attach_lock': False,
                 'status': {
                     'can_write_config': False,
                     'can_write_attach': True,
@@ -131,6 +134,7 @@ class HealthCheckTests(SimpleTestCase):
             content = loads(response.content)
             assert content == {
                 'config_lock': False,
+                'attach_lock': True,
                 'status': {
                     'can_write_config': True,
                     'can_write_attach': False,
@@ -153,9 +157,10 @@ class HealthCheckTests(SimpleTestCase):
             content = loads(response.content)
             assert content == {
                 'config_lock': False,
+                'attach_lock': False,
                 'status': {
                     'can_write_config': True,
-                    'can_write_attach': False,
+                    'can_write_attach': True,
                     'details': ['OK']
                 }
             }

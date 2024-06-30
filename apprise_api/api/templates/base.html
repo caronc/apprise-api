@@ -37,9 +37,9 @@
         </a>
         <h1>{% trans "Apprise API" %}</h1>
         <ul>
-				   <li>APPRISE v{{APPRISE_VERSION}}</li>
-				   <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><i class="material-icons">invert_colors</i></a></li>
-				</ul>
+           <li>APPRISE v{{APPRISE_VERSION}}</li>
+           <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><i class="material-icons">invert_colors</i></a></li>
+        </ul>
       </div>
     </div>
     <!-- Page Layout here -->
@@ -50,10 +50,10 @@
         <ul class="collection z-depth-1">
           <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
-					{% if not CONFIG_LOCK %}
+          {% if not CONFIG_LOCK %}
           <a class="collection-item" href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
             {% trans "New Configuration" %}</a>
-					{% endif %}
+          {% endif %}
         </ul>
 {% endif %}
         <ul class="collection z-depth-1">
@@ -80,6 +80,28 @@
       </div>
 
       <div class="col s9">
+        <div id="health-check" class="section" style="display: none">
+          <h4><i class="material-icons" style="color: orange">warning</i>&nbsp;{% trans "Apprise Health Check Failed" %}&nbsp;<i class="material-icons" style="color: orange">warning</i></h4>
+        {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
+           <ul>
+             <li class="can_write_config" style="display: none"><strong>
+                <i class="material-icons"
+                style="color: red">cancel</i>&nbsp;{% trans "Configuration Write Failure" %}</strong>
+                <p>{% blocktrans %}Apprise can not write new configuration information to the directory:{% endblocktrans %} <code>{{CONFIG_DIR}}</code>.</p>
+                <p>{% blocktrans %}<em>Note:</em>  If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_CONFIG_LOCK=yes</code> and reload your Apprise instance.{% endblocktrans %}</p>
+             </li>
+
+             <li class="can_write_attach" style="display: none"><strong>
+                <i class="material-icons"
+                style="color: red">cancel</i>&nbsp;{% trans "Attachment Temporary Storage Write Failure" %}</strong>
+                <p>{% blocktrans %}Apprise can not circulate attachments (if provided) along to supported endpoints due to not having write access to the directory:{% endblocktrans %} <code>{{ATTACH_DIR}}</code>.</p>
+                <p>{% blocktrans %}<em>Note:</em> If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_ATTACH_SIZE=0</code> and reload your Apprise instance.{% endblocktrans %}</p>
+                </p>
+             </li>
+           </ul>
+        <p>{% blocktrans %}Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files.  In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too.{% endblocktrans %}</p>
+        <p>{% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.</p>
+        </div>
         {% block body %}{% endblock %}
       </div>
 
@@ -91,9 +113,37 @@
       M.AutoInit();
       // highlightjs
       hljs.initHighlightingOnLoad();
-      {% block onload %} {% endblock %}
+      {% block onload %}{% endblock %}
+      // healthcheck
+      health_check()
     });
     {% block jsfooter %} {% endblock %}
+    function health_check() {
+      // perform our health check
+      document.querySelector('#health-check').style.display = 'none';
+      document.querySelector('#health-check li.can_write_config').style.display = 'none';
+      document.querySelector('#health-check li.can_write_attach').style.display = 'none';
+      let response = fetch('{% url "health" %}', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json;charset=utf-8'
+        },
+
+      }).then(function(response) {
+         if(response.status != 200)
+         {
+             response.json().then(function(content) {
+              if (content['status']['can_write_config'] === false && content['config_lock'] === false) {
+                   document.querySelector('#health-check li.can_write_config').style.display = '';
+              }
+              if (content['status']['can_write_attach'] === false && content['attach_lock'] === false) {
+                   document.querySelector('#health-check li.can_write_attach').style.display = '';
+              }
+              document.querySelector('#health-check').style.display = '';
+            })
+         }
+      });
+    }
   </script>
 </body>
 

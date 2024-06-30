@@ -45,7 +45,7 @@ FROM base as runtime
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
-COPY --from=builder /build/*.whl .
+COPY --from=builder /build/*.whl ./
 RUN set -eux && \
     echo "Installing cryptography" && \
         pip3 install *.whl && \
@@ -55,6 +55,9 @@ RUN set -eux && \
         apt-get update -qq && \
         apt-get install -y -qq \
             nginx && \
+    echo "Installing tools" && \
+        apt-get install -y -qq \
+            sed && \
     echo "Cleaning up" && \
         apt-get --yes autoremove --purge && \
         apt-get clean --yes && \
@@ -73,16 +76,12 @@ WORKDIR /opt/apprise
 # Copy over Apprise API
 COPY apprise_api/ webapp
 
-#
-# # Configuration Permissions (to run nginx as a non-root user)
+# Configuration Permissions (to run nginx as a non-root user)
 RUN umask 0002 && \
-    mkdir -p /attach /config /plugin /run/apprise && \
-    chown www-data:www-data -R /run/apprise /var/lib/nginx /attach /config /plugin
+    touch /etc/nginx/override.conf
 
-# Handle running as a non-root user (www-data is id/gid 33)
-USER www-data
 VOLUME /config
 VOLUME /attach
 VOLUME /plugin
 EXPOSE 8000
-CMD ["/usr/local/bin/supervisord", "-c", "/opt/apprise/webapp/etc/supervisord.conf"]
+CMD ["/opt/apprise/webapp/supervisord-startup"]
