@@ -207,6 +207,22 @@ class HTTPAttachment(A_MGR['http']):
                 pass
 
 
+def touch(fname, mode=0o666, dir_fd=None, **kwargs):
+    """
+    Acts like a Linux touch and updates a file with a current timestamp
+    """
+    flags = os.O_CREAT | os.O_APPEND
+    try:
+        with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
+            os.utime(f.fileno() if os.utime in os.supports_fd else fname,
+                     dir_fd=None if os.supports_fd else dir_fd, **kwargs)
+
+    except OSError:
+        return False
+
+    return True
+
+
 def parse_attachments(attachment_payload, files_request):
     """
     Takes the payload provided in a `/notify` call and extracts the
@@ -230,15 +246,12 @@ def parse_attachments(attachment_payload, files_request):
         count += 1
 
     if settings.APPRISE_ATTACH_SIZE <= 0:
-        raise ValueError("The attachment size is restricted to 0MB")
+        raise ValueError("Attachment support has been disabled")
 
-    if settings.APPRISE_MAX_ATTACHMENTS <= 0 or \
-            (settings.APPRISE_MAX_ATTACHMENTS > 0 and
-                count > settings.APPRISE_MAX_ATTACHMENTS):
+    if settings.APPRISE_MAX_ATTACHMENTS > 0 and count > settings.APPRISE_MAX_ATTACHMENTS:
         raise ValueError(
             "There is a maximum of %d attachments" %
-            settings.APPRISE_MAX_ATTACHMENTS
-            if settings.APPRISE_MAX_ATTACHMENTS > 0 else 0)
+            settings.APPRISE_MAX_ATTACHMENTS)
 
     if isinstance(attachment_payload, (tuple, list, set)):
         for no, entry in enumerate(attachment_payload, start=1):
@@ -772,66 +785,69 @@ def healthcheck(lazy=True):
 
     if not (settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED or settings.APPRISE_CONFIG_LOCK):
         # Update our Configuration Check Block
-        path = os.path.join(ConfigCache.root, '.tmp_healthcheck')
+        path = os.path.join(ConfigCache.root, '.tmp_hc')
         if lazy:
             try:
                 modify_date = datetime.fromtimestamp(os.path.getmtime(path))
                 delta = (datetime.now() - modify_date).total_seconds()
-                if delta <= 7200.00:  # 2hrs
+                if delta <= 30.00:  # 30s
                     response['can_write_config'] = True
 
             except FileNotFoundError:
                 # No worries... continue with below testing
                 pass
 
-        if not response['can_write_config']:
-            try:
-                os.makedirs(path, exist_ok=True)
-
-                # Write a small file
-                with tempfile.TemporaryFile(mode='w+b', dir=path) as fp:
-                    # Test writing 1 block
-                    fp.write(b'.')
-                    # Read it back
-                    fp.seek(0)
-                    fp.read(1) == b'.'
-                    # Toggle our status
-                    response['can_write_config'] = True
-
             except OSError:
+                # Permission Issue or something else likely
                 # We can take an early exit
                 response['details'].append('CONFIG_PERMISSION_ISSUE')
 
-    if settings.APPRISE_MAX_ATTACHMENTS > 0 and settings.APPRISE_ATTACH_SIZE > 0:
+        if not (response['can_write_config'] or 'CONFIG_PERMISSION_ISSUE' in response['details']):
+            try:
+                os.makedirs(ConfigCache.root, exist_ok=True)
+                if touch(path):
+                    # Toggle our status
+                    response['can_write_config'] = True
+
+                else:
+                    # We can take an early exit as there is already a permission issue detected
+                    response['details'].append('CONFIG_PERMISSION_ISSUE')
+
+            except OSError:
+                # We can take an early exit as there is already a permission issue detected
+                response['details'].append('CONFIG_PERMISSION_ISSUE')
+
+    if settings.APPRISE_ATTACH_SIZE > 0:
         # Test our ability to access write attachments
 
         # Update our Configuration Check Block
-        path = os.path.join(settings.APPRISE_ATTACH_DIR, '.tmp_healthcheck')
+        path = os.path.join(settings.APPRISE_ATTACH_DIR, '.tmp_hc')
         if lazy:
             try:
                 modify_date = datetime.fromtimestamp(os.path.getmtime(path))
                 delta = (datetime.now() - modify_date).total_seconds()
-                if delta <= 7200.00:  # 2hrs
+                if delta <= 30.00:  # 30s
                     response['can_write_attach'] = True
 
             except FileNotFoundError:
                 # No worries... continue with below testing
                 pass
 
-        if not response['can_write_attach']:
+            except OSError:
+                # We can take an early exit as there is already a permission issue detected
+                response['details'].append('ATTACH_PERMISSION_ISSUE')
+
+        if not (response['can_write_attach'] or 'ATTACH_PERMISSION_ISSUE' in response['details']):
             # No lazy mode set or content require a refresh
             try:
-                os.makedirs(path, exist_ok=True)
-
-                # Write a small file
-                with tempfile.TemporaryFile(mode='w+b', dir=path) as fp:
-                    # Test writing 1 block
-                    fp.write(b'.')
-                    # Read it back
-                    fp.seek(0)
-                    fp.read(1) == b'.'
+                os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+                if touch(path):
                     # Toggle our status
                     response['can_write_attach'] = True
+
+                else:
+                    # We can take an early exit as there is already a permission issue detected
+                    response['details'].append('ATTACH_PERMISSION_ISSUE')
 
             except OSError:
                 # We can take an early exit

@@ -161,8 +161,8 @@ class HealthCheckView(View):
             and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
-        # Run our healthcheck
-        response = healthcheck()
+        # Run our healthcheck; allow ?force which will cause the check to run each time
+        response = healthcheck(lazy='force' not in request.GET)
 
         # Prepare our response
         status = ResponseCode.okay if 'OK' in response['details'] else ResponseCode.expectation_failed
@@ -172,6 +172,7 @@ class HealthCheckView(View):
         return HttpResponse(response, status=status, content_type='text/plain') \
             if not json_response else JsonResponse({
                 'config_lock': settings.APPRISE_CONFIG_LOCK,
+                'attach_lock': settings.APPRISE_ATTACH_SIZE <= 0,
                 'status': response,
             }, encoder=JSONEncoder, safe=False, status=status)
 

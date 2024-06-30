@@ -181,7 +181,69 @@ class NotifyTests(SimpleTestCase):
         # Reset our mock object
         mock_notify.reset_mock()
 
+        # A setting of zero means unlimited attachments are allowed
         with override_settings(APPRISE_MAX_ATTACHMENTS=0):
+
+            # Preare our form data
+            form_data = {
+                'body': 'test notifiction',
+            }
+            attach_data = {
+                'attachment': SimpleUploadedFile(
+                    "attach.txt", b"content here", content_type="text/plain")
+            }
+
+            # At a minimum, just a body is required
+            form = NotifyForm(form_data, attach_data)
+            assert form.is_valid()
+
+            # Send our notification
+            response = self.client.post(
+                '/notify/{}'.format(key), form.cleaned_data)
+
+            # We're good!
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Only allow 1 attachment, but we'll attempt to send more...
+        with override_settings(APPRISE_MAX_ATTACHMENTS=1):
+
+            # Preare our form data
+            form_data = {
+                'body': 'test notifiction',
+            }
+
+            # At a minimum, just a body is required
+            form = NotifyForm(form_data)
+
+            assert form.is_valid()
+            # Required to prevent None from being passed into self.client.post()
+            del form.cleaned_data['attachment']
+
+            data = {
+                **form.cleaned_data,
+                'file1': SimpleUploadedFile(
+                    "attach1.txt", b"content here", content_type="text/plain"),
+                'file2': SimpleUploadedFile(
+                    "attach2.txt", b"more content here", content_type="text/plain"),
+            }
+
+            # Send our notification
+            response = self.client.post(
+                '/notify/{}'.format(key), data, format='multipart')
+
+            # Too many attachments
+            assert response.status_code == 400
+            assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # A setting of zero means unlimited attachments are allowed
+        with override_settings(APPRISE_ATTACH_SIZE=0):
 
             # Preare our form data
             form_data = {

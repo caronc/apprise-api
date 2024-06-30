@@ -1,4 +1,4 @@
-FROM python:3.11-slim as base
+FROM python:3.11-slim AS base
 
 # set version label
 ARG BUILD_DATE
@@ -7,13 +7,13 @@ LABEL build_version="Apprise API version:- ${VERSION} Build-date:- ${BUILD_DATE}
 LABEL maintainer="Chris-Caron"
 
 # set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV APPRISE_CONFIG_DIR /config
-ENV APPRISE_ATTACH_DIR /attach
-ENV APPRISE_PLUGIN_PATHS /plugin
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV APPRISE_CONFIG_DIR=/config
+ENV APPRISE_ATTACH_DIR=/attach
+ENV APPRISE_PLUGIN_PATHS=/plugin
 
-FROM base as builder
+FROM base AS builder
 
 WORKDIR /build/
 
@@ -41,11 +41,11 @@ RUN set -eux && \
             --no-binary cryptography \
             cryptography
 
-FROM base as runtime
+FROM base AS runtime
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
-COPY --from=builder /build/*.whl .
+COPY --from=builder /build/*.whl ./
 RUN set -eux && \
     echo "Installing cryptography" && \
         pip3 install *.whl && \
@@ -55,6 +55,9 @@ RUN set -eux && \
         apt-get update -qq && \
         apt-get install -y -qq \
             nginx && \
+    echo "Installing tools" && \
+        apt-get install -y -qq \
+            sed && \
     echo "Cleaning up" && \
         apt-get --yes autoremove --purge && \
         apt-get clean --yes && \
@@ -73,16 +76,13 @@ WORKDIR /opt/apprise
 # Copy over Apprise API
 COPY apprise_api/ webapp
 
-#
-# # Configuration Permissions (to run nginx as a non-root user)
+# Configuration Permissions (to run nginx as a non-root user)
 RUN umask 0002 && \
-    mkdir -p /attach /config /plugin /run/apprise && \
-    chown www-data:www-data -R /run/apprise /var/lib/nginx /attach /config /plugin
+    touch /etc/nginx/server-override.conf && \
+    touch /etc/nginx/location-override.conf
 
-# Handle running as a non-root user (www-data is id/gid 33)
-USER www-data
 VOLUME /config
 VOLUME /attach
 VOLUME /plugin
 EXPOSE 8000
-CMD ["/usr/local/bin/supervisord", "-c", "/opt/apprise/webapp/etc/supervisord.conf"]
+CMD ["/opt/apprise/webapp/supervisord-startup"]

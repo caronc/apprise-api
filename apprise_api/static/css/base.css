@@ -238,3 +238,33 @@ code.config-id {
 .chip.selected {
 	font-weight: 600;
 }
+
+#health-check {
+	background-color: #f883791f;
+  border-radius: 25px;
+	padding: 2em;
+	margin-bottom: 2em;
+}
+#health-check h4 {
+	font-size: 30px;
+}
+#health-check h4 .material-icons {
+  margin-top: -0.2em;
+}
+
+#health-check li .material-icons {
+	font-size: 30px;
+  margin-top: -0.2em;
+}
+
+#health-check ul {
+  list-style-type: disc;
+  padding-left: 2em;
+}
+
+#health-check ul strong {
+	font-weight: 600;
+	font-size: 1.2rem;
+	display: block;
+}
+

@@ -1,0 +1,78 @@
+#!/bin/bash
+# Copyright (C) 2024 Chris Caron <lead2gold@gmail.com>
+# All rights reserved.
+#
+# This code is licensed under the MIT License.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files(the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions :
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+if [ $(id -u) -ne 0 ]; then
+   echo "You must be root to run this script."
+   echo "Caution: This should only be ran in a dockerized instance!"
+   exit 1
+fi
+
+# Default values
+PUID=${PUID:=1000}
+PGID=${PGID:=1000}
+
+# lookup our identifier
+GROUP=$(getent group $PGID 2>/dev/null | cut -d: -f1)
+[ -z "$GROUP" ] && groupadd --force -g $PGID apprise &>/dev/null && \
+   GROUP=apprise
+
+USER=$(id -un $PUID 2>/dev/null)
+[ $? -ne 0 ] && useradd -M -N \
+     -o -u $PUID -G $GROUP -c "Apprise API User" -d /opt/apprise apprise && \
+     USER=apprise
+
+if [ -z "$USER" ]; then
+   echo "The specified User ID (PUID) of $PUID is invalid; Aborting operation."
+   exit 1
+
+elif [ -z "$GROUP" ]; then
+   echo "The specified Group ID (PGID) of $PGID is invalid; Aborting operation."
+   exit 1
+fi
+
+# Ensure our group has been correctly assigned
+usermod -a -G $GROUP $USER &>/dev/null
+chmod o+w /dev/stdout /dev/stderr
+
+[ ! -d /attach ] && mkdir -p /attach
+chown -R $USER:$GROUP /attach
+[ ! -d /config ] && mkdir -p /config
+chown $USER:$GROUP /config
+[ ! -d /plugin ] && mkdir -p /plugin
+[ ! -d /run/apprise ] && mkdir -p /run/apprise
+
+# Some Directories require enforced permissions to play it safe
+chown $USER:$GROUP -R /run/apprise /var/lib/nginx /opt/apprise
+sed -i -e "s/^\(user[ \t]*=[ \t]*\).*$/\1$USER/g" \
+   /opt/apprise/webapp/etc/supervisord.conf
+sed -i -e "s/^\(group[ \t]*=[ \t]*\).*$/\1$GROUP/g" \
+   /opt/apprise/webapp/etc/supervisord.conf
+
+# Working directory
+cd /opt/apprise
+
+# Launch our SupervisorD
+/usr/local/bin/supervisord -c /opt/apprise/webapp/etc/supervisord.conf
+# Always return our SupervisorD return code
+exit $?

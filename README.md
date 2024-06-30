@@ -56,11 +56,17 @@ docker pull caronc/apprise:latest
 # setting APPRISE_STATEFUL_MODE to simple allows you to map your defined {key}
 # straight to a file found in the `/config` path.  In simple home configurations
 # this is sometimes the ideal expectation.
+#
+# Set your User ID or Group ID if you wish to over-ride the default of 1000
+# in the below example, we make sure it runs as the user we created the container as
+
 docker run --name apprise \
    -p 8000:8000 \
-   -v /var/lib/apprise/config:/config \
-   -v /var/lib/apprise/plugin:/plugin \
-   -v /var/lib/apprise/attach:/attach \
+   -e PUID=$(id -u) \
+   -e PGID=$(id -g) \
+   -v /path/to/local/config:/config \
+   -v /path/to/local/plugin:/plugin \
+   -v /path/to/local/attach:/attach \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -d caronc/apprise:latest
@@ -72,11 +78,17 @@ A common change one might make is to update the Dockerfile to point to the maste
 # Setup your environment the way you like
 docker build -t apprise/local:latest -f Dockerfile .
 
+# Set up a directory you wish to store your configuration in:
+mkdir -p /etc/apprise
+
 # Launch your instance
 docker run --name apprise \
    -p 8000:8000 \
+   -e PUID=$(id -u) \
+   -e PGID=$(id -g) \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -v /etc/apprise:/config \
    -d apprise/local:latest
 ```
 A `docker-compose.yml` file is already set up to grant you an instant production ready simulated environment:
@@ -84,40 +96,6 @@ A `docker-compose.yml` file is already set up to grant you an instant production
 ```bash
 # Docker Compose
 docker-compose up
-```
-
-### Config Directory Permissions
-
-Under the hood, An NginX services is reading/writing your configuration files as the user (and group) `www-data` which generally has the id of `33`.  In preparation so that you don't get the error: `An error occured saving configuration.` consider also setting up your local `/var/lib/apprise/config` permissions as:
-
-```bash
-# Create a user/group (if one doesn't already exist) owned
-# by the user and group id of 33
-id 33 &>/dev/null || sudo useradd \
-   --system --no-create-home --shell /bin/false \
-    -u 33 -g 33 www-data
-
-# Securely set the directory limiting access to only those who
-# are part of the www-data group:
-sudo chmod 770 -R /var/lib/apprise/config
-sudo chown 33:33 -R /var/lib/apprise/config
-
-# Now optionally add yourself to the group if you wish to be able to view
-# contents.
-sudo usermod -a -G 33 $(whoami)
-
-# You may need to log out and back in again for the above usermod
-# to reflect on you.  Alternatively you can just type the following
-# and it will work as a temporary solution:
-sudo su - $(whoami)
-```
-
-Alternatively a dirty solution is to just set the directory with full read/write permissions (which is not ideal in a production environment):
-
-```bash
-# Grant full permission to the local directory you're saving your
-# Apprise configuration to:
-chmod 777 /var/lib/apprise/config
 ```
 
 ## Dockerfile Details
@@ -398,6 +376,8 @@ The use of environment variables allow you to provide over-rides to default sett
 
 | Variable             | Description |
 |--------------------- | ----------- |
+| `PUID` | The User ID you wish the Apprise instance under the hood to run as. The default is `1000` if not otherwise specified.
+| `PGID` | The Group ID you wish the Apprise instance under the hood to run as. The default is `1000` if not otherwise specified.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
@@ -421,8 +401,56 @@ The use of environment variables allow you to provide over-rides to default sett
 | `DEBUG`            | This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 
 
-## Development Environment
+## Nginx Overrides
 
+The 2 files you can override are:
+1. `/etc/nginx/location-override.conf` which is included within all of the Apprise API NginX `location` references.
+1. `/etc/nginx/server-override.conf` which is included within Apprise API `server` reference.
+
+### Authentication
+Under the hood, Apprise-API is running a small NginX instance.  It allows for you to inject your own configuration into it. One thing you may wish to add is basic authentication.
+
+Below we create ourselves some nginx directives we'd like to apply to our Apprise API:
+```nginx
+# Our override.conf file:
+auth_basic            "Apprise API Restricted Area";
+auth_basic_user_file  /etc/nginx/.htpasswd;
+```
+
+Now let's set ourselves up with a simple password file (for more info on htpasswd files, see [here](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)
+```bash
+# Create ourselves a for our user 'foobar'; the below will prompt you for the pass
+# you want to provide:
+htpasswd -c apprise_api.htpasswd foobar
+
+# Note: the -c above is only needed to create the database for the first time
+```
+
+Now we can create our docker container with this new authentication information:
+```bash
+# Create our container containing Basic Auth:
+docker run --name apprise \
+   -p 8000:8000 \
+   -e PUID=$(id -u) \
+   -e PGID=$(id -g) \
+   -v /path/to/local/config:/config \
+   -v /path/to/local/attach:/attach \
+   -v ./override.conf:/etc/nginx/location-override.conf:ro \
+   -v ./apprise_api.htpasswd:/etc/nginx/.htpasswd:ro \
+   -e APPRISE_STATEFUL_MODE=simple \
+   -e APPRISE_WORKER_COUNT=1 \
+   -d caronc/apprise:latest
+```
+
+Visit http://localhost:8000 to see if things are working as expected. If you followed the example above, you should log in as the user `foobar` using the credentials you provided the account.
+
+You can add further accounts to the existing database by omitting the `-c` switch:
+```bash
+# Add another account
+htpasswd apprise_api.htpasswd user2
+```
+
+## Development Environment
 The following should get you a working development environment to test with:
 
 ```bash
