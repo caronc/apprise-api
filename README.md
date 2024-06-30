@@ -401,8 +401,56 @@ The use of environment variables allow you to provide over-rides to default sett
 | `DEBUG`            | This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 
 
-## Development Environment
+## Nginx Overrides
 
+The 2 files you can override are:
+1. `/etc/nginx/location-override.conf` which is included within all of the Apprise API NginX `location` references.
+1. `/etc/nginx/server-override.conf` which is included within Apprise API `server` reference.
+
+### Authentication
+Under the hood, Apprise-API is running a small NginX instance.  It allows for you to inject your own configuration into it. One thing you may wish to add is basic authentication.
+
+Below we create ourselves some nginx directives we'd like to apply to our Apprise API:
+```nginx
+# Our override.conf file:
+auth_basic            "Apprise API Restricted Area";
+auth_basic_user_file  /etc/nginx/.htpasswd;
+```
+
+Now let's set ourselves up with a simple password file (for more info on htpasswd files, see [here](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)
+```bash
+# Create ourselves a for our user 'foobar'; the below will prompt you for the pass
+# you want to provide:
+htpasswd -c apprise_api.htpasswd foobar
+
+# Note: the -c above is only needed to create the database for the first time
+```
+
+Now we can create our docker container with this new authentication information:
+```bash
+# Create our container containing Basic Auth:
+docker run --name apprise \
+   -p 8000:8000 \
+   -e PUID=$(id -u) \
+   -e PGID=$(id -g) \
+   -v /path/to/local/config:/config \
+   -v /path/to/local/attach:/attach \
+   -v ./override.conf:/etc/nginx/location-override.conf:ro \
+   -v ./apprise_api.htpasswd:/etc/nginx/.htpasswd:ro \
+   -e APPRISE_STATEFUL_MODE=simple \
+   -e APPRISE_WORKER_COUNT=1 \
+   -d caronc/apprise:latest
+```
+
+Visit http://localhost:8000 to see if things are working as expected. If you followed the example above, you should log in as the user `foobar` using the credentials you provided the account.
+
+You can add further accounts to the existing database by omitting the `-c` switch:
+```bash
+# Add another account
+htpasswd apprise_api.htpasswd user2
+```
+
+## Development Environment
 The following should get you a working development environment to test with:
 
 ```bash
