@@ -135,6 +135,7 @@ curl -X GET -H "Accept: application/json" http://localhost:8000/status
 The above output may look like this:
 ```json
 {
+  "attach_lock": false,
   "config_lock": false,
   "status": {
     "can_write_config": true,
@@ -144,9 +145,10 @@ The above output may look like this:
 }
 ```
 
+- The `attach_lock` always cross references if the `APPRISE_ATTACH_SIZE` on whether or not it is `0` (zero) or less.
 - The `config_lock` always cross references if the `APPRISE_CONFIG_LOCK` is enabled or not.
 - The `status.can_write_config` defines if the configuration directory is writable or not.  If the environment variable `APPRISE_STATEFUL_MODE` is set to `disabled`, this value will always read `false` and it will not impact the `status.details`
-- The `status.can_write_attach` defines if the attachment directory is writable or not.  If the environment variable `APPRISE_ATTACH_SIZE` or `APPRISE_MAX_ATTACHMENTS` is set to `0` (zero) or lower, this value will always read `false` and it will not impact the `status.details`.
+- The `status.can_write_attach` defines if the attachment directory is writable or not.  If the environment variable `APPRISE_ATTACH_SIZE`. This value will always read `false` and it will not impact the `status.details`.
 - The `status.details` identifies the overall status. If there is more then 1 issue to report here, they will all show in this list.  In a working orderly environment, this will always be set to `OK` and the http response type will be `200`.
 
 ### Stateless Solution
