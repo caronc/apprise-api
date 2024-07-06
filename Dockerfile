@@ -57,7 +57,7 @@ RUN set -eux && \
             nginx && \
     echo "Installing tools" && \
         apt-get install -y -qq \
-            sed && \
+            curl sed && \
     echo "Cleaning up" && \
         apt-get --yes autoremove --purge && \
         apt-get clean --yes && \
