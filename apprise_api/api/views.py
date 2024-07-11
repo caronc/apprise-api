@@ -707,6 +707,9 @@ class NotifyView(View):
         # rules
         rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ':'}
 
+        body_not_required = request.GET.get('body_not_required') == 'true'
+        title_not_required = request.GET.get('title_not_required') == 'true'
+
         # our content
         content = {}
         if not json_payload:
@@ -912,7 +915,7 @@ class NotifyView(View):
             content['title'] = request.GET['title']
 
         # Some basic error checking
-        if not content.get('body') and not attach or \
+        if (not content.get('body') and not body_not_required and not attach) or \
                 content.get('type', apprise.NotifyType.INFO) \
                 not in apprise.NOTIFY_TYPES:
 
@@ -1124,12 +1127,15 @@ class NotifyView(View):
                 if content_type == 'text/html' else \
                 settings.LOGGING['formatters']['standard']['format']
 
+        notif_body = content.get('body') if not body_not_required else apprise.NOT_REQUIRED
+        notif_title = content.get('title', '') if not title_not_required else apprise.NOT_REQUIRED
+
         # Now specify our format (and over-ride the default):
         with apprise.LogCapture(level=level, fmt=fmt) as logs:
             # Perform our notification at this point
             result = a_obj.notify(
-                content.get('body'),
-                title=content.get('title', ''),
+                notif_body,
+                title=notif_title,
                 notify_type=content.get('type', apprise.NotifyType.INFO),
                 tag=content.get('tag'),
                 attach=attach,
@@ -1323,8 +1329,11 @@ class StatelessNotifyView(View):
         if not content.get('title') and 'title' in request.GET:
             content['title'] = request.GET['title']
 
+        body_not_required = request.GET.get('body_not_required') == 'true'
+        title_not_required = request.GET.get('title_not_required') == 'true'
+
         # Some basic error checking
-        if not content.get('body') or \
+        if (not content.get('body') and not body_not_required) or \
                 content.get('type', apprise.NotifyType.INFO) \
                 not in apprise.NOTIFY_TYPES:
 
@@ -1492,14 +1501,17 @@ class StatelessNotifyView(View):
         elif level == 'TRACE':
             level = logging.DEBUG - 1
 
+        notif_body = content.get('body') if not body_not_required else apprise.NOT_REQUIRED
+        notif_title = content.get('title', '') if not title_not_required else apprise.NOT_REQUIRED
+
         if settings.APPRISE_WEBHOOK_URL:
             esc = '<!!-!ESC!-!!>'
             fmt = f'["%(levelname)s","%(asctime)s","{esc}%(message)s{esc}"]'
             with apprise.LogCapture(level=level, fmt=fmt) as logs:
                 # Perform our notification at this point
                 result = a_obj.notify(
-                    content.get('body'),
-                    title=content.get('title', ''),
+                    notif_body,
+                    title=notif_title,
                     notify_type=content.get('type', apprise.NotifyType.INFO),
                     tag='all',
                     attach=attach,
@@ -1527,8 +1539,8 @@ class StatelessNotifyView(View):
         else:
             # Perform our notification at this point
             result = a_obj.notify(
-                content.get('body'),
-                title=content.get('title', ''),
+                notif_body,
+                title=notif_title,
                 notify_type=content.get('type', apprise.NotifyType.INFO),
                 tag='all',
                 attach=attach,
