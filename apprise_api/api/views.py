@@ -764,7 +764,7 @@ class NotifyView(View):
                         'error': msg,
                     }, encoder=JSONEncoder, safe=False, status=status)
 
-        if not content:
+        if not content and not body_not_required:
             # We could not handle the Content-Type
             logger.warning(
                 'NOTIFY - %s - Invalid FORM Payload provided using KEY: %s',
@@ -1236,6 +1236,9 @@ class StatelessNotifyView(View):
         # rules
         rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ':'}
 
+        body_not_required = request.GET.get('body_not_required') == 'true'
+        title_not_required = request.GET.get('title_not_required') == 'true'
+
         # our content
         content = {}
         if not json_payload:
@@ -1328,9 +1331,6 @@ class StatelessNotifyView(View):
         #
         if not content.get('title') and 'title' in request.GET:
             content['title'] = request.GET['title']
-
-        body_not_required = request.GET.get('body_not_required') == 'true'
-        title_not_required = request.GET.get('title_not_required') == 'true'
 
         # Some basic error checking
         if (not content.get('body') and not body_not_required) or \
