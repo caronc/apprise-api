@@ -1483,3 +1483,40 @@ class NotifyTests(SimpleTestCase):
             '/notify/{}'.format(key), data=form_data, **headers)
         assert response.status_code == 400
         assert mock_notify.call_count == 0
+
+
+    @mock.patch('apprise.Apprise.notify')
+    def test_notify_no_body(self, mock_notify):
+        """
+        Test sending a notification without a body (if supported)
+        """
+
+        key = "dummy"
+
+        # Add some content
+        response = self.client.post(
+            '/add/{}'.format(key),
+            {'urls': 'onesignal://template_id:account_id@app_key/target_player_id'})
+        assert response.status_code == 200
+
+        # Set our return value
+        mock_notify.return_value = True
+
+        # Expect to fail because body is not provided
+        response = self.client.post(
+            '/notify/{}'.format(key),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        assert response.status_code == 400 and response.json() == {
+            "error": "Bad FORM Payload provided"
+        }
+
+        # This now succeeds because body is set to not required explicitly
+        response = self.client.post(
+            '/notify/{}?body_not_required=true'.format(key),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200 and mock_notify.call_count == 1
+

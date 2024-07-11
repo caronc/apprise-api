@@ -757,3 +757,35 @@ class StatelessNotifyTests(SimpleTestCase):
 
                 # nothing was changed
                 assert N_MGR['json'].enabled is True
+
+    @mock.patch('apprise.Apprise.notify')
+    def test_notify_no_body(self, mock_notify):
+        """
+        Test sending a notification without a body (if supported)
+        """
+
+        # Set our return value
+        mock_notify.return_value = True
+
+        # Prepare our JSON data
+        json_data = {
+            'urls': 'onesignal://template_id:account_id@app_key/target_player_id',
+        }
+
+        # Expect to fail because body is not provided
+        response = self.client.post(
+            '/notify/',
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+        assert response.status_code == 400 and response.json() == {
+            "error": "Payload lacks minimum requirements"
+        }
+
+        # This now succeeds because body is set to not required explicitly
+        response = self.client.post(
+            '/notify/?body_not_required=true',
+            data=json.dumps(json_data),
+            content_type='application/json',
+        )
+        assert response.status_code == 200 and mock_notify.call_count == 1
