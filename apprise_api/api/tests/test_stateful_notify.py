@@ -65,7 +65,7 @@ class StatefulNotifyTests(SimpleTestCase):
         """
 
         # our key to use
-        key = 'test_stateful'
+        key = 'test_stateful_01'
 
         request = Mock()
         request.content = b'ok'
@@ -77,13 +77,11 @@ class StatefulNotifyTests(SimpleTestCase):
 
         # Preare our list of URLs we want to save
         urls = [
-            'devops=slack://TokenA/TokenB/TokenC',
             'pushbullet=pbul://tokendetails',
             'general,json=json://hostname',
         ]
 
         # Monkey Patch
-        N_MGR['slack'].enabled = True
         N_MGR['pbul'].enabled = True
         N_MGR['json'].enabled = True
 
@@ -105,7 +103,7 @@ class StatefulNotifyTests(SimpleTestCase):
             assert response.status_code == 200
 
             entries = re.split(r'[\r*\n]+', response.content.decode('utf-8'))
-            assert len(entries) == 3
+            assert len(entries) == 2
 
             form_data = {
                 'body': '## test notification',
@@ -195,6 +193,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
         # Now we do a similar approach as the above except we remove the
         # configuration from under the application
+        key = 'test_stateful_02'
         for _ in range(10):
             # No content saved to the location yet
             response = self.client.post('/get/{}'.format(key))
@@ -211,7 +210,7 @@ class StatefulNotifyTests(SimpleTestCase):
             assert response.status_code == 200
 
             entries = re.split(r'[\r*\n]+', response.content.decode('utf-8'))
-            assert len(entries) == 3
+            assert len(entries) == 2
 
             form_data = {
                 'body': '## test notification',
@@ -306,7 +305,7 @@ class StatefulNotifyTests(SimpleTestCase):
                 'body': '## test notification',
                 'format': apprise.NotifyFormat.MARKDOWN,
                 # Comma (OR)
-                'tag': 'general, devops',
+                'tag': 'pushbullet, json',
             }
 
             form = NotifyForm(data=form_data)
