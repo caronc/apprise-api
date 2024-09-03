@@ -47,17 +47,17 @@ FROM base AS runtime
 COPY ./requirements.txt /etc/requirements.txt
 COPY --from=builder /build/*.whl ./
 RUN set -eux && \
-    echo "Installing cryptography" && \
-        pip3 install *.whl && \
-    echo "Installing python requirements" && \
-        pip3 install --no-cache-dir -q -r /etc/requirements.txt gunicorn supervisor && \
     echo "Installing nginx" && \
         apt-get update -qq && \
         apt-get install -y -qq \
             nginx && \
+    echo "Installing cryptography" && \
+        pip3 install *.whl && \
     echo "Installing tools" && \
         apt-get install -y -qq \
-            curl sed && \
+            curl sed git && \
+    echo "Installing python requirements" && \
+        pip3 install --no-cache-dir -q -r /etc/requirements.txt gunicorn supervisor && \
     echo "Cleaning up" && \
         apt-get --yes autoremove --purge && \
         apt-get clean --yes && \

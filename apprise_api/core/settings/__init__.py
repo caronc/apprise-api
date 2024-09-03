@@ -143,6 +143,28 @@ APPRISE_WEBHOOK_URL = os.environ.get('APPRISE_WEBHOOK_URL', '')
 APPRISE_CONFIG_DIR = os.environ.get(
     'APPRISE_CONFIG_DIR', os.path.join(BASE_DIR, 'var', 'config'))
 
+# The location to store Apprise Persistent Storage files
+APPRISE_STORAGE_DIR = os.environ.get(
+    'APPRISE_STORAGE_DIR', os.path.join(APPRISE_CONFIG_DIR, 'store'))
+
+# Default number of days to prune persistent storage
+APPRISE_STORAGE_PRUNE_DAYS = \
+    int(os.environ.get('APPRISE_STORAGE_PRUNE_DAYS', 30))
+
+# The default URL ID Length
+APPRISE_STORAGE_UID_LENGTH = \
+    int(os.environ.get('APPRISE_STORAGE_UID_LENGTH', 8))
+
+# The default storage mode; options are:
+# - memory  : Disables persistent storage (this is also automatically set
+#             if the APPRISE_STORAGE_DIR is empty reguardless of what is
+#             defined below.
+# - auto    : Writes to storage after each notifications execution (default)
+# - flush   : Writes to storage constantly (as much as possible).  This
+#             produces more i/o but can allow multiple calls to the same
+#             notification to be in sync more
+APPRISE_STORAGE_MODE = os.environ.get('APPRISE_STORAGE_MODE', 'auto').lower()
+
 # The location to place file attachments
 APPRISE_ATTACH_DIR = os.environ.get(
     'APPRISE_ATTACH_DIR', os.path.join(BASE_DIR, 'var', 'attach'))

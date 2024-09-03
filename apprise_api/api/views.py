@@ -992,10 +992,16 @@ class NotifyView(View):
                 status=status,
             )
 
-        # Prepare our keyword arguments (to be passed into an AppriseAsset
-        # object)
+        # Prepare our keyword arguments (to be passed into an AppriseAsset object)
         kwargs = {
+            # Load our dynamic plugin path
             'plugin_paths': settings.APPRISE_PLUGIN_PATHS,
+            # Load our persistent storage path
+            'storage_path': settings.APPRISE_STORAGE_DIR,
+            # Our storage URL ID Length
+            'storage_idlen': settings.APPRISE_STORAGE_UID_LENGTH,
+            # Define if we flush to disk as soon as possible or not when required
+            'storage_mode': settings.APPRISE_STORAGE_MODE,
         }
 
         if body_format:
@@ -1353,10 +1359,16 @@ class StatelessNotifyView(View):
                     'error': msg,
                 }, encoder=JSONEncoder, safe=False, status=status)
 
-        # Prepare our keyword arguments (to be passed into an AppriseAsset
-        # object)
+        # Prepare our keyword arguments (to be passed into an AppriseAsset object)
         kwargs = {
+            # Load our dynamic plugin path
             'plugin_paths': settings.APPRISE_PLUGIN_PATHS,
+            # Load our persistent storage path
+            'storage_path': settings.APPRISE_STORAGE_DIR,
+            # Our storage URL ID Length
+            'storage_idlen': settings.APPRISE_STORAGE_UID_LENGTH,
+            # Define if we flush to disk as soon as possible or not when required
+            'storage_mode': settings.APPRISE_STORAGE_MODE,
         }
 
         if body_format:
@@ -1576,6 +1588,7 @@ class JsonUrlView(View):
         #    "tags": ["tag1', "tag2", "tag3"],
         #    "urls": [
         #       {
+        #          "uid": "efa313ab",
         #          "url": "windows://",
         #          "tags": [],
         #       },
@@ -1640,6 +1653,7 @@ class JsonUrlView(View):
         for notification in a_obj.find(tag):
             # Set Notification
             response['urls'].append({
+                'id': notification.url_id(),
                 'url': notification.url(privacy=privacy),
                 'tags': notification.tags,
             })

@@ -57,8 +57,9 @@ chmod o+w /dev/stdout /dev/stderr
 
 [ ! -d /attach ] && mkdir -p /attach
 chown -R $USER:$GROUP /attach
-[ ! -d /config ] && mkdir -p /config
+[ ! -d /config ] && mkdir -p /config /config/store
 chown $USER:$GROUP /config
+chown -R $USER:$GROUP /config/store
 [ ! -d /plugin ] && mkdir -p /plugin
 [ ! -d /run/apprise ] && mkdir -p /run/apprise
 

@@ -66,6 +66,7 @@ class HealthCheckTests(SimpleTestCase):
             'config_lock': False,
             'attach_lock': False,
             'status': {
+                'persistent_storage': True,
                 'can_write_config': True,
                 'can_write_attach': True,
                 'details': ['OK']
@@ -90,6 +91,7 @@ class HealthCheckTests(SimpleTestCase):
                 'config_lock': True,
                 'attach_lock': False,
                 'status': {
+                    'persistent_storage': True,
                     'can_write_config': False,
                     'can_write_attach': True,
                     'details': ['OK']
@@ -113,6 +115,7 @@ class HealthCheckTests(SimpleTestCase):
                 'config_lock': False,
                 'attach_lock': False,
                 'status': {
+                    'persistent_storage': True,
                     'can_write_config': False,
                     'can_write_attach': True,
                     'details': ['OK']
@@ -136,6 +139,7 @@ class HealthCheckTests(SimpleTestCase):
                 'config_lock': False,
                 'attach_lock': True,
                 'status': {
+                    'persistent_storage': True,
                     'can_write_config': True,
                     'can_write_attach': False,
                     'details': ['OK']
@@ -159,6 +163,7 @@ class HealthCheckTests(SimpleTestCase):
                 'config_lock': False,
                 'attach_lock': False,
                 'status': {
+                    'persistent_storage': True,
                     'can_write_config': True,
                     'can_write_attach': True,
                     'details': ['OK']
@@ -172,6 +177,7 @@ class HealthCheckTests(SimpleTestCase):
 
         result = healthcheck(lazy=True)
         assert result == {
+            'persistent_storage': True,
             'can_write_config': True,
             'can_write_attach': True,
             'details': ['OK']
@@ -180,6 +186,7 @@ class HealthCheckTests(SimpleTestCase):
         # A Double lazy check
         result = healthcheck(lazy=True)
         assert result == {
+            'persistent_storage': True,
             'can_write_config': True,
             'can_write_attach': True,
             'details': ['OK']
@@ -192,16 +199,20 @@ class HealthCheckTests(SimpleTestCase):
             # We still succeed; we just don't leverage our lazy check
             # which prevents addition (unnessisary) writes
             assert result == {
+                'persistent_storage': True,
                 'can_write_config': True,
                 'can_write_attach': True,
                 'details': ['OK'],
             }
 
-        # Force a non-lazy check
-        with mock.patch('os.makedirs') as mock_makedirs:
-            mock_makedirs.side_effect = OSError()
-            result = healthcheck(lazy=False)
+        # Force a lazy check where we can't acquire the modify time
+        with mock.patch('os.path.getmtime') as mock_getmtime:
+            mock_getmtime.side_effect = OSError()
+            result = healthcheck(lazy=True)
+            # We still succeed; we just don't leverage our lazy check
+            # which prevents addition (unnessisary) writes
             assert result == {
+                'persistent_storage': True,
                 'can_write_config': False,
                 'can_write_attach': False,
                 'details': [
@@ -209,18 +220,59 @@ class HealthCheckTests(SimpleTestCase):
                     'ATTACH_PERMISSION_ISSUE',
                 ]}
 
-            mock_makedirs.side_effect = (None, OSError())
+        # Force a non-lazy check
+        with mock.patch('os.makedirs') as mock_makedirs:
+            mock_makedirs.side_effect = OSError()
             result = healthcheck(lazy=False)
             assert result == {
-                'can_write_config': True,
+                'persistent_storage': False,
+                'can_write_config': False,
                 'can_write_attach': False,
                 'details': [
+                    'CONFIG_PERMISSION_ISSUE',
+                    'ATTACH_PERMISSION_ISSUE',
+                    'STORE_PERMISSION_ISSUE',
+                ]}
+
+            with mock.patch('os.path.getmtime') as mock_getmtime:
+                with mock.patch('os.fdopen', side_effect=OSError()):
+                    mock_getmtime.side_effect = OSError()
+                    mock_makedirs.side_effect = None
+                    result = healthcheck(lazy=False)
+                    assert result == {
+                        'persistent_storage': True,
+                        'can_write_config': False,
+                        'can_write_attach': False,
+                        'details': [
+                            'CONFIG_PERMISSION_ISSUE',
+                            'ATTACH_PERMISSION_ISSUE',
+                        ]}
+
+            with mock.patch('apprise.PersistentStore.flush', return_value=False):
+                result = healthcheck(lazy=False)
+                assert result == {
+                    'persistent_storage': False,
+                    'can_write_config': True,
+                    'can_write_attach': True,
+                    'details': [
+                        'STORE_PERMISSION_ISSUE',
+                    ]}
+
+            mock_makedirs.side_effect = (OSError(), OSError(), None, None, None, None)
+            result = healthcheck(lazy=False)
+            assert result == {
+                'persistent_storage': True,
+                'can_write_config': False,
+                'can_write_attach': False,
+                'details': [
+                    'CONFIG_PERMISSION_ISSUE',
                     'ATTACH_PERMISSION_ISSUE',
                 ]}
 
-            mock_makedirs.side_effect = (OSError(), None)
+            mock_makedirs.side_effect = (OSError(), None, None, None, None)
             result = healthcheck(lazy=False)
             assert result == {
+                'persistent_storage': True,
                 'can_write_config': False,
                 'can_write_attach': True,
                 'details': [
