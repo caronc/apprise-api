@@ -902,7 +902,6 @@ def healthcheck(lazy=True):
                     # No worries... continue with below testing
                     pass
 
-
             if not (store.set('foo', 'bar') and store.flush()):
                 # No persistent store
                 response['details'].append('STORE_PERMISSION_ISSUE')

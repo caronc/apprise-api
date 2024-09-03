@@ -258,6 +258,17 @@ class HealthCheckTests(SimpleTestCase):
                         'STORE_PERMISSION_ISSUE',
                     ]}
 
+            # Test a case where we simply do not define a persistent store path
+            # health checks will always disable persistent storage
+            with override_settings(APPRISE_STORAGE_DIR=""):
+                with mock.patch('apprise.PersistentStore.flush', return_value=False):
+                    result = healthcheck(lazy=False)
+                    assert result == {
+                        'persistent_storage': False,
+                        'can_write_config': True,
+                        'can_write_attach': True,
+                        'details': ['OK']}
+
             mock_makedirs.side_effect = (OSError(), OSError(), None, None, None, None)
             result = healthcheck(lazy=False)
             assert result == {
