@@ -1363,13 +1363,17 @@ class StatelessNotifyView(View):
         kwargs = {
             # Load our dynamic plugin path
             'plugin_paths': settings.APPRISE_PLUGIN_PATHS,
-            # Load our persistent storage path
-            'storage_path': settings.APPRISE_STORAGE_DIR,
-            # Our storage URL ID Length
-            'storage_idlen': settings.APPRISE_STORAGE_UID_LENGTH,
-            # Define if we flush to disk as soon as possible or not when required
-            'storage_mode': settings.APPRISE_STORAGE_MODE,
         }
+        if settings.APPRISE_STATELESS_STORAGE:
+            # Persistent Storage is allowed with Stateless queries
+            kwargs.update({
+                # Load our persistent storage path
+                'storage_path': settings.APPRISE_STORAGE_DIR,
+                # Our storage URL ID Length
+                'storage_idlen': settings.APPRISE_STORAGE_UID_LENGTH,
+                # Define if we flush to disk as soon as possible or not when required
+                'storage_mode': settings.APPRISE_STORAGE_MODE,
+            })
 
         if body_format:
             # Store our defined body format

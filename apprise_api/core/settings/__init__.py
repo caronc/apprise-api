@@ -201,6 +201,12 @@ APPRISE_CONFIG_LOCK = \
 # were otherwise posted with the URL request.
 APPRISE_STATELESS_URLS = os.environ.get('APPRISE_STATELESS_URLS', '')
 
+# Allow stateless URLS to generate and/or work with persistent storage
+# By default this is set to no
+APPRISE_STATELESS_STORAGE = \
+    os.environ.get("APPRISE_STATELESS_STORAGE", 'no')[0].lower() in (
+        'a', 'y', '1', 't', 'e', '+')
+
 # Defines the stateful mode; possible values are:
 # - hash (default): content is hashed and zipped
 # - simple: content is just written straight to disk 'as-is'

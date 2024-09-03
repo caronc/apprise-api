@@ -153,6 +153,7 @@ The above output may look like this:
   "attach_lock": false,
   "config_lock": false,
   "status": {
+    "persistent_storage": true,
     "can_write_config": true,
     "can_write_attach": true,
     "details": ["OK"]
@@ -162,6 +163,7 @@ The above output may look like this:
 
 - The `attach_lock` always cross references if the `APPRISE_ATTACH_SIZE` on whether or not it is `0` (zero) or less.
 - The `config_lock` always cross references if the `APPRISE_CONFIG_LOCK` is enabled or not.
+- The `status.persistent_storage` defines if the persistent storage is enabled or not.  If the environment variable `APPRISE_STORAGE_PATH` is empty, this value will always read `false` and it will not impact the `status.details`
 - The `status.can_write_config` defines if the configuration directory is writable or not.  If the environment variable `APPRISE_STATEFUL_MODE` is set to `disabled`, this value will always read `false` and it will not impact the `status.details`
 - The `status.can_write_attach` defines if the attachment directory is writable or not.  If the environment variable `APPRISE_ATTACH_SIZE`. This value will always read `false` and it will not impact the `status.details`.
 - The `status.details` identifies the overall status. If there is more then 1 issue to report here, they will all show in this list.  In a working orderly environment, this will always be set to `OK` and the http response type will be `200`.
@@ -401,6 +403,7 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_STORAGE_DIR` | Defines an (optional) persistent store location of all cache files saved. By default persistent storage is written into the `<APPRISE_CONFIG_DIR>/store`.
 | `APPRISE_STORAGE_MODE` | Defines the storage mode to use.  If no `APPRISE_STORGE_DIR` is identified, then this is set to `memory` in all circumtances reguardless what it might otherwise be set to. The possible options are:<br/>📌 **auto**: This is also the default. Writes cache files on demand only. <br/>📌 **memory**: Persistent storage is disabled; local memory is used for simple internal references. This is effectively the behavior of Apprise of versions 1.8.1 and earlier.<br/>📌 **flush**: A bit more i/o intensive then `auto`.  Content is written to disk constantly if changed in anyway. This mode is still experimental.
 | `APPRISE_STORAGE_UID_LENGTH` | Defines the unique key lengths used to identify an Apprise URL.  By default this is set to `8`.  Value can not be set to a smaller value then `2` or larger then `64`.
+| `APPRISE_STATELESS_STORAGE` | Allow stateless URLs (in addition to stateful) to also leverage persistent storage. This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 | `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
 | `APPRISE_ATTACH_SIZE` | Over-ride the attachment size (defined in MB). By default it is set to `200` (Megabytes). You can set this up to a maximum value of `500` which is the restriction in place for NginX (internal hosting ervice) at this time.  If you set this to zero (`0`) then attachments will not be passed along even if provided.
 | `APPRISE_UPLOAD_MAX_MEMORY_SIZE` | Over-ride the in-memory accepted payload size (defined in MB). By default it is set to `3` (Megabytes). There is no reason the HTTP payload (excluding attachments) should exceed this limit.  This value is only configurable for those who have edge cases where there are exceptions to this rule.
