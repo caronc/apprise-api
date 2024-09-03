@@ -637,23 +637,25 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Send our service with the `json://` denied
         with override_settings(APPRISE_ALLOW_SERVICES=""):
-            with override_settings(APPRISE_DENY_SERVICES="json"):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    '/notify',
-                    data=json.dumps(json_data),
-                    content_type='application/json',
-                )
+            # Test our stateless storage setting (just to kill 2 birds with 1 stone)
+            with override_settings(APPRISE_STATELESS_STORAGE="yes"):
+                with override_settings(APPRISE_DENY_SERVICES="json"):
+                    # Send our notification as a JSON object
+                    response = self.client.post(
+                        '/notify',
+                        data=json.dumps(json_data),
+                        content_type='application/json',
+                    )
 
-                # json:// is disabled
-                assert response.status_code == 204
-                assert mock_send.call_count == 0
+                    # json:// is disabled
+                    assert response.status_code == 204
+                    assert mock_send.call_count == 0
 
-                # What actually took place behind close doors:
-                assert N_MGR['json'].enabled is False
+                    # What actually took place behind close doors:
+                    assert N_MGR['json'].enabled is False
 
-                # Reset our flag (for next test)
-                N_MGR['json'].enabled = True
+                    # Reset our flag (for next test)
+                    N_MGR['json'].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()

@@ -207,6 +207,26 @@ class HTTPAttachment(A_MGR['http']):
                 pass
 
 
+def touchdir(path, mode=0o770, **kwargs):
+    """
+    Acts like a Linux touch and updates a dir with a current timestamp
+    """
+    try:
+        os.makedirs(path, mode=mode, exist_ok=False)
+
+    except FileExistsError:
+        # Update the mtime of the directory
+        try:
+            os.utime(path, None)
+        except OSError:
+            return False
+
+    except OSError:
+        return False
+
+    return True
+
+
 def touch(fname, mode=0o666, dir_fd=None, **kwargs):
     """
     Acts like a Linux touch and updates a file with a current timestamp
@@ -778,6 +798,7 @@ def healthcheck(lazy=True):
 
     # Some status variables we can flip
     response = {
+        'persistent_storage': False,
         'can_write_config': False,
         'can_write_attach': False,
         'details': [],
@@ -852,6 +873,44 @@ def healthcheck(lazy=True):
             except OSError:
                 # We can take an early exit
                 response['details'].append('ATTACH_PERMISSION_ISSUE')
+
+    if settings.APPRISE_STORAGE_DIR:
+        #
+        # Persistent Storage Check
+        #
+        store = apprise.PersistentStore(
+            path=settings.APPRISE_STORAGE_DIR,
+            namespace='tmp_hc',
+            mode=settings.APPRISE_STORAGE_MODE,
+        )
+
+        if store.mode != settings.APPRISE_STORAGE_MODE:
+            # Persistent storage not as configured
+            response['details'].append('STORE_PERMISSION_ISSUE')
+
+        elif store.mode != apprise.PersistentStoreMode.MEMORY:
+            # G
+            path = settings.APPRISE_STORAGE_DIR
+            if lazy:
+                try:
+                    modify_date = datetime.fromtimestamp(os.path.getmtime(path))
+                    delta = (datetime.now() - modify_date).total_seconds()
+                    if delta <= 30.00:  # 30s
+                        response['persistent_storage'] = True
+
+                except OSError:
+                    # No worries... continue with below testing
+                    pass
+
+            if not (store.set('foo', 'bar') and store.flush()):
+                # No persistent store
+                response['details'].append('STORE_PERMISSION_ISSUE')
+            else:
+                # Toggle our status
+                response['persistent_storage'] = True
+
+            # Clear our test
+            store.clear('foo')
 
     if not response['details']:
         response['details'].append('OK')
