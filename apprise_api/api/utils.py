@@ -744,7 +744,7 @@ def send_webhook(payload):
     }
 
     try:
-        if not apprise.utils.VALID_URL_RE.match(settings.APPRISE_WEBHOOK_URL).group('schema'):
+        if not apprise.utils.parse.VALID_URL_RE.match(settings.APPRISE_WEBHOOK_URL).group('schema'):
             raise AttributeError()
 
     except (AttributeError, TypeError):

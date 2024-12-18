@@ -10,7 +10,7 @@
 # apprise @ git+https://github.com/caronc/apprise@custom-tag-or-version
 
 ## 3. The below grabs our stable version (generally the best choice):
-apprise == 1.9.0
+apprise == 1.9.1
 
 ## Apprise API Minimum Requirements
 django
