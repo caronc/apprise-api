@@ -473,6 +473,104 @@ You can add further accounts to the existing database by omitting the `-c` switc
 htpasswd apprise_api.htpasswd user2
 ```
 
+## Kubernetes Deployment
+
+Thanks to @steled, here is what a potential Kubernetes deployment configuration could look like:
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apprise
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apprise-api-override-conf-config
+  namespace: apprise
+data:
+  location-override.conf: |
+    auth_basic            "Apprise API Restricted Area";
+    auth_basic_user_file  /etc/nginx/.htpasswd;
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: apprise-api-htpasswd-secret
+  namespace: apprise
+data:
+  .htpasswd: <base64_encoded> # add output of: htpasswd -c apprise_api.htpasswd dgops-kubernetes && cat apprise_api.htpasswd | base64
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: apprise
+  name: apprise
+  namespace: apprise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: apprise
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: apprise
+    spec:
+      containers:
+        - env:
+            - name: APPRISE_STATEFUL_MODE
+              value: simple
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+          image: caronc/apprise:1.1
+          name: apprise
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+          volumeMounts:
+            - mountPath: /config
+              name: apprise-data
+            - mountPath: /plugin
+              name: apprise-data
+            - mountPath: /attach
+              name: apprise-data
+            # the following mountPath can be removed if not wanted/used
+            - mountPath: /etc/nginx/.htpasswd
+              name: apprise-api-htpasswd-secret-volume
+              readOnly: true
+              subPath: .htpasswd
+            # the following mountPath can be removed if not wanted/used
+            - mountPath: /etc/nginx/location-override.conf
+              name: apprise-api-override-conf-config-volume
+              readOnly: true
+              subPath: location-override.conf
+      restartPolicy: Always
+      volumes:
+        - name: apprise-data
+          persistentVolumeClaim:
+            claimName: apprise-data
+        # the following volume can be removed if not wanted/used
+        - name: apprise-api-htpasswd-secret-volume
+          secret:
+            secretName: apprise-api-htpasswd-secret
+        # the following volume can be removed if not wanted/used
+        - name: apprise-api-override-conf-config-volume
+          configMap:
+            name: apprise-api-override-conf-config
+```
+
 ## Development Environment
 The following should get you a working development environment to test with:
 
