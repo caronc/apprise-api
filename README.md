@@ -480,11 +480,15 @@ Thanks to @steled, here is what a potential Kubernetes deployment configuration 
 apiVersion: v1
 kind: Namespace
 metadata:
+  labels:
+    name: apprise
   name: apprise
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  labels:
+    name: apprise
   name: apprise-api-override-conf-config
   namespace: apprise
 data:
@@ -495,10 +499,43 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
+  labels:
+    name: apprise
   name: apprise-api-htpasswd-secret
   namespace: apprise
 data:
-  .htpasswd: <base64_encoded> # add output of: htpasswd -c apprise_api.htpasswd dgops-kubernetes && cat apprise_api.htpasswd | base64
+  .htpasswd: <base64_encoded> # add output of: htpasswd -c apprise_api.htpasswd <USERNAME> && cat apprise_api.htpasswd | base64
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    name: apprise
+  name: apprise-data
+  namespace: apprise
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: apprise
+  name: apprise
+  namespace: apprise
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    name: apprise
+  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
