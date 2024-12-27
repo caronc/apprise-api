@@ -13,51 +13,22 @@ ENV APPRISE_CONFIG_DIR=/config
 ENV APPRISE_ATTACH_DIR=/attach
 ENV APPRISE_PLUGIN_PATHS=/plugin
 
-FROM base AS builder
-
-WORKDIR /build/
-
-# Install nginx, supervisord, and cryptography dependencies
-RUN set -eux && \
-    echo "Installing build dependencies" && \
-        apt-get update -qq && \
-        apt-get install -y -qq \
-            curl \
-            build-essential \
-            libffi-dev \
-            libssl-dev \
-            pkg-config && \
-    echo "Updating pip and getting requirements to build" && \
-        # Cryptography documents that the latest version of pip3 must always be used
-        python3 -m pip install --upgrade \
-            pip \
-            wheel && \
-    echo "Installing latest rustc" && \
-        # Pull in bleeding edge of rust to keep up with cryptography build requirements
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal && \
-        . "$HOME/.cargo/env" && \
-    echo "Buildingcryptography" && \
-        python3 -m pip wheel \
-            --no-binary cryptography \
-            cryptography
-
 FROM base AS runtime
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
-COPY --from=builder /build/*.whl ./
+
 RUN set -eux && \
     echo "Installing nginx" && \
         apt-get update -qq && \
         apt-get install -y -qq \
             nginx && \
-    echo "Installing cryptography" && \
-        pip3 install *.whl && \
     echo "Installing tools" && \
         apt-get install -y -qq \
             curl sed git && \
     echo "Installing python requirements" && \
         pip3 install --no-cache-dir -q -r /etc/requirements.txt gunicorn supervisor && \
+        pip freeze && \
     echo "Cleaning up" && \
         apt-get --yes autoremove --purge && \
         apt-get clean --yes && \
