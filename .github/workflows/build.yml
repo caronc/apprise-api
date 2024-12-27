@@ -8,6 +8,7 @@ on:
 
 jobs:
   buildx:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
