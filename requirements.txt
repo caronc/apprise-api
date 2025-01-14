@@ -24,3 +24,6 @@ requests
 paho-mqtt < 2.0.0
 gntp
 cryptography
+
+# prometheus metrics
+django-prometheus
