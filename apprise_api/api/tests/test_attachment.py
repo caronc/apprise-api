@@ -218,11 +218,11 @@ class AttachmentTests(SimpleTestCase):
         # Support multi entries
         attachment_payload = [
             {
-                'url': 'http://localhost/my.attachment.3',
+                'url': 'http://myserver/my.attachment.3',
             }, {
-                'url': 'http://localhost/my.attachment.2',
+                'url': 'http://myserver/my.attachment.2',
             }, {
-                'url': 'http://localhost/my.attachment.1',
+                'url': 'http://myserver/my.attachment.1',
             }
         ]
         result = parse_attachments(attachment_payload, {})
@@ -352,18 +352,36 @@ class AttachmentTests(SimpleTestCase):
 
         attachment_payload = [
             # Request several images
-            "https://localhost/myotherfile.png",
-            "https://localhost/myfile.png"
+            "https://myserver/myotherfile.png",
+            "https://myserver/myfile.png"
         ]
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 2
 
+        # A attachment set where our URLs are blocked
+        attachment_payload = [
+            # Request several images
+            "https://localhost.localdomain/myotherfile.png",
+            "http://localhost/myfile.png",
+            "http://127.0.0.1/myfile.png",
+            "https://127.0.0.3/myfile.png",
+        ]
+        with self.assertRaises(ValueError):
+            # We have hosts that will be blocked
+            parse_attachments(attachment_payload, {})
+
+        # Test each
+        for ap in attachment_payload:
+            with self.assertRaises(ValueError):
+                # We have hosts that will be blocked
+                parse_attachments([ap], {})
+
         attachment_payload = [{
             # Request several images
-            'url': "https://localhost/myotherfile.png",
+            'url': "https://myserver/myotherfile.png",
         }, {
-            'url': "https://localhost/myfile.png"
+            'url': "https://myserver/myfile.png"
         }]
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
@@ -388,17 +406,17 @@ class AttachmentTests(SimpleTestCase):
             # While we have a network in place, we're intentionally requesting
             # URLs that do not exist (hopefully they don't anyway) as we want
             # this test to fail.
-            "https://localhost/garbage/abcd1.png",
-            "https://localhost/garbage/abcd2.png",
+            "https://myserver/garbage/abcd1.png",
+            "https://myserver/garbage/abcd2.png",
         ]
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
 
         # Support url encoding
         attachment_payload = [{
-            'url': "https://localhost/garbage/abcd1.png",
+            'url': "https://myserver/garbage/abcd1.png",
         }, {
-            'url': "https://localhost/garbage/abcd2.png",
+            'url': "https://myserver/garbage/abcd2.png",
         }]
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})

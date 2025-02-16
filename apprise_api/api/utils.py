@@ -36,6 +36,7 @@ import requests
 from json import dumps
 from django.conf import settings
 from datetime import datetime
+from . urlfilter import AppriseURLFilter
 
 # import the logging library
 import logging
@@ -82,6 +83,9 @@ A_MGR = apprise.manager_attachment.AttachmentManager()
 
 # Access our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
+
+# Prepare our Attachment URL Filter
+ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
 
 class Attachment(A_MGR['file']):
@@ -321,6 +325,12 @@ def parse_attachments(attachment_payload, files_request):
                         "Failed to load attachment "
                         "%d (not web request): %s" % (no, entry))
 
+                if not ATTACH_URL_FILTER.is_allowed(entry):
+                    # We are not allowed to use this entry
+                    raise ValueError(
+                        "Denied attachment "
+                        "%d (blocked web request): %s" % (no, entry))
+
                 attachment = HTTPAttachment(
                     filename, **A_MGR['http'].parse_url(entry))
                 if not attachment:
@@ -342,6 +352,13 @@ def parse_attachments(attachment_payload, files_request):
 
                         elif isinstance(entry, dict) and \
                                 AttachmentPayload.URL in entry:
+
+                            if not ATTACH_URL_FILTER.is_allowed(entry[AttachmentPayload.URL]):
+                                # We are not allowed to use this entry
+                                raise ValueError(
+                                    "Denied attachment "
+                                    "%d (blocked web request): %s" % (
+                                        no, entry[AttachmentPayload.URL]))
 
                             attachment = HTTPAttachment(
                                 filename, **A_MGR['http']
