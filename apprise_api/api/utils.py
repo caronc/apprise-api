@@ -258,7 +258,7 @@ def parse_attachments(attachment_payload, files_request):
     attachments = []
 
     if settings.APPRISE_ATTACH_SIZE <= 0:
-        if not (attachment_payload and files_request):
+        if not (attachment_payload or files_request):
             # No further processing required
             return []
 
