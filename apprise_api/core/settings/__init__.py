@@ -107,6 +107,8 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
+            'level': os.environ.get(
+                'LOG_LEVEL', 'debug' if DEBUG else 'info').upper(),
         },
         'apprise': {
             'handlers': ['console'],
