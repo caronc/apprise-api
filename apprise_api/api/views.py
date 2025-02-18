@@ -783,11 +783,13 @@ class NotifyView(View):
         if not content.get('attachment'):
             if 'attachment' in request.POST:
                 # Acquire attachments to work with them
-                content['attachment'] = request.POST.getlist('attachment')
+                content['attachment'] = \
+                    [a for a in request.POST.getlist('attachment') if isinstance(a, str) and a.strip()]
 
             elif 'attach' in request.POST:
                 # Acquire kw (alias) attach to work with them
-                content['attachment'] = request.POST.getlist('attach')
+                content['attachment'] = \
+                    [a for a in request.POST.getlist('attach') if isinstance(a, str) and a.strip()]
 
             elif content.get('attach'):
                 # Acquire kw (alias) attach from payload to work with

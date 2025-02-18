@@ -1335,7 +1335,9 @@ input[type=range]::-ms-thumb {
 
 .swal2-popup {
 	background-color: #2e3440;
+  color: #e5e9f0;
 }
+
 
 .swal-icon--success__ring {
     border: 4px solid rgba(194, 26, 90, 0.2);
@@ -1379,4 +1381,25 @@ input[type=range]::-ms-thumb {
 .swal-icon--info:after,
 .swal-icon--info:before {
     background-color: #d119c8;
+}
+
+ul.logs {
+	background-color: #1b1e26;
+	color: #e5e9f0;
+}
+
+ul.logs li.log_INFO {
+	color: #e5e9f0;
+}
+
+ul.logs li.log_DEBUG {
+  color: #606060;
+}
+
+ul.logs li.log_WARNING {
+  color: orange;
+}
+
+ul.logs li.log_ERROR {
+  color: #8B0000;
 }
