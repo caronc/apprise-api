@@ -61,12 +61,17 @@ INSTALLED_APPS = [
 
     # Apprise API
     'api',
+
+    # Prometheus
+    'django_prometheus',
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.common.CommonMiddleware',
     'core.middleware.theme.AutoThemeMiddleware',
     'core.middleware.config.DetectConfigMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -128,6 +133,9 @@ BASE_URL = os.environ.get('BASE_URL', '')
 # Define our default configuration ID to use
 APPRISE_DEFAULT_CONFIG_ID = \
     os.environ.get('APPRISE_DEFAULT_CONFIG_ID', 'apprise')
+
+# Define our Prometheus Namespace
+PROMETHEUS_METRIC_NAMESPACE = "apprise"
 
 # Static files relative path (CSS, JavaScript, Images)
 STATIC_URL = BASE_URL + '/s/'

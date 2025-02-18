@@ -258,6 +258,7 @@ You can pre-save all of your Apprise configuration and/or set of Apprise URLs an
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://github.com/caronc/apprise/wiki/Development_Apprise_Details#apprise-details)
+| `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
 As an example, the `/json/urls/{KEY}` response might return something like this:
 
@@ -784,3 +785,6 @@ The colon `:` prefix is the switch that starts the re-mapping rule engine.  You 
 1. `:existing_key=`: By setting no value, the existing key is simply removed from the payload entirely
 1. `:expected_key=A value to give it`: You can also fix an expected apprise key to a pre-generated string value.
 
+
+## Metrics Collection & Analysis
+Basic Prometheus support added through `/metrics` reference point.
