@@ -257,6 +257,14 @@ def parse_attachments(attachment_payload, files_request):
     """
     attachments = []
 
+    if settings.APPRISE_ATTACH_SIZE <= 0:
+        if not (attachment_payload or files_request):
+            # No further processing required
+            return []
+
+        # Otherwise we need to raise an error
+        raise ValueError("Attachment support has been disabled")
+
     # Attachment Count
     count = sum([
         0 if not isinstance(attachment_payload, (set, tuple, list))
@@ -268,9 +276,6 @@ def parse_attachments(attachment_payload, files_request):
         # Convert and adjust counter
         attachment_payload = (attachment_payload, )
         count += 1
-
-    if settings.APPRISE_ATTACH_SIZE <= 0:
-        raise ValueError("Attachment support has been disabled")
 
     if settings.APPRISE_MAX_ATTACHMENTS > 0 and count > settings.APPRISE_MAX_ATTACHMENTS:
         raise ValueError(

@@ -28,7 +28,10 @@ from unittest import mock
 from unittest.mock import mock_open
 from ..utils import Attachment, HTTPAttachment
 from ..utils import parse_attachments
+from ..urlfilter import AppriseURLFilter
+from .. import utils
 from django.test.utils import override_settings
+from django.conf import settings
 from tempfile import TemporaryDirectory
 from shutil import rmtree
 import base64
@@ -92,8 +95,25 @@ class AttachmentTests(SimpleTestCase):
         """
         Test the parsing of file attachments
         """
-        # Get ourselves a file to work with
+        # Variation tests without any data
+        result = parse_attachments(None, None)
+        assert isinstance(result, list)
+        assert len(result) == 0
 
+        result = parse_attachments([], [])
+        assert isinstance(result, list)
+        assert len(result) == 0
+
+        with override_settings(APPRISE_ATTACH_SIZE=0):
+            result = parse_attachments(None, None)
+            assert isinstance(result, list)
+            assert len(result) == 0
+
+            result = parse_attachments([], [])
+            assert isinstance(result, list)
+            assert len(result) == 0
+
+        # Get ourselves a file to work with
         files_request = {
             'file1': SimpleUploadedFile(
                 "attach.txt", b"content here", content_type="text/plain")
@@ -228,6 +248,20 @@ class AttachmentTests(SimpleTestCase):
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 3
+
+        with override_settings(APPRISE_ATTACH_DENY_URLS='*'):
+            utils.ATTACH_URL_FILTER = AppriseURLFilter(
+                settings.APPRISE_ATTACH_ALLOW_URLS,
+                settings.APPRISE_ATTACH_DENY_URLS)
+
+            # We will fail to parse our URL based attachment
+            with self.assertRaises(ValueError):
+                parse_attachments(attachment_payload, {})
+
+        # Reload our configuration to default values
+        utils.ATTACH_URL_FILTER = AppriseURLFilter(
+            settings.APPRISE_ATTACH_ALLOW_URLS,
+            settings.APPRISE_ATTACH_DENY_URLS)
 
         # Garbage handling (integer, float, object, etc is invalid)
         attachment_payload = 5
