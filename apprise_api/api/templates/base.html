@@ -51,7 +51,7 @@
           <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
             {% trans "Configuration Manager" %}</a>
           {% if not CONFIG_LOCK %}
-          <a class="collection-item" href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
+          <a class="collection-item" id='cfg-gen' href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
             {% trans "New Configuration" %}</a>
           {% endif %}
         </ul>
@@ -144,6 +144,22 @@
          }
       });
     }
+		document.querySelector('#cfg-gen').addEventListener('click', function(e) {
+      e.preventDefault();
+
+      Swal.fire({
+        title: '{% trans "New Configuration" %}',
+        html: `{% blocktrans with default_config_id=DEFAULT_CONFIG_ID %}This will generate a new Apprise configuration ID and transition over to it. It is important that you have bookmarked or noted the current ID <code>{{ default_config_id }}</code> before continuing. Do you still wish to proceed?{% endblocktrans %}`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: '{% trans "Yes" %}',
+        cancelButtonText: '{% trans "No" %}'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = e.target.href;
+        }
+      });
+    });
   </script>
 </body>
 

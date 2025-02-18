@@ -189,22 +189,6 @@ ul.logs li div.log_msg {
   flex: 1;
 }
 
-ul.logs li.log_INFO {
-  color: black;
-}
-
-ul.logs li.log_DEBUG {
-  color: #606060;
-}
-
-ul.logs li.log_WARNING {
-  color: orange;
-}
-
-ul.logs li.log_ERROR {
-  color: #8B0000;
-}
-
 .url-enabled {
   color:#004d40;
 }

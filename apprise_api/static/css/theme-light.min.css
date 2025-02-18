@@ -27,3 +27,20 @@
 	color: #fff;
 	background-color: #258528!important;
 }
+
+
+ul.logs li.log_INFO {
+  color: black;
+}
+
+ul.logs li.log_DEBUG {
+  color: #606060;
+}
+
+ul.logs li.log_WARNING {
+  color: orange;
+}
+
+ul.logs li.log_ERROR {
+  color: #8B0000;
+}

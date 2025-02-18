@@ -515,25 +515,25 @@ function config_init() {
             main_init();
 
             // user notification
-            Swal.fire(
-              '{% trans "Save" %}',
-              '{% trans "Successfully saved the specified URL(s)." %}',
-              'success'
-            );
+            Swal.fire({
+              title: '{% trans "Save" %}',
+              html: '{% trans "Successfully saved the specified URL(s)." %}',
+              icon: 'success'
+            });
          } else if(response.status == 500) {
             // Disk issue
-            Swal.fire(
-              '{% trans "Save" %}',
-              '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
-              'error'
-            );
+            Swal.fire({
+              title: '{% trans "Save" %}',
+              html: '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
+              icon: 'error'
+            });
          } else {
             // user notification
-            Swal.fire(
-              '{% trans "Save" %}',
-              '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
-              'error'
-            );
+            Swal.fire({
+              title: '{% trans "Save" %}',
+              html: '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
+              icon: 'error'
+            });
          }
       });
     } else {
@@ -549,18 +549,18 @@ function config_init() {
             main_init();
 
             // user notification
-            Swal.fire(
-              '{% trans "Delete" %}',
-              '{% trans "Successfully removed configuration." %}',
-              'success'
-            );
+            Swal.fire({
+              title: '{% trans "Delete" %}',
+              html: '{% trans "Successfully removed configuration." %}',
+              icon: 'success'
+            });
          } else {
             // user notification
-            Swal.fire(
-              '{% trans "Delete" %}',
-              '{% trans "There was an issue removing the configuration." %}',
-              'error'
-            );
+            Swal.fire({
+              title: '{% trans "Delete" %}',
+              html: '{% trans "There was an issue removing the configuration." %}',
+              icon: 'error'
+            });
          }
       });
     }
@@ -655,10 +655,10 @@ function notify_init() {
     const form = new FormData(this);
 
     // perform our notification
-    Swal.fire(
-      '{% trans "Notification" %}',
-      '{% trans "Sending notification(s)..." %}',
-    );
+    Swal.fire({
+      title: '{% trans "Notification" %}',
+      html: '{% trans "Sending notification(s)..." %}',
+    });
     Swal.showLoading()
     let response = fetch('{% url "notify" key %}', {
       method: 'POST',
@@ -672,25 +672,28 @@ function notify_init() {
          if(response.status == 200)
          {
             // user notification
-            Swal.fire(
-              '{% trans "Notification" %}',
-              '{% trans "Successfully sent the notification(s)." %}' + html,
-              'success'
-            );
+            Swal.fire({
+              title: '{% trans "Notification" %}',
+              html: '{% trans "Successfully sent the notification(s)." %}' + html,
+              icon: 'success',
+						  width: '80em'
+           });
          } else if(response.status == 424) {
             // user notification
-            Swal.fire(
-              '{% trans "Notification" %}',
-              '{% trans "One or more of the notification(s) were not sent." %}' + html,
-              'warning'
-            );
+            Swal.fire({
+              title: '{% trans "Notification" %}',
+              html: '{% trans "One or more of the notification(s) were not sent." %}' + html,
+              icon: 'warning',
+						  width: '80em'
+            });
          } else {
             // user notification
-            Swal.fire(
-              '{% trans "Notification" %}',
-              '{% trans "Failed to send the notification(s)." %}' + html,
-              'error'
-            );
+            Swal.fire({
+              title: '{% trans "Notification" %}',
+              html: '{% trans "Failed to send the notification(s)." %}' + html,
+              icon: 'error',
+						  width: '80em'
+            });
          }
        });
     });
