@@ -33,7 +33,7 @@ import json
 import apprise
 
 # Grant access to our Notification Manager Singleton
-N_MGR = apprise.NotificationManager.NotificationManager()
+N_MGR = apprise.manager_plugins.NotificationManager()
 
 
 class StatelessNotifyTests(SimpleTestCase):
@@ -118,6 +118,39 @@ class StatelessNotifyTests(SimpleTestCase):
             assert mock_notify.call_count == 1
 
             # Reset our mock object
+            mock_notify.reset_mock()
+
+            form_data = {
+                'payload': '## test notification',
+                'fmt': apprise.NotifyFormat.MARKDOWN,
+                'extra': 'mailto://user:pass@hotmail.com',
+            }
+
+            # We sent the notification successfully (use our rule mapping)
+            # FORM
+            response = self.client.post(
+                '/notify/?:payload=body&:fmt=format&:extra=urls',
+                form_data)
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
+            mock_notify.reset_mock()
+
+            form_data = {
+                'payload': '## test notification',
+                'fmt': apprise.NotifyFormat.MARKDOWN,
+                'extra': 'mailto://user:pass@hotmail.com',
+            }
+
+            # We sent the notification successfully (use our rule mapping)
+            # JSON
+            response = self.client.post(
+                '/notify/?:payload=body&:fmt=format&:extra=urls',
+                json.dumps(form_data),
+                content_type="application/json")
+            assert response.status_code == 200
+            assert mock_notify.call_count == 1
+
             mock_notify.reset_mock()
 
         # Long Filename
@@ -317,7 +350,7 @@ class StatelessNotifyTests(SimpleTestCase):
         }
 
         # Monkey Patch
-        apprise.plugins.NotifyEmail.NotifyEmail.enabled = True
+        apprise.plugins.email.NotifyEmail.enabled = True
 
         # At a minimum 'body' is requred
         form = NotifyByUrlForm(data=form_data)
@@ -573,7 +606,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
-    @mock.patch('apprise.plugins.NotifyJSON.NotifyJSON.send')
+    @mock.patch('apprise.plugins.custom_json.NotifyJSON.send')
     def test_notify_with_filters(self, mock_send):
         """
         Test workings of APPRISE_DENY_SERVICES and APPRISE_ALLOW_SERVICES
@@ -604,23 +637,25 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Send our service with the `json://` denied
         with override_settings(APPRISE_ALLOW_SERVICES=""):
-            with override_settings(APPRISE_DENY_SERVICES="json"):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    '/notify',
-                    data=json.dumps(json_data),
-                    content_type='application/json',
-                )
+            # Test our stateless storage setting (just to kill 2 birds with 1 stone)
+            with override_settings(APPRISE_STATELESS_STORAGE="yes"):
+                with override_settings(APPRISE_DENY_SERVICES="json"):
+                    # Send our notification as a JSON object
+                    response = self.client.post(
+                        '/notify',
+                        data=json.dumps(json_data),
+                        content_type='application/json',
+                    )
 
-                # json:// is disabled
-                assert response.status_code == 204
-                assert mock_send.call_count == 0
+                    # json:// is disabled
+                    assert response.status_code == 204
+                    assert mock_send.call_count == 0
 
-                # What actually took place behind close doors:
-                assert N_MGR['json'].enabled is False
+                    # What actually took place behind close doors:
+                    assert N_MGR['json'].enabled is False
 
-                # Reset our flag (for next test)
-                N_MGR['json'].enabled = True
+                    # Reset our flag (for next test)
+                    N_MGR['json'].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()

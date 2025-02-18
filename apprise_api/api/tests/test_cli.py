@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -22,38 +22,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.urls import re_path
-from . import views
 
-urlpatterns = [
-    re_path(
-        r'^$',
-        views.WelcomeView.as_view(), name='welcome'),
-    re_path(
-        r'^status/?$',
-        views.HealthCheckView.as_view(), name='health'),
-    re_path(
-        r'^details/?$',
-        views.DetailsView.as_view(), name='details'),
-    re_path(
-        r'^cfg/(?P<key>[\w_-]{1,128})/?$',
-        views.ConfigView.as_view(), name='config'),
-    re_path(
-        r'^add/(?P<key>[\w_-]{1,128})/?$',
-        views.AddView.as_view(), name='add'),
-    re_path(
-        r'^del/(?P<key>[\w_-]{1,128})/?$',
-        views.DelView.as_view(), name='del'),
-    re_path(
-        r'^get/(?P<key>[\w_-]{1,128})/?$',
-        views.GetView.as_view(), name='get'),
-    re_path(
-        r'^notify/(?P<key>[\w_-]{1,128})/?$',
-        views.NotifyView.as_view(), name='notify'),
-    re_path(
-        r'^notify/?$',
-        views.StatelessNotifyView.as_view(), name='s_notify'),
-    re_path(
-        r'^json/urls/(?P<key>[\w_-]{1,128})/?$',
-        views.JsonUrlView.as_view(), name='json_urls'),
-]
+import io
+from django.test import SimpleTestCase
+from django.core import management
+
+
+class CommandTests(SimpleTestCase):
+
+    def test_command_style(self):
+        out = io.StringIO()
+        management.call_command('storeprune', days=40, stdout=out)

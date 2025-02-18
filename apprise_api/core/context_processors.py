@@ -29,4 +29,8 @@ def base_url(request):
     """
     Returns our defined BASE_URL object
     """
-    return {'BASE_URL': settings.BASE_URL}
+    return {
+        'BASE_URL': settings.BASE_URL,
+        'CONFIG_DIR': settings.APPRISE_CONFIG_DIR,
+        'ATTACH_DIR': settings.APPRISE_ATTACH_DIR,
+    }

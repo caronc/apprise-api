@@ -36,6 +36,7 @@ import requests
 from json import dumps
 from django.conf import settings
 from datetime import datetime
+from . urlfilter import AppriseURLFilter
 
 # import the logging library
 import logging
@@ -78,10 +79,13 @@ STORE_MODES = (
 )
 
 # Access our Attachment Manager Singleton
-A_MGR = apprise.AttachmentManager.AttachmentManager()
+A_MGR = apprise.manager_attachment.AttachmentManager()
 
 # Access our Notification Manager Singleton
-N_MGR = apprise.NotificationManager.NotificationManager()
+N_MGR = apprise.manager_plugins.NotificationManager()
+
+# Prepare our Attachment URL Filter
+ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
 
 class Attachment(A_MGR['file']):
@@ -207,6 +211,42 @@ class HTTPAttachment(A_MGR['http']):
                 pass
 
 
+def touchdir(path, mode=0o770, **kwargs):
+    """
+    Acts like a Linux touch and updates a dir with a current timestamp
+    """
+    try:
+        os.makedirs(path, mode=mode, exist_ok=False)
+
+    except FileExistsError:
+        # Update the mtime of the directory
+        try:
+            os.utime(path, None)
+        except OSError:
+            return False
+
+    except OSError:
+        return False
+
+    return True
+
+
+def touch(fname, mode=0o666, dir_fd=None, **kwargs):
+    """
+    Acts like a Linux touch and updates a file with a current timestamp
+    """
+    flags = os.O_CREAT | os.O_APPEND
+    try:
+        with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
+            os.utime(f.fileno() if os.utime in os.supports_fd else fname,
+                     dir_fd=None if os.supports_fd else dir_fd, **kwargs)
+
+    except OSError:
+        return False
+
+    return True
+
+
 def parse_attachments(attachment_payload, files_request):
     """
     Takes the payload provided in a `/notify` call and extracts the
@@ -229,13 +269,13 @@ def parse_attachments(attachment_payload, files_request):
         attachment_payload = (attachment_payload, )
         count += 1
 
-    if settings.APPRISE_MAX_ATTACHMENTS <= 0 or \
-            (settings.APPRISE_MAX_ATTACHMENTS > 0 and
-                count > settings.APPRISE_MAX_ATTACHMENTS):
+    if settings.APPRISE_ATTACH_SIZE <= 0:
+        raise ValueError("Attachment support has been disabled")
+
+    if settings.APPRISE_MAX_ATTACHMENTS > 0 and count > settings.APPRISE_MAX_ATTACHMENTS:
         raise ValueError(
             "There is a maximum of %d attachments" %
-            settings.APPRISE_MAX_ATTACHMENTS
-            if settings.APPRISE_MAX_ATTACHMENTS > 0 else 0)
+            settings.APPRISE_MAX_ATTACHMENTS)
 
     if isinstance(attachment_payload, (tuple, list, set)):
         for no, entry in enumerate(attachment_payload, start=1):
@@ -285,6 +325,12 @@ def parse_attachments(attachment_payload, files_request):
                         "Failed to load attachment "
                         "%d (not web request): %s" % (no, entry))
 
+                if not ATTACH_URL_FILTER.is_allowed(entry):
+                    # We are not allowed to use this entry
+                    raise ValueError(
+                        "Denied attachment "
+                        "%d (blocked web request): %s" % (no, entry))
+
                 attachment = HTTPAttachment(
                     filename, **A_MGR['http'].parse_url(entry))
                 if not attachment:
@@ -306,6 +352,13 @@ def parse_attachments(attachment_payload, files_request):
 
                         elif isinstance(entry, dict) and \
                                 AttachmentPayload.URL in entry:
+
+                            if not ATTACH_URL_FILTER.is_allowed(entry[AttachmentPayload.URL]):
+                                # We are not allowed to use this entry
+                                raise ValueError(
+                                    "Denied attachment "
+                                    "%d (blocked web request): %s" % (
+                                        no, entry[AttachmentPayload.URL]))
 
                             attachment = HTTPAttachment(
                                 filename, **A_MGR['http']
@@ -707,8 +760,11 @@ def send_webhook(payload):
         'Content-Type': 'application/json',
     }
 
-    if not apprise.utils.VALID_URL_RE.match(
-            settings.APPRISE_WEBHOOK_URL):
+    try:
+        if not apprise.utils.parse.VALID_URL_RE.match(settings.APPRISE_WEBHOOK_URL).group('schema'):
+            raise AttributeError()
+
+    except (AttributeError, TypeError):
         logger.warning(
             'The Apprise Webhook Result URL is not a valid web based URI')
         return
@@ -750,3 +806,130 @@ def send_webhook(payload):
         logger.debug('Socket Exception: %s' % str(e))
 
     return
+
+
+def healthcheck(lazy=True):
+    """
+    Runs a status check on the data and returns the statistics
+    """
+
+    # Some status variables we can flip
+    response = {
+        'persistent_storage': False,
+        'can_write_config': False,
+        'can_write_attach': False,
+        'details': [],
+    }
+
+    if not (settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED or settings.APPRISE_CONFIG_LOCK):
+        # Update our Configuration Check Block
+        path = os.path.join(ConfigCache.root, '.tmp_hc')
+        if lazy:
+            try:
+                modify_date = datetime.fromtimestamp(os.path.getmtime(path))
+                delta = (datetime.now() - modify_date).total_seconds()
+                if delta <= 30.00:  # 30s
+                    response['can_write_config'] = True
+
+            except FileNotFoundError:
+                # No worries... continue with below testing
+                pass
+
+            except OSError:
+                # Permission Issue or something else likely
+                # We can take an early exit
+                response['details'].append('CONFIG_PERMISSION_ISSUE')
+
+        if not (response['can_write_config'] or 'CONFIG_PERMISSION_ISSUE' in response['details']):
+            try:
+                os.makedirs(ConfigCache.root, exist_ok=True)
+                if touch(path):
+                    # Toggle our status
+                    response['can_write_config'] = True
+
+                else:
+                    # We can take an early exit as there is already a permission issue detected
+                    response['details'].append('CONFIG_PERMISSION_ISSUE')
+
+            except OSError:
+                # We can take an early exit as there is already a permission issue detected
+                response['details'].append('CONFIG_PERMISSION_ISSUE')
+
+    if settings.APPRISE_ATTACH_SIZE > 0:
+        # Test our ability to access write attachments
+
+        # Update our Configuration Check Block
+        path = os.path.join(settings.APPRISE_ATTACH_DIR, '.tmp_hc')
+        if lazy:
+            try:
+                modify_date = datetime.fromtimestamp(os.path.getmtime(path))
+                delta = (datetime.now() - modify_date).total_seconds()
+                if delta <= 30.00:  # 30s
+                    response['can_write_attach'] = True
+
+            except FileNotFoundError:
+                # No worries... continue with below testing
+                pass
+
+            except OSError:
+                # We can take an early exit as there is already a permission issue detected
+                response['details'].append('ATTACH_PERMISSION_ISSUE')
+
+        if not (response['can_write_attach'] or 'ATTACH_PERMISSION_ISSUE' in response['details']):
+            # No lazy mode set or content require a refresh
+            try:
+                os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+                if touch(path):
+                    # Toggle our status
+                    response['can_write_attach'] = True
+
+                else:
+                    # We can take an early exit as there is already a permission issue detected
+                    response['details'].append('ATTACH_PERMISSION_ISSUE')
+
+            except OSError:
+                # We can take an early exit
+                response['details'].append('ATTACH_PERMISSION_ISSUE')
+
+    if settings.APPRISE_STORAGE_DIR:
+        #
+        # Persistent Storage Check
+        #
+        store = apprise.PersistentStore(
+            path=settings.APPRISE_STORAGE_DIR,
+            namespace='tmp_hc',
+            mode=settings.APPRISE_STORAGE_MODE,
+        )
+
+        if store.mode != settings.APPRISE_STORAGE_MODE:
+            # Persistent storage not as configured
+            response['details'].append('STORE_PERMISSION_ISSUE')
+
+        elif store.mode != apprise.PersistentStoreMode.MEMORY:
+            # G
+            path = settings.APPRISE_STORAGE_DIR
+            if lazy:
+                try:
+                    modify_date = datetime.fromtimestamp(os.path.getmtime(path))
+                    delta = (datetime.now() - modify_date).total_seconds()
+                    if delta <= 30.00:  # 30s
+                        response['persistent_storage'] = True
+
+                except OSError:
+                    # No worries... continue with below testing
+                    pass
+
+            if not (store.set('foo', 'bar') and store.flush()):
+                # No persistent store
+                response['details'].append('STORE_PERMISSION_ISSUE')
+            else:
+                # Toggle our status
+                response['persistent_storage'] = True
+
+            # Clear our test
+            store.clear('foo')
+
+    if not response['details']:
+        response['details'].append('OK')
+
+    return response

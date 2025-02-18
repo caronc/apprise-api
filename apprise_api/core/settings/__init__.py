@@ -112,6 +112,8 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
+            'level': os.environ.get(
+                'LOG_LEVEL', 'debug' if DEBUG else 'info').upper(),
         },
         'apprise': {
             'handlers': ['console'],
@@ -151,12 +153,69 @@ APPRISE_WEBHOOK_URL = os.environ.get('APPRISE_WEBHOOK_URL', '')
 APPRISE_CONFIG_DIR = os.environ.get(
     'APPRISE_CONFIG_DIR', os.path.join(BASE_DIR, 'var', 'config'))
 
+# The location to store Apprise Persistent Storage files
+APPRISE_STORAGE_DIR = os.environ.get(
+    'APPRISE_STORAGE_DIR', os.path.join(APPRISE_CONFIG_DIR, 'store'))
+
+# Default number of days to prune persistent storage
+APPRISE_STORAGE_PRUNE_DAYS = \
+    int(os.environ.get('APPRISE_STORAGE_PRUNE_DAYS', 30))
+
+# The default URL ID Length
+APPRISE_STORAGE_UID_LENGTH = \
+    int(os.environ.get('APPRISE_STORAGE_UID_LENGTH', 8))
+
+# The default storage mode; options are:
+# - memory  : Disables persistent storage (this is also automatically set
+#             if the APPRISE_STORAGE_DIR is empty reguardless of what is
+#             defined below.
+# - auto    : Writes to storage after each notifications execution (default)
+# - flush   : Writes to storage constantly (as much as possible).  This
+#             produces more i/o but can allow multiple calls to the same
+#             notification to be in sync more
+APPRISE_STORAGE_MODE = os.environ.get('APPRISE_STORAGE_MODE', 'auto').lower()
+
 # The location to place file attachments
 APPRISE_ATTACH_DIR = os.environ.get(
     'APPRISE_ATTACH_DIR', os.path.join(BASE_DIR, 'var', 'attach'))
 
 # The maximum file attachment size allowed by the API (defined in MB)
 APPRISE_ATTACH_SIZE = int(os.environ.get('APPRISE_ATTACH_SIZE', 200)) * 1048576
+
+# A provided list that identify all of the URLs/Hosts/IPs that Apprise can
+# retrieve remote attachments from.
+#
+# Processing Order:
+#  - The DENY list is always processed before the ALLOW list.
+#     * If a match is found, processing stops, and the URL attachment is ignored
+#  - The ALLOW list is ONLY processed if there was no match found on the DENY list
+#  - If there is no match found on the ALLOW List, then the Attachment URL is ignored
+#     * Not matching anything on the ALLOW list is effectively treated as a DENY
+#
+#  Lists are both processed from top down (stopping on first match)
+
+# Use the following rules when constructing your ALLOW/DENY entries:
+#  - Entries are separated with either a comma (,) and/or a space
+#  - Entries can start with http:// or https:// (enforcing URL security HTTPS as part of check)
+#  - IPs or hostnames provided is the preferred approach if it doesn't matter if the entry is
+#     https:// or http://
+#  - * wildcards are allowed. * means nothing or anything else that follows.
+#  - ? placeholder wildcards are allowed (identifying the explicit placeholder
+#    of an alpha/numeric/dash/underscore character)
+#
+#  Notes of interest:
+#  - If the list is empty, then attachments can not be retrieved via URL at all.
+#  - If the URL to be attached is not found or matched against an entry in this list then
+#     the URL based attachment is ignored and is not retrieved at all.
+#  - Set the list to * (a single astrix) to match all URLs and accepting all provided
+#    matches
+APPRISE_ATTACH_DENY_URLS = \
+    os.environ.get('APPRISE_ATTACH_REJECT_URL', '127.0.* localhost*').lower()
+
+# The Allow list which is processed after the Deny list above
+APPRISE_ATTACH_ALLOW_URLS = \
+    os.environ.get('APPRISE_ATTACH_ALLOW_URL', '*').lower()
+
 
 # The maximum size in bytes that a request body may be before raising an error
 # (defined in MB)
@@ -186,6 +245,12 @@ APPRISE_CONFIG_LOCK = \
 # Stateless posts to /notify/ will resort to this set of URLs if none
 # were otherwise posted with the URL request.
 APPRISE_STATELESS_URLS = os.environ.get('APPRISE_STATELESS_URLS', '')
+
+# Allow stateless URLS to generate and/or work with persistent storage
+# By default this is set to no
+APPRISE_STATELESS_STORAGE = \
+    os.environ.get("APPRISE_STATELESS_STORAGE", 'no')[0].lower() in (
+        'a', 'y', '1', 't', 'e', '+')
 
 # Defines the stateful mode; possible values are:
 # - hash (default): content is hashed and zipped

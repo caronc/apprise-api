@@ -35,10 +35,12 @@ from django.views.decorators.gzip import gzip_page
 from django.utils.translation import gettext_lazy as _
 from django.core.serializers.json import DjangoJSONEncoder
 
+from .payload_mapper import remap_fields
 from .utils import parse_attachments
 from .utils import ConfigCache
 from .utils import apply_global_filters
 from .utils import send_webhook
+from .utils import healthcheck
 from .forms import AddByUrlForm
 from .forms import AddByConfigForm
 from .forms import NotifyForm
@@ -98,7 +100,7 @@ class JSONEncoder(DjangoJSONEncoder):
         if isinstance(obj, set):
             return list(obj)
 
-        elif isinstance(obj, apprise.AppriseLocale.LazyTranslation):
+        elif isinstance(obj, apprise.locale.LazyTranslation):
             return str(obj)
 
         return super().default(obj)
@@ -115,6 +117,7 @@ class ResponseCode(object):
     not_found = 404
     method_not_allowed = 405
     method_not_accepted = 406
+    expectation_failed = 417
     failed_dependency = 424
     fields_too_large = 431
     internal_server_error = 500
@@ -133,6 +136,45 @@ class WelcomeView(View):
             'secure': request.scheme[-1].lower() == 's',
             'key': key if key else default_key,
         })
+
+
+@method_decorator((gzip_page, never_cache), name='dispatch')
+class HealthCheckView(View):
+    """
+    A Django view used to return a simple status/healthcheck
+    """
+
+    def get(self, request):
+        """
+        Handle a GET request
+        """
+        # Detect the format our incoming payload
+        json_payload = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'content-type', '')) is not None
+
+        # Detect the format our response should be in
+        json_response = True if json_payload \
+            and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
+            MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
+
+        # Run our healthcheck; allow ?force which will cause the check to run each time
+        response = healthcheck(lazy='force' not in request.GET)
+
+        # Prepare our response
+        status = ResponseCode.okay if 'OK' in response['details'] else ResponseCode.expectation_failed
+        if not json_response:
+            response = ','.join(response['details'])
+
+        return HttpResponse(response, status=status, content_type='text/plain') \
+            if not json_response else JsonResponse({
+                'config_lock': settings.APPRISE_CONFIG_LOCK,
+                'attach_lock': settings.APPRISE_ATTACH_SIZE <= 0,
+                'status': response,
+            }, encoder=JSONEncoder, safe=False, status=status)
 
 
 @method_decorator((gzip_page, never_cache), name='dispatch')
@@ -662,10 +704,22 @@ class NotifyView(View):
             and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
+        # rules
+        rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ':'}
+
         # our content
         content = {}
         if not json_payload:
-            form = NotifyForm(data=request.POST, files=request.FILES)
+            if rules:
+                # Create a copy
+                data = request.POST.copy()
+                remap_fields(rules, data)
+
+            else:
+                # Just create a pointer
+                data = request.POST
+
+            form = NotifyForm(data=data, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -674,6 +728,10 @@ class NotifyView(View):
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
+
+                # Apply content rules
+                if rules:
+                    remap_fields(rules, content)
 
             except (RequestDataTooBig):
                 # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
@@ -934,10 +992,16 @@ class NotifyView(View):
                 status=status,
             )
 
-        # Prepare our keyword arguments (to be passed into an AppriseAsset
-        # object)
+        # Prepare our keyword arguments (to be passed into an AppriseAsset object)
         kwargs = {
+            # Load our dynamic plugin path
             'plugin_paths': settings.APPRISE_PLUGIN_PATHS,
+            # Load our persistent storage path
+            'storage_path': settings.APPRISE_STORAGE_DIR,
+            # Our storage URL ID Length
+            'storage_idlen': settings.APPRISE_STORAGE_UID_LENGTH,
+            # Define if we flush to disk as soon as possible or not when required
+            'storage_mode': settings.APPRISE_STORAGE_MODE,
         }
 
         if body_format:
@@ -1169,11 +1233,22 @@ class StatelessNotifyView(View):
             and ACCEPT_ALL.match(request.headers.get('accept', '')) else \
             MIME_IS_JSON.match(request.headers.get('accept', '')) is not None
 
+        # rules
+        rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ':'}
+
         # our content
         content = {}
         if not json_payload:
-            content = {}
-            form = NotifyByUrlForm(request.POST, request.FILES)
+            if rules:
+                # Create a copy
+                data = request.POST.copy()
+                remap_fields(rules, data, form=NotifyByUrlForm())
+
+            else:
+                # Just create a pointer
+                data = request.POST
+
+            form = NotifyByUrlForm(data=data, files=request.FILES)
             if form.is_valid():
                 content.update(form.cleaned_data)
 
@@ -1182,6 +1257,10 @@ class StatelessNotifyView(View):
             try:
                 # load our JSON content
                 content = json.loads(request.body.decode('utf-8'))
+
+                # Apply content rules
+                if rules:
+                    remap_fields(rules, content, form=NotifyByUrlForm())
 
             except (RequestDataTooBig):
                 # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
@@ -1280,11 +1359,21 @@ class StatelessNotifyView(View):
                     'error': msg,
                 }, encoder=JSONEncoder, safe=False, status=status)
 
-        # Prepare our keyword arguments (to be passed into an AppriseAsset
-        # object)
+        # Prepare our keyword arguments (to be passed into an AppriseAsset object)
         kwargs = {
+            # Load our dynamic plugin path
             'plugin_paths': settings.APPRISE_PLUGIN_PATHS,
         }
+        if settings.APPRISE_STATELESS_STORAGE:
+            # Persistent Storage is allowed with Stateless queries
+            kwargs.update({
+                # Load our persistent storage path
+                'storage_path': settings.APPRISE_STORAGE_DIR,
+                # Our storage URL ID Length
+                'storage_idlen': settings.APPRISE_STORAGE_UID_LENGTH,
+                # Define if we flush to disk as soon as possible or not when required
+                'storage_mode': settings.APPRISE_STORAGE_MODE,
+            })
 
         if body_format:
             # Store our defined body format
@@ -1503,6 +1592,7 @@ class JsonUrlView(View):
         #    "tags": ["tag1', "tag2", "tag3"],
         #    "urls": [
         #       {
+        #          "uid": "efa313ab",
         #          "url": "windows://",
         #          "tags": [],
         #       },
@@ -1567,6 +1657,7 @@ class JsonUrlView(View):
         for notification in a_obj.find(tag):
             # Set Notification
             response['urls'].append({
+                'id': notification.url_id(),
                 'url': notification.url(privacy=privacy),
                 'tags': notification.tags,
             })

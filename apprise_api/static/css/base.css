@@ -122,8 +122,9 @@ textarea {
   border-radius: 12px;
   width: 50%;
   min-width: 35rem;
-  min-height: 12em;
+  min-height: 4em;
   float: left;
+  position: relative;
 }
 
 .chip {
@@ -134,6 +135,7 @@ textarea {
   cursor: pointer;
 }
 
+
 #url-list code {
   overflow-x: hidden;
   overflow-y: hidden;
@@ -141,7 +143,22 @@ textarea {
   text-wrap: wrap;
   overflow-wrap: break-word;
   border-radius: 5px;
+  margin-top: 0.8rem;
   display: block;
+}
+
+#url-list .card-panel .url-id {
+  width: auto;
+  margin: 0.3rem;
+  background-color: inherit;
+  color: #aaa;
+	padding: 0.2em;
+  font-size: 0.7em;
+  border: 0px;
+  /* Top Justified */
+  position: absolute;
+  top: -0.5em;
+  right: 0.3em;
 }
 
 /* Notification Details */
@@ -236,5 +253,35 @@ code.config-id {
 }
 
 .chip.selected {
-	font-weight: 600;
+  font-weight: 600;
 }
+
+#health-check {
+  background-color: #f883791f;
+  border-radius: 25px;
+  padding: 2em;
+  margin-bottom: 2em;
+}
+#health-check h4 {
+  font-size: 30px;
+}
+#health-check h4 .material-icons {
+  margin-top: -0.2em;
+}
+
+#health-check li .material-icons {
+  font-size: 30px;
+  margin-top: -0.2em;
+}
+
+#health-check ul {
+  list-style-type: disc;
+  padding-left: 2em;
+}
+
+#health-check ul strong {
+  font-weight: 600;
+  font-size: 1.2rem;
+  display: block;
+}
+

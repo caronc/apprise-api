@@ -22,15 +22,15 @@
       <h5>{% trans "Getting Started" %}</h5>
       <ol>
         <li>
-          {% blocktrans %}
-          Here is where you can store your Apprise configuration associated with the key <code>{{key}}</code>.
-          {% endblocktrans %}
-          For some examples on how to build a development environment around this, <strong><a href="{% url 'welcome'%}?key={{key}}">click here</a></strong>.
+          {% trans "Verify your Apprise API Status:" %} <strong><a href="{% url 'health' %}">click here</a></strong>
+        </li>
+        <li>
+          {% trans "Here is where you can store your Apprise configuration associated with the key:" %} <code>{{key}}</code>
+          {% trans "For some examples on how to build a development environment around this:" %} <strong><a href="{% url 'welcome'%}?key={{key}}">click here</a></strong>
         </li>
         <li>
           {% blocktrans %}
-          In the future you can return to this configuration screen at any time by placing the following into your
-          browser:
+          In the future you can return to this configuration screen at any time by placing the following into your browser:
           {% endblocktrans %}
           <code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/{{key}}</code>
         </li>
@@ -188,7 +188,7 @@
 {% endif %}
 {% endblock %}
 {% block jsfooter %}
-
+{{ block.super }}
 {% if STATEFUL_MODE != 'disabled' %}
 function update_count() {
   const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
@@ -351,8 +351,14 @@ async function main_init(){
     let code = document.createElement('code');
     let li = document.createElement('li');
     code.textContent = entry.url;
-    li.setAttribute('class', 'card-panel');
     li.appendChild(code);
+    li.setAttribute('class', 'card-panel');
+    if (entry.id) {
+      let url_id = document.createElement('code');
+      url_id.setAttribute('class', 'url-id');
+      url_id.textContent = entry.id;
+      li.appendChild(url_id);
+    }
 
     urlList.appendChild(li);
     // Store `all` tag
@@ -695,8 +701,8 @@ function notify_init() {
 {% endblock %}
 
 {% block onload %}
-{% if STATEFUL_MODE != 'disabled' %}
 {{ block.super }}
+{% if STATEFUL_MODE != 'disabled' %}
 document.querySelector('label [for="id_tag"]')
 {
   // create a new div with the class 'chips' assigned to it
