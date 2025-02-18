@@ -132,6 +132,9 @@ BASE_URL = os.environ.get('BASE_URL', '')
 APPRISE_DEFAULT_CONFIG_ID = \
     os.environ.get('APPRISE_DEFAULT_CONFIG_ID', 'apprise')
 
+# Define our Prometheus Namespace
+PROMETHEUS_METRIC_NAMESPACE = "apprise"
+
 # Static files relative path (CSS, JavaScript, Images)
 STATIC_URL = BASE_URL + '/s/'
 
