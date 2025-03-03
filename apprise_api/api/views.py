@@ -254,6 +254,23 @@ class ConfigView(View):
 
 
 @method_decorator(never_cache, name='dispatch')
+class ConfigListView(View):
+    """
+    A Django view used to list all configuration keys
+    """
+    template_name = 'config_list.html'
+
+    def get(self, request):
+        """
+        Handle a GET request
+        """
+        logger.warning(ConfigCache.keys())
+        return render(request, self.template_name, {
+            'keys': ConfigCache.keys(),
+        })
+
+
+@method_decorator(never_cache, name='dispatch')
 class AddView(View):
     """
     A Django view used to store Apprise configuration

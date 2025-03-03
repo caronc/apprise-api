@@ -34,9 +34,9 @@ class ManagerPageTests(SimpleTestCase):
         """
         General testing of management page
         """
-        # No key was specified
+        # No key was specified -> list page
         response = self.client.get('/cfg/')
-        assert response.status_code == 404
+        assert response.status_code == 200
 
         # An invalid key was specified
         response = self.client.get('/cfg/**invalid-key**')
