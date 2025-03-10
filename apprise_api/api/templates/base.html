@@ -54,7 +54,7 @@
           <a class="collection-item" id='cfg-gen' href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
             {% trans "New Configuration" %}</a>
           {% endif %}
-          {% if STATEFUL_MODE == 'simple' and ALLOW_CONFIG_LIST %}
+          {% if STATEFUL_MODE == 'simple' and ADMIN_ENABLED %}
           <a class="collection-item" id='cfg-list' href="{% url 'config_list' %}"><i class="material-icons">list</i>
             {% trans "Configuration List" %}</a>
           {% endif %}

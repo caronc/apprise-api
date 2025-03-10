@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block body %}
     <h4>{% trans "Configuration List" %}</h4>
-    {% if ALLOW_CONFIG_LIST and STATEFUL_MODE == 'simple' %}
+    {% if ADMIN_ENABLED and STATEFUL_MODE == 'simple' %}
         <ul class="collection z-depth-1">
             {% for key in keys %}
                 <a class="collection-item" href="{% url 'config' key %}"><i

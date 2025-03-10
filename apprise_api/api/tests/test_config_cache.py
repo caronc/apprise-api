@@ -153,13 +153,13 @@ def test_apprise_config_list_simple_mode(tmpdir):
 
     # Now ensure that the returned keys are the same as the ones we wrote
     # And that the hidden file is not included
-    with override_settings(APPRISE_ALLOW_CONFIG_LIST=True):
+    with override_settings(APPRISE_ADMIN_ENABLED=True):
         keys = acc_obj.keys()
         assert len(keys) == 10
         assert sorted(keys) == sorted(text_keys + yaml_keys)
 
     # But only when the setting is enabled
-    with override_settings(APPRISE_ALLOW_CONFIG_LIST=False):
+    with override_settings(APPRISE_ADMIN_ENABLED=False):
         keys = acc_obj.keys()
         assert len(keys) == 0
 

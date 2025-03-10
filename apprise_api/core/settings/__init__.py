@@ -89,7 +89,7 @@ TEMPLATES = [
                 'api.context_processors.unique_config_id',
                 'api.context_processors.stateful_mode',
                 'api.context_processors.config_lock',
-                'api.context_processors.allow_config_list',
+                'api.context_processors.admin_enabled',
                 'api.context_processors.apprise_version',
             ],
         },
@@ -286,7 +286,8 @@ APPRISE_PLUGIN_PATHS = os.environ.get(
 # Setting this to zero disables the limit
 APPRISE_MAX_ATTACHMENTS = int(os.environ.get('APPRISE_MAX_ATTACHMENTS', 6))
 
-# Allow showing a list of configuration keys (when STATEFUL_MODE is set to simple)
-APPRISE_ALLOW_CONFIG_LIST = \
-    os.environ.get("APPRISE_ALLOW_CONFIG_LIST", 'no')[0].lower() in (
+# Allow Admin mode:
+# - showing a list of configuration keys (when STATEFUL_MODE is set to simple)
+APPRISE_ADMIN_ENABLED = \
+    os.environ.get("APPRISE_ADMIN_ENABLED", 'no')[0].lower() in (
         'a', 'y', '1', 't', 'e', '+')

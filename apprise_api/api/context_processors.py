@@ -42,11 +42,11 @@ def config_lock(request):
     return {'CONFIG_LOCK': settings.APPRISE_CONFIG_LOCK}
 
 
-def allow_config_list(request):
+def admin_enabled(request):
     """
     Returns whether we allow the config list to be displayed
     """
-    return {'ALLOW_CONFIG_LIST': settings.APPRISE_ALLOW_CONFIG_LIST}
+    return {'ADMIN_ENABLED': settings.APPRISE_ADMIN_ENABLED}
 
 
 def apprise_version(request):
