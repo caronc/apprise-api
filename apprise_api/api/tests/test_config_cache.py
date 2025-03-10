@@ -122,6 +122,12 @@ def test_apprise_config_list_simple_mode(tmpdir):
     # Create our object to work with
     acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
 
+    # Add a hidden file to the config directory (which should be ignored)
+    hidden_file = os.path.join(str(tmpdir), '.hidden')
+    with open(hidden_file, 'w') as f:
+        f.write('hidden file')
+
+
     # Write 5 text configs and 5 yaml configs
     content_text = 'mailto://test:pass@gmail.com'
     content_yaml = """
@@ -139,12 +145,14 @@ def test_apprise_config_list_simple_mode(tmpdir):
     for key in yaml_keys:
         assert acc_obj.put(key, content_yaml, ConfigFormat.YAML)
 
-    # Ensure the 10 configuration files are the only contents of the directory
+    # Ensure the 10 configuration files (plus the hidden file) are the only
+    # contents of the directory
     conf_dir, _ = acc_obj.path(key)
     contents = os.listdir(conf_dir)
-    assert len(contents) == 10
+    assert len(contents) == 11
 
     # Now ensure that the returned keys are the same as the ones we wrote
+    # And that the hidden file is not included
     with override_settings(APPRISE_ALLOW_CONFIG_LIST=True):
         keys = acc_obj.keys()
         assert len(keys) == 10
