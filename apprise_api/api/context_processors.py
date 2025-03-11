@@ -46,7 +46,7 @@ def admin_enabled(request):
     """
     Returns whether we allow the config list to be displayed
     """
-    return {'ADMIN_ENABLED': settings.APPRISE_ADMIN_ENABLED}
+    return {'APPRISE_ADMIN': settings.APPRISE_ADMIN}
 
 
 def apprise_version(request):

@@ -24,8 +24,6 @@
 # THE SOFTWARE.
 import os
 
-from django.test import override_settings
-
 from ..utils import AppriseConfigCache
 from ..utils import AppriseStoreMode
 from ..utils import SimpleFileExtension
@@ -127,7 +125,6 @@ def test_apprise_config_list_simple_mode(tmpdir):
     with open(hidden_file, 'w') as f:
         f.write('hidden file')
 
-
     # Write 5 text configs and 5 yaml configs
     content_text = 'mailto://test:pass@gmail.com'
     content_yaml = """
@@ -151,17 +148,49 @@ def test_apprise_config_list_simple_mode(tmpdir):
     contents = os.listdir(conf_dir)
     assert len(contents) == 11
 
-    # Now ensure that the returned keys are the same as the ones we wrote
-    # And that the hidden file is not included
-    with override_settings(APPRISE_ADMIN_ENABLED=True):
-        keys = acc_obj.keys()
-        assert len(keys) == 10
-        assert sorted(keys) == sorted(text_keys + yaml_keys)
+    keys = acc_obj.keys()
+    assert len(keys) == 10
+    assert sorted(keys) == sorted(text_keys + yaml_keys)
 
-    # But only when the setting is enabled
-    with override_settings(APPRISE_ADMIN_ENABLED=False):
-        keys = acc_obj.keys()
-        assert len(keys) == 0
+
+def test_apprise_config_list_hash_mode(tmpdir):
+    """
+    Test Apprise Config Keys List using HASH mode
+    """
+    # Create our object to work with
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+
+    # Add a hidden file to the config directory (which should be ignored)
+    hidden_file = os.path.join(str(tmpdir), '.hidden')
+    with open(hidden_file, 'w') as f:
+        f.write('hidden file')
+
+    # Write 5 text configs and 5 yaml configs
+    content_text = 'mailto://test:pass@gmail.com'
+    content_yaml = """
+    version: 1
+    urls:
+         - windows://
+    """
+    text_key_tpl = 'test_apprise_config_list_simple_text_{}'
+    yaml_key_tpl = 'test_apprise_config_list_simple_yaml_{}'
+    text_keys = [text_key_tpl.format(i) for i in range(5)]
+    yaml_keys = [yaml_key_tpl.format(i) for i in range(5)]
+    key = None
+    for key in text_keys:
+        assert acc_obj.put(key, content_text, ConfigFormat.TEXT)
+    for key in yaml_keys:
+        assert acc_obj.put(key, content_yaml, ConfigFormat.YAML)
+
+    # Ensure the 10 configuration files (plus the hidden file) are the only
+    # contents of the directory
+    conf_dir, _ = acc_obj.path(key)
+    contents = os.listdir(conf_dir)
+    assert len(contents) == 1
+
+    # does not search on hash mode
+    keys = acc_obj.keys()
+    assert len(keys) == 0
 
 
 def test_apprise_config_io_simple_mode(tmpdir):

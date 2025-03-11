@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block body %}
     <h4>{% trans "Configuration List" %}</h4>
-    {% if ADMIN_ENABLED and STATEFUL_MODE == 'simple' %}
+    {% if keys %}
         <ul class="collection z-depth-1">
             {% for key in keys %}
                 <a class="collection-item" href="{% url 'config' key %}"><i
@@ -10,6 +10,6 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p>{% blocktrans %}The administrator of this system has not enabled configuration listing.{% endblocktrans %}</p>
+        <p>{% blocktrans %}There is no configuration defined.{% endblocktrans %}</p>
     {% endif %}
 {% endblock %}
