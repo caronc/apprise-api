@@ -42,6 +42,13 @@ def config_lock(request):
     return {'CONFIG_LOCK': settings.APPRISE_CONFIG_LOCK}
 
 
+def admin_enabled(request):
+    """
+    Returns whether we allow the config list to be displayed
+    """
+    return {'APPRISE_ADMIN': settings.APPRISE_ADMIN}
+
+
 def apprise_version(request):
     """
     Returns the current version of apprise loaded under the hood

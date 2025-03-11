@@ -711,6 +711,24 @@ class AppriseConfigCache(object):
         else:   # AppriseStoreMode.SIMPLE
             return (self.root, key)
 
+    def keys(self):
+        """
+        Returns a list of keys that are currently stored
+        """
+        keys = []
+        if self.mode != AppriseStoreMode.SIMPLE:
+            return keys
+
+        for filename in sorted(os.listdir(self.root)):
+            if filename.startswith('.'):
+                continue
+            path = os.path.join(self.root, filename)
+            if os.path.isfile(path):
+                key_name = os.path.splitext(filename)[0]
+                keys.append(key_name)
+
+        return keys
+
 
 # Initialize our singleton
 ConfigCache = AppriseConfigCache(

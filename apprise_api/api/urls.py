@@ -39,6 +39,9 @@ urlpatterns = [
         r'^cfg/(?P<key>[\w_-]{1,128})/?$',
         views.ConfigView.as_view(), name='config'),
     re_path(
+        r'^cfg/?$',
+        views.ConfigListView.as_view(), name='config_list'),
+    re_path(
         r'^add/(?P<key>[\w_-]{1,128})/?$',
         views.AddView.as_view(), name='add'),
     re_path(

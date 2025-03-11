@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block body %}
+    <h4>{% trans "Configuration List" %}</h4>
+    {% if keys %}
+        <ul class="collection z-depth-1">
+            {% for key in keys %}
+                <a class="collection-item" href="{% url 'config' key %}"><i
+                        class="material-icons">settings</i> {{ key }}</a>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{% blocktrans %}There is no configuration defined.{% endblocktrans %}</p>
+    {% endif %}
+{% endblock %}

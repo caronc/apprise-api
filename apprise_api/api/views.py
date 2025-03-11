@@ -38,6 +38,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .payload_mapper import remap_fields
 from .utils import parse_attachments
 from .utils import ConfigCache
+from .utils import AppriseStoreMode
 from .utils import apply_global_filters
 from .utils import send_webhook
 from .utils import healthcheck
@@ -114,7 +115,6 @@ class ResponseCode(object):
     no_content = 204
     bad_request = 400
     no_access = 403
-    not_found = 404
     method_not_allowed = 405
     method_not_accepted = 406
     expectation_failed = 417
@@ -250,6 +250,43 @@ class ConfigView(View):
             'form_url': AddByUrlForm(),
             'form_cfg': AddByConfigForm(),
             'form_notify': NotifyForm(),
+        })
+
+
+@method_decorator(never_cache, name='dispatch')
+class ConfigListView(View):
+    """
+    A Django view used to list all configuration keys
+    """
+    template_name = 'config_list.html'
+
+    def get(self, request):
+        """
+        Handle a GET request
+        """
+        # Detect the format our response should be in
+        json_response = \
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get(
+                    'accept', request.headers.get(
+                        'content-type', ''))) is not None
+
+        if not (settings.APPRISE_ADMIN and settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.SIMPLE):
+            msg = _('The site has been configured to deny this request')
+            status = ResponseCode.no_access
+            return HttpResponse(msg, status=status, content_type='text/plain') \
+                if not json_response else JsonResponse({
+                    'error': msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
+
+        return render(request, self.template_name, {
+            'keys': ConfigCache.keys(),
         })
 
 

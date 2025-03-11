@@ -89,6 +89,7 @@ TEMPLATES = [
                 'api.context_processors.unique_config_id',
                 'api.context_processors.stateful_mode',
                 'api.context_processors.config_lock',
+                'api.context_processors.admin_enabled',
                 'api.context_processors.apprise_version',
             ],
         },
@@ -284,3 +285,9 @@ APPRISE_PLUGIN_PATHS = os.environ.get(
 # Define the number of attachments that can exist as part of a payload
 # Setting this to zero disables the limit
 APPRISE_MAX_ATTACHMENTS = int(os.environ.get('APPRISE_MAX_ATTACHMENTS', 6))
+
+# Allow Admin mode:
+# - showing a list of configuration keys (when STATEFUL_MODE is set to simple)
+APPRISE_ADMIN = \
+    os.environ.get("APPRISE_ADMIN", 'no')[0].lower() in (
+        'a', 'y', '1', 't', 'e', '+')
