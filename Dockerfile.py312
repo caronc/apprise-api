@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Base
-FROM python:3.10-buster
+FROM python:3.12
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential musl-dev bash && \
     rm -rf /var/lib/apt/lists/*
@@ -38,7 +38,7 @@ WORKDIR /apprise-api
 COPY requirements.txt /
 COPY dev-requirements.txt /
 ENV PYTHONPATH /apprise-api
-ENV PYTHONPYCACHEPREFIX /apprise-api/__pycache__/py310
+ENV PYTHONPYCACHEPREFIX /apprise-api/__pycache__/py312
 
 RUN pip install --no-cache-dir -r /requirements.txt -r /dev-requirements.txt
 
