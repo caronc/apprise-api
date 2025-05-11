@@ -25,7 +25,6 @@
 
 # To create a valid debug settings.py we need to intentionally pollute our
 # file with all of the content found in the master configuration.
-import os
 from .. import *  # noqa F403
 
 # Debug is always on when running in debug mode
@@ -33,11 +32,3 @@ DEBUG = True
 
 # Allowed hosts is not required in debug mode
 ALLOWED_HOSTS = []
-
-# Over-ride the default URLConf for debugging
-ROOT_URLCONF = 'core.settings.debug.urls'
-
-# Our static paths directory for serving
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),  # noqa F405
-)

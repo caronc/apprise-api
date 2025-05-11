@@ -22,7 +22,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import re
+
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import re_path
+from django.views import static
+
 from . import views
 
 urlpatterns = [
@@ -59,4 +65,7 @@ urlpatterns = [
     re_path(
         r'^json/urls/(?P<key>[\w_-]{1,128})/?$',
         views.JsonUrlView.as_view(), name='json_urls'),
+    re_path(r"^" + re.escape(settings.STATIC_URL.lstrip("/")) + "(?P<path>.*)$",
+            static.serve,
+            kwargs={'document_root': settings.STATIC_ROOT}),
 ]
