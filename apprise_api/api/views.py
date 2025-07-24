@@ -1519,6 +1519,20 @@ class StatelessNotifyView(View):
                         'error': msg,
                     }, encoder=JSONEncoder, safe=False, status=status)
 
+        # Our return content type can be controlled by the Accept keyword
+        # If it includes /* or /html somewhere then we return html, otherwise
+        # we return the logs as they're processed in their text format.
+        # The HTML response type has a bit of overhead where as it's not
+        # the case with text/plain
+        if not json_response:
+            content_type = \
+                'text/html' if re.search(r'text\/(\*|html)',
+                                         request.headers.get('Accept', ''),
+                                         re.IGNORECASE) \
+                else 'text/plain'
+        else:
+            content_type = 'application/json'
+
         # Acquire our log level from headers if defined, otherwise use
         # the global one set in the settings
         level = request.headers.get(
@@ -1547,39 +1561,25 @@ class StatelessNotifyView(View):
         elif level == 'TRACE':
             level = logging.DEBUG - 1
 
-        if settings.APPRISE_WEBHOOK_URL:
-            esc = '<!!-!ESC!-!!>'
+        # Initialize our response object
+        response = None
+
+        esc = '<!!-!ESC!-!!>'
+
+        if json_response:
             fmt = f'["%(levelname)s","%(asctime)s","{esc}%(message)s{esc}"]'
-            with apprise.LogCapture(level=level, fmt=fmt) as logs:
-                # Perform our notification at this point
-                result = a_obj.notify(
-                    content.get('body'),
-                    title=content.get('title', ''),
-                    notify_type=content.get('type', apprise.NotifyType.INFO),
-                    tag='all',
-                    attach=attach,
-                )
-
-                esc = re.escape(esc)
-                entries = re.findall(
-                    r'\r*\n?(?P<head>\["[^"]+","[^"]+",)"{}(?P<to_escape>.+?)'
-                    r'{}"(?P<tail>\]\r*\n?$)(?=$|\r*\n?\["[^"]+","[^"]+","{})'.format(
-                        esc, esc, esc), logs.getvalue(), re.DOTALL | re.MULTILINE)
-
-                # Prepare ourselves a JSON Response
-                response = json.loads('[{}]'.format(
-                    ','.join([e[0] + json.dumps(e[1].rstrip()) + e[2] for e in entries])))
-
-                webhook_payload = {
-                    'source': request.META['REMOTE_ADDR'],
-                    'status': 0 if result else 1,
-                    'output': response,
-                }
-
-                # Send our webhook (pass or fail)
-                send_webhook(webhook_payload)
 
         else:
+            # Format is only updated if the content_type is html
+            fmt = '<li class="log_%(levelname)s">' \
+                '<div class="log_time">%(asctime)s</div>' \
+                '<div class="log_level">%(levelname)s</div>' \
+                f'<div class="log_msg">{esc}%(message)s{esc}</div></li>' \
+                if content_type == 'text/html' else \
+                settings.LOGGING['formatters']['standard']['format']
+
+        # Now specify our format (and over-ride the default):
+        with apprise.LogCapture(level=level, fmt=fmt) as logs:
             # Perform our notification at this point
             result = a_obj.notify(
                 content.get('body'),
@@ -1589,6 +1589,43 @@ class StatelessNotifyView(View):
                 attach=attach,
             )
 
+        if json_response:
+            esc = re.escape(esc)
+            entries = re.findall(
+                r'\r*\n?(?P<head>\["[^"]+","[^"]+",)"{}(?P<to_escape>.+?)'
+                r'{}"(?P<tail>\]\r*\n?$)(?=$|\r*\n?\["[^"]+","[^"]+","{})'.format(
+                    esc, esc, esc), logs.getvalue(), re.DOTALL | re.MULTILINE)
+
+            # Prepare ourselves a JSON Response
+            response = json.loads('[{}]'.format(
+                ','.join([e[0] + json.dumps(e[1].rstrip()) + e[2] for e in entries])))
+
+        elif content_type == 'text/html':
+            # Iterate over our entries so that we can prepare to escape
+            # things to be presented as HTML
+            esc = re.escape(esc)
+            entries = re.findall(
+                r'\r*\n?(?P<head><li class="log_.+?){}(?P<to_escape>.+?)'
+                r'{}(?P<tail></div></li>\r*\n?$)(?=$|\r*\n?<li class="log_.+{})'.format(
+                    esc, esc, esc), logs.getvalue(), re.DOTALL | re.MULTILINE)
+
+            # Wrap logs in `<ul>` tag and escape our message body:
+            response = '<ul class="logs">{}</ul>'.format(
+                ''.join([e[0] + escape(e[1]) + e[2] for e in entries]))
+
+        else:  # content_type == 'text/plain'
+            response = logs.getvalue()
+
+        if settings.APPRISE_WEBHOOK_URL:
+            webhook_payload = {
+                'source': request.META['REMOTE_ADDR'],
+                'status': 0 if result else 1,
+                'output': response,
+            }
+
+            # Send our webhook (pass or fail)
+            send_webhook(webhook_payload)
+
         if not result:
             # If at least one notification couldn't be sent; change up the
             # response to a 424 error code
@@ -1597,10 +1634,12 @@ class StatelessNotifyView(View):
                 request.META['REMOTE_ADDR'])
 
             status = ResponseCode.failed_dependency
-            msg = _('One or more notification could not be sent')
-            return HttpResponse(msg, status=status, content_type='text/plain') \
+            msg = _('One or more notifications could not be sent')
+
+            return HttpResponse(response if response else msg, status=status, content_type=content_type) \
                 if not json_response else JsonResponse({
                     'error': msg,
+                    'details': response,
                 }, encoder=JSONEncoder, safe=False, status=status)
 
         logger.info(
@@ -1609,9 +1648,10 @@ class StatelessNotifyView(View):
 
         # Return our success message
         status = ResponseCode.okay
-        msg = _('Notification(s) sent')
-        return HttpResponse(msg, status=status, content_type='text/plain') \
+        return HttpResponse(response, status=status, content_type=content_type) \
             if not json_response else JsonResponse({
+                'error': None,
+                'details': response,
             }, encoder=JSONEncoder, safe=False, status=status)
 
 
