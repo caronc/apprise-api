@@ -1117,7 +1117,10 @@ class NotifyView(View):
         if not json_response:
             content_type = \
                 'text/html' if re.search(r'text\/(\*|html)',
-                                         request.headers.get('Accept', ''),
+                                         request.headers.get(
+                                             'Accept', request.content_type
+                                             if request.content_type
+                                             else request.headers.get('Content-Type', '')),
                                          re.IGNORECASE) \
                 else 'text/plain'
 
@@ -1527,7 +1530,10 @@ class StatelessNotifyView(View):
         if not json_response:
             content_type = \
                 'text/html' if re.search(r'text\/(\*|html)',
-                                         request.headers.get('Accept', ''),
+                                         request.headers.get(
+                                             'Accept', request.content_type
+                                             if request.content_type
+                                             else request.headers.get('Content-Type', '')),
                                          re.IGNORECASE) \
                 else 'text/plain'
         else:

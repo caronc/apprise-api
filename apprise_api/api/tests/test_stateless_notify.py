@@ -493,6 +493,34 @@ class StatelessNotifyTests(SimpleTestCase):
             assert mock_notify.call_count == 0
 
     @mock.patch('apprise.Apprise.notify')
+    def test_notify_html_response_block(self, mock_notify):
+        """
+        Test HTML log formatting block is triggered in StatelessNotifyView
+        """
+        mock_notify.return_value = True
+        form_data = {
+            'urls': 'json://user@localhost',
+            'body': 'Testing HTML block',
+            'type': apprise.NotifyType.INFO,
+        }
+
+        headers = {
+            'HTTP_Accept': 'text/html',
+        }
+
+        response = self.client.post(
+            '/notify',
+            data=form_data,
+            **headers,
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert response['Content-Type'].startswith('text/html')
+        assert b'<ul class="logs">' in response.content
+        assert b'class="logs"' in response.content
+
+    @mock.patch('apprise.Apprise.notify')
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """
         Test sending a simple notification using JSON
