@@ -140,6 +140,7 @@ PROMETHEUS_METRIC_NAMESPACE = "apprise"
 
 # Static files relative path (CSS, JavaScript, Images)
 STATIC_URL = BASE_URL + '/s/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default theme can be either 'light' or 'dark'
 APPRISE_DEFAULT_THEME = \
