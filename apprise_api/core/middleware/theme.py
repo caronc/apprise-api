@@ -74,8 +74,8 @@ class AutoThemeMiddleware:
 
         # Set our cookie
         max_age = 365 * 24 * 60 * 60  # 1 year
-        expires = datetime.datetime.utcnow() + \
-            datetime.timedelta(seconds=max_age)
+        expires = \
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=max_age)
 
         # Set our cookie
         response.set_cookie('theme', theme, expires=expires)
