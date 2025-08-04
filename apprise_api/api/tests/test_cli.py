@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -29,7 +29,6 @@ from django.core import management
 
 
 class CommandTests(SimpleTestCase):
-
     def test_command_style(self):
         out = io.StringIO()
-        management.call_command('storeprune', days=40, stdout=out)
+        management.call_command("storeprune", days=40, stdout=out)

@@ -28,7 +28,7 @@ from api.forms import NotifyForm
 import logging
 
 # Get an instance of a logger
-logger = logging.getLogger('django')
+logger = logging.getLogger("django")
 
 
 def remap_fields(rules, payload, form=None):
@@ -54,7 +54,6 @@ def remap_fields(rules, payload, form=None):
     # First generate our expected keys; only these can be mapped
     expected_keys = set(form.fields.keys())
     for _key, value in rules.items():
-
         key = _key.lower()
         if key in payload and not value:
             # Remove element

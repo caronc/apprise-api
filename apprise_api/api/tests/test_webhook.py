@@ -31,8 +31,7 @@ from django.test.utils import override_settings
 
 
 class WebhookTests(SimpleTestCase):
-
-    @mock.patch('requests.post')
+    @mock.patch("requests.post")
     def test_webhook_testing(self, mock_post):
         """
         Test webhook handling
@@ -43,48 +42,43 @@ class WebhookTests(SimpleTestCase):
         response.status_code = requests.codes.ok
         mock_post.return_value = response
 
-        with override_settings(
-                APPRISE_WEBHOOK_URL='https://'
-                'user:pass@localhost/webhook'):
+        with override_settings(APPRISE_WEBHOOK_URL="https://user:pass@localhost/webhook"):
             send_webhook({})
             assert mock_post.call_count == 1
 
             details = mock_post.call_args_list[0]
-            assert details[0][0] == 'https://localhost/webhook'
-            assert loads(details[1]['data']) == {}
-            assert 'User-Agent' in details[1]['headers']
-            assert 'Content-Type' in details[1]['headers']
-            assert details[1]['headers']['User-Agent'] == 'Apprise-API'
-            assert details[1]['headers']['Content-Type'] == 'application/json'
-            assert details[1]['auth'] == ('user', 'pass')
-            assert details[1]['verify'] is True
-            assert details[1]['params'] == {}
-            assert details[1]['timeout'] == (4.0, 4.0)
+            assert details[0][0] == "https://localhost/webhook"
+            assert loads(details[1]["data"]) == {}
+            assert "User-Agent" in details[1]["headers"]
+            assert "Content-Type" in details[1]["headers"]
+            assert details[1]["headers"]["User-Agent"] == "Apprise-API"
+            assert details[1]["headers"]["Content-Type"] == "application/json"
+            assert details[1]["auth"] == ("user", "pass")
+            assert details[1]["verify"] is True
+            assert details[1]["params"] == {}
+            assert details[1]["timeout"] == (4.0, 4.0)
 
         mock_post.reset_mock()
 
-        with override_settings(
-                APPRISE_WEBHOOK_URL='http://'
-                'user@localhost/webhook/here'
-                '?verify=False&key=value&cto=2.0&rto=1.0'):
+        with override_settings(APPRISE_WEBHOOK_URL="http://user@localhost/webhook/here?verify=False&key=value&cto=2.0&rto=1.0"):
             send_webhook({})
             assert mock_post.call_count == 1
 
             details = mock_post.call_args_list[0]
-            assert details[0][0] == 'http://localhost/webhook/here'
-            assert loads(details[1]['data']) == {}
-            assert 'User-Agent' in details[1]['headers']
-            assert 'Content-Type' in details[1]['headers']
-            assert details[1]['headers']['User-Agent'] == 'Apprise-API'
-            assert details[1]['headers']['Content-Type'] == 'application/json'
-            assert details[1]['auth'] == ('user', None)
-            assert details[1]['verify'] is False
-            assert details[1]['params'] == {'key': 'value'}
-            assert details[1]['timeout'] == (2.0, 1.0)
+            assert details[0][0] == "http://localhost/webhook/here"
+            assert loads(details[1]["data"]) == {}
+            assert "User-Agent" in details[1]["headers"]
+            assert "Content-Type" in details[1]["headers"]
+            assert details[1]["headers"]["User-Agent"] == "Apprise-API"
+            assert details[1]["headers"]["Content-Type"] == "application/json"
+            assert details[1]["auth"] == ("user", None)
+            assert details[1]["verify"] is False
+            assert details[1]["params"] == {"key": "value"}
+            assert details[1]["timeout"] == (2.0, 1.0)
 
         mock_post.reset_mock()
 
-        with override_settings(APPRISE_WEBHOOK_URL='invalid'):
+        with override_settings(APPRISE_WEBHOOK_URL="invalid"):
             # Invalid webhook defined
             send_webhook({})
             assert mock_post.call_count == 0
@@ -98,15 +92,14 @@ class WebhookTests(SimpleTestCase):
 
         mock_post.reset_mock()
 
-        with override_settings(APPRISE_WEBHOOK_URL='http://$#@'):
+        with override_settings(APPRISE_WEBHOOK_URL="http://$#@"):
             # Invalid hostname defined
             send_webhook({})
             assert mock_post.call_count == 0
 
         mock_post.reset_mock()
 
-        with override_settings(
-                APPRISE_WEBHOOK_URL='invalid://hostname'):
+        with override_settings(APPRISE_WEBHOOK_URL="invalid://hostname"):
             # Invalid webhook defined
             send_webhook({})
             assert mock_post.call_count == 0
@@ -116,9 +109,7 @@ class WebhookTests(SimpleTestCase):
         # A valid URL with a bad server response:
         response.status_code = requests.codes.internal_server_error
         mock_post.return_value = response
-        with override_settings(
-                APPRISE_WEBHOOK_URL='http://localhost'):
-
+        with override_settings(APPRISE_WEBHOOK_URL="http://localhost"):
             send_webhook({})
             assert mock_post.call_count == 1
 
@@ -127,8 +118,6 @@ class WebhookTests(SimpleTestCase):
         # A valid URL with a bad server response:
         mock_post.return_value = None
         mock_post.side_effect = requests.RequestException("error")
-        with override_settings(
-                APPRISE_WEBHOOK_URL='http://localhost'):
-
+        with override_settings(APPRISE_WEBHOOK_URL="http://localhost"):
             send_webhook({})
             assert mock_post.call_count == 1

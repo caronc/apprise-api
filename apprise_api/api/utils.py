@@ -36,40 +36,42 @@ import requests
 from json import dumps
 from django.conf import settings
 from datetime import datetime
-from . urlfilter import AppriseURLFilter
+from .urlfilter import AppriseURLFilter
 
 # import the logging library
 import logging
 
 # Get an instance of a logger
-logger = logging.getLogger('django')
+logger = logging.getLogger("django")
 
 
 class AppriseStoreMode(object):
     """
     Defines the store modes of configuration
     """
+
     # This is the default option. Content is cached and written by
     # it's key
-    HASH = 'hash'
+    HASH = "hash"
 
     # Content is written straight to disk using it's key
     # there is nothing further done
-    SIMPLE = 'simple'
+    SIMPLE = "simple"
 
     # When set to disabled; stateful functionality is disabled
-    DISABLED = 'disabled'
+    DISABLED = "disabled"
 
 
 class AttachmentPayload(object):
     """
     Defines the supported Attachment Payload Types
     """
+
     # BASE64
-    BASE64 = 'base64'
+    BASE64 = "base64"
 
     # URL request
-    URL = 'url'
+    URL = "url"
 
 
 STORE_MODES = (
@@ -88,7 +90,7 @@ N_MGR = apprise.manager_plugins.NotificationManager()
 ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
 
-class Attachment(A_MGR['file']):
+class Attachment(A_MGR["file"]):
     """
     A Light Weight Attachment Object for Auto-cleanup that wraps the Apprise
     Attachments
@@ -106,8 +108,7 @@ class Attachment(A_MGR['file']):
 
         except OSError:
             # Permission error
-            raise ValueError('Could not create directory {}'.format(
-                settings.APPRISE_ATTACH_DIR))
+            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR))
 
         if not path:
             try:
@@ -116,9 +117,7 @@ class Attachment(A_MGR['file']):
                 os.close(d)
 
             except FileNotFoundError:
-                raise ValueError(
-                    'Could not prepare {} attachment in {}'.format(
-                        filename, settings.APPRISE_ATTACH_DIR))
+                raise ValueError("Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR))
 
         self._path = path
 
@@ -151,7 +150,7 @@ class Attachment(A_MGR['file']):
                 pass
 
 
-class HTTPAttachment(A_MGR['http']):
+class HTTPAttachment(A_MGR["http"]):
     """
     A Light Weight Attachment Object for Auto-cleanup that wraps the Apprise
     Web Attachments
@@ -169,8 +168,7 @@ class HTTPAttachment(A_MGR['http']):
 
         except OSError:
             # Permission error
-            raise ValueError('Could not create directory {}'.format(
-                settings.APPRISE_ATTACH_DIR))
+            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR))
 
         try:
             d, self._path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
@@ -178,9 +176,7 @@ class HTTPAttachment(A_MGR['http']):
             os.close(d)
 
         except FileNotFoundError:
-            raise ValueError(
-                'Could not prepare {} attachment in {}'.format(
-                    filename, settings.APPRISE_ATTACH_DIR))
+            raise ValueError("Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR))
 
         # Prepare our item
         super().__init__(name=filename, **kwargs)
@@ -238,8 +234,7 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
     flags = os.O_CREAT | os.O_APPEND
     try:
         with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
-            os.utime(f.fileno() if os.utime in os.supports_fd else fname,
-                     dir_fd=None if os.supports_fd else dir_fd, **kwargs)
+            os.utime(f.fileno() if os.utime in os.supports_fd else fname, dir_fd=None if os.supports_fd else dir_fd, **kwargs)
 
     except OSError:
         return False
@@ -266,21 +261,20 @@ def parse_attachments(attachment_payload, files_request):
         raise ValueError("Attachment support has been disabled")
 
     # Attachment Count
-    count = sum([
-        0 if not isinstance(attachment_payload, (set, tuple, list))
-        else len(attachment_payload),
-        0 if not isinstance(files_request, dict) else len(files_request),
-    ])
+    count = sum(
+        [
+            0 if not isinstance(attachment_payload, (set, tuple, list)) else len(attachment_payload),
+            0 if not isinstance(files_request, dict) else len(files_request),
+        ]
+    )
 
     if isinstance(attachment_payload, (dict, str, bytes)):
         # Convert and adjust counter
-        attachment_payload = (attachment_payload, )
+        attachment_payload = (attachment_payload,)
         count += 1
 
     if settings.APPRISE_MAX_ATTACHMENTS > 0 and count > settings.APPRISE_MAX_ATTACHMENTS:
-        raise ValueError(
-            "There is a maximum of %d attachments" %
-            settings.APPRISE_MAX_ATTACHMENTS)
+        raise ValueError("There is a maximum of %d attachments" % settings.APPRISE_MAX_ATTACHMENTS)
 
     if isinstance(attachment_payload, (tuple, list, set)):
         for no, entry in enumerate(attachment_payload, start=1):
@@ -293,24 +287,19 @@ def parse_attachments(attachment_payload, files_request):
 
                     # Max filename size is 250
                     if len(filename) > 250:
-                        raise ValueError(
-                            "The filename associated with attachment "
-                            "%d is too long" % no)
+                        raise ValueError("The filename associated with attachment %d is too long" % no)
 
                     elif not filename:
                         filename = "attachment.%.3d" % no
 
                 except AttributeError:
                     # not a string that was provided
-                    raise ValueError(
-                        "An invalid filename was provided for attachment %d" %
-                        no)
+                    raise ValueError("An invalid filename was provided for attachment %d" % no)
 
             else:
                 # you must pass in a base64 string, or a dict containing our
                 # required parameters
-                raise ValueError(
-                    "An invalid filename was provided for attachment %d" % no)
+                raise ValueError("An invalid filename was provided for attachment %d" % no)
 
             #
             # Prepare our Attachment
@@ -324,82 +313,57 @@ def parse_attachments(attachment_payload, files_request):
                     count -= 1
                     continue
 
-                if not re.match(r'^https?://.+', entry[:10], re.I):
+                if not re.match(r"^https?://.+", entry[:10], re.I):
                     # We failed to retrieve the product
-                    raise ValueError(
-                        "Failed to load attachment "
-                        "%d (not web request): %s" % (no, entry))
+                    raise ValueError("Failed to load attachment %d (not web request): %s" % (no, entry))
 
                 if not ATTACH_URL_FILTER.is_allowed(entry):
                     # We are not allowed to use this entry
-                    raise ValueError(
-                        "Denied attachment "
-                        "%d (blocked web request): %s" % (no, entry))
+                    raise ValueError("Denied attachment %d (blocked web request): %s" % (no, entry))
 
-                attachment = HTTPAttachment(
-                    filename, **A_MGR['http'].parse_url(entry))
+                attachment = HTTPAttachment(filename, **A_MGR["http"].parse_url(entry))
                 if not attachment:
                     # We failed to retrieve the attachment
-                    raise ValueError(
-                        "Failed to retrieve attachment %d: %s" % (no, entry))
+                    raise ValueError("Failed to retrieve attachment %d: %s" % (no, entry))
 
-            else:   # web, base64 or raw
+            else:  # web, base64 or raw
                 attachment = Attachment(filename)
                 try:
-                    with open(attachment.path, 'wb') as f:
+                    with open(attachment.path, "wb") as f:
                         # Write our content to disk
-                        if isinstance(entry, dict) and \
-                                AttachmentPayload.BASE64 in entry:
+                        if isinstance(entry, dict) and AttachmentPayload.BASE64 in entry:
                             # BASE64
-                            f.write(
-                                base64.b64decode(
-                                    entry[AttachmentPayload.BASE64]))
+                            f.write(base64.b64decode(entry[AttachmentPayload.BASE64]))
 
-                        elif isinstance(entry, dict) and \
-                                AttachmentPayload.URL in entry:
-
+                        elif isinstance(entry, dict) and AttachmentPayload.URL in entry:
                             if not ATTACH_URL_FILTER.is_allowed(entry[AttachmentPayload.URL]):
                                 # We are not allowed to use this entry
-                                raise ValueError(
-                                    "Denied attachment "
-                                    "%d (blocked web request): %s" % (
-                                        no, entry[AttachmentPayload.URL]))
+                                raise ValueError("Denied attachment %d (blocked web request): %s" % (no, entry[AttachmentPayload.URL]))
 
-                            attachment = HTTPAttachment(
-                                filename, **A_MGR['http']
-                                .parse_url(entry[AttachmentPayload.URL]))
+                            attachment = HTTPAttachment(filename, **A_MGR["http"].parse_url(entry[AttachmentPayload.URL]))
                             if not attachment:
                                 # We failed to retrieve the attachment
-                                raise ValueError(
-                                    "Failed to retrieve attachment "
-                                    "%d: %s" % (no, entry))
+                                raise ValueError("Failed to retrieve attachment %d: %s" % (no, entry))
 
                         elif isinstance(entry, bytes):
                             # RAW
                             f.write(entry)
 
                         else:
-                            raise ValueError(
-                                "Invalid filetype was provided for "
-                                "attachment %s" % filename)
+                            raise ValueError("Invalid filetype was provided for attachment %s" % filename)
 
                 except binascii.Error:
                     # The file ws not base64 encoded
-                    raise ValueError(
-                        "Invalid filecontent was provided for attachment %s" %
-                        filename)
+                    raise ValueError("Invalid filecontent was provided for attachment %s" % filename)
 
                 except OSError:
-                    raise ValueError(
-                        "Could not write attachment %s to disk" % filename)
+                    raise ValueError("Could not write attachment %s to disk" % filename)
 
                 #
                 # Some Validation
                 #
-                if settings.APPRISE_ATTACH_SIZE > 0 and \
-                        attachment.size > settings.APPRISE_ATTACH_SIZE:
-                    raise ValueError(
-                        "attachment %s's filesize is to large" % filename)
+                if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
+                    raise ValueError("attachment %s's filesize is to large" % filename)
 
             # Add our attachment
             attachments.append(attachment)
@@ -408,9 +372,7 @@ def parse_attachments(attachment_payload, files_request):
     # Now handle the request.FILES
     #
     if isinstance(files_request, dict):
-        for no, (key, meta) in enumerate(
-                files_request.items(), start=len(attachments) + 1):
-
+        for no, (key, meta) in enumerate(files_request.items(), start=len(attachments) + 1):
             try:
                 # Filetype is presumed to be of base class
                 # django.core.files.UploadedFile
@@ -418,37 +380,31 @@ def parse_attachments(attachment_payload, files_request):
 
                 # Max filename size is 250
                 if len(filename) > 250:
-                    raise ValueError(
-                        "The filename associated with attachment "
-                        "%d is too long" % no)
+                    raise ValueError("The filename associated with attachment %d is too long" % no)
 
                 elif not filename:
                     filename = "attachment.%.3d" % no
 
             except (AttributeError, TypeError):
-                raise ValueError(
-                    "An invalid filename was provided for attachment %d" % no)
+                raise ValueError("An invalid filename was provided for attachment %d" % no)
 
             #
             # Prepare our Attachment
             #
             attachment = Attachment(filename)
             try:
-                with open(attachment.path, 'wb') as f:
+                with open(attachment.path, "wb") as f:
                     # Write our content to disk
                     f.write(meta.read())
 
             except OSError:
-                raise ValueError(
-                    "Could not write attachment %s to disk" % filename)
+                raise ValueError("Could not write attachment %s to disk" % filename)
 
             #
             # Some Validation
             #
-            if settings.APPRISE_ATTACH_SIZE > 0 and \
-                    attachment.size > settings.APPRISE_ATTACH_SIZE:
-                raise ValueError(
-                    "attachment %s's filesize is to large" % filename)
+            if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
+                raise ValueError("attachment %s's filesize is to large" % filename)
 
             # Add our attachment
             attachments.append(attachment)
@@ -460,11 +416,12 @@ class SimpleFileExtension(object):
     """
     Defines the simple file exension lookups
     """
+
     # Simple Configuration file
-    TEXT = 'cfg'
+    TEXT = "cfg"
 
     # YAML Configuration file
-    YAML = 'yml'
+    YAML = "yml"
 
 
 SIMPLE_FILE_EXTENSION_MAPPING = {
@@ -492,9 +449,7 @@ class AppriseConfigCache(object):
         self.mode = mode.strip().lower()
         if self.mode not in STORE_MODES:
             self.mode = AppriseStoreMode.DISABLED
-            logger.error(
-                'APPRISE_STATEFUL_MODE {} is not supported; '
-                'reverted to {}.'.format(mode, self.mode))
+            logger.error("APPRISE_STATEFUL_MODE {} is not supported; reverted to {}.".format(mode, self.mode))
 
     def put(self, key, content, fmt):
         """
@@ -519,18 +474,18 @@ class AppriseConfigCache(object):
 
         except OSError:
             # Permission error
-            logger.error('Could not create directory {}'.format(path))
+            logger.error("Could not create directory {}".format(path))
             return False
 
         # Write our file to a temporary file
-        d, tmp_path = tempfile.mkstemp(suffix='.tmp', dir=path)
+        d, tmp_path = tempfile.mkstemp(suffix=".tmp", dir=path)
         # Close the file handle provided by mkstemp()
         # We're reopening it, and it can't be renamed while open on Windows
         os.close(d)
 
         if self.mode == AppriseStoreMode.HASH:
             try:
-                with gzip.open(tmp_path, 'wb') as f:
+                with gzip.open(tmp_path, "wb") as f:
                     # Write our content to disk
                     f.write(content.encode())
 
@@ -543,7 +498,7 @@ class AppriseConfigCache(object):
             # Update our file extenion based on our fmt
             fmt = SIMPLE_FILE_EXTENSION_MAPPING[fmt]
             try:
-                with open(tmp_path, 'wb') as f:
+                with open(tmp_path, "wb") as f:
                     # Write our content to disk
                     f.write(content.encode())
 
@@ -555,8 +510,7 @@ class AppriseConfigCache(object):
         # If we reach here we successfully wrote the content. We now safely
         # move our configuration into place. The following writes our content
         # to disk
-        shutil.move(tmp_path, os.path.join(
-            path, '{}.{}'.format(filename, fmt)))
+        shutil.move(tmp_path, os.path.join(path, "{}.{}".format(filename, fmt)))
 
         # perform tidy of any other lingering files of other type in case
         # configuration changed from TEXT -> YAML or YAML -> TEXT
@@ -593,7 +547,7 @@ class AppriseConfigCache(object):
 
         if self.mode == AppriseStoreMode.DISABLED:
             # Do nothing
-            return (None, '')
+            return (None, "")
 
         # There isn't a lot of error handling done here as it is presumed most
         # of the checking has been done higher up.
@@ -606,16 +560,12 @@ class AppriseConfigCache(object):
 
         # Test the only possible hashed files we expect to find
         if self.mode == AppriseStoreMode.HASH:
-            text_file = os.path.join(
-                path, '{}.{}'.format(filename, apprise.ConfigFormat.TEXT))
-            yaml_file = os.path.join(
-                path, '{}.{}'.format(filename, apprise.ConfigFormat.YAML))
+            text_file = os.path.join(path, "{}.{}".format(filename, apprise.ConfigFormat.TEXT))
+            yaml_file = os.path.join(path, "{}.{}".format(filename, apprise.ConfigFormat.YAML))
 
         else:  # AppriseStoreMode.SIMPLE
-            text_file = os.path.join(
-                path, '{}.{}'.format(filename, SimpleFileExtension.TEXT))
-            yaml_file = os.path.join(
-                path, '{}.{}'.format(filename, SimpleFileExtension.YAML))
+            text_file = os.path.join(path, "{}.{}".format(filename, SimpleFileExtension.TEXT))
+            yaml_file = os.path.join(path, "{}.{}".format(filename, SimpleFileExtension.YAML))
 
         if os.path.isfile(text_file):
             fmt = apprise.ConfigFormat.TEXT
@@ -629,13 +579,13 @@ class AppriseConfigCache(object):
             # Not found; we set the fmt to something other than none as
             # an indication for the upstream handling to know that we didn't
             # fail on error
-            return (None, '')
+            return (None, "")
 
         # Initialize our content
         content = None
         if self.mode == AppriseStoreMode.HASH:
             try:
-                with gzip.open(path, 'rb') as f:
+                with gzip.open(path, "rb") as f:
                     # Write our content to disk
                     content = f.read().decode()
 
@@ -646,7 +596,7 @@ class AppriseConfigCache(object):
 
         else:  # AppriseStoreMode.SIMPLE
             try:
-                with open(path, 'rb') as f:
+                with open(path, "rb") as f:
                     # Write our content to disk
                     content = f.read().decode()
 
@@ -683,10 +633,7 @@ class AppriseConfigCache(object):
             # Eliminate any existing content if present
             try:
                 # Handle failure
-                os.remove(os.path.join(path, '{}.{}'.format(
-                    filename,
-                    fmt if self.mode == AppriseStoreMode.HASH
-                    else SIMPLE_FILE_EXTENSION_MAPPING[fmt])))
+                os.remove(os.path.join(path, "{}.{}".format(filename, fmt if self.mode == AppriseStoreMode.HASH else SIMPLE_FILE_EXTENSION_MAPPING[fmt])))
 
                 # If we reach here, an element was removed
                 response = True
@@ -708,7 +655,7 @@ class AppriseConfigCache(object):
             path = os.path.join(self.root, encoded_key[0:2])
             return (path, encoded_key[2:])
 
-        else:   # AppriseStoreMode.SIMPLE
+        else:  # AppriseStoreMode.SIMPLE
             return (self.root, key)
 
     def keys(self):
@@ -720,7 +667,7 @@ class AppriseConfigCache(object):
             return keys
 
         for filename in sorted(os.listdir(self.root)):
-            if filename.startswith('.'):
+            if filename.startswith("."):
                 continue
             path = os.path.join(self.root, filename)
             if os.path.isfile(path):
@@ -731,9 +678,7 @@ class AppriseConfigCache(object):
 
 
 # Initialize our singleton
-ConfigCache = AppriseConfigCache(
-    settings.APPRISE_CONFIG_DIR, salt=settings.SECRET_KEY,
-    mode=settings.APPRISE_STATEFUL_MODE)
+ConfigCache = AppriseConfigCache(settings.APPRISE_CONFIG_DIR, salt=settings.SECRET_KEY, mode=settings.APPRISE_STATEFUL_MODE)
 
 
 def apply_global_filters():
@@ -741,22 +686,14 @@ def apply_global_filters():
     # Apply Any Global Filters (if identified)
     #
     if settings.APPRISE_ALLOW_SERVICES:
-        alphanum_re = re.compile(
-            r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
-        entries = \
-            [alphanum_re.match(x).group('name').lower()
-             for x in re.split(r'[ ,]+', settings.APPRISE_ALLOW_SERVICES)
-             if alphanum_re.match(x)]
+        alphanum_re = re.compile(r"^(?P<name>[a-z][a-z0-9]+)", re.IGNORECASE)
+        entries = [alphanum_re.match(x).group("name").lower() for x in re.split(r"[ ,]+", settings.APPRISE_ALLOW_SERVICES) if alphanum_re.match(x)]
 
         N_MGR.enable_only(*entries)
 
     elif settings.APPRISE_DENY_SERVICES:
-        alphanum_re = re.compile(
-            r'^(?P<name>[a-z][a-z0-9]+)', re.IGNORECASE)
-        entries = \
-            [alphanum_re.match(x).group('name').lower()
-             for x in re.split(r'[ ,]+', settings.APPRISE_DENY_SERVICES)
-             if alphanum_re.match(x)]
+        alphanum_re = re.compile(r"^(?P<name>[a-z][a-z0-9]+)", re.IGNORECASE)
+        entries = [alphanum_re.match(x).group("name").lower() for x in re.split(r"[ ,]+", settings.APPRISE_DENY_SERVICES) if alphanum_re.match(x)]
 
         N_MGR.disable(*entries)
 
@@ -767,8 +704,8 @@ def gen_unique_config_id():
     """
     # our key to use
     h = hashlib.sha256()
-    h.update(datetime.now().strftime('%Y%m%d%H%M%S%f').encode('utf-8'))
-    h.update(settings.SECRET_KEY.encode('utf-8'))
+    h.update(datetime.now().strftime("%Y%m%d%H%M%S%f").encode("utf-8"))
+    h.update(settings.SECRET_KEY.encode("utf-8"))
     return h.hexdigest()
 
 
@@ -779,28 +716,26 @@ def send_webhook(payload):
 
     # Prepare HTTP Headers
     headers = {
-        'User-Agent': 'Apprise-API',
-        'Content-Type': 'application/json',
+        "User-Agent": "Apprise-API",
+        "Content-Type": "application/json",
     }
 
     try:
-        if not apprise.utils.parse.VALID_URL_RE.match(settings.APPRISE_WEBHOOK_URL).group('schema'):
+        if not apprise.utils.parse.VALID_URL_RE.match(settings.APPRISE_WEBHOOK_URL).group("schema"):
             raise AttributeError()
 
     except (AttributeError, TypeError):
-        logger.warning(
-            'The Apprise Webhook Result URL is not a valid web based URI')
+        logger.warning("The Apprise Webhook Result URL is not a valid web based URI")
         return
 
     # Parse our URL
     results = apprise.URLBase.parse_url(settings.APPRISE_WEBHOOK_URL)
     if not results:
-        logger.warning('The Apprise Webhook Result URL is not parseable')
+        logger.warning("The Apprise Webhook Result URL is not parseable")
         return
 
-    if results['schema'] not in ('http', 'https'):
-        logger.warning(
-            'The Apprise Webhook Result URL is not using the HTTP protocol')
+    if results["schema"] not in ("http", "https"):
+        logger.warning("The Apprise Webhook Result URL is not using the HTTP protocol")
         return
 
     # Load our URL
@@ -808,8 +743,7 @@ def send_webhook(payload):
 
     # Our Query String Dictionary; we use this to track arguments
     # specified that aren't otherwise part of this class
-    params = {k: v for k, v in results.get('qsd', {}).items()
-              if k not in base.template_args}
+    params = {k: v for k, v in results.get("qsd", {}).items() if k not in base.template_args}
 
     try:
         requests.post(
@@ -823,10 +757,8 @@ def send_webhook(payload):
         )
 
     except requests.RequestException as e:
-        logger.warning(
-            'A Connection error occurred sending the Apprise Webhook '
-            'results to %s.' % base.url(privacy=True))
-        logger.debug('Socket Exception: %s' % str(e))
+        logger.warning("A Connection error occurred sending the Apprise Webhook results to %s." % base.url(privacy=True))
+        logger.debug("Socket Exception: %s" % str(e))
 
     return
 
@@ -838,21 +770,21 @@ def healthcheck(lazy=True):
 
     # Some status variables we can flip
     response = {
-        'persistent_storage': False,
-        'can_write_config': False,
-        'can_write_attach': False,
-        'details': [],
+        "persistent_storage": False,
+        "can_write_config": False,
+        "can_write_attach": False,
+        "details": [],
     }
 
     if not (settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED or settings.APPRISE_CONFIG_LOCK):
         # Update our Configuration Check Block
-        path = os.path.join(ConfigCache.root, '.tmp_hc')
+        path = os.path.join(ConfigCache.root, ".tmp_hc")
         if lazy:
             try:
                 modify_date = datetime.fromtimestamp(os.path.getmtime(path))
                 delta = (datetime.now() - modify_date).total_seconds()
                 if delta <= 30.00:  # 30s
-                    response['can_write_config'] = True
+                    response["can_write_config"] = True
 
             except FileNotFoundError:
                 # No worries... continue with below testing
@@ -861,34 +793,34 @@ def healthcheck(lazy=True):
             except OSError:
                 # Permission Issue or something else likely
                 # We can take an early exit
-                response['details'].append('CONFIG_PERMISSION_ISSUE')
+                response["details"].append("CONFIG_PERMISSION_ISSUE")
 
-        if not (response['can_write_config'] or 'CONFIG_PERMISSION_ISSUE' in response['details']):
+        if not (response["can_write_config"] or "CONFIG_PERMISSION_ISSUE" in response["details"]):
             try:
                 os.makedirs(ConfigCache.root, exist_ok=True)
                 if touch(path):
                     # Toggle our status
-                    response['can_write_config'] = True
+                    response["can_write_config"] = True
 
                 else:
                     # We can take an early exit as there is already a permission issue detected
-                    response['details'].append('CONFIG_PERMISSION_ISSUE')
+                    response["details"].append("CONFIG_PERMISSION_ISSUE")
 
             except OSError:
                 # We can take an early exit as there is already a permission issue detected
-                response['details'].append('CONFIG_PERMISSION_ISSUE')
+                response["details"].append("CONFIG_PERMISSION_ISSUE")
 
     if settings.APPRISE_ATTACH_SIZE > 0:
         # Test our ability to access write attachments
 
         # Update our Configuration Check Block
-        path = os.path.join(settings.APPRISE_ATTACH_DIR, '.tmp_hc')
+        path = os.path.join(settings.APPRISE_ATTACH_DIR, ".tmp_hc")
         if lazy:
             try:
                 modify_date = datetime.fromtimestamp(os.path.getmtime(path))
                 delta = (datetime.now() - modify_date).total_seconds()
                 if delta <= 30.00:  # 30s
-                    response['can_write_attach'] = True
+                    response["can_write_attach"] = True
 
             except FileNotFoundError:
                 # No worries... continue with below testing
@@ -896,23 +828,23 @@ def healthcheck(lazy=True):
 
             except OSError:
                 # We can take an early exit as there is already a permission issue detected
-                response['details'].append('ATTACH_PERMISSION_ISSUE')
+                response["details"].append("ATTACH_PERMISSION_ISSUE")
 
-        if not (response['can_write_attach'] or 'ATTACH_PERMISSION_ISSUE' in response['details']):
+        if not (response["can_write_attach"] or "ATTACH_PERMISSION_ISSUE" in response["details"]):
             # No lazy mode set or content require a refresh
             try:
                 os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
                 if touch(path):
                     # Toggle our status
-                    response['can_write_attach'] = True
+                    response["can_write_attach"] = True
 
                 else:
                     # We can take an early exit as there is already a permission issue detected
-                    response['details'].append('ATTACH_PERMISSION_ISSUE')
+                    response["details"].append("ATTACH_PERMISSION_ISSUE")
 
             except OSError:
                 # We can take an early exit
-                response['details'].append('ATTACH_PERMISSION_ISSUE')
+                response["details"].append("ATTACH_PERMISSION_ISSUE")
 
     if settings.APPRISE_STORAGE_DIR:
         #
@@ -920,13 +852,13 @@ def healthcheck(lazy=True):
         #
         store = apprise.PersistentStore(
             path=settings.APPRISE_STORAGE_DIR,
-            namespace='tmp_hc',
+            namespace="tmp_hc",
             mode=settings.APPRISE_STORAGE_MODE,
         )
 
         if store.mode != settings.APPRISE_STORAGE_MODE:
             # Persistent storage not as configured
-            response['details'].append('STORE_PERMISSION_ISSUE')
+            response["details"].append("STORE_PERMISSION_ISSUE")
 
         elif store.mode != apprise.PersistentStoreMode.MEMORY:
             # G
@@ -936,23 +868,23 @@ def healthcheck(lazy=True):
                     modify_date = datetime.fromtimestamp(os.path.getmtime(path))
                     delta = (datetime.now() - modify_date).total_seconds()
                     if delta <= 30.00:  # 30s
-                        response['persistent_storage'] = True
+                        response["persistent_storage"] = True
 
                 except OSError:
                     # No worries... continue with below testing
                     pass
 
-            if not (store.set('foo', 'bar') and store.flush()):
+            if not (store.set("foo", "bar") and store.flush()):
                 # No persistent store
-                response['details'].append('STORE_PERMISSION_ISSUE')
+                response["details"].append("STORE_PERMISSION_ISSUE")
             else:
                 # Toggle our status
-                response['persistent_storage'] = True
+                response["persistent_storage"] = True
 
             # Clear our test
-            store.clear('foo')
+            store.clear("foo")
 
-    if not response['details']:
-        response['details'].append('OK')
+    if not response["details"]:
+        response["details"].append("OK")
 
     return response

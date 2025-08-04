@@ -27,12 +27,11 @@ from unittest.mock import patch
 
 
 class GetTests(SimpleTestCase):
-
     def test_get_invalid_key_status_code(self):
         """
         Test GET requests to invalid key
         """
-        response = self.client.get('/get/**invalid-key**')
+        response = self.client.get("/get/**invalid-key**")
         assert response.status_code == 404
 
     def test_get_config(self):
@@ -41,47 +40,48 @@ class GetTests(SimpleTestCase):
         """
 
         # our key to use
-        key = 'test_get_config_'
+        key = "test_get_config_"
 
         # GET returns 405 (not allowed)
-        response = self.client.get('/get/{}'.format(key))
+        response = self.client.get("/get/{}".format(key))
         assert response.status_code == 405
 
         # No content saved to the location yet
-        response = self.client.post('/get/{}'.format(key))
+        response = self.client.post("/get/{}".format(key))
         self.assertEqual(response.status_code, 204)
 
         # Add some content
-        response = self.client.post(
-            '/add/{}'.format(key),
-            {'urls': 'mailto://user:pass@yahoo.ca'})
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
         assert response.status_code == 200
 
         # Handle case when we try to retrieve our content but we have no idea
         # what the format is in. Essentialy there had to have been disk
         # corruption here or someone meddling with the backend.
-        with patch('gzip.open', side_effect=OSError):
-            response = self.client.post('/get/{}'.format(key))
+        with patch("gzip.open", side_effect=OSError):
+            response = self.client.post("/get/{}".format(key))
             assert response.status_code == 500
 
         # Now we should be able to see our content
-        response = self.client.post('/get/{}'.format(key))
+        response = self.client.post("/get/{}".format(key))
         assert response.status_code == 200
 
         # Add a YAML file
         response = self.client.post(
-            '/add/{}'.format(key), {
-                'format': 'yaml',
-                'config': """
+            "/add/{}".format(key),
+            {
+                "format": "yaml",
+                "config": """
                 urls:
-                   - dbus://"""})
+                   - dbus://""",
+            },
+        )
         assert response.status_code == 200
 
         # Now retrieve our YAML configuration
-        response = self.client.post('/get/{}'.format(key))
+        response = self.client.post("/get/{}".format(key))
         assert response.status_code == 200
 
         # Verify that the correct Content-Type is set in the header of the
         # response
-        assert 'Content-Type' in response
-        assert response['Content-Type'].startswith('text/yaml')
+        assert "Content-Type" in response
+        assert response["Content-Type"].startswith("text/yaml")

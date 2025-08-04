@@ -27,13 +27,12 @@ import os
 import sys
 
 # Update our path so it will see our apprise_api content
-sys.path.insert(
-    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apprise_api'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "apprise_api"))
 
 
 def main():
     # Unless otherwise specified, default to a debug mode
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings.debug')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.debug")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -45,5 +44,5 @@ def main():
     execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

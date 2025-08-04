@@ -1,93 +1,67 @@
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
+# All rights reserved.
+#
+# This code is licensed under the MIT License.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files(the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions :
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 name: Tests
 
 on:
-
-  # On which repository actions to trigger the build.
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
-  # Allow job to be triggered manually.
   workflow_dispatch:
 
-# Cancel in-progress jobs when pushing to the same branch.
-concurrency:
-  cancel-in-progress: true
-  group: ${{ github.workflow }}-${{ github.ref }}
-
 jobs:
-
   tests:
+    runs-on: ubuntu-latest
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-
-      # Run all jobs to completion (false), or cancel
-      # all jobs once the first one fails (true).
-      fail-fast: true
-
-      # Define a minimal test matrix, it will be
-      # expanded using subsequent `include` items.
-      matrix:
-        os: ["ubuntu-latest"]
-        python-version: ["3.12"]
-        bare: [false]
-
-    defaults:
-      run:
-        shell: bash
-
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: ${{ matrix.python-version }}
-      BARE: ${{ matrix.bare }}
-
-    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} ${{ matrix.bare && '(bare)' || '' }}
     steps:
-
     - name: Acquire sources
       uses: actions/checkout@v4
 
-    - name: Install prerequisites (Linux)
-      if: runner.os == 'Linux'
+    - name: Install prerequisites
       run: |
         sudo apt-get update
 
-    - name: Install project dependencies (Baseline)
+    - name: Install dependencies
       run: |
         pip install -r requirements.txt -r dev-requirements.txt
 
-    # For saving resources, code style checking is
-    # only invoked within the `bare` environment.
-    - name: Check code style
-      if: matrix.bare == true
+    - name: Lint with Ruff
       run: |
-        flake8 apprise_api --count --show-source --statistics
+        ruff check apprise_api
 
-    - name: Debug pytest plugins
+    - name: Run tests with coverage
       run: |
-        pytest --version
-        pytest --help
-        pytest --trace-config
-        pip freeze | grep pytest
-
-    - name: Run tests
-      run: |
-        pytest
-
-    #- name: Run tests
-    #  run: |
-    #    coverage run -m pytest apprise_api
+        coverage run -m pytest apprise_api
 
     - name: Process coverage data
       run: |
         coverage xml
         coverage report
 
-    - name: Upload coverage data
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
         files: ./coverage.xml
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
+

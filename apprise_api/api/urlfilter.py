@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -62,7 +62,7 @@ class AppriseURLFilter:
           - Host‐based tokens: those that do not contain a “/”.
         Returns a list of tuples (compiled_regex, is_url_based).
         """
-        tokens = re.split(r'[\s,]+', list_str.strip().lower())
+        tokens = re.split(r"[\s,]+", list_str.strip().lower())
         rules = []
         for token in tokens:
             if not token:
@@ -99,18 +99,18 @@ class AppriseURLFilter:
         # Determine the scheme.
         scheme_regex = ""
         if token.startswith("http://"):
-            scheme_regex = r'http'
+            scheme_regex = r"http"
             # drop http://
             token = token[7:]
 
         elif token.startswith("https://"):
-            scheme_regex = r'https'
+            scheme_regex = r"https"
             # drop https://
             token = token[8:]
 
         else:  # https?
             # Used for implicit tokens; our _compile_implicit_token ensures this.
-            scheme_regex = r'https?'
+            scheme_regex = r"https?"
             # strip https?://
             token = token[9:]
 
@@ -190,11 +190,11 @@ class AppriseURLFilter:
         """
         regex = ""
         for char in pattern:
-            if char == '*':
-                regex += r"[^/]+/?" if not is_host else r'.*'
+            if char == "*":
+                regex += r"[^/]+/?" if not is_host else r".*"
 
-            elif char == '?':
-                regex += r'[^/]' if not is_host else r"[A-Za-z0-9_-]"
+            elif char == "?":
+                regex += r"[^/]" if not is_host else r"[A-Za-z0-9_-]"
 
             else:
                 regex += re.escape(char)
@@ -212,7 +212,7 @@ class AppriseURLFilter:
             return False
 
         # includes port if present
-        netloc = '%s:%d' % (parsed['host'], parsed.get('port')) if parsed.get('port') else parsed['host']
+        netloc = "%s:%d" % (parsed["host"], parsed.get("port")) if parsed.get("port") else parsed["host"]
 
         # Check deny rules first.
         for pattern, is_url_based in self.deny_rules:

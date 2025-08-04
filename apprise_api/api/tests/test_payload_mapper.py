@@ -41,9 +41,9 @@ class NotifyPayloadMapper(SimpleTestCase):
         #
         rules = {}
         payload = {
-            'format': 'markdown',
-            'title': 'title',
-            'body': '# body',
+            "format": "markdown",
+            "title": "title",
+            "body": "# body",
         }
         payload_orig = payload.copy()
 
@@ -58,32 +58,29 @@ class NotifyPayloadMapper(SimpleTestCase):
         #
         rules = {
             # map 'as' to 'format'
-            'as': 'format',
+            "as": "format",
             # map 'subject' to 'title'
-            'subject': 'title',
+            "subject": "title",
             # map 'content' to 'body'
-            'content': 'body',
+            "content": "body",
             # 'missing' is an invalid entry so this will be skipped
-            'unknown': 'missing',
-
+            "unknown": "missing",
             # Empty field
-            'attachment': '',
-
+            "attachment": "",
             # Garbage is an field that can be removed since it doesn't
             # conflict with the form
-            'garbage': '',
-
+            "garbage": "",
             # Tag
-            'tag': 'test',
+            "tag": "test",
         }
         payload = {
-            'as': 'markdown',
-            'subject': 'title',
-            'content': '# body',
-            'tag': '',
-            'unknown': 'hmm',
-            'attachment': '',
-            'garbage': '',
+            "as": "markdown",
+            "subject": "title",
+            "content": "# body",
+            "tag": "",
+            "unknown": "hmm",
+            "attachment": "",
+            "garbage": "",
         }
 
         # Map our fields
@@ -91,11 +88,11 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         # Our field mappings have taken place
         assert payload == {
-            'tag': 'test',
-            'unknown': 'missing',
-            'format': 'markdown',
-            'title': 'title',
-            'body': '# body',
+            "tag": "test",
+            "unknown": "missing",
+            "format": "markdown",
+            "title": "title",
+            "body": "# body",
         }
 
         #
@@ -104,18 +101,18 @@ class NotifyPayloadMapper(SimpleTestCase):
         rules = {
             #
             # map 'content' to 'body'
-            'content': 'body',
+            "content": "body",
             # a double mapping to body will trigger an error
-            'message': 'body',
+            "message": "body",
             # Swapping fields
-            'body': 'another set of data',
+            "body": "another set of data",
         }
         payload = {
-            'as': 'markdown',
-            'subject': 'title',
-            'content': '# content body',
-            'message': '# message body',
-            'body': 'another set of data',
+            "as": "markdown",
+            "subject": "title",
+            "content": "# content body",
+            "message": "# message body",
+            "body": "another set of data",
         }
 
         # Map our fields
@@ -123,9 +120,9 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         # Our information gets swapped
         assert payload == {
-            'as': 'markdown',
-            'subject': 'title',
-            'body': 'another set of data',
+            "as": "markdown",
+            "subject": "title",
+            "body": "another set of data",
         }
 
         #
@@ -134,12 +131,12 @@ class NotifyPayloadMapper(SimpleTestCase):
         rules = {
             #
             # map 'content' to 'body'
-            'title': 'body',
+            "title": "body",
         }
         payload = {
-            'format': 'markdown',
-            'title': 'body',
-            'body': '# title',
+            "format": "markdown",
+            "title": "body",
+            "body": "# title",
         }
 
         # Map our fields
@@ -147,9 +144,9 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         # Our information gets swapped
         assert payload == {
-            'format': 'markdown',
-            'title': '# title',
-            'body': 'body',
+            "format": "markdown",
+            "title": "# title",
+            "body": "body",
         }
 
         #
@@ -158,11 +155,11 @@ class NotifyPayloadMapper(SimpleTestCase):
         rules = {
             #
             # map 'content' to 'body'
-            'title': 'body',
+            "title": "body",
         }
         payload = {
-            'format': 'markdown',
-            'title': 'body',
+            "format": "markdown",
+            "title": "body",
         }
 
         # Map our fields
@@ -170,8 +167,8 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         # Our information gets swapped
         assert payload == {
-            'format': 'markdown',
-            'body': 'body',
+            "format": "markdown",
+            "body": "body",
         }
 
         #
@@ -180,12 +177,12 @@ class NotifyPayloadMapper(SimpleTestCase):
         rules = {
             #
             # map 'content' to 'body'
-            'content': 'body',
+            "content": "body",
         }
         payload = {
-            'format': 'markdown',
-            'content': 'the message',
-            'body': 'to-be-replaced',
+            "format": "markdown",
+            "content": "the message",
+            "body": "to-be-replaced",
         }
 
         # Map our fields
@@ -193,26 +190,26 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         # Our information gets swapped
         assert payload == {
-            'format': 'markdown',
-            'body': 'the message',
+            "format": "markdown",
+            "body": "the message",
         }
 
         #
         # mapping of fields don't align - test 6
         #
         rules = {
-            'payload': 'body',
-            'fmt': 'format',
-            'extra': 'tag',
+            "payload": "body",
+            "fmt": "format",
+            "extra": "tag",
         }
         payload = {
-            'format': 'markdown',
-            'type': 'info',
-            'title': '',
-            'body': '## test notifiction',
-            'attachment': None,
-            'tag': 'general',
-            'tags': '',
+            "format": "markdown",
+            "type": "info",
+            "title": "",
+            "body": "## test notifiction",
+            "attachment": None,
+            "tag": "general",
+            "tags": "",
         }
 
         # Make a copy of our original payload

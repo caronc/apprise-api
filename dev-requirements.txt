@@ -1,6 +1,6 @@
-flake8
 mock
 pytest-django
 pytest
 pytest-cov
 tox
+ruff

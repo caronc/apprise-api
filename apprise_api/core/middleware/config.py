@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -35,7 +35,7 @@ class DetectConfigMiddleware:
 
     """
 
-    _is_cfg_path = re.compile(r'/cfg/(?P<key>[\w_-]{1,128})')
+    _is_cfg_path = re.compile(r"/cfg/(?P<key>[\w_-]{1,128})")
 
     def __init__(self, get_response):
         """
@@ -51,14 +51,13 @@ class DetectConfigMiddleware:
         result = self._is_cfg_path.match(request.path)
         if not result:
             # Our current config
-            config = \
-                request.COOKIES.get('key', settings.APPRISE_DEFAULT_CONFIG_ID)
+            config = request.COOKIES.get("key", settings.APPRISE_DEFAULT_CONFIG_ID)
 
             # Extract our key (fall back to our default if not set)
             config = request.GET.get("key", config).strip()
 
         else:
-            config = result.group('key')
+            config = result.group("key")
 
         if not config:
             # Fallback to default config
@@ -72,11 +71,10 @@ class DetectConfigMiddleware:
 
         # Set our cookie
         max_age = 365 * 24 * 60 * 60  # 1 year
-        expires = \
-            datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=max_age)
+        expires = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=max_age)
 
         # Set our cookie
-        response.set_cookie('key', config, expires=expires)
+        response.set_cookie("key", config, expires=expires)
 
         # return our response
         return response

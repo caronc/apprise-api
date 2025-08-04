@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -26,12 +26,11 @@ from django.test import SimpleTestCase
 
 
 class DetailTests(SimpleTestCase):
-
     def test_post_not_supported(self):
         """
         Test POST requests
         """
-        response = self.client.post('/details')
+        response = self.client.post("/details")
         # 405 as posting is not allowed
         assert response.status_code == 405
 
@@ -41,38 +40,30 @@ class DetailTests(SimpleTestCase):
         """
 
         # Nothing to return
-        response = self.client.get('/details')
+        response = self.client.get("/details")
         self.assertEqual(response.status_code, 200)
-        assert response['Content-Type'].startswith('text/html')
+        assert response["Content-Type"].startswith("text/html")
 
         # JSON Response
-        response = self.client.get(
-            '/details', content_type='application/json',
-            **{'HTTP_CONTENT_TYPE': 'application/json'})
+        response = self.client.get("/details", content_type="application/json", **{"HTTP_CONTENT_TYPE": "application/json"})
         self.assertEqual(response.status_code, 200)
-        assert response['Content-Type'].startswith('application/json')
+        assert response["Content-Type"].startswith("application/json")
 
         # JSON Response
-        response = self.client.get(
-            '/details', content_type='application/json',
-            **{'HTTP_ACCEPT': 'application/json'})
+        response = self.client.get("/details", content_type="application/json", **{"HTTP_ACCEPT": "application/json"})
         self.assertEqual(response.status_code, 200)
-        assert response['Content-Type'].startswith('application/json')
+        assert response["Content-Type"].startswith("application/json")
 
-        response = self.client.get('/details?all=yes')
+        response = self.client.get("/details?all=yes")
         self.assertEqual(response.status_code, 200)
-        assert response['Content-Type'].startswith('text/html')
+        assert response["Content-Type"].startswith("text/html")
 
         # JSON Response
-        response = self.client.get(
-            '/details?all=yes', content_type='application/json',
-            **{'HTTP_CONTENT_TYPE': 'application/json'})
+        response = self.client.get("/details?all=yes", content_type="application/json", **{"HTTP_CONTENT_TYPE": "application/json"})
         self.assertEqual(response.status_code, 200)
-        assert response['Content-Type'].startswith('application/json')
+        assert response["Content-Type"].startswith("application/json")
 
         # JSON Response
-        response = self.client.get(
-            '/details?all=yes', content_type='application/json',
-            **{'HTTP_ACCEPT': 'application/json'})
+        response = self.client.get("/details?all=yes", content_type="application/json", **{"HTTP_ACCEPT": "application/json"})
         self.assertEqual(response.status_code, 200)
-        assert response['Content-Type'].startswith('application/json')
+        assert response["Content-Type"].startswith("application/json")

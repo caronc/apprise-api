@@ -35,9 +35,9 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Over-ride the default URLConf for debugging
-ROOT_URLCONF = 'core.settings.debug.urls'
+ROOT_URLCONF = "core.settings.debug.urls"
 
 # Our static paths directory for serving
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),  # noqa F405
+    os.path.join(BASE_DIR, "static"),  # noqa F405
 )

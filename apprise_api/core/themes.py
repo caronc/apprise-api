@@ -28,8 +28,9 @@ class SiteTheme:
     """
     Defines our site themes
     """
-    LIGHT = 'light'
-    DARK = 'dark'
+
+    LIGHT = "light"
+    DARK = "dark"
 
 
 SITE_THEMES = (

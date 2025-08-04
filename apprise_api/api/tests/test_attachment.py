@@ -39,7 +39,7 @@ from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from os.path import dirname, join, getsize
 
-SAMPLE_FILE = join(dirname(dirname(dirname(__file__))), 'static', 'logo.png')
+SAMPLE_FILE = join(dirname(dirname(dirname(__file__))), "static", "logo.png")
 
 
 class AttachmentTests(SimpleTestCase):
@@ -63,32 +63,32 @@ class AttachmentTests(SimpleTestCase):
         """
 
         with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
-            with mock.patch('os.makedirs', side_effect=OSError):
+            with mock.patch("os.makedirs", side_effect=OSError):
                 with self.assertRaises(ValueError):
-                    Attachment('file')
+                    Attachment("file")
                 with self.assertRaises(ValueError):
-                    HTTPAttachment('web')
+                    HTTPAttachment("web")
 
-            with mock.patch('tempfile.mkstemp', side_effect=FileNotFoundError):
+            with mock.patch("tempfile.mkstemp", side_effect=FileNotFoundError):
                 with self.assertRaises(ValueError):
-                    Attachment('file')
+                    Attachment("file")
                 with self.assertRaises(ValueError):
-                    HTTPAttachment('web')
+                    HTTPAttachment("web")
 
-            with mock.patch('os.remove', side_effect=FileNotFoundError):
-                a = Attachment('file')
+            with mock.patch("os.remove", side_effect=FileNotFoundError):
+                a = Attachment("file")
                 # Force __del__ call to throw an exception which we gracefully
                 # handle
                 del a
 
-                a = HTTPAttachment('web')
-                a._path = 'abcd'
-                assert a.filename == 'web'
+                a = HTTPAttachment("web")
+                a._path = "abcd"
+                assert a.filename == "web"
                 # Force __del__ call to throw an exception which we gracefully
                 # handle
                 del a
 
-            a = Attachment('file')
+            a = Attachment("file")
             assert a.filename
 
     def test_form_file_attachment_parsing(self):
@@ -114,19 +114,13 @@ class AttachmentTests(SimpleTestCase):
             assert len(result) == 0
 
         # Get ourselves a file to work with
-        files_request = {
-            'file1': SimpleUploadedFile(
-                "attach.txt", b"content here", content_type="text/plain")
-        }
+        files_request = {"file1": SimpleUploadedFile("attach.txt", b"content here", content_type="text/plain")}
         result = parse_attachments(None, files_request)
         assert isinstance(result, list)
         assert len(result) == 1
 
         # Test case where no filename was specified
-        files_request = {
-            'file1': SimpleUploadedFile(
-                "    ", b"content here", content_type="text/plain")
-        }
+        files_request = {"file1": SimpleUploadedFile("    ", b"content here", content_type="text/plain")}
         result = parse_attachments(None, files_request)
         assert isinstance(result, list)
         assert len(result) == 1
@@ -135,7 +129,7 @@ class AttachmentTests(SimpleTestCase):
         # attachment to disk
         m = mock_open()
         m.side_effect = OSError()
-        with patch('builtins.open', m):
+        with patch("builtins.open", m):
             with self.assertRaises(ValueError):
                 parse_attachments(None, files_request)
 
@@ -143,11 +137,12 @@ class AttachmentTests(SimpleTestCase):
         # for
         with override_settings(APPRISE_ATTACH_SIZE=1):
             files_request = {
-                'file1': SimpleUploadedFile(
+                "file1": SimpleUploadedFile(
                     "attach.txt",
                     # More then 1 MB in size causing error to trip
-                    ("content" * 1024 * 1024).encode('utf-8'),
-                    content_type="text/plain")
+                    ("content" * 1024 * 1024).encode("utf-8"),
+                    content_type="text/plain",
+                )
             }
             with self.assertRaises(ValueError):
                 parse_attachments(None, files_request)
@@ -155,24 +150,22 @@ class AttachmentTests(SimpleTestCase):
         # Test Attachment Size seto t zer0
         with override_settings(APPRISE_ATTACH_SIZE=0):
             files_request = {
-                'file1': SimpleUploadedFile(
+                "file1": SimpleUploadedFile(
                     "attach.txt",
                     # More then 1 MB in size causing error to trip
-                    ("content" * 1024 * 1024).encode('utf-8'),
-                    content_type="text/plain")
+                    ("content" * 1024 * 1024).encode("utf-8"),
+                    content_type="text/plain",
+                )
             }
             with self.assertRaises(ValueError):
                 parse_attachments(None, files_request)
 
         # Bad data provided in filename field
-        files_request = {
-            'file1': SimpleUploadedFile(
-                None, b"content here", content_type="text/plain")
-        }
+        files_request = {"file1": SimpleUploadedFile(None, b"content here", content_type="text/plain")}
         with self.assertRaises(ValueError):
             parse_attachments(None, files_request)
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_direct_attachment_parsing(self, mock_get):
         """
         Test the parsing of file attachments
@@ -187,33 +180,33 @@ class AttachmentTests(SimpleTestCase):
         response.status_code = requests.codes.ok
         response.raise_for_status.return_value = True
         response.headers = {
-            'Content-Length': getsize(SAMPLE_FILE),
+            "Content-Length": getsize(SAMPLE_FILE),
         }
         ref = {
-            'io': None,
+            "io": None,
         }
 
         def iter_content(chunk_size=1024, *args, **kwargs):
-            if not ref['io']:
-                ref['io'] = open(SAMPLE_FILE, 'rb')
-            block = ref['io'].read(chunk_size)
+            if not ref["io"]:
+                ref["io"] = open(SAMPLE_FILE, "rb")
+            block = ref["io"].read(chunk_size)
             if not block:
                 # Close for re-use
-                ref['io'].close()
-                ref['io'] = None
+                ref["io"].close()
+                ref["io"] = None
             yield block
+
         response.iter_content = iter_content
 
         def test(*args, **kwargs):
             return response
+
         response.__enter__ = test
         response.__exit__ = test
         mock_get.return_value = response
 
         # Support base64 encoding
-        attachment_payload = {
-            'base64': base64.b64encode(b'data to be encoded').decode('utf-8')
-        }
+        attachment_payload = {"base64": base64.b64encode(b"data to be encoded").decode("utf-8")}
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 1
@@ -221,15 +214,14 @@ class AttachmentTests(SimpleTestCase):
         # Support multi entries
         attachment_payload = [
             {
-                'base64': base64.b64encode(
-                    b'data to be encoded 1').decode('utf-8'),
-            }, {
-                'base64': base64.b64encode(
-                    b'data to be encoded 2').decode('utf-8'),
-            }, {
-                'base64': base64.b64encode(
-                    b'data to be encoded 3').decode('utf-8'),
-            }
+                "base64": base64.b64encode(b"data to be encoded 1").decode("utf-8"),
+            },
+            {
+                "base64": base64.b64encode(b"data to be encoded 2").decode("utf-8"),
+            },
+            {
+                "base64": base64.b64encode(b"data to be encoded 3").decode("utf-8"),
+            },
         ]
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
@@ -238,30 +230,28 @@ class AttachmentTests(SimpleTestCase):
         # Support multi entries
         attachment_payload = [
             {
-                'url': 'http://myserver/my.attachment.3',
-            }, {
-                'url': 'http://myserver/my.attachment.2',
-            }, {
-                'url': 'http://myserver/my.attachment.1',
-            }
+                "url": "http://myserver/my.attachment.3",
+            },
+            {
+                "url": "http://myserver/my.attachment.2",
+            },
+            {
+                "url": "http://myserver/my.attachment.1",
+            },
         ]
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 3
 
-        with override_settings(APPRISE_ATTACH_DENY_URLS='*'):
-            utils.ATTACH_URL_FILTER = AppriseURLFilter(
-                settings.APPRISE_ATTACH_ALLOW_URLS,
-                settings.APPRISE_ATTACH_DENY_URLS)
+        with override_settings(APPRISE_ATTACH_DENY_URLS="*"):
+            utils.ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
             # We will fail to parse our URL based attachment
             with self.assertRaises(ValueError):
                 parse_attachments(attachment_payload, {})
 
         # Reload our configuration to default values
-        utils.ATTACH_URL_FILTER = AppriseURLFilter(
-            settings.APPRISE_ATTACH_ALLOW_URLS,
-            settings.APPRISE_ATTACH_DENY_URLS)
+        utils.ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
         # Garbage handling (integer, float, object, etc is invalid)
         attachment_payload = 5
@@ -278,40 +268,37 @@ class AttachmentTests(SimpleTestCase):
         assert len(result) == 0
 
         # filename provided, but its empty (and/or contains whitespace)
-        attachment_payload = {
-            'base64': base64.b64encode(b'data to be encoded').decode('utf-8'),
-            'filename': '   '
-        }
+        attachment_payload = {"base64": base64.b64encode(b"data to be encoded").decode("utf-8"), "filename": "   "}
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 1
 
         # filename too long
         attachment_payload = {
-            'base64': base64.b64encode(b'data to be encoded').decode('utf-8'),
-            'filename': 'a' * 1000,
+            "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
+            "filename": "a" * 1000,
         }
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
 
         # filename invalid
         attachment_payload = {
-            'base64': base64.b64encode(b'data to be encoded').decode('utf-8'),
-            'filename': 1,
+            "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
+            "filename": 1,
         }
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
 
         attachment_payload = {
-            'base64': base64.b64encode(b'data to be encoded').decode('utf-8'),
-            'filename': None,
+            "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
+            "filename": None,
         }
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
 
         attachment_payload = {
-            'base64': base64.b64encode(b'data to be encoded').decode('utf-8'),
-            'filename': object(),
+            "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
+            "filename": object(),
         }
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
@@ -332,19 +319,18 @@ class AttachmentTests(SimpleTestCase):
 
         # We allow empty entries, this is okay; there is just nothing
         # returned at the end of the day
-        assert parse_attachments({''}, {}) == []
+        assert parse_attachments({""}, {}) == []
 
         # We can't parse entries that are not base64 but specified as
         # though they are
         attachment_payload = {
-            'base64': 'not-base-64',
+            "base64": "not-base-64",
         }
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
 
         # Support string; these become web requests
-        attachment_payload = \
-            "https://avatars.githubusercontent.com/u/850374?v=4"
+        attachment_payload = "https://avatars.githubusercontent.com/u/850374?v=4"
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 1
@@ -364,7 +350,7 @@ class AttachmentTests(SimpleTestCase):
         # to disk
         m = mock_open()
         m.side_effect = OSError()
-        with patch('builtins.open', m):
+        with patch("builtins.open", m):
             with self.assertRaises(ValueError):
                 attachment_payload = b"some data to work with."
                 parse_attachments(attachment_payload, {})
@@ -373,8 +359,7 @@ class AttachmentTests(SimpleTestCase):
         # for
         with override_settings(APPRISE_ATTACH_SIZE=1):
             # More then 1 MB in size causing error to trip
-            attachment_payload = \
-                ("content" * 1024 * 1024).encode('utf-8')
+            attachment_payload = ("content" * 1024 * 1024).encode("utf-8")
             with self.assertRaises(ValueError):
                 parse_attachments(attachment_payload, {})
 
@@ -387,7 +372,7 @@ class AttachmentTests(SimpleTestCase):
         attachment_payload = [
             # Request several images
             "https://myserver/myotherfile.png",
-            "https://myserver/myfile.png"
+            "https://myserver/myfile.png",
         ]
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
@@ -411,12 +396,13 @@ class AttachmentTests(SimpleTestCase):
                 # We have hosts that will be blocked
                 parse_attachments([ap], {})
 
-        attachment_payload = [{
-            # Request several images
-            'url': "https://myserver/myotherfile.png",
-        }, {
-            'url': "https://myserver/myfile.png"
-        }]
+        attachment_payload = [
+            {
+                # Request several images
+                "url": "https://myserver/myotherfile.png",
+            },
+            {"url": "https://myserver/myfile.png"},
+        ]
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 2
@@ -447,10 +433,13 @@ class AttachmentTests(SimpleTestCase):
             parse_attachments(attachment_payload, {})
 
         # Support url encoding
-        attachment_payload = [{
-            'url': "https://myserver/garbage/abcd1.png",
-        }, {
-            'url': "https://myserver/garbage/abcd2.png",
-        }]
+        attachment_payload = [
+            {
+                "url": "https://myserver/garbage/abcd1.png",
+            },
+            {
+                "url": "https://myserver/garbage/abcd2.png",
+            },
+        ]
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})

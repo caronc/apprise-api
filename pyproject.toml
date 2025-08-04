@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,23 +21,64 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
-import apprise
+[project]
+name = "apprise-api"
+version = "1.2.1"
+authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
+license = "MIT"
+dependencies = [
+  "apprise == 1.9.4",
+  "django",
+  "gevent",
+  "gunicorn",
+  "requests",
+  "paho-mqtt < 2.0.0",
+  "gntp",
+  "cryptography",
+  "django-prometheus"
+]
 
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-django",
+  "ruff",
+  "tox",
+  "mock"
+]
 
-class Command(BaseCommand):
-    help = f"Prune all persistent content older then {settings.APPRISE_STORAGE_PRUNE_DAYS} days()"
+[tool.setuptools]
+license-files = ["LICENSE"]
 
-    def add_arguments(self, parser):
-        parser.add_argument("-d", "--days", type=int, default=settings.APPRISE_STORAGE_PRUNE_DAYS)
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["apprise_api*"]
 
-    def handle(self, *args, **options):
-        # Persistent Storage cleanup
-        apprise.PersistentStore.disk_prune(
-            path=settings.APPRISE_STORAGE_DIR,
-            expires=options["days"] * 86400,
-            action=True,
-        )
-        self.stdout.write(self.style.SUCCESS("Successfully pruned persistent storeage (days: %d)" % options["days"]))
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings.pytest"
+addopts = "--ignore=lib --ignore=lib64 --nomigrations --cov=apprise_api --cov-report=term-missing"
+filterwarnings = ["once::Warning"]
+testpaths = ["apprise_api"]
+
+[tool.coverage.run]
+branch = true
+source = ["apprise_api"]
+parallel = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 160
+exclude = [".eggs", ".tox", "__pycache__"]
+builtins = ["_"]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E741", "E722"]

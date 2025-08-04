@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -47,15 +47,11 @@ class AutoThemeMiddleware:
         """
 
         # Our current theme
-        current_theme = \
-            request.COOKIES.get('t', request.COOKIES.get(
-                'theme', settings.APPRISE_DEFAULT_THEME))
+        current_theme = request.COOKIES.get("t", request.COOKIES.get("theme", settings.APPRISE_DEFAULT_THEME))
 
         # Extract our theme (fall back to our default if not set)
         theme = request.GET.get("theme", current_theme).strip().lower()
-        theme = next((entry for entry in SITE_THEMES
-                     if entry.startswith(theme)), None) \
-            if theme else None
+        theme = next((entry for entry in SITE_THEMES if entry.startswith(theme)), None) if theme else None
 
         if theme not in SITE_THEMES:
             # Fallback to default theme
@@ -65,20 +61,17 @@ class AutoThemeMiddleware:
         request.theme = theme
 
         # Set our next theme
-        request.next_theme = SiteTheme.LIGHT \
-            if theme == SiteTheme.DARK \
-            else SiteTheme.DARK
+        request.next_theme = SiteTheme.LIGHT if theme == SiteTheme.DARK else SiteTheme.DARK
 
         # Get our response object
         response = self.get_response(request)
 
         # Set our cookie
         max_age = 365 * 24 * 60 * 60  # 1 year
-        expires = \
-            datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=max_age)
+        expires = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=max_age)
 
         # Set our cookie
-        response.set_cookie('theme', theme, expires=expires)
+        response.set_cookie("theme", theme, expires=expires)
 
         # return our response
         return response

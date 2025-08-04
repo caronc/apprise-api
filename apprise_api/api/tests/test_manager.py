@@ -36,34 +36,34 @@ class ManagerPageTests(SimpleTestCase):
         General testing of management page
         """
         # No permission to get keys
-        response = self.client.get('/cfg/')
+        response = self.client.get("/cfg/")
         assert response.status_code == 403
 
-        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE='hash'):
-            response = self.client.get('/cfg/')
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="hash"):
+            response = self.client.get("/cfg/")
             assert response.status_code == 403
 
-        with override_settings(APPRISE_ADMIN=False, APPRISE_STATEFUL_MODE='simple'):
-            response = self.client.get('/cfg/')
+        with override_settings(APPRISE_ADMIN=False, APPRISE_STATEFUL_MODE="simple"):
+            response = self.client.get("/cfg/")
             assert response.status_code == 403
 
-        with override_settings(APPRISE_ADMIN=False, APPRISE_STATEFUL_MODE='disabled'):
-            response = self.client.get('/cfg/')
+        with override_settings(APPRISE_ADMIN=False, APPRISE_STATEFUL_MODE="disabled"):
+            response = self.client.get("/cfg/")
             assert response.status_code == 403
 
-        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE='disabled'):
-            response = self.client.get('/cfg/')
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="disabled"):
+            response = self.client.get("/cfg/")
             assert response.status_code == 403
 
         # But only when the setting is enabled
-        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE='simple'):
-            response = self.client.get('/cfg/')
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            response = self.client.get("/cfg/")
             assert response.status_code == 200
 
         # An invalid key was specified
-        response = self.client.get('/cfg/**invalid-key**')
+        response = self.client.get("/cfg/**invalid-key**")
         assert response.status_code == 404
 
         # An invalid key was specified
-        response = self.client.get('/cfg/valid-key')
+        response = self.client.get("/cfg/valid-key")
         assert response.status_code == 200

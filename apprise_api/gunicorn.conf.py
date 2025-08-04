@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -29,29 +29,28 @@ import multiprocessing
 # gunicorn --config <this file> core.wsgi:application
 
 raw_env = [
-    'LANG={}'.format(os.environ.get('LANG', 'en_US.UTF-8')),
-    'DJANGO_SETTINGS_MODULE=core.settings',
+    "LANG={}".format(os.environ.get("LANG", "en_US.UTF-8")),
+    "DJANGO_SETTINGS_MODULE=core.settings",
 ]
 
 # This is the path as prepared in the docker compose
-pythonpath = '/opt/apprise/webapp'
+pythonpath = "/opt/apprise/webapp"
 
 # bind to port 8000
 bind = [
-    '0.0.0.0:8000',  # IPv4 Support
-    '[::]:8000',  # IPv6 Support
+    "0.0.0.0:8000",  # IPv4 Support
+    "[::]:8000",  # IPv6 Support
 ]
 
 # Workers are relative to the number of CPU's provided by hosting server
-workers = int(os.environ.get(
-    'APPRISE_WORKER_COUNT', multiprocessing.cpu_count() * 2 + 1))
+workers = int(os.environ.get("APPRISE_WORKER_COUNT", multiprocessing.cpu_count() * 2 + 1))
 
 # Increase worker timeout value to give upstream services time to
 # respond.
-timeout = int(os.environ.get('APPRISE_WORKER_TIMEOUT', 300))
+timeout = int(os.environ.get("APPRISE_WORKER_TIMEOUT", 300))
 
 # Our worker type to use; over-ride the default `sync`
-worker_class = 'gevent'
+worker_class = "gevent"
 
 # Get workers memory consumption under control by leveraging gunicorn
 # worker recycling timeout
@@ -60,6 +59,6 @@ max_requests_jitter = 50
 
 # Logging
 # '-' means log to stdout.
-errorlog = '-'
-accesslog = '-'
-loglevel = 'warn'
+errorlog = "-"
+accesslog = "-"
+loglevel = "warn"

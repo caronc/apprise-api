@@ -38,4 +38,4 @@ ALLOWED_HOSTS = []
 APPRISE_CONFIG_DIR = TemporaryDirectory().name
 
 # Setup our runner
-TEST_RUNNER = 'core.settings.pytest.runner.PytestTestRunner'
+TEST_RUNNER = "core.settings.pytest.runner.PytestTestRunner"
