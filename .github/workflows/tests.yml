@@ -65,9 +65,20 @@ jobs:
       run: |
         flake8 apprise_api --count --show-source --statistics
 
+    - name: Debug pytest plugins
+      run: |
+        pytest --version
+        pytest --help
+        pytest --trace-config
+        pip freeze | grep pytest
+
     - name: Run tests
       run: |
-        coverage run -m pytest apprise_api
+        pytest
+
+    #- name: Run tests
+    #  run: |
+    #    coverage run -m pytest apprise_api
 
     - name: Process coverage data
       run: |
