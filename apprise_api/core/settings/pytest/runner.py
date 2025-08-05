@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -27,7 +26,7 @@
 # file with all of the content found in the master configuration.
 
 
-class PytestTestRunner(object):
+class PytestTestRunner:
     """Runs pytest to discover and run tests."""
 
     def __init__(self, verbosity=1, failfast=False, keepdb=False, **kwargs):

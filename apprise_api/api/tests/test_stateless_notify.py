@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,15 +21,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.exceptions import RequestDataTooBig
-from django.test.utils import override_settings
-from unittest import mock
-from ..forms import NotifyByUrlForm
-import requests
 import json
+from unittest import mock
+
+from django.core.exceptions import RequestDataTooBig
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import SimpleTestCase
+from django.test.utils import override_settings
+import requests
+
 import apprise
+
+from ..forms import NotifyByUrlForm
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -72,7 +74,7 @@ class StatelessNotifyTests(SimpleTestCase):
         form_data = {
             "urls": "mailto://user:pass@hotmail.com",
             "body": "test notifiction",
-            "format": apprise.NotifyFormat.MARKDOWN,
+            "format": apprise.NotifyFormat.MARKDOWN.value,
         }
         form = NotifyByUrlForm(data=form_data)
         assert form.is_valid()
@@ -88,11 +90,19 @@ class StatelessNotifyTests(SimpleTestCase):
         mock_notify.reset_mock()
 
         # Test Headers
-        for level in ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE", "INVALID"):
+        for level in (
+            "CRITICAL",
+            "ERROR",
+            "WARNING",
+            "INFO",
+            "DEBUG",
+            "TRACE",
+            "INVALID",
+        ):
             form_data = {
                 "urls": "mailto://user:pass@hotmail.com",
                 "body": "test notifiction",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
             }
 
             attach_data = {"attachment": SimpleUploadedFile("attach.txt", b"content here", content_type="text/plain")}
@@ -116,7 +126,7 @@ class StatelessNotifyTests(SimpleTestCase):
 
             form_data = {
                 "payload": "## test notification",
-                "fmt": apprise.NotifyFormat.MARKDOWN,
+                "fmt": apprise.NotifyFormat.MARKDOWN.value,
                 "extra": "mailto://user:pass@hotmail.com",
             }
 
@@ -130,20 +140,30 @@ class StatelessNotifyTests(SimpleTestCase):
 
             form_data = {
                 "payload": "## test notification",
-                "fmt": apprise.NotifyFormat.MARKDOWN,
+                "fmt": apprise.NotifyFormat.MARKDOWN.value,
                 "extra": "mailto://user:pass@hotmail.com",
             }
 
             # We sent the notification successfully (use our rule mapping)
             # JSON
-            response = self.client.post("/notify/?:payload=body&:fmt=format&:extra=urls", json.dumps(form_data), content_type="application/json")
+            response = self.client.post(
+                "/notify/?:payload=body&:fmt=format&:extra=urls",
+                json.dumps(form_data),
+                content_type="application/json",
+            )
             assert response.status_code == 200
             assert mock_notify.call_count == 1
 
             mock_notify.reset_mock()
 
         # Long Filename
-        attach_data = {"attachment": SimpleUploadedFile("{}.txt".format("a" * 2000), b"content here", content_type="text/plain")}
+        attach_data = {
+            "attachment": SimpleUploadedFile(
+                "{}.txt".format("a" * 2000),
+                b"content here",
+                content_type="text/plain",
+            )
+        }
 
         # At a minimum, just a body is required
         form = NotifyByUrlForm(form_data, attach_data)
@@ -171,7 +191,7 @@ class StatelessNotifyTests(SimpleTestCase):
                 form_data = {
                     "urls": "mailto://user:pass@hotmail.com",
                     "body": "test notifiction",
-                    "format": apprise.NotifyFormat.MARKDOWN,
+                    "format": apprise.NotifyFormat.MARKDOWN.value,
                 }
 
                 # At a minimum, just a body is required
@@ -492,7 +512,7 @@ class StatelessNotifyTests(SimpleTestCase):
         form_data = {
             "urls": "json://user@localhost",
             "body": "Testing HTML block",
-            "type": apprise.NotifyType.INFO,
+            "type": apprise.NotifyType.INFO.value,
         }
 
         headers = {
@@ -524,7 +544,7 @@ class StatelessNotifyTests(SimpleTestCase):
         json_data = {
             "urls": "",
             "body": "test notifiction",
-            "type": apprise.NotifyType.WARNING,
+            "type": apprise.NotifyType.WARNING.value,
         }
 
         # Send our empty notification as a JSON object
@@ -542,7 +562,7 @@ class StatelessNotifyTests(SimpleTestCase):
         json_data = {
             "urls": "mailto://user:pass@yahoo.ca",
             "body": "test notifiction",
-            "type": apprise.NotifyType.WARNING,
+            "type": apprise.NotifyType.WARNING.value,
         }
 
         # Send our notification as a JSON object
@@ -591,7 +611,7 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Test sending without a body
         json_data = {
-            "type": apprise.NotifyType.WARNING,
+            "type": apprise.NotifyType.WARNING.value,
         }
 
         response = self.client.post(
@@ -638,7 +658,7 @@ class StatelessNotifyTests(SimpleTestCase):
         json_data = {
             "urls": "json://user:pass@yahoo.ca",
             "body": "test notifiction",
-            "type": apprise.NotifyType.WARNING,
+            "type": apprise.NotifyType.WARNING.value,
         }
 
         # Send our notification as a JSON object
@@ -655,126 +675,124 @@ class StatelessNotifyTests(SimpleTestCase):
         mock_send.reset_mock()
 
         # Send our service with the `json://` denied
-        with override_settings(APPRISE_ALLOW_SERVICES=""):
-            # Test our stateless storage setting (just to kill 2 birds with 1 stone)
-            with override_settings(APPRISE_STATELESS_STORAGE="yes"):
-                with override_settings(APPRISE_DENY_SERVICES="json"):
-                    # Send our notification as a JSON object
-                    response = self.client.post(
-                        "/notify",
-                        data=json.dumps(json_data),
-                        content_type="application/json",
-                    )
+        with override_settings(APPRISE_ALLOW_SERVICES=""), \
+            override_settings(APPRISE_STATELESS_STORAGE="yes"), \
+            override_settings(APPRISE_DENY_SERVICES="json"):
 
-                    # json:// is disabled
-                    assert response.status_code == 204
-                    assert mock_send.call_count == 0
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                    # What actually took place behind close doors:
-                    assert N_MGR["json"].enabled is False
+            # json:// is disabled
+            assert response.status_code == 204
+            assert mock_send.call_count == 0
 
-                    # Reset our flag (for next test)
-                    N_MGR["json"].enabled = True
+            # What actually took place behind close doors:
+            assert N_MGR["json"].enabled is False
+
+            # Reset our flag (for next test)
+            N_MGR["json"].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Send our service with the `json://` denied
-        with override_settings(APPRISE_ALLOW_SERVICES=""):
-            with override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify",
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES=""), \
+             override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
 
-                # json:// is enabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # Verify that json was never turned off
-                assert N_MGR["json"].enabled is True
+            # json:// is enabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-        # Reset Mock
-        mock_send.reset_mock()
-
-        # Send our service with the `json://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="json"):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify",
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
-
-                # json:// is enabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
-
-                # Verify email was never turned off
-                assert N_MGR["json"].enabled is True
+            # Verify that json was never turned off
+            assert N_MGR["json"].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Send our service with the `json://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="invalid, jsons"):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify",
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES="json"), override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # json:// is enabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
+            # json:// is enabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-                # Verify email was never turned off
-                assert N_MGR["json"].enabled is True
+            # Verify email was never turned off
+            assert N_MGR["json"].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Send our service with the `json://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="syslog"):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify",
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES="invalid, jsons"), \
+             override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # json:// is disabled
-                assert response.status_code == 204
-                assert mock_send.call_count == 0
+            # json:// is enabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-                # What actually took place behind close doors:
-                assert N_MGR["json"].enabled is False
+            # Verify email was never turned off
+            assert N_MGR["json"].enabled is True
 
-                # Reset our flag (for next test)
-                N_MGR["json"].enabled = True
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `json://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="syslog"), override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
+
+            # json:// is disabled
+            assert response.status_code == 204
+            assert mock_send.call_count == 0
+
+            # What actually took place behind close doors:
+            assert N_MGR["json"].enabled is False
+
+            # Reset our flag (for next test)
+            N_MGR["json"].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Test case where there is simply no over-rides defined
-        with override_settings(APPRISE_ALLOW_SERVICES=""):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify",
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES=""), override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # json:// is disabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
+            # json:// is disabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-                # nothing was changed
-                assert N_MGR["json"].enabled is True
+            # nothing was changed
+            assert N_MGR["json"].enabled is True

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,15 +21,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase
-from django.core.exceptions import RequestDataTooBig
-from apprise import ConfigFormat
-from unittest.mock import patch
-from unittest import mock
-from django.test.utils import override_settings
-from ..forms import AUTO_DETECT_CONFIG_KEYWORD
-import json
 import hashlib
+import json
+from unittest import mock
+from unittest.mock import patch
+
+from django.core.exceptions import RequestDataTooBig
+from django.test import SimpleTestCase
+from django.test.utils import override_settings
+
+from apprise import ConfigFormat
+
+from ..forms import AUTO_DETECT_CONFIG_KEYWORD
 
 
 class AddTests(SimpleTestCase):
@@ -60,7 +62,10 @@ class AddTests(SimpleTestCase):
 
         # However adding just 1 more character exceeds our limit and the save
         # will fail
-        response = self.client.post("/add/{}".format(key + "x"), {"urls": "mailto://user:pass@yahoo.ca"})
+        response = self.client.post(
+            "/add/{}".format(key + "x"),
+            {"urls": "mailto://user:pass@yahoo.ca"},
+        )
         assert response.status_code == 404
 
     @override_settings(APPRISE_CONFIG_LOCK=True)
@@ -100,18 +105,27 @@ class AddTests(SimpleTestCase):
         assert response.status_code == 200
 
         # No URLs loaded
-        response = self.client.post("/add/{}".format(key), {"config": "invalid content", "format": "text"})
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"config": "invalid content", "format": "text"},
+        )
         assert response.status_code == 400
 
         # Test a case where we fail to load a valid configuration file
         with patch("apprise.AppriseConfig.add", return_value=False):
-            response = self.client.post("/add/{}".format(key), {"config": "garbage://", "format": "text"})
+            response = self.client.post(
+                "/add/{}".format(key),
+                {"config": "garbage://", "format": "text"},
+            )
         assert response.status_code == 400
 
         with patch("os.remove", side_effect=OSError):
             # We will fail to remove the device first prior to placing a new
             # one;  This will result in a 500 error
-            response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:newpass@gmail.com"})
+            response = self.client.post(
+                "/add/{}".format(key),
+                {"urls": "mailto://user:newpass@gmail.com"},
+            )
             assert response.status_code == 500
 
         # URL is actually not a valid one (invalid Slack tokens specified
@@ -200,8 +214,11 @@ class AddTests(SimpleTestCase):
         # Empty Text Configuration
         config = """
 
-        """  # noqa W293
-        response = self.client.post("/add/{}".format(key), {"format": ConfigFormat.TEXT, "config": config})
+        """
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": ConfigFormat.TEXT.value, "config": config},
+        )
         assert response.status_code == 400
 
         # Valid Text Configuration
@@ -209,13 +226,16 @@ class AddTests(SimpleTestCase):
         browser,media=notica://VTokenC
         home=mailto://user:pass@hotmail.com
         """
-        response = self.client.post("/add/{}".format(key), {"format": ConfigFormat.TEXT, "config": config})
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": ConfigFormat.TEXT.value, "config": config},
+        )
         assert response.status_code == 200
 
         # Test with JSON
         response = self.client.post(
             "/add/{}".format(key),
-            data=json.dumps({"format": ConfigFormat.TEXT, "config": config}),
+            data=json.dumps({"format": ConfigFormat.TEXT.value, "config": config}),
             content_type="application/json",
         )
         assert response.status_code == 200
@@ -228,13 +248,16 @@ class AddTests(SimpleTestCase):
           - mailto://user:pass@hotmail.com:
               tag: home
         """
-        response = self.client.post("/add/{}".format(key), {"format": ConfigFormat.YAML, "config": config})
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": ConfigFormat.YAML.value, "config": config},
+        )
         assert response.status_code == 200
 
         # Test with JSON
         response = self.client.post(
             "/add/{}".format(key),
-            data=json.dumps({"format": ConfigFormat.YAML, "config": config}),
+            data=json.dumps({"format": ConfigFormat.YAML.value, "config": config}),
             content_type="application/json",
         )
         assert response.status_code == 200
@@ -253,7 +276,7 @@ class AddTests(SimpleTestCase):
             # We'll fail to write our key now
             response = self.client.post(
                 "/add/{}".format(key),
-                data=json.dumps({"format": ConfigFormat.YAML, "config": config}),
+                data=json.dumps({"format": ConfigFormat.YAML.value, "config": config}),
                 content_type="application/json",
             )
 
@@ -271,8 +294,11 @@ class AddTests(SimpleTestCase):
         # Empty Text Configuration
         config = """
 
-        """  # noqa W293
-        response = self.client.post("/add/{}".format(key), {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config})
+        """
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config},
+        )
         assert response.status_code == 400
 
         # Valid Text Configuration
@@ -280,13 +306,16 @@ class AddTests(SimpleTestCase):
         browser,media=notica://VTokenA
         home=mailto://user:pass@hotmail.com
         """
-        response = self.client.post("/add/{}".format(key), {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config})
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config},
+        )
         assert response.status_code == 200
 
         # Test with JSON
         response = self.client.post(
             "/add/{}".format(key),
-            data=json.dumps({"format": ConfigFormat.TEXT, "config": config}),
+            data=json.dumps({"format": ConfigFormat.TEXT.value, "config": config}),
             content_type="application/json",
         )
         assert response.status_code == 200
@@ -300,7 +329,10 @@ class AddTests(SimpleTestCase):
           - mailto://user:pass@hotmail.com:
               tag: home
         """
-        response = self.client.post("/add/{}".format(key), {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config})
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config},
+        )
         assert response.status_code == 200
 
         # Test with JSON
@@ -315,7 +347,10 @@ class AddTests(SimpleTestCase):
         config = """
         42
         """
-        response = self.client.post("/add/{}".format(key), {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config})
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config},
+        )
         assert response.status_code == 400
 
         # Test with JSON

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -24,8 +23,9 @@
 # THE SOFTWARE.
 
 import io
-from django.test import SimpleTestCase
+
 from django.core import management
+from django.test import SimpleTestCase
 
 
 class CommandTests(SimpleTestCase):

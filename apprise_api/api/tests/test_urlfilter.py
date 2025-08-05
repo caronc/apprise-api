@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -23,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from django.test import SimpleTestCase
+
 from ..urlfilter import AppriseURLFilter
 
 
@@ -186,7 +186,10 @@ class AttachmentTests(SimpleTestCase):
         # Testing of hostnames only and ports but via URLs (explicit http://)
         # Also tests path ending with `/` (slash)
         #
-        af = AppriseURLFilter("http://localhost, http://myserver:3000", "http://localhost/resources/")
+        af = AppriseURLFilter(
+            "http://localhost, http://myserver:3000",
+            "http://localhost/resources/",
+        )
 
         # We still block junk
         self.assertFalse(af.is_allowed("$"))
@@ -225,7 +228,10 @@ class AttachmentTests(SimpleTestCase):
         # Testing of hostnames only and ports but via URLs (explicit https://)
         # Also tests path ending with `/` (slash)
         #
-        af = AppriseURLFilter("https://localhost, https://myserver:3000", "https://localhost/resources/")
+        af = AppriseURLFilter(
+            "https://localhost, https://myserver:3000",
+            "https://localhost/resources/",
+        )
 
         # We still block junk
         self.assertFalse(af.is_allowed("$"))

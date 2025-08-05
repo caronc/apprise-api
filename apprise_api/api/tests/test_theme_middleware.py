@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-#
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -22,26 +20,24 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-import os
-import sys
+from django.http import HttpResponse
+from django.test import RequestFactory, SimpleTestCase
 
-# Update our path so it will see our apprise_api content
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "apprise_api"))
-
-
-def main():
-    # Unless otherwise specified, default to a debug mode
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.debug")
-    try:
-        from django.core.management import execute_from_command_line
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
-        ) from exc
-    execute_from_command_line(sys.argv)
+from apprise_api.core.middleware.theme import AutoThemeMiddleware, SiteTheme
 
 
-if __name__ == "__main__":
-    main()
+class AutoThemeMiddlewareTest(SimpleTestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_theme_fallback_when_invalid_theme_given(self):
+        request = self.factory.get("/", {"theme": "foobar"})
+        request.COOKIES = {}
+
+        def get_response(req):
+            return HttpResponse()
+
+        middleware = AutoThemeMiddleware(get_response)
+        _response = middleware(request)
+
+        self.assertEqual(request.theme, SiteTheme.LIGHT)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,17 +21,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase
-from django.test.utils import override_settings
-from unittest.mock import patch, Mock
-from ..forms import NotifyForm
-from ..utils import ConfigCache
+import inspect
 from json import dumps
 import os
 import re
-import apprise
+from unittest.mock import Mock, patch
+
+from django.test import SimpleTestCase
+from django.test.utils import override_settings
 import requests
-import inspect
+
+import apprise
+
+from ..forms import NotifyForm
+from ..utils import ConfigCache
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -105,7 +107,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 "tag": "general",
             }
 
@@ -125,13 +127,16 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "payload": "## test notification",
-                "fmt": apprise.NotifyFormat.MARKDOWN,
+                "fmt": apprise.NotifyFormat.MARKDOWN.value,
                 "extra": "general",
             }
 
             # We sent the notification successfully (use our rule mapping)
             # FORM
-            response = self.client.post(f"/notify/{key}/?:payload=body&:fmt=format&:extra=tag", form_data)
+            response = self.client.post(
+                f"/notify/{key}/?:payload=body&:fmt=format&:extra=tag",
+                form_data,
+            )
             assert response.status_code == 200
             assert mock_post.call_count == 1
 
@@ -139,13 +144,17 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "payload": "## test notification",
-                "fmt": apprise.NotifyFormat.MARKDOWN,
+                "fmt": apprise.NotifyFormat.MARKDOWN.value,
                 "extra": "general",
             }
 
             # We sent the notification successfully (use our rule mapping)
             # JSON
-            response = self.client.post(f"/notify/{key}/?:payload=body&:fmt=format&:extra=tag", dumps(form_data), content_type="application/json")
+            response = self.client.post(
+                f"/notify/{key}/?:payload=body&:fmt=format&:extra=tag",
+                dumps(form_data),
+                content_type="application/json",
+            )
             assert response.status_code == 200
             assert mock_post.call_count == 1
 
@@ -153,7 +162,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 "tag": "no-on-with-this-tag",
             }
 
@@ -203,7 +212,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
             }
 
             form = NotifyForm(data=form_data)
@@ -226,7 +235,7 @@ class StatefulNotifyTests(SimpleTestCase):
             #
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 "tag": "general+json",
             }
 
@@ -247,7 +256,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 # Plus with space inbetween
                 "tag": "general + json",
             }
@@ -268,7 +277,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 # Space (AND)
                 "tag": "general json",
             }
@@ -288,7 +297,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 # Comma (OR)
                 "tag": "pushbullet, json",
             }
@@ -340,7 +349,8 @@ class StatefulNotifyTests(SimpleTestCase):
         # Monkey Patch
         N_MGR["mailto"].enabled = True
 
-        config = inspect.cleandoc("""
+        config = inspect.cleandoc(
+            """
         version: 1
         groups:
           mygroup: user1, user2
@@ -351,7 +361,8 @@ class StatefulNotifyTests(SimpleTestCase):
               tag: user1
             - to: user2@example.com
               tag: user2
-        """)
+        """
+        )
 
         # Monkey Patch
         N_MGR["json"].enabled = True
@@ -367,7 +378,7 @@ class StatefulNotifyTests(SimpleTestCase):
         for tag in ("user1", "user2"):
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 "tag": tag,
             }
             form = NotifyForm(data=form_data)
@@ -389,7 +400,7 @@ class StatefulNotifyTests(SimpleTestCase):
         # Now let's notify by our group
         form_data = {
             "body": "## test notification",
-            "format": apprise.NotifyFormat.MARKDOWN,
+            "format": apprise.NotifyFormat.MARKDOWN.value,
             "tag": "mygroup",
         }
 
@@ -433,7 +444,8 @@ class StatefulNotifyTests(SimpleTestCase):
         # Monkey Patch
         N_MGR["mailto"].enabled = True
 
-        config = inspect.cleandoc("""
+        config = inspect.cleandoc(
+            """
         version: 1
         groups:
           - mygroup: user1, user2
@@ -444,7 +456,8 @@ class StatefulNotifyTests(SimpleTestCase):
               tag: user1
             - to: user2@example.com
               tag: user2
-        """)
+        """
+        )
 
         # Monkey Patch
         N_MGR["json"].enabled = True
@@ -460,7 +473,7 @@ class StatefulNotifyTests(SimpleTestCase):
         for tag in ("user1", "user2"):
             form_data = {
                 "body": "## test notification",
-                "format": apprise.NotifyFormat.MARKDOWN,
+                "format": apprise.NotifyFormat.MARKDOWN.value,
                 "tag": tag,
             }
             form = NotifyForm(data=form_data)
@@ -482,7 +495,7 @@ class StatefulNotifyTests(SimpleTestCase):
         # Now let's notify by our group
         form_data = {
             "body": "## test notification",
-            "format": apprise.NotifyFormat.MARKDOWN,
+            "format": apprise.NotifyFormat.MARKDOWN.value,
             "tag": "mygroup",
         }
 

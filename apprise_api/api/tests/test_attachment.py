@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,22 +21,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-import requests
-from django.test import SimpleTestCase
-from unittest import mock
-from unittest.mock import mock_open
-from ..utils import Attachment, HTTPAttachment
-from ..utils import parse_attachments
-from ..urlfilter import AppriseURLFilter
-from .. import utils
-from django.test.utils import override_settings
-from django.conf import settings
-from tempfile import TemporaryDirectory
-from shutil import rmtree
 import base64
-from unittest.mock import patch
+from contextlib import suppress
+from os.path import dirname, getsize, join
+from shutil import rmtree
+from tempfile import TemporaryDirectory
+from unittest import mock
+from unittest.mock import mock_open, patch
+
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from os.path import dirname, join, getsize
+from django.test import SimpleTestCase
+from django.test.utils import override_settings
+import requests
+
+from .. import utils
+from ..urlfilter import AppriseURLFilter
+from ..utils import Attachment, HTTPAttachment, parse_attachments
 
 SAMPLE_FILE = join(dirname(dirname(dirname(__file__))), "static", "logo.png")
 
@@ -48,12 +48,9 @@ class AttachmentTests(SimpleTestCase):
         self.tmp_dir = TemporaryDirectory()
 
     def tearDown(self):
-        # Clear directory
-        try:
+        # Clear content if possible
+        with suppress(FileNotFoundError):
             rmtree(self.tmp_dir.name)
-        except FileNotFoundError:
-            # no worries
-            pass
 
         self.tmp_dir = None
 
@@ -129,9 +126,8 @@ class AttachmentTests(SimpleTestCase):
         # attachment to disk
         m = mock_open()
         m.side_effect = OSError()
-        with patch("builtins.open", m):
-            with self.assertRaises(ValueError):
-                parse_attachments(None, files_request)
+        with patch("builtins.open", m), self.assertRaises(ValueError):
+            parse_attachments(None, files_request)
 
         # Test a case where our attachment exceeds the maximum size we allow
         # for
@@ -188,7 +184,7 @@ class AttachmentTests(SimpleTestCase):
 
         def iter_content(chunk_size=1024, *args, **kwargs):
             if not ref["io"]:
-                ref["io"] = open(SAMPLE_FILE, "rb")
+                ref["io"] = open(SAMPLE_FILE, "rb")  # noqa: SIM115
             block = ref["io"].read(chunk_size)
             if not block:
                 # Close for re-use
@@ -244,14 +240,20 @@ class AttachmentTests(SimpleTestCase):
         assert len(result) == 3
 
         with override_settings(APPRISE_ATTACH_DENY_URLS="*"):
-            utils.ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+            utils.ATTACH_URL_FILTER = AppriseURLFilter(
+                settings.APPRISE_ATTACH_ALLOW_URLS,
+                settings.APPRISE_ATTACH_DENY_URLS,
+            )
 
             # We will fail to parse our URL based attachment
             with self.assertRaises(ValueError):
                 parse_attachments(attachment_payload, {})
 
         # Reload our configuration to default values
-        utils.ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+        utils.ATTACH_URL_FILTER = AppriseURLFilter(
+            settings.APPRISE_ATTACH_ALLOW_URLS,
+            settings.APPRISE_ATTACH_DENY_URLS,
+        )
 
         # Garbage handling (integer, float, object, etc is invalid)
         attachment_payload = 5
@@ -268,7 +270,10 @@ class AttachmentTests(SimpleTestCase):
         assert len(result) == 0
 
         # filename provided, but its empty (and/or contains whitespace)
-        attachment_payload = {"base64": base64.b64encode(b"data to be encoded").decode("utf-8"), "filename": "   "}
+        attachment_payload = {
+            "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
+            "filename": "   ",
+        }
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 1
@@ -350,10 +355,9 @@ class AttachmentTests(SimpleTestCase):
         # to disk
         m = mock_open()
         m.side_effect = OSError()
-        with patch("builtins.open", m):
-            with self.assertRaises(ValueError):
-                attachment_payload = b"some data to work with."
-                parse_attachments(attachment_payload, {})
+        with patch("builtins.open", m), self.assertRaises(ValueError):
+            attachment_payload = b"some data to work with."
+            parse_attachments(attachment_payload, {})
 
         # Test a case where our attachment exceeds the maximum size we allow
         # for

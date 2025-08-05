@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -23,9 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import re
-from django.conf import settings
 import datetime
+import re
+
+from django.conf import settings
 
 
 class DetectConfigMiddleware:

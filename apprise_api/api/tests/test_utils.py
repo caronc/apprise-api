@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2024 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -23,9 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import os
-import mock
 import tempfile
+from unittest import mock
+
 from django.test import SimpleTestCase
+
 from .. import utils
 
 
@@ -57,6 +58,5 @@ class UtilsTests(SimpleTestCase):
         Test touch()
         """
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with mock.patch("os.fdopen", side_effect=OSError()):
-                assert utils.touch(os.path.join(tmpdir, "tmp-file")) is False
+        with tempfile.TemporaryDirectory() as tmpdir, mock.patch("os.fdopen", side_effect=OSError()):
+            assert utils.touch(os.path.join(tmpdir, "tmp-file")) is False

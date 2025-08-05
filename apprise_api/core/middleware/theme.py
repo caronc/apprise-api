@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -23,9 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from django.conf import settings
-from core.themes import SiteTheme, SITE_THEMES
 import datetime
+
+from django.conf import settings
+
+from core.themes import SITE_THEMES, SiteTheme
 
 
 class AutoThemeMiddleware:
@@ -51,7 +52,14 @@ class AutoThemeMiddleware:
 
         # Extract our theme (fall back to our default if not set)
         theme = request.GET.get("theme", current_theme).strip().lower()
-        theme = next((entry for entry in SITE_THEMES if entry.startswith(theme)), None) if theme else None
+        theme = (
+            next(
+                (entry for entry in SITE_THEMES if entry.startswith(theme)),
+                None,
+            )
+            if theme
+            else None
+        )
 
         if theme not in SITE_THEMES:
             # Fallback to default theme

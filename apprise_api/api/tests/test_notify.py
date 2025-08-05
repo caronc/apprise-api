@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -22,15 +20,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase, override_settings
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.exceptions import RequestDataTooBig
-from unittest import mock
-import requests
-from ..forms import NotifyForm
-import json
-import apprise
 from inspect import cleandoc
+import json
+from unittest import mock
+
+from django.core.exceptions import RequestDataTooBig
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import SimpleTestCase, override_settings
+import requests
+
+import apprise
+
+from ..forms import NotifyForm
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -70,10 +71,10 @@ class NotifyTests(SimpleTestCase):
         del form.cleaned_data["attachment"]
 
         # we always set a type if one wasn't done so already
-        assert form.cleaned_data["type"] == apprise.NotifyType.INFO
+        assert form.cleaned_data["type"] == apprise.NotifyType.INFO.value
 
         # we always set a format if one wasn't done so already
-        assert form.cleaned_data["format"] == apprise.NotifyFormat.TEXT
+        assert form.cleaned_data["format"] == apprise.NotifyFormat.TEXT.value
 
         # Send our notification
         response = self.client.post("/notify/{}".format(key), form.cleaned_data)
@@ -118,7 +119,15 @@ class NotifyTests(SimpleTestCase):
         mock_notify.reset_mock()
 
         # Test Headers
-        for level in ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE", "INVALID"):
+        for level in (
+            "CRITICAL",
+            "ERROR",
+            "WARNING",
+            "INFO",
+            "DEBUG",
+            "TRACE",
+            "INVALID",
+        ):
             # Preare our form data
             form_data = {
                 "body": "test notifiction",
@@ -143,7 +152,13 @@ class NotifyTests(SimpleTestCase):
             mock_notify.reset_mock()
 
         # Long Filename
-        attach_data = {"attachment": SimpleUploadedFile("{}.txt".format("a" * 2000), b"content here", content_type="text/plain")}
+        attach_data = {
+            "attachment": SimpleUploadedFile(
+                "{}.txt".format("a" * 2000),
+                b"content here",
+                content_type="text/plain",
+            )
+        }
 
         # At a minimum, just a body is required
         form = NotifyForm(form_data, attach_data)
@@ -198,7 +213,11 @@ class NotifyTests(SimpleTestCase):
             data = {
                 **form.cleaned_data,
                 "file1": SimpleUploadedFile("attach1.txt", b"content here", content_type="text/plain"),
-                "file2": SimpleUploadedFile("attach2.txt", b"more content here", content_type="text/plain"),
+                "file2": SimpleUploadedFile(
+                    "attach2.txt",
+                    b"more content here",
+                    content_type="text/plain",
+                ),
             }
 
             # Send our notification
@@ -298,8 +317,8 @@ class NotifyTests(SimpleTestCase):
         # Preare our form data
         form_data = {
             "body": "test notifiction",
-            "type": apprise.NotifyType.INFO,
-            "format": apprise.NotifyFormat.TEXT,
+            "type": apprise.NotifyType.INFO.value,
+            "format": apprise.NotifyFormat.TEXT.value,
         }
 
         # Send our notification
@@ -321,7 +340,7 @@ class NotifyTests(SimpleTestCase):
         response = json.loads(mock_post.call_args_list[0][1]["data"])
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
 
         # Preare our form data (body is actually the minimum requirement)
         # All of the rest of the variables can actually be over-ridden
@@ -346,7 +365,7 @@ class NotifyTests(SimpleTestCase):
         response = json.loads(mock_post.call_args_list[0][1]["data"])
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
 
         # Preare our form data (body is actually the minimum requirement)
         # All of the rest of the variables can actually be over-ridden
@@ -362,7 +381,12 @@ class NotifyTests(SimpleTestCase):
 
         # Send our notification by specifying the tag in the parameters
         response = self.client.post(
-            "/notify/{}?tag=home&format={}&type={}&title={}&body=ignored".format(key, apprise.NotifyFormat.TEXT, apprise.NotifyType.WARNING, "Test Title"),
+            "/notify/{}?tag=home&format={}&type={}&title={}&body=ignored".format(
+                key,
+                apprise.NotifyFormat.TEXT.value,
+                apprise.NotifyType.WARNING.value,
+                "Test Title",
+            ),
             form_data,
             content_type="application/json",
         )
@@ -374,7 +398,7 @@ class NotifyTests(SimpleTestCase):
         response = json.loads(mock_post.call_args_list[0][1]["data"])
         assert response["title"] == "Test Title"
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.WARNING
+        assert response["type"] == apprise.NotifyType.WARNING.value
 
     @mock.patch("requests.post")
     def test_notify_with_tags_via_apprise(self, mock_post):
@@ -412,14 +436,18 @@ class NotifyTests(SimpleTestCase):
         # Preare our form data
         form_data = {
             "body": "test notifiction",
-            "type": apprise.NotifyType.INFO,
-            "format": apprise.NotifyFormat.TEXT,
+            "type": apprise.NotifyType.INFO.value,
+            "format": apprise.NotifyFormat.TEXT.value,
             # Support Array
             "tag": [("home", "summer-home")],
         }
 
         # Send our notification
-        response = self.client.post("/notify/{}/".format(key), content_type="application/json", data=form_data)
+        response = self.client.post(
+            "/notify/{}/".format(key),
+            content_type="application/json",
+            data=form_data,
+        )
 
         # Nothing could be notified as there were no tag matches for 'home'
         # AND 'summer-home'
@@ -436,7 +464,11 @@ class NotifyTests(SimpleTestCase):
         # parameters
 
         # Send our notification
-        response = self.client.post("/notify/{}/".format(key), content_type="application/json", data=form_data)
+        response = self.client.post(
+            "/notify/{}/".format(key),
+            content_type="application/json",
+            data=form_data,
+        )
 
         # Our notification was sent (as we matched 'home' OR' 'summer-home')
         assert response.status_code == 200
@@ -446,7 +478,7 @@ class NotifyTests(SimpleTestCase):
         response = json.loads(mock_post.call_args_list[0][1]["data"])
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
 
         # Reset our mock object
         mock_post.reset_mock()
@@ -459,7 +491,11 @@ class NotifyTests(SimpleTestCase):
         # parameters
 
         # Send our notification
-        response = self.client.post("/notify/{}/".format(key), content_type="application/json", data=form_data)
+        response = self.client.post(
+            "/notify/{}/".format(key),
+            content_type="application/json",
+            data=form_data,
+        )
 
         # Our notification was sent (as we matched 'home' OR' 'summer-home')
         assert response.status_code == 200
@@ -469,7 +505,7 @@ class NotifyTests(SimpleTestCase):
         response = json.loads(mock_post.call_args_list[0][1]["data"])
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
 
         # Reset our mock object
         mock_post.reset_mock()
@@ -482,7 +518,11 @@ class NotifyTests(SimpleTestCase):
         # parameters
 
         # Send our notification
-        response = self.client.post("/notify/{}/".format(key), content_type="application/json", data=form_data)
+        response = self.client.post(
+            "/notify/{}/".format(key),
+            content_type="application/json",
+            data=form_data,
+        )
 
         # Our notification failed because 'tag' took priority over 'tags' and
         # it contains an invalid entry
@@ -500,7 +540,11 @@ class NotifyTests(SimpleTestCase):
         # parameters
 
         # Send our notification
-        response = self.client.post("/notify/{}/".format(key), content_type="application/json", data=form_data)
+        response = self.client.post(
+            "/notify/{}/".format(key),
+            content_type="application/json",
+            data=form_data,
+        )
 
         # Our notification failed because no tags were loaded
         assert response.status_code == 400
@@ -516,7 +560,11 @@ class NotifyTests(SimpleTestCase):
         # parameters
 
         # Send our notification
-        response = self.client.post("/notify/{}/".format(key), content_type="application/json", data=form_data)
+        response = self.client.post(
+            "/notify/{}/".format(key),
+            content_type="application/json",
+            data=form_data,
+        )
 
         # Our notification makes it through the list check and into the
         # Apprise library. It will be at that level that the tags will fail
@@ -536,7 +584,11 @@ class NotifyTests(SimpleTestCase):
         # parameters
 
         # Send our notification
-        response = self.client.post("/notify/{}/".format(key), content_type="application/json", data=form_data)
+        response = self.client.post(
+            "/notify/{}/".format(key),
+            content_type="application/json",
+            data=form_data,
+        )
 
         # Our notification was sent (as we matched 'home' OR' 'summer-home')
         assert response.status_code == 200
@@ -546,7 +598,7 @@ class NotifyTests(SimpleTestCase):
         response = json.loads(mock_post.call_args_list[0][1]["data"])
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
 
         # Reset our mock object
         mock_post.reset_mock()
@@ -562,7 +614,12 @@ class NotifyTests(SimpleTestCase):
 
         # Send our notification by specifying the tag in the parameters
         response = self.client.post(
-            "/notify/{}?tag=home&format={}&type={}&title={}&body=ignored".format(key, apprise.NotifyFormat.TEXT, apprise.NotifyType.WARNING, "Test Title"),
+            "/notify/{}?tag=home&format={}&type={}&title={}&body=ignored".format(
+                key,
+                apprise.NotifyFormat.TEXT.value,
+                apprise.NotifyType.WARNING.value,
+                "Test Title",
+            ),
             form_data,
             content_type="application/json",
         )
@@ -574,7 +631,7 @@ class NotifyTests(SimpleTestCase):
         response = json.loads(mock_post.call_args_list[0][1]["data"])
         assert response["title"] == "Test Title"
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.WARNING
+        assert response["type"] == apprise.NotifyType.WARNING.value
 
         # Test case where RequestDataTooBig thrown
         # Reset our mock object
@@ -583,7 +640,11 @@ class NotifyTests(SimpleTestCase):
         with mock.patch("json.loads") as mock_loads:
             mock_loads.side_effect = RequestDataTooBig()
             # Send our notification by specifying the tag in the parameters
-            response = self.client.post(f"/notify/{key}?tag=home&body=test", form_data, content_type="application/json")
+            response = self.client.post(
+                f"/notify/{key}?tag=home&body=test",
+                form_data,
+                content_type="application/json",
+            )
 
             # Our notification failed
             assert response.status_code == 431
@@ -609,7 +670,8 @@ class NotifyTests(SimpleTestCase):
         key = "test_adv_notify_with_tags"
 
         # Valid Yaml Configuration
-        config = cleandoc("""
+        config = cleandoc(
+            """
         version: 1
         tag: panic
 
@@ -620,7 +682,8 @@ class NotifyTests(SimpleTestCase):
              tag: devops, high
           - json://user:pass@localhost?+url=3:
              tag: cris, emergency
-        """)
+        """
+        )
 
         # Load our configuration (it will be detected as YAML)
         response = self.client.post("/add/{}".format(key), {"config": config})
@@ -629,8 +692,8 @@ class NotifyTests(SimpleTestCase):
         # Preare our form data
         form_data = {
             "body": "test notifiction",
-            "type": apprise.NotifyType.INFO,
-            "format": apprise.NotifyFormat.TEXT,
+            "type": apprise.NotifyType.INFO.value,
+            "format": apprise.NotifyFormat.TEXT.value,
         }
 
         # Send our notification
@@ -660,7 +723,7 @@ class NotifyTests(SimpleTestCase):
         headers = mock_post.call_args_list[0][1]["headers"]
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
         # Verify we matched the first entry only
         assert headers["url"] == "1"
 
@@ -680,8 +743,8 @@ class NotifyTests(SimpleTestCase):
         # Let's store our tag in our form
         form_data = {
             "body": "test notifiction",
-            "type": apprise.NotifyType.INFO,
-            "format": apprise.NotifyFormat.TEXT,
+            "type": apprise.NotifyType.INFO.value,
+            "format": apprise.NotifyFormat.TEXT.value,
             # (devops AND cris) OR (notify AND high)
             "tag": "devops cris, notify high",
         }
@@ -711,7 +774,7 @@ class NotifyTests(SimpleTestCase):
         headers = mock_post.call_args_list[0][1]["headers"]
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
         # Verify we matched the first entry only
         assert headers["url"] == "2"
 
@@ -719,7 +782,7 @@ class NotifyTests(SimpleTestCase):
         headers = mock_post.call_args_list[1][1]["headers"]
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
         # Verify we matched the first entry only
         assert headers["url"] == "3"
 
@@ -742,7 +805,7 @@ class NotifyTests(SimpleTestCase):
         headers = mock_post.call_args_list[0][1]["headers"]
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
         # Verify we matched the first entry only
         assert headers["url"] == "1"
 
@@ -750,7 +813,7 @@ class NotifyTests(SimpleTestCase):
         headers = mock_post.call_args_list[1][1]["headers"]
         assert response["title"] == ""
         assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO
+        assert response["type"] == apprise.NotifyType.INFO.value
         # Verify we matched the first entry only
         assert headers["url"] == "3"
 
@@ -817,10 +880,10 @@ class NotifyTests(SimpleTestCase):
         del form.cleaned_data["attachment"]
 
         # we always set a type if one wasn't done so already
-        assert form.cleaned_data["type"] == apprise.NotifyType.INFO
+        assert form.cleaned_data["type"] == apprise.NotifyType.INFO.value
 
         # we always set a format if one wasn't done so already
-        assert form.cleaned_data["format"] == apprise.NotifyFormat.TEXT
+        assert form.cleaned_data["format"] == apprise.NotifyFormat.TEXT.value
 
         # Set our return value; first we return a true, then we fail
         # on the second call
@@ -883,7 +946,7 @@ class NotifyTests(SimpleTestCase):
         # Preare our JSON data
         json_data = {
             "body": "test notification",
-            "type": apprise.NotifyType.WARNING,
+            "type": apprise.NotifyType.WARNING.value,
         }
 
         # Send our notification as a JSON object
@@ -943,7 +1006,7 @@ class NotifyTests(SimpleTestCase):
 
         # Test sending without a body
         json_data = {
-            "type": apprise.NotifyType.WARNING,
+            "type": apprise.NotifyType.WARNING.value,
         }
 
         response = self.client.post(
@@ -1172,134 +1235,130 @@ class NotifyTests(SimpleTestCase):
         # Preare our JSON data
         json_data = {
             "body": "test notifiction",
-            "type": apprise.NotifyType.WARNING,
+            "type": apprise.NotifyType.WARNING.value,
         }
 
         # Verify by default email is enabled
         assert N_MGR["mailto"].enabled is True
 
         # Send our service with the `mailto://` denied
-        with override_settings(APPRISE_ALLOW_SERVICES=""):
-            with override_settings(APPRISE_DENY_SERVICES="mailto"):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify/{}".format(key),
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES=""), override_settings(APPRISE_DENY_SERVICES="mailto"):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify/{}".format(key),
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # mailto:// is disabled
-                assert response.status_code == 424
-                assert mock_send.call_count == 0
+            # mailto:// is disabled
+            assert response.status_code == 424
+            assert mock_send.call_count == 0
 
-                # What actually took place behind close doors:
-                assert N_MGR["mailto"].enabled is False
+            # What actually took place behind close doors:
+            assert N_MGR["mailto"].enabled is False
 
-                # Reset our flag (for next test)
-                N_MGR["mailto"].enabled = True
+            # Reset our flag (for next test)
+            N_MGR["mailto"].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Send our service with the `mailto://` denied
-        with override_settings(APPRISE_ALLOW_SERVICES=""):
-            with override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify/{}".format(key),
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES=""), \
+            override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify/{}".format(key),
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # mailto:// is enabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
+            # mailto:// is enabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-                # Verify that mailto was never turned off
-                assert N_MGR["mailto"].enabled is True
-
-        # Reset Mock
-        mock_send.reset_mock()
-
-        # Send our service with the `mailto://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="mailto"):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify/{}".format(key),
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
-
-                # mailto:// is enabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
-
-                # Verify email was never turned off
-                assert N_MGR["mailto"].enabled is True
+            # Verify that mailto was never turned off
+            assert N_MGR["mailto"].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Send our service with the `mailto://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="invalid, mailtos"):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify/{}".format(key),
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES="mailto"), override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify/{}".format(key),
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # mailto:// is enabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
+            # mailto:// is enabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-                # Verify email was never turned off
-                assert N_MGR["mailto"].enabled is True
+            # Verify email was never turned off
+            assert N_MGR["mailto"].enabled is True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Send our service with the `mailto://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="syslog"):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify/{}".format(key),
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES="invalid, mailtos"), \
+            override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify/{}".format(key),
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # mailto:// is disabled
-                assert response.status_code == 424
-                assert mock_send.call_count == 0
+            # mailto:// is enabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-                # What actually took place behind close doors:
-                assert N_MGR["mailto"].enabled is False
+            # Verify email was never turned off
+            assert N_MGR["mailto"].enabled is True
 
-                # Reset our flag (for next test)
-                N_MGR["mailto"].enabled = True
+        # Reset Mock
+        mock_send.reset_mock()
+
+        # Send our service with the `mailto://` being the only accepted type
+        with override_settings(APPRISE_ALLOW_SERVICES="syslog"), override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify/{}".format(key),
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
+
+            # mailto:// is disabled
+            assert response.status_code == 424
+            assert mock_send.call_count == 0
+
+            # What actually took place behind close doors:
+            assert N_MGR["mailto"].enabled is False
+
+            # Reset our flag (for next test)
+            N_MGR["mailto"].enabled = True
 
         # Reset Mock
         mock_send.reset_mock()
 
         # Test case where there is simply no over-rides defined
-        with override_settings(APPRISE_ALLOW_SERVICES=""):
-            with override_settings(APPRISE_DENY_SERVICES=""):
-                # Send our notification as a JSON object
-                response = self.client.post(
-                    "/notify/{}".format(key),
-                    data=json.dumps(json_data),
-                    content_type="application/json",
-                )
+        with override_settings(APPRISE_ALLOW_SERVICES=""), override_settings(APPRISE_DENY_SERVICES=""):
+            # Send our notification as a JSON object
+            response = self.client.post(
+                "/notify/{}".format(key),
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
 
-                # json:// is disabled
-                assert response.status_code == 200
-                assert mock_send.call_count == 1
+            # json:// is disabled
+            assert response.status_code == 200
+            assert mock_send.call_count == 1
 
-                # nothing was changed
-                assert N_MGR["mailto"].enabled is True
+            # nothing was changed
+            assert N_MGR["mailto"].enabled is True
 
     @override_settings(APPRISE_RECURSION_MAX=1)
     @mock.patch("apprise.Apprise.notify")

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,10 +21,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from .utils import gen_unique_config_id
-from .utils import ConfigCache
 from django.conf import settings
+
 import apprise
+
+from .utils import ConfigCache, gen_unique_config_id
 
 
 def stateful_mode(request):

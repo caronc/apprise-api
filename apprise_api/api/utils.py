@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,30 +21,34 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-import re
-import binascii
-import os
-import tempfile
-import shutil
-import gzip
-import apprise
-import hashlib
-import errno
 import base64
-import requests
-from json import dumps
-from django.conf import settings
+import binascii
+from contextlib import suppress
 from datetime import datetime
-from .urlfilter import AppriseURLFilter
+import errno
+import gzip
+import hashlib
+from json import dumps
 
 # import the logging library
 import logging
+import os
+import re
+import shutil
+import tempfile
+
+from django.conf import settings
+import requests
+
+import apprise
+
+from .urlfilter import AppriseURLFilter
 
 # Get an instance of a logger
 logger = logging.getLogger("django")
 
 
-class AppriseStoreMode(object):
+class AppriseStoreMode:
     """
     Defines the store modes of configuration
     """
@@ -62,7 +65,7 @@ class AppriseStoreMode(object):
     DISABLED = "disabled"
 
 
-class AttachmentPayload(object):
+class AttachmentPayload:
     """
     Defines the supported Attachment Payload Types
     """
@@ -108,7 +111,7 @@ class Attachment(A_MGR["file"]):
 
         except OSError:
             # Permission error
-            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR))
+            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)) from None
 
         if not path:
             try:
@@ -117,7 +120,9 @@ class Attachment(A_MGR["file"]):
                 os.close(d)
 
             except FileNotFoundError:
-                raise ValueError("Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR))
+                raise ValueError(
+                    "Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR)
+                ) from None
 
         self._path = path
 
@@ -143,11 +148,9 @@ class Attachment(A_MGR["file"]):
         De-Construtor is used to tidy up files during garbage collection
         """
         if self.delete and self._path:
-            try:
+            # no problem if file is missing
+            with suppress(FileNotFoundError):
                 os.remove(self._path)
-            except FileNotFoundError:
-                # no problem
-                pass
 
 
 class HTTPAttachment(A_MGR["http"]):
@@ -168,7 +171,7 @@ class HTTPAttachment(A_MGR["http"]):
 
         except OSError:
             # Permission error
-            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR))
+            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)) from None
 
         try:
             d, self._path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
@@ -176,7 +179,9 @@ class HTTPAttachment(A_MGR["http"]):
             os.close(d)
 
         except FileNotFoundError:
-            raise ValueError("Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR))
+            raise ValueError(
+                "Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR)
+            ) from None
 
         # Prepare our item
         super().__init__(name=filename, **kwargs)
@@ -200,11 +205,9 @@ class HTTPAttachment(A_MGR["http"]):
         De-Construtor is used to tidy up files during garbage collection
         """
         if self.delete and self._path:
-            try:
+            # no problem if file is missing
+            with suppress(FileNotFoundError):
                 os.remove(self._path)
-            except FileNotFoundError:
-                # no problem
-                pass
 
 
 def touchdir(path, mode=0o770, **kwargs):
@@ -234,7 +237,11 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
     flags = os.O_CREAT | os.O_APPEND
     try:
         with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
-            os.utime(f.fileno() if os.utime in os.supports_fd else fname, dir_fd=None if os.supports_fd else dir_fd, **kwargs)
+            os.utime(
+                f.fileno() if os.utime in os.supports_fd else fname,
+                dir_fd=None if os.supports_fd else dir_fd,
+                **kwargs,
+            )
 
     except OSError:
         return False
@@ -263,23 +270,23 @@ def parse_attachments(attachment_payload, files_request):
     # Attachment Count
     count = sum(
         [
-            0 if not isinstance(attachment_payload, (set, tuple, list)) else len(attachment_payload),
+            (0 if not isinstance(attachment_payload, set | tuple | list) else len(attachment_payload)),
             0 if not isinstance(files_request, dict) else len(files_request),
         ]
     )
 
-    if isinstance(attachment_payload, (dict, str, bytes)):
+    if isinstance(attachment_payload, dict | str | bytes):
         # Convert and adjust counter
         attachment_payload = (attachment_payload,)
         count += 1
 
     if settings.APPRISE_MAX_ATTACHMENTS > 0 and count > settings.APPRISE_MAX_ATTACHMENTS:
-        raise ValueError("There is a maximum of %d attachments" % settings.APPRISE_MAX_ATTACHMENTS)
+        raise ValueError(f"There is a maximum of {settings.APPRISE_MAX_ATTACHMENTS} attachments")
 
-    if isinstance(attachment_payload, (tuple, list, set)):
+    if isinstance(attachment_payload, tuple | list | set):
         for no, entry in enumerate(attachment_payload, start=1):
-            if isinstance(entry, (str, bytes)):
-                filename = "attachment.%.3d" % no
+            if isinstance(entry, str | bytes):
+                filename = f"attachment.{no:03d}"
 
             elif isinstance(entry, dict):
                 try:
@@ -287,19 +294,19 @@ def parse_attachments(attachment_payload, files_request):
 
                     # Max filename size is 250
                     if len(filename) > 250:
-                        raise ValueError("The filename associated with attachment %d is too long" % no)
+                        raise ValueError(f"The filename associated with attachment {no} is too long")
 
                     elif not filename:
-                        filename = "attachment.%.3d" % no
+                        filename = f"attachment.{no:03d}"
 
                 except AttributeError:
                     # not a string that was provided
-                    raise ValueError("An invalid filename was provided for attachment %d" % no)
+                    raise ValueError(f"An invalid filename was provided for attachment {no}") from None
 
             else:
                 # you must pass in a base64 string, or a dict containing our
                 # required parameters
-                raise ValueError("An invalid filename was provided for attachment %d" % no)
+                raise ValueError(f"An invalid filename was provided for attachment {no}")
 
             #
             # Prepare our Attachment
@@ -315,16 +322,16 @@ def parse_attachments(attachment_payload, files_request):
 
                 if not re.match(r"^https?://.+", entry[:10], re.I):
                     # We failed to retrieve the product
-                    raise ValueError("Failed to load attachment %d (not web request): %s" % (no, entry))
+                    raise ValueError(f"Failed to load attachment {no} (not web request): {entry}")
 
                 if not ATTACH_URL_FILTER.is_allowed(entry):
                     # We are not allowed to use this entry
-                    raise ValueError("Denied attachment %d (blocked web request): %s" % (no, entry))
+                    raise ValueError(f"Denied attachment {no} (blocked web request): {entry}")
 
                 attachment = HTTPAttachment(filename, **A_MGR["http"].parse_url(entry))
                 if not attachment:
                     # We failed to retrieve the attachment
-                    raise ValueError("Failed to retrieve attachment %d: %s" % (no, entry))
+                    raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
 
             else:  # web, base64 or raw
                 attachment = Attachment(filename)
@@ -338,32 +345,37 @@ def parse_attachments(attachment_payload, files_request):
                         elif isinstance(entry, dict) and AttachmentPayload.URL in entry:
                             if not ATTACH_URL_FILTER.is_allowed(entry[AttachmentPayload.URL]):
                                 # We are not allowed to use this entry
-                                raise ValueError("Denied attachment %d (blocked web request): %s" % (no, entry[AttachmentPayload.URL]))
+                                raise ValueError(
+                                    f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
+                                )
 
-                            attachment = HTTPAttachment(filename, **A_MGR["http"].parse_url(entry[AttachmentPayload.URL]))
+                            attachment = HTTPAttachment(
+                                filename,
+                                **A_MGR["http"].parse_url(entry[AttachmentPayload.URL]),
+                            )
                             if not attachment:
                                 # We failed to retrieve the attachment
-                                raise ValueError("Failed to retrieve attachment %d: %s" % (no, entry))
+                                raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
 
                         elif isinstance(entry, bytes):
                             # RAW
                             f.write(entry)
 
                         else:
-                            raise ValueError("Invalid filetype was provided for attachment %s" % filename)
+                            raise ValueError(f"Invalid filetype was provided for attachment {filename}")
 
                 except binascii.Error:
                     # The file ws not base64 encoded
-                    raise ValueError("Invalid filecontent was provided for attachment %s" % filename)
+                    raise ValueError(f"Invalid filecontent was provided for attachment {filename}") from None
 
                 except OSError:
-                    raise ValueError("Could not write attachment %s to disk" % filename)
+                    raise ValueError(f"Could not write attachment {filename} to disk") from None
 
                 #
                 # Some Validation
                 #
                 if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-                    raise ValueError("attachment %s's filesize is to large" % filename)
+                    raise ValueError(f"attachment {filename}'s filesize is to large")
 
             # Add our attachment
             attachments.append(attachment)
@@ -372,7 +384,7 @@ def parse_attachments(attachment_payload, files_request):
     # Now handle the request.FILES
     #
     if isinstance(files_request, dict):
-        for no, (key, meta) in enumerate(files_request.items(), start=len(attachments) + 1):
+        for no, (_key, meta) in enumerate(files_request.items(), start=len(attachments) + 1):
             try:
                 # Filetype is presumed to be of base class
                 # django.core.files.UploadedFile
@@ -380,13 +392,13 @@ def parse_attachments(attachment_payload, files_request):
 
                 # Max filename size is 250
                 if len(filename) > 250:
-                    raise ValueError("The filename associated with attachment %d is too long" % no)
+                    raise ValueError(f"The filename associated with attachment {no} is too long")
 
                 elif not filename:
-                    filename = "attachment.%.3d" % no
+                    filename = f"attachment.{no:03d}"
 
             except (AttributeError, TypeError):
-                raise ValueError("An invalid filename was provided for attachment %d" % no)
+                raise ValueError(f"An invalid filename was provided for attachment {no}") from None
 
             #
             # Prepare our Attachment
@@ -398,13 +410,13 @@ def parse_attachments(attachment_payload, files_request):
                     f.write(meta.read())
 
             except OSError:
-                raise ValueError("Could not write attachment %s to disk" % filename)
+                raise ValueError(f"Could not write attachment {filename} to disk") from None
 
             #
             # Some Validation
             #
             if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-                raise ValueError("attachment %s's filesize is to large" % filename)
+                raise ValueError(f"attachment {filename}'s filesize is to large")
 
             # Add our attachment
             attachments.append(attachment)
@@ -412,7 +424,7 @@ def parse_attachments(attachment_payload, files_request):
     return attachments
 
 
-class SimpleFileExtension(object):
+class SimpleFileExtension:
     """
     Defines the simple file exension lookups
     """
@@ -425,8 +437,8 @@ class SimpleFileExtension(object):
 
 
 SIMPLE_FILE_EXTENSION_MAPPING = {
-    apprise.ConfigFormat.TEXT: SimpleFileExtension.TEXT,
-    apprise.ConfigFormat.YAML: SimpleFileExtension.YAML,
+    apprise.ConfigFormat.TEXT.value: SimpleFileExtension.TEXT,
+    apprise.ConfigFormat.YAML.value: SimpleFileExtension.YAML,
     SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
     SimpleFileExtension.YAML: SimpleFileExtension.YAML,
 }
@@ -434,7 +446,7 @@ SIMPLE_FILE_EXTENSION_MAPPING = {
 SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
 
 
-class AppriseConfigCache(object):
+class AppriseConfigCache:
     """
     Designed to make it easy to store/read contact back from disk in a cache
     type structure that is fast.
@@ -560,19 +572,19 @@ class AppriseConfigCache(object):
 
         # Test the only possible hashed files we expect to find
         if self.mode == AppriseStoreMode.HASH:
-            text_file = os.path.join(path, "{}.{}".format(filename, apprise.ConfigFormat.TEXT))
-            yaml_file = os.path.join(path, "{}.{}".format(filename, apprise.ConfigFormat.YAML))
+            text_file = os.path.join(path, "{}.{}".format(filename, apprise.ConfigFormat.TEXT.value))
+            yaml_file = os.path.join(path, "{}.{}".format(filename, apprise.ConfigFormat.YAML.value))
 
         else:  # AppriseStoreMode.SIMPLE
             text_file = os.path.join(path, "{}.{}".format(filename, SimpleFileExtension.TEXT))
             yaml_file = os.path.join(path, "{}.{}".format(filename, SimpleFileExtension.YAML))
 
         if os.path.isfile(text_file):
-            fmt = apprise.ConfigFormat.TEXT
+            fmt = apprise.ConfigFormat.TEXT.value
             path = text_file
 
         elif os.path.isfile(yaml_file):
-            fmt = apprise.ConfigFormat.YAML
+            fmt = apprise.ConfigFormat.YAML.value
             path = yaml_file
 
         else:
@@ -633,7 +645,15 @@ class AppriseConfigCache(object):
             # Eliminate any existing content if present
             try:
                 # Handle failure
-                os.remove(os.path.join(path, "{}.{}".format(filename, fmt if self.mode == AppriseStoreMode.HASH else SIMPLE_FILE_EXTENSION_MAPPING[fmt])))
+                os.remove(
+                    os.path.join(
+                        path,
+                        "{}.{}".format(
+                            filename,
+                            (fmt if self.mode == AppriseStoreMode.HASH else SIMPLE_FILE_EXTENSION_MAPPING[fmt]),
+                        ),
+                    )
+                )
 
                 # If we reach here, an element was removed
                 response = True
@@ -678,7 +698,11 @@ class AppriseConfigCache(object):
 
 
 # Initialize our singleton
-ConfigCache = AppriseConfigCache(settings.APPRISE_CONFIG_DIR, salt=settings.SECRET_KEY, mode=settings.APPRISE_STATEFUL_MODE)
+ConfigCache = AppriseConfigCache(
+    settings.APPRISE_CONFIG_DIR,
+    salt=settings.SECRET_KEY,
+    mode=settings.APPRISE_STATEFUL_MODE,
+)
 
 
 def apply_global_filters():
@@ -687,13 +711,21 @@ def apply_global_filters():
     #
     if settings.APPRISE_ALLOW_SERVICES:
         alphanum_re = re.compile(r"^(?P<name>[a-z][a-z0-9]+)", re.IGNORECASE)
-        entries = [alphanum_re.match(x).group("name").lower() for x in re.split(r"[ ,]+", settings.APPRISE_ALLOW_SERVICES) if alphanum_re.match(x)]
+        entries = [
+            alphanum_re.match(x).group("name").lower()
+            for x in re.split(r"[ ,]+", settings.APPRISE_ALLOW_SERVICES)
+            if alphanum_re.match(x)
+        ]
 
         N_MGR.enable_only(*entries)
 
     elif settings.APPRISE_DENY_SERVICES:
         alphanum_re = re.compile(r"^(?P<name>[a-z][a-z0-9]+)", re.IGNORECASE)
-        entries = [alphanum_re.match(x).group("name").lower() for x in re.split(r"[ ,]+", settings.APPRISE_DENY_SERVICES) if alphanum_re.match(x)]
+        entries = [
+            alphanum_re.match(x).group("name").lower()
+            for x in re.split(r"[ ,]+", settings.APPRISE_DENY_SERVICES)
+            if alphanum_re.match(x)
+        ]
 
         N_MGR.disable(*entries)
 
@@ -757,8 +789,8 @@ def send_webhook(payload):
         )
 
     except requests.RequestException as e:
-        logger.warning("A Connection error occurred sending the Apprise Webhook results to %s." % base.url(privacy=True))
-        logger.debug("Socket Exception: %s" % str(e))
+        logger.warning("A Connection error occurred sending the Apprise Webhook results to %s.", base.url(privacy=True))
+        logger.debug("Socket Exception: %s", str(e))
 
     return
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,12 +21,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase
-from unittest import mock
 from json import loads
-import requests
-from ..utils import send_webhook
+from unittest import mock
+
+from django.test import SimpleTestCase
 from django.test.utils import override_settings
+import requests
+
+from ..utils import send_webhook
 
 
 class WebhookTests(SimpleTestCase):
@@ -60,7 +61,9 @@ class WebhookTests(SimpleTestCase):
 
         mock_post.reset_mock()
 
-        with override_settings(APPRISE_WEBHOOK_URL="http://user@localhost/webhook/here?verify=False&key=value&cto=2.0&rto=1.0"):
+        with override_settings(
+            APPRISE_WEBHOOK_URL="http://user@localhost/webhook/here?verify=False&key=value&cto=2.0&rto=1.0"
+        ):
             send_webhook({})
             assert mock_post.call_count == 1
 

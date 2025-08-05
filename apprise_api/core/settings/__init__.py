@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -23,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import os
+
 from core.themes import SiteTheme
 
 # Disable Timezones
@@ -45,7 +45,14 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "+reua88v8rs4j!bcfdtinb-f0edxazf!$x_q1
 #    ./manage.py runserver
 #
 # Support 'yes', '1', 'true', 'enable', 'active', and +
-DEBUG = os.environ.get("DEBUG", "No")[0].lower() in ("a", "y", "1", "t", "e", "+")
+DEBUG = os.environ.get("DEBUG", "No")[0].lower() in (
+    "a",
+    "y",
+    "1",
+    "t",
+    "e",
+    "+",
+)
 
 # allow all hosts by default otherwise read from the
 # ALLOWED_HOSTS environment variable
@@ -225,7 +232,14 @@ APPRISE_STATELESS_URLS = os.environ.get("APPRISE_STATELESS_URLS", "")
 
 # Allow stateless URLS to generate and/or work with persistent storage
 # By default this is set to no
-APPRISE_STATELESS_STORAGE = os.environ.get("APPRISE_STATELESS_STORAGE", "no")[0].lower() in ("a", "y", "1", "t", "e", "+")
+APPRISE_STATELESS_STORAGE = os.environ.get("APPRISE_STATELESS_STORAGE", "no")[0].lower() in (
+    "a",
+    "y",
+    "1",
+    "t",
+    "e",
+    "+",
+)
 
 # Defines the stateful mode; possible values are:
 # - hash (default): content is hashed and zipped
@@ -238,7 +252,10 @@ APPRISE_STATEFUL_MODE = os.environ.get("APPRISE_STATEFUL_MODE", "hash")
 # - You do not need to identify every schema supported by the service you
 #   wish to disable (only one).  For example, if you were to specify
 #   xml, that would include the xmls entry as well (or vs versa)
-APPRISE_DENY_SERVICES = os.environ.get("APPRISE_DENY_SERVICES", ",".join(("windows", "dbus", "gnome", "macosx", "syslog")))
+APPRISE_DENY_SERVICES = os.environ.get(
+    "APPRISE_DENY_SERVICES",
+    ",".join(("windows", "dbus", "gnome", "macosx", "syslog")),
+)
 
 # Our Apprise Exclusive Allow List
 #  - anything not identified here is denied/disabled)
@@ -260,4 +277,11 @@ APPRISE_MAX_ATTACHMENTS = int(os.environ.get("APPRISE_MAX_ATTACHMENTS", 6))
 
 # Allow Admin mode:
 # - showing a list of configuration keys (when STATEFUL_MODE is set to simple)
-APPRISE_ADMIN = os.environ.get("APPRISE_ADMIN", "no")[0].lower() in ("a", "y", "1", "t", "e", "+")
+APPRISE_ADMIN = os.environ.get("APPRISE_ADMIN", "no")[0].lower() in (
+    "a",
+    "y",
+    "1",
+    "t",
+    "e",
+    "+",
+)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -24,6 +23,7 @@
 # THE SOFTWARE.
 from django.conf import settings
 from django.conf.urls.static import static
+
 from ...urls import *  # noqa F403
 
 # Extend our patterns

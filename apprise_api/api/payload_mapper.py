@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2024 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,10 +21,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from api.forms import NotifyForm
-
 # import the logging library
 import logging
+
+from api.forms import NotifyForm
 
 # Get an instance of a logger
 logger = logging.getLogger("django")

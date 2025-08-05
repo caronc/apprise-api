@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,15 +21,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-import os
-
-from ..utils import AppriseConfigCache
-from ..utils import AppriseStoreMode
-from ..utils import SimpleFileExtension
-from apprise import ConfigFormat
-from unittest.mock import patch
-from unittest.mock import mock_open
 import errno
+import os
+from unittest.mock import mock_open, patch
+
+from apprise import ConfigFormat
+
+from ..utils import AppriseConfigCache, AppriseStoreMode, SimpleFileExtension
 
 
 def test_apprise_config_io_hash_mode(tmpdir):
@@ -47,13 +44,13 @@ def test_apprise_config_io_hash_mode(tmpdir):
     assert acc_obj.get(key) == (None, "")
 
     # Write our content assigned to our key
-    assert acc_obj.put(key, content, ConfigFormat.TEXT)
+    assert acc_obj.put(key, content, ConfigFormat.TEXT.value)
 
     # Test the handling of underlining disk/write exceptions
     with patch("gzip.open") as mock_gzopen:
         mock_gzopen.side_effect = OSError()
         # We'll fail to write our key now
-        assert not acc_obj.put(key, content, ConfigFormat.TEXT)
+        assert not acc_obj.put(key, content, ConfigFormat.TEXT.value)
 
     # Get path details
     conf_dir, _ = acc_obj.path(key)
@@ -63,10 +60,10 @@ def test_apprise_config_io_hash_mode(tmpdir):
 
     # There should be just 1 new file in this directory
     assert len(contents) == 1
-    assert contents[0].endswith(".{}".format(ConfigFormat.TEXT))
+    assert contents[0].endswith(".{}".format(ConfigFormat.TEXT.value))
 
     # Verify that the content is retrievable
-    assert acc_obj.get(key) == (content, ConfigFormat.TEXT)
+    assert acc_obj.get(key) == (content, ConfigFormat.TEXT.value)
 
     # Test the handling of underlining disk/read exceptions
     with patch("gzip.open") as mock_gzopen:
@@ -87,7 +84,7 @@ def test_apprise_config_io_hash_mode(tmpdir):
 
         # If we try to put the same file, we'll fail since
         # one exists there already
-        assert not acc_obj.put(key, content, ConfigFormat.TEXT)
+        assert not acc_obj.put(key, content, ConfigFormat.TEXT.value)
 
     # Now test with YAML file
     content = """
@@ -100,17 +97,17 @@ def test_apprise_config_io_hash_mode(tmpdir):
     # Write our content assigned to our key
     # This should gracefully clear the TEXT entry that was
     # previously in the spot
-    assert acc_obj.put(key, content, ConfigFormat.YAML)
+    assert acc_obj.put(key, content, ConfigFormat.YAML.value)
 
     # List content of directory
     contents = os.listdir(conf_dir)
 
     # There should STILL be just 1 new file in this directory
     assert len(contents) == 1
-    assert contents[0].endswith(".{}".format(ConfigFormat.YAML))
+    assert contents[0].endswith(".{}".format(ConfigFormat.YAML.value))
 
     # Verify that the content is retrievable
-    assert acc_obj.get(key) == (content, ConfigFormat.YAML)
+    assert acc_obj.get(key) == (content, ConfigFormat.YAML.value)
 
 
 def test_apprise_config_list_simple_mode(tmpdir):
@@ -138,9 +135,9 @@ def test_apprise_config_list_simple_mode(tmpdir):
     yaml_keys = [yaml_key_tpl.format(i) for i in range(5)]
     key = None
     for key in text_keys:
-        assert acc_obj.put(key, content_text, ConfigFormat.TEXT)
+        assert acc_obj.put(key, content_text, ConfigFormat.TEXT.value)
     for key in yaml_keys:
-        assert acc_obj.put(key, content_yaml, ConfigFormat.YAML)
+        assert acc_obj.put(key, content_yaml, ConfigFormat.YAML.value)
 
     # Ensure the 10 configuration files (plus the hidden file) are the only
     # contents of the directory
@@ -178,9 +175,9 @@ def test_apprise_config_list_hash_mode(tmpdir):
     yaml_keys = [yaml_key_tpl.format(i) for i in range(5)]
     key = None
     for key in text_keys:
-        assert acc_obj.put(key, content_text, ConfigFormat.TEXT)
+        assert acc_obj.put(key, content_text, ConfigFormat.TEXT.value)
     for key in yaml_keys:
-        assert acc_obj.put(key, content_yaml, ConfigFormat.YAML)
+        assert acc_obj.put(key, content_yaml, ConfigFormat.YAML.value)
 
     # Ensure the 10 configuration files (plus the hidden file) are the only
     # contents of the directory
@@ -207,13 +204,13 @@ def test_apprise_config_io_simple_mode(tmpdir):
     assert acc_obj.get(key) == (None, "")
 
     # Write our content assigned to our key
-    assert acc_obj.put(key, content, ConfigFormat.TEXT)
+    assert acc_obj.put(key, content, ConfigFormat.TEXT.value)
 
     m = mock_open()
     m.side_effect = OSError()
     with patch("builtins.open", m):
         # We'll fail to write our key now
-        assert not acc_obj.put(key, content, ConfigFormat.TEXT)
+        assert not acc_obj.put(key, content, ConfigFormat.TEXT.value)
 
     # Get path details
     conf_dir, _ = acc_obj.path(key)
@@ -226,7 +223,7 @@ def test_apprise_config_io_simple_mode(tmpdir):
     assert contents[0].endswith(".{}".format(SimpleFileExtension.TEXT))
 
     # Verify that the content is retrievable
-    assert acc_obj.get(key) == (content, ConfigFormat.TEXT)
+    assert acc_obj.get(key) == (content, ConfigFormat.TEXT.value)
 
     # Test the handling of underlining disk/read exceptions
     with patch("builtins.open", m) as mock__open:
@@ -247,7 +244,7 @@ def test_apprise_config_io_simple_mode(tmpdir):
 
         # If we try to put the same file, we'll fail since
         # one exists there already
-        assert not acc_obj.put(key, content, ConfigFormat.TEXT)
+        assert not acc_obj.put(key, content, ConfigFormat.TEXT.value)
 
     # Now test with YAML file
     content = """
@@ -260,7 +257,7 @@ def test_apprise_config_io_simple_mode(tmpdir):
     # Write our content assigned to our key
     # This should gracefully clear the TEXT entry that was
     # previously in the spot
-    assert acc_obj.put(key, content, ConfigFormat.YAML)
+    assert acc_obj.put(key, content, ConfigFormat.YAML.value)
 
     # List content of directory
     contents = os.listdir(conf_dir)
@@ -270,7 +267,7 @@ def test_apprise_config_io_simple_mode(tmpdir):
     assert contents[0].endswith(".{}".format(SimpleFileExtension.YAML))
 
     # Verify that the content is retrievable
-    assert acc_obj.get(key) == (content, ConfigFormat.YAML)
+    assert acc_obj.get(key) == (content, ConfigFormat.YAML.value)
 
 
 def test_apprise_config_io_disabled_mode(tmpdir):
@@ -294,7 +291,7 @@ def test_apprise_config_io_disabled_mode(tmpdir):
 
     # Write our content assigned to our key
     # This isn't allowed
-    assert acc_obj.put(key, content, ConfigFormat.TEXT) is False
+    assert acc_obj.put(key, content, ConfigFormat.TEXT.value) is False
 
     # Get path details
     conf_dir, _ = acc_obj.path(key)

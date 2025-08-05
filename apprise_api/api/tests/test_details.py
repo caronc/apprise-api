@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -45,12 +44,20 @@ class DetailTests(SimpleTestCase):
         assert response["Content-Type"].startswith("text/html")
 
         # JSON Response
-        response = self.client.get("/details", content_type="application/json", **{"HTTP_CONTENT_TYPE": "application/json"})
+        response = self.client.get(
+            "/details",
+            content_type="application/json",
+            **{"HTTP_CONTENT_TYPE": "application/json"},
+        )
         self.assertEqual(response.status_code, 200)
         assert response["Content-Type"].startswith("application/json")
 
         # JSON Response
-        response = self.client.get("/details", content_type="application/json", **{"HTTP_ACCEPT": "application/json"})
+        response = self.client.get(
+            "/details",
+            content_type="application/json",
+            **{"HTTP_ACCEPT": "application/json"},
+        )
         self.assertEqual(response.status_code, 200)
         assert response["Content-Type"].startswith("application/json")
 
@@ -59,11 +66,19 @@ class DetailTests(SimpleTestCase):
         assert response["Content-Type"].startswith("text/html")
 
         # JSON Response
-        response = self.client.get("/details?all=yes", content_type="application/json", **{"HTTP_CONTENT_TYPE": "application/json"})
+        response = self.client.get(
+            "/details?all=yes",
+            content_type="application/json",
+            **{"HTTP_CONTENT_TYPE": "application/json"},
+        )
         self.assertEqual(response.status_code, 200)
         assert response["Content-Type"].startswith("application/json")
 
         # JSON Response
-        response = self.client.get("/details?all=yes", content_type="application/json", **{"HTTP_ACCEPT": "application/json"})
+        response = self.client.get(
+            "/details?all=yes",
+            content_type="application/json",
+            **{"HTTP_ACCEPT": "application/json"},
+        )
         self.assertEqual(response.status_code, 200)
         assert response["Content-Type"].startswith("application/json")

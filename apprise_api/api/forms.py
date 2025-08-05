@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -23,9 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import apprise
 from django import forms
 from django.utils.translation import gettext_lazy as _
+
+import apprise
 
 # Auto-Detect Keyword
 AUTO_DETECT_CONFIG_KEYWORD = "auto"
@@ -33,22 +33,22 @@ AUTO_DETECT_CONFIG_KEYWORD = "auto"
 # Define our potential configuration types
 CONFIG_FORMATS = (
     (AUTO_DETECT_CONFIG_KEYWORD, _("Auto-Detect")),
-    (apprise.ConfigFormat.TEXT, _("TEXT")),
-    (apprise.ConfigFormat.YAML, _("YAML")),
+    (apprise.ConfigFormat.TEXT.value, _("TEXT")),
+    (apprise.ConfigFormat.YAML.value, _("YAML")),
 )
 
 NOTIFICATION_TYPES = (
-    (apprise.NotifyType.INFO, _("Info")),
-    (apprise.NotifyType.SUCCESS, _("Success")),
-    (apprise.NotifyType.WARNING, _("Warning")),
-    (apprise.NotifyType.FAILURE, _("Failure")),
+    (apprise.NotifyType.INFO.value, _("Info")),
+    (apprise.NotifyType.SUCCESS.value, _("Success")),
+    (apprise.NotifyType.WARNING.value, _("Warning")),
+    (apprise.NotifyType.FAILURE.value, _("Failure")),
 )
 
 # Define our potential input text categories
 INPUT_FORMATS = (
-    (apprise.NotifyFormat.TEXT, _("TEXT")),
-    (apprise.NotifyFormat.MARKDOWN, _("MARKDOWN")),
-    (apprise.NotifyFormat.HTML, _("HTML")),
+    (apprise.NotifyFormat.TEXT.value, _("TEXT")),
+    (apprise.NotifyFormat.MARKDOWN.value, _("MARKDOWN")),
+    (apprise.NotifyFormat.HTML.value, _("HTML")),
     # As-is - do not interpret it
     (None, _("IGNORE")),
 )
@@ -166,7 +166,7 @@ class NotifyForm(forms.Form):
         data = self.cleaned_data["type"]
         if not data:
             # Always set a type
-            data = apprise.NotifyType.INFO
+            data = apprise.NotifyType.INFO.value
         return data
 
     def clean_format(self):
@@ -176,7 +176,7 @@ class NotifyForm(forms.Form):
         data = self.cleaned_data["format"]
         if not data:
             # Always set a type
-            data = apprise.NotifyFormat.TEXT
+            data = apprise.NotifyFormat.TEXT.value
         return data
 
 
