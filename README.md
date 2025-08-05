@@ -616,33 +616,67 @@ spec:
 ```
 
 ## Development Environment
-The following should get you a working development environment to test with:
+The following should get you a working development environment (min requirements are Python v3.12) to test with.
+
+### Setup
 
 ```bash
-# Create a virtual environment in the same directory you
-# cloned this repository to:
-python -m venv .
+# Create and activate a Python 3.12 virtual environment:
+python3.12 -m venv .venv
+. .venv/bin/activate
 
-# Activate it now:
-. ./bin/activate
+# Install core dependencies:
 
-# install dependencies
-pip install -r dev-requirements.txt -r requirements.txt
-
-# Run a dev server (debug mode) accessible from your browser at:
-# -> http://localhost:8000/
-./manage.py runserver
-
+pip install -e '.[dev]'
 ```
 
-Some other useful development notes:
+### Running the Dev Server
 
 ```bash
-# Check for any lint errors
-flake8 apprise_api
+# Start the development server in debug mode:
+./manage.py runserver
+# Then visit: http://localhost:8000/
+```
 
+Or use Docker:
+```bash
+# It's this simple:
+docker compose up
+```
+
+### Quality Assurance and Testing (via Tox)
+
+The project uses `tox` to manage linting, testing, and formatting in a reproducible way.
+
+```bash
 # Run unit tests
+tox -e test
+
+# Test structure; calls ruff under the hood
+tox -e lint
+```
+
+**Note**: You can combine environments, e.g.:
+```bash
+tox -e test,lint
+```
+
+Automatically format your code if possible to pass linting after changes:
+```bash
+tox -e format
+```
+
+### Manual Tools (optional)
+The following also works assuming you have provided all development dependencies (`pip install .[dev]`)
+```bash
+# Run unit tests manually (if needed)
 pytest apprise_api
+
+# Lint code with Ruff
+ruff check .
+
+# Format code with Ruff
+ruff format .
 ```
 
 ## Apprise Integration
@@ -790,4 +824,6 @@ The colon `:` prefix is the switch that starts the re-mapping rule engine.  You 
 
 
 ## Metrics Collection & Analysis
+
 Basic Prometheus support added through `/metrics` reference point.
+

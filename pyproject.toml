@@ -66,14 +66,29 @@ filterwarnings = ["once::Warning"]
 testpaths = ["apprise_api"]
 
 [tool.coverage.run]
-branch = true
-source = ["apprise_api"]
-parallel = true
+data_file = ".coverage-reports/.coverage"
+parallel = false
+concurrency = ["multiprocessing"]
+include = ["apprise_api"]
+omit = [
+  "*apps.py",
+  "*/migrations/*",
+  "*/core/settings/*",
+  "*/*/tests/*",
+  "lib/*",
+  "lib64/*",
+  "*urls.py",
+  "*/core/wsgi.py",
+  "gunicorn.conf.py",
+  "*/manage.py"
+]
+disable_warnings = ["no-data-collected"]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
 skip_empty = true
+fail_under = 75.0
 
 [tool.ruff]
 line-length = 120
@@ -161,3 +176,4 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["_"]
+
