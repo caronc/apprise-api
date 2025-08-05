@@ -1,7 +1,7 @@
 services:
-  apprise:
+  apprise-api:
     build: .
-    container_name: apprise
+    container_name: apprise-api
     environment:
       - APPRISE_STATEFUL_MODE=simple
     ports:

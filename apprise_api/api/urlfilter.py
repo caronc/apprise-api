@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -23,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import re
+
 from apprise.utils.parse import parse_url
 
 
@@ -57,12 +57,12 @@ class AppriseURLFilter:
         """
         Split the list (tokens separated by whitespace or commas) and compile each token.
         Tokens are classified as follows:
-          - URL‐based tokens: if they start with “http://” or “https://” (explicit)
+          - URL-based tokens: if they start with “http://” or “https://” (explicit)
             or if they contain a “/” (implicit; no scheme given).
-          - Host‐based tokens: those that do not contain a “/”.
+          - Host-based tokens: those that do not contain a “/”.
         Returns a list of tuples (compiled_regex, is_url_based).
         """
-        tokens = re.split(r'[\s,]+', list_str.strip().lower())
+        tokens = re.split(r"[\s,]+", list_str.strip().lower())
         rules = []
         for token in tokens:
             if not token:
@@ -88,7 +88,7 @@ class AppriseURLFilter:
 
     def _compile_url_token(self, token: str):
         """
-        Compiles a URL‐based token (explicit token that starts with a scheme) into a regex.
+        Compiles a URL-based token (explicit token that starts with a scheme) into a regex.
         An implied trailing wildcard is added to the path:
           - If no path is given (or just “/”) then “(/.*)?” is appended.
           - If a nonempty path is given that does not end with “/” or “*”, then “($|/.*)” is appended.
@@ -99,18 +99,18 @@ class AppriseURLFilter:
         # Determine the scheme.
         scheme_regex = ""
         if token.startswith("http://"):
-            scheme_regex = r'http'
+            scheme_regex = r"http"
             # drop http://
             token = token[7:]
 
         elif token.startswith("https://"):
-            scheme_regex = r'https'
+            scheme_regex = r"https"
             # drop https://
             token = token[8:]
 
         else:  # https?
             # Used for implicit tokens; our _compile_implicit_token ensures this.
-            scheme_regex = r'https?'
+            scheme_regex = r"https?"
             # strip https?://
             token = token[9:]
 
@@ -173,8 +173,8 @@ class AppriseURLFilter:
 
     def _compile_host_token(self, token: str):
         """
-        Compiles a host‐based token (one with no “/”) into a regex.
-        Note: When matching host‐based tokens, we require that the URL’s scheme is exactly “http”.
+        Compiles a host-based token (one with no "/") into a regex.
+        Note: When matching host-based tokens, we require that the URL's scheme is exactly "http".
         """
         regex = "^" + self._wildcard_to_regex(token) + "$"
         return re.compile(regex, re.IGNORECASE)
@@ -190,11 +190,11 @@ class AppriseURLFilter:
         """
         regex = ""
         for char in pattern:
-            if char == '*':
-                regex += r"[^/]+/?" if not is_host else r'.*'
+            if char == "*":
+                regex += r"[^/]+/?" if not is_host else r".*"
 
-            elif char == '?':
-                regex += r'[^/]' if not is_host else r"[A-Za-z0-9_-]"
+            elif char == "?":
+                regex += r"[^/]" if not is_host else r"[A-Za-z0-9_-]"
 
             else:
                 regex += re.escape(char)
@@ -205,14 +205,15 @@ class AppriseURLFilter:
         """
         Checks a given URL against the deny list first, then the allow list.
         For URL-based rules (explicit or implicit), the full URL is tested.
-        For host-based rules, the URL’s netloc (which includes the port) is tested.
+        For host-based rules, the URL's netloc (which includes the port) is tested.
         """
         parsed = parse_url(url, strict_port=True, simple=True)
         if not parsed:
             return False
 
         # includes port if present
-        netloc = '%s:%d' % (parsed['host'], parsed.get('port')) if parsed.get('port') else parsed['host']
+        port = parsed.get("port")
+        netloc = f"{parsed['host']}:{port}" if port is not None else parsed["host"]
 
         # Check deny rules first.
         for pattern, is_url_based in self.deny_rules:

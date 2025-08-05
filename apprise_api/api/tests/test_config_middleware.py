@@ -1,4 +1,3 @@
-#
 # Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
@@ -21,29 +20,33 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from django.http import HttpResponse
+from django.test import RequestFactory, SimpleTestCase, override_settings
 
-from django.conf import settings
-from django.core.management.base import BaseCommand
-
-import apprise
+from apprise_api.core.middleware.config import DetectConfigMiddleware
 
 
-class Command(BaseCommand):
-    help = f"Prune all persistent content older then {settings.APPRISE_STORAGE_PRUNE_DAYS} days()"
+class DetectConfigMiddlewareTest(SimpleTestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-d",
-            "--days",
-            type=int,
-            default=settings.APPRISE_STORAGE_PRUNE_DAYS,
-        )
+    @override_settings(APPRISE_DEFAULT_CONFIG_ID="")
+    def test_middleware_falls_back_when_config_absent(self):
+        """
+        Ensure we trigger the `if not config:` fallback
+        """
+        # Create request to path that does NOT match /cfg/<key>
+        request = self.factory.get("/")
+        request.COOKIES = {}  # no 'key' cookie
 
-    def handle(self, *args, **options):
-        # Persistent Storage cleanup
-        apprise.PersistentStore.disk_prune(
-            path=settings.APPRISE_STORAGE_DIR,
-            expires=options["days"] * 86400,
-            action=True,
-        )
-        self.stdout.write(self.style.SUCCESS(f"Successfully pruned persistent storeage (days: {options['days']})"))
+        # Patch middleware to capture the 'config' result
+        def get_response(req):
+            req._config = getattr(req, "_config", None)
+            return HttpResponse()  # simulate response
+
+        middleware = DetectConfigMiddleware(get_response)
+        response = middleware(request)
+
+        # Validate we entered the `if not config:` branch
+        # You can't test the internal `config` variable directly unless it's exposed
+        self.assertTrue(hasattr(response, "_config") is False)

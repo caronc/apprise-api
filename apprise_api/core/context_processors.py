@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -30,7 +29,7 @@ def base_url(request):
     Returns our defined BASE_URL object
     """
     return {
-        'BASE_URL': settings.BASE_URL,
-        'CONFIG_DIR': settings.APPRISE_CONFIG_DIR,
-        'ATTACH_DIR': settings.APPRISE_ATTACH_DIR,
+        "BASE_URL": settings.BASE_URL,
+        "CONFIG_DIR": settings.APPRISE_CONFIG_DIR,
+        "ATTACH_DIR": settings.APPRISE_ATTACH_DIR,
     }

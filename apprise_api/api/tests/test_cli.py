@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -24,12 +23,12 @@
 # THE SOFTWARE.
 
 import io
-from django.test import SimpleTestCase
+
 from django.core import management
+from django.test import SimpleTestCase
 
 
 class CommandTests(SimpleTestCase):
-
     def test_command_style(self):
         out = io.StringIO()
-        management.call_command('storeprune', days=40, stdout=out)
+        management.call_command("storeprune", days=40, stdout=out)

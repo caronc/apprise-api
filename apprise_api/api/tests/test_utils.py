@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2024 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -23,41 +22,41 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import os
-import mock
 import tempfile
+from unittest import mock
+
 from django.test import SimpleTestCase
+
 from .. import utils
 
 
 class UtilsTests(SimpleTestCase):
-
     def test_touchdir(self):
         """
         Test touchdir()
         """
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with mock.patch('os.makedirs', side_effect=OSError()):
-                assert utils.touchdir(os.path.join(tmpdir, 'tmp-file')) is False
+            with mock.patch("os.makedirs", side_effect=OSError()):
+                assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is False
 
-            with mock.patch('os.makedirs', side_effect=FileExistsError()):
+            with mock.patch("os.makedirs", side_effect=FileExistsError()):
                 # Dir doesn't exist
-                assert utils.touchdir(os.path.join(tmpdir, 'tmp-file')) is False
+                assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is False
 
-            assert utils.touchdir(os.path.join(tmpdir, 'tmp-file')) is True
+            assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is True
 
             # Date is updated
-            assert utils.touchdir(os.path.join(tmpdir, 'tmp-file')) is True
+            assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is True
 
-            with mock.patch('os.utime', side_effect=OSError()):
+            with mock.patch("os.utime", side_effect=OSError()):
                 # Fails to update file
-                assert utils.touchdir(os.path.join(tmpdir, 'tmp-file')) is False
+                assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is False
 
     def test_touch(self):
         """
         Test touch()
         """
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with mock.patch('os.fdopen', side_effect=OSError()):
-                assert utils.touch(os.path.join(tmpdir, 'tmp-file')) is False
+        with tempfile.TemporaryDirectory() as tmpdir, mock.patch("os.fdopen", side_effect=OSError()):
+            assert utils.touch(os.path.join(tmpdir, "tmp-file")) is False

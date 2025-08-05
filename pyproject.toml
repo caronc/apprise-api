@@ -1,0 +1,179 @@
+#
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
+# All rights reserved.
+#
+# This code is licensed under the MIT License.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files(the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions :
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apprise-api"
+version = "1.2.1"
+authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
+license = "MIT"
+dependencies = [
+  "apprise == 1.9.4",
+  "django",
+  "gevent",
+  "gunicorn",
+  "requests",
+  "paho-mqtt < 2.0.0",
+  "gntp",
+  "cryptography",
+  "django-prometheus"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-django",
+  "ruff",
+  "tox",
+  "mock"
+]
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["apprise_api*"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings.pytest"
+addopts = "--ignore=lib --ignore=lib64 --nomigrations --cov=apprise_api --cov-report=term-missing"
+filterwarnings = ["once::Warning"]
+testpaths = ["apprise_api"]
+
+[tool.coverage.run]
+data_file = ".coverage-reports/.coverage"
+parallel = false
+concurrency = ["multiprocessing"]
+include = ["apprise_api"]
+omit = [
+  "*apps.py",
+  "*/migrations/*",
+  "*/core/settings/*",
+  "*/*/tests/*",
+  "lib/*",
+  "lib64/*",
+  "*urls.py",
+  "*/core/wsgi.py",
+  "gunicorn.conf.py",
+  "*/manage.py"
+]
+disable_warnings = ["no-data-collected"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+skip_empty = true
+fail_under = 75.0
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+exclude = [
+  "tests/data",
+  "bin",
+  "build",
+  "dist",
+  ".eggs",
+  ".tox",
+  ".local",
+  ".venv",
+  "venv",
+]
+
+[tool.black]
+# Added for backwards support and alternative cleanup
+# when needed
+line-length = 79  # Respecting BSD-style 79-char limit
+target-version = ['py39']
+extend-exclude = '''
+/(
+  tests/data \
+  bin \
+  build \
+  dist \
+  .eggs \
+  .tox \
+  .local \
+  .venv \
+  venv
+)
+'''
+
+[tool.ruff.lint]
+select = [
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "W",    # pycodestyle warnings
+  "Q",    # Quote handling ' -> "
+  "I",    # isort
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "SIM",  # flake8-simplify
+  "T20",  # flake8-print (catches stray `print`)
+  "RUF",  # Ruff-native rules
+]
+
+extend-select = [
+   "E501",   # Spacing
+   "Q000",   # Quoting
+   "I"  # Automatically sort imports with isort logic
+]
+
+ignore = [
+  "D100",    # missing docstring in public module
+  "D104",    # missing docstring in public package
+  "B008",    # do not call `dict()` with keyword args
+  "E722",    # bare except (Apprise uses it reasonably)
+  "E741",    # Ambiguous variable name (e.g., l, O, I)
+  "W605",    # Invalid escape sequence
+  "B026",    # Star-arg play a big part of Apprise; must be accepted for now
+
+  # The following needs to be supported at some point and is of great value
+  "RUF012",  # typing.ClassVar implimentation
+  "UP032",   # This is a massive undertaking and requires a massive rewrite
+             # of test cases; this will take a while to fix, so turning off
+             # for now
+]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+
+[tool.ruff.lint.isort]
+known-first-party = ["apprise"]
+force-sort-within-sections = true
+combine-as-imports = true
+order-by-type = true
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["_"]
+

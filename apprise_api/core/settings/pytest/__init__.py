@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -26,6 +25,7 @@
 # To create a valid debug settings.py we need to intentionally pollute our
 # file with all of the content found in the master configuration.
 from tempfile import TemporaryDirectory
+
 from .. import *  # noqa F403
 
 # Debug is always on when running in debug mode
@@ -38,4 +38,4 @@ ALLOWED_HOSTS = []
 APPRISE_CONFIG_DIR = TemporaryDirectory().name
 
 # Setup our runner
-TEST_RUNNER = 'core.settings.pytest.runner.PytestTestRunner'
+TEST_RUNNER = "core.settings.pytest.runner.PytestTestRunner"

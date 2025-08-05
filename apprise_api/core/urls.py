@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -22,12 +21,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.urls import path
-from django.conf.urls import include
-
 from api import urls as api_urls
+from django.conf.urls import include
+from django.urls import path
 
 urlpatterns = [
-    path('', include(api_urls)),
-    path('', include('django_prometheus.urls')),
+    path("", include(api_urls)),
+    path("", include("django_prometheus.urls")),
 ]

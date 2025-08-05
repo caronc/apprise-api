@@ -16,6 +16,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+.local/
 lib64
 lib
 var/

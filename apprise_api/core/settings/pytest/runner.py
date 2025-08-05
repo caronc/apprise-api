@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -27,7 +26,7 @@
 # file with all of the content found in the master configuration.
 
 
-class PytestTestRunner(object):
+class PytestTestRunner:
     """Runs pytest to discover and run tests."""
 
     def __init__(self, verbosity=1, failfast=False, keepdb=False, **kwargs):
@@ -44,15 +43,15 @@ class PytestTestRunner(object):
 
         argv = []
         if self.verbosity == 0:
-            argv.append('--quiet')
+            argv.append("--quiet")
         if self.verbosity == 2:
-            argv.append('--verbose')
+            argv.append("--verbose")
         if self.verbosity == 3:
-            argv.append('-vv')
+            argv.append("-vv")
         if self.failfast:
-            argv.append('--exitfirst')
+            argv.append("--exitfirst")
         if self.keepdb:
-            argv.append('--reuse-db')
+            argv.append("--reuse-db")
 
         argv.extend(test_labels)
         return pytest.main(argv)

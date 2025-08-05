@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -26,7 +25,6 @@ from django.test import SimpleTestCase
 
 
 class WelcomePageTests(SimpleTestCase):
-
     def test_welcome_page_status_code(self):
-        response = self.client.get('/')
+        response = self.client.get("/")
         assert response.status_code == 200

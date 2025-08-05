@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
@@ -28,8 +27,9 @@ class SiteTheme:
     """
     Defines our site themes
     """
-    LIGHT = 'light'
-    DARK = 'dark'
+
+    LIGHT = "light"
+    DARK = "dark"
 
 
 SITE_THEMES = (
