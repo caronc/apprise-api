@@ -37,8 +37,7 @@ pythonpath = "/opt/apprise/webapp"
 
 # bind to port 8000
 bind = [
-    "0.0.0.0:8000",  # IPv4 Support
-    "[::]:8000",  # IPv6 Support
+    "0.0.0.0:8000",
 ]
 
 # Workers are relative to the number of CPU's provided by hosting server
