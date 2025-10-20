@@ -85,13 +85,14 @@ if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
 # Handle IPV4_ONLY flag
 elif [ "${IPV4_ONLY+x}" ]; then
   echo -n "Enforcing Exclusive IPv4 environment... "
-  sed -ibak -e '/IPv6 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
+  sed -ibak -e '/IPv6 Support/d' /opt/apprise/webapp/etc/nginx.conf /opt/apprise/webapp/gunicorn.conf.py && \
+  sed -i -e 's|proxy_pass http://localhost:8080;|proxy_pass http://127.0.0.1:8080;|' /opt/apprise/webapp/etc/nginx.conf && \
      echo "Done." || echo "Failed!"
 
 # Handle IPV6_ONLY flag
 elif [ "${IPV6_ONLY+x}" ]; then
   echo -n "Enforcing Exclusive IPv6 environment... "
-  sed -ibak -e '/IPv4 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
+  sed -ibak -e '/IPv4 Support/d' /opt/apprise/webapp/etc/nginx.conf /opt/apprise/webapp/gunicorn.conf.py && \
      echo "Done." || echo "Failed!"
 fi
 
