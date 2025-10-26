@@ -285,3 +285,14 @@ APPRISE_ADMIN = os.environ.get("APPRISE_ADMIN", "no")[0].lower() in (
     "e",
     "+",
 )
+
+# Allow Interpret Emojis override
+APPRISE_INTERPRET_EMOJIS = None if "APPRISE_INTERPRET_EMOJIS" not in os.environ \
+    else os.environ.get("APPRISE_INTERPRET_EMOJIS", "yes")[0].lower() in (
+    "a",
+    "y",
+    "1",
+    "t",
+    "e",
+    "+",
+)

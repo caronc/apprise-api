@@ -1300,6 +1300,8 @@ class NotifyView(View):
             "storage_idlen": settings.APPRISE_STORAGE_UID_LENGTH,
             # Define if we flush to disk as soon as possible or not when required
             "storage_mode": settings.APPRISE_STORAGE_MODE,
+            # Emoji configuration (values are None, True, or False)
+            "interpret_emojis": settings.APPRISE_INTERPRET_EMOJIS,
         }
 
         if body_format:
@@ -1380,7 +1382,7 @@ class NotifyView(View):
         a_obj = apprise.Apprise(asset=asset)
 
         # Create an apprise config object
-        ac_obj = apprise.AppriseConfig()
+        ac_obj = apprise.AppriseConfig(asset=asset)
 
         # Load our configuration
         ac_obj.add_config(config, format=format)
@@ -1766,6 +1768,8 @@ class StatelessNotifyView(View):
         kwargs = {
             # Load our dynamic plugin path
             "plugin_paths": settings.APPRISE_PLUGIN_PATHS,
+            # Emoji configuration (values are None, True, or False)
+            "interpret_emojis": settings.APPRISE_INTERPRET_EMOJIS,
         }
         if settings.APPRISE_STATELESS_STORAGE:
             # Persistent Storage is allowed with Stateless queries
