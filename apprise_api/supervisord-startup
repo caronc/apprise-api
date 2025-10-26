@@ -80,20 +80,27 @@ sed -i -e "s/^\(group[ \t]*=[ \t]*\).*$/\1$GROUP/g" \
    /opt/apprise/webapp/etc/supervisord.conf
 
 if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
-  echo -n "Warning: both IPV4_ONLY and IPV6_ONLY flags set; ambigious; no changes made."
+  echo "ERROR: Both IPV4_ONLY and IPV6_ONLY are set. Exiting."
+  exit 1
 
 # Handle IPV4_ONLY flag
 elif [ "${IPV4_ONLY+x}" ]; then
-  echo -n "Enforcing Exclusive IPv4 environment... "
-  sed -ibak -e '/IPv6 Support/d' /opt/apprise/webapp/etc/nginx.conf /opt/apprise/webapp/gunicorn.conf.py && \
+  echo -n "Network mode: IPv4-only (IPV4_ONLY set) ... "
+  sed -ibak -e '/IPv6 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
      echo "Done." || echo "Failed!"
 
 # Handle IPV6_ONLY flag
 elif [ "${IPV6_ONLY+x}" ]; then
-  echo -n "Enforcing Exclusive IPv6 environment... "
-  sed -ibak -e '/IPv4 Support/d' /opt/apprise/webapp/etc/nginx.conf /opt/apprise/webapp/gunicorn.conf.py && \
+  echo -n "Network mode: IPv6-only (IPV6_ONLY set) ... "
+  sed -ibak -e '/IPv4 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
      echo "Done." || echo "Failed!"
 fi
+
+# The following entry will help identify how internal network configurations
+# may be set up on the host that could cause problems.  This is used for debugging
+# only; it was originall created to support https://github.com/caronc/apprise-api/issues/262
+echo "Resolution of 'localhost' inside container:"
+getent ahosts localhost || true
 
 # Working directory
 cd /opt/apprise
