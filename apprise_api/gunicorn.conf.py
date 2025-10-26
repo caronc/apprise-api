@@ -35,11 +35,11 @@ raw_env = [
 # This is the path as prepared in the docker compose
 pythonpath = "/opt/apprise/webapp"
 
-# bind to port 8000
-bind = [
-    "0.0.0.0:8000",  # IPv4 Support
-    "[::]:8000",  # IPv6 Support
-]
+# Bind path
+bind = ["unix:/run/apprise/gunicorn.sock"]
+
+# Define our umask
+umask = 0o117
 
 # Workers are relative to the number of CPU's provided by hosting server
 workers = int(os.environ.get("APPRISE_WORKER_COUNT", multiprocessing.cpu_count() * 2 + 1))
