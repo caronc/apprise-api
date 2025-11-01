@@ -592,6 +592,7 @@ input[type=time]:not(.browser-default),
 input[type=url]:not(.browser-default),
 textarea.materialize-textarea {
     border-bottom: 1px solid #4c566a
+		color: #e5e9f0;
 }
 
 input:not([type]):disabled,
@@ -798,7 +799,7 @@ textarea.materialize-textarea.invalid:focus {
     box-shadow: 0 1px 0 0 #f44336
 }
 
-textarea {
+input, textarea {
     color: #e5e9f0;
     border: 1px solid #2e3440;
     background-color: #1b1e26
