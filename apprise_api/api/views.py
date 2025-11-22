@@ -545,8 +545,8 @@ class AddView(View):
                     )
                 )
 
-            # prepare our apprise config object
-            ac_obj = apprise.AppriseConfig()
+            # Prepare our apprise config object
+            ac_obj = apprise.AppriseConfig(recursion=settings.APPRISE_RECURSION_MAX)
 
             if fmt == AUTO_DETECT_CONFIG_KEYWORD:
                 # By setting format to None, it is automatically detected from
@@ -1382,7 +1382,7 @@ class NotifyView(View):
         a_obj = apprise.Apprise(asset=asset)
 
         # Create an apprise config object
-        ac_obj = apprise.AppriseConfig(asset=asset)
+        ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
 
         # Load our configuration
         ac_obj.add_config(config, format=format)
@@ -2179,7 +2179,7 @@ class JsonUrlView(View):
         a_obj = apprise.Apprise()
 
         # Create an apprise config object
-        ac_obj = apprise.AppriseConfig()
+        ac_obj = apprise.AppriseConfig(recursion=settings.APPRISE_RECURSION_MAX)
 
         # Load our configuration
         ac_obj.add_config(config, format=format)
