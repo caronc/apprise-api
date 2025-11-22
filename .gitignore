@@ -6,6 +6,11 @@ __pycache__/
 # vi swap files
 .*.sw?
 
+# Development leftovers
+attach/
+config/
+plugin/
+
 # Distribution / packaging / virtualenv
 .Python
 .bash_history
@@ -68,9 +73,6 @@ target/
 
 #PyCharm
 .idea
-
-# Dockerfile
-docker-compose.yml
 
 # Apprise Gateway Variable/Test Configuration
 apprise_gw/var/*
