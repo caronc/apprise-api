@@ -50,7 +50,8 @@ COPY apprise_api/ webapp
 # Configuration Permissions (to run nginx as a non-root user)
 RUN umask 0002 && \
     touch /etc/nginx/server-override.conf && \
-    touch /etc/nginx/location-override.conf
+    touch /etc/nginx/location-override.conf && \
+    mkdir -p /config /attach /plugin /run/apprise
 
 VOLUME /config
 VOLUME /attach

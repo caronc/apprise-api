@@ -32,52 +32,73 @@ if [ $(id -u) -eq 0 ]; then
    PUID=${PUID:=1000}
    PGID=${PGID:=1000}
 
-   # lookup our identifier
-   GROUP=$(getent group $PGID 2>/dev/null | cut -d: -f1)
-   [ -z "$GROUP" ] && groupadd --force -g $PGID apprise &>/dev/null && \
+   # Lookup our identifier based on the numeric IDs provided.
+   GROUP=$(getent group "${PGID}" 2>/dev/null | cut -d: -f1)
+   [ -z "${GROUP}" ] && groupadd --force -g "${PGID}" apprise &>/dev/null && \
       GROUP=apprise
 
-   USER=$(id -un $PUID 2>/dev/null)
-   [ $? -ne 0 ] && useradd -M -N \
-        -o -u $PUID -G $GROUP -c "Apprise API User" -d /opt/apprise apprise && \
-        USER=apprise
+   USER=$(id -un "${PUID}" 2>/dev/null)
+   if [ $? -ne 0 ]; then
+      useradd -M -N -o -u "${PUID}" -G "${GROUP}" \
+         -c "Apprise API User" -d /opt/apprise apprise && \
+         USER=apprise
+   fi
 
-   if [ -z "$USER" ]; then
-      echo "The specified User ID (PUID) of $PUID is invalid; Aborting operation."
+   if [ -z "${USER}" ]; then
+      echo "The specified User ID (PUID) of ${PUID} is invalid; Aborting operation."
       exit 1
 
-   elif [ -z "$GROUP" ]; then
-      echo "The specified Group ID (PGID) of $PGID is invalid; Aborting operation."
+   elif [ -z "${GROUP}" ]; then
+      echo "The specified Group ID (PGID) of ${PGID} is invalid; Aborting operation."
       exit 1
    fi
 
-  # Ensure our group has been correctly assigned
-  usermod -a -G $GROUP $USER &>/dev/null
-  chmod o+w /dev/stdout /dev/stderr
+   # Ensure our group has been correctly assigned
+   usermod -a -G "${GROUP}" "${USER}" &>/dev/null || true
+
+   # Allow log redirection even when we later drop privileges.
+   chmod o+w /dev/stdout /dev/stderr || true
+
+   # Prepare runtime directories and ownership when running as root.
+   for d in /attach /config /config/store /plugin /tmp/apprise; do
+      if [ ! -d "${d}" ]; then
+         mkdir -p "${d}" 2>/dev/null || true
+      fi
+      if [ -w "${d}" ]; then
+         chown -R "${USER}:${GROUP}" "${d}" 2>/dev/null || true
+      fi
+   done
 
 else
    #
    # Non-Root User
    #
    echo "Apprise API Non-Super User Startup"
-   USER=$(id -un 2>/dev/null)
-   GROUP=$(id -gn 2>/dev/null)
+   USER=$(id -un 2>/dev/null || echo apprise)
+   GROUP=$(id -gn 2>/dev/null || echo apprise)
+
+   # Ensure runtime directories exist; in non-root mode we just best-effort mkdir
+   [ ! -d /attach ] && mkdir -p /attach 2>/dev/null || true
+   [ ! -d /config ] && mkdir -p /config 2>/dev/null || true
+   [ ! -d /config/store ] && mkdir -p /config/store 2>/dev/null || true
+   [ ! -d /plugin ] && mkdir -p /plugin 2>/dev/null || true
+   [ ! -d /tmp/apprise ] && mkdir -p /tmp/apprise 2>/dev/null || true
+
+   # Some directories require enforced permissions (only possible as root)
+   if [ "$(id -u)" -eq 0 ]; then
+      chown -R "$USER:$GROUP" /attach /config /config/store /plugin /opt/apprise /tmp/apprise 2>/dev/null || true
+   fi
 fi
 
-[ ! -d /attach ] && mkdir -p /attach
-chown -R $USER:$GROUP /attach
-[ ! -d /config/store ] && mkdir -p /config/store
-chown $USER:$GROUP /config
-chown -R $USER:$GROUP /config/store
-[ ! -d /plugin ] && mkdir -p /plugin
-[ ! -d /run/apprise ] && mkdir -p /run/apprise
-
-# Some Directories require enforced permissions to play it safe
-chown $USER:$GROUP -R /run/apprise /var/lib/nginx /opt/apprise
-sed -i -e "s/^\(user[ \t]*=[ \t]*\).*$/\1$USER/g" \
-   /opt/apprise/webapp/etc/supervisord.conf
-sed -i -e "s/^\(group[ \t]*=[ \t]*\).*$/\1$GROUP/g" \
-   /opt/apprise/webapp/etc/supervisord.conf
+# Update SupervisorD configuration when the file is writable so that
+# it follows the resolved USER/GROUP.  If the configuration is on a
+# read-only filesystem, we simply skip this step.
+if [ -w /opt/apprise/webapp/etc/supervisord.conf ]; then
+   sed -i -e "s/^\(user[ \t]*=[ \t]*\).*$/\1${USER}/g" \
+      /opt/apprise/webapp/etc/supervisord.conf
+   sed -i -e "s/^\(group[ \t]*=[ \t]*\).*$/\1${GROUP}/g" \
+      /opt/apprise/webapp/etc/supervisord.conf
+fi
 
 if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
   echo "ERROR: Both IPV4_ONLY and IPV6_ONLY are set. Exiting."
@@ -86,14 +107,22 @@ if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
 # Handle IPV4_ONLY flag
 elif [ "${IPV4_ONLY+x}" ]; then
   echo -n "Network mode: IPv4-only (IPV4_ONLY set) ... "
-  sed -ibak -e '/IPv6 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
-     echo "Done." || echo "Failed!"
+  if [ -w /opt/apprise/webapp/etc/nginx.conf ]; then
+    sed -ibak -e '/IPv6 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
+       echo "Done." || echo "Failed!"
+  else
+    echo "Skipped (nginx.conf not writable)."
+  fi
 
 # Handle IPV6_ONLY flag
 elif [ "${IPV6_ONLY+x}" ]; then
   echo -n "Network mode: IPv6-only (IPV6_ONLY set) ... "
-  sed -ibak -e '/IPv4 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
-     echo "Done." || echo "Failed!"
+  if [ -w /opt/apprise/webapp/etc/nginx.conf ]; then
+    sed -ibak -e '/IPv4 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
+       echo "Done." || echo "Failed!"
+  else
+    echo "Skipped (nginx.conf not writable)."
+  fi
 fi
 
 # The following entry will help identify how internal network configurations
@@ -105,8 +134,8 @@ getent ahosts localhost || true
 # Working directory
 cd /opt/apprise
 
-# Launch our SupervisorD
-/usr/local/bin/supervisord -c /opt/apprise/webapp/etc/supervisord.conf
+# Launch our SupervisorD as PID 1
+exec /usr/local/bin/supervisord -c /opt/apprise/webapp/etc/supervisord.conf
 
 # Always return our SupervisorD return code
 exit $?

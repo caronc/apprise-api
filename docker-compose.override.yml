@@ -1,14 +1,16 @@
 services:
   apprise:
-    image: caronc/apprise:latest
-    container_name: apprise
-    ports:
-      - "8000:8000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: apprise-api-dev
+    container_name: apprise-api-dev
     user: "${PUID:-1000}:${PGID:-1000}"
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
     volumes:
+      - ./apprise_api:/opt/apprise/webapp:ro
       - ./config:/config
       - ./plugin:/plugin
       - ./attach:/attach

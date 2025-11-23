@@ -43,13 +43,14 @@ Using [dockerhub](https://hub.docker.com/r/caronc/apprise) you can do the follow
 docker pull caronc/apprise:latest
 
 # Start it up:
-# /config/store  is used for a persistent store, you do not have to mount
-#                this if you don't intend to use it.
 # /config is used for a spot to write all of the configuration files
-#         generated through the API
+#         generated through the API. The internal persistent store lives
+#         under /config/store so a single /config volume is sufficient.
 # /plugin is used for a location you can add your own custom apprise plugins.
 #         You do not have to mount this if you don't intend to use it.
 # /attach is used for file attachments
+#
+# /tmp         Temporary files, suitable for `tmpfs` in hardened deployments.
 #
 # The below example sets a the APPRISE_WORKER_COUNT to a small value (over-riding
 # a full production environment setting).  This may be all that is needed for
@@ -64,8 +65,7 @@ docker pull caronc/apprise:latest
 
 docker run --name apprise \
    -p 8000:8000 \
-   -e PUID=$(id -u) \
-   -e PGID=$(id -g) \
+   --user "$(id -u):$(id -g)" \
    -v /path/to/local/config:/config \
    -v /path/to/local/plugin:/plugin \
    -v /path/to/local/attach:/attach \
@@ -86,8 +86,7 @@ mkdir -p /etc/apprise
 # Launch your instance
 docker run --name apprise \
    -p 8000:8000 \
-   -e PUID=$(id -u) \
-   -e PGID=$(id -g) \
+   --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -v /etc/apprise:/config \
@@ -95,21 +94,79 @@ docker run --name apprise \
 
 # Change your paths to what you want them to be, you may also wish to
 # just do the following:
-mkdir -p config store
+mkdir -p config
 docker run --name apprise \
    -p 8000:8000 \
-   -e PUID=$(id -u) \
-   -e PGID=$(id -g) \
+   --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -v ./config:/config \
    -d apprise/local:latest
 ```
-A `docker-compose.yml` file is already set up to grant you an instant production ready simulated environment:
 
+### Docker Compose Examples
+
+A minimal `docker-compose.yml` might look like this:
+
+```yaml
+services:
+  apprise:
+    image: caronc/apprise:latest
+    container_name: apprise
+    ports:
+      - "8000:8000"
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      APPRISE_STATEFUL_MODE: simple
+      APPRISE_WORKER_COUNT: "1"
+    volumes:
+      - ./config:/config
+      - ./plugin:/plugin
+      - ./attach:/attach
+```
+
+To ignore the development override and use only the image based setup from
+`docker-compose.yml`, run:
 ```bash
-# Docker Compose
-docker-compose up
+# Pre-create the paths you will mount to
+mkdir -p attach config plugin
+
+# Ignore override, use only the base file
+PUID=$(id -u) PGID=$(id -g) \
+   docker compose -f docker-compose.yml up -d
+```
+
+A more hardened configuration might look like:
+```yaml
+services:
+  apprise:
+    image: caronc/apprise:latest
+    container_name: apprise
+    user: "${PUID:-1000}:${PGID:-1000}"
+
+    # Hardened runtime
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      APPRISE_STATEFUL_MODE: simple
+      APPRISE_WORKER_COUNT: "1"
+
+    # Persistent state
+    volumes:
+      - ./config:/config
+      - ./plugin:/plugin
+      - ./attach:/attach
+
+    # Ephemeral runtime and temp files
+    tmpfs:
+      - /tmp
 ```
 
 ## Dockerfile Details
@@ -117,6 +174,29 @@ docker-compose up
 The following architectures are supported: `amd64`, `arm/v7`, and `arm64`. The following tags can be used:
 - `latest`: Points to the latest stable build.
 - `edge`: Points to the last push to the master branch.
+
+### Container Runtime Model and Filesystem Layout
+
+The Apprise API container is designed to be “container native”:
+
+- All logs (nginx, gunicorn, supervisord) are written to `stdout` and `stderr`.
+  No files are written under `/var/log`. You should use `docker logs`,
+  `kubectl logs`, or your orchestrator’s log collection instead.
+- Nginx and the application use `/tmp` for all temporary files
+  (request bodies, proxy buffers, etc.).
+- Runtime state such as pid and socket information is written under `/tmp/apprise`.
+
+Persistent or writable locations are:
+
+- `/config` – configuration created and managed through the API or UI.
+  The internal persistent store lives under `/config/store`.
+- `/attach` – uploaded attachments.
+- `/plugin` – custom Apprise plugins.
+- `/tmp` – temporary files, suitable for `tmpfs` in hardened deployments.
+
+For simple deployments you only need to mount persistent storage for `/config`, `/attach`, if you want that data to survive container restarts. You only require `/plugin` if you intend to add some custom plugins into your Apprise instance for others to use.
+
+Stateless `/notify` usage can still use `/attach` for file uploads and optionally `/plugin` for custom plugins. In those cases you can back them with either persistent volumes or ephemeral storage, depending on your needs.
 
 ## Apprise URLs
 
@@ -175,6 +255,8 @@ Some people may wish to only have a sidecar solution that does require use of an
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
 | `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
+
+Stateless `/notify` calls do not require `/config`, but they do leverage `/attach` for file uploads (assuming `APPRISE_ATTACH_SIZE` is not set to `0` (zero).  You can optionally use `/plugin` if you have custom Apprise plugins you wish to use.
 
 Here is a *stateless* example of how one might send a notification (using `/notify/`):
 
@@ -396,15 +478,15 @@ The use of environment variables allow you to provide over-rides to default sett
 
 | Variable             | Description |
 |--------------------- | ----------- |
-| `PUID` | The User ID you wish the Apprise instance under the hood to run as. The default is `1000` if not otherwise specified.
-| `PGID` | The Group ID you wish the Apprise instance under the hood to run as. The default is `1000` if not otherwise specified.
+| `PUID` | The User ID you wish the Apprise services under the hood to run as when the container starts as root and no explicit `--user` / `user:` has been set. The default is `1000` if not otherwise specified.
+| `PGID` | The Group ID used in the same scenario as `PUID`. If the container is started with an explicit `--user` or `user:`, that value takes precedence and `PUID` / `PGID` are not consulted for process privileges.
 | `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6).  Nothing is done if `IPV6_ONLY` is also set as this creates an ambigious setup.
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6).  Nothing is done if `IPV4_ONLY` is also set as this creates an ambigious setup.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
 | `APPRISE_STORAGE_DIR` | Defines an (optional) persistent store location of all cache files saved. By default persistent storage is written into the `<APPRISE_CONFIG_DIR>/store`.
-| `APPRISE_STORAGE_MODE` | Defines the storage mode to use.  If no `APPRISE_STORGE_DIR` is identified, then this is set to `memory` in all circumtances reguardless what it might otherwise be set to. The possible options are:<br/>📌 **auto**: This is also the default. Writes cache files on demand only. <br/>📌 **memory**: Persistent storage is disabled; local memory is used for simple internal references. This is effectively the behavior of Apprise of versions 1.8.1 and earlier.<br/>📌 **flush**: A bit more i/o intensive then `auto`.  Content is written to disk constantly if changed in anyway. This mode is still experimental.
+| `APPRISE_STORAGE_MODE` | Defines the storage mode to use.  If no `APPRISE_STORAGE_DIR` is identified, then this is set to `memory` in all circumtances regardless what it might otherwise be set to. The possible options are:<br/>📌 **auto**: This is also the default. Writes cache files on demand only. <br/>📌 **memory**: Persistent storage is disabled; local memory is used for simple internal references. This is effectively the behavior of Apprise of versions 1.8.1 and earlier.<br/>📌 **flush**: A bit more i/o intensive then `auto`.  Content is written to disk constantly if changed in anyway. This mode is still experimental.
 | `APPRISE_STORAGE_UID_LENGTH` | Defines the unique key lengths used to identify an Apprise URL.  By default this is set to `8`.  Value can not be set to a smaller value then `2` or larger then `64`.
 | `APPRISE_STATELESS_STORAGE` | Allow stateless URLs (in addition to stateful) to also leverage persistent storage. This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 | `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
@@ -459,13 +541,16 @@ htpasswd -c apprise_api.htpasswd foobar
 
 Now we can create our docker container with this new authentication information:
 ```bash
+# Pre-create the paths you will mount to
+mkdir -p /path/to/local/{attach,config,plugin}
+
 # Create our container containing Basic Auth:
 docker run --name apprise \
    -p 8000:8000 \
-   -e PUID=$(id -u) \
-   -e PGID=$(id -g) \
+   --user "$(id -u):$(id -g)" \
    -v /path/to/local/config:/config \
    -v /path/to/local/attach:/attach \
+   -v /path/to/local/plugin:/plugin \
    -v ./override.conf:/etc/nginx/location-override.conf:ro \
    -v ./apprise_api.htpasswd:/etc/nginx/.htpasswd:ro \
    -e APPRISE_STATEFUL_MODE=simple \
@@ -481,9 +566,10 @@ You can add further accounts to the existing database by omitting the `-c` switc
 htpasswd apprise_api.htpasswd user2
 ```
 
-## Kubernetes Deployment
+## Kubernetes
 
-Thanks to @steled, here is what a potential Kubernetes deployment configuration could look like:
+### Example Kubernetes Deployment
+Thanks to @steled, here is what a potential Kubernetes deployment configuration could also look like (note that this uses the legacy PGID and PUID global variables:
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -616,6 +702,85 @@ spec:
             name: apprise-api-override-conf-config
 ```
 
+### Hardened Kubernetes deployment (rootless and read only)
+
+For a more security conscious setup, you can run Apprise API as a non-root
+user with a read only root filesystem and explicit ephemeral volumes.
+
+The following example assumes you already created persistent volume claims
+for `/config`, `/plugin`, and `/attach`.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: apprise
+  name: apprise
+  namespace: apprise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apprise
+  template:
+    metadata:
+      labels:
+        app: apprise
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        readOnlyRootFilesystem: true
+      containers:
+        - name: apprise
+          image: caronc/apprise:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: APPRISE_STATEFUL_MODE
+              value: simple
+            - name: APPRISE_WORKER_COUNT
+              value: "1"
+          ports:
+            - containerPort: 8000
+              name: http
+          volumeMounts:
+            # Persistent data
+            - name: config
+              mountPath: /config
+            - name: plugin
+              mountPath: /plugin
+            - name: attach
+              mountPath: /attach
+
+            # Ephemeral runtime and temp files
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: apprise-config
+        - name: plugin
+          persistentVolumeClaim:
+            claimName: apprise-plugin
+        - name: attach
+          persistentVolumeClaim:
+            claimName: apprise-attach
+
+        # The deployment mounts /tmp as an in-memory emptyDir, which is where nginx,
+        # gunicorn, and supervisord store pids, sockets, and temporary files.
+        # This is configured as an ephemeral volume, stored in memory.
+        - name: tmp
+          emptyDir:
+            medium: Memory
+```
+
 ## Development Environment
 The following should get you a working development environment (min requirements are Python v3.12) to test with.
 
@@ -639,10 +804,15 @@ pip install -e '.[dev]'
 # Then visit: http://localhost:8000/
 ```
 
-Or use Docker:
+For development, the repository includes a `docker-compose.override.yml` file
+that extends `docker-compose.yml` to build from source and bind-mount the code.
+Running:
 ```bash
-# It's this simple:
-docker compose up
+# Pre-create the paths you will mount to
+mkdir -p attach config plugin
+
+# Dev workflow: base + override
+PUID=$(id -u) PGID=$(id -g) docker compose up
 ```
 
 ### Quality Assurance and Testing (via Tox)
