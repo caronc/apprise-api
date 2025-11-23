@@ -197,6 +197,66 @@ function update_count() {
   })
 }
 
+function showCopyToast(anchorEl) {
+  // Try SweetAlert2 first so we can anchor to the card
+  if (window.Swal && Swal.fire) {
+    const card = anchorEl
+      ? anchorEl.closest('li.card-panel') || anchorEl
+      : document.body;
+
+    Swal.fire({
+      toast: true,
+      target: card,  // anchor inside the card
+      position: 'top-end',
+      title: '{% trans "URL copied to clipboard" %}',
+      showConfirmButton: false,
+      timer: 1600,
+      timerProgressBar: true,
+      customClass: {
+        popup: 'copy-toast'
+      }
+    });
+    return;
+  }
+
+  // Fallback to Materialize toast if Swal is not available
+  if (window.M && M.toast) {
+    M.toast({ html: '{% trans "URL copied to clipboard" %}' });
+  }
+}
+
+async function copyToClipboard(text, anchorEl) {
+  // Prefer modern Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showCopyToast(anchorEl);
+      return;
+    } catch (e) {
+      console.warn('navigator.clipboard failed, falling back', e);
+      // fall through to legacy method
+    }
+  }
+
+  // Fallback for older browsers
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'absolute';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    document.execCommand('copy');
+    showCopyToast(anchorEl);
+  } catch (e) {
+    console.warn('document.execCommand("copy") failed', e);
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
 async function main_init(){
 
   const params = new Proxy(new URLSearchParams(window.location.search), {
@@ -348,11 +408,41 @@ async function main_init(){
 
   // Create a list item for each url retrieved
   data.urls.forEach(function (entry) {
+	  let li = document.createElement('li');
+    li.setAttribute('class', 'card-panel url-item');
+
+    // Header row: URL + copy button
+    let header = document.createElement('div');
+    header.setAttribute('class', 'url-header');
+
+    // URL text
     let code = document.createElement('code');
-    let li = document.createElement('li');
+    code.setAttribute('class', 'url-text');
     code.textContent = entry.url;
-    li.appendChild(code);
-    li.setAttribute('class', 'card-panel');
+    header.appendChild(code);
+
+    // Copy button
+    let copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.setAttribute('class', 'copy-url-btn btn-flat btn-small');
+    copyBtn.setAttribute('title', '{% trans "Copy URL to Clipboard" %}');
+
+    let copyIcon = document.createElement('i');
+    copyIcon.setAttribute('class', 'material-icons');
+    copyIcon.textContent = 'content_copy';
+    copyBtn.appendChild(copyIcon);
+
+    copyBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      copyToClipboard(entry.url, copyBtn);
+    }, false);
+
+
+    header.appendChild(copyBtn);
+    li.appendChild(header);
+
+    // Optional URL ID (as before)
     if (entry.id) {
       let url_id = document.createElement('code');
       url_id.setAttribute('class', 'url-id');
