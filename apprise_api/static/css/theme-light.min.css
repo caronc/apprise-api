@@ -1,4 +1,7 @@
-.tabs .tab a {background-color: #f3f3f3;}
+.tabs .tab a {
+  background-color: #f3f3f3;
+	border-bottom: 1px solid #464646;
+}
 .tabs.tabs-transparent .tab a,
 .tabs.tabs-transparent .tab.disabled a,
 .tabs.tabs-transparent .tab.disabled a:hover,
@@ -15,19 +18,31 @@
 	background-color: #f3f3f3;
 }
 
-#url-list .card-panel.selected {
-  background-color: #fff8dc;
+#url-list .card-panel {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+	background-color: #f3f3f3;
+}
+
+#url-list .url-header code.url-text {
+	background-color: #fff;
+  color: #464646;
 }
 
 .chip {
-	background-color: #fff!important;
+	background-color: #fff !important;
+  border: 1px solid #464646 !important;
+  color: #464646 !important;
 }
 
 .chip.selected {
-	color: #fff;
 	background-color: #258528!important;
+  color: white !important;
 }
 
+#overview strong {
+  color: #004d40;
+  background-color: #eee;
+}
 
 ul.logs li.log_INFO {
   color: black;

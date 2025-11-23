@@ -134,13 +134,11 @@ a:hover {
 
 #overview strong {
     color: #d8dee9 !important;
-    background-color: #4c566a !important
+    background-color: #373e4d;
 }
 
-code,
-kbd,
-samp {
-    background-color: #2e3440 !important;
+pre code {
+    background-color: #111 !important;
     color: #d8dee9
 }
 
@@ -338,7 +336,7 @@ em {
 
 .tabs .tab a {
     color: #d8dee9;
-    background-color: #2e3440;
+    background-color: #373e4d;
     border-left: 1px solid #3b4252;
     border-bottom: 1px solid #81a1c1
 }
@@ -355,7 +353,7 @@ em {
 
 .tabs .tab.disabled a,
 .tabs .tab.disabled a:hover {
-    background-color: #4c566a !important;
+    background-color: #404959 !important;
     color: #6e7d9c !important
 }
 
@@ -501,8 +499,14 @@ em {
     background-color: #fff
 }
 
-#url-list .card-panel.selected {
-  background-color: #a0c8ef;
+#url-list .card-panel {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  background: #2f3946;
+}
+
+#url-list .url-header code.url-text {
+  background-color: #212733;
+  color: #e0e6f0;
 }
 
 .chip {
@@ -1404,3 +1408,47 @@ ul.logs li.log_WARNING {
 ul.logs li.log_ERROR {
   color: #8B0000;
 }
+
+/* Apprise dark theme – tab clean-up */
+
+.tabs {
+  /* Let the page background show through behind tabs */
+  background-color: transparent;
+  border-bottom: none;
+}
+
+.tabs .tab {
+  /* No extra slab behind each tab */
+  background-color: transparent;
+}
+
+/* Base.css already gives us the rounded corners.
+ * Here we just define dark colours and avoid square backgrounds.
+ */
+.tabs .tab a {
+  background-color: #4c566a;
+  border-left: none;
+  border-bottom: none;
+  color: #d8dee9;
+}
+
+/* Hover / active – subtle pill highlight */
+.tabs .tab a:hover,
+.tabs .tab a.active {
+  background-color: #4c566a;
+  color: #eceff4;
+}
+
+/* Disabled tabs – keep them obviously disabled, but no slab */
+.tabs .tab.disabled a,
+.tabs .tab.disabled a:hover {
+  background-color: transparent;
+  color: #6e7d9c !important;
+}
+
+/* Indicator bar under active tab */
+.tabs .indicator {
+  background-color: #ebcb8b !important;
+  height: 3px;
+}
+

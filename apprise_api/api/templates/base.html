@@ -43,9 +43,10 @@
       </div>
     </div>
     <!-- Page Layout here -->
-    <div class="row">
+    <div class="row main-layout">
 
-      <div class="col s3" style="width:20em">
+      <!-- Side menu -->
+      <div class="col s12 m3 l3 side-menu">
 {% if STATEFUL_MODE != 'disabled' %}
         <ul class="collection z-depth-1">
           <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
@@ -83,7 +84,8 @@
         {% block menu %}{% endblock %}
       </div>
 
-      <div class="col s9">
+      <!-- Main content -->
+      <div class="col s12 m9 l9 main-content">
         <div id="health-check" class="section" style="display: none">
           <h4><i class="material-icons" style="color: orange">warning</i>&nbsp;{% trans "Apprise Health Check Failed" %}&nbsp;<i class="material-icons" style="color: orange">warning</i></h4>
         {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
