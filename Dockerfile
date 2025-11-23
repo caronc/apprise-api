@@ -51,7 +51,7 @@ COPY apprise_api/ webapp
 RUN umask 0002 && \
     touch /etc/nginx/server-override.conf && \
     touch /etc/nginx/location-override.conf && \
-    mkdir -p /config /attach /plugin /run/apprise
+    mkdir -p /config /attach /plugin
 
 VOLUME /config
 VOLUME /attach
