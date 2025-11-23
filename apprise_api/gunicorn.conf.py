@@ -36,7 +36,7 @@ raw_env = [
 pythonpath = "/opt/apprise/webapp"
 
 # Bind path
-bind = ["unix:/run/apprise/gunicorn.sock"]
+bind = ["unix:/tmp/apprise/gunicorn.sock"]
 
 # Define our umask
 umask = 0o117
