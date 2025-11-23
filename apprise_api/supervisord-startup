@@ -83,12 +83,10 @@ else
    [ ! -d /config/store ] && mkdir -p /config/store 2>/dev/null || true
    [ ! -d /plugin ] && mkdir -p /plugin 2>/dev/null || true
    [ ! -d /tmp/apprise ] && mkdir -p /tmp/apprise 2>/dev/null || true
-
-   # Some directories require enforced permissions (only possible as root)
-   if [ "$(id -u)" -eq 0 ]; then
-      chown -R "$USER:$GROUP" /attach /config /config/store /plugin /opt/apprise /tmp/apprise 2>/dev/null || true
-   fi
 fi
+
+# Permissions
+chmod 1777 /tmp/apprise 2>/dev/null || true
 
 # Update SupervisorD configuration when the file is writable so that
 # it follows the resolved USER/GROUP.  If the configuration is on a
