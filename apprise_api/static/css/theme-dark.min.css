@@ -1452,3 +1452,15 @@ ul.logs li.log_ERROR {
   height: 3px;
 }
 
+/* Copy-toast for dark theme */
+.copy-toast.swal2-popup {
+  background-color: #2f3946;
+  color: #e5e9f0;
+  padding: .35rem .8rem;
+}
+
+.copy-toast .swal2-title {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 500;
+}

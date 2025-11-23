@@ -47,6 +47,10 @@
   float:right;
 }
 
+a.apprise-lib-ver, a.apprise-lib-ver:hover {
+	color: inherit;
+}
+
 input {
   display: block;
 }
@@ -115,7 +119,6 @@ textarea {
 
 .tabs .tab a{
   border-radius: 25px 25px 0 0;
-  color:#2bbbad;
 }
 .collection a.collection-item:not(.active):hover,
 .tabs .tab a:focus, .tabs .tab a:focus.active {

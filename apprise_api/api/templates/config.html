@@ -197,14 +197,40 @@ function update_count() {
   })
 }
 
-async function copyToClipboard(text) {
+function showCopyToast(anchorEl) {
+  // Try SweetAlert2 first so we can anchor to the card
+  if (window.Swal && Swal.fire) {
+    const card = anchorEl
+      ? anchorEl.closest('li.card-panel') || anchorEl
+      : document.body;
+
+    Swal.fire({
+      toast: true,
+      target: card,  // anchor inside the card
+      position: 'top-end',
+      title: '{% trans "URL copied to clipboard" %}',
+      showConfirmButton: false,
+      timer: 1600,
+      timerProgressBar: true,
+      customClass: {
+        popup: 'copy-toast'
+      }
+    });
+    return;
+  }
+
+  // Fallback to Materialize toast if Swal is not available
+  if (window.M && M.toast) {
+    M.toast({ html: '{% trans "URL copied to clipboard" %}' });
+  }
+}
+
+async function copyToClipboard(text, anchorEl) {
   // Prefer modern Clipboard API
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
       await navigator.clipboard.writeText(text);
-      if (window.M && M.toast) {
-        M.toast({ html: '{% trans "URL copied to clipboard" %}' });
-      }
+      showCopyToast(anchorEl);
       return;
     } catch (e) {
       console.warn('navigator.clipboard failed, falling back', e);
@@ -223,9 +249,7 @@ async function copyToClipboard(text) {
 
   try {
     document.execCommand('copy');
-    if (window.M && M.toast) {
-      M.toast({ html: 'URL copied to clipboard' });
-    }
+    showCopyToast(anchorEl);
   } catch (e) {
     console.warn('document.execCommand("copy") failed', e);
   } finally {
@@ -411,8 +435,9 @@ async function main_init(){
     copyBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      copyToClipboard(entry.url);
+      copyToClipboard(entry.url, copyBtn);
     }, false);
+
 
     header.appendChild(copyBtn);
     li.appendChild(header);

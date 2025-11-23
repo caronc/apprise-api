@@ -1,4 +1,5 @@
 .tabs .tab a {
+	color:#2bbbad;
   background-color: #f3f3f3;
 	border-bottom: 1px solid #464646;
 }
@@ -58,4 +59,18 @@ ul.logs li.log_WARNING {
 
 ul.logs li.log_ERROR {
   color: #8B0000;
+}
+/* Copy-toast for light theme */
+.copy-toast.swal2-popup {
+  background-color: #f3f3f3;
+  color: #464646;
+  box-shadow: 0 2px 4px rgba(0,0,0,.25);
+  border-radius: 4px;
+  padding: .35rem .8rem;
+}
+
+.copy-toast .swal2-title {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 500;
 }
