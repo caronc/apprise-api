@@ -128,6 +128,9 @@ services:
 To ignore the development override and use only the image based setup from
 `docker-compose.yml`, run:
 ```bash
+# Pre-create the paths you will mount to
+mkdir -p attach config plugin
+
 # Ignore override, use only the base file
 PUID=$(id -u) PGID=$(id -g) \
    docker compose -f docker-compose.yml up -d
@@ -191,10 +194,9 @@ Persistent or writable locations are:
 - `/plugin` – custom Apprise plugins.
 - `/tmp` – temporary files, suitable for `tmpfs` in hardened deployments.
 
-For simple deployments you only need to persist `/config`,
-`/attach`, and `/plugin` if you intend to use those features. In more hardened
-setups you should also back `/tmp` with a writable volume or
-`tmpfs` and you may wish to mount the root filesystem as read only.
+For simple deployments you only need to mount persistent storage for `/config`, `/attach`, if you want that data to survive container restarts. You only require `/plugin` if you intend to add some custom plugins into your Apprise instance for others to use.
+
+Stateless `/notify` usage can still use `/attach` for file uploads and optionally `/plugin` for custom plugins. In those cases you can back them with either persistent volumes or ephemeral storage, depending on your needs.
 
 ## Apprise URLs
 
@@ -253,6 +255,8 @@ Some people may wish to only have a sidecar solution that does require use of an
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
 | `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
+
+Stateless `/notify` calls do not require `/config`, but they do leverage `/attach` for file uploads (assuming `APPRISE_ATTACH_SIZE` is not set to `0` (zero).  You can optionally use `/plugin` if you have custom Apprise plugins you wish to use.
 
 Here is a *stateless* example of how one might send a notification (using `/notify/`):
 
@@ -474,8 +478,8 @@ The use of environment variables allow you to provide over-rides to default sett
 
 | Variable             | Description |
 |--------------------- | ----------- |
-| `PUID` | The User ID you wish the Apprise instance under the hood to run as. The default is `1000` if not otherwise specified.
-| `PGID` | The Group ID you wish the Apprise instance under the hood to run as. The default is `1000` if not otherwise specified.
+| `PUID` | The User ID you wish the Apprise services under the hood to run as when the container starts as root and no explicit `--user` / `user:` has been set. The default is `1000` if not otherwise specified.
+| `PGID` | The Group ID used in the same scenario as `PUID`. If the container is started with an explicit `--user` or `user:`, that value takes precedence and `PUID` / `PGID` are not consulted for process privileges.
 | `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6).  Nothing is done if `IPV6_ONLY` is also set as this creates an ambigious setup.
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6).  Nothing is done if `IPV4_ONLY` is also set as this creates an ambigious setup.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
@@ -537,12 +541,16 @@ htpasswd -c apprise_api.htpasswd foobar
 
 Now we can create our docker container with this new authentication information:
 ```bash
+# Pre-create the paths you will mount to
+mkdir -p /path/to/local/{attach,config,plugin}
+
 # Create our container containing Basic Auth:
 docker run --name apprise \
    -p 8000:8000 \
    --user "$(id -u):$(id -g)" \
    -v /path/to/local/config:/config \
    -v /path/to/local/attach:/attach \
+   -v /path/to/local/plugin:/plugin \
    -v ./override.conf:/etc/nginx/location-override.conf:ro \
    -v ./apprise_api.htpasswd:/etc/nginx/.htpasswd:ro \
    -e APPRISE_STATEFUL_MODE=simple \
@@ -765,7 +773,9 @@ spec:
           persistentVolumeClaim:
             claimName: apprise-attach
 
-        # Ephemeral volumes, stored in memory
+        # The deployment mounts /tmp as an in-memory emptyDir, which is where nginx,
+        # gunicorn, and supervisord store pids, sockets, and temporary files.
+        # This is configured as an ephemeral volume, stored in memory.
         - name: tmp
           emptyDir:
             medium: Memory
@@ -798,6 +808,9 @@ For development, the repository includes a `docker-compose.override.yml` file
 that extends `docker-compose.yml` to build from source and bind-mount the code.
 Running:
 ```bash
+# Pre-create the paths you will mount to
+mkdir -p attach config plugin
+
 # Dev workflow: base + override
 PUID=$(id -u) PGID=$(id -g) docker compose up
 ```
