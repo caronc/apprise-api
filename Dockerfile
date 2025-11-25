@@ -47,13 +47,18 @@ WORKDIR /opt/apprise
 # Copy over Apprise API
 COPY apprise_api/ webapp
 
-# Configuration Permissions (to run nginx as a non-root user)
+# Directory Setup
 RUN umask 0002 && \
     touch /etc/nginx/server-override.conf && \
     touch /etc/nginx/location-override.conf && \
-    mkdir -p /config /attach /plugin
+    mkdir -p /config/store /attach /plugin /tmp/apprise && \
+     chmod 1777 /tmp/apprise && \
+        chmod 777 /config /config/store /attach /plugin
 
+# Essential:
 VOLUME /config
+
+# Optional:
 VOLUME /attach
 VOLUME /plugin
 EXPOSE 8000

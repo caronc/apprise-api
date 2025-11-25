@@ -59,15 +59,11 @@ if [ $(id -u) -eq 0 ]; then
    # Allow log redirection even when we later drop privileges.
    chmod o+w /dev/stdout /dev/stderr || true
 
-   # Prepare runtime directories and ownership when running as root.
-   for d in /attach /config /config/store /plugin /tmp/apprise; do
-      if [ ! -d "${d}" ]; then
-         mkdir -p "${d}" 2>/dev/null || true
-      fi
-      if [ -w "${d}" ]; then
-         chown -R "${USER}:${GROUP}" "${d}" 2>/dev/null || true
-      fi
-   done
+   # Update our configuration
+   sed -i -e "s/^#?[ \t]*\(user[ \t]*=[ \t]*\).*$/\1${USER}/g" \
+      /opt/apprise/webapp/etc/supervisord.conf
+   sed -i -e "s/^#?[ \t]*\(group[ \t]*=[ \t]*\).*$/\1${GROUP}/g" \
+      /opt/apprise/webapp/etc/supervisord.conf
 
 else
    #
@@ -76,27 +72,19 @@ else
    echo "Apprise API Non-Super User Startup"
    USER=$(id -un 2>/dev/null || echo apprise)
    GROUP=$(id -gn 2>/dev/null || echo apprise)
-
-   # Ensure runtime directories exist; in non-root mode we just best-effort mkdir
-   [ ! -d /attach ] && mkdir -p /attach 2>/dev/null || true
-   [ ! -d /config ] && mkdir -p /config 2>/dev/null || true
-   [ ! -d /config/store ] && mkdir -p /config/store 2>/dev/null || true
-   [ ! -d /plugin ] && mkdir -p /plugin 2>/dev/null || true
-   [ ! -d /tmp/apprise ] && mkdir -p /tmp/apprise 2>/dev/null || true
 fi
+
+# Ensure runtime directories exist; in non-root mode we just best-effort mkdir
+[ ! -d /attach ] && mkdir -p /attach 2>/dev/null || true
+[ ! -d /config ] && mkdir -p /config 2>/dev/null || true
+[ ! -d /config/store ] && mkdir -p /config/store 2>/dev/null || true
+[ ! -d /plugin ] && mkdir -p /plugin 2>/dev/null || true
+[ ! -d /tmp/apprise ] && mkdir -p /tmp/apprise 2>/dev/null || true
 
 # Permissions
 chmod 1777 /tmp/apprise 2>/dev/null || true
-
-# Update SupervisorD configuration when the file is writable so that
-# it follows the resolved USER/GROUP.  If the configuration is on a
-# read-only filesystem, we simply skip this step.
-if [ -w /opt/apprise/webapp/etc/supervisord.conf ]; then
-   sed -i -e "s/^\(user[ \t]*=[ \t]*\).*$/\1${USER}/g" \
-      /opt/apprise/webapp/etc/supervisord.conf
-   sed -i -e "s/^\(group[ \t]*=[ \t]*\).*$/\1${GROUP}/g" \
-      /opt/apprise/webapp/etc/supervisord.conf
-fi
+chown -R "$USER:$GROUP" /attach /config /config/store \
+   /plugin /opt/apprise /tmp/apprise 2>/dev/null || true
 
 if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
   echo "ERROR: Both IPV4_ONLY and IPV6_ONLY are set. Exiting."
