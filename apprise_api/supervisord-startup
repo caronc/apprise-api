@@ -60,9 +60,9 @@ if [ $(id -u) -eq 0 ]; then
    chmod o+w /dev/stdout /dev/stderr || true
 
    # Update our configuration
-   sed -i -e "s/^#?[ \t]*\(user[ \t]*=[ \t]*\).*$/\1${USER}/g" \
+   sed -i -e "s/^#\?[ \t]*\(user[ \t]*=[ \t]*\).*$/\1${USER}/g" \
       /opt/apprise/webapp/etc/supervisord.conf
-   sed -i -e "s/^#?[ \t]*\(group[ \t]*=[ \t]*\).*$/\1${GROUP}/g" \
+   sed -i -e "s/^#\?[ \t]*\(group[ \t]*=[ \t]*\).*$/\1${GROUP}/g" \
       /opt/apprise/webapp/etc/supervisord.conf
 
 else
