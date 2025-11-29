@@ -86,6 +86,16 @@ chmod 1777 /tmp/apprise 2>/dev/null || true
 chown -R "$USER:$GROUP" /attach /config /config/store \
    /plugin /opt/apprise /tmp/apprise 2>/dev/null || true
 
+if [ ! -z "${HTTP_PORT}" ]; then
+  echo -n "Nginx/HTTP over-ride TCP/IP Listen Port: ${HTTP_PORT} ... "
+  if [ -w /opt/apprise/webapp/etc/nginx.conf ]; then
+    sed -i -e "s/^\([ \t]*listen[ \t]\+[^0-9]*\)\([^;]\+\);\(.*\)/\1${HTTP_PORT};\3/g" \
+       /opt/apprise/webapp/etc/nginx.conf &>/dev/null && echo "Done." || echo "Failed!"
+  else
+    echo "Skipped (nginx.conf not writable)."
+  fi
+fi
+
 if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
   echo "ERROR: Both IPV4_ONLY and IPV6_ONLY are set. Exiting."
   exit 1
@@ -117,6 +127,12 @@ fi
 echo "Resolution of 'localhost' inside container:"
 getent ahosts localhost || true
 
+# Get our Port Information
+PORT=$(grep -m1 -E '^[ \t]*listen[ \t]+' /opt/apprise/webapp/etc/nginx.conf 2>/dev/null | \
+   sed -e 's/^[^0-9]\+\([0-9]\+\).*/\1/g')
+PORT=${PORT:=Unknown}
+
+echo "Listening on TCP/IP Port: ${PORT}"
 # Working directory
 cd /opt/apprise
 
