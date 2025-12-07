@@ -36,9 +36,9 @@
           <img class="left" src="{% static "logo.png" %}" alt="{% trans "Apprise Logo" %}" />
         </a>
         <h1>{% trans "Apprise API" %}</h1>
-           <a class="apprise-api-ver" href="https://github.com/caronc/apprise-api" target="_new">v{{APPRISE_API_VERSION}}</a>
+           <a class="apprise-api-ver" href="{{APPRISE_API_URL}}" target="_new">v{{APPRISE_API_VERSION}}</a>
         <ul>
-           <li><a class="apprise-lib-ver" href="https://github.com/caronc/apprise" target="_new">APPRISE LIBRARY v{{APPRISE_LIB_VERSION}}</a></li>
+           <li><a class="apprise-lib-ver" href="{{APPRISE_LIB_URL}}" target="_new">APPRISE LIBRARY v{{APPRISE_LIB_VERSION}}</a></li>
            <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><i class="material-icons">invert_colors</i></a></li>
         </ul>
       </div>
@@ -60,11 +60,11 @@
           <a class="collection-item" id='cfg-list' href="{% url 'config_list' %}"><i class="material-icons">list</i>
             {% trans "Configuration List" %}</a>
           {% endif %}
+          <a class="collection-item" href="{% url 'details' %}"><i class="material-icons">search</i>
+            {% trans "Available Plugins" %}</a>
         </ul>
 {% endif %}
         <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'details' %}"><i class="material-icons">settings</i>
-            {% trans "Apprise Details" %}</a>
           <a class="collection-item" target="_blank"
             href="https://github.com/caronc/apprise/wiki#notification-services">📣
             {% trans "Notification Services" %}</a>
@@ -110,8 +110,16 @@
         <p>{% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.</p>
         </div>
         {% block body %}{% endblock %}
+        <footer class="page-footer-legal">
+          <small>
+            {{ APPRISE_API_COPYRIGHT }}
+            ·
+            {% blocktrans with license=APPRISE_API_LICENSE %}
+              Licensed under the {{ license }} License.
+            {% endblocktrans %}
+          </small>
+        </footer>
       </div>
-
     </div>
   </div>
   <script>

@@ -24,7 +24,26 @@
 Apprise API package.
 """
 
-__all__ = ["__version__"]
+from __future__ import annotations
 
+__all__: list[str] = [
+    "__author__",
+    "__copyright__",
+    "__description__",
+    "__email__",
+    "__license__",
+    "__status__",
+    "__title__",
+    "__url__",
+    "__version__",
+]
+
+__title__: str = "Apprise API"
+__description__: str = "A lightweight REST API for the Apprise notification framework."
 __version__: str = "1.2.6"
-
+__author__: str = "Chris Caron"
+__license__: str = "MIT"
+__url__: str = "https://github.com/caronc/apprise-api"
+__copyright__ = "Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>"
+__email__ = "lead2gold@gmail.com"
+__status__ = "Production"

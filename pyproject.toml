@@ -48,6 +48,7 @@ dev = [
   "pytest-cov",
   "pytest-django",
   "ruff",
+  "djlint",
   "tox",
   "mock"
 ]
@@ -177,3 +178,26 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["_"]
 
+[tool.djlint]
+# Define our profile
+profile = "django"
+
+# Match existing Python line length
+max_line_length = 120
+
+# Indentation
+indent = 2
+
+extend_exclude = [
+  ".venv",
+  "venv",
+  ".tox",
+  "node_modules",
+  "build",
+  "dist",
+  "lib",
+  "lib64",
+  "static",
+]
+
+ignore = ""

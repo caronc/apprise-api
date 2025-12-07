@@ -55,6 +55,23 @@ a.apprise-lib-ver:hover {
   color: inherit;
 }
 
+.page-footer-legal {
+  margin-top: 2rem;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.page-footer-legal a {
+  text-decoration: none;
+}
+
+.page-footer-legal a:hover {
+  text-decoration: underline;
+}
+
 input {
   display: block;
 }
@@ -272,7 +289,32 @@ textarea {
   border-radius: 999px !important;
 }
 
-.config-id-copy.btn-flat:hover {
+
+.code-snippet {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.code-snippet pre {
+  margin: 0;
+}
+
+.snippet-copy-btn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  padding: 0 0.4rem;
+  min-width: 0;
+  border-radius: 999px;
+}
+
+.snippet-copy-btn .material-icons {
+  font-size: 1.1rem;
+}
+
+#url-list .copy-url-btn:hover,
+.config-id-copy.btn-flat:hover,
+.snippet-copy-btn:hover {
   background-color: rgba(255, 255, 255, 0.06);
 }
 
@@ -329,10 +371,6 @@ textarea {
   bottom: 0.45rem;
   right: 0.75rem;
   opacity: 0.9;
-}
-
-#url-list .copy-url-btn:hover {
-  background-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Notification Details */

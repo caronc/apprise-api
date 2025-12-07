@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block body %}
-  <h4>{% trans 'Apprise Details' %}</h4>
+  <h4>{% trans 'Available Plugins' %}</h4>
   <p>
     {% url 'details' as href %}
     {% blocktrans %}The following services are supported by this <a target="_blank" href="https://github.com/caronc/apprise">Apprise</a> instance.{% endblocktrans %}
@@ -13,11 +13,8 @@
     {% else %}
     {% blocktrans %}To see a listing that identifies all of Apprise services available to this version (enabled or not) click <a href="{{href}}?all=yes">here</a>.{% endblocktrans %}
     {% endif %}
-    <ul>
-      <li>
-        <i class="tiny material-icons">chevron_right</i><strong>{% blocktrans %}Apprise Version:{% endblocktrans %}</strong> {{ details.version }}
-      </li>
-    </ul>
+		<hr/>
+    <div><b>{% blocktrans %}Total plugin(s) supported{% endblocktrans %}:</b> {{ details.schemas|length }}</div>
     <ul class="collapsible">
       {% for entry in details.schemas %}
         <li>

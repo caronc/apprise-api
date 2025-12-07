@@ -24,9 +24,9 @@
 from django.conf import settings
 
 import apprise
+from apprise_api import __author__, __copyright__, __license__, __url__, __version__
 
 from .utils import ConfigCache, gen_unique_config_id
-from apprise_api import __version__
 
 
 def stateful_mode(request):
@@ -50,13 +50,19 @@ def admin_enabled(request):
     return {"APPRISE_ADMIN": settings.APPRISE_ADMIN}
 
 
-def apprise_version(request):
+def apprise_details(request):
     """
-    Returns the current versions of the Apprise Library and API under the hood
+    Returns the current details of the Apprise Library and API under the hood
     """
     return {
         "APPRISE_LIB_VERSION": apprise.__version__,
+
         "APPRISE_API_VERSION": __version__,
+        "APPRISE_API_URL": __url__,
+        "APPRISE_API_LICENSE": __license__,
+        "APPRISE_API_COPYRIGHT": __copyright__,
+
+        "APPRISE_AUTHOR": __author__,
     }
 
 

@@ -92,7 +92,7 @@ TEMPLATES = [
                 "api.context_processors.stateful_mode",
                 "api.context_processors.config_lock",
                 "api.context_processors.admin_enabled",
-                "api.context_processors.apprise_version",
+                "api.context_processors.apprise_details",
             ],
         },
     },
