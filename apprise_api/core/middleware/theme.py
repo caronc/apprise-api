@@ -24,9 +24,8 @@
 #
 import datetime
 
-from django.conf import settings
-
 from core.themes import SITE_THEMES, SiteTheme
+from django.conf import settings
 
 
 class AutoThemeMiddleware:

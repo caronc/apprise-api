@@ -500,13 +500,13 @@ em {
 }
 
 #url-list .card-panel {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  background: #2f3946;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    background: #2f3946;
 }
 
 #url-list .url-header code.url-text {
-  background-color: #212733;
-  color: #e0e6f0;
+    background-color: #212733;
+    color: #e0e6f0;
 }
 
 .chip {
@@ -595,8 +595,7 @@ input[type=text]:not(.browser-default),
 input[type=time]:not(.browser-default),
 input[type=url]:not(.browser-default),
 textarea.materialize-textarea {
-    border-bottom: 1px solid #4c566a
-		color: #e5e9f0;
+    border-bottom: 1px solid #4c566a color: #e5e9f0;
 }
 
 input:not([type]):disabled,
@@ -803,7 +802,8 @@ textarea.materialize-textarea.invalid:focus {
     box-shadow: 0 1px 0 0 #f44336
 }
 
-input, textarea {
+input,
+textarea {
     color: #e5e9f0;
     border: 1px solid #2e3440;
     background-color: #1b1e26
@@ -1039,14 +1039,15 @@ select:disabled {
 }
 
 .dropdown-content {
-	background-color: #2e3440;
+    background-color: #2e3440;
 }
+
 .dropdown-content li {
     color: rgba(0, 0, 0, .87)
 }
 
 .dropdown-content li.active,
-.dropdown-content li:hover{
+.dropdown-content li:hover {
     background-color: #2e3440
 }
 
@@ -1056,7 +1057,7 @@ body.keyboard-focused .dropdown-content li:focus {
 
 .dropdown-content li>a,
 .dropdown-content li>span {
-   color: #d8dee9;
+    color: #d8dee9;
 }
 
 body.keyboard-focused .dropdown-content li:focus {
@@ -1329,18 +1330,18 @@ input[type=range]::-ms-thumb {
 }
 
 .file-selected {
-	color: #ebcb8b;
-	background-color: #2e3440;
+    color: #ebcb8b;
+    background-color: #2e3440;
 }
 
 .chip.selected {
-	color: #fff;
-	background-color: #258528!important;
+    color: #fff;
+    background-color: #258528 !important;
 }
 
 .swal2-popup {
-	background-color: #2e3440;
-  color: #e5e9f0;
+    background-color: #2e3440;
+    color: #e5e9f0;
 }
 
 
@@ -1389,78 +1390,78 @@ input[type=range]::-ms-thumb {
 }
 
 ul.logs {
-	background-color: #1b1e26;
-	color: #e5e9f0;
+    background-color: #1b1e26;
+    color: #e5e9f0;
 }
 
 ul.logs li.log_INFO {
-	color: #e5e9f0;
+    color: #e5e9f0;
 }
 
 ul.logs li.log_DEBUG {
-  color: #606060;
+    color: #606060;
 }
 
 ul.logs li.log_WARNING {
-  color: orange;
+    color: orange;
 }
 
 ul.logs li.log_ERROR {
-  color: #8B0000;
+    color: #8B0000;
 }
 
 /* Apprise dark theme – tab clean-up */
 
 .tabs {
-  /* Let the page background show through behind tabs */
-  background-color: transparent;
-  border-bottom: none;
+    /* Let the page background show through behind tabs */
+    background-color: transparent;
+    border-bottom: none;
 }
 
 .tabs .tab {
-  /* No extra slab behind each tab */
-  background-color: transparent;
+    /* No extra slab behind each tab */
+    background-color: transparent;
 }
 
 /* Base.css already gives us the rounded corners.
  * Here we just define dark colours and avoid square backgrounds.
  */
 .tabs .tab a {
-  background-color: #4c566a;
-  border-left: none;
-  border-bottom: none;
-  color: #d8dee9;
+    background-color: #4c566a;
+    border-left: none;
+    border-bottom: none;
+    color: #d8dee9;
 }
 
 /* Hover / active – subtle pill highlight */
 .tabs .tab a:hover,
 .tabs .tab a.active {
-  background-color: #4c566a;
-  color: #eceff4;
+    background-color: #4c566a;
+    color: #eceff4;
 }
 
 /* Disabled tabs – keep them obviously disabled, but no slab */
 .tabs .tab.disabled a,
 .tabs .tab.disabled a:hover {
-  background-color: transparent;
-  color: #6e7d9c !important;
+    background-color: transparent;
+    color: #6e7d9c !important;
 }
 
 /* Indicator bar under active tab */
 .tabs .indicator {
-  background-color: #ebcb8b !important;
-  height: 3px;
+    background-color: #ebcb8b !important;
+    height: 3px;
 }
 
 /* Copy-toast for dark theme */
 .copy-toast.swal2-popup {
-  background-color: #2f3946;
-  color: #e5e9f0;
-  padding: .35rem .8rem;
+    background-color: #2f3946;
+    color: #e5e9f0;
+    padding: .35rem .8rem;
 }
 
 .copy-toast .swal2-title {
-  margin: 0;
-  font-size: .9rem;
-  font-weight: 500;
+    margin: 0;
+    font-size: .9rem;
+    font-weight: 500;
 }

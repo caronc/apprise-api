@@ -36,8 +36,9 @@
           <img class="left" src="{% static "logo.png" %}" alt="{% trans "Apprise Logo" %}" />
         </a>
         <h1>{% trans "Apprise API" %}</h1>
+           <a class="apprise-api-ver" href="https://github.com/caronc/apprise-api" target="_new">v{{APPRISE_API_VERSION}}</a>
         <ul>
-           <li><a class="apprise-lib-ver" href="https://github.com/caronc/apprise" target="_new">APPRISE v{{APPRISE_VERSION}}</a></li>
+           <li><a class="apprise-lib-ver" href="https://github.com/caronc/apprise" target="_new">APPRISE LIBRARY v{{APPRISE_LIB_VERSION}}</a></li>
            <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><i class="material-icons">invert_colors</i></a></li>
         </ul>
       </div>

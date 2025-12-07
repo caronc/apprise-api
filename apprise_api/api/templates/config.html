@@ -2,7 +2,20 @@
 {% load i18n %}
 {% block body %}
 {% if STATEFUL_MODE != 'disabled' %}
-<h4>{% trans "Management for Config ID:" %} <code class="config-id">{{ key }}</code></h4>
+<h4>
+  {% trans "Management for Config ID:" %}
+  <span class="config-id-wrapper">
+    <code class="config-id">{{ key }}</code>
+    <button
+      type="button"
+      class="btn-flat btn-small config-id-copy"
+      title="{% trans 'Copy Config ID to Clipboard' %}"
+    >
+      <i class="material-icons">content_copy</i>
+    </button>
+  </span>
+</h4>
+
 <div class="row">
   <div class="col s12">
     <ul class="tabs config-overview">
@@ -197,7 +210,9 @@ function update_count() {
   })
 }
 
-function showCopyToast(anchorEl) {
+function showCopyToast(anchorEl, message) {
+  const msg = message || '{% trans "URL copied to clipboard" %}';
+
   // Try SweetAlert2 first so we can anchor to the card
   if (window.Swal && Swal.fire) {
     const card = anchorEl
@@ -208,7 +223,7 @@ function showCopyToast(anchorEl) {
       toast: true,
       target: card,  // anchor inside the card
       position: 'top-end',
-      title: '{% trans "URL copied to clipboard" %}',
+      title: msg,
       showConfirmButton: false,
       timer: 1600,
       timerProgressBar: true,
@@ -221,16 +236,17 @@ function showCopyToast(anchorEl) {
 
   // Fallback to Materialize toast if Swal is not available
   if (window.M && M.toast) {
-    M.toast({ html: '{% trans "URL copied to clipboard" %}' });
+    M.toast({ html: msg });
   }
 }
 
-async function copyToClipboard(text, anchorEl) {
+
+async function copyToClipboard(text, anchorEl, message) {
   // Prefer modern Clipboard API
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
       await navigator.clipboard.writeText(text);
-      showCopyToast(anchorEl);
+      showCopyToast(anchorEl, message);
       return;
     } catch (e) {
       console.warn('navigator.clipboard failed, falling back', e);
@@ -249,9 +265,7 @@ async function copyToClipboard(text, anchorEl) {
 
   try {
     document.execCommand('copy');
-    showCopyToast(anchorEl);
-  } catch (e) {
-    console.warn('document.execCommand("copy") failed', e);
+    showCopyToast(anchorEl, message);
   } finally {
     document.body.removeChild(textarea);
   }
@@ -810,6 +824,20 @@ document.querySelector('label [for="id_tag"]')
 document.querySelector('#id_tag').style.display = 'none';
 /* Initialize our page */
 main_init();
+
+// Config ID copy-to-clipboard
+const configIdEl = document.querySelector('code.config-id');
+const configCopyBtn = document.querySelector('.config-id-copy');
+if (configIdEl && configCopyBtn) {
+  configCopyBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    copyToClipboard(
+      configIdEl.textContent.trim(),
+      configCopyBtn,
+      '{% trans "Config ID copied to clipboard" %}'
+    );
+  }, false);
+}
 
 {% if not CONFIG_LOCK %}
 /* Initialze our configuration */

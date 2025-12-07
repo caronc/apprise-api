@@ -21,6 +21,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, override_settings
 
 
@@ -65,3 +67,51 @@ class ManagerPageTests(SimpleTestCase):
         # An invalid key was specified
         response = self.client.get("/cfg/valid-key")
         assert response.status_code == 200
+
+    def test_get_config(self):
+        """
+        Test retrieving configuration
+        """
+
+        # our key to use
+        key = "test_cfg_config_"
+
+        # No content saved to the location yet
+        response = self.client.post("/cfg/{}".format(key))
+        self.assertEqual(response.status_code, 204)
+
+        # Add some content
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        # Handle case when we try to retrieve our content but we have no idea
+        # what the format is in. Essentialy there had to have been disk
+        # corruption here or someone meddling with the backend.
+        with patch("gzip.open", side_effect=OSError):
+            response = self.client.post("/cfg/{}".format(key))
+            assert response.status_code == 500
+
+        # Now we should be able to see our content
+        response = self.client.post("/cfg/{}".format(key))
+        assert response.status_code == 200
+
+        # Add a YAML file
+        response = self.client.post(
+            "/add/{}".format(key),
+            {
+                "format": "yaml",
+                "config": """
+                urls:
+                   - dbus://""",
+            },
+        )
+        assert response.status_code == 200
+
+        # Now retrieve our YAML configuration
+        response = self.client.post("/cfg/{}".format(key))
+        assert response.status_code == 200
+
+        # Verify that the correct Content-Type is set in the header of the
+        # response
+        assert "Content-Type" in response
+        assert response["Content-Type"].startswith("text/yaml")

@@ -1,42 +1,45 @@
 .tabs .tab a {
-	color:#2bbbad;
+  color: #2bbbad;
   background-color: #f3f3f3;
-	border-bottom: 1px solid #464646;
+  border-bottom: 1px solid #464646;
 }
+
 .tabs.tabs-transparent .tab a,
 .tabs.tabs-transparent .tab.disabled a,
 .tabs.tabs-transparent .tab.disabled a:hover,
-.tab.disabled i.material-icons{
-  color:#a7a7a7
+.tab.disabled i.material-icons {
+  color: #a7a7a7
 }
+
 .tabs .tab.disabled a,
 .tabs .tab.disabled a:hover {
   background-color: #f3f3f3;
-  color:#a7a7a7
+  color: #a7a7a7
 }
+
 .file-selected {
-	color: #039be5;
-	background-color: #f3f3f3;
+  color: #039be5;
+  background-color: #f3f3f3;
 }
 
 #url-list .card-panel {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-	background-color: #f3f3f3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  background-color: #f3f3f3;
 }
 
 #url-list .url-header code.url-text {
-	background-color: #fff;
+  background-color: #fff;
   color: #464646;
 }
 
 .chip {
-	background-color: #fff !important;
+  background-color: #fff !important;
   border: 1px solid #464646 !important;
   color: #464646 !important;
 }
 
 .chip.selected {
-	background-color: #258528!important;
+  background-color: #258528 !important;
   color: white !important;
 }
 
@@ -60,11 +63,12 @@ ul.logs li.log_WARNING {
 ul.logs li.log_ERROR {
   color: #8B0000;
 }
+
 /* Copy-toast for light theme */
 .copy-toast.swal2-popup {
   background-color: #f3f3f3;
   color: #464646;
-  box-shadow: 0 2px 4px rgba(0,0,0,.25);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .25);
   border-radius: 4px;
   padding: .35rem .8rem;
 }
