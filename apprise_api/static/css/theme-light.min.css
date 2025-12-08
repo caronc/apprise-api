@@ -1,27 +1,61 @@
-.tabs .tab a {
+/* Typography & Icons */
+em {
+  color: #004d40;
+}
+
+.url-enabled {
+  color: #004d40;
+}
+
+.url-disabled {
+  color: #8B0000;
+}
+
+.no-config .info {
+  color: #004d40;
+}
+
+.api-details .plugin-index {
+  color: #666;
+}
+
+#overview strong {
+  color: #004d40;
+  background-color: #eee;
+}
+
+/* Tabs - Prefixed with 'body' to override Materialize */
+body .tabs .tab a {
   color: #2bbbad;
   background-color: #f3f3f3;
   border-bottom: 1px solid #464646;
 }
 
-.tabs.tabs-transparent .tab a,
-.tabs.tabs-transparent .tab.disabled a,
-.tabs.tabs-transparent .tab.disabled a:hover,
-.tab.disabled i.material-icons {
-  color: #a7a7a7
+body .tabs .tab a:hover,
+body .tabs .tab a.active {
+  background-color: #eee;
+  color: #004d40;
+  font-weight: bold;
 }
 
-.tabs .tab.disabled a,
-.tabs .tab.disabled a:hover {
+body .tabs .tab.disabled a,
+body .tabs .tab.disabled a:hover {
   background-color: #f3f3f3;
-  color: #a7a7a7
+  color: #a7a7a7;
 }
 
-.file-selected {
-  color: #039be5;
-  background-color: #f3f3f3;
+body .tabs .indicator {
+  background-color: #004d40;
 }
 
+/* Standard Hovers */
+.collection a.collection-item:not(.active):hover,
+.tabs .tab a:focus,
+.tabs .tab a:focus.active {
+  background-color: #eee;
+}
+
+/* Cards & Lists */
 #url-list .card-panel {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   background-color: #f3f3f3;
@@ -32,6 +66,11 @@
   color: #464646;
 }
 
+#url-list .card-panel .url-id {
+  color: #aaa;
+}
+
+/* Buttons & Chips */
 .chip {
   background-color: #fff !important;
   border: 1px solid #464646 !important;
@@ -43,28 +82,23 @@
   color: white !important;
 }
 
-#overview strong {
-  color: #004d40;
-  background-color: #eee;
+.file-selected {
+  color: #039be5;
+  background-color: #f3f3f3;
 }
 
-ul.logs li.log_INFO {
-  color: black;
+#url-list .copy-url-btn:hover,
+.config-id-copy.btn-flat:hover,
+.snippet-copy-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
-ul.logs li.log_DEBUG {
-  color: #606060;
+/* Health Check */
+#health-check {
+  background-color: #f883791f;
 }
 
-ul.logs li.log_WARNING {
-  color: orange;
-}
-
-ul.logs li.log_ERROR {
-  color: #8B0000;
-}
-
-/* Copy-toast for light theme */
+/* Notifications */
 .copy-toast.swal2-popup {
   background-color: #f3f3f3;
   color: #464646;

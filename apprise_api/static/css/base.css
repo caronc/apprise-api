@@ -1,5 +1,6 @@
-/* === Main layout: side menu vs content === */
-
+/* =========================================
+   1. Main Layout & Navigation
+   ========================================= */
 .main-layout {
   margin-top: 0.5rem;
 }
@@ -27,21 +28,15 @@
   }
 }
 
-.nav h1 {
-  margin: 0.4rem;
-  font-size: 2.1rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  float: left;
-}
-
 .nav ul {
   float: right;
   font-style: normal;
 }
+
 .nav ul i {
   font-size: 2.0rem;
 }
+
 .nav ul li .apprise-lib-ver {
   font-size: 0.75rem;
 }
@@ -68,10 +63,9 @@ img.apprise-mini-logo {
 }
 
 a.apprise-api-ver,
-a.apprise-api-ver:hover,
-a.apprise-lib-ver,
-a.apprise-lib-ver:hover {
+a.apprise-lib-ver {
   color: inherit;
+  text-decoration: none;
 }
 
 .page-footer-legal {
@@ -91,19 +85,18 @@ a.apprise-lib-ver:hover {
   text-decoration: underline;
 }
 
+/* =========================================
+   2. Global Typography & Elements
+   ========================================= */
 input {
   display: block;
-}
-
-.tabs .tab.disabled a,
-.tabs .tab.disabled a:hover {
-  font-weight: inherit
 }
 
 code {
   font-family: monospace;
   white-space: normal;
   padding: 0.2rem;
+  border-radius: 4px;
 }
 
 h1,
@@ -118,12 +111,41 @@ h4 {
   margin-bottom: 0.75rem;
 }
 
+h6 {
+  font-weight: bold;
+}
+
+/* Specific H4 fix for welcome/details pages */
+h4 em {
+  font-size: 2.0rem;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  word-break: break-all;
+  line-height: 1.0em;
+  font-style: normal;
+  font-weight: bold;
+}
+
 td,
 th {
   vertical-align: top;
   padding-top: 0;
 }
 
+textarea {
+  height: 16rem;
+  font-family: monospace;
+}
+
+.material-icons {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* =========================================
+   3. Page Specific: Welcome & Details
+   ========================================= */
 .api-welcome {
   margin-top: 0.5rem;
 }
@@ -142,6 +164,15 @@ th {
   word-break: break-word;
 }
 
+.api-details {
+  margin-top: 0.5rem;
+}
+
+.api-details .details-header p,
+.api-details .details-summary {
+  max-width: 70rem;
+}
+
 .api-details .collapsible-header {
   display: flex;
   align-items: center;
@@ -154,13 +185,9 @@ th {
   width: 3rem;
   text-align: right;
   margin-right: 0.5rem;
-  color: #666;
 }
 
-.api-details .plugin-chevron {
-  margin-right: 0.4rem;
-}
-
+.api-details .plugin-chevron,
 .api-details .plugin-status {
   margin-right: 0.4rem;
 }
@@ -182,27 +209,8 @@ th {
   margin-left: 0.5rem;
 }
 
-.api-details .plugin-actions a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .api-details .plugin-actions .material-icons {
   font-size: 1.2rem;
-}
-
-.api-details {
-  margin-top: 0.5rem;
-}
-
-.api-details .details-header {
-  margin-top: 0;
-}
-
-.api-details .details-header p,
-.api-details .details-summary {
-  max-width: 70rem;
 }
 
 .detail-buttons--width {
@@ -211,77 +219,33 @@ th {
   padding-left: 0;
 }
 
-ul.detail-buttons strong {
-  font-weight: 800;
-}
-
-h4 em {
-  font-size: 2.0rem;
-  display: inline-block;
-  margin: 0;
-  padding: 0;
-  word-break: break-all;
-  line-height: 1.0em;
-}
-
-em {
-  color: #004d40;
-  font-weight: bold;
+/* =========================================
+   4. Config Page, Tabs & Cards
+   ========================================= */
+.collapsible-body {
+  padding: 1rem 2rem;
 }
 
 .no-config .info {
-  color: #004d40;
   font-size: 3.3rem;
-
-}
-
-textarea {
-  height: 16rem;
-  font-family: monospace;
-}
-
-.collapsible-body {
-  padding: 1rem 2rem;
 }
 
 #overview strong {
   display: inline-block;
 }
 
+#overview pre {
+  margin-left: 2.0rem;
+}
+
+/* Base Tab Structure */
 .tabs .tab a {
   border-radius: 25px 25px 0 0;
 }
 
-.collection a.collection-item:not(.active):hover,
-.tabs .tab a:focus,
-.tabs .tab a:focus.active {
-  background-color: #eee;
-}
-
-.tabs .tab a:hover,
-.tabs .tab a.active {
-  background-color: transparent;
-  color: #004d40;
-  font-weight: bold;
-  background-color: #eee;
-}
-
-.tabs .tab.disabled a,
-.tabs .tab.disabled a:hover {
-  color: rgba(102, 147, 153, 0.7);
-}
-
-.tabs .indicator {
-  background-color: #004d40;
-}
-
-.tabs .tab-locked a {
-  color: rgba(212, 161, 157, 0.7);
-}
-
-.tabs .tab-locked a:hover,
-.tabs .tab-locked a.active {
-  color: #6b0900;
+.tabs .tab.disabled a {
+  font-weight: inherit;
+  cursor: default;
 }
 
 .tabs.config-overview {
@@ -300,15 +264,21 @@ textarea {
   }
 }
 
-.material-icons {
-  display: inline-flex;
-  vertical-align: middle;
+/* URL List Grid */
+#url-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
+  grid-auto-rows: auto;
+  grid-column-gap: 0.8rem;
+  grid-row-gap: 0.6rem;
+  padding: 0;
+  margin: 0;
 }
 
-.chip {
-  margin: 0.3rem;
-  background-color: inherit;
-  cursor: pointer;
+@media (max-width: 1100px) {
+  #url-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 #url-list .card-panel {
@@ -320,19 +290,6 @@ textarea {
   float: left;
   position: relative;
   padding: 0.5rem 0.75rem 1.8rem 0.75rem;
-}
-
-.wide-buttons {
-  width: 90%;
-  min-width: 60%;
-}
-
-.service_name {
-  width: 40rem;
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 @media (max-width: 1450px) {
@@ -361,20 +318,74 @@ textarea {
   word-break: break-all;
 }
 
-/* Copy button */
-#url-list .copy-url-btn {
+#url-list code {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  white-space: wrap;
+  text-wrap: wrap;
+  overflow-wrap: break-word;
+  border-radius: 5px;
+  margin-top: 0.8rem;
+  display: block;
+}
+
+#url-list .service_name {
+  width: 40rem;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#url-list .card-panel .url-id {
+  width: auto;
+  margin: 0;
+  background-color: inherit;
+  padding: 0.15em 0.35em;
+  font-size: 0.65em;
+  border: 0;
+  position: absolute;
+  bottom: 0.45rem;
+  right: 0.75rem;
+  opacity: 0.9;
+}
+
+/* =========================================
+   5. Buttons, Chips & Inputs
+   ========================================= */
+.chip {
+  margin: 0.3rem;
+  cursor: pointer;
+}
+
+.chip.selected {
+  font-weight: 600;
+}
+
+#url-list .card-panel .chip {
+  margin: 0.3rem 0.35rem 0.9rem 0;
+}
+
+#url-list .copy-url-btn,
+.config-id-copy.btn-flat,
+.snippet-copy-btn {
+  border-radius: 999px !important;
   flex: 0 0 auto;
   padding: 0 0.35rem;
   min-width: 0;
-  margin-top: 0.15rem;
-  border-radius: 999px;
+  background-color: transparent;
 }
 
-#url-list .copy-url-btn .material-icons {
+#url-list .copy-url-btn {
+  margin-top: 0.15rem;
+}
+
+#url-list .copy-url-btn .material-icons,
+.config-id-copy.btn-flat .material-icons,
+.snippet-copy-btn .material-icons {
   font-size: 1.1rem;
 }
 
-/* Config ID copy button in header */
 .config-id-wrapper {
   display: inline-flex;
   align-items: center;
@@ -383,21 +394,12 @@ textarea {
 }
 
 .config-id-copy.btn-flat {
-  flex: 0 0 auto;
-  padding: 0 0.35rem;
-  min-width: 0;
   margin-left: 0.2rem;
-  border-radius: 999px;
 }
 
-.config-id-copy.btn-flat .material-icons {
-  font-size: 1.1rem;
+code.config-id {
+  font-size: 0.7em;
 }
-
-.config-id-copy.btn-flat {
-  border-radius: 999px !important;
-}
-
 
 .code-snippet {
   position: relative;
@@ -412,122 +414,9 @@ textarea {
   position: absolute;
   top: 0.35rem;
   right: 0.5rem;
-  padding: 0 0.4rem;
-  min-width: 0;
-  border-radius: 999px;
 }
 
-.snippet-copy-btn .material-icons {
-  font-size: 1.1rem;
-}
-
-#url-list .copy-url-btn:hover,
-.config-id-copy.btn-flat:hover,
-.snippet-copy-btn:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-}
-
-#url-list code {
-  overflow-x: hidden;
-  overflow-y: hidden;
-  white-space: wrap;
-  text-wrap: wrap;
-  overflow-wrap: break-word;
-  border-radius: 5px;
-  margin-top: 0.8rem;
-  display: block;
-}
-
-/* URL ID stays pinned above, right, as before */
-#url-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
-  grid-auto-rows: auto;
-  grid-column-gap: 0.8rem;
-  grid-row-gap: 0.6rem;
-  padding: 0;
-  margin: 0;
-}
-
-@media (max-width: 1100px) {
-  #url-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* Chips remain below the header */
-#url-list .card-panel .chip {
-  margin: 0.3rem 0.35rem 0.9rem 0;
-}
-
-#url-list .copy-url-btn {
-  border-radius: 999px;
-}
-
-/* URL ID badge pinned to bottom-right of each card */
-#url-list .card-panel .url-id {
-  width: auto;
-  margin: 0;
-  background-color: inherit;
-  color: #aaa;
-  padding: 0.15em 0.35em;
-  font-size: 0.65em;
-  border: 0;
-  position: absolute;
-  bottom: 0.45rem;
-  right: 0.75rem;
-  opacity: 0.9;
-}
-
-/* Notification Details */
-ul.logs {
-  font-family: monospace, monospace;
-  height: 60%;
-  overflow: auto;
-}
-
-ul.logs li {
-  display: flex;
-  text-align: left;
-  width: 50em;
-}
-
-ul.logs li div.log_time {
-  font-weight: normal;
-  flex: 0 15em;
-}
-
-ul.logs li div.log_level {
-  font-weight: bold;
-  align: right;
-  flex: 0 5em;
-}
-
-ul.logs li div.log_msg {
-  flex: 1;
-}
-
-.url-enabled {
-  color: #004d40;
-}
-
-.url-disabled {
-  color: #8B0000;
-}
-
-h6 {
-  font-weight: bold;
-}
-
-#overview pre {
-  margin-left: 2.0rem
-}
-
-code.config-id {
-  font-size: 0.7em;
-}
-
-/* file button styled */
+/* File Input Hack */
 .btn-file {
   position: relative;
   overflow: hidden;
@@ -558,12 +447,8 @@ code.config-id {
   overflow: hidden;
 }
 
-.chip.selected {
-  font-weight: 600;
-}
-
+/* Health Check */
 #health-check {
-  background-color: #f883791f;
   border-radius: 25px;
   padding: 2em;
   margin-bottom: 2em;
@@ -573,13 +458,13 @@ code.config-id {
   font-size: 30px;
 }
 
-#health-check h4 .material-icons {
+#health-check h4 .material-icons,
+#health-check li .material-icons {
   margin-top: -0.2em;
 }
 
 #health-check li .material-icons {
   font-size: 30px;
-  margin-top: -0.2em;
 }
 
 #health-check ul {

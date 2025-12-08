@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% load i18n %}
 
@@ -812,7 +812,7 @@
     }
     }
   {% endif %}
-{% endblock %}
+{% endblock jsfooter %}
 {% block onload %}
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
@@ -878,4 +878,4 @@
     notify_init();
     form_file_input_hack();
   {% endif %}
-{% endblock %}
+{% endblock onload %}

@@ -138,29 +138,29 @@
         <p>
           {% blocktrans %}<em>Note:</em> If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_ATTACH_SIZE=0</code> and reload your Apprise instance.{% endblocktrans %}
         </p>
-      </p>
-    </li>
-  </ul>
-  <p>
-    {% blocktrans %}Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files.  In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too.{% endblocktrans %}
-  </p>
-  <p>
-    {% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.
-  </p>
-</div>
-{% block body %}{% endblock %}
-<footer class="page-footer-legal">
-  <small>
-    <hr />
-    <a href="{{ APPRISE_API_URL }}" target="_new">{% trans "Apprise API" %} v{{ APPRISE_API_VERSION }}</a>
-    <br />
-    {{ APPRISE_API_COPYRIGHT }}
-    ·
-    {% blocktrans with license=APPRISE_API_LICENSE %}
+      </li>
+    </ul>
+    <p>
+      {% blocktrans %}Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files.  In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too.{% endblocktrans %}
+    </p>
+    <p>
+      {% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.
+    </p>
+  </div>
+  {% block body %}
+  {% endblock body %}
+  <footer class="page-footer-legal">
+    <small>
+      <hr />
+      <a href="{{ APPRISE_API_URL }}" target="_new">{% trans "Apprise API" %} v{{ APPRISE_API_VERSION }}</a>
+      <br />
+      {{ APPRISE_API_COPYRIGHT }}
+      ·
+      {% blocktrans with license=APPRISE_API_LICENSE %}
               Licensed under the {{ license }} License.
             {% endblocktrans %}
-  </small>
-</footer>
+    </small>
+  </footer>
 </div>
 </div>
 </div>
@@ -174,7 +174,7 @@
       // healthcheck
       health_check()
     });
-    {% block jsfooter %} {% endblock %}
+    {% block jsfooter %} {% endblock jsfooter %}
     function health_check() {
       // perform our health check
       document.querySelector('#health-check').style.display = 'none';
