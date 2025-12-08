@@ -192,4 +192,4 @@ indent = 2
 blank_line_after_tag = "load,extends,include"
 
 extend_exclude = ".venv,venv,.tox,node_modules,build,dist,lib,lib64,static"
-ignore = ""
+ignore = "H006,H021"

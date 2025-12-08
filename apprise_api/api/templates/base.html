@@ -7,6 +7,10 @@
     <meta charset="utf-8">
     <!--Let browser know website is optimized for mobile-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="{{ APPRISE_API_DESCRIPTION|default:'Apprise API - notification service API' }}" />
+    <meta name="keywords"
+          content="{{ APPRISE_API_KEYWORDS|default:'apprise,notifications,api,alerts' }}" />
     <link rel="shortcut icon"
           type="image/png"
           href="{% static 'favicon.ico' %}" />
@@ -31,7 +35,7 @@
     <title>
       {% block title %}
         {% trans "Apprise API" %}
-      {% endblock %}
+      {% endblock title %}
     </title>
   </head>
   <body>
@@ -69,15 +73,15 @@
           {% trans "Configuration Manager" %}</a>
           {% if not CONFIG_LOCK %}
           <a class="collection-item"
-             id='cfg-gen'
+             id="cfg-gen"
              href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
         {% trans "New Configuration" %}</a>
       {% endif %}
-      {% if STATEFUL_MODE == 'simple' and APPRISE_ADMIN %}
-      <a class="collection-item" id='cfg-list' href="{% url 'config_list' %}"><i class="material-icons">list</i>
+      {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN %}
+      <a class="collection-item" id="cfg-list" href="{% url 'config_list' %}"><i class="material-icons">list</i>
     {% trans "Configuration List" %}</a>
   {% endif %}
-<a class="collection-item" href="{% url 'details' %}"><i class="material-icons">search</i>
+<a class="collection-item" href="{% url "details" %}"><i class="material-icons">search</i>
 {% trans "Available Plugins" %}</a>
 </ul>
 {% endif %}
@@ -104,7 +108,8 @@
      target="_blank"
      href="https://github.com/sponsors/caronc"><i class="material-icons" style="color: red;">favorite</i> <strong>{% trans "Sponsor Apprise Development" %}</strong></a>
 </ul>
-{% block menu %}{% endblock %}
+{% block menu %}
+{% endblock menu %}
 </div>
 <!-- Main content -->
 <div class="col s12 m9 l9 main-content">

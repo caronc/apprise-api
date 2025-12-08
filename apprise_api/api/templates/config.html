@@ -10,7 +10,7 @@
         <code class="config-id">{{ key }}</code>
         <button type="button"
                 class="btn-flat btn-small config-id-copy"
-                title="{% trans 'Copy Config ID to Clipboard' %}">
+                title="{% trans "Copy Config ID to Clipboard" %}">
           <i class="material-icons">content_copy</i>
         </button>
       </span>
@@ -61,32 +61,32 @@
           </li>
           <li>
             {% blocktrans %}
-          In the future you can return to this configuration screen at any time by placing the following into your browser:
-          {% endblocktrans %}
+              In the future you can return to this configuration screen at any time by placing the following into your browser:
+              {% endblocktrans %}
             <code>{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code>
           </li>
           <li>
             {% blocktrans %}
-          Use the <strong><i class="material-icons">settings</i> Configuration</strong> section to prepare and save your Apprise configuration.
-          {% endblocktrans %}
+              Use the <strong><i class="material-icons">settings</i> Configuration</strong> section to prepare and save your Apprise configuration.
+              {% endblocktrans %}
             <ul>
               <li>
                 {% blocktrans %}
-          <i class="material-icons">lightbulb_outline</i>You can always refer to the
-          <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
-          {% endblocktrans %}
+              <i class="material-icons">lightbulb_outline</i>You can always refer to the
+              <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
+              {% endblocktrans %}
               </li>
             </ul>
           </li>
           <li>
             {% blocktrans %}
-          Use the <strong><i class="material-icons">web</i> Review</strong> section to review what was parsed/detected from your defined configuration.
-          {% endblocktrans %}
+              Use the <strong><i class="material-icons">web</i> Review</strong> section to review what was parsed/detected from your defined configuration.
+              {% endblocktrans %}
           </li>
           <li>
             {% blocktrans %}
-          Use the <strong><i class="material-icons">announcement</i> Notifications</strong> section to test out your saved configuration.
-          {% endblocktrans %}
+              Use the <strong><i class="material-icons">announcement</i> Notifications</strong> section to test out your saved configuration.
+              {% endblocktrans %}
           </li>
         </ol>
       </div>
@@ -95,10 +95,10 @@
         <h5>{% trans "Apprise Configuration is Locked" %}</h5>
         <p>
           {% blocktrans %}At this time, the administrator of this server has locked down all configuration. This means
-      That pre-created configuration is securely hidden for the purpose of notification transmission only.
+          That pre-created configuration is securely hidden for the purpose of notification transmission only.
 
-      New configuration can not be set, and existing configuration can not be modified or viewed.
-      {% endblocktrans %}
+          New configuration can not be set, and existing configuration can not be modified or viewed.
+          {% endblocktrans %}
         </p>
       </div>
     {% endif %}
@@ -112,26 +112,37 @@
         <div class="code-snippet"
              data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all'>
           <pre><code class="bash">apprise --body="Test Message" \<br />
-           &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
         </div>
         {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
         <div class="code-snippet"
              data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
           <pre><code class="bash">apprise --body="Test Message" \<br />
-           &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
-           &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
-           &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br />
-           </code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br />
+               </code></pre>
         </div>
         {% if not CONFIG_LOCK %}
           <p>
             {% blocktrans %}The following command would cause apprise to retrieve the configuration loaded and
-      send a test notification to all of your added services:{% endblocktrans %}
+          send a test notification to all of your added services:{% endblocktrans %}
           </p>
           <div class="code-snippet"
-               data-copy-text='apprise --body="Test Message" --tag=all --config={{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+            data-copy-text="apprise --body=\"
+            Test
+            Message
+            "
+            --tag="all"
+            --config="{{ request.scheme }}"
+            ://
+            {{ request.META.HTTP_HOST }}
+            {{ BASE_URL }}
+            /cfg/
+            {{ key }}
+            ">
             <pre><code class="bash">apprise --body="Test Message" --tag=all \<br />
-           &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
           </div>
           {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
           <div class="code-snippet"
@@ -151,36 +162,36 @@
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+                   &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+                   &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
+                   &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         </div>
         {% blocktrans %}When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:{% endblocktrans %}
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+              &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         </div>
         {% blocktrans %}When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:{% endblocktrans %}
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+              &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         </div>
         {% blocktrans %}Sends a notification to our endpoints with an attachment and no body specified:{% endblocktrans %}
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl -X POST \<br />
-           &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br />
-           &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br />
-           &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br />
+               &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br />
+               &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         </div>
       </div>
     {% endif %}
@@ -207,7 +218,7 @@
         <div>
           <i class="material-icons info">info</i>
           {% blocktrans %}Once you have successfully loaded <i>at least one Apprise URL</i> on the <strong><i class="material-icons">settings</i> Configuration</strong> section, your loaded entries will display here.
-      {% endblocktrans %}
+          {% endblocktrans %}
         </div>
         <div class="divider"></div>
       </div>
@@ -228,8 +239,8 @@
   </div>
   <div id="notify" class="col s12">
     {% blocktrans %}
-      You can send a notification using the loaded configuration:
-      {% endblocktrans %}
+          You can send a notification using the loaded configuration:
+          {% endblocktrans %}
     <form id="donotify"
           enctype="multipart/form-data"
           action="{% url "notify" key %}"
@@ -248,7 +259,7 @@
   <p>{% blocktrans %}The administrator of this system has disabled persistent storage.{% endblocktrans %}</p>
 </div>
 {% endif %}
-{% endblock %}
+{% endblock body %}
 {% block jsfooter %}
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
