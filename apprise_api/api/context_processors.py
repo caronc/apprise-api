@@ -56,6 +56,7 @@ def apprise_details(request):
     """
     return {
         "APPRISE_LIB_VERSION": apprise.__version__,
+        "APPRISE_LIB_URL": "http://github.com/caronc/apprise",
 
         "APPRISE_API_VERSION": __version__,
         "APPRISE_API_URL": __url__,

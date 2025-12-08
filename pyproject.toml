@@ -188,16 +188,8 @@ max_line_length = 120
 # Indentation
 indent = 2
 
-extend_exclude = [
-  ".venv",
-  "venv",
-  ".tox",
-  "node_modules",
-  "build",
-  "dist",
-  "lib",
-  "lib64",
-  "static",
-]
+# Add this to help with tag placement if you feel they are too "squashed"
+blank_line_after_tag = "load,extends,include"
 
+extend_exclude = ".venv,venv,.tox,node_modules,build,dist,lib,lib64,static"
 ignore = ""

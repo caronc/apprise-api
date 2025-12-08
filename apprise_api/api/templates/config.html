@@ -1,228 +1,245 @@
 {% extends 'base.html' %}
-{% load i18n %}
-{% block body %}
-{% if STATEFUL_MODE != 'disabled' %}
-<h4>
-  {% trans "Management for Config ID:" %}
-  <span class="config-id-wrapper">
-    <code class="config-id">{{ key }}</code>
-    <button
-      type="button"
-      class="btn-flat btn-small config-id-copy"
-      title="{% trans 'Copy Config ID to Clipboard' %}"
-    >
-      <i class="material-icons">content_copy</i>
-    </button>
-  </span>
-</h4>
 
-<div class="row">
-  <div class="col s12">
-    <ul class="tabs config-overview">
-      <li class="tab col s3"><a class="active" href="#overview"><i class="material-icons">info</i>
-          {% trans "Overview" %}</a></li>
-      <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3"><a href="#config"><i class="material-icons">{% if not CONFIG_LOCK %}settings{% else %}lock{% endif %}</i> {%trans "Configuration" %}</a>
+{% load i18n %}
+
+{% block body %}
+  {% if STATEFUL_MODE != 'disabled' %}
+    <h4>
+      {% trans "Management for Config ID:" %}
+      <span class="config-id-wrapper">
+        <code class="config-id">{{ key }}</code>
+        <button type="button"
+                class="btn-flat btn-small config-id-copy"
+                title="{% trans 'Copy Config ID to Clipboard' %}">
+          <i class="material-icons">content_copy</i>
+        </button>
+      </span>
+    </h4>
+    <div class="row">
+      <div class="col s12">
+        <ul class="tabs config-overview">
+          <li class="tab col s3">
+          <a class="active" href="#overview"><i class="material-icons">info</i>
+        {% trans "Overview" %}</a>
       </li>
-      <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3"><a href="#review"><i class="material-icons">{% if not CONFIG_LOCK %}web{% else %}lock{% endif %}</i> {%trans "Review" %}</a>
+      <li class="tab {% if CONFIG_LOCK %}disabled{% endif %}col s3">
+        <a href="#config"><i class="material-icons">
+          {% if not CONFIG_LOCK %}
+            settings
+          {% else %}
+            lock
+          {% endif %}
+        </i> {% trans "Configuration" %}</a>
       </li>
-      <li class="tab col s3"><a href="#notify"><i class="material-icons">announcement</i> {%trans "Notifications" %}{% if not CONFIG_LOCK %} <span class="card-count"></span>{% endif %}</a>
+      <li class="tab {% if CONFIG_LOCK %}disabled{% endif %}col s3">
+        <a href="#review"><i class="material-icons">
+          {% if not CONFIG_LOCK %}
+            web
+          {% else %}
+            lock
+          {% endif %}
+        </i> {% trans "Review" %}</a>
+      </li>
+      <li class="tab col s3">
+        <a href="#notify"><i class="material-icons">announcement</i> {% trans "Notifications" %}
+          {% if not CONFIG_LOCK %}<span class="card-count"></span>{% endif %}
+        </a>
       </li>
     </ul>
   </div>
   <div id="overview" class="col s12">
     {% if not CONFIG_LOCK %}
-    <div class="section">
-      <h5>{% trans "Getting Started" %}</h5>
-      <ol>
-        <li>
-          {% trans "Verify your Apprise API Status:" %} <strong><a href="{% url 'health' %}">click here</a></strong>
-        </li>
-        <li>
-          {% trans "Here is where you can store your Apprise configuration associated with the key:" %} <code>{{key}}</code>
-          {% trans "For some examples on how to build a development environment around this:" %} <strong><a href="{% url 'welcome'%}?key={{key}}">click here</a></strong>
-        </li>
-        <li>
-          {% blocktrans %}
+      <div class="section">
+        <h5>{% trans "Getting Started" %}</h5>
+        <ol>
+          <li>
+            {% trans "Verify your Apprise API Status:" %} <strong><a href="{% url 'health' %}">click here</a></strong>
+          </li>
+          <li>
+            {% trans "Here is where you can store your Apprise configuration associated with the key:" %} <code>{{ key }}</code>
+            {% trans "For some examples on how to build a development environment around this:" %} <strong><a href="{% url 'welcome' %}?key={{ key }}">click here</a></strong>
+          </li>
+          <li>
+            {% blocktrans %}
           In the future you can return to this configuration screen at any time by placing the following into your browser:
           {% endblocktrans %}
-          <code>{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/{{key}}</code>
-        </li>
-        <li>
-          {% blocktrans %}
+            <code>{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code>
+          </li>
+          <li>
+            {% blocktrans %}
           Use the <strong><i class="material-icons">settings</i> Configuration</strong> section to prepare and save your Apprise configuration.
           {% endblocktrans %}
-      <ul>
-        <li>
-          {% blocktrans %}
+            <ul>
+              <li>
+                {% blocktrans %}
           <i class="material-icons">lightbulb_outline</i>You can always refer to the
           <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
           {% endblocktrans %}
-        </li>
-      </ul>
-        </li>
-        <li>
-          {% blocktrans %}
+              </li>
+            </ul>
+          </li>
+          <li>
+            {% blocktrans %}
           Use the <strong><i class="material-icons">web</i> Review</strong> section to review what was parsed/detected from your defined configuration.
           {% endblocktrans %}
-        </li>
-        <li>
-          {% blocktrans %}
+          </li>
+          <li>
+            {% blocktrans %}
           Use the <strong><i class="material-icons">announcement</i> Notifications</strong> section to test out your saved configuration.
           {% endblocktrans %}
-        </li>
-      </ol>
-    </div>
+          </li>
+        </ol>
+      </div>
     {% else %}
-    <div class="section">
-      <h5>{% trans "Apprise Configuration is Locked" %}</h5>
-      <p>
-      {% blocktrans %}At this time, the administrator of this server has locked down all configuration. This means
+      <div class="section">
+        <h5>{% trans "Apprise Configuration is Locked" %}</h5>
+        <p>
+          {% blocktrans %}At this time, the administrator of this server has locked down all configuration. This means
       That pre-created configuration is securely hidden for the purpose of notification transmission only.
 
       New configuration can not be set, and existing configuration can not be modified or viewed.
-      {% endblocktrans %}</p>
-    </div>
+      {% endblocktrans %}
+        </p>
+      </div>
     {% endif %}
-		{% if not CONFIG_LOCK %}
-    <div class="section has-config">
-      <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
-      <h6>{% trans "Using The Apprise CLI" %}</h6>
-      <p>
-      {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/{{key}}/?tags=all'>
-           <pre><code class="bash">apprise --body="Test Message" \<br/>
+    {% if not CONFIG_LOCK %}
+      <div class="section has-config">
+        <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
+        <h6>{% trans "Using The Apprise CLI" %}</h6>
+        <p>
+          {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
+        </p>
+        <div class="code-snippet"
+             data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all'>
+          <pre><code class="bash">apprise --body="Test Message" \<br />
            &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
-			</div>
-      {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/{{key}}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
-           <pre><code class="bash">apprise --body="Test Message" \<br/>
-           &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br/>
-           &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br/>
-           &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br/>
+        </div>
+        {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
+        <div class="code-snippet"
+             data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
+          <pre><code class="bash">apprise --body="Test Message" \<br />
+           &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
+           &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
+           &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br />
            </code></pre>
-			</div>
-      </p>
-      {% if not CONFIG_LOCK %}
-      <p>
-      {% blocktrans %}The following command would cause apprise to retrieve the configuration loaded and
+        </div>
+        {% if not CONFIG_LOCK %}
+          <p>
+            {% blocktrans %}The following command would cause apprise to retrieve the configuration loaded and
       send a test notification to all of your added services:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='apprise --body="Test Message" --tag=all --config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/{{key}}'>
-           <pre><code class="bash">apprise --body="Test Message" --tag=all \<br/>
+          </p>
+          <div class="code-snippet"
+               data-copy-text='apprise --body="Test Message" --tag=all --config={{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+            <pre><code class="bash">apprise --body="Test Message" --tag=all \<br />
            &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
-			</div>
-      {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/{{key}}'
-         data-copy-label='{% trans "Apprise configuration entry copied to clipboard" %}'>
-			</div>
-      <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
-      {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='apprise --body="Test Message" --tag=all'>
-           <pre><code class="bash">apprise --body="Test Message" --tag=all</em></code></pre>
-			</div>
-      </p>
-
-      {% endif %}
-      <h6>{% trans "Using CURL" %}</h6>
-      <p>
-      {% blocktrans %}The following command would cause the Apprise API to notify all of your services:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='curl -X POST -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify{{key}}'>
-           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-               &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-               &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
+          </div>
+          {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+          <div class="code-snippet"
+               data-copy-text='include {{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
+               data-copy-label='{% trans "Apprise configuration entry copied to clipboard" %}'></div>
+          <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+          {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
+          <div class="code-snippet"
+               data-copy-text='apprise --body="Test Message" --tag=all'>
+            <pre><code class="bash">apprise --body="Test Message" --tag=all</em></code></pre>
+          </div>
+        {% endif %}
+        <h6>{% trans "Using CURL" %}</h6>
+        <p>
+          {% blocktrans %}The following command would cause the Apprise API to notify all of your services:{% endblocktrans %}
+        </p>
+        <div class="code-snippet"
+             data-copy-text='curl -X POST -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+          <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
-			</div>
-      {% blocktrans %}When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify{{key}}'>
-      <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br/>
+        </div>
+        {% blocktrans %}When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:{% endblocktrans %}
+        <div class="code-snippet"
+             data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+          <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br />
           &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
-			</div>
-      {% blocktrans %}When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify{{key}}'>
-      <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br/>
-          &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br/>
+        </div>
+        {% blocktrans %}When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:{% endblocktrans %}
+        <div class="code-snippet"
+             data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+          <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br />
           &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
-			</div>
-      {% blocktrans %}Sends a notification to our endpoints with an attachment and no body specified:{% endblocktrans %}
-			<div class="code-snippet"
-         data-copy-text='curl -X POST -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify{{key}}'>
-       <pre><code class="bash">curl -X POST \<br/>
-           &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br/>
-           &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br/>
+        </div>
+        {% blocktrans %}Sends a notification to our endpoints with an attachment and no body specified:{% endblocktrans %}
+        <div class="code-snippet"
+             data-copy-text='curl -X POST -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+          <pre><code class="bash">curl -X POST \<br />
+           &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br />
+           &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br />
            &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
-			</div>
-      </p>
-    </div>
+        </div>
+      </div>
     {% endif %}
   </div>
   <div id="config" class="col s12">
     {% if not CONFIG_LOCK %}
-    <p>
-      {% blocktrans %}Define your configuration below:{% endblocktrans %}
+      <p>{% blocktrans %}Define your configuration below:{% endblocktrans %}</p>
       <form id="addconfig" action="{% url "add" key %}" method="post">
         {{ form_cfg }}
-        <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Save Configuration" %}
+        <button class="btn waves-effect waves-light" type="submit" name="action">
+          {% trans "Save Configuration" %}
           <i class="material-icons right">save</i>
         </button>
       </form>
-    </p>
     {% else %}
-    <h5>{% trans "Your Configuration Is Locked" %}</h5>
-    <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}
-
+      <h5>{% trans "Your Configuration Is Locked" %}</h5>
+      <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}</p>
     {% endif %}
   </div>
-
   <div id="review" class="col s12">
     {% if not CONFIG_LOCK %}
-    <div class="section no-config">
-      <div class="divider"></div>
-      <p>
-      <i class="material-icons info">info</i>
-      {% blocktrans %}Once you have successfully loaded <i>at least one Apprise URL</i> on the <strong><i class="material-icons">settings</i> Configuration</strong> section, your loaded entries will display here.
+      <div class="section no-config">
+        <div class="divider"></div>
+        <div>
+          <i class="material-icons info">info</i>
+          {% blocktrans %}Once you have successfully loaded <i>at least one Apprise URL</i> on the <strong><i class="material-icons">settings</i> Configuration</strong> section, your loaded entries will display here.
       {% endblocktrans %}
-      </p>
-      <div class="divider"></div>
-    </div>
-    <div class="section has-config">
-      <h5>{% trans "Loaded Configuration" %}</h5>
-       <p>{% blocktrans %}<strong>Tip:</strong> Click on a tag (🏷️) to pre-select it in the <strong><i class="material-icons">announcement</i>Notifications</strong> section.{% endblocktrans %}</p>
-      <div id="url-list"></div>
-      <div id="url-list-progress" class="progress" style="width:70%">
-        <div class="indeterminate"></div>
+        </div>
+        <div class="divider"></div>
       </div>
-    </div>
+      <div class="section has-config">
+        <h5>{% trans "Loaded Configuration" %}</h5>
+        <div>
+          {% blocktrans %}<strong>Tip:</strong> Click on a tag (🏷️) to pre-select it in the <strong><i class="material-icons">announcement</i>Notifications</strong> section.{% endblocktrans %}
+        </div>
+        <div id="url-list"></div>
+        <div id="url-list-progress" class="progress" style="width:70%">
+          <div class="indeterminate"></div>
+        </div>
+      </div>
     {% else %}
-    <h5>{% trans "Your Configuration Is Locked" %}</h5>
-    <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}
+      <h5>{% trans "Your Configuration Is Locked" %}</h5>
+      <div>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}</div>
     {% endif %}
   </div>
-
   <div id="notify" class="col s12">
-    <p>
-      {% blocktrans %}
+    {% blocktrans %}
       You can send a notification using the loaded configuration:
       {% endblocktrans %}
-      <form id="donotify" enctype="multipart/form-data" action="{% url "notify" key %}" method="post">
-        {{ form_notify }}
-        <button class="btn waves-effect waves-light" type="submit" name="action">{% trans "Send Notification" %}
-          <i class="material-icons right">send</i>
-        </button>
-      </form>
-    </p>
+    <form id="donotify"
+          enctype="multipart/form-data"
+          action="{% url "notify" key %}"
+          method="post">
+      {{ form_notify }}
+      <button class="btn waves-effect waves-light" type="submit" name="action">
+        {% trans "Send Notification" %}
+        <i class="material-icons right">send</i>
+      </button>
+    </form>
   </div>
 </div>
 {% else %}
@@ -233,684 +250,621 @@
 {% endif %}
 {% endblock %}
 {% block jsfooter %}
-{{ block.super }}
-{% if STATEFUL_MODE != 'disabled' %}
-function update_count() {
-  const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
-  document.querySelectorAll(".card-count").forEach(function(e){
+  {{ block.super }}
+  {% if STATEFUL_MODE != 'disabled' %}
+    function update_count() {
+    const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
+    document.querySelectorAll(".card-count").forEach(function(e){
     e.textContent = `(${p_count})`;
-  })
-}
-
-function showCopyToast(anchorEl, message) {
-  const msg = message || '{% trans "URL copied to clipboard" %}';
-
-  // Try SweetAlert2 first so we can anchor to the card
-  if (window.Swal && Swal.fire) {
+    })
+    }
+    function showCopyToast(anchorEl, message) {
+    const msg = message || '{% trans "URL copied to clipboard" %}';
+    // Try SweetAlert2 first so we can anchor to the card
+    if (window.Swal && Swal.fire) {
     const card = anchorEl
-      ? anchorEl.closest('li.card-panel') || anchorEl
-      : document.body;
-
+    ? anchorEl.closest('li.card-panel') || anchorEl
+    : document.body;
     Swal.fire({
-      toast: true,
-      target: card,  // anchor inside the card
-      position: 'top-end',
-      title: msg,
-      showConfirmButton: false,
-      timer: 1600,
-      timerProgressBar: true,
-      customClass: {
-        popup: 'copy-toast'
-      }
+    toast: true,
+    target: card,  // anchor inside the card
+    position: 'top-end',
+    title: msg,
+    showConfirmButton: false,
+    timer: 1600,
+    timerProgressBar: true,
+    customClass: {
+    popup: 'copy-toast'
+    }
     });
     return;
-  }
-
-  // Fallback to Materialize toast if Swal is not available
-  if (window.M && M.toast) {
-    M.toast({ html: msg });
-  }
-}
-
-
-async function copyToClipboard(text, anchorEl, message) {
-  // Prefer modern Clipboard API
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      showCopyToast(anchorEl, message);
-      return;
-    } catch (e) {
-      console.warn('navigator.clipboard failed, falling back', e);
-      // fall through to legacy method
     }
-  }
-
-  // Fallback for older browsers
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.setAttribute('readonly', '');
-  textarea.style.position = 'absolute';
-  textarea.style.left = '-9999px';
-  document.body.appendChild(textarea);
-  textarea.select();
-
-  try {
+    // Fallback to Materialize toast if Swal is not available
+    if (window.M && M.toast) {
+    M.toast({ html: msg });
+    }
+    }
+    async function copyToClipboard(text, anchorEl, message) {
+    // Prefer modern Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+    await navigator.clipboard.writeText(text);
+    showCopyToast(anchorEl, message);
+    return;
+    } catch (e) {
+    console.warn('navigator.clipboard failed, falling back', e);
+    // fall through to legacy method
+    }
+    }
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
     document.execCommand('copy');
     showCopyToast(anchorEl, message);
-  } finally {
+    } finally {
     document.body.removeChild(textarea);
-  }
-}
-
-async function main_init(){
-
-  const params = new Proxy(new URLSearchParams(window.location.search), {
+    }
+    }
+    async function main_init(){
+    const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
-  });
-
-  if (params.title) {
-      document.querySelector('#id_title').value = params.title;
-  }
-  if (params.body) {
-      document.querySelector('#id_body').value = params.body;
-  }
-
-{% if not CONFIG_LOCK %}
-  // disable the notification tab until we know for certain
-  // a notification is possible
-  document.querySelector('.config-overview li a[href="#notify"]')
-   .parentNode.classList.add('disabled');
-
-  // Disable any has-config entries
-  document.querySelectorAll('.has-config').forEach(function(e){
+    });
+    if (params.title) {
+    document.querySelector('#id_title').value = params.title;
+    }
+    if (params.body) {
+    document.querySelector('#id_body').value = params.body;
+    }
+    {% if not CONFIG_LOCK %}
+      // disable the notification tab until we know for certain
+      // a notification is possible
+      document.querySelector('.config-overview li a[href="#notify"]')
+      .parentNode.classList.add('disabled');
+      // Disable any has-config entries
+      document.querySelectorAll('.has-config').forEach(function(e){
       e.style.display = 'none'
-   });
-  // Ensure we show our progress loader and reset our url list
-  document.querySelector('#url-list').textContent = ''
-  document.querySelector('#url-list-progress').style.display = null;
-
-  // Ensure no-config sections are visible
-  document.querySelectorAll('.no-config').forEach(function(e){
+      });
+      // Ensure we show our progress loader and reset our url list
+      document.querySelector('#url-list').textContent = ''
+      document.querySelector('#url-list-progress').style.display = null;
+      // Ensure no-config sections are visible
+      document.querySelectorAll('.no-config').forEach(function(e){
       e.style.display = null;
-  });
-
-  // perform a tag retrieval; start with 'all'
-  let tags = ['all'];
-
-  let jsonResponse = await fetch('{% url "json_urls" key %}/?privacy=1', {
-    method: 'GET',
-  })
-  if(jsonResponse.status == 204) {
-    // Take an early exit
-    document.querySelector('#url-list-progress').style.display = 'none';
-    document.querySelector('#url-list').textContent = ''
-    return;
-
-   } else if(jsonResponse.status != 200) {
-    // Take an early exit
-    document.querySelector('#url-list-progress').style.display = 'none';
-    document.querySelector('#url-list').textContent = '{% trans "💣 An error occurred retrieving the list of loaded Apprise URL(s)" %}'
-    return;
-  }
-
-  // Initialize our tags making it easy for an end user to
-  // choose from. Tags are based off ones found in the saved
-  // configuration.
-  const data = await jsonResponse.json();
-  const external_data = tags.concat(data.tags).reduce(function(result, item) {
-    result[item] = null;
-    return result;
-}, {})
-
-  const chipElement = document.querySelector('.chips');
-  M.Chips.init(chipElement, {
-    placeholder: '{% trans "Optional Tag" %}',
-    secondaryPlaceholder: '{% trans "Another Tag" %}',
-    autocompleteOptions: {
+      });
+      // perform a tag retrieval; start with 'all'
+      let tags = ['all'];
+      let jsonResponse = await fetch('{% url "json_urls" key %}/?privacy=1', {
+      method: 'GET',
+      })
+      if(jsonResponse.status == 204) {
+      // Take an early exit
+      document.querySelector('#url-list-progress').style.display = 'none';
+      document.querySelector('#url-list').textContent = ''
+      return;
+      } else if(jsonResponse.status != 200) {
+      // Take an early exit
+      document.querySelector('#url-list-progress').style.display = 'none';
+      document.querySelector('#url-list').textContent = '{% trans "💣 An error occurred retrieving the list of loaded Apprise URL(s)" %}'
+      return;
+      }
+      // Initialize our tags making it easy for an end user to
+      // choose from. Tags are based off ones found in the saved
+      // configuration.
+      const data = await jsonResponse.json();
+      const external_data = tags.concat(data.tags).reduce(function(result, item) {
+      result[item] = null;
+      return result;
+      }, {})
+      const chipElement = document.querySelector('.chips');
+      M.Chips.init(chipElement, {
+      placeholder: '{% trans "Optional Tag" %}',
+      secondaryPlaceholder: '{% trans "Another Tag" %}',
+      autocompleteOptions: {
       data: external_data,
       minLength: 0
-    },
-    onChipAdd: function(e, data) {
+      },
+      onChipAdd: function(e, data) {
       var $this = this;
       const chip = data.childNodes[0].textContent;
       document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function(e){
-        if (!e.classList.contains('selected')) {
-            e.classList.add('selected');
-            const p = e.parentNode;
-            if (!p.classList.contains('selected')) {
-              p.classList.add('selected');
-            }
-          }
-        })
+      if (!e.classList.contains('selected')) {
+      e.classList.add('selected');
+      const p = e.parentNode;
+      if (!p.classList.contains('selected')) {
+      p.classList.add('selected');
+      }
+      }
+      })
       document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function(e){
-        if (e.classList.contains('selected')) {
-          e.classList.remove('selected');
-          const p = e.parentNode;
-          if (!p.querySelector('.selected')) {
-            if (p.classList.contains('selected')) {
-               p.classList.remove('selected');
-            }
-          }
-        }
+      if (e.classList.contains('selected')) {
+      e.classList.remove('selected');
+      const p = e.parentNode;
+      if (!p.querySelector('.selected')) {
+      if (p.classList.contains('selected')) {
+      p.classList.remove('selected');
+      }
+      }
+      }
       })
       $this.chipsData.forEach(function(e, index) {
-        if(!(e.tag in external_data))
-          $this.deleteChip(index);
+      if(!(e.tag in external_data))
+      $this.deleteChip(index);
       })
       update_count();
-    },
-    onChipDelete: function(e, data) {
+      },
+      onChipDelete: function(e, data) {
       var $this = this;
       const chip = data.childNodes[0].textContent;
       document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function(e){
-          if (e.classList.contains('selected')) {
-            e.classList.remove('selected');
-          }
-          const p = e.parentNode;
-          if (!p.querySelector('.selected')) {
-            if (p.classList.contains('selected')) {
-              p.classList.remove('selected');
-            }
-           }
-        })
-        if ($this.chipsData.length == 0){
-          // last item
-          document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function(e){
-            if (!e.classList.contains('selected')) {
-              e.classList.add('selected');
-            }
-            const p = e.parentNode;
-            if (!p.classList.contains('selected')) {
-              p.classList.add('selected');
-            }
-          })
-        }
-        update_count();
-    }
-  });
-{% else %}
-  {# Empty external data set #}
-   const data = {
+      if (e.classList.contains('selected')) {
+      e.classList.remove('selected');
+      }
+      const p = e.parentNode;
+      if (!p.querySelector('.selected')) {
+      if (p.classList.contains('selected')) {
+      p.classList.remove('selected');
+      }
+      }
+      })
+      if ($this.chipsData.length == 0){
+      // last item
+      document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function(e){
+      if (!e.classList.contains('selected')) {
+      e.classList.add('selected');
+      }
+      const p = e.parentNode;
+      if (!p.classList.contains('selected')) {
+      p.classList.add('selected');
+      }
+      })
+      }
+      update_count();
+      }
+      });
+    {% else %}
+      {# Empty external data set #}
+      const data = {
       urls: []
-   };
-  const chipElement = document.querySelector('.chips');
-  M.Chips.init(chipElement, {
-    placeholder: '{% trans "Optional Tag" %}',
-    secondaryPlaceholder: '{% trans "Another Tag" %}'
-  });
-{% endif %}
-  const chipInstance =  M.Chips.getInstance(chipElement);
-  if (params.tag) {
+      };
+      const chipElement = document.querySelector('.chips');
+      M.Chips.init(chipElement, {
+      placeholder: '{% trans "Optional Tag" %}',
+      secondaryPlaceholder: '{% trans "Another Tag" %}'
+      });
+    {% endif %}
+    const chipInstance =  M.Chips.getInstance(chipElement);
+    if (params.tag) {
     // our GET parameters to be treated as template values
     var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
     params.tag.split(tagRe).forEach(function (tag, index) {
-       chipInstance.addChip({tag: tag, image: ''});
+    chipInstance.addChip({tag: tag, image: ''});
     });
-  }
-{% if not CONFIG_LOCK %}
-  // Now build our our loaded list of configuration for our welcome page
-  let urlList = document.createElement('ul');
-
-  // Create a list item for each url retrieved
-  data.urls.forEach(function (entry) {
-	  let li = document.createElement('li');
-    li.setAttribute('class', 'card-panel url-item');
-
-    // Header row: URL + copy button
-    let header = document.createElement('div');
-    header.setAttribute('class', 'url-header');
-
-    // URL text
-    let code = document.createElement('code');
-    code.setAttribute('class', 'url-text');
-    code.textContent = entry.url;
-    header.appendChild(code);
-
-    // Copy button
-    let copyBtn = document.createElement('button');
-    copyBtn.type = 'button';
-    copyBtn.setAttribute('class', 'copy-url-btn btn-flat btn-small');
-    copyBtn.setAttribute('title', '{% trans "Copy URL to Clipboard" %}');
-
-    let copyIcon = document.createElement('i');
-    copyIcon.setAttribute('class', 'material-icons');
-    copyIcon.textContent = 'content_copy';
-    copyBtn.appendChild(copyIcon);
-
-    copyBtn.addEventListener('click', function (e) {
+    }
+    {% if not CONFIG_LOCK %}
+      // Now build our our loaded list of configuration for our welcome page
+      let urlList = document.createElement('ul');
+      // Create a list item for each url retrieved
+      data.urls.forEach(function (entry) {
+      let li = document.createElement('li');
+      li.setAttribute('class', 'card-panel url-item');
+      // Header row: URL + copy button
+      let header = document.createElement('div');
+      header.setAttribute('class', 'url-header');
+      // URL text
+      let code = document.createElement('code');
+      code.setAttribute('class', 'url-text');
+      code.textContent = entry.url;
+      header.appendChild(code);
+      // Copy button
+      let copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.setAttribute('class', 'copy-url-btn btn-flat btn-small');
+      copyBtn.setAttribute('title', '{% trans "Copy URL to Clipboard" %}');
+      let copyIcon = document.createElement('i');
+      copyIcon.setAttribute('class', 'material-icons');
+      copyIcon.textContent = 'content_copy';
+      copyBtn.appendChild(copyIcon);
+      copyBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
       copyToClipboard(entry.url, copyBtn);
-    }, false);
-
-
-    header.appendChild(copyBtn);
-    li.appendChild(header);
-
-    // Optional URL ID (as before)
-    if (entry.id) {
+      }, false);
+      header.appendChild(copyBtn);
+      li.appendChild(header);
+      // Optional URL ID (as before)
+      if (entry.id) {
       let url_id = document.createElement('code');
       url_id.setAttribute('class', 'url-id');
       url_id.textContent = entry.id;
       li.appendChild(url_id);
-    }
-
-    urlList.appendChild(li);
-    // Store `all` tag
-    entry.tags.unshift('all')
-
-    if (entry.tags.length === 1){
+      }
+      urlList.appendChild(li);
+      // Store `all` tag
+      entry.tags.unshift('all')
+      if (entry.tags.length === 1){
       // This entry triggers when no tags are defined
       // Store '' (empty) tag for notice generation
       entry.tags.unshift('')
-    }
-
-    // Get our tags associate with the URL
-    entry.tags.forEach(function (tag) {
+      }
+      // Get our tags associate with the URL
+      entry.tags.forEach(function (tag) {
       let chip = document.createElement('div');
       chip.setAttribute('class', `chip`);
       if(tag.length > 0) {
-        // we're dealing with a valid tag
-        chip.setAttribute('name', tag);
-        chip.textContent = `🏷️ ${tag}`;
-
-        const index = chipInstance.chipsData.findIndex(function (e) {
-        return e.tag === tag;})
-        if (index >= 0) {
-          chip.classList.add('selected');
-          li.classList.add('selected');
-        }
-        li.appendChild(chip);
-
-        chip.addEventListener('click', function(e) {
-          e.preventDefault();
-          const index = chipInstance.chipsData.findIndex(function (e) {
-            return e.tag === tag;
-          });
-          if(index < 0) {
-            chipInstance.addChip({tag: this.getAttribute('name'), image: ''});
-          } else {
-            chipInstance.deleteChip(index);
-          }
-        }, false);
-      } else {
-        // no tags were defined for this element
-        chip.classList.add('chip-notag');
-        chip.textContent = '🔖 no-tag';
-        if (chipInstance.chipsData.length === 0) {
-           chip.classList.add('selected');
-           if (!li.classList.contains('selected')) {
-             li.classList.add('selected');
-           }
-        }
-        li.appendChild(chip);
-
-        chip.addEventListener('click', function(e) {
-          e.preventDefault();
-          while(chipInstance.chipsData.length > 0){
-            chipInstance.deleteChip(0);
-          }
-          chip.classList.add('selected');
-          if (!li.classList.contains('selected')) {
-            li.classList.add('selected');
-          }
-          update_count();
-        });
+      // we're dealing with a valid tag
+      chip.setAttribute('name', tag);
+      chip.textContent = `🏷️ ${tag}`;
+      const index = chipInstance.chipsData.findIndex(function (e) {
+      return e.tag === tag;})
+      if (index >= 0) {
+      chip.classList.add('selected');
+      li.classList.add('selected');
       }
-    });
-  });
-{% endif %}
-
-{% if not CONFIG_LOCK %}
-  // Store our new list
-  document.querySelector('#url-list-progress').style.display = 'none';
-  document.querySelector('#url-list').textContent = ''
-  if(urlList.childNodes.length > 0) {
-
-    // Ensure has-config sections are visible
-    document.querySelectorAll('.has-config').forEach(function(e){
-        e.style.display = null;
-     });
-
-    // Remove our restrictions on sending notifications
-    document.querySelector('.config-overview li a[href="#notify"]')
+      li.appendChild(chip);
+      chip.addEventListener('click', function(e) {
+      e.preventDefault();
+      const index = chipInstance.chipsData.findIndex(function (e) {
+      return e.tag === tag;
+      });
+      if(index < 0) {
+      chipInstance.addChip({tag: this.getAttribute('name'), image: ''});
+      } else {
+      chipInstance.deleteChip(index);
+      }
+      }, false);
+      } else {
+      // no tags were defined for this element
+      chip.classList.add('chip-notag');
+      chip.textContent = '🔖 no-tag';
+      if (chipInstance.chipsData.length === 0) {
+      chip.classList.add('selected');
+      if (!li.classList.contains('selected')) {
+      li.classList.add('selected');
+      }
+      }
+      li.appendChild(chip);
+      chip.addEventListener('click', function(e) {
+      e.preventDefault();
+      while(chipInstance.chipsData.length > 0){
+      chipInstance.deleteChip(0);
+      }
+      chip.classList.add('selected');
+      if (!li.classList.contains('selected')) {
+      li.classList.add('selected');
+      }
+      update_count();
+      });
+      }
+      });
+      });
+    {% endif %}
+    {% if not CONFIG_LOCK %}
+      // Store our new list
+      document.querySelector('#url-list-progress').style.display = 'none';
+      document.querySelector('#url-list').textContent = ''
+      if(urlList.childNodes.length > 0) {
+      // Ensure has-config sections are visible
+      document.querySelectorAll('.has-config').forEach(function(e){
+      e.style.display = null;
+      });
+      // Remove our restrictions on sending notifications
+      document.querySelector('.config-overview li a[href="#notify"]')
       .parentNode.classList.remove('disabled');
-
-    // Disable any no-config entries
-    document.querySelectorAll('.no-config').forEach(function(e){
-        e.style.display = 'none';
-    });
-
-    // Save our list to the screen
-    document.querySelector('#url-list').appendChild(urlList);
-
-    //
-    // Load our configuration now into the configuration tab
-    //
-    let response = await fetch('{% url "get" key %}', {
+      // Disable any no-config entries
+      document.querySelectorAll('.no-config').forEach(function(e){
+      e.style.display = 'none';
+      });
+      // Save our list to the screen
+      document.querySelector('#url-list').appendChild(urlList);
+      //
+      // Load our configuration now into the configuration tab
+      //
+      let response = await fetch('{% url "get" key %}', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json;charset=utf-8'
+      'Content-Type': 'application/json;charset=utf-8'
       },
-    });
-
-    if(response.status == 204)
-    {
+      });
+      if(response.status == 204)
+      {
       // no problem; we simply have no content to retrieve
       return '';
-    }
-    else if(response.status == 200)
-    {
+      }
+      else if(response.status == 200)
+      {
       // configuration found
-
       // get our results
       let result = await response.json();
-
       // Set our configuration so it's visible
       document.querySelector('#id_config').value = result.config;
       // Set our format
       document.querySelector('#id_format').value = result.format;
-
       // dispatch our event to update our select box
       if (typeof(Event) === 'function') {
-          var event = new Event('change');
+      var event = new Event('change');
       } else {  // for IE11
-          var event = document.createEvent('Event');
-          event.initEvent('change', true, true);
+      var event = document.createEvent('Event');
+      event.initEvent('change', true, true);
       }
       document.querySelector('#id_format').dispatchEvent(event);
+      }
+      } else {
+      document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
+      }
+    {% endif %}
+    update_count();
+    return null;
     }
-  } else {
-    document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
-  }
-  {% endif %}
-  update_count();
-  return null;
-}
-
-{% if not CONFIG_LOCK %}
-function config_init() {
-  // over-ride manual submit for a nicer user experience
-  document.querySelector('#addconfig').onsubmit = function(event) {
-    event.preventDefault();
-    const form = this;
-    const body = new URLSearchParams(new FormData(form));
-
-    content = document.querySelector('#id_config')
-        .value.replace(/^\s+|\s+$/gm,'');
-    if(content.length) {
+    {% if not CONFIG_LOCK %}
+      function config_init() {
+      // over-ride manual submit for a nicer user experience
+      document.querySelector('#addconfig').onsubmit = function(event) {
+      event.preventDefault();
+      const form = this;
+      const body = new URLSearchParams(new FormData(form));
+      content = document.querySelector('#id_config')
+      .value.replace(/^\s+|\s+$/gm,'');
+      if(content.length) {
       // perform our status check
       let response = fetch('{% url "add" key %}', {
-        method: 'POST',
-        body: body,
+      method: 'POST',
+      body: body,
       }).then(function(response) {
-         if(response.status == 200)
-         {
-            // update our settings
-            main_init();
-
-            // user notification
-            Swal.fire({
-              title: '{% trans "Save" %}',
-              html: '{% trans "Successfully saved the configuration." %}',
-              icon: 'success'
-            });
-         } else if(response.status == 500) {
-            // Disk issue
-            Swal.fire({
-              title: '{% trans "Save" %}',
-              html: '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
-              icon: 'error'
-            });
-         } else {
-            // user notification
-            Swal.fire({
-              title: '{% trans "Save" %}',
-              html: '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
-              icon: 'error'
-            });
-         }
+      if(response.status == 200)
+      {
+      // update our settings
+      main_init();
+      // user notification
+      Swal.fire({
+      title: '{% trans "Save" %}',
+      html: '{% trans "Successfully saved the configuration." %}',
+      icon: 'success'
       });
-    } else {
-       // Perform Delete
+      } else if(response.status == 500) {
+      // Disk issue
+      Swal.fire({
+      title: '{% trans "Save" %}',
+      html: '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
+      icon: 'error'
+      });
+      } else {
+      // user notification
+      Swal.fire({
+      title: '{% trans "Save" %}',
+      html: '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
+      icon: 'error'
+      });
+      }
+      });
+      } else {
+      // Perform Delete
       // perform our status check
       let response = fetch('{% url "del" key %}', {
-        method: 'POST',
-        body: body,
+      method: 'POST',
+      body: body,
       }).then(function(response) {
-         if(response.status == 200 || response.status == 204)
-         {
-            // update our settings
-            main_init();
-
-            // user notification
-            Swal.fire({
-              title: '{% trans "Delete" %}',
-              html: '{% trans "Successfully removed configuration." %}',
-              icon: 'success'
-            });
-         } else {
-            // user notification
-            Swal.fire({
-              title: '{% trans "Delete" %}',
-              html: '{% trans "There was an issue removing the configuration." %}',
-              icon: 'error'
-            });
-         }
+      if(response.status == 200 || response.status == 204)
+      {
+      // update our settings
+      main_init();
+      // user notification
+      Swal.fire({
+      title: '{% trans "Delete" %}',
+      html: '{% trans "Successfully removed configuration." %}',
+      icon: 'success'
       });
-    }
-    return false;
-  }
-}
-{% endif %}
-
-function form_file_input_hack() {
-  /*
-  A small hack to remformat all `<input file>` upload options to a more cleaner
-  and presentable look by wrapping it like this:
-
-  <span class="btn btn-file">
-    <i class="material-icons left">cloud_upload</i>
-    Browse<input type="file">
-   </span>
-  */
-  document.querySelectorAll('input[type=file]').forEach(function (entry) {
-     const div = document.createElement('div');
-     const selected = document.createElement('div');
-     selected.style.display = 'none';
-     selected.setAttribute('class', 'file-selected');
-     const span = document.createElement('span')
-     span.setAttribute('class', 'btn btn-file waves-effect waves-light');
-     const i = document.createElement('i')
-     span.textContent = '{% trans "Browse" %}';
-     i.setAttribute('class', 'material-icons right');
-     i.textContent = 'folder';
-     div.appendChild(span);
-     span.appendChild(i);
-     entry.before(div)
-     span.appendChild(entry);
-     span.after(selected);
-
+      } else {
+      // user notification
+      Swal.fire({
+      title: '{% trans "Delete" %}',
+      html: '{% trans "There was an issue removing the configuration." %}',
+      icon: 'error'
+      });
+      }
+      });
+      }
+      return false;
+      }
+      }
+    {% endif %}
+    function form_file_input_hack() {
+    /*
+    A small hack to remformat all `
+    <input file>
+    ` upload options to a more cleaner
+    and presentable look by wrapping it like this:
+    <span class="btn btn-file">
+      <i class="material-icons left">cloud_upload</i>
+      Browse
+      <input type="file">
+    </span>
+    */
+    document.querySelectorAll('input[type=file]').forEach(function (entry) {
+    const div = document.createElement('div');
+    const selected = document.createElement('div');
+    selected.style.display = 'none';
+    selected.setAttribute('class', 'file-selected');
+    const span = document.createElement('span')
+    span.setAttribute('class', 'btn btn-file waves-effect waves-light');
+    const i = document.createElement('i')
+    span.textContent = '{% trans "Browse" %}';
+    i.setAttribute('class', 'material-icons right');
+    i.textContent = 'folder';
+    div.appendChild(span);
+    span.appendChild(i);
+    entry.before(div)
+    span.appendChild(entry);
+    span.after(selected);
     entry.addEventListener('change', function(e){
-      const selected = this.parentNode.nextElementSibling;
-      const file = e.target.files[0];
-      selected.style.display = 'block'
-      selected.textContent = file.name;
-     });
-   });
-}
-
-function notify_init() {
-  // over-ride manual submit for a nicer user experience
-  document.querySelector('#donotify').onsubmit = function(event) {
+    const selected = this.parentNode.nextElementSibling;
+    const file = e.target.files[0];
+    selected.style.display = 'block'
+    selected.textContent = file.name;
+    });
+    });
+    }
+    function notify_init() {
+    // over-ride manual submit for a nicer user experience
+    document.querySelector('#donotify').onsubmit = function(event) {
     event.preventDefault();
-
     const chipElement = document.querySelector('.chips');
     const chipInput = document.querySelector('.chips > input');
     if(chipInput.value) {
-      // This code just handles text typed in the tag section that was
-      // not submitted. This forces any lingering un-committed text
-      // into a tag just prior to it's submission
-      const ev = new KeyboardEvent('keydown', {
-        altKey:false,
-        bubbles: true,
-        cancelBubble: false,
-        cancelable: true,
-        charCode: 0,
-        code: "Enter",
-        composed: true,
-        ctrlKey: false,
-        currentTarget: null,
-        defaultPrevented: true,
-        detail: 0,
-        eventPhase: 0,
-        isComposing: false,
-        isTrusted: true,
-        key: "Enter",
-        keyCode: 13,
-        location: 0,
-        metaKey: false,
-        repeat: false,
-        returnValue: false,
-        shiftKey: false,
-        type: "keydown",
-        which: 13
-      });
-      chipInput.dispatchEvent(ev);
+    // This code just handles text typed in the tag section that was
+    // not submitted. This forces any lingering un-committed text
+    // into a tag just prior to it's submission
+    const ev = new KeyboardEvent('keydown', {
+    altKey:false,
+    bubbles: true,
+    cancelBubble: false,
+    cancelable: true,
+    charCode: 0,
+    code: "Enter",
+    composed: true,
+    ctrlKey: false,
+    currentTarget: null,
+    defaultPrevented: true,
+    detail: 0,
+    eventPhase: 0,
+    isComposing: false,
+    isTrusted: true,
+    key: "Enter",
+    keyCode: 13,
+    location: 0,
+    metaKey: false,
+    repeat: false,
+    returnValue: false,
+    shiftKey: false,
+    type: "keydown",
+    which: 13
+    });
+    chipInput.dispatchEvent(ev);
     }
-
     // store tags (as comma separated string) from materialize chip type into form
     document.querySelector('#id_tag').value = M.Chips.getInstance(chipElement).chipsData.reduce(
-      function(s, a){
-        s.push(a.tag)
-        return s;
-      }, []).join(",")
-
+    function(s, a){
+    s.push(a.tag)
+    return s;
+    }, []).join(",")
     // our Form
     const form = new FormData(this);
-
     // perform our notification
     Swal.fire({
-      title: '{% trans "Notification" %}',
-      html: '{% trans "Sending notification(s)..." %}',
+    title: '{% trans "Notification" %}',
+    html: '{% trans "Sending notification(s)..." %}',
     });
     Swal.showLoading()
     let response = fetch('{% url "notify" key %}', {
-      method: 'POST',
-      body: form,
-      headers: {
-        'Accept': 'text/html',
-        'X-Apprise-Log-Level': 'info'
-      }
+    method: 'POST',
+    body: form,
+    headers: {
+    'Accept': 'text/html',
+    'X-Apprise-Log-Level': 'info'
+    }
     }).then(function(response) {
-       response.text().then(function (html) {
-         if(response.status == 200)
-         {
-            // user notification
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html: '{% trans "Successfully sent the notification(s)." %}' + html,
-              icon: 'success',
-						  width: '80em'
-           });
-         } else if(response.status == 424) {
-            // user notification
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html: '{% trans "One or more of the notification(s) were not sent." %}' + html,
-              icon: 'warning',
-						  width: '80em'
-            });
-         } else {
-            // user notification
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html: '{% trans "Failed to send the notification(s)." %}' + html,
-              icon: 'error',
-						  width: '80em'
-            });
-         }
-       });
+    response.text().then(function (html) {
+    if(response.status == 200)
+    {
+    // user notification
+    Swal.fire({
+    title: '{% trans "Notification" %}',
+    html: '{% trans "Successfully sent the notification(s)." %}' + html,
+    icon: 'success',
+    width: '80em'
+    });
+    } else if(response.status == 424) {
+    // user notification
+    Swal.fire({
+    title: '{% trans "Notification" %}',
+    html: '{% trans "One or more of the notification(s) were not sent." %}' + html,
+    icon: 'warning',
+    width: '80em'
+    });
+    } else {
+    // user notification
+    Swal.fire({
+    title: '{% trans "Notification" %}',
+    html: '{% trans "Failed to send the notification(s)." %}' + html,
+    icon: 'error',
+    width: '80em'
+    });
+    }
+    });
     });
     return false;
-  }
-}
-{% endif %}
+    }
+    }
+  {% endif %}
 {% endblock %}
-
 {% block onload %}
-{{ block.super }}
-{% if STATEFUL_MODE != 'disabled' %}
-document.querySelector('label [for="id_tag"]')
-{
-  // create a new div with the class 'chips' assigned to it
-  const element = document.createElement('div')
-  let refNode = document.querySelector('label[for="id_tag"]')
-  element.classList.add("chips")
-  element.style.margin = '0'
-  refNode.parentNode.insertBefore(element, refNode.nextSibling)
-}
-
-// Hide tag field since we use the pretty Materialize Chip setup instead
-document.querySelector('#id_tag').style.display = 'none';
-/* Initialize our page */
-main_init();
-
-// Config ID copy-to-clipboard
-const configIdEl = document.querySelector('code.config-id');
-const configCopyBtn = document.querySelector('.config-id-copy');
-if (configIdEl && configCopyBtn) {
-  configCopyBtn.addEventListener('click', function (e) {
+  {{ block.super }}
+  {% if STATEFUL_MODE != 'disabled' %}
+    document.querySelector('label [for="id_tag"]')
+    {
+    // create a new div with the class 'chips' assigned to it
+    const element = document.createElement('div')
+    let refNode = document.querySelector('label[for="id_tag"]')
+    element.classList.add("chips")
+    element.style.margin = '0'
+    refNode.parentNode.insertBefore(element, refNode.nextSibling)
+    }
+    // Hide tag field since we use the pretty Materialize Chip setup instead
+    document.querySelector('#id_tag').style.display = 'none';
+    /* Initialize our page */
+    main_init();
+    // Config ID copy-to-clipboard
+    const configIdEl = document.querySelector('code.config-id');
+    const configCopyBtn = document.querySelector('.config-id-copy');
+    if (configIdEl && configCopyBtn) {
+    configCopyBtn.addEventListener('click', function (e) {
     e.preventDefault();
     copyToClipboard(
-      configIdEl.textContent.trim(),
-      configCopyBtn,
-      '{% trans "Config ID copied to clipboard" %}'
+    configIdEl.textContent.trim(),
+    configCopyBtn,
+    '{% trans "Config ID copied to clipboard" %}'
     );
-  }, false);
-}
-
-// Attach copy buttons to code snippets in the overview
-document.querySelectorAll('.code-snippet').forEach(function (snippet) {
-  // Avoid adding the button twice if main_init runs again
-  if (snippet.querySelector('.snippet-copy-btn')) {
+    }, false);
+    }
+    // Attach copy buttons to code snippets in the overview
+    document.querySelectorAll('.code-snippet').forEach(function (snippet) {
+    // Avoid adding the button twice if main_init runs again
+    if (snippet.querySelector('.snippet-copy-btn')) {
     return;
-  }
-
-  const copyText = snippet.dataset.copyText;
-  if (!copyText) {
+    }
+    const copyText = snippet.dataset.copyText;
+    if (!copyText) {
     return;
-  }
-  const message = snippet.dataset.copyLabel
+    }
+    const message = snippet.dataset.copyLabel
     || '{% trans "Command copied to clipboard" %}';
-
-  // Create copy button
-  const copyBtn = document.createElement('button');
-  copyBtn.type = 'button';
-  copyBtn.className = 'snippet-copy-btn btn-flat btn-small';
-  copyBtn.setAttribute('title', '{% trans "Copy command to Clipboard" %}');
-
-  const icon = document.createElement('i');
-  icon.className = 'material-icons';
-  icon.textContent = 'content_copy';
-  copyBtn.appendChild(icon);
-
-  copyBtn.addEventListener('click', function (e) {
+    // Create copy button
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'snippet-copy-btn btn-flat btn-small';
+    copyBtn.setAttribute('title', '{% trans "Copy command to Clipboard" %}');
+    const icon = document.createElement('i');
+    icon.className = 'material-icons';
+    icon.textContent = 'content_copy';
+    copyBtn.appendChild(icon);
+    copyBtn.addEventListener('click', function (e) {
     e.preventDefault();
     e.stopPropagation();
     copyToClipboard(copyText, copyBtn, message);
-  }, false);
-
-  // Insert the button into the snippet container
-  snippet.appendChild(copyBtn);
-});
-
-{% if not CONFIG_LOCK %}
-/* Initialze our configuration */
-config_init();
-{% endif %}
-notify_init();
-form_file_input_hack();
-{% endif %}
+    }, false);
+    // Insert the button into the snippet container
+    snippet.appendChild(copyBtn);
+    });
+    {% if not CONFIG_LOCK %}
+      /* Initialze our configuration */
+      config_init();
+    {% endif %}
+    notify_init();
+    form_file_input_hack();
+  {% endif %}
 {% endblock %}

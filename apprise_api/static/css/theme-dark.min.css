@@ -1,7 +1,13 @@
 /* highlightjs overrides */
 
 .nav.nav-color {
-    background: #4c566a !important
+		background: #171b23 !important;
+}
+
+.collapsible {
+    border-top: 1px solid #525252;
+    border-right: 1px solid #525252;
+    border-left: 1px solid #525252;
 }
 
 .hljs {

@@ -35,11 +35,30 @@
   float: left;
 }
 
-/* Apprise Version */
 .nav ul {
   float: right;
   font-style: normal;
-  font-size: 0.7rem;
+}
+.nav ul i {
+  font-size: 2.0rem;
+}
+.nav ul li .apprise-lib-ver {
+  font-size: 0.75rem;
+}
+
+img.apprise-logo,
+img.apprise-mini-logo {
+  max-width: 100%;
+  display: block;
+}
+
+img.apprise-logo {
+  height: 6em;
+}
+
+img.apprise-mini-logo {
+  height: 2em;
+  padding: 0 0.25rem;
 }
 
 .theme {
@@ -60,7 +79,7 @@ a.apprise-lib-ver:hover {
   padding: 0.75rem 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   opacity: 0.8;
 }
 
@@ -105,9 +124,91 @@ th {
   padding-top: 0;
 }
 
-.api-details ol {
+.api-welcome {
+  margin-top: 0.5rem;
+}
+
+.api-welcome .section {
+  max-width: 80rem;
+}
+
+.api-welcome .table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.api-welcome pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.api-details .collapsible-header {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+}
+
+.api-details .plugin-index {
+  font-family: monospace;
+  font-size: 0.9rem;
+  width: 3rem;
+  text-align: right;
+  margin-right: 0.5rem;
+  color: #666;
+}
+
+.api-details .plugin-chevron {
+  margin-right: 0.4rem;
+}
+
+.api-details .plugin-status {
+  margin-right: 0.4rem;
+}
+
+.api-details .service_name {
+  width: auto;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.api-details .plugin-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+}
+
+.api-details .plugin-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.api-details .plugin-actions .material-icons {
+  font-size: 1.2rem;
+}
+
+.api-details {
+  margin-top: 0.5rem;
+}
+
+.api-details .details-header {
   margin-top: 0;
-  margin-bottom: 0;
+}
+
+.api-details .details-header p,
+.api-details .details-summary {
+  max-width: 70rem;
+}
+
+.detail-buttons--width {
+  width: 90%;
+  min-width: 60%;
+  padding-left: 0;
 }
 
 ul.detail-buttons strong {
@@ -175,13 +276,11 @@ textarea {
 }
 
 .tabs .tab-locked a {
-  /* Handle locked out tabs */
   color: rgba(212, 161, 157, 0.7);
 }
 
 .tabs .tab-locked a:hover,
 .tabs .tab-locked a.active {
-  /* Handle locked out tabs */
   color: #6b0900;
 }
 
@@ -223,7 +322,19 @@ textarea {
   padding: 0.5rem 0.75rem 1.8rem 0.75rem;
 }
 
-/* When there is not enough space for 2 columns, use full width */
+.wide-buttons {
+  width: 90%;
+  min-width: 60%;
+}
+
+.service_name {
+  width: 40rem;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 1450px) {
   #url-list .card-panel {
     width: 100%;
@@ -232,14 +343,12 @@ textarea {
   }
 }
 
-/* Header row: URL + copy icon */
 #url-list .url-header {
   display: flex;
   align-items: flex-start;
   gap: 0.4rem;
 }
 
-/* Main URL text */
 #url-list .url-header code.url-text {
   flex: 1 1 auto;
   margin-top: 0.2rem;
@@ -332,7 +441,6 @@ textarea {
 /* URL ID stays pinned above, right, as before */
 #url-list {
   display: grid;
-  /* On wide screens, as many columns as fit, min 28rem each */
   grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
   grid-auto-rows: auto;
   grid-column-gap: 0.8rem;
@@ -341,7 +449,6 @@ textarea {
   margin: 0;
 }
 
-/* On narrower screens, force a single column so cards stretch nicely */
 @media (max-width: 1100px) {
   #url-list {
     grid-template-columns: minmax(0, 1fr);
@@ -365,7 +472,6 @@ textarea {
   color: #aaa;
   padding: 0.15em 0.35em;
   font-size: 0.65em;
-  /* feel free to shrink further */
   border: 0;
   position: absolute;
   bottom: 0.45rem;

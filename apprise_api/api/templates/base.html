@@ -1,128 +1,165 @@
 {% load static %}
 {% load i18n %}
+
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="utf-8">
-  <!--Let browser know website is optimized for mobile-->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}" />
-  <!--materialize-->
-  <link rel="stylesheet" href="{% get_static_prefix %}css/materialize.min.css" />
-  <!--material-design-icons-->
-  <link rel="stylesheet" href="{% static 'iconfont/material-icons.css' %}">
-  <!--highlightjs-->
-  <link rel="stylesheet" href="{% get_static_prefix %}css/highlight.min.css">
-  <!--common-->
-  <link rel="stylesheet" href="{% static 'css/base.css' %}" />
-  <!--materialize-->
-  <script src="{% static 'js/materialize.min.js' %}"></script>
-  <!--sweetalert2-->
-  <script src="{% static 'js/sweetalert2.all.min.js' %}"></script>
-  <!--highlightjs-->
-  <script src="{% static 'js/highlight.pack.js' %}"></script>
-  <!--theme-->
-  <link rel="stylesheet" href="{% get_static_prefix %}css/theme-{{request.theme|safe}}.min.css">
-  <title>{% block title %}{% trans "Apprise API" %}{% endblock %}</title>
-</head>
-
-<body>
-  <div class="content">
-    <!-- Title -->
-    <div class="nav row nav-color z-depth-2">
-      <div class="col s12">
-        <a href="{% url 'welcome' %}">
-          <img class="left" src="{% static "logo.png" %}" alt="{% trans "Apprise Logo" %}" />
-        </a>
-        <h1>{% trans "Apprise API" %}</h1>
-           <a class="apprise-api-ver" href="{{APPRISE_API_URL}}" target="_new">v{{APPRISE_API_VERSION}}</a>
-        <ul>
-           <li><a class="apprise-lib-ver" href="{{APPRISE_LIB_URL}}" target="_new">APPRISE LIBRARY v{{APPRISE_LIB_VERSION}}</a></li>
-           <li class="theme"><a href="{{ request.path }}?theme={{request.next_theme}}"><i class="material-icons">invert_colors</i></a></li>
-        </ul>
-      </div>
-    </div>
-    <!-- Page Layout here -->
-    <div class="row main-layout">
-
-      <!-- Side menu -->
-      <div class="col s12 m3 l3 side-menu">
-{% if STATEFUL_MODE != 'disabled' %}
-        <ul class="collection z-depth-1">
-          <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
-            {% trans "Configuration Manager" %}</a>
-          {% if not CONFIG_LOCK %}
-          <a class="collection-item" id='cfg-gen' href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
-            {% trans "New Configuration" %}</a>
-          {% endif %}
-          {% if STATEFUL_MODE == 'simple' and APPRISE_ADMIN %}
-          <a class="collection-item" id='cfg-list' href="{% url 'config_list' %}"><i class="material-icons">list</i>
-            {% trans "Configuration List" %}</a>
-          {% endif %}
-          <a class="collection-item" href="{% url 'details' %}"><i class="material-icons">search</i>
-            {% trans "Available Plugins" %}</a>
-        </ul>
-{% endif %}
-        <ul class="collection z-depth-1">
-          <a class="collection-item" target="_blank"
-            href="https://github.com/caronc/apprise/wiki#notification-services">📣
-            {% trans "Notification Services" %}</a>
-          <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/config"><i
-              class="material-icons">local_library</i> {% trans "Configuration Help" %}</a>
-          <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/Troubleshooting"><i
-              class="material-icons">build</i> {% trans "Troubleshooting" %}</a>
-          <a class="collection-item" target="_blank" href="https://github.com/caronc/apprise/wiki/CLI_Usage"><i
-              class="material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
-        </ul>
-        <ul class="collection z-depth-1">
-          <a class="collection-item" target="_blank"
-            href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E"><i
-              class="material-icons" style="color: maroon;">free_breakfast</i> <strong>{% trans "Buy Developer A Coffee" %}</strong></a>
-          <a class="collection-item" target="_blank" href="https://github.com/sponsors/caronc"><i
-              class="material-icons" style="color: red;">favorite</i> <strong>{% trans "Sponsor Apprise Development" %}</strong></a>
-        </ul>
-        {% block menu %}{% endblock %}
-      </div>
-
-      <!-- Main content -->
-      <div class="col s12 m9 l9 main-content">
-        <div id="health-check" class="section" style="display: none">
-          <h4><i class="material-icons" style="color: orange">warning</i>&nbsp;{% trans "Apprise Health Check Failed" %}&nbsp;<i class="material-icons" style="color: orange">warning</i></h4>
-        {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
-           <ul>
-             <li class="can_write_config" style="display: none"><strong>
-                <i class="material-icons"
-                style="color: red">cancel</i>&nbsp;{% trans "Configuration Write Failure" %}</strong>
-                <p>{% blocktrans %}Apprise can not write new configuration information to the directory:{% endblocktrans %} <code>{{CONFIG_DIR}}</code>.</p>
-                <p>{% blocktrans %}<em>Note:</em>  If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_CONFIG_LOCK=yes</code> and reload your Apprise instance.{% endblocktrans %}</p>
-             </li>
-
-             <li class="can_write_attach" style="display: none"><strong>
-                <i class="material-icons"
-                style="color: red">cancel</i>&nbsp;{% trans "Attachment Temporary Storage Write Failure" %}</strong>
-                <p>{% blocktrans %}Apprise can not circulate attachments (if provided) along to supported endpoints due to not having write access to the directory:{% endblocktrans %} <code>{{ATTACH_DIR}}</code>.</p>
-                <p>{% blocktrans %}<em>Note:</em> If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_ATTACH_SIZE=0</code> and reload your Apprise instance.{% endblocktrans %}</p>
-                </p>
-             </li>
-           </ul>
-        <p>{% blocktrans %}Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files.  In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too.{% endblocktrans %}</p>
-        <p>{% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.</p>
+  <head>
+    <meta charset="utf-8">
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon"
+          type="image/png"
+          href="{% static 'favicon.ico' %}" />
+    <!--materialize-->
+    <link rel="stylesheet"
+          href="{% get_static_prefix %}css/materialize.min.css" />
+    <!--material-design-icons-->
+    <link rel="stylesheet" href="{% static 'iconfont/material-icons.css' %}">
+    <!--highlightjs-->
+    <link rel="stylesheet" href="{% get_static_prefix %}css/highlight.min.css">
+    <!--common-->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+    <!--materialize-->
+    <script src="{% static 'js/materialize.min.js' %}"></script>
+    <!--sweetalert2-->
+    <script src="{% static 'js/sweetalert2.all.min.js' %}"></script>
+    <!--highlightjs-->
+    <script src="{% static 'js/highlight.pack.js' %}"></script>
+    <!--theme-->
+    <link rel="stylesheet"
+          href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.min.css">
+    <title>
+      {% block title %}
+        {% trans "Apprise API" %}
+      {% endblock %}
+    </title>
+  </head>
+  <body>
+    <div class="content">
+      <!-- Title -->
+      <div class="nav row nav-color z-depth-2">
+        <div class="col s12">
+          <a href="{% url 'welcome' %}">
+            <img class="apprise-logo left"
+                 src="{% get_static_prefix %}logo-{{ request.theme|safe }}.png"
+                 alt="{% trans "Apprise Logo" %}" />
+          </a>
+          <small>&nbsp;<a class="apprise-api-ver" href="{{ APPRISE_API_URL }}" target="_new">v{{ APPRISE_API_VERSION }}</a></small>
+          <ul>
+            <li>
+              <a class="apprise-lib-ver" href="{{ APPRISE_LIB_URL }}" target="_new">
+                <img class="apprise-mini-logo left"
+                     src="{% get_static_prefix %}logo.png"
+                     alt="{% trans "Apprise Logo" %}" />
+              APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
+            </li>
+            <li class="theme">
+              <a href="{{ request.path }}?theme={{ request.next_theme }}"><i class="material-icons">invert_colors</i></a>
+            </li>
+          </ul>
         </div>
-        {% block body %}{% endblock %}
-        <footer class="page-footer-legal">
-          <small>
-            {{ APPRISE_API_COPYRIGHT }}
-            ·
-            {% blocktrans with license=APPRISE_API_LICENSE %}
+      </div>
+      <!-- Page Layout here -->
+      <div class="row main-layout">
+        <!-- Side menu -->
+        <div class="col s12 m3 l3 side-menu">
+          {% if STATEFUL_MODE != 'disabled' %}
+            <ul class="collection z-depth-1">
+            <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
+          {% trans "Configuration Manager" %}</a>
+          {% if not CONFIG_LOCK %}
+          <a class="collection-item"
+             id='cfg-gen'
+             href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
+        {% trans "New Configuration" %}</a>
+      {% endif %}
+      {% if STATEFUL_MODE == 'simple' and APPRISE_ADMIN %}
+      <a class="collection-item" id='cfg-list' href="{% url 'config_list' %}"><i class="material-icons">list</i>
+    {% trans "Configuration List" %}</a>
+  {% endif %}
+<a class="collection-item" href="{% url 'details' %}"><i class="material-icons">search</i>
+{% trans "Available Plugins" %}</a>
+</ul>
+{% endif %}
+<ul class="collection z-depth-1">
+  <a class="collection-item"
+     target="_blank"
+     href="https://github.com/caronc/apprise/wiki#notification-services">📣
+  {% trans "Notification Services" %}</a>
+  <a class="collection-item"
+     target="_blank"
+     href="https://github.com/caronc/apprise/wiki/config"><i class="material-icons">local_library</i> {% trans "Configuration Help" %}</a>
+  <a class="collection-item"
+     target="_blank"
+     href="https://github.com/caronc/apprise/wiki/Troubleshooting"><i class="material-icons">build</i> {% trans "Troubleshooting" %}</a>
+  <a class="collection-item"
+     target="_blank"
+     href="https://github.com/caronc/apprise/wiki/CLI_Usage"><i class="material-icons">lightbulb_outline</i> {% trans "Using the CLI" %}</a>
+</ul>
+<ul class="collection z-depth-1">
+  <a class="collection-item"
+     target="_blank"
+     href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E"><i class="material-icons" style="color: maroon;">free_breakfast</i> <strong>{% trans "Buy Developer A Coffee" %}</strong></a>
+  <a class="collection-item"
+     target="_blank"
+     href="https://github.com/sponsors/caronc"><i class="material-icons" style="color: red;">favorite</i> <strong>{% trans "Sponsor Apprise Development" %}</strong></a>
+</ul>
+{% block menu %}{% endblock %}
+</div>
+<!-- Main content -->
+<div class="col s12 m9 l9 main-content">
+  <div id="health-check" class="section" style="display: none">
+    <h4>
+      <i class="material-icons" style="color: orange">warning</i>&nbsp;{% trans "Apprise Health Check Failed" %}&nbsp;<i class="material-icons" style="color: orange">warning</i>
+    </h4>
+    {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
+    <ul>
+      <li class="can_write_config" style="display: none">
+        <strong>
+          <i class="material-icons" style="color: red">cancel</i>&nbsp;{% trans "Configuration Write Failure" %}</strong>
+        <p>
+          {% blocktrans %}Apprise can not write new configuration information to the directory:{% endblocktrans %} <code>{{ CONFIG_DIR }}</code>.
+        </p>
+        <p>
+          {% blocktrans %}<em>Note:</em>  If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_CONFIG_LOCK=yes</code> and reload your Apprise instance.{% endblocktrans %}
+        </p>
+      </li>
+      <li class="can_write_attach" style="display: none">
+        <strong>
+          <i class="material-icons" style="color: red">cancel</i>&nbsp;{% trans "Attachment Temporary Storage Write Failure" %}</strong>
+        <p>
+          {% blocktrans %}Apprise can not circulate attachments (if provided) along to supported endpoints due to not having write access to the directory:{% endblocktrans %} <code>{{ ATTACH_DIR }}</code>.
+        </p>
+        <p>
+          {% blocktrans %}<em>Note:</em> If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_ATTACH_SIZE=0</code> and reload your Apprise instance.{% endblocktrans %}
+        </p>
+      </p>
+    </li>
+  </ul>
+  <p>
+    {% blocktrans %}Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files.  In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too.{% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.
+  </p>
+</div>
+{% block body %}{% endblock %}
+<footer class="page-footer-legal">
+  <small>
+    <hr />
+    <a href="{{ APPRISE_API_URL }}" target="_new">{% trans "Apprise API" %} v{{ APPRISE_API_VERSION }}</a>
+    <br />
+    {{ APPRISE_API_COPYRIGHT }}
+    ·
+    {% blocktrans with license=APPRISE_API_LICENSE %}
               Licensed under the {{ license }} License.
             {% endblocktrans %}
-          </small>
-        </footer>
-      </div>
-    </div>
-  </div>
-  <script>
+  </small>
+</footer>
+</div>
+</div>
+</div>
+<script>
     document.addEventListener('DOMContentLoaded', function () {
       // Materialize Init
       M.AutoInit();
@@ -175,7 +212,6 @@
         }
       });
     });
-  </script>
+</script>
 </body>
-
 </html>

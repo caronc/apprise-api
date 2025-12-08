@@ -1,125 +1,172 @@
 {% extends 'base.html' %}
+
 {% load i18n %}
 
 {% block body %}
-  <h4>{% trans 'Available Plugins' %}</h4>
-  <p>
-    {% url 'details' as href %}
-    {% blocktrans %}The following services are supported by this <a target="_blank" href="https://github.com/caronc/apprise">Apprise</a> instance.{% endblocktrans %}
-  </p>
-  <p>
-    {% if show_all %}
-    {% blocktrans %}To see a simplified listing that only identifies the Apprise services enabled click <a href="{{href}}">here</a>.{% endblocktrans %}
-    {% else %}
-    {% blocktrans %}To see a listing that identifies all of Apprise services available to this version (enabled or not) click <a href="{{href}}?all=yes">here</a>.{% endblocktrans %}
-    {% endif %}
-		<hr/>
-    <div><b>{% blocktrans %}Total plugin(s) supported{% endblocktrans %}:</b> {{ details.schemas|length }}</div>
-    <ul class="collapsible">
-      {% for entry in details.schemas %}
+  <div class="api-details">
+    {# Header / intro block #}
+    <div class="section details-header">
+      <h4>{% trans "Apprise Details" %}</h4>
+      <p>
+        {% blocktrans %}The following services are supported by this
+        <a target="_blank" href="https://github.com/caronc/apprise">Apprise</a>
+        instance.{% endblocktrans %}
+      </p>
+      <p>
+        {% url 'details' as href %}
+        {% if show_all %}
+          {% blocktrans %}To see a simplified listing that only identifies the Apprise services
+          enabled click <a href="{{ href }}">here</a>.{% endblocktrans %}
+        {% else %}
+          {% blocktrans %}To see a listing that identifies all of Apprise services available to this
+          version (enabled or not) click <a href="{{ href }}?all=yes">here</a>.{% endblocktrans %}
+        {% endif %}
+      </p>
+      <div class="details-summary">
+        <b>{% blocktrans %}Total plugin(s) supported{% endblocktrans %}:</b>
+        {{ details.schemas|length }}
+      </div>
+    </div>
+    {# Plugin accordion #}
+    <div class="section details-plugins">
+      <ul class="collapsible">
+        {% for entry in details.schemas %}
+          <li>
+            <div class="collapsible-header">
+              <span class="plugin-index">{{ forloop.counter|stringformat:"03d" }}</span>
+              <i class="tiny material-icons plugin-chevron">chevron_right</i>
+              {% if show_all %}
+                {% if entry.enabled %}
+                  <i class="url-enabled material-icons plugin-status">
+                    check_circle
+                  </i>
+                {% else %}
+                  <i class="url-disabled material-icons plugin-status">
+                    remove_circle
+                  </i>
+                {% endif %}
+              {% endif %}
+              <span class="service_name">{{ entry.service_name }}</span>
+              <span class="plugin-actions">
+                <a href="{{ entry.setup_url }}" target="_blank">
+                  <i class="material-icons">help</i>
+                </a>
+                <a href="{{ entry.service_url }}" target="_blank">
+                  <i class="material-icons">explore</i>
+                </a>
+              </span>
+            </div>
+            <div class="collapsible-body">
+              <h5>{{ entry.service_name }}</h5>
+              {% if show_all and not entry.enabled %}
+                <i class="url-disabled material-icons">report</i>
+                {% blocktrans %}
+                  <strong>Note:</strong> This service is unavailable due to the
+                  service being disabled by the administrator or the required
+                  libraries needed to drive it is not installed or functioning
+                  correctly.
+                {% endblocktrans %}
+              {% endif %}
+              <hr />
+              <ul class="detail-buttons detail-buttons--width">
+                <li>
+                  <strong>{% blocktrans %}Category{% endblocktrans %}:</strong>
+                  <code>{{ entry.category }}</code>
+                </li>
+                {% if entry.protocols %}
+                  <li>
+                    <strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong>
+                    <code>{{ entry.protocols|join:", " }}</code>
+                  </li>
+                {% endif %}
+                {% if entry.secure_protocols %}
+                  <li>
+                    <strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong>
+                    <code>{{ entry.secure_protocols|join:", " }}</code>
+                  </li>
+                {% endif %}
+                <li>
+                  <pre><code class="bash">
+# {% blocktrans %}Apprise URL Formatting{% endblocktrans %}</br>
+{% for url in entry.details.templates %}{{ url }}<br />{% endfor %}
+                  </code></pre>
+                </li>
+                <li>
+                  <p>
+                    {% blocktrans %}For more details and additional Apprise
+                    configuration options available to this service:{% endblocktrans %}
+                    <a href="{{ entry.setup_url }}" target="_blank">Click Here</a>
+                  </p>
+                </li>
+              </ul>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {# API endpoints section #}
+    <div class="section details-api">
+      <h4>{% trans "API Endpoints" %}</h4>
+      <p>
+        {% blocktrans %}Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achive this:{% endblocktrans %}
+      </p>
+      <ul class="collapsible">
         <li>
           <div class="collapsible-header">
-            {{ forloop.counter|stringformat:"03d"}} <i class="tiny material-icons">chevron_right</i>
-            {% if show_all %}{% if entry.enabled %}<i class="url-enabled material-icons">check_circle</i>{%else%}<i class="url-disabled material-icons">remove_circle</i>{%endif%}{% endif%}
-            <div style="width:40rem;" lass="service_name">{{ entry.service_name }}</div>
-                        <ul style="width:90%; min-width: 60%;" class="right detail-buttons">
-              <li class="right">
-             <a href="{{ entry.setup_url }}" target="_blank" class="service_name"><i class="material-icons">help</i></a>
-             <a href="{{ entry.service_url }}" target="_blank" class="service_name"><i class="material-icons">explore</i></a>
-              </li>
-            </ul>
+            <i class="material-icons">code</i>Curl Example
           </div>
           <div class="collapsible-body">
-            <h5>{{ entry.service_name }}</h5>
-            {% if show_all and not entry.enabled %}
-            <i class="url-disabled material-icons">report</i>{% blocktrans %}<strong>Note:</strong> This service is unavailable due to the service being disabled by the administrator or the required libraries needed to drive it is not installed or functioning correctly.{% endblocktrans %}
-            {% endif %}
-            <hr/>
-
-            <ul class="detail-buttons">
-              <li><strong>{% blocktrans %}Category{% endblocktrans %}:</strong> <code>{{entry.category}}</code></li>
-              {% if entry.protocols %}
-              <li><strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong> <code>{{ entry.protocols|join:", " }}</code></li>
-              {% endif %}
-              {% if entry.secure_protocols %}
-              <li><strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong> <code>{{ entry.secure_protocols|join:", " }}</code></li>
-              {% endif %}
-              <li><pre><code class="bash">
-                  # {% blocktrans %}Apprise URL Formatting{% endblocktrans %}</br>
-                {% for url in entry.details.templates %}
-                  {{url}}<br/>
-                  {% endfor %}
-                </code></pre>
-              </li>
-              <li>{% blocktrans %}For more details and additional Apprise configuration options available to this service:{% endblocktrans %}
-                <a href="{{ entry.setup_url }}" target="_blank" class="service_name">Click Here</a>
-            </ul>
-        </div>
+            <pre><code class="bash">
+#{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
+curl -H "Accept: application/json" \<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"
+            </code></pre>
+          </div>
         </li>
-      {% endfor %}
-    </ul>
-  </p>
-
-  <div class="section">
-    <h4>{% trans 'API Endpoints' %}</h4>
-    <p>
-      {% blocktrans %}Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achive this:{% endblocktrans %}
-    </p>
-    <ul class="collapsible">
-      <li>
-        <div class="collapsible-header">
-          <i class="material-icons">code</i>Curl Example
-        </div>
-        <div class="collapsible-body">
-          <pre><code class="bash">
-              #{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
-              curl -H "Accept: application/json" \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"
+        <li>
+          <div class="collapsible-header">
+            <i class="material-icons">code</i>Python Example
+          </div>
+          <div class="collapsible-body">
+            <pre><code class="python">
+import json<br />
+from urllib.request import Request<br />
+<br /># The URL<br />
+req = Request(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
+&nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{"Accept": "application/json"},<br />
+&nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
+)
             </code></pre>
-        </div>
-      </li>
-      <li>
-        <div class="collapsible-header">
-          <i class="material-icons">code</i>Python Example
-        </div>
-        <div class="collapsible-body">
-          <pre><code class="python">
-              import json<br />
-              from urllib.request import Request<br />
-              <br /># The URL<br />
-              req = Request(<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;{"Accept": "application/json"},<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
-              )
+          </div>
+        </li>
+        <li>
+          <div class="collapsible-header">
+            <i class="material-icons">code</i>PHP Example
+          </div>
+          <div class="collapsible-body">
+            <pre><code class="php">
+&lt;?php<br />
+<br />
+// The URL<br />
+$url = '{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
+<br />
+//Initiate cURL.<br />
+$ch = curl_init($url);<br />
+<br />
+//Set the content type to application/json<br />
+curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));<br />
+<br />
+//Execute the request<br />
+$result = curl_exec($ch);
             </code></pre>
-        </div>
-      </li>
-      <li>
-        <div class="collapsible-header">
-          <i class="material-icons">code</i>PHP Example
-        </div>
-        <div class="collapsible-body">
-          <pre><code class="php">
-              &lt;?php<br />
-              <br />
-              // The URL<br />
-              $url = '{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
-              <br />
-              //Initiate cURL.<br />
-              $ch = curl_init($url);<br />
-              <br />
-              //Set the content type to application/json<br />
-              curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));<br />
-              <br />
-              //Execute the request<br />
-              $result = curl_exec($ch);
-            </code></pre>
-        </div>
-      </li>
-    </ul>
-    <p>
-      {% blocktrans %}More details on the JSON format can be found <a href="https://github.com/caronc/apprise/wiki/Development_Apprise_Details#details" target="_blank">here</a>.{% endblocktrans %}
+          </div>
+        </li>
+      </ul>
+      <p>
+        {% blocktrans %}More details on the JSON format can be found <a href="https://github.com/caronc/apprise/wiki/Development_Apprise_Details#details" target="_blank">here</a>.{% endblocktrans %}
+      </p>
+    </div>
   </div>
 {% endblock %}

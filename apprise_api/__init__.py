@@ -40,7 +40,7 @@ __all__: list[str] = [
 
 __title__: str = "Apprise API"
 __description__: str = "A lightweight REST API for the Apprise notification framework."
-__version__: str = "1.2.6"
+__version__: str = "1.3.0"
 __author__: str = "Chris Caron"
 __license__: str = "MIT"
 __url__: str = "https://github.com/caronc/apprise-api"
