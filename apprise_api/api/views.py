@@ -87,8 +87,6 @@ TAG_DETECT_RE = re.compile(r"\s*([a-z0-9\s_&+-]+)(?=$|\s*[|,]\s*[a-z0-9\s&+_-|,]
 # Break apart our objects anded together
 TAG_AND_DELIM_RE = re.compile(r"[\s&+]+")
 
-MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
-
 
 class JSONEncoder(DjangoJSONEncoder):
     """
