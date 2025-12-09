@@ -21,7 +21,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from core import __author__, __copyright__, __license__, __url__, __version__
 from django.conf import settings
 
 import apprise
@@ -50,20 +49,21 @@ def admin_enabled(request):
     return {"APPRISE_ADMIN": settings.APPRISE_ADMIN}
 
 
-def apprise_details(request):
+def apprise_metadata(request):
     """
     Returns the current details of the Apprise Library and API under the hood
     """
+
     return {
         "APPRISE_LIB_VERSION": apprise.__version__,
         "APPRISE_LIB_URL": "http://github.com/caronc/apprise",
 
-        "APPRISE_API_VERSION": __version__,
-        "APPRISE_API_URL": __url__,
-        "APPRISE_API_LICENSE": __license__,
-        "APPRISE_API_COPYRIGHT": __copyright__,
+        "APPRISE_API_VERSION": settings.APP_AUTHOR,
+        "APPRISE_API_URL": settings.APP_URL,
+        "APPRISE_API_LICENSE": settings.APP_LICENSE,
+        "APPRISE_API_COPYRIGHT": settings.APP_COPYRIGHT,
 
-        "APPRISE_AUTHOR": __author__,
+        "APPRISE_AUTHOR": settings.APP_AUTHOR,
     }
 
 

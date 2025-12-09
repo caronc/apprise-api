@@ -318,6 +318,8 @@
     try {
     document.execCommand('copy');
     showCopyToast(anchorEl, message);
+    } catch (e) {
+    console.warn('document.execCommand("copy") failed', e);
     } finally {
     document.body.removeChild(textarea);
     }

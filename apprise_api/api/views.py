@@ -192,7 +192,7 @@ def _get_config_response(request, key):
             request.META["REMOTE_ADDR"],
             key,
         )
-        msg = _("An error occured accessing configuration")
+        msg = _("An error occurred accessing configuration")
         status = ResponseCode.internal_server_error
         return (
             HttpResponse(msg, status=status, content_type="text/plain")
@@ -731,7 +731,7 @@ class AddView(View):
                     request.META["REMOTE_ADDR"],
                     key,
                 )
-                msg = _("An error occured saving configuration")
+                msg = _("An error occurred saving configuration")
                 status = ResponseCode.internal_server_error
                 return (
                     HttpResponse(msg, status=status, content_type="text/plain")
@@ -1290,7 +1290,7 @@ class NotifyView(View):
             )
 
             # Something went very wrong; return 500
-            msg = _("An error occured accessing configuration")
+            msg = _("An error occurred accessing configuration")
             status = ResponseCode.internal_server_error
             return (
                 HttpResponse(msg, status=status, content_type="text/plain")

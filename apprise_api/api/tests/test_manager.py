@@ -85,7 +85,7 @@ class ManagerPageTests(SimpleTestCase):
         assert response.status_code == 200
 
         # Handle case when we try to retrieve our content but we have no idea
-        # what the format is in. Essentialy there had to have been disk
+        # what the format is in. Essentially there had to have been disk
         # corruption here or someone meddling with the backend.
         with patch("gzip.open", side_effect=OSError):
             response = self.client.post("/cfg/{}".format(key))
