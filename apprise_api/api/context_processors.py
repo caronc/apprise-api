@@ -58,7 +58,7 @@ def apprise_metadata(request):
         "APPRISE_LIB_VERSION": apprise.__version__,
         "APPRISE_LIB_URL": "http://github.com/caronc/apprise",
 
-        "APPRISE_API_VERSION": settings.APP_AUTHOR,
+        "APPRISE_API_VERSION": settings.APP_VERSION,
         "APPRISE_API_URL": settings.APP_URL,
         "APPRISE_API_LICENSE": settings.APP_LICENSE,
         "APPRISE_API_COPYRIGHT": settings.APP_COPYRIGHT,

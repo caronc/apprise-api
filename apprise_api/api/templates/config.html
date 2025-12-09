@@ -4,17 +4,15 @@
 
 {% block body %}
   {% if STATEFUL_MODE != 'disabled' %}
-    <h4>
-      {% trans "Management for Config ID:" %}
-      <span class="config-id-wrapper">
-        <code class="config-id">{{ key }}</code>
-        <button type="button"
-                class="btn-flat btn-small config-id-copy"
-                title="{% trans "Copy Config ID to Clipboard" %}">
-          <i class="material-icons">content_copy</i>
-        </button>
-      </span>
-    </h4>
+    <span class="config-id-wrapper"><b>{% trans "Config ID" %}:</b>
+      <code class="config-id">{{ key }}</code>
+      <button type="button"
+              class="btn-flat btn-small config-id-copy"
+              title="{% trans "Copy Config ID to Clipboard" %}">
+        <i class="material-icons">content_copy</i>
+      </button>
+    </span>
+    <hr />
     <div class="row">
       <div class="col s12">
         <ul class="tabs config-overview">
@@ -49,21 +47,32 @@
   </div>
   <div id="overview" class="col s12">
     {% if not CONFIG_LOCK %}
-      <div class="section">
+      <div class="section getting-started">
         <h5>{% trans "Getting Started" %}</h5>
         <ol>
           <li>
             {% trans "Verify your Apprise API Status:" %} <strong><a href="{% url 'health' %}">click here</a></strong>
           </li>
           <li>
-            {% trans "Here is where you can store your Apprise configuration associated with the key:" %} <code>{{ key }}</code>
-            {% trans "For some examples on how to build a development environment around this:" %} <strong><a href="{% url 'welcome' %}?key={{ key }}">click here</a></strong>
+            <p>
+              {% trans "The following is your Apprise Configuration ID:" %}
+              <div class="code-snippet"
+                   data-copy-label='{% trans "Apprise configuration ID copied to clipboard" %}'
+                   data-copy-text='{{ key }}'>
+                <pre><code>{{ key }}</code></pre>
+              </div>
+              {% trans "For some examples on how to build a development environment around this:" %} <strong><a href="{% url 'welcome' %}?key={{ key }}">click here</a></strong>
+            </p>
           </li>
           <li>
             {% blocktrans %}
               In the future you can return to this configuration screen at any time by placing the following into your browser:
               {% endblocktrans %}
-            <code>{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code>
+            <div class="code-snippet"
+                 data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
+                 data-copy-text='{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+              <pre><code>{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code></pre>
+            </div>
           </li>
           <li>
             {% blocktrans %}
@@ -147,7 +156,7 @@
           {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
           <div class="code-snippet"
                data-copy-text='include {{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
-               data-copy-label='{% trans "Apprise configuration entry copied to clipboard" %}'></div>
+               data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'></div>
           <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
           {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
           <div class="code-snippet"

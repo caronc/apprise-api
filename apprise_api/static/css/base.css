@@ -213,6 +213,14 @@ textarea {
   font-size: 1.2rem;
 }
 
+.getting-started li {
+   padding: 0.3em 0;
+}
+
+.getting-started p {
+   padding: 0.2em 0;
+   margin: 0;
+}
 .detail-buttons--width {
   width: 90%;
   min-width: 60%;
@@ -242,8 +250,15 @@ textarea {
 .tabs .tab a {
   border-radius: 25px 25px 0 0;
 }
+body .tabs .tab a:hover,
+body .tabs .tab a.active {
+  font-weight: bold;
+}
 
-.tabs .tab.disabled a {
+body .tabs .tab.disabled a,
+body .tabs .tab.disabled a:hover,
+body .tabs .tab.disabled a i,
+body .tabs .tab.disabled a:hover i {
   font-weight: inherit;
   cursor: default;
 }
@@ -398,7 +413,7 @@ textarea {
 }
 
 code.config-id {
-  font-size: 0.7em;
+  font-size: 0.8em;
 }
 
 .code-snippet {

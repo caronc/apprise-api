@@ -120,12 +120,18 @@ nav ul a:hover {
     color: #d8dee9;
 }
 
-.collection a.collection-item {
+.collection a.collection-item{
     color: #d8dee9;
 }
 
+a,
+a:hover,
+a.active {
+    color: #6e7d9c;
+}
+
 .collection a.collection-item:not(.active):hover {
-    background-color: #81a1c1 !important;
+    background-color: #1b1e26 !important;
 }
 
 .collapsible {
@@ -155,22 +161,33 @@ nav ul a:hover {
 }
 
 body .tabs .tab a {
-    background-color: #4c566a;
+    background-color: #4c566a !important;
     border-left: none;
     border-bottom: none;
-    color: #d8dee9;
+    color: #d8dee9 !important;
 }
 
 body .tabs .tab a:hover,
 body .tabs .tab a.active {
-    background-color: #4c566a;
+    background-color: inherit;
     color: #eceff4;
 }
 
 body .tabs .tab.disabled a,
 body .tabs .tab.disabled a:hover {
-    background-color: transparent !important;
-    color: #6e7d9c !important;
+    background-color: #171b23 !important;
+}
+
+body .tabs .tab.disabled a,
+body .tabs .tab.disabled a:hover,
+body .tabs .tab.disabled a i,
+body .tabs .tab.disabled a:hover i {
+  color: #666 !important;
+}
+
+body .tabs .tab a:focus,
+body.tabs .tab a:focus.active {
+  background-color: #1b1e26 !important;
 }
 
 body .tabs .indicator {

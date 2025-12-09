@@ -26,7 +26,7 @@ em {
 
 /* Tabs - Prefixed with 'body' to override Materialize */
 body .tabs .tab a {
-  color: #2bbbad;
+  color: #004d40;
   background-color: #f3f3f3;
   border-bottom: 1px solid #464646;
 }
@@ -35,13 +35,23 @@ body .tabs .tab a:hover,
 body .tabs .tab a.active {
   background-color: #eee;
   color: #004d40;
-  font-weight: bold;
+}
+body .tabs .tab.disabled a,
+body .tabs .tab.disabled a:hover {
+  background-color: #ccc;
 }
 
 body .tabs .tab.disabled a,
-body .tabs .tab.disabled a:hover {
-  background-color: #f3f3f3;
-  color: #a7a7a7;
+body .tabs .tab.disabled a:hover,
+body .tabs .tab.disabled a i,
+body .tabs .tab.disabled a:hover i {
+  color: #666;
+}
+
+body .tabs .tab a:focus,
+body.tabs .tab a:focus.active {
+  background-color: inherit;
+  color: #666;
 }
 
 body .tabs .indicator {
@@ -52,7 +62,14 @@ body .tabs .indicator {
 .collection a.collection-item:not(.active):hover,
 .tabs .tab a:focus,
 .tabs .tab a:focus.active {
-  background-color: #eee;
+  background-color: #eee !important;
+}
+
+.collection a.collection-item,
+a,
+a:hover,
+a.active {
+  color: #004d40 !important;
 }
 
 /* Cards & Lists */

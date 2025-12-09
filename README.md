@@ -784,28 +784,23 @@ spec:
 ```
 
 ## Development Environment
-The following should get you a working development environment (min requirements are Python v3.12) to test with.
+The following should get you a working development server to test with:
 
-### Setup
-
-```bash
-# Create and activate a Python 3.12 virtual environment:
-python3.12 -m venv .venv
-. .venv/bin/activate
-
-# Install core dependencies:
-
-pip install -e '.[dev]'
-```
-
-### Running the Dev Server
-
+### Bare Metal
 ```bash
 # Start the development server in debug mode:
-./manage.py runserver
+tox -e runserver
 # Then visit: http://localhost:8000/
+
+# If you want to run on a different port:
+tox -e runserver -- "localhost:8080"
+# Then visit: http://localhost:8000/
+
+# You can also bind it to all of your interfaces like so:
+tox -e runserver -- "0.0.0.0:8080"
 ```
 
+### Docker Containers
 For development, the repository includes a `docker-compose.override.yml` file
 that extends `docker-compose.yml` to build from source and bind-mount the code.
 Running:
