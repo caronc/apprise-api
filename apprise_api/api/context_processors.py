@@ -21,10 +21,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from core import __author__, __copyright__, __license__, __url__, __version__
 from django.conf import settings
 
 import apprise
-from apprise_api import __author__, __copyright__, __license__, __url__, __version__
 
 from .utils import ConfigCache, gen_unique_config_id
 
