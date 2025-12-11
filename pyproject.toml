@@ -197,3 +197,9 @@ blank_line_after_tag = "load,extends,include"
 
 extend_exclude = ".venv,venv,.tox,node_modules,build,dist,lib,lib64,static"
 ignore = "H006,H021"
+
+# Configure the inner JS formatter (js-beautify)
+[tool.djlint.js]
+indent_size = 2
+preserve_newlines = true
+

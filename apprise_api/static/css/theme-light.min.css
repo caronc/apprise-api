@@ -163,29 +163,62 @@ a.active {
 .apprise-config-highlight .hljs-string,
 .apprise-config-highlight .hljs-symbol,
 .apprise-config-highlight .hljs-link {
-    color: #1b1e26 !important;
+  color: #1b1e26 !important;
 }
 
 /* 2. Comments */
 .apprise-config-highlight .hljs-comment {
-    color: #777 !important;
-    font-style: italic !important;
+  color: #777 !important;
+  font-style: italic !important;
 }
 
 /* 3. Tags / Keywords */
 .apprise-config-highlight .hljs-keyword,
 .apprise-config-highlight .hljs-section,
 .apprise-config-highlight .hljs-name {
-    color: #6a9955 !important;
+  color: #6a9955 !important;
 }
 
 /* 4. Numbers / Constants */
 .apprise-config-highlight .hljs-number,
 .apprise-config-highlight .hljs-literal {
-    color: #c586c0 !important;
+  color: #c586c0 !important;
 }
 
 /* 5. Standard Text */
 .apprise-config-highlight {
-    color: #d4d4d4 !important;
+  color: #d4d4d4 !important;
+}
+
+/* SweetAlert2 – log colouring */
+.swal2-popup .notify-log-panel {
+  background-color: #eee;
+}
+
+.swal2-popup .logs .log_DEBUG {
+  color: #607d8b;
+}
+
+.swal2-popup .logs .log_INFO {
+  color: #2e7d32;
+}
+
+.swal2-popup .logs .log_WARNING {
+  color: #f9a825;
+}
+
+.swal2-popup .logs .log_ERROR {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+.swal2-popup .logs .log_CRITICAL,
+.swal2-popup .logs .log_FATAL {
+  color: #b71c1c;
+  font-weight: 700;
+}
+
+.swal2-popup .logs .log_TRACE {
+  color: #1976d2;
+  font-style: italic;
 }

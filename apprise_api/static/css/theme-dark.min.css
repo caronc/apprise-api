@@ -35,10 +35,11 @@ em {
 }
 
 .select-wrapper input.select-dropdown:focus {
-   border-bottom: 1px solid #4c566a !important;
+    border-bottom: 1px solid #4c566a !important;
 }
 
-.dropdown-content li>a, .dropdown-content li>span {
+.dropdown-content li>a,
+.dropdown-content li>span {
     background-color: #171b23 !important;
     color: #eceff4;
 }
@@ -363,7 +364,7 @@ pre code {
 }
 
 .apprise-config-editor textarea {
-  caret-color: white !important;
+    caret-color: white !important;
 }
 
 .apprise-config-editor .apprise-config-highlight {
@@ -400,4 +401,38 @@ pre code {
 /* 5. Standard Text */
 .apprise-config-highlight {
     color: #d4d4d4 !important;
+}
+
+/* SweetAlert2 – log colouring */
+
+.swal2-popup .notify-log-panel {
+    background-color: #1b1e26;
+}
+
+.swal2-popup .logs .log_DEBUG {
+    color: #7f9bb3;
+}
+
+.swal2-popup .logs .log_INFO {
+    color: #b5e07a;
+}
+
+.swal2-popup .logs .log_WARNING {
+    color: #ffc861;
+}
+
+.swal2-popup .logs .log_ERROR {
+    color: #ff8080;
+    font-weight: 600;
+}
+
+.swal2-popup .logs .log_CRITICAL,
+.swal2-popup .logs .log_FATAL {
+    color: #ff5555;
+    font-weight: 700;
+}
+
+.swal2-popup .logs .log_TRACE {
+    color: #6a9fb5;
+    font-style: italic;
 }

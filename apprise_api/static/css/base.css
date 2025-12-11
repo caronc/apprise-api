@@ -603,6 +603,99 @@ code.config-id {
   display: block;
 }
 
+.notify-top-row .input-field>label {
+  position: static;
+  transform: none;
+  display: block;
+  margin: 0 0 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+.notify-attachments-field input[type=file] {
+  /* Hidden, we trigger it from our Browse button */
+  display: none;
+}
+
+.notify-attachments-field .btn-file {
+  display: inline-flex;
+  margin-top: 0.25rem;
+}
+
+.notify-attachments-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.notify-attachments-list .attachment-chip {
+  border-radius: 16px;
+  padding: 0 0.75rem;
+  line-height: 1.8;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notify-attachments-list .attachment-chip i.material-icons {
+  font-size: 1.1rem;
+  margin-left: 0.25rem;
+}
+
+#notify .row,
+#notify .row .input-field {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  padding-top: 0;
+}
+
+/* SweetAlert2 – notification summary and logs */
+
+.swal2-popup .notify-summary {
+  text-align: center;
+  margin: 0 auto 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.swal2-popup .notify-log-panel {
+  margin: 0 auto 0.5rem;
+  padding: 0.75rem 1rem;
+  max-height: 28rem;
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.swal2-popup .notify-log-panel ul.logs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+/* log lines */
+.swal2-popup .notify-log-panel ul.logs li {
+  display: flex;
+  flex-direction: row;
+  gap: 0.8rem;
+
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  padding: 0.05rem 0;
+  white-space: pre-wrap;
+}
+
+.swal2-popup .notify-log-panel ul.logs li .log_time,
+.swal2-popup .notify-log-panel ul.logs li .log_level {
+  flex-shrink: 0;
+}
+
 /* =========================================
    Apprise Configuration Editor (Grid Overlay)
    ========================================= */
@@ -650,7 +743,6 @@ code.config-id {
   border: 1px solid transparent !important;
 }
 
-/* Syntax Highlighting overrides */
 .apprise-config-highlight code {
   font-family: inherit !important;
   font-size: inherit !important;
@@ -659,7 +751,6 @@ code.config-id {
   color: inherit;
 }
 
-/* 1. Reset the library's internal spacing */
 .apprise-config-highlight code,
 .apprise-config-highlight .hljs {
   white-space: pre-wrap !important;
