@@ -352,7 +352,48 @@
           window.location.href = e.target.href;
         }
       });
-    });
+		});
+
+  // Register custom Apprise TEXT config language
+  hljs.registerLanguage('apprise-config', function (hljs) {
+    const URL = {
+      className: 'string',
+      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s#]*/,
+      relevance: 0
+    };
+
+    const COMMENT = {
+      className: 'comment',
+      begin: /^[ \t]*[;#].*$/,
+      relevance: 0
+    };
+
+    const TAG_DECL = {
+      // <tags>=<urls> or <groups>=<tags>
+      className: 'keyword',
+      begin: /^[ \t]*<[^>]+>/,
+      end: /=/,
+      excludeEnd: true,
+      relevance: 0
+    };
+
+    const TAG_NAME = {
+      className: 'meta',
+      begin: /\b[a-zA-Z0-9_:-]+\b/,
+      relevance: 0
+    };
+
+    return {
+      name: 'AppriseConfig',
+      contains: [
+        COMMENT,
+        TAG_DECL,
+        URL,
+        TAG_NAME
+      ]
+    };
+  });
+
 </script>
 </body>
 </html>

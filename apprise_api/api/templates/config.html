@@ -133,7 +133,7 @@
         {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
         <div class="code-snippet"
              data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
-          <pre><code class="bash">apprise --body="Test Message" \<br />
+          <pre><code class="bash">apprise --body=&quot;Test Message&quot; \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br />
@@ -145,19 +145,8 @@
           send a test notification to all of your added services:{% endblocktrans %}
           </p>
           <div class="code-snippet"
-            data-copy-text="apprise --body=\"
-            Test
-            Message
-            "
-            --tag="all"
-            --config="{{ request.scheme }}"
-            ://
-            {{ request.META.HTTP_HOST }}
-            {{ BASE_URL }}
-            /cfg/
-            {{ key }}
-            ">
-            <pre><code class="bash">apprise --body="Test Message" --tag=all \<br />
+               data-copy-text='apprise --body="Test Message" --tag="all" --config="{{ request.scheme }}"://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+            <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
           </div>
           {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
@@ -168,7 +157,7 @@
           {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
           <div class="code-snippet"
                data-copy-text='apprise --body="Test Message" --tag=all'>
-            <pre><code class="bash">apprise --body="Test Message" --tag=all</em></code></pre>
+            <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all</em></code></pre>
           </div>
         {% endif %}
         <h6>{% trans "Using CURL" %}</h6>
@@ -178,16 +167,16 @@
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
-                   &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
-                   &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
+                   &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
+                   &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
                    &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         </div>
         {% blocktrans %}When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:{% endblocktrans %}
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         </div>
@@ -195,8 +184,8 @@
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;-F "tags=all" \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;-F "body=Test Message" \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
@@ -205,8 +194,8 @@
         <div class="code-snippet"
              data-copy-text='curl -X POST -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
           <pre><code class="bash">curl -X POST \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \ <br />
-               &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br />
+               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tag=all&quot; \ <br />
+               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png&quot; \ <br />
                &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
         </div>
       </div>
@@ -216,7 +205,22 @@
     {% if not CONFIG_LOCK %}
       <p>{% blocktrans %}Define your configuration below:{% endblocktrans %}</p>
       <form id="addconfig" action="{% url "add" key %}" method="post">
-        {{ form_cfg }}
+        {% for hidden in form_cfg.hidden_fields %}{{ hidden }}{% endfor %}
+        {% for field in form_cfg.visible_fields %}
+          {% if field.name == 'config' %}
+            <div class="apprise-config-editor">
+              {{ field }}
+              <pre aria-hidden="true" class="apprise-config-highlight"><code class="language-apprise-config" id="config-highlight"></code></pre>
+            </div>
+            {{ field.errors }}
+          {% else %}
+            <div class="input-field">
+              {{ field }}
+              {{ field.label_tag }}
+              {{ field.errors }}
+            </div>
+          {% endif %}
+        {% endfor %}
         <button class="btn waves-effect waves-light" type="submit" name="action">
           {% trans "Save Configuration" %}
           <i class="material-icons right">save</i>
@@ -279,6 +283,59 @@
 {% block jsfooter %}
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
+    function initAppriseConfigEditor() {
+    const textarea = document.getElementById('id_config');
+    const code = document.getElementById('config-highlight');
+    const tabsElem = document.querySelector('.tabs');
+    if (!textarea || !code) return;
+    // The Paint Logic
+    const update = () => {
+    let text = textarea.value;
+    text = text.replace(/&/g, '&amp;')
+    .replace(/
+    </g , '&lt;') .replace( />
+    /g, '&gt;');
+    if (text[text.length - 1] === "\n") {
+    text += " ";
+    }
+    code.innerHTML = text;
+    if (typeof hljs !== 'undefined') {
+    if (typeof hljs.highlightElement === 'function') {
+    hljs.highlightElement(code);
+    } else if (typeof hljs.highlightBlock === 'function') {
+    hljs.highlightBlock(code);
+    }
+    }
+    };
+    // --- Events ---
+    textarea.addEventListener('input', update);
+    textarea.addEventListener('scroll', () => {
+    code.scrollTop = textarea.scrollTop;
+    code.scrollLeft = textarea.scrollLeft;
+    });
+    // --- NEW: Resize Safety Net ---
+    // If CSS fails to stretch the background, this forces it.
+    if (window.ResizeObserver) {
+    new ResizeObserver(() => {
+    // Force background to match textarea height exactly
+    code.style.height = textarea.style.height;
+    // Re-sync scroll just in case
+    code.scrollTop = textarea.scrollTop;
+    }).observe(textarea);
+    }
+    // --- Tab Switching Logic ---
+    if (tabsElem && typeof M !== 'undefined') {
+    M.Tabs.init(tabsElem, {
+    onShow: function(tabContent) {
+    if (tabContent.id === 'config') {
+    setTimeout(update, 10);
+    }
+    }
+    });
+    }
+    // Initial Load
+    update();
+    }
     function update_count() {
     const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
     document.querySelectorAll(".card-count").forEach(function(e){
@@ -892,6 +949,8 @@
     {% if not CONFIG_LOCK %}
       /* Initialze our configuration */
       config_init();
+      hljs.initHighlightingOnLoad();
+      initAppriseConfigEditor();
     {% endif %}
     notify_init();
     form_file_input_hack();

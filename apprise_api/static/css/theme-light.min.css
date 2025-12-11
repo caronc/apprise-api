@@ -148,3 +148,44 @@ a.active {
 .api-status-icon.status-error {
   color: #ef5350;
 }
+
+
+.apprise-config-editor textarea {
+  caret-color: black !important;
+}
+
+.apprise-config-editor .apprise-config-highlight {
+  background-color: #fff !important;
+  color: #d4d4d4;
+}
+
+/* 1. URLs  */
+.apprise-config-highlight .hljs-string,
+.apprise-config-highlight .hljs-symbol,
+.apprise-config-highlight .hljs-link {
+    color: #1b1e26 !important;
+}
+
+/* 2. Comments */
+.apprise-config-highlight .hljs-comment {
+    color: #777 !important;
+    font-style: italic !important;
+}
+
+/* 3. Tags / Keywords */
+.apprise-config-highlight .hljs-keyword,
+.apprise-config-highlight .hljs-section,
+.apprise-config-highlight .hljs-name {
+    color: #6a9955 !important;
+}
+
+/* 4. Numbers / Constants */
+.apprise-config-highlight .hljs-number,
+.apprise-config-highlight .hljs-literal {
+    color: #c586c0 !important;
+}
+
+/* 5. Standard Text */
+.apprise-config-highlight {
+    color: #d4d4d4 !important;
+}

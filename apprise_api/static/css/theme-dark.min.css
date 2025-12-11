@@ -30,6 +30,19 @@ em {
     color: #5e81ac !important;
 }
 
+.dropdown-content li>span:hover {
+    background-color: #4c566a !important;
+}
+
+.select-wrapper input.select-dropdown:focus {
+   border-bottom: 1px solid #4c566a !important;
+}
+
+.dropdown-content li>a, .dropdown-content li>span {
+    background-color: #171b23 !important;
+    color: #eceff4;
+}
+
 i.material-icons {
     color: #6e7d9c;
 }
@@ -241,10 +254,14 @@ pre code {
     background-color: #2e3440;
 }
 
+.btn:focus,
+.btn-large:focus,
+.btn-small:focus,
+.btn-floating:focus,
 .btn-large:hover,
 .btn-small:hover,
 .btn:hover {
-    background-color: #d08770;
+    background-color: #1b1e26;
 }
 
 .btn-flat {
@@ -343,4 +360,44 @@ pre code {
 
 .api-status-icon.status-error {
     color: #ef5350;
+}
+
+.apprise-config-editor textarea {
+  caret-color: white !important;
+}
+
+.apprise-config-editor .apprise-config-highlight {
+    background-color: #1b1e26;
+    color: #d4d4d4;
+}
+
+/* 1. URLs  */
+.apprise-config-highlight .hljs-string,
+.apprise-config-highlight .hljs-symbol,
+.apprise-config-highlight .hljs-link {
+    color: #9cdcfe !important;
+}
+
+/* 2. Comments */
+.apprise-config-highlight .hljs-comment {
+    color: #666 !important;
+    font-style: italic !important;
+}
+
+/* 3. Tags / Keywords */
+.apprise-config-highlight .hljs-keyword,
+.apprise-config-highlight .hljs-section,
+.apprise-config-highlight .hljs-name {
+    color: #c586c0 !important;
+}
+
+/* 4. Numbers / Constants */
+.apprise-config-highlight .hljs-number,
+.apprise-config-highlight .hljs-literal {
+    color: #b5cea8 !important;
+}
+
+/* 5. Standard Text */
+.apprise-config-highlight {
+    color: #d4d4d4 !important;
 }
