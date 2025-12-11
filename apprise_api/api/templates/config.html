@@ -213,6 +213,12 @@
               <pre aria-hidden="true" class="apprise-config-highlight"><code class="language-apprise-config" id="config-highlight"></code></pre>
             </div>
             {{ field.errors }}
+          {% elif field.name == 'format' %}
+            <div class="input-field config-format-field">
+              {{ field.label_tag }}
+              {{ field }}
+              {{ field.errors }}
+            </div>
           {% else %}
             <div class="input-field">
               {{ field }}
@@ -288,13 +294,21 @@
     const code = document.getElementById('config-highlight');
     const tabsElem = document.querySelector('.tabs');
     if (!textarea || !code) return;
+    // Disable browser spell-check and similar “helpful” features
+    textarea.setAttribute('spellcheck', 'false');
+    textarea.setAttribute('autocorrect', 'off');
+    textarea.setAttribute('autocapitalize', 'off');
+    textarea.setAttribute('autocomplete', 'off');
+    // Format Label to float above
+    const formatLabel = document.querySelector('label[for="id_format"]');
+    if (formatLabel) {
+    formatLabel.classList.add('active');
+    }
     // The Paint Logic
     const update = () => {
     let text = textarea.value;
-    text = text.replace(/&/g, '&amp;')
-    .replace(/
-    </g , '&lt;') .replace( />
-    /g, '&gt;');
+    {# djlint safe #}
+    text = text.replace(new RegExp('<', 'g'), '&lt;').replace(new RegExp('>', 'g'), '&gt;');
     if (text[text.length - 1] === "\n") {
     text += " ";
     }

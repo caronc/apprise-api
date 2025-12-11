@@ -176,224 +176,234 @@
 </div>
 </div>
 </div>
+{# Script Block 1 - Itentionally done this way to work nicely with djlint #}
+{# djlint:off #}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Materialize Init
-      M.AutoInit();
-      // highlightjs
-      hljs.initHighlightingOnLoad();
-      {% block onload %}{% endblock %}
+    document.addEventListener('DOMContentLoaded', function() {
+        // Materialize Init
+        M.AutoInit();
+        // highlightjs
+        hljs.initHighlightingOnLoad();
 
-			// Health Checks
-    appriseStatusStartPolling();
+        {% block onload %}
+	{% endblock onload %}
 
+        // Health Checks
+        appriseStatusStartPolling();
     });
-    {% block jsfooter %} {% endblock jsfooter %}
-  async function appriseStatusUpdate() {
-    const iconOverview = document.querySelector('#api-status-icon');
-    const detailsOverview = document.querySelector('#api-status-details');
-    const iconNav = document.querySelector('#nav-api-status-icon');
+</script>
+{# Script Block 2 #}
+<script>
+    {% block jsfooter %}
+    {% endblock jsfooter %}
+</script>
+{# djlint:on #}
+{# Script Block 3 #}
+<script>
+    async function appriseStatusUpdate() {
+        const iconOverview = document.querySelector('#api-status-icon');
+        const detailsOverview = document.querySelector('#api-status-details');
+        const iconNav = document.querySelector('#nav-api-status-icon');
 
-    const hc = document.querySelector('#health-check');
-    const liCfg = hc ? hc.querySelector('li.can_write_config') : null;
-    const liAttach = hc ? hc.querySelector('li.can_write_attach') : null;
+        const hc = document.querySelector('#health-check');
+        const liCfg = hc ? hc.querySelector('li.can_write_config') : null;
+        const liAttach = hc ? hc.querySelector('li.can_write_attach') : null;
 
-    // Helper to reset icons to loading
-    function setLoading(icon) {
-      if (!icon) {
-        return;
-      }
-      icon.classList.remove('status-ok', 'status-error');
-      icon.classList.add('status-loading');
-      icon.textContent = 'autorenew';
+        // Helper to reset icons to loading
+        function setLoading(icon) {
+            if (!icon) {
+                return;
+            }
+            icon.classList.remove('status-ok', 'status-error');
+            icon.classList.add('status-loading');
+            icon.textContent = 'autorenew';
+        }
+
+        setLoading(iconOverview);
+        setLoading(iconNav);
+        if (detailsOverview) {
+            detailsOverview.textContent = '';
+        }
+        if (hc) {
+            hc.style.display = 'none';
+            if (liCfg) liCfg.style.display = 'none';
+            if (liAttach) liAttach.style.display = 'none';
+        }
+
+        try {
+            const response = await fetch('{% url "health" %}', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+            });
+
+            let data = null;
+            let details = null;
+            let hasDetails = false;
+
+            try {
+                data = await response.json();
+                if (data && data.status && Array.isArray(data.status.details)) {
+                    details = data.status.details;
+                    hasDetails = true;
+                }
+            } catch (e) {
+                // JSON parse failed; we fall back below
+            }
+
+            // Helper to set icons to OK/error
+            function setIconState(icon, ok) {
+                if (!icon) {
+                    return;
+                }
+                icon.classList.remove('status-loading');
+                if (ok) {
+                    icon.textContent = 'check_circle';
+                    icon.classList.add('status-ok');
+                    icon.classList.remove('status-error');
+                } else {
+                    icon.textContent = 'error';
+                    icon.classList.add('status-error');
+                    icon.classList.remove('status-ok');
+                }
+            }
+
+            // Update the large health panel (permissions etc.)
+            if (hc && data && data.status) {
+                const showCfg = (data.status.can_write_config === false &&
+                    data.config_lock === false);
+                const showAttach = (data.status.can_write_attach === false &&
+                    data.attach_lock === false);
+
+                if (liCfg) liCfg.style.display = showCfg ? '' : 'none';
+                if (liAttach) liAttach.style.display = showAttach ? '' : 'none';
+
+                if (showCfg || showAttach) {
+                    hc.style.display = '';
+                } else {
+                    hc.style.display = 'none';
+                }
+            }
+
+            // Decide high-level status + message
+            let isOk = response.ok;
+            let message = '';
+
+            if (hasDetails && details && details.length > 0) {
+                if (response.ok && details.length === 1 && details[0] === 'OK') {
+                    isOk = true;
+                    message = '';
+                } else {
+                    isOk = false;
+                    message = details.join(', ');
+                }
+            } else {
+                if (!response.ok) {
+                    isOk = false;
+                    message = '{% trans "Unable to reach the Apprise API status endpoint." %}';
+                }
+            }
+
+            // Apply status to icons and overview details
+            setIconState(iconOverview, isOk);
+            setIconState(iconNav, isOk);
+            if (detailsOverview) {
+                detailsOverview.textContent = message;
+            }
+
+        } catch (e) {
+            // Network / fetch failure
+            if (hc) hc.style.display = 'none';
+            const fallbackMsg =
+                '{% trans "Unable to reach the Apprise API status endpoint." %}';
+
+            function setError(icon) {
+                if (!icon) return;
+                icon.classList.remove('status-loading');
+                icon.textContent = 'error';
+                icon.classList.add('status-error');
+            }
+            setError(iconOverview);
+            setError(iconNav);
+            if (detailsOverview) {
+                detailsOverview.textContent = fallbackMsg;
+            }
+            console.warn('Apprise status check failed', e);
+        }
     }
 
-    setLoading(iconOverview);
-    setLoading(iconNav);
-    if (detailsOverview) {
-      detailsOverview.textContent = '';
+    // Ensure we only start polling once
+    window.appriseStatusPollingStarted = window.appriseStatusPollingStarted || false;
+
+    function appriseStatusStartPolling() {
+        if (window.appriseStatusPollingStarted) {
+            return;
+        }
+        window.appriseStatusPollingStarted = true;
+
+        // Initial check immediately
+        appriseStatusUpdate();
+        // Re-check every 30 seconds
+        window.setInterval(appriseStatusUpdate, 30000);
     }
-    if (hc) {
-      hc.style.display = 'none';
-      if (liCfg) liCfg.style.display = 'none';
-      if (liAttach) liAttach.style.display = 'none';
-    }
 
-    try {
-      const response = await fetch('{% url "health" %}', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
+    document.querySelector('#cfg-gen').addEventListener('click', function(e) {
+        e.preventDefault();
 
-      let data = null;
-      let details = null;
-      let hasDetails = false;
+        Swal.fire({
+            title: '{% trans "New Configuration" %}',
+            html: `{% blocktrans with default_config_id=DEFAULT_CONFIG_ID %}This will generate a new Apprise configuration ID and transition over to it. It is important that you have bookmarked or noted the current ID <code>{{ default_config_id }}</code> before continuing. Do you still wish to proceed?{% endblocktrans %}`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: '{% trans "Yes" %}',
+            cancelButtonText: '{% trans "No" %}'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = e.target.href;
+            }
+        });
+    });
 
-      try {
-        data = await response.json();
-        if (data && data.status && Array.isArray(data.status.details)) {
-          details = data.status.details;
-          hasDetails = true;
-        }
-      } catch (e) {
-        // JSON parse failed; we fall back below
-      }
+    // Register custom Apprise TEXT config language
+    hljs.registerLanguage('apprise-config', function(hljs) {
+        const URL = {
+            className: 'string',
+            begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s#]*/,
+            relevance: 0
+        };
 
-      // Helper to set icons to OK/error
-      function setIconState(icon, ok) {
-        if (!icon) {
-          return;
-        }
-        icon.classList.remove('status-loading');
-        if (ok) {
-          icon.textContent = 'check_circle';
-          icon.classList.add('status-ok');
-          icon.classList.remove('status-error');
-        } else {
-          icon.textContent = 'error';
-          icon.classList.add('status-error');
-          icon.classList.remove('status-ok');
-        }
-      }
+        const COMMENT = {
+            className: 'comment',
+            begin: /^[ \t]*[;#].*$/,
+            relevance: 0
+        };
 
-      // Update the large health panel (permissions etc.)
-      if (hc && data && data.status) {
-        const showCfg = (data.status.can_write_config === false &&
-                         data.config_lock === false);
-        const showAttach = (data.status.can_write_attach === false &&
-                            data.attach_lock === false);
+        const TAG_DECL = {
+            // <tags>=<urls> or <groups>=<tags>
+            className: 'keyword',
+            begin: /^[ \t]*<[^>]+>/,
+            end: /=/,
+            excludeEnd: true,
+            relevance: 0
+        };
 
-        if (liCfg) liCfg.style.display = showCfg ? '' : 'none';
-        if (liAttach) liAttach.style.display = showAttach ? '' : 'none';
+        const TAG_NAME = {
+            className: 'meta',
+            begin: /\b[a-zA-Z0-9_:-]+\b/,
+            relevance: 0
+        };
 
-        if (showCfg || showAttach) {
-          hc.style.display = '';
-        } else {
-          hc.style.display = 'none';
-        }
-      }
-
-      // Decide high-level status + message
-      let isOk = response.ok;
-      let message = '';
-
-      if (hasDetails && details && details.length > 0) {
-        if (response.ok && details.length === 1 && details[0] === 'OK') {
-          isOk = true;
-          message = '';
-        } else {
-          isOk = false;
-          message = details.join(', ');
-        }
-      } else {
-        if (!response.ok) {
-          isOk = false;
-          message = '{% trans "Unable to reach the Apprise API status endpoint." %}';
-        }
-      }
-
-      // Apply status to icons and overview details
-      setIconState(iconOverview, isOk);
-      setIconState(iconNav, isOk);
-      if (detailsOverview) {
-        detailsOverview.textContent = message;
-      }
-
-    } catch (e) {
-      // Network / fetch failure
-      if (hc) hc.style.display = 'none';
-      const fallbackMsg =
-        '{% trans "Unable to reach the Apprise API status endpoint." %}';
-
-      function setError(icon) {
-        if (!icon) return;
-        icon.classList.remove('status-loading');
-        icon.textContent = 'error';
-        icon.classList.add('status-error');
-      }
-      setError(iconOverview);
-      setError(iconNav);
-      if (detailsOverview) {
-        detailsOverview.textContent = fallbackMsg;
-      }
-      console.warn('Apprise status check failed', e);
-    }
-  }
-
-  // Ensure we only start polling once
-  window.appriseStatusPollingStarted = window.appriseStatusPollingStarted || false;
-
-  function appriseStatusStartPolling() {
-    if (window.appriseStatusPollingStarted) {
-      return;
-    }
-    window.appriseStatusPollingStarted = true;
-
-    // Initial check immediately
-    appriseStatusUpdate();
-    // Re-check every 30 seconds
-    window.setInterval(appriseStatusUpdate, 30000);
-  }
-
-		document.querySelector('#cfg-gen').addEventListener('click', function(e) {
-      e.preventDefault();
-
-      Swal.fire({
-        title: '{% trans "New Configuration" %}',
-        html: `{% blocktrans with default_config_id=DEFAULT_CONFIG_ID %}This will generate a new Apprise configuration ID and transition over to it. It is important that you have bookmarked or noted the current ID <code>{{ default_config_id }}</code> before continuing. Do you still wish to proceed?{% endblocktrans %}`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: '{% trans "Yes" %}',
-        cancelButtonText: '{% trans "No" %}'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = e.target.href;
-        }
-      });
-		});
-
-  // Register custom Apprise TEXT config language
-  hljs.registerLanguage('apprise-config', function (hljs) {
-    const URL = {
-      className: 'string',
-      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s#]*/,
-      relevance: 0
-    };
-
-    const COMMENT = {
-      className: 'comment',
-      begin: /^[ \t]*[;#].*$/,
-      relevance: 0
-    };
-
-    const TAG_DECL = {
-      // <tags>=<urls> or <groups>=<tags>
-      className: 'keyword',
-      begin: /^[ \t]*<[^>]+>/,
-      end: /=/,
-      excludeEnd: true,
-      relevance: 0
-    };
-
-    const TAG_NAME = {
-      className: 'meta',
-      begin: /\b[a-zA-Z0-9_:-]+\b/,
-      relevance: 0
-    };
-
-    return {
-      name: 'AppriseConfig',
-      contains: [
-        COMMENT,
-        TAG_DECL,
-        URL,
-        TAG_NAME
-      ]
-    };
-  });
-
+        return {
+            name: 'AppriseConfig',
+            contains: [
+                COMMENT,
+                TAG_DECL,
+                URL,
+                TAG_NAME
+            ]
+        };
+    });
 </script>
 </body>
 </html>

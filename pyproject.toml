@@ -49,6 +49,7 @@ dev = [
   "pytest-django",
   "ruff",
   "djlint",
+  "jsbeautifier",
   "tox",
   "mock"
 ]
@@ -187,6 +188,9 @@ max_line_length = 120
 
 # Indentation
 indent = 2
+
+format_js = true
+format_css = true
 
 # Add this to help with tag placement if you feel they are too "squashed"
 blank_line_after_tag = "load,extends,include"

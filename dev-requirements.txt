@@ -3,5 +3,6 @@ pytest-django
 pytest
 pytest-cov
 djlint
+jsbeautifier
 tox
 ruff
