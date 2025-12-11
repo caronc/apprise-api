@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (C) 2024 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -21,6 +21,22 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
+# Nginx configuration file
+NGINX_CONF=/opt/apprise/webapp/etc/nginx.conf
+echo "$STRICT_MODE" | cut -c1 | grep -E -m1 -q -i '\(a|y|1|e|t|+)\)' 2>/dev/null
+STRICT_MODE=$?
+if [  $STRICT_MODE -eq 0 ]; then
+   # Strict Mode
+   echo "Apprise-API operating in Strict Mode"
+   NGINX_CONF=/opt/apprise/webapp/etc/nginx-strict.conf
+else
+   echo "Apprise-API operating in Normal Mode"
+fi
+NGINX_FILENAME=$(basename "$NGINX_CONF")
+
+# supervisord configuration file
+SUPERVISORD_CONF="/opt/apprise/webapp/etc/supervisord.conf"
 
 if [ $(id -u) -eq 0 ]; then
    #
@@ -61,9 +77,9 @@ if [ $(id -u) -eq 0 ]; then
 
    # Update our configuration
    sed -i -e "s/^#\?[ \t]*\(user[ \t]*=[ \t]*\).*$/\1${USER}/g" \
-      /opt/apprise/webapp/etc/supervisord.conf
+      "$SUPERVISORD_CONF"
    sed -i -e "s/^#\?[ \t]*\(group[ \t]*=[ \t]*\).*$/\1${GROUP}/g" \
-      /opt/apprise/webapp/etc/supervisord.conf
+      "$SUPERVISORD_CONF"
 
 else
    #
@@ -88,11 +104,11 @@ chown -R "$USER:$GROUP" /attach /config /config/store \
 
 if [ ! -z "${HTTP_PORT}" ]; then
   echo -n "Nginx/HTTP over-ride TCP/IP Listen Port: ${HTTP_PORT} ... "
-  if [ -w /opt/apprise/webapp/etc/nginx.conf ]; then
+  if [ -w "$NGINX_CONF" ]; then
     sed -i -e "s/^\([ \t]*listen[ \t]\+[^0-9]*\)\([^;]\+\);\(.*\)/\1${HTTP_PORT};\3/g" \
-       /opt/apprise/webapp/etc/nginx.conf &>/dev/null && echo "Done." || echo "Failed!"
+       "$NGINX_CONF" &>/dev/null && echo "Done." || echo "Failed!"
   else
-    echo "Skipped (nginx.conf not writable)."
+    echo "Skipped ($NGINX_FILENAME not writable)."
   fi
 fi
 
@@ -103,21 +119,31 @@ if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
 # Handle IPV4_ONLY flag
 elif [ "${IPV4_ONLY+x}" ]; then
   echo -n "Network mode: IPv4-only (IPV4_ONLY set) ... "
-  if [ -w /opt/apprise/webapp/etc/nginx.conf ]; then
-    sed -ibak -e '/IPv6 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
+  if [ -w "$NGINX_CONF" ]; then
+    sed -ibak -e '/IPv6 Support/d' "$NGINX_CONF" && \
        echo "Done." || echo "Failed!"
   else
-    echo "Skipped (nginx.conf not writable)."
+    echo "Skipped ($NGINX_FILENAME not writable)."
   fi
 
 # Handle IPV6_ONLY flag
 elif [ "${IPV6_ONLY+x}" ]; then
   echo -n "Network mode: IPv6-only (IPV6_ONLY set) ... "
-  if [ -w /opt/apprise/webapp/etc/nginx.conf ]; then
-    sed -ibak -e '/IPv4 Support/d' /opt/apprise/webapp/etc/nginx.conf && \
+  if [ -w "$NGINX_CONF" ]; then
+    sed -ibak -e '/IPv4 Support/d' "$NGINX_CONF" && \
        echo "Done." || echo "Failed!"
   else
-    echo "Skipped (nginx.conf not writable)."
+    echo "Skipped ($NGINX_FILENAME not writable)."
+  fi
+fi
+
+if [ $STRICT_MODE -eq 0 ]; then
+  echo -n "Enforcing nginx strict mode ... "
+  if [ -w "$SUPERVISORD_CONF" ]; then
+    sed -i -e "s/nginx\.conf/nginx-strict.conf/g" \
+       "$SUPERVISORD_CONF" &>/dev/null && echo "Done." || echo "Failed!"
+  else
+    echo "Skipped ($NGINX_FILENAME not writable)."
   fi
 fi
 
@@ -128,7 +154,7 @@ echo "Resolution of 'localhost' inside container:"
 getent ahosts localhost || true
 
 # Get our Port Information
-PORT=$(grep -m1 -E '^[ \t]*listen[ \t]+' /opt/apprise/webapp/etc/nginx.conf 2>/dev/null | \
+PORT=$(grep -m1 -E '^[ \t]*listen[ \t]+' "$NGINX_CONF" 2>/dev/null | \
    sed -e 's/^[^0-9]\+\([0-9]\+\).*/\1/g')
 PORT=${PORT:=Unknown}
 
@@ -137,7 +163,7 @@ echo "Listening on TCP/IP Port: ${PORT}"
 cd /opt/apprise
 
 # Launch our SupervisorD as PID 1
-exec /usr/local/bin/supervisord -c /opt/apprise/webapp/etc/supervisord.conf
+exec /usr/local/bin/supervisord -c "$SUPERVISORD_CONF"
 
 # Always return our SupervisorD return code
 exit $?

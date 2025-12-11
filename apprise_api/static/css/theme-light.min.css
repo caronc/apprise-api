@@ -36,6 +36,7 @@ body .tabs .tab a.active {
   background-color: #eee;
   color: #004d40;
 }
+
 body .tabs .tab.disabled a,
 body .tabs .tab.disabled a:hover {
   background-color: #ccc;
@@ -128,4 +129,22 @@ a.active {
   margin: 0;
   font-size: .9rem;
   font-weight: 500;
+}
+
+/* Loading spinner */
+.api-status-icon.status-loading {
+  color: #90caf9;
+}
+
+/* Error details text under the line */
+.api-status-details {
+  color: #ffcdd2;
+}
+
+.api-status-icon.status-ok {
+  color: #265228;
+}
+
+.api-status-icon.status-error {
+  color: #ef5350;
 }

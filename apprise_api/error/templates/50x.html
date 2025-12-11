@@ -1,0 +1,19 @@
+{% extends "fullsize_base.html" %}
+
+{% load i18n %}
+
+{% block body %}
+  <div class="section error-page center">
+    <h1>500 - {% trans "Service Temporarily Unavailable" %}</h1>
+    <i class="material-icons spotlight">error</i>
+    <p>
+      {% blocktrans %}
+              The Apprise API encountered an internal error while processing
+              your request.
+						{% endblocktrans %}
+    </p>
+    <p>
+      <i class="material-icons">cloud</i><code>{{ remote_ip }} - {{ original_method }} - {{ original_uri }}</code>
+    </p>
+  </div>
+{% endblock body %}

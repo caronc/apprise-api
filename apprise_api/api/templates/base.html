@@ -57,8 +57,20 @@
                      alt="{% trans "Apprise Logo" %}" />
               APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
             </li>
+            <li class="api-status-nav">
+              {% trans "API HEALTH" %}
+              <a href="{% url 'health' %}" target="_new" id="nav-api-status-link">
+                <i id="nav-api-status-icon"
+                   class="material-icons api-status-icon status-loading">
+                  autorenew
+                </i>
+              </a>
+            </li>
             <li class="theme">
-              <a href="{{ request.path }}?theme={{ request.next_theme }}"><i class="material-icons">invert_colors</i></a>
+              <a href="{{ request.path }}?theme={{ request.next_theme }}"
+                 class="tooltipped"
+                 data-position="bottom"
+                 data-tooltip="{% trans "Toggle light / dark theme" %}"><i class="material-icons">invert_colors</i></a>
             </li>
           </ul>
         </div>
@@ -171,36 +183,160 @@
       // highlightjs
       hljs.initHighlightingOnLoad();
       {% block onload %}{% endblock %}
-      // healthcheck
-      health_check()
+
+			// Health Checks
+    appriseStatusStartPolling();
+
     });
     {% block jsfooter %} {% endblock jsfooter %}
-    function health_check() {
-      // perform our health check
-      document.querySelector('#health-check').style.display = 'none';
-      document.querySelector('#health-check li.can_write_config').style.display = 'none';
-      document.querySelector('#health-check li.can_write_attach').style.display = 'none';
-      let response = fetch('{% url "health" %}', {
+  async function appriseStatusUpdate() {
+    const iconOverview = document.querySelector('#api-status-icon');
+    const detailsOverview = document.querySelector('#api-status-details');
+    const iconNav = document.querySelector('#nav-api-status-icon');
+
+    const hc = document.querySelector('#health-check');
+    const liCfg = hc ? hc.querySelector('li.can_write_config') : null;
+    const liAttach = hc ? hc.querySelector('li.can_write_attach') : null;
+
+    // Helper to reset icons to loading
+    function setLoading(icon) {
+      if (!icon) {
+        return;
+      }
+      icon.classList.remove('status-ok', 'status-error');
+      icon.classList.add('status-loading');
+      icon.textContent = 'autorenew';
+    }
+
+    setLoading(iconOverview);
+    setLoading(iconNav);
+    if (detailsOverview) {
+      detailsOverview.textContent = '';
+    }
+    if (hc) {
+      hc.style.display = 'none';
+      if (liCfg) liCfg.style.display = 'none';
+      if (liAttach) liAttach.style.display = 'none';
+    }
+
+    try {
+      const response = await fetch('{% url "health" %}', {
         method: 'GET',
         headers: {
-          'Accept': 'application/json;charset=utf-8'
+          'Accept': 'application/json',
         },
-
-      }).then(function(response) {
-         if(response.status != 200)
-         {
-             response.json().then(function(content) {
-              if (content['status']['can_write_config'] === false && content['config_lock'] === false) {
-                   document.querySelector('#health-check li.can_write_config').style.display = '';
-              }
-              if (content['status']['can_write_attach'] === false && content['attach_lock'] === false) {
-                   document.querySelector('#health-check li.can_write_attach').style.display = '';
-              }
-              document.querySelector('#health-check').style.display = '';
-            })
-         }
       });
+
+      let data = null;
+      let details = null;
+      let hasDetails = false;
+
+      try {
+        data = await response.json();
+        if (data && data.status && Array.isArray(data.status.details)) {
+          details = data.status.details;
+          hasDetails = true;
+        }
+      } catch (e) {
+        // JSON parse failed; we fall back below
+      }
+
+      // Helper to set icons to OK/error
+      function setIconState(icon, ok) {
+        if (!icon) {
+          return;
+        }
+        icon.classList.remove('status-loading');
+        if (ok) {
+          icon.textContent = 'check_circle';
+          icon.classList.add('status-ok');
+          icon.classList.remove('status-error');
+        } else {
+          icon.textContent = 'error';
+          icon.classList.add('status-error');
+          icon.classList.remove('status-ok');
+        }
+      }
+
+      // Update the large health panel (permissions etc.)
+      if (hc && data && data.status) {
+        const showCfg = (data.status.can_write_config === false &&
+                         data.config_lock === false);
+        const showAttach = (data.status.can_write_attach === false &&
+                            data.attach_lock === false);
+
+        if (liCfg) liCfg.style.display = showCfg ? '' : 'none';
+        if (liAttach) liAttach.style.display = showAttach ? '' : 'none';
+
+        if (showCfg || showAttach) {
+          hc.style.display = '';
+        } else {
+          hc.style.display = 'none';
+        }
+      }
+
+      // Decide high-level status + message
+      let isOk = response.ok;
+      let message = '';
+
+      if (hasDetails && details && details.length > 0) {
+        if (response.ok && details.length === 1 && details[0] === 'OK') {
+          isOk = true;
+          message = '';
+        } else {
+          isOk = false;
+          message = details.join(', ');
+        }
+      } else {
+        if (!response.ok) {
+          isOk = false;
+          message = '{% trans "Unable to reach the Apprise API status endpoint." %}';
+        }
+      }
+
+      // Apply status to icons and overview details
+      setIconState(iconOverview, isOk);
+      setIconState(iconNav, isOk);
+      if (detailsOverview) {
+        detailsOverview.textContent = message;
+      }
+
+    } catch (e) {
+      // Network / fetch failure
+      if (hc) hc.style.display = 'none';
+      const fallbackMsg =
+        '{% trans "Unable to reach the Apprise API status endpoint." %}';
+
+      function setError(icon) {
+        if (!icon) return;
+        icon.classList.remove('status-loading');
+        icon.textContent = 'error';
+        icon.classList.add('status-error');
+      }
+      setError(iconOverview);
+      setError(iconNav);
+      if (detailsOverview) {
+        detailsOverview.textContent = fallbackMsg;
+      }
+      console.warn('Apprise status check failed', e);
     }
+  }
+
+  // Ensure we only start polling once
+  window.appriseStatusPollingStarted = window.appriseStatusPollingStarted || false;
+
+  function appriseStatusStartPolling() {
+    if (window.appriseStatusPollingStarted) {
+      return;
+    }
+    window.appriseStatusPollingStarted = true;
+
+    // Initial check immediately
+    appriseStatusUpdate();
+    // Re-check every 30 seconds
+    window.setInterval(appriseStatusUpdate, 30000);
+  }
+
 		document.querySelector('#cfg-gen').addEventListener('click', function(e) {
       e.preventDefault();
 

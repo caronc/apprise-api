@@ -21,13 +21,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from api import urls as api_urls
-from django.conf.urls import include
-from django.urls import path
-from error import urls as error_urls
 
-urlpatterns = [
-    path("", include(api_urls)),
-    path("", include(error_urls)),
-    path("", include("django_prometheus.urls")),
-]
+from django.test import SimpleTestCase
+
+
+class ErrorTests(SimpleTestCase):
+    def test_get_404(self):
+        """
+        Test 404
+        """
+        response = self.client.get("/_/404")
+        assert response.status_code == 404
+
+    def test_get_50x(self):
+        """
+        Test 50x
+        """
+        response = self.client.get("/_/50x")
+        assert response.status_code == 500

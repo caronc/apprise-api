@@ -71,6 +71,7 @@ docker run --name apprise \
    -v /path/to/local/attach:/attach \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -d caronc/apprise:latest
 ```
 
@@ -89,6 +90,7 @@ docker run --name apprise \
    --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -v /etc/apprise:/config \
    -d apprise/local:latest
 
@@ -100,6 +102,7 @@ docker run --name apprise \
    --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -v ./config:/config \
    -d apprise/local:latest
 ```
@@ -119,6 +122,7 @@ services:
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
+      APPRISE_ADMIN: "y"
     volumes:
       - ./config:/config
       - ./plugin:/plugin
@@ -157,6 +161,7 @@ services:
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
+      APPRISE_ADMIN: "y"
 
     # Persistent state
     volumes:
@@ -484,6 +489,8 @@ The use of environment variables allow you to provide over-rides to default sett
 | `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6).  Nothing is done if `IPV6_ONLY` is also set as this creates an ambigious setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6).  Nothing is done if `IPV4_ONLY` is also set as this creates an ambigious setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
 | `HTTP_PORT` | Force the default listening port to be something other then `8000` within the Docker container. **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
+| `STRICT_MODE` | Applicable only to container deployments; if this is set to `yes`, the NginX instance will not return content on any invalid or unsupported request.  This is incredibly useful for those hosting Apprise publicly and pairs nicely with fail2ban.  By default, the system does not operate in this strict mode.
+| `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
@@ -503,7 +510,6 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_ALLOW_SERVICES` | A comma separated set of entries identifying what plugins to allow access to. You may only use alpha-numeric characters as is the restriction of Apprise Schemas (schema://) anyway.  To exclusively include more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified.
 | `APPRISE_ATTACH_ALLOW_URLS` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always accept.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. Use a space and/or a comma to identify more then one entry. By default this is set to `*` (Accept all provided URLs).
 | `APPRISE_ATTACH_DENY_URLS` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always reject.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. The `APPRISE_ATTACH_DENY_URLS` is always processed before the `APPRISE_ATTACH_ALLOW_URLS` list. Use a space and/or a comma to identify more then one entry. By default this is set to `127.0.* localhost*`.
- By default this
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
 | `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://github.com/caronc/apprise/wiki/decorator_notify). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
@@ -557,6 +563,7 @@ docker run --name apprise \
    -v ./apprise_api.htpasswd:/etc/nginx/.htpasswd:ro \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -d caronc/apprise:latest
 ```
 
@@ -748,6 +755,8 @@ spec:
               value: simple
             - name: APPRISE_WORKER_COUNT
               value: "1"
+            - name: APPRISE_ADMIN
+              value: "y"
           ports:
             - containerPort: 8000
               name: http

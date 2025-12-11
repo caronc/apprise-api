@@ -21,13 +21,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from api import urls as api_urls
-from django.conf.urls import include
-from django.urls import path
-from error import urls as error_urls
+from django.urls import re_path
+
+from . import views
 
 urlpatterns = [
-    path("", include(api_urls)),
-    path("", include(error_urls)),
-    path("", include("django_prometheus.urls")),
+    re_path(r"^_/404/?$", views.Error404View.as_view(), name="http_404"),
+    re_path(r"^_/50x/?$", views.Error50xView.as_view(), name="http_50x"),
 ]

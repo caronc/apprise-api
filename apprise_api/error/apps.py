@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -21,13 +21,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from api import urls as api_urls
-from django.conf.urls import include
-from django.urls import path
-from error import urls as error_urls
+from django.apps import AppConfig
 
-urlpatterns = [
-    path("", include(api_urls)),
-    path("", include(error_urls)),
-    path("", include("django_prometheus.urls")),
-]
+
+class ErrorConfig(AppConfig):
+    name = "error"

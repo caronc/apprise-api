@@ -120,7 +120,7 @@ nav ul a:hover {
     color: #d8dee9;
 }
 
-.collection a.collection-item{
+.collection a.collection-item {
     color: #d8dee9;
 }
 
@@ -182,12 +182,12 @@ body .tabs .tab.disabled a,
 body .tabs .tab.disabled a:hover,
 body .tabs .tab.disabled a i,
 body .tabs .tab.disabled a:hover i {
-  color: #666 !important;
+    color: #666 !important;
 }
 
 body .tabs .tab a:focus,
 body.tabs .tab a:focus.active {
-  background-color: #1b1e26 !important;
+    background-color: #1b1e26 !important;
 }
 
 body .tabs .indicator {
@@ -325,4 +325,22 @@ pre code {
 .hljs-name,
 .hljs-tag {
     color: navy;
+}
+
+/* Loading spinner */
+.api-status-icon.status-loading {
+    color: #90caf9;
+}
+
+/* Error details text under the line */
+.api-status-details {
+    color: #ffcdd2;
+}
+
+.api-status-icon.status-ok {
+    color: #66bb6a;
+}
+
+.api-status-icon.status-error {
+    color: #ef5350;
 }

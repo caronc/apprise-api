@@ -1,0 +1,18 @@
+{% extends "fullsize_base.html" %}
+
+{% load i18n %}
+
+{% block body %}
+  <div class="section error-page center">
+    <h1>404 - {% trans "Page Not Found" %}</h1>
+    <i class="material-icons spotlight">info</i>
+    <p>
+      {% blocktrans %}
+              The resource you requested could not be found on this Apprise API
+              instance.
+							{% endblocktrans %}
+    </p>
+    <hr />
+    <pre><code><i class="material-icons">cloud</i>{{ remote_ip }} - {{original_method}} - {{ original_uri }}</code></pre>
+  </div>
+{% endblock body %}

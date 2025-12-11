@@ -71,6 +71,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Apprise API
     "api",
+    # Error Responses
+    "error",
     # Prometheus
     "django_prometheus",
 ]

@@ -51,7 +51,14 @@
         <h5>{% trans "Getting Started" %}</h5>
         <ol>
           <li>
-            {% trans "Verify your Apprise API Status:" %} <strong><a href="{% url 'health' %}">click here</a></strong>
+            <span>
+              {% trans "Verify your Apprise API Status:" %}
+              <i id="api-status-icon"
+                 class="material-icons api-status-icon status-loading">
+                autorenew
+              </i>
+            </span>
+            <div id="api-status-details" class="api-status-details"></div>
           </li>
           <li>
             <p>
