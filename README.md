@@ -305,7 +305,7 @@ curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}
 # Send a notification with a URL based attachment
 curl -X POST \
     -F 'urls=mailto://user:pass@gmail.com' \
-    -F attach=attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
+    -F attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
     http://localhost:8000/notify
 ```
 
@@ -398,7 +398,7 @@ curl -X POST \
 # Send a notification with a URL based attachment
 curl -X POST \
     -F 'urls=mailto://user:pass@gmail.com' \
-    -F attach=attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
+    -F attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
     http://localhost:8000/notify/abc123
 ```
 

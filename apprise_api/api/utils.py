@@ -267,12 +267,18 @@ def parse_attachments(attachment_payload, files_request):
         # Otherwise we need to raise an error
         raise ValueError("Attachment support has been disabled")
 
+    # Determine how many files we have in the request.FILES
+    file_count = 0
+    if hasattr(files_request, "lists"):
+        file_count = sum(len(v) for _, v in files_request.lists())
+    elif isinstance(files_request, dict):
+        # conservative fallback
+        file_count = len(files_request)
+
     # Attachment Count
-    count = sum(
-        [
-            (0 if not isinstance(attachment_payload, set | tuple | list) else len(attachment_payload)),
-            0 if not isinstance(files_request, dict) else len(files_request),
-        ]
+    count = (
+        (len(attachment_payload) if isinstance(attachment_payload, (set, tuple, list)) else 0)
+        + file_count
     )
 
     if isinstance(attachment_payload, dict | str | bytes):
@@ -383,43 +389,49 @@ def parse_attachments(attachment_payload, files_request):
     #
     # Now handle the request.FILES
     #
-    if isinstance(files_request, dict):
-        for no, (_key, meta) in enumerate(files_request.items(), start=len(attachments) + 1):
-            try:
-                # Filetype is presumed to be of base class
-                # django.core.files.UploadedFile
-                filename = meta.name.strip()
+    if hasattr(files_request, "lists"):
+        iterable = ((k, f) for k, lst in files_request.lists() for f in lst)
+    elif isinstance(files_request, dict):
+        iterable = files_request.items()
+    else:
+        iterable = ()
 
-                # Max filename size is 250
-                if len(filename) > 250:
-                    raise ValueError(f"The filename associated with attachment {no} is too long")
+    for no, (_, meta) in enumerate(iterable, start=len(attachments) + 1):
+        try:
+            # Filetype is presumed to be of base class
+            # django.core.files.UploadedFile
+            filename = meta.name.strip()
 
-                elif not filename:
-                    filename = f"attachment.{no:03d}"
+            # Max filename size is 250
+            if len(filename) > 250:
+                raise ValueError(f"The filename associated with attachment {no} is too long")
 
-            except (AttributeError, TypeError):
-                raise ValueError(f"An invalid filename was provided for attachment {no}") from None
+            elif not filename:
+                filename = f"attachment.{no:03d}"
 
-            #
-            # Prepare our Attachment
-            #
-            attachment = Attachment(filename)
-            try:
-                with open(attachment.path, "wb") as f:
-                    # Write our content to disk
-                    f.write(meta.read())
+        except (AttributeError, TypeError):
+            raise ValueError(f"An invalid filename was provided for attachment {no}") from None
 
-            except OSError:
-                raise ValueError(f"Could not write attachment {filename} to disk") from None
+        #
+        # Prepare our Attachment
+        #
+        attachment = Attachment(filename)
+        try:
+            with open(attachment.path, "wb") as f:
+                # Write our content to disk
+                f.write(meta.read())
 
-            #
-            # Some Validation
-            #
-            if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-                raise ValueError(f"attachment {filename}'s filesize is to large")
+        except OSError:
+            raise ValueError(f"Could not write attachment {filename} to disk") from None
 
-            # Add our attachment
-            attachments.append(attachment)
+        #
+        # Some Validation
+        #
+        if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
+            raise ValueError(f"attachment {filename}'s filesize is to large")
+
+        # Add our attachment
+        attachments.append(attachment)
 
     return attachments
 
