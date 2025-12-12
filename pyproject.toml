@@ -110,7 +110,7 @@ exclude = [
 [tool.black]
 # Added for backwards support and alternative cleanup
 # when needed
-line-length = 79  # Respecting BSD-style 79-char limit
+line-length = 120
 target-version = ['py39']
 extend-exclude = '''
 /(
@@ -185,21 +185,18 @@ profile = "django"
 
 # Match existing Python line length
 max_line_length = 120
-
-# Indentation
 indent = 2
 
 format_js = true
 format_css = true
-
-# Add this to help with tag placement if you feel they are too "squashed"
 blank_line_after_tag = "load,extends,include"
 
 extend_exclude = ".venv,venv,.tox,node_modules,build,dist,lib,lib64,static"
 ignore = "H006,H021"
 
-# Configure the inner JS formatter (js-beautify)
 [tool.djlint.js]
 indent_size = 2
 preserve_newlines = true
 
+[tool.djlint.css]
+indent_size = 2

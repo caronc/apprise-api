@@ -1,19 +1,32 @@
-{% extends "fullsize_base.html" %}
+{% extends "base.html" %}
 
 {% load i18n %}
 
-{% block body %}
-  <div class="section error-page center">
-    <h1>500 - {% trans "Service Temporarily Unavailable" %}</h1>
-    <i class="material-icons spotlight">error</i>
-    <p>
-      {% blocktrans %}
+{# Remove the left sidebar entirely #}
+{% block sidebar %}
+{% endblock sidebar %}
+{# Remove scripts used only by “full UI” pages #}
+{% block head_js_optional %}
+{% endblock head_js_optional %}
+{% block scripts_optional %}
+{% endblock scripts_optional %}
+{% block onload %}
+{% endblock onload %}
+{# Make the main page full width #}
+{% block main_page %}
+  <div class="col s12 error-content">
+    {% block body %}
+      <div class="section error-page center">
+        <h1>500 - {% trans "Service Temporarily Unavailable" %}</h1>
+        <i class="material-icons spotlight">error</i>
+        <p>
+          {% blocktrans %}
               The Apprise API encountered an internal error while processing
               your request.
-						{% endblocktrans %}
-    </p>
-    <p>
-      <i class="material-icons">cloud</i><code>{{ remote_ip }} - {{ original_method }} - {{ original_uri }}</code>
-    </p>
-  </div>
-{% endblock body %}
+      {% endblocktrans %}
+        </p>
+        <hr />
+        <pre><code><i class="material-icons">cloud</i>{{ remote_ip }} - {{original_method}} - {{ original_uri }}</code></pre>
+      </div>
+    {% endblock body %}
+  {% endblock main_page %}

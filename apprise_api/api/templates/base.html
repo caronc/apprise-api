@@ -25,13 +25,15 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}" />
     <!--materialize-->
     <script src="{% static 'js/materialize.min.js' %}"></script>
-    <!--sweetalert2-->
-    <script src="{% static 'js/sweetalert2.all.min.js' %}"></script>
-    <!--highlightjs-->
-    <script src="{% static 'js/highlight.pack.js' %}"></script>
+    {% block head_js_optional %}
+      <!--sweetalert2-->
+      <script src="{% static 'js/sweetalert2.all.min.js' %}"></script>
+      <!--highlightjs-->
+      <script src="{% static 'js/highlight.pack.js' %}"></script>
+    {% endblock head_js_optional %}
     <!--theme-->
     <link rel="stylesheet"
-          href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.min.css">
+          href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.css">
     <title>
       {% block title %}
         {% trans "Apprise API" %}
@@ -77,24 +79,26 @@
       </div>
       <!-- Page Layout here -->
       <div class="row main-layout">
-        <!-- Side menu -->
-        <div class="col s12 m3 l3 side-menu">
-          {% if STATEFUL_MODE != 'disabled' %}
-            <ul class="collection z-depth-1">
-            <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
-          {% trans "Configuration Manager" %}</a>
-          {% if not CONFIG_LOCK %}
-          <a class="collection-item"
-             id="cfg-gen"
-             href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
-        {% trans "New Configuration" %}</a>
+        {% block layout %}
+          {% block sidebar %}
+            <!-- Side menu -->
+            <div class="col s12 m3 l3 side-menu">
+              {% if STATEFUL_MODE != 'disabled' %}
+                <ul class="collection z-depth-1">
+                <a class="collection-item" href="{% url 'config' DEFAULT_CONFIG_ID %}"><i class="material-icons">settings</i>
+              {% trans "Configuration Manager" %}</a>
+              {% if not CONFIG_LOCK %}
+              <a class="collection-item"
+                 id="cfg-gen"
+                 href="{% url 'config' UNIQUE_CONFIG_ID %}"><i class="material-icons">refresh</i>
+            {% trans "New Configuration" %}</a>
+          {% endif %}
+          {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN %}
+          <a class="collection-item" id="cfg-list" href="{% url 'config_list' %}"><i class="material-icons">list</i>
+        {% trans "Configuration List" %}</a>
       {% endif %}
-      {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN %}
-      <a class="collection-item" id="cfg-list" href="{% url 'config_list' %}"><i class="material-icons">list</i>
-    {% trans "Configuration List" %}</a>
-  {% endif %}
-<a class="collection-item" href="{% url "details" %}"><i class="material-icons">search</i>
-{% trans "Available Plugins" %}</a>
+    <a class="collection-item" href="{% url "details" %}"><i class="material-icons">search</i>
+  {% trans "Available Plugins" %}</a>
 </ul>
 {% endif %}
 <ul class="collection z-depth-1">
@@ -123,57 +127,61 @@
 {% block menu %}
 {% endblock menu %}
 </div>
-<!-- Main content -->
-<div class="col s12 m9 l9 main-content">
-  <div id="health-check" class="section" style="display: none">
-    <h4>
-      <i class="material-icons" style="color: orange">warning</i>&nbsp;{% trans "Apprise Health Check Failed" %}&nbsp;<i class="material-icons" style="color: orange">warning</i>
-    </h4>
-    {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
-    <ul>
-      <li class="can_write_config" style="display: none">
-        <strong>
-          <i class="material-icons" style="color: red">cancel</i>&nbsp;{% trans "Configuration Write Failure" %}</strong>
-        <p>
-          {% blocktrans %}Apprise can not write new configuration information to the directory:{% endblocktrans %} <code>{{ CONFIG_DIR }}</code>.
-        </p>
-        <p>
-          {% blocktrans %}<em>Note:</em>  If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_CONFIG_LOCK=yes</code> and reload your Apprise instance.{% endblocktrans %}
-        </p>
-      </li>
-      <li class="can_write_attach" style="display: none">
-        <strong>
-          <i class="material-icons" style="color: red">cancel</i>&nbsp;{% trans "Attachment Temporary Storage Write Failure" %}</strong>
-        <p>
-          {% blocktrans %}Apprise can not circulate attachments (if provided) along to supported endpoints due to not having write access to the directory:{% endblocktrans %} <code>{{ ATTACH_DIR }}</code>.
-        </p>
-        <p>
-          {% blocktrans %}<em>Note:</em> If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_ATTACH_SIZE=0</code> and reload your Apprise instance.{% endblocktrans %}
-        </p>
-      </li>
-    </ul>
-    <p>
-      {% blocktrans %}Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files.  In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too.{% endblocktrans %}
-    </p>
-    <p>
-      {% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.
-    </p>
-  </div>
-  {% block body %}
-  {% endblock body %}
-  <footer class="page-footer-legal">
-    <small>
-      <hr />
-      <a href="{{ APPRISE_API_URL }}" target="_new">{% trans "Apprise API" %} v{{ APPRISE_API_VERSION }}</a>
-      <br />
-      {{ APPRISE_API_COPYRIGHT }}
-      ·
-      {% blocktrans with license=APPRISE_API_LICENSE %}
+{% endblock sidebar %}
+{% block main_page %}
+  <!-- Main content -->
+  <div class="col s12 m9 l9 main-content">
+    <div id="health-check" class="section" style="display: none">
+      <h4>
+        <i class="material-icons" style="color: orange">warning</i>&nbsp;{% trans "Apprise Health Check Failed" %}&nbsp;<i class="material-icons" style="color: orange">warning</i>
+      </h4>
+      {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
+      <ul>
+        <li class="can_write_config" style="display: none">
+          <strong>
+            <i class="material-icons" style="color: red">cancel</i>&nbsp;{% trans "Configuration Write Failure" %}</strong>
+          <p>
+            {% blocktrans %}Apprise can not write new configuration information to the directory:{% endblocktrans %} <code>{{ CONFIG_DIR }}</code>.
+          </p>
+          <p>
+            {% blocktrans %}<em>Note:</em>  If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_CONFIG_LOCK=yes</code> and reload your Apprise instance.{% endblocktrans %}
+          </p>
+        </li>
+        <li class="can_write_attach" style="display: none">
+          <strong>
+            <i class="material-icons" style="color: red">cancel</i>&nbsp;{% trans "Attachment Temporary Storage Write Failure" %}</strong>
+          <p>
+            {% blocktrans %}Apprise can not circulate attachments (if provided) along to supported endpoints due to not having write access to the directory:{% endblocktrans %} <code>{{ ATTACH_DIR }}</code>.
+          </p>
+          <p>
+            {% blocktrans %}<em>Note:</em> If this is the expected behavior, you should pre-set the environment variable <code>APPRISE_ATTACH_SIZE=0</code> and reload your Apprise instance.{% endblocktrans %}
+          </p>
+        </li>
+      </ul>
+      <p>
+        {% blocktrans %}Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files.  In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too.{% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}The issue(s) identified here can also be associated with SELinux too. You may wish to rule out SELinux by first temporarily disabling it using the command <code>setenforce 0</code>.  You can always re-enstate it with <code>setenforce 1</code>{% endblocktrans %}.
+      </p>
+    </div>
+    {% block body %}
+    {% endblock body %}
+    <footer class="page-footer-legal">
+      <small>
+        <hr />
+        <a href="{{ APPRISE_API_URL }}" target="_new">{% trans "Apprise API" %} v{{ APPRISE_API_VERSION }}</a>
+        <br />
+        {{ APPRISE_API_COPYRIGHT }}
+        ·
+        {% blocktrans with license=APPRISE_API_LICENSE %}
               Licensed under the {{ license }} License.
             {% endblocktrans %}
-    </small>
-  </footer>
-</div>
+      </small>
+    </footer>
+  </div>
+{% endblock main_page %}
+{% endblock layout %}
 </div>
 </div>
 {# Script Block 1 - Itentionally done this way to work nicely with djlint #}
@@ -182,228 +190,236 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Materialize Init
         M.AutoInit();
-        // highlightjs
-        hljs.initHighlightingOnLoad();
+
+        // Initial state
+        const status = document.querySelector('#nav-api-status-icon');
+        status.classList.remove('status-ok', 'status-error', 'status-loading');
+        status.classList.add('status-disabled');
+        status.textContent = 'visibility_off';
 
         {% block onload %}
-	{% endblock onload %}
+          // highlightjs
+          hljs.initHighlightingOnLoad();
 
-        // Health Checks
-        appriseStatusStartPolling();
+          // Health Checks
+          appriseStatusStartPolling();
+        {% endblock onload %}
     });
 </script>
 {# Script Block 2 #}
 <script>
-    {% block jsfooter %}
-    {% endblock jsfooter %}
+{% block jsfooter %}
+{% endblock jsfooter %}
 </script>
 {# djlint:on #}
-{# Script Block 3 #}
-<script>
-  async function appriseStatusUpdate() {
-    const iconOverview = document.querySelector('#api-status-icon');
-    const detailsOverview = document.querySelector('#api-status-details');
-    const iconNav = document.querySelector('#nav-api-status-icon');
+{% block scripts_optional %}
+  {# Script Block 3 #}
+  <script>
+    async function appriseStatusUpdate() {
+      const iconOverview = document.querySelector('#api-status-icon');
+      const detailsOverview = document.querySelector('#api-status-details');
+      const iconNav = document.querySelector('#nav-api-status-icon');
 
-    const hc = document.querySelector('#health-check');
-    const liCfg = hc ? hc.querySelector('li.can_write_config') : null;
-    const liAttach = hc ? hc.querySelector('li.can_write_attach') : null;
+      const hc = document.querySelector('#health-check');
+      const liCfg = hc ? hc.querySelector('li.can_write_config') : null;
+      const liAttach = hc ? hc.querySelector('li.can_write_attach') : null;
 
-    // Helper to reset icons to loading
-    function setLoading(icon) {
-      if (!icon) {
-        return;
-      }
-      icon.classList.remove('status-ok', 'status-error');
-      icon.classList.add('status-loading');
-      icon.textContent = 'autorenew';
-    }
-
-    setLoading(iconOverview);
-    setLoading(iconNav);
-    if (detailsOverview) {
-      detailsOverview.textContent = '';
-    }
-    if (hc) {
-      hc.style.display = 'none';
-      if (liCfg) liCfg.style.display = 'none';
-      if (liAttach) liAttach.style.display = 'none';
-    }
-
-    try {
-      const response = await fetch('{% url "health" %}', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      let data = null;
-      let details = null;
-      let hasDetails = false;
-
-      try {
-        data = await response.json();
-        if (data && data.status && Array.isArray(data.status.details)) {
-          details = data.status.details;
-          hasDetails = true;
-        }
-      } catch (e) {
-        // JSON parse failed; we fall back below
-      }
-
-      // Helper to set icons to OK/error
-      function setIconState(icon, ok) {
+      // Helper to reset icons to loading
+      function setLoading(icon) {
         if (!icon) {
           return;
         }
-        icon.classList.remove('status-loading');
-        if (ok) {
-          icon.textContent = 'check_circle';
-          icon.classList.add('status-ok');
-          icon.classList.remove('status-error');
+        icon.classList.remove('status-ok', 'status-error');
+        icon.classList.add('status-loading');
+        icon.textContent = 'autorenew';
+      }
+
+      setLoading(iconOverview);
+      setLoading(iconNav);
+      if (detailsOverview) {
+        detailsOverview.textContent = '';
+      }
+      if (hc) {
+        hc.style.display = 'none';
+        if (liCfg) liCfg.style.display = 'none';
+        if (liAttach) liAttach.style.display = 'none';
+      }
+
+      try {
+        const response = await fetch('{% url "health" %}', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+
+        let data = null;
+        let details = null;
+        let hasDetails = false;
+
+        try {
+          data = await response.json();
+          if (data && data.status && Array.isArray(data.status.details)) {
+            details = data.status.details;
+            hasDetails = true;
+          }
+        } catch (e) {
+          // JSON parse failed; we fall back below
+        }
+
+        // Helper to set icons to OK/error
+        function setIconState(icon, ok) {
+          if (!icon) {
+            return;
+          }
+          icon.classList.remove('status-loading');
+          if (ok) {
+            icon.textContent = 'check_circle';
+            icon.classList.add('status-ok');
+            icon.classList.remove('status-error');
+          } else {
+            icon.textContent = 'error';
+            icon.classList.add('status-error');
+            icon.classList.remove('status-ok');
+          }
+        }
+
+        // Update the large health panel (permissions etc.)
+        if (hc && data && data.status) {
+          const showCfg = (data.status.can_write_config === false &&
+            data.config_lock === false);
+          const showAttach = (data.status.can_write_attach === false &&
+            data.attach_lock === false);
+
+          if (liCfg) liCfg.style.display = showCfg ? '' : 'none';
+          if (liAttach) liAttach.style.display = showAttach ? '' : 'none';
+
+          if (showCfg || showAttach) {
+            hc.style.display = '';
+          } else {
+            hc.style.display = 'none';
+          }
+        }
+
+        // Decide high-level status + message
+        let isOk = response.ok;
+        let message = '';
+
+        if (hasDetails && details && details.length > 0) {
+          if (response.ok && details.length === 1 && details[0] === 'OK') {
+            isOk = true;
+            message = '';
+          } else {
+            isOk = false;
+            message = details.join(', ');
+          }
         } else {
+          if (!response.ok) {
+            isOk = false;
+            message = '{% trans "Unable to reach the Apprise API status endpoint." %}';
+          }
+        }
+
+        // Apply status to icons and overview details
+        setIconState(iconOverview, isOk);
+        setIconState(iconNav, isOk);
+        if (detailsOverview) {
+          detailsOverview.textContent = message;
+        }
+
+      } catch (e) {
+        // Network / fetch failure
+        if (hc) hc.style.display = 'none';
+        const fallbackMsg =
+          '{% trans "Unable to reach the Apprise API status endpoint." %}';
+
+        function setError(icon) {
+          if (!icon) return;
+          icon.classList.remove('status-loading');
           icon.textContent = 'error';
           icon.classList.add('status-error');
-          icon.classList.remove('status-ok');
         }
-      }
-
-      // Update the large health panel (permissions etc.)
-      if (hc && data && data.status) {
-        const showCfg = (data.status.can_write_config === false &&
-          data.config_lock === false);
-        const showAttach = (data.status.can_write_attach === false &&
-          data.attach_lock === false);
-
-        if (liCfg) liCfg.style.display = showCfg ? '' : 'none';
-        if (liAttach) liAttach.style.display = showAttach ? '' : 'none';
-
-        if (showCfg || showAttach) {
-          hc.style.display = '';
-        } else {
-          hc.style.display = 'none';
+        setError(iconOverview);
+        setError(iconNav);
+        if (detailsOverview) {
+          detailsOverview.textContent = fallbackMsg;
         }
+        console.warn('Apprise status check failed', e);
       }
-
-      // Decide high-level status + message
-      let isOk = response.ok;
-      let message = '';
-
-      if (hasDetails && details && details.length > 0) {
-        if (response.ok && details.length === 1 && details[0] === 'OK') {
-          isOk = true;
-          message = '';
-        } else {
-          isOk = false;
-          message = details.join(', ');
-        }
-      } else {
-        if (!response.ok) {
-          isOk = false;
-          message = '{% trans "Unable to reach the Apprise API status endpoint." %}';
-        }
-      }
-
-      // Apply status to icons and overview details
-      setIconState(iconOverview, isOk);
-      setIconState(iconNav, isOk);
-      if (detailsOverview) {
-        detailsOverview.textContent = message;
-      }
-
-    } catch (e) {
-      // Network / fetch failure
-      if (hc) hc.style.display = 'none';
-      const fallbackMsg =
-        '{% trans "Unable to reach the Apprise API status endpoint." %}';
-
-      function setError(icon) {
-        if (!icon) return;
-        icon.classList.remove('status-loading');
-        icon.textContent = 'error';
-        icon.classList.add('status-error');
-      }
-      setError(iconOverview);
-      setError(iconNav);
-      if (detailsOverview) {
-        detailsOverview.textContent = fallbackMsg;
-      }
-      console.warn('Apprise status check failed', e);
     }
-  }
 
-  // Ensure we only start polling once
-  window.appriseStatusPollingStarted = window.appriseStatusPollingStarted || false;
+    // Ensure we only start polling once
+    window.appriseStatusPollingStarted = window.appriseStatusPollingStarted || false;
 
-  function appriseStatusStartPolling() {
-    if (window.appriseStatusPollingStarted) {
-      return;
-    }
-    window.appriseStatusPollingStarted = true;
-
-    // Initial check immediately
-    appriseStatusUpdate();
-    // Re-check every 30 seconds
-    window.setInterval(appriseStatusUpdate, 30000);
-  }
-
-  document.querySelector('#cfg-gen').addEventListener('click', function(e) {
-    e.preventDefault();
-
-    Swal.fire({
-      title: '{% trans "New Configuration" %}',
-      html: `{% blocktrans with default_config_id=DEFAULT_CONFIG_ID %}This will generate a new Apprise configuration ID and transition over to it. It is important that you have bookmarked or noted the current ID <code>{{ default_config_id }}</code> before continuing. Do you still wish to proceed?{% endblocktrans %}`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: '{% trans "Yes" %}',
-      cancelButtonText: '{% trans "No" %}'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = e.target.href;
+    function appriseStatusStartPolling() {
+      if (window.appriseStatusPollingStarted) {
+        return;
       }
+      window.appriseStatusPollingStarted = true;
+
+      // Initial check immediately
+      appriseStatusUpdate();
+      // Re-check every 30 seconds
+      window.setInterval(appriseStatusUpdate, 30000);
+    }
+
+    document.querySelector('#cfg-gen').addEventListener('click', function(e) {
+      e.preventDefault();
+
+      Swal.fire({
+        title: '{% trans "New Configuration" %}',
+        html: `{% blocktrans with default_config_id=DEFAULT_CONFIG_ID %}This will generate a new Apprise configuration ID and transition over to it. It is important that you have bookmarked or noted the current ID <code>{{ default_config_id }}</code> before continuing. Do you still wish to proceed?{% endblocktrans %}`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: '{% trans "Yes" %}',
+        cancelButtonText: '{% trans "No" %}'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = e.target.href;
+        }
+      });
     });
-  });
 
-  // Register custom Apprise TEXT config language
-  hljs.registerLanguage('apprise-config', function(hljs) {
-    const URL = {
-      className: 'string',
-      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s#]*/,
-      relevance: 0
-    };
+    // Register custom Apprise TEXT config language
+    hljs.registerLanguage('apprise-config', function(hljs) {
+      const URL = {
+        className: 'string',
+        begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s#]*/,
+        relevance: 0
+      };
 
-    const COMMENT = {
-      className: 'comment',
-      begin: /^[ \t]*[;#].*$/,
-      relevance: 0
-    };
+      const COMMENT = {
+        className: 'comment',
+        begin: /^[ \t]*[;#].*$/,
+        relevance: 0
+      };
 
-    const TAG_DECL = {
-      // <tags>=<urls> or <groups>=<tags>
-      className: 'keyword',
-      begin: /^[ \t]*<[^>]+>/,
-      end: /=/,
-      excludeEnd: true,
-      relevance: 0
-    };
+      const TAG_DECL = {
+        // <tags>=<urls> or <groups>=<tags>
+        className: 'keyword',
+        begin: /^[ \t]*<[^>]+>/,
+        end: /=/,
+        excludeEnd: true,
+        relevance: 0
+      };
 
-    const TAG_NAME = {
-      className: 'meta',
-      begin: /\b[a-zA-Z0-9_:-]+\b/,
-      relevance: 0
-    };
+      const TAG_NAME = {
+        className: 'meta',
+        begin: /\b[a-zA-Z0-9_:-]+\b/,
+        relevance: 0
+      };
 
-    return {
-      name: 'AppriseConfig',
-      contains: [
-        COMMENT,
-        TAG_DECL,
-        URL,
-        TAG_NAME
-      ]
-    };
-  });
-</script>
+      return {
+        name: 'AppriseConfig',
+        contains: [
+          COMMENT,
+          TAG_DECL,
+          URL,
+          TAG_NAME
+        ]
+      };
+    });
+  </script>
+{% endblock scripts_optional %}
 </body>
 </html>
