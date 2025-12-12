@@ -403,8 +403,12 @@ pre code {
     color: #d4d4d4 !important;
 }
 
-/* SweetAlert2 – log colouring */
+.notify-attachments-list .attachment-chip {
+    background-color: #171b23;
+    color: #eceff4;
+}
 
+/* SweetAlert2 – log colouring */
 .swal2-popup .notify-log-panel {
     background-color: #1b1e26;
 }

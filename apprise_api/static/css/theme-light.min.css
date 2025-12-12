@@ -190,6 +190,11 @@ a.active {
   color: #d4d4d4 !important;
 }
 
+.notify-attachments-list .attachment-chip {
+  background-color: #eee;
+  color: #004d40;
+}
+
 /* SweetAlert2 – log colouring */
 .swal2-popup .notify-log-panel {
   background-color: #eee;

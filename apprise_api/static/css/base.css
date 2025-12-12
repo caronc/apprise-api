@@ -632,7 +632,6 @@ code.config-id {
   border-radius: 16px;
   padding: 0 0.75rem;
   line-height: 1.8;
-  background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
   font-size: 0.9rem;
   display: inline-flex;
@@ -646,10 +645,19 @@ code.config-id {
 
 #notify .row,
 #notify .row .input-field {
-  margin-top: 0;
+  margin-top: 0.2em;
   margin-bottom: 0;
   padding-bottom: 0;
-  padding-top: 0;
+  padding-top: 0.3rem;
+}
+
+.notify-top-row .input-field label[for="id_tag"] {
+  position: static;
+  transform: none;
+  display: block;
+  margin-top: -0.1rem;
+  margin-bottom: 0;
+  font-size: 0.9rem;
 }
 
 /* SweetAlert2 – notification summary and logs */

@@ -282,12 +282,12 @@
           {{ form_notify.type }}
           {{ form_notify.type.errors }}
         </div>
-        <div class="input-field col s12 m5">
+        <div class="input-field col s12 m4">
           {{ form_notify.tag.label_tag }}
           {{ form_notify.tag }}
           {{ form_notify.tag.errors }}
         </div>
-        <div class="input-field col s12 m3 notify-attachments-field">
+        <div class="input-field col s12 m4 notify-attachments-field">
           {{ form_notify.attachment.label_tag }}
           {{ form_notify.attachment }}
           {{ form_notify.attachment.errors }}
@@ -817,26 +817,26 @@
       const chip = document.createElement('div');
       chip.className = 'attachment-chip';
       chip.textContent = file.name;
-  
+
       const icon = document.createElement('i');
       icon.className = 'material-icons';
       icon.textContent = 'close';
       chip.appendChild(icon);
-  
+
       chip.addEventListener('click', function (e) {
         e.preventDefault();
         notifyAttachments.splice(index, 1);
         renderAttachmentList(listEl);
       });
-  
+
       listEl.appendChild(chip);
     });
   }
-  
+
   function form_file_input_hack() {
     /*
       Customised for the Notify tab:
-  
+
       - Hide the raw <input type="file">
       - Provide a Browse button on its own line
       - Allow selecting multiple files in batches
@@ -846,39 +846,39 @@
     if (!input) {
       return;
     }
-  
+
     // Let the user pick more than one file at a time
     input.setAttribute('multiple', 'multiple');
     input.style.display = 'none';
-  
+
     const field = input.closest('.notify-attachments-field') || input.parentNode;
     const list = field.querySelector('.notify-attachments-list');
-  
+
     // Create our Browse button
     const browseBtn = document.createElement('span');
     browseBtn.setAttribute('class', 'btn btn-file waves-effect waves-light');
     browseBtn.textContent = '{% trans "Browse" %}';
-  
+
     const icon = document.createElement('i');
     icon.setAttribute('class', 'material-icons right');
     icon.textContent = 'folder';
     browseBtn.appendChild(icon);
-  
+
     // Insert button before the list
     list.parentNode.insertBefore(browseBtn, list);
-  
+
     // Clicking the visible button opens the hidden file input
     browseBtn.addEventListener('click', function (e) {
       e.preventDefault();
       input.click();
     });
-  
+
     // When files are selected, add them to our list
     input.addEventListener('change', function (e) {
       if (!e.target.files || !e.target.files.length) {
         return;
       }
-  
+
       Array.from(e.target.files).forEach(function (file) {
         // Avoid simple duplicates: name + size + mtime
         const exists = notifyAttachments.some(function (f) {
@@ -892,7 +892,7 @@
           notifyAttachments.push(file);
         }
       });
-  
+
       // Reset input so the same file can be selected again later
       input.value = '';
       renderAttachmentList(list);
@@ -956,7 +956,25 @@
           return;
         }
         form.append(el.name, el.value);
-      });
+				});
+
+      // Attach files from our notifyAttachments buffer
+      // Each file is sent under the "attachment" field name, which
+      // matches the NotifyForm FileField and what the view expects.
+      if (notifyAttachments.length > 0) {
+        notifyAttachments.forEach(function (file) {
+          form.append('attachment', file, file.name);
+        });
+      } else {
+        // Fallback: if for some reason notifyAttachments is empty but the
+        // hidden input still has files, include those as well.
+        const fileInput = rawForm.querySelector('#id_attachment');
+        if (fileInput && fileInput.files && fileInput.files.length) {
+          Array.from(fileInput.files).forEach(function (file) {
+            form.append('attachment', file, file.name);
+          });
+        }
+      }
 
       // perform our notification
       Swal.fire({
