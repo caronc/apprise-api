@@ -1,91 +1,336 @@
 openapi: '3.0.3'
+
 info:
   title: Apprise API
-  description: https://github.com/caronc/apprise-api
-  version: 0.7.0
+  description: >
+    A lightweight REST framework that wraps the Apprise API Notification
+    Library. See https://github.com/caronc/apprise-api for details.
+  version: 1.2.6
+
+servers:
+  - url: http://localhost:8000
+    description: Local hosting of Apprise API
+  - url: /
+    description: Relative path (Current Host of Apprise API instance)
+
+tags:
+  - name: Stateless
+    description: Stateless notification endpoints that do not use a stored key.
+  - name: Persistent
+    description: Endpoints that work with pre-saved configurations identified by a {key}.
+  - name: Meta
+    description: Introspection and system endpoints.
+
 paths:
+  /status:
+    get:
+      operationId: Meta_GetStatus
+      summary: Server Health Check
+      description: >
+        Performs a health check on the server configuration.
+        Returns 200 if OK, 417 if there is a configuration/permission issue.
+      tags:
+        - Meta
+      responses:
+        '200':
+          description: Server is healthy.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '417':
+          description: Expectation Failed (Configuration or Permission issues).
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "CONFIG_PERMISSION_ISSUE"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /details:
+    get:
+      operationId: Meta_GetDetails
+      summary: Returns details of all supported Apprise URLs and their options.
+      description: >
+        Returns a list of supported notification services.
+        If Accept header is 'text/html', renders a UI page.
+        If Accept header is 'application/json', returns the JSON structure.
+      tags:
+        - Meta
+      parameters:
+        - in: query
+          name: all
+          schema:
+            type: string
+            enum: ["yes", "no"]
+          description: Show all plugins (including disabled ones).
+      responses:
+        '200':
+          description: Details of supported services.
+          content:
+            application/json:
+              schema:
+                type: object
+            text/html:
+              schema:
+                type: string
+
   /notify:
     post:
       operationId: Stateless_SendNotification
-      summary: Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable APPRISE_STATELESS_URLS.
+      summary: >
+        Sends one or more notifications to the URLs identified as part
+        of the payload or in APPRISE_STATELESS_URLS.
+      tags:
+        - Stateless
+      parameters:
+        - $ref: '#/components/parameters/RecursionHeader'
+        - $ref: '#/components/parameters/IdHeader'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-                $ref: '#/components/schemas/StatelessNotificationRequest'
-      responses:
-        200:
-          description: OK
-      tags:
-        - Stateless
-  /add/{key}:
-    post:
-      operationId: Persistent_AddConfiguration
-      summary: Saves Apprise Configuration (or set of URLs) to the persistent store.
-      parameters:
-        - in: path
-          name: key
-          required: true
-          schema:
-            type: string
-          description: Configuration key
-      requestBody:
-        content:
-          application/json:
+              $ref: '#/components/schemas/StatelessNotificationRequest'
+          multipart/form-data:
             schema:
-                $ref: '#/components/schemas/AddConfigurationRequest'
+              $ref: '#/components/schemas/StatelessNotificationMultipart'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StatelessNotificationForm'
       responses:
-        200:
-          description: OK
-      tags:
-        - Persistent
-  /del/{key}:
-    post:
-      operationId: Persistent_RemoveConfiguration
-      summary: Removes Apprise Configuration from the persistent store.
-      parameters:
-        - $ref: '#/components/parameters/key'
-      responses:
-        200:
-          description: OK
-      tags:
-        - Persistent
-  /get/{key}:
-    post:
-      operationId: Persistent_GetConfiguration
-      summary: Returns the Apprise Configuration from the persistent store.
-      parameters:
-        - $ref: '#/components/parameters/key'
-      responses:
-        200:
-          description: OK
+        '200':
+          description: >
+            Notification accepted. Response contains processing logs.
           content:
             text/plain:
               schema:
                 type: string
+                example: "2025-01-01 12:00:00,000 - INFO - Sent to Telegram"
+            text/html:
+              schema:
+                type: string
+                description: Rendered HTML logs.
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogResponse'
+        '204':
+          description: No Content (No valid URLs provided).
+        '400':
+          description: Bad Request (Invalid payload or format).
+        '406':
+          description: Method Not Accepted (Recursion limit reached).
+        '424':
+          description: One or more notifications could not be sent.
+        '431':
+          description: Request Header Fields Too Large (JSON Payload too big).
+
+  /cfg:
+    get:
+      operationId: Persistent_ListConfigurations
+      summary: List all stored configuration keys.
+      description: >
+        Returns a list of all Config Keys currently stored. 
+        Requires APPRISE_ADMIN to be enabled in server settings.
       tags:
         - Persistent
-  /notify/{key}:
+      responses:
+        '200':
+          description: List of keys retrieved.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+            text/html:
+              schema:
+                type: string
+        '403':
+          description: Access Denied (APPRISE_ADMIN not enabled).
+
+  /add/{key}:
     post:
-      operationId: Persistent_SendNotification
-      summary: Sends notification(s) to all of the end points you've previously configured associated with a {KEY}.
+      operationId: Persistent_AddConfiguration
+      summary: Saves Apprise configuration (or set of URLs) to the persistent store.
+      tags:
+        - Persistent
       parameters:
         - $ref: '#/components/parameters/key'
       requestBody:
+        required: false
         content:
           application/json:
             schema:
-                $ref: '#/components/schemas/PersistentNotificationRequest'
+              $ref: '#/components/schemas/AddConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AddConfigurationForm'
       responses:
-        200:
-          description: OK
+        '200':
+          description: Configuration stored (or updated).
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Successfully saved configuration"
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    nullable: true
+        '400':
+          description: Bad Request (Invalid format or payload).
+        '403':
+          description: Forbidden (Config Lock enabled).
+        '431':
+          description: Payload Too Large.
+        '500':
+          description: Internal Error (Could not write to disk).
+
+  /del/{key}:
+    post:
+      operationId: Persistent_RemoveConfiguration
+      summary: Removes Apprise configuration from the persistent store.
       tags:
         - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Configuration removed.
+        '204':
+          description: No content (Configuration did not exist).
+        '403':
+          description: Forbidden (Config Lock enabled).
+        '500':
+          description: Internal Error (Could not delete from disk).
+
+  /get/{key}:
+    post:
+      operationId: Persistent_GetConfiguration
+      summary: >
+        Returns the Apprise configuration for {key}.
+      description: >
+        Depending on the Accept header and how the config was stored,
+        returns TEXT, YAML, or JSON.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Configuration returned.
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Returned if config was saved as TEXT.
+            text/yaml:
+              schema:
+                type: string
+                description: Returned if config was saved as YAML.
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigResponse'
+        '204':
+          description: No content (Key found but empty).
+        '403':
+          description: Forbidden (Config Lock enabled).
+        '500':
+          description: Internal Server Error.
+
+  /cfg/{key}:
+    post:
+      operationId: Persistent_GetConfigurationAlias
+      summary: >
+        Alias for /get/{key}. Returns the Apprise configuration.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Configuration returned.
+          content:
+            text/plain:
+              schema:
+                type: string
+            text/yaml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigResponse'
+        '204':
+          description: No content.
+        '403':
+          description: Forbidden.
+        '500':
+          description: Internal Server Error.
+
+  /notify/{key}:
+    post:
+      operationId: Persistent_SendNotification
+      summary: >
+        Sends notification(s) to all of the endpoints previously
+        configured under {key}, optionally filtered by tag.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/RecursionHeader'
+        - $ref: '#/components/parameters/IdHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersistentNotificationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PersistentNotificationMultipart'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PersistentNotificationForm'
+      responses:
+        '200':
+          description: Notification accepted. Response contains logs.
+          content:
+            text/plain:
+              schema:
+                type: string
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogResponse'
+        '204':
+          description: No configuration found for this key.
+        '406':
+          description: Method Not Accepted (Recursion limit reached).
+        '424':
+          description: One or more notifications could not be sent.
+        '431':
+          description: Payload Too Large.
+
   /json/urls/{key}:
     get:
       operationId: Persistent_GetUrls
-      summary: Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
+      summary: >
+        Returns a JSON object describing the URLs and tags associated
+        with {key}.
+      tags:
+        - Persistent
       parameters:
         - $ref: '#/components/parameters/key'
         - in: query
@@ -93,25 +338,29 @@ paths:
           schema:
             type: integer
             enum: [0, 1]
-            # This should be changed to use 'oneOf' when upgrading to OpenApi 3.1
             x-enumNames: ["ShowSecrets", "HideSecrets"]
           required: false
+          description: >
+            When set to 1, secrets within URLs are redacted.
         - in: query
           name: tag
           schema:
             type: string
             default: all
           required: false
+          description: >
+            Filter URLs by tag expression. Comma (",") for OR, space (" ")
+            for AND. Use "all" to select everything.
       responses:
-        200:
-          description: OK
+        '200':
+          description: URL listing.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JsonUrlsResponse'
-      tags:
-        - Persistent
-      
+        '204':
+          description: No content.
+
 components:
   parameters:
     key:
@@ -121,27 +370,104 @@ components:
       schema:
         type: string
         minLength: 1
-        maxLength: 64
-      description: Configuration key
+        maxLength: 128
+      description: Configuration key (1-128 chars, alphanumeric, _, -).
+    RecursionHeader:
+      in: header
+      name: X-Apprise-Recursion-Count
+      schema:
+        type: integer
+        default: 0
+      description: Internal header to track recursion depth.
+    IdHeader:
+      in: header
+      name: X-Apprise-ID
+      schema:
+        type: string
+      description: Optional Unique ID to associate with the notification.
+
   schemas:
     NotificationType:
       type: string
-      enum: [info, warning, failure]
+      description: Logical type of the notification.
+      enum:
+        - info
+        - success
+        - warning
+        - failure
       default: info
+
     NotificationFormat:
       type: string
-      enum: [text, markdown, html]
+      description: Text format of the message body.
+      enum:
+        - text
+        - markdown
+        - html
       default: text
+
+    StatusResponse:
+      type: object
+      properties:
+        attach_lock:
+          type: boolean
+        config_lock:
+          type: boolean
+        status:
+          type: object
+          properties:
+            persistent_storage:
+              type: boolean
+            can_write_config:
+              type: boolean
+            can_write_attach:
+              type: boolean
+            details:
+              type: array
+              items:
+                type: string
+
+    ConfigResponse:
+      type: object
+      properties:
+        format:
+          type: string
+          description: The format of the returned config (text or yaml).
+        config:
+          type: string
+          description: The raw configuration content.
+
+    LogResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          nullable: true
+        details:
+          type: array
+          description: A list of log entries [Level, Date, Message].
+          items:
+            type: array
+            items:
+              type: string
+
+    # JSON Request
     StatelessNotificationRequest:
+      type: object
       properties:
         urls:
           type: array
+          description: >
+            One or more Apprise URLs. If omitted, the environment
+            variable APPRISE_STATELESS_URLS is used (if set).
           items:
             type: string
         body:
           type: string
+          description: Message body to send.
         title:
           type: string
+          description: Optional message title.
         type:
           $ref: '#/components/schemas/NotificationType'
         format:
@@ -150,19 +476,74 @@ components:
           type: string
       required:
         - body
-    AddConfigurationRequest:
+
+    # Multipart Request (Files)
+    StatelessNotificationMultipart:
+      type: object
       properties:
         urls:
+          type: string
+          description: Comma separated list of Apprise URLs.
+        body:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        format:
+          $ref: '#/components/schemas/NotificationFormat'
+        attach:
           type: array
           items:
             type: string
-          default: null
+            format: binary
+          description: File attachments.
+      required:
+        - body
+
+    # Form URL Encoded Request
+    StatelessNotificationForm:
+      type: object
+      properties:
+        urls:
+          type: string
+        body:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        format:
+          $ref: '#/components/schemas/NotificationFormat'
+      required:
+        - body
+
+    AddConfigurationRequest:
+      type: object
+      description: >
+        Either supply urls, or supply config (with format).
+      properties:
+        config:
+          type: string
+          description: TEXT or YAML Apprise configuration.
+        format:
+          type: string
+          enum: [text, yaml, auto]
+
+    AddConfigurationForm:
+      type: object
+      properties:
+        urls:
+          type: string
+          description: Comma separated URLs.
         config:
           type: string
         format:
           type: string
-          enum: [text, yaml]
+          enum: [text, yaml, auto]
+
     PersistentNotificationRequest:
+      type: object
       properties:
         body:
           type: string
@@ -177,7 +558,46 @@ components:
           default: all
       required:
         - body
+
+    PersistentNotificationMultipart:
+      type: object
+      properties:
+        body:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        format:
+          $ref: '#/components/schemas/NotificationFormat'
+        tag:
+          type: string
+        attach:
+          type: array
+          items:
+            type: string
+            format: binary
+      required:
+        - body
+
+    PersistentNotificationForm:
+      type: object
+      properties:
+        body:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        format:
+          $ref: '#/components/schemas/NotificationFormat'
+        tag:
+          type: string
+      required:
+        - body
+
     JsonUrlsResponse:
+      type: object
       properties:
         tags:
           type: array
@@ -186,10 +606,13 @@ components:
         urls:
           type: array
           items:
-            type: object
             $ref: '#/components/schemas/url'
+
     url:
+      type: object
       properties:
+        id:
+          type: string
         url:
           type: string
         tags:

@@ -68,7 +68,7 @@
                    data-copy-text='{{ key }}'>
                 <pre><code>{{ key }}</code></pre>
               </div>
-              {% trans "For some examples on how to build a development environment around this:" %} <strong><a href="{% url 'welcome' %}?key={{ key }}">click here</a></strong>
+              {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">click here</a>.
             </p>
           </li>
           <li>
@@ -82,17 +82,17 @@
             </div>
           </li>
           <li>
-            {% blocktrans %}
+            <div>
+              {% blocktrans %}
               Use the <strong><i class="material-icons">settings</i> Configuration</strong> section to prepare and save your Apprise configuration.
               {% endblocktrans %}
-            <ul>
-              <li>
-                {% blocktrans %}
+            </div>
+            <div>
+              {% blocktrans %}
               <i class="material-icons">lightbulb_outline</i>You can always refer to the
               <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
               {% endblocktrans %}
-              </li>
-            </ul>
+            </div>
           </li>
           <li>
             {% blocktrans %}
@@ -100,9 +100,17 @@
               {% endblocktrans %}
           </li>
           <li>
-            {% blocktrans %}
+            <div>
+              {% blocktrans %}
               Use the <strong><i class="material-icons">announcement</i> Notifications</strong> section to test out your saved configuration.
-              {% endblocktrans %}
+            {% endblocktrans %}
+            </div>
+            <div>
+              {% blocktrans %}
+              <i class="material-icons">lightbulb_outline</i>: The number also provided in the <strong><i class="material-icons">announcement</i> Notifications</strong>
+              tab identifies how many notifications will be sent (based on tags/configuration provided) when using this section.
+            {% endblocktrans %}
+            </div>
           </li>
         </ol>
       </div>
@@ -264,9 +272,7 @@
     {% endif %}
   </div>
   <div id="notify" class="col s12">
-    {% blocktrans %}
-          You can send a notification using the loaded configuration:
-          {% endblocktrans %}
+    <div>{% blocktrans %}You can send a notification using the loaded configuration:{% endblocktrans %}</div>
     <form id="donotify"
           enctype="multipart/form-data"
           action="{% url "notify" key %}"
@@ -287,12 +293,18 @@
           {{ form_notify.tag }}
           {{ form_notify.tag.errors }}
         </div>
-        <div class="input-field col s12 m4 notify-attachments-field">
+        <div class="input-field col s12 m3 notify-attachments-field">
           {{ form_notify.attachment.label_tag }}
           {{ form_notify.attachment }}
           {{ form_notify.attachment.errors }}
           {# Where we will render the selected files #}
           <div class="notify-attachments-list"></div>
+        </div>
+        <div class="input-field col s12 m1">
+          <span class="btn btn-clear-form waves-effect waves-light">
+            <label>{% trans "Clear Form" %}</label>
+            <i class="material-icons">restore_page</i>
+          </span>
         </div>
       </div>
       <div class="row">
@@ -327,6 +339,64 @@
 {% block jsfooter %}
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
+  function resetNotifyForm() {
+    const form = document.querySelector('#donotify');
+    if (!form) {
+      return;
+    }
+
+    // Reset standard fields back to defaults
+    form.reset();
+
+    // Clear Materialize select UI, if present
+    if (window.M) {
+      const selects = form.querySelectorAll('select');
+      selects.forEach(function (sel) {
+        if (M.FormSelect && M.FormSelect.getInstance(sel)) {
+          M.FormSelect.getInstance(sel).destroy();
+        }
+        M.FormSelect.init(sel);
+      });
+    }
+
+    // Clear chips (tags)
+    const chipElement = document.querySelector('.chips');
+    if (window.M && chipElement) {
+      const chipInstance = M.Chips.getInstance(chipElement);
+      if (chipInstance) {
+        while (chipInstance.chipsData.length > 0) {
+          chipInstance.deleteChip(0);
+        }
+      }
+    }
+    // Ensure hidden tag field is blank
+    const tagInput = document.querySelector('#id_tag');
+    if (tagInput) {
+      tagInput.value = '';
+    }
+
+    // Clear attachments buffer and UI
+    notifyAttachments = [];
+    const listEl = form.querySelector('.notify-attachments-list');
+    if (listEl) {
+      renderAttachmentList(listEl);
+    }
+
+    // Clear the underlying hidden file input
+    const fileInput = form.querySelector('#id_attachment');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+
+    // Reset textareas/inputs that Materialize might keep labels “active”
+    const titleEl = form.querySelector('#id_title');
+    const bodyEl = form.querySelector('#id_body');
+    if (titleEl) titleEl.value = '';
+    if (bodyEl) bodyEl.value = '';
+    if (window.M && M.updateTextFields) {
+      M.updateTextFields();
+    }
+  }
 
   function initAppriseConfigEditor() {
     const textarea = document.getElementById('id_config');
@@ -872,6 +942,14 @@
       e.preventDefault();
       input.click();
     });
+
+    const clearBtn = document.querySelector('#donotify .btn-clear-form');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        resetNotifyForm();
+      });
+    }
 
     // When files are selected, add them to our list
     input.addEventListener('change', function (e) {

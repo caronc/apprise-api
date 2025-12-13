@@ -50,6 +50,7 @@ dev = [
   "ruff",
   "djlint",
   "jsbeautifier",
+  "openapi-spec-validator",
   "tox",
   "mock"
 ]

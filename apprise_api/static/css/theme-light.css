@@ -33,26 +33,21 @@ body .tabs .tab a {
 
 body .tabs .tab a:hover,
 body .tabs .tab a.active {
-  background-color: #eee;
   color: #004d40;
-}
-
-body .tabs .tab.disabled a,
-body .tabs .tab.disabled a:hover {
-  background-color: #ccc;
+  background-color: #eee;
 }
 
 body .tabs .tab.disabled a,
 body .tabs .tab.disabled a:hover,
 body .tabs .tab.disabled a i,
 body .tabs .tab.disabled a:hover i {
-  color: #666;
+  background-color: #ccc !important;
+  color: #666 !important;
 }
 
 body .tabs .tab a:focus,
 body.tabs .tab a:focus.active {
-  background-color: inherit;
-  color: #666;
+  background-color: #eee !important;
 }
 
 body .tabs .indicator {
@@ -89,6 +84,29 @@ a.active {
 }
 
 /* Buttons & Chips */
+.btn,
+.btn-large,
+.btn-small {
+  color: #004d40;
+  background-color: #e5e9f0;
+}
+
+.btn:focus,
+.btn-large:focus,
+.btn-small:focus,
+.btn-floating:focus,
+.btn-large:hover,
+.btn-small:hover,
+.btn:hover {
+  color: #000 !important;
+  background-color: #8fbcbb;
+}
+
+.btn-flat {
+  background-color: #e5e9f0;
+  color: #004d40;
+}
+
 .chip {
   background-color: #fff !important;
   border: 1px solid #464646 !important;

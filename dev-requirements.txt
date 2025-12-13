@@ -4,5 +4,6 @@ pytest
 pytest-cov
 djlint
 jsbeautifier
+openapi-spec-validator
 tox
 ruff

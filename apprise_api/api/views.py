@@ -444,12 +444,23 @@ class ConfigListView(View):
                 )
             )
 
-        return render(
-            request,
-            self.template_name,
-            {
-                "keys": ConfigCache.keys(),
-            },
+        status = ResponseCode.okay
+        return (
+            render(
+                request,
+                self.template_name,
+                {
+                    "keys": ConfigCache.keys(),
+                },
+                status=status,
+            )
+            if not json_response
+            else JsonResponse(
+                ConfigCache.keys(),
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
         )
 
 

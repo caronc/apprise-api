@@ -1004,3 +1004,17 @@ The colon `:` prefix is the switch that starts the re-mapping rule engine.  You 
 
 Basic Prometheus support added through `/metrics` reference point.
 
+## OpenAPI / Swagger Specification
+
+Apprise API includes an OpenAPI 3 specification in `swagger.yaml` at the root
+of the repository.
+
+For local development you can bring up a standalone Swagger UI that reads the
+checked-in spec file without changing how Apprise API runs:
+
+```bash
+docker compose -f docker-compose.swagger.yml up -d
+# Then browse to:
+#   http://localhost:8001
+```
+

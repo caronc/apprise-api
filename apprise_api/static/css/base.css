@@ -658,6 +658,37 @@ code.config-id {
   font-size: 0.9rem;
 }
 
+.btn-clear-form {
+  height: 4rem;
+  min-height: 4rem;
+  width: 100%;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.9rem;
+  line-height: 1;
+}
+
+.btn-clear-form label {
+  display: block;
+  text-align: left;
+  font-size: 0.95rem;
+  color: inherit;
+  max-width: 10.5ch;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.15;
+}
+
+.btn-clear-form i {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 2.6rem;
+  line-height: 1;
+  opacity: 0.95;
+}
+
 /* SweetAlert2 – notification summary and logs */
 .swal2-popup .notify-summary {
   text-align: center;
