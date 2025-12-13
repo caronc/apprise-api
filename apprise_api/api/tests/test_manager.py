@@ -21,9 +21,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import json
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
+from django.urls import resolve
 
 
 class ManagerPageTests(SimpleTestCase):
@@ -115,3 +117,55 @@ class ManagerPageTests(SimpleTestCase):
         # response
         assert "Content-Type" in response
         assert response["Content-Type"].startswith("text/yaml")
+
+    def test_manage_cfg_list_content_type_defaults_to_html(self):
+        """
+        /cfg/ should render HTML by default when allowed.
+        """
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            response = self.client.get("/cfg/")
+            assert response.status_code == 200
+            assert response["Content-Type"].startswith("text/html")
+
+    def test_manage_cfg_list_json_when_requested(self):
+        """
+        /cfg/ should return JSON list when requested via Accept header.
+        """
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            response = self.client.get("/cfg/", HTTP_ACCEPT="application/json")
+            assert response.status_code == 200
+            assert response["Content-Type"].startswith("application/json")
+            payload = json.loads(response.content.decode("utf-8"))
+            assert isinstance(payload, list)
+
+    def test_manage_cfg_list_denied_content_type_plain_text(self):
+        """
+        /cfg/ denied case should be plain text when JSON is not requested.
+        """
+        response = self.client.get("/cfg/")
+        assert response.status_code == 403
+        assert response["Content-Type"].startswith("text/plain")
+
+    def test_manage_cfg_list_denied_content_type_json(self):
+        """
+        /cfg/ denied case should return JSON when requested.
+        """
+        response = self.client.get("/cfg/", HTTP_ACCEPT="application/json")
+        assert response.status_code == 403
+        assert response["Content-Type"].startswith("application/json")
+        payload = json.loads(response.content.decode("utf-8"))
+        assert "error" in payload
+
+    def test_manage_cfg_list_json_returns_store_keys(self):
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            mod = resolve("/cfg/").func.__module__
+            with patch(f"{mod}.ConfigCache.keys", return_value=["abc", "def"]) as m:
+                response = self.client.get("/cfg/", HTTP_ACCEPT="application/json")
+                assert response.status_code == 200
+                assert response["Content-Type"].startswith("application/json")
+
+                payload = json.loads(response.content.decode("utf-8"))
+                assert payload == ["abc", "def"]
+                m.assert_called_once_with()
+
+
