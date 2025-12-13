@@ -25,6 +25,13 @@ import os
 
 from core.themes import SiteTheme
 
+# Project metadata for templates
+APP_AUTHOR = "Chris Caron"
+APP_COPYRIGHT = "Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>"
+APP_LICENSE = "MIT"
+APP_URL = "https://github.com/caronc/apprise-api"
+APP_VERSION = "1.3.0"
+
 # Disable Timezones
 USE_TZ = False
 
@@ -64,6 +71,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Apprise API
     "api",
+    # Error Responses
+    "error",
     # Prometheus
     "django_prometheus",
 ]
@@ -92,7 +101,7 @@ TEMPLATES = [
                 "api.context_processors.stateful_mode",
                 "api.context_processors.config_lock",
                 "api.context_processors.admin_enabled",
-                "api.context_processors.apprise_version",
+                "api.context_processors.apprise_metadata",
             ],
         },
     },

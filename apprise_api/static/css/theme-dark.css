@@ -1,0 +1,446 @@
+/* =========================================
+Global Dark Theme Variables & Overrides
+========================================= */
+html {
+  color: #d8dee9;
+  background-color: #2e3440;
+}
+
+h1 {
+  color: #eceff4 !important;
+}
+
+h4 {
+  color: #e5e9f0;
+}
+
+h5 {
+  color: #8fbcbb;
+}
+
+a {
+  color: #ebcb8b;
+}
+
+a:hover {
+  color: #d08770;
+}
+
+em {
+  color: #5e81ac !important;
+}
+
+.dropdown-content li>span:hover {
+  background-color: #4c566a !important;
+}
+
+.select-wrapper input.select-dropdown:focus {
+  border-bottom: 1px solid #4c566a !important;
+}
+
+.dropdown-content li>a,
+.dropdown-content li>span {
+  background-color: #171b23 !important;
+  color: #eceff4;
+}
+
+i.material-icons {
+  color: #6e7d9c;
+}
+
+i.material-icons:hover {
+  color: #57637a;
+}
+
+/* Status Colors */
+.url-enabled {
+  color: #02c7a6;
+}
+
+.url-disabled {
+  color: #e00202;
+}
+
+.no-config .info {
+  color: #4c566a;
+}
+
+.api-details .plugin-index {
+  color: #666;
+}
+
+/* =========================================
+Navigation & Footer
+========================================= */
+.nav.nav-color,
+nav {
+  background: #171b23 !important;
+  color: #d8dee9;
+}
+
+nav a,
+nav .brand-logo,
+nav ul a {
+  color: #d8dee9;
+}
+
+nav ul li.active,
+nav ul a:hover {
+  background-color: rgba(0, 0, 0, .1);
+}
+
+.page-footer {
+  color: #d8dee9;
+  background-color: #ee6e73;
+}
+
+/* =========================================
+Components: Cards, Collections, Collapsibles
+========================================= */
+.card-panel,
+.card {
+  background-color: #4c566a;
+}
+
+.card .card-image .card-title {
+  color: #d8dee9;
+}
+
+.card .card-reveal {
+  background-color: #d8dee9;
+}
+
+#url-list .card-panel {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  background: #2f3946;
+}
+
+#url-list .url-header code.url-text {
+  background-color: #212733;
+  color: #e0e6f0;
+}
+
+#url-list .card-panel .url-id {
+  color: #777;
+}
+
+.collection {
+  border-color: #525252;
+}
+
+.collection .collection-item {
+  background-color: #2e3440;
+  border-color: #666;
+  color: #d8dee9;
+}
+
+.collection a.collection-item {
+  color: #d8dee9;
+}
+
+a,
+a:hover,
+a.active {
+  color: #6e7d9c;
+}
+
+.collection a.collection-item:not(.active):hover {
+  background-color: #1b1e26 !important;
+}
+
+.collapsible {
+  border: 1px solid #525252;
+}
+
+.collapsible-header {
+  background-color: #2e3440;
+  border-bottom: 1px solid #4c566a;
+}
+
+.collapsible-body {
+  border-bottom: 1px solid #434c5e;
+  background-color: #2e3440;
+}
+
+/* =========================================
+Tabs - Prefixed with 'body' to override Materialize
+========================================= */
+.tabs {
+  background-color: transparent;
+  border-bottom: none;
+}
+
+.tabs .tab {
+  background-color: transparent;
+}
+
+body .tabs .tab a {
+  background-color: #4c566a !important;
+  color: #d8dee9 !important;
+  border-bottom: 1px solid #464646 !important;
+}
+
+body .tabs .tab a:hover,
+body .tabs .tab a.active {
+  color: #eceff4;
+  background-color: #8fbcbb;
+}
+
+body .tabs .tab.disabled a,
+body .tabs .tab.disabled a:hover,
+body .tabs .tab.disabled a i,
+body .tabs .tab.disabled a:hover i {
+  background-color: #171b23 !important;
+  color: #666 !important;
+}
+
+body .tabs .tab a:focus,
+body.tabs .tab a:focus.active {
+  background-color: #1b1e26 !important;
+}
+
+body .tabs .indicator {
+  background-color: #d8dee9;
+}
+
+/* =========================================
+Inputs & Code
+========================================= */
+/* Added body prefix to ensure dark input backgrounds win */
+body input,
+body textarea {
+  color: #e5e9f0;
+  border: 1px solid #2e3440;
+  background-color: #1b1e26;
+}
+
+/* Materialize Input Focus overrides */
+input:not([type]):focus:not([readonly]),
+textarea.materialize-textarea:focus:not([readonly]) {
+  border-bottom: 1px solid #8fbcbb;
+}
+
+input:not([type]):focus:not([readonly])+label,
+textarea.materialize-textarea:focus:not([readonly])+label {
+  color: #8fbcbb;
+}
+
+pre code {
+  background-color: #111 !important;
+  color: #d8dee9;
+}
+
+#overview strong {
+  color: #d8dee9 !important;
+  background-color: #373e4d;
+}
+
+.file-selected {
+  color: #ebcb8b;
+  background-color: #2e3440;
+}
+
+/* =========================================
+Buttons & Chips
+========================================= */
+.btn,
+.btn-large,
+.btn-small {
+  color: #e5e9f0;
+  background-color: #2e3440;
+}
+
+.btn:focus,
+.btn-large:focus,
+.btn-small:focus,
+.btn-floating:focus,
+.btn-large:hover,
+.btn-small:hover,
+.btn:hover {
+  background-color: #1b1e26;
+}
+
+.btn-flat {
+  background-color: transparent;
+  color: #d8dee9;
+}
+
+#url-list .copy-url-btn:hover,
+.config-id-copy.btn-flat:hover,
+.snippet-copy-btn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.chip {
+  color: #d8dee9;
+  background-color: #2e3440 !important;
+  border: 1px solid #434c5e !important;
+}
+
+.card-panel.selected {
+  background-color: #3f523f !important;
+
+}
+
+.chip.selected {
+  color: #fff;
+  background-color: #258528 !important;
+}
+
+.url-selected-icon i {
+  color: #bbb;
+}
+
+/* =========================================
+Health Check & Notifications
+========================================= */
+#health-check {
+  background-color: #2f3946;
+  /* Darker bg for health check */
+  color: #d8dee9;
+}
+
+.swal2-popup {
+  background-color: #2e3440;
+  color: #e5e9f0;
+}
+
+.copy-toast.swal2-popup {
+  background-color: #2f3946;
+  color: #e5e9f0;
+}
+
+.copy-toast .swal2-title {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 500;
+}
+
+/* HighlightJS Overrides */
+.hljs {
+  color: #d8dee9;
+  background: #4c566a;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #4fa1ba;
+}
+
+.hljs-literal,
+.hljs-number,
+.hljs-variable {
+  color: teal;
+}
+
+.hljs-string {
+  color: #d8dee9;
+}
+
+.hljs-section,
+.hljs-title {
+  color: #900;
+}
+
+.hljs-attribute,
+.hljs-name,
+.hljs-tag {
+  color: navy;
+}
+
+/* Loading spinner */
+.api-status-icon.status-loading {
+  color: #90caf9;
+}
+
+/* Error details text under the line */
+.api-status-details {
+  color: #ffcdd2;
+}
+
+.api-status-icon.status-ok {
+  color: #66bb6a;
+}
+
+.api-status-icon.status-error {
+  color: #ef5350;
+}
+
+.apprise-config-editor textarea {
+  caret-color: white !important;
+}
+
+.apprise-config-editor .apprise-config-highlight {
+  background-color: #1b1e26;
+  color: #d4d4d4;
+}
+
+/* 1. URLs  */
+.apprise-config-highlight .hljs-string,
+.apprise-config-highlight .hljs-symbol,
+.apprise-config-highlight .hljs-link {
+  color: #9cdcfe !important;
+}
+
+/* 2. Comments */
+.apprise-config-highlight .hljs-comment {
+  color: #666 !important;
+  font-style: italic !important;
+}
+
+/* 3. Tags / Keywords */
+.apprise-config-highlight .hljs-keyword,
+.apprise-config-highlight .hljs-section,
+.apprise-config-highlight .hljs-name {
+  color: #c586c0 !important;
+}
+
+/* 4. Numbers / Constants */
+.apprise-config-highlight .hljs-number,
+.apprise-config-highlight .hljs-literal {
+  color: #b5cea8 !important;
+}
+
+/* 5. Standard Text */
+.apprise-config-highlight {
+  color: #d4d4d4 !important;
+}
+
+.notify-attachments-list .attachment-chip {
+  background-color: #171b23;
+  color: #eceff4;
+}
+
+/* SweetAlert2 – log colouring */
+.swal2-popup .notify-log-panel {
+  background-color: #1b1e26;
+}
+
+.swal2-popup .logs .log_DEBUG {
+  color: #7f9bb3;
+}
+
+.swal2-popup .logs .log_INFO {
+  color: #b5e07a;
+}
+
+.swal2-popup .logs .log_WARNING {
+  color: #ffc861;
+}
+
+.swal2-popup .logs .log_ERROR {
+  color: #ff8080;
+  font-weight: 600;
+}
+
+.swal2-popup .logs .log_CRITICAL,
+.swal2-popup .logs .log_FATAL {
+  color: #ff5555;
+  font-weight: 700;
+}
+
+.swal2-popup .logs .log_TRACE {
+  color: #6a9fb5;
+  font-style: italic;
+}

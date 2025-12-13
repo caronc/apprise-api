@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: apprise-api-swagger-ui
+    ports:
+      - "${SWAGGER_PORT:-8001}:8080"
+    environment:
+      SWAGGER_JSON: /docs/swagger.yaml
+    volumes:
+      - ./swagger.yaml:/docs/swagger.yaml:ro

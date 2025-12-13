@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -33,6 +33,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from django.utils.datastructures import MultiValueDict
 import requests
 
 from .. import utils
@@ -420,6 +421,24 @@ class AttachmentTests(SimpleTestCase):
         assert isinstance(result, list)
         assert len(result) == 2
 
+        # Support remote URL payload combined with uploaded FILES
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            attachment_payload = ["https://example.com/logo.png"]
+
+            files_request = MultiValueDict(
+                {
+                    "attachment": [
+                        SimpleUploadedFile("a.txt", b"a", content_type="text/plain"),
+                        SimpleUploadedFile("b.txt", b"b", content_type="text/plain"),
+                    ]
+                }
+            )
+
+            result = parse_attachments(attachment_payload, files_request)
+            assert isinstance(result, list)
+            # 1 remote + 2 local uploads
+            assert len(result) == 3
+
     def test_direct_attachment_parsing_nw(self):
         """
         Test the parsing of file attachments with network availability
@@ -447,3 +466,85 @@ class AttachmentTests(SimpleTestCase):
         ]
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
+
+
+    def test_form_file_attachment_parsing_multivalue_single_key(self):
+        """
+        Regression: MultiValueDict under a single key must not lose files.
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            files_request = MultiValueDict(
+                {
+                    "attachment": [
+                        SimpleUploadedFile("a.txt", b"a", content_type="text/plain"),
+                        SimpleUploadedFile("b.txt", b"b", content_type="text/plain"),
+                        SimpleUploadedFile("c.txt", b"c", content_type="text/plain"),
+                    ]
+                }
+            )
+
+            result = parse_attachments(None, files_request)
+            assert isinstance(result, list)
+            assert len(result) == 3
+
+
+    def test_form_file_attachment_parsing_unique_keys(self):
+        """
+        Support curl: -F attach1=@... -F attach2=@...
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            files_request = {
+                "attach1": SimpleUploadedFile("a.txt", b"a", content_type="text/plain"),
+                "attach2": SimpleUploadedFile("b.txt", b"b", content_type="text/plain"),
+            }
+
+            result = parse_attachments(None, files_request)
+            assert isinstance(result, list)
+            assert len(result) == 2
+
+
+    def test_form_file_attachment_parsing_payload_dict_plus_files(self):
+        """
+        Base64 dict payload should count as 1 attachment, plus all file uploads.
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            attachment_payload = {
+                "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
+            }
+            files_request = MultiValueDict(
+                {
+                    "attachment": [
+                        SimpleUploadedFile("a.txt", b"a", content_type="text/plain"),
+                        SimpleUploadedFile("b.txt", b"b", content_type="text/plain"),
+                    ]
+                }
+            )
+
+            result = parse_attachments(attachment_payload, files_request)
+            assert isinstance(result, list)
+            assert len(result) == 3
+
+
+    def test_form_file_attachment_parsing_max_attachments_payload_plus_files(self):
+        """
+        Verify APPRISE_MAX_ATTACHMENTS enforcement accounts for payload + all FILES.
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name, APPRISE_MAX_ATTACHMENTS=3):
+            attachment_payload = [
+                {"base64": base64.b64encode(b"one").decode("utf-8")},
+                {"base64": base64.b64encode(b"two").decode("utf-8")},
+            ]
+            files_request = MultiValueDict(
+                {
+                    "attachment": [
+                        SimpleUploadedFile("a.txt", b"a", content_type="text/plain"),
+                        SimpleUploadedFile("b.txt", b"b", content_type="text/plain"),
+                    ]
+                }
+            )
+
+            # 2 (payload) + 2 (files) = 4 > max=3
+            with self.assertRaises(ValueError):
+                parse_attachments(attachment_payload, files_request)
+
+

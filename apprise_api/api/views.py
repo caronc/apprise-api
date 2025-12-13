@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -49,6 +48,7 @@ from .forms import (
 )
 from .payload_mapper import remap_fields
 from .utils import (
+    MIME_IS_JSON,
     AppriseStoreMode,
     ConfigCache,
     apply_global_filters,
@@ -65,12 +65,7 @@ logger = logging.getLogger("django")
 # multipart/form-data
 MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencoded)", re.I)
 
-# Support JSON formats
-# text/json
-# text/x-json
-# application/json
-# application/x-json
-MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
+
 
 # Parsing of Accept; the following amounts to Accept All
 # */*
@@ -87,8 +82,6 @@ TAG_DETECT_RE = re.compile(r"\s*([a-z0-9\s_&+-]+)(?=$|\s*[|,]\s*[a-z0-9\s&+_-|,]
 
 # Break apart our objects anded together
 TAG_AND_DELIM_RE = re.compile(r"[\s&+]+")
-
-MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
 
 
 class JSONEncoder(DjangoJSONEncoder):
@@ -122,6 +115,122 @@ class ResponseCode:
     failed_dependency = 424
     fields_too_large = 431
     internal_server_error = 500
+
+
+def _get_config_response(request, key):
+    """
+    Shared implementation for returning stored configuration for a key.
+
+    Used by both POST /get/<key> and POST /cfg/<key>.
+    """
+
+    # Detect the format our response should be in
+    json_response = (
+        MIME_IS_JSON.match(
+            request.content_type
+            if request.content_type
+            else request.headers.get("accept", request.headers.get("content-type", ""))
+        )
+        is not None
+    )
+
+    if settings.APPRISE_CONFIG_LOCK:
+        # General Access Control
+        logger.warning(
+            "VIEW - %s - Config Lock Active - Request Denied",
+            request.META["REMOTE_ADDR"],
+        )
+
+        msg = _("The site has been configured to deny this request")
+        status = ResponseCode.no_access
+        return (
+            HttpResponse(msg, status=status, content_type="text/plain")
+            if not json_response
+            else JsonResponse(
+                {"error": msg},
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
+        )
+
+    config, format = ConfigCache.get(key)
+    if config is None:
+        # The returned value of config and format tell a rather cryptic
+        # story; this portion could probably be updated in the future.
+        # but for now it reads like this:
+        #   config == None and format == None: We had an internal error
+        #   config == None and format != None: we simply have no data
+        #   config != None: we simply have no data
+        if format is not None:
+            # no content to return
+            logger.warning(
+                "VIEW - %s - No configuration associated using KEY: %s",
+                request.META["REMOTE_ADDR"],
+                key,
+            )
+            msg = _("There was no configuration found")
+            status = ResponseCode.no_content
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse(
+                    {"error": msg},
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+            )
+
+        # Something went very wrong; return 500
+        logger.error(
+            "VIEW - %s - Configuration could not be accessed associated using KEY: %s",
+            request.META["REMOTE_ADDR"],
+            key,
+        )
+        msg = _("An error occurred accessing configuration")
+        status = ResponseCode.internal_server_error
+        return (
+            HttpResponse(msg, status=status, content_type="text/plain")
+            if not json_response
+            else JsonResponse(
+                {
+                    "error": msg,
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
+        )
+
+    # Our configuration was retrieved; now our response varies on whether
+    # we are a YAML configuration or a TEXT based one.  This allows us to
+    # be compatible with those using the AppriseConfig() library or the
+    # reference to it through the --config (-c) option in the CLI.
+    content_type = (
+        "text/yaml; charset=utf-8" if format == apprise.ConfigFormat.YAML.value else "text/plain; charset=utf-8"
+    )
+
+    # Return our retrieved content
+    logger.info(
+        "VIEW - %s - Retrieved configuration associated using KEY: %s",
+        request.META["REMOTE_ADDR"],
+        key,
+    )
+    return (
+        HttpResponse(
+            config,
+            content_type=content_type,
+            status=ResponseCode.okay,
+        )
+        if not json_response
+        else JsonResponse(
+            {"format": format, "config": config},
+            encoder=JSONEncoder,
+            safe=False,
+            status=ResponseCode.okay,
+        )
+    )
 
 
 class WelcomeView(View):
@@ -283,6 +392,15 @@ class ConfigView(View):
             },
         )
 
+    def post(self, request, key):
+        """
+        Handle a POST request.
+
+        This mirrors POST /get/<key>, allowing clients to retrieve the
+        stored configuration via /cfg/<key> as well.
+        """
+        return _get_config_response(request, key)
+
 
 @method_decorator(never_cache, name="dispatch")
 class ConfigListView(View):
@@ -322,12 +440,23 @@ class ConfigListView(View):
                 )
             )
 
-        return render(
-            request,
-            self.template_name,
-            {
-                "keys": ConfigCache.keys(),
-            },
+        status = ResponseCode.okay
+        return (
+            render(
+                request,
+                self.template_name,
+                {
+                    "keys": ConfigCache.keys(),
+                },
+                status=status,
+            )
+            if not json_response
+            else JsonResponse(
+                ConfigCache.keys(),
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
         )
 
 
@@ -609,7 +738,7 @@ class AddView(View):
                     request.META["REMOTE_ADDR"],
                     key,
                 )
-                msg = _("An error occured saving configuration")
+                msg = _("An error occurred saving configuration")
                 status = ResponseCode.internal_server_error
                 return (
                     HttpResponse(msg, status=status, content_type="text/plain")
@@ -790,114 +919,7 @@ class GetView(View):
         """
         Handle a POST request
         """
-
-        # Detect the format our response should be in
-        json_response = (
-            MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
-            )
-            is not None
-        )
-
-        if settings.APPRISE_CONFIG_LOCK:
-            # General Access Control
-            logger.warning(
-                "VIEW - %s - Config Lock Active - Request Denied",
-                request.META["REMOTE_ADDR"],
-            )
-
-            msg = _("The site has been configured to deny this request")
-            status = ResponseCode.no_access
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {"error": msg},
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
-            )
-
-        config, format = ConfigCache.get(key)
-        if config is None:
-            # The returned value of config and format tell a rather cryptic
-            # story; this portion could probably be updated in the future.
-            # but for now it reads like this:
-            #   config == None and format == None: We had an internal error
-            #   config == None and format != None: we simply have no data
-            #   config != None: we simply have no data
-            if format is not None:
-                # no content to return
-                logger.warning(
-                    "VIEW - %s - No configuration associated using KEY: %s",
-                    request.META["REMOTE_ADDR"],
-                    key,
-                )
-                msg = _("There was no configuration found")
-                status = ResponseCode.no_content
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {"error": msg},
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
-
-            # Something went very wrong; return 500
-            logger.error(
-                "VIEW - %s - Configuration could not be accessed associated using KEY: %s",
-                request.META["REMOTE_ADDR"],
-                key,
-            )
-            msg = _("An error occured accessing configuration")
-            status = ResponseCode.internal_server_error
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {
-                        "error": msg,
-                    },
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
-            )
-
-        # Our configuration was retrieved; now our response varies on whether
-        # we are a YAML configuration or a TEXT based one.  This allows us to
-        # be compatible with those using the AppriseConfig() library or the
-        # reference to it through the --config (-c) option in the CLI.
-        content_type = (
-            "text/yaml; charset=utf-8" if format == apprise.ConfigFormat.YAML.value else "text/plain; charset=utf-8"
-        )
-
-        # Return our retrieved content
-        logger.info(
-            "VIEW - %s - Retrieved configuration associated using KEY: %s",
-            request.META["REMOTE_ADDR"],
-            key,
-        )
-        return (
-            HttpResponse(
-                config,
-                content_type=content_type,
-                status=ResponseCode.okay,
-            )
-            if not json_response
-            else JsonResponse(
-                {"format": format, "config": config},
-                encoder=JSONEncoder,
-                safe=False,
-                status=ResponseCode.okay,
-            )
-        )
+        return _get_config_response(request, key)
 
 
 @method_decorator((gzip_page, never_cache), name="dispatch")
@@ -1275,7 +1297,7 @@ class NotifyView(View):
             )
 
             # Something went very wrong; return 500
-            msg = _("An error occured accessing configuration")
+            msg = _("An error occurred accessing configuration")
             status = ResponseCode.internal_server_error
             return (
                 HttpResponse(msg, status=status, content_type="text/plain")

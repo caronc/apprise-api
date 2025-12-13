@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -49,11 +49,22 @@ def admin_enabled(request):
     return {"APPRISE_ADMIN": settings.APPRISE_ADMIN}
 
 
-def apprise_version(request):
+def apprise_metadata(request):
     """
-    Returns the current version of apprise loaded under the hood
+    Returns the current details of the Apprise Library and API under the hood
     """
-    return {"APPRISE_VERSION": apprise.__version__}
+
+    return {
+        "APPRISE_LIB_VERSION": apprise.__version__,
+        "APPRISE_LIB_URL": "http://github.com/caronc/apprise",
+
+        "APPRISE_API_VERSION": settings.APP_VERSION,
+        "APPRISE_API_URL": settings.APP_URL,
+        "APPRISE_API_LICENSE": settings.APP_LICENSE,
+        "APPRISE_API_COPYRIGHT": settings.APP_COPYRIGHT,
+
+        "APPRISE_AUTHOR": settings.APP_AUTHOR,
+    }
 
 
 def default_config_id(request):

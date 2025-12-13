@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -21,7 +21,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import json
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, override_settings
+from django.urls import resolve
 
 
 class ManagerPageTests(SimpleTestCase):
@@ -65,3 +69,103 @@ class ManagerPageTests(SimpleTestCase):
         # An invalid key was specified
         response = self.client.get("/cfg/valid-key")
         assert response.status_code == 200
+
+    def test_get_config(self):
+        """
+        Test retrieving configuration
+        """
+
+        # our key to use
+        key = "test_cfg_config_"
+
+        # No content saved to the location yet
+        response = self.client.post("/cfg/{}".format(key))
+        self.assertEqual(response.status_code, 204)
+
+        # Add some content
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        # Handle case when we try to retrieve our content but we have no idea
+        # what the format is in. Essentially there had to have been disk
+        # corruption here or someone meddling with the backend.
+        with patch("gzip.open", side_effect=OSError):
+            response = self.client.post("/cfg/{}".format(key))
+            assert response.status_code == 500
+
+        # Now we should be able to see our content
+        response = self.client.post("/cfg/{}".format(key))
+        assert response.status_code == 200
+
+        # Add a YAML file
+        response = self.client.post(
+            "/add/{}".format(key),
+            {
+                "format": "yaml",
+                "config": """
+                urls:
+                   - dbus://""",
+            },
+        )
+        assert response.status_code == 200
+
+        # Now retrieve our YAML configuration
+        response = self.client.post("/cfg/{}".format(key))
+        assert response.status_code == 200
+
+        # Verify that the correct Content-Type is set in the header of the
+        # response
+        assert "Content-Type" in response
+        assert response["Content-Type"].startswith("text/yaml")
+
+    def test_manage_cfg_list_content_type_defaults_to_html(self):
+        """
+        /cfg/ should render HTML by default when allowed.
+        """
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            response = self.client.get("/cfg/")
+            assert response.status_code == 200
+            assert response["Content-Type"].startswith("text/html")
+
+    def test_manage_cfg_list_json_when_requested(self):
+        """
+        /cfg/ should return JSON list when requested via Accept header.
+        """
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            response = self.client.get("/cfg/", HTTP_ACCEPT="application/json")
+            assert response.status_code == 200
+            assert response["Content-Type"].startswith("application/json")
+            payload = json.loads(response.content.decode("utf-8"))
+            assert isinstance(payload, list)
+
+    def test_manage_cfg_list_denied_content_type_plain_text(self):
+        """
+        /cfg/ denied case should be plain text when JSON is not requested.
+        """
+        response = self.client.get("/cfg/")
+        assert response.status_code == 403
+        assert response["Content-Type"].startswith("text/plain")
+
+    def test_manage_cfg_list_denied_content_type_json(self):
+        """
+        /cfg/ denied case should return JSON when requested.
+        """
+        response = self.client.get("/cfg/", HTTP_ACCEPT="application/json")
+        assert response.status_code == 403
+        assert response["Content-Type"].startswith("application/json")
+        payload = json.loads(response.content.decode("utf-8"))
+        assert "error" in payload
+
+    def test_manage_cfg_list_json_returns_store_keys(self):
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            mod = resolve("/cfg/").func.__module__
+            with patch(f"{mod}.ConfigCache.keys", return_value=["abc", "def"]) as m:
+                response = self.client.get("/cfg/", HTTP_ACCEPT="application/json")
+                assert response.status_code == 200
+                assert response["Content-Type"].startswith("application/json")
+
+                payload = json.loads(response.content.decode("utf-8"))
+                assert payload == ["abc", "def"]
+                m.assert_called_once_with()
+
+

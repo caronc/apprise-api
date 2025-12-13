@@ -71,6 +71,7 @@ docker run --name apprise \
    -v /path/to/local/attach:/attach \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -d caronc/apprise:latest
 ```
 
@@ -89,6 +90,7 @@ docker run --name apprise \
    --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -v /etc/apprise:/config \
    -d apprise/local:latest
 
@@ -100,6 +102,7 @@ docker run --name apprise \
    --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -v ./config:/config \
    -d apprise/local:latest
 ```
@@ -119,6 +122,7 @@ services:
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
+      APPRISE_ADMIN: "y"
     volumes:
       - ./config:/config
       - ./plugin:/plugin
@@ -157,6 +161,7 @@ services:
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
+      APPRISE_ADMIN: "y"
 
     # Persistent state
     volumes:
@@ -300,7 +305,7 @@ curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}
 # Send a notification with a URL based attachment
 curl -X POST \
     -F 'urls=mailto://user:pass@gmail.com' \
-    -F attach=attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
+    -F attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
     http://localhost:8000/notify
 ```
 
@@ -336,7 +341,8 @@ You can pre-save all of your Apprise configuration and/or set of Apprise URLs an
 |------------- | ------ | ----------- |
 | `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the *config* parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are *text* and *yaml*. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. This path does not work if `APPRISE_CONFIG_LOCK` is set.
-| `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://github.com/caronc/apprise/wiki/config)). This path does not work if `APPRISE_CONFIG_LOCK` is set.
+| `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://github.com/caronc/apprise/wiki/config)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
+| `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://github.com/caronc/apprise/wiki/config)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://github.com/caronc/apprise/wiki/Development_Apprise_Details#apprise-details)
@@ -392,7 +398,7 @@ curl -X POST \
 # Send a notification with a URL based attachment
 curl -X POST \
     -F 'urls=mailto://user:pass@gmail.com' \
-    -F attach=attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
+    -F attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png \
     http://localhost:8000/notify/abc123
 ```
 
@@ -483,6 +489,8 @@ The use of environment variables allow you to provide over-rides to default sett
 | `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6).  Nothing is done if `IPV6_ONLY` is also set as this creates an ambigious setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6).  Nothing is done if `IPV4_ONLY` is also set as this creates an ambigious setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
 | `HTTP_PORT` | Force the default listening port to be something other then `8000` within the Docker container. **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
+| `STRICT_MODE` | Applicable only to container deployments; if this is set to `yes`, the NginX instance will not return content on any invalid or unsupported request.  This is incredibly useful for those hosting Apprise publicly and pairs nicely with fail2ban.  By default, the system does not operate in this strict mode.
+| `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
@@ -502,7 +510,6 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_ALLOW_SERVICES` | A comma separated set of entries identifying what plugins to allow access to. You may only use alpha-numeric characters as is the restriction of Apprise Schemas (schema://) anyway.  To exclusively include more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified.
 | `APPRISE_ATTACH_ALLOW_URLS` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always accept.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. Use a space and/or a comma to identify more then one entry. By default this is set to `*` (Accept all provided URLs).
 | `APPRISE_ATTACH_DENY_URLS` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always reject.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. The `APPRISE_ATTACH_DENY_URLS` is always processed before the `APPRISE_ATTACH_ALLOW_URLS` list. Use a space and/or a comma to identify more then one entry. By default this is set to `127.0.* localhost*`.
- By default this
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
 | `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://github.com/caronc/apprise/wiki/decorator_notify). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
@@ -556,6 +563,7 @@ docker run --name apprise \
    -v ./apprise_api.htpasswd:/etc/nginx/.htpasswd:ro \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
+   -e APPRISE_ADMIN=y \
    -d caronc/apprise:latest
 ```
 
@@ -747,6 +755,8 @@ spec:
               value: simple
             - name: APPRISE_WORKER_COUNT
               value: "1"
+            - name: APPRISE_ADMIN
+              value: "y"
           ports:
             - containerPort: 8000
               name: http
@@ -783,28 +793,23 @@ spec:
 ```
 
 ## Development Environment
-The following should get you a working development environment (min requirements are Python v3.12) to test with.
+The following should get you a working development server to test with:
 
-### Setup
-
-```bash
-# Create and activate a Python 3.12 virtual environment:
-python3.12 -m venv .venv
-. .venv/bin/activate
-
-# Install core dependencies:
-
-pip install -e '.[dev]'
-```
-
-### Running the Dev Server
-
+### Bare Metal
 ```bash
 # Start the development server in debug mode:
-./manage.py runserver
+tox -e runserver
 # Then visit: http://localhost:8000/
+
+# If you want to run on a different port:
+tox -e runserver -- "localhost:8080"
+# Then visit: http://localhost:8000/
+
+# You can also bind it to all of your interfaces like so:
+tox -e runserver -- "0.0.0.0:8080"
 ```
 
+### Docker Containers
 For development, the repository includes a `docker-compose.override.yml` file
 that extends `docker-compose.yml` to build from source and bind-mount the code.
 Running:
@@ -998,4 +1003,18 @@ The colon `:` prefix is the switch that starts the re-mapping rule engine.  You 
 ## Metrics Collection & Analysis
 
 Basic Prometheus support added through `/metrics` reference point.
+
+## OpenAPI / Swagger Specification
+
+Apprise API includes an OpenAPI 3 specification in `swagger.yaml` at the root
+of the repository.
+
+For local development you can bring up a standalone Swagger UI that reads the
+checked-in spec file without changing how Apprise API runs:
+
+```bash
+docker compose -f docker-compose.swagger.yml up -d
+# Then browse to:
+#   http://localhost:8001
+```
 

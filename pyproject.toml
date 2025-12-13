@@ -27,11 +27,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apprise-api"
-version = "1.2.1"
+version = "1.3.0"
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
-  "apprise == 1.9.4",
+  "apprise == 1.9.6",
   "django",
   "gevent",
   "gunicorn",
@@ -48,6 +48,9 @@ dev = [
   "pytest-cov",
   "pytest-django",
   "ruff",
+  "djlint",
+  "jsbeautifier",
+  "openapi-spec-validator",
   "tox",
   "mock"
 ]
@@ -108,7 +111,7 @@ exclude = [
 [tool.black]
 # Added for backwards support and alternative cleanup
 # when needed
-line-length = 79  # Respecting BSD-style 79-char limit
+line-length = 120
 target-version = ['py39']
 extend-exclude = '''
 /(
@@ -123,6 +126,9 @@ extend-exclude = '''
   venv
 )
 '''
+
+[tool.ruff.format]
+indent-style = "space"
 
 [tool.ruff.lint]
 select = [
@@ -177,3 +183,24 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["_"]
 
+[tool.djlint]
+# Define our profile
+profile = "django"
+
+# Match existing Python line length
+max_line_length = 120
+indent = 2
+
+format_js = true
+format_css = true
+blank_line_after_tag = "load,extends,include"
+
+extend_exclude = ".venv,venv,.tox,node_modules,build,dist,lib,lib64,static"
+ignore = "H006,H021"
+
+[tool.djlint.js]
+indent_size = 2
+preserve_newlines = true
+
+[tool.djlint.css]
+indent_size = 2
