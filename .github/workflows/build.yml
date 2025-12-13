@@ -2,9 +2,14 @@ name: Build Apprise API Image
 
 on:
   push:
-    branches: master
+    branches:
+      - master
     tags:
       - v*
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   buildx:
@@ -35,19 +40,20 @@ jobs:
           echo "Name is ${ghcr_name}"
           echo "ghcr-repository=${ghcr_name}" >> $GITHUB_OUTPUT
 
-      - name: Docker meta
+      - name: Docker Meta
         id: docker_meta
         uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/${{ steps.set-ghcr-repository.outputs.ghcr-repository }}
-            name=docker.io/caronc/apprise,enable=${{ steps.push-other-places.outputs.enable }}
+            name=docker.io/caronc/apprise-api,enable=${{ steps.push-other-places.outputs.enable }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=edge
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
