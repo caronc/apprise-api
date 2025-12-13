@@ -349,8 +349,9 @@ paths:
             default: all
           required: false
           description: >
-            Filter URLs by tag expression. Comma (",") for OR, space (" ")
-            for AND. Use "all" to select everything.
+            Filter URLs by tag expression.
+              Comma (",") or Pipe ("|") for OR, space (" ") for AND.
+              Use "all" to select everything.
       responses:
         '200':
           description: URL listing.

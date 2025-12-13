@@ -113,6 +113,15 @@ a.active {
   color: #464646 !important;
 }
 
+.card-panel.selected {
+  background-color: #d8e9d8 !important;
+
+}
+
+.url-selected-icon i {
+  color: #666
+}
+
 .chip.selected {
   background-color: #258528 !important;
   color: white !important;

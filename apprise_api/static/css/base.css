@@ -396,13 +396,6 @@ body .tabs .tab.disabled a:hover i {
   }
 }
 
-/* Force 3 columns on 4K screens (1400px) */
-@media (min-width: 1400px) {
-  #url-list {
-    column-count: 3;
-  }
-}
-
 #url-list .card-panel {
   break-inside: avoid;
   page-break-inside: avoid;
@@ -477,6 +470,23 @@ body .tabs .tab.disabled a:hover i {
 
 .chip.selected {
   font-weight: 600;
+}
+
+#url-list .card-panel .url-selected-icon {
+  position: absolute;
+  bottom: 0.45rem;
+  left: 0.75rem;
+  opacity: 0.9;
+  line-height: 1;
+  pointer-events: none;
+}
+
+#url-list .card-panel:not(.selected) .url-selected-icon {
+  opacity: 0.55;
+}
+
+#url-list .card-panel .url-selected-icon .material-icons {
+  font-size: 1.0rem;
 }
 
 #url-list .card-panel .chip {
@@ -659,14 +669,14 @@ code.config-id {
 }
 
 .btn-clear-form {
-  height: 4rem;
   min-height: 4rem;
+  height: auto;
   width: 100%;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.9rem;
+  padding: 0.5rem 0.9rem;
   line-height: 1;
 }
 

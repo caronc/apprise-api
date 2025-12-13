@@ -339,6 +339,16 @@
 {% block jsfooter %}
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
+  function updateCardSelectedIcon(cardEl) {
+    const icon = cardEl.querySelector('.url-selected-icon .material-icons');
+    if (!icon) {
+      return;
+    }
+    icon.textContent = cardEl.classList.contains('selected')
+      ? 'notifications_active'
+      : 'notifications_off';
+  }
+
   function resetNotifyForm() {
     const form = document.querySelector('#donotify');
     if (!form) {
@@ -587,6 +597,7 @@
             if (!p.classList.contains('selected')) {
               p.classList.add('selected');
             }
+            updateCardSelectedIcon(p);
           }
         })
         document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function (e) {
@@ -598,6 +609,7 @@
                 p.classList.remove('selected');
               }
             }
+            updateCardSelectedIcon(p);
           }
         })
         $this.chipsData.forEach(function (e, index) {
@@ -619,6 +631,7 @@
               p.classList.remove('selected');
             }
           }
+          updateCardSelectedIcon(p);
         })
         if ($this.chipsData.length == 0) {
           // last item
@@ -630,6 +643,7 @@
             if (!p.classList.contains('selected')) {
               p.classList.add('selected');
             }
+            updateCardSelectedIcon(p);
           })
         }
         update_count();
@@ -685,6 +699,19 @@
       }, false);
       header.appendChild(copyBtn);
       li.appendChild(header);
+
+      let sel = document.createElement('div');
+      sel.setAttribute('class', 'url-selected-icon');
+
+      let selIcon = document.createElement('i');
+      selIcon.setAttribute('class', 'material-icons');
+      selIcon.textContent = li.classList.contains('selected')
+        ? 'notifications_active'
+        : 'notifications_off';
+
+      sel.appendChild(selIcon);
+      li.appendChild(sel);
+
       // Optional URL ID (as before)
       if (entry.id) {
         let url_id = document.createElement('code');
@@ -747,9 +774,11 @@
             if (!li.classList.contains('selected')) {
               li.classList.add('selected');
             }
+            // apply any updates to our icon
             update_count();
           });
         }
+        updateCardSelectedIcon(li);
       });
     });
   {% endif %}

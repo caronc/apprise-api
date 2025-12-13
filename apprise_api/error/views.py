@@ -21,19 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import re
 
+from api.utils import MIME_IS_JSON
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
-# Support JSON formats
-# text/json
-# text/x-json
-# application/json
-# application/x-json
-MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
 
 class Error404View(View):
     """

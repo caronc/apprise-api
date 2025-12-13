@@ -127,6 +127,9 @@ extend-exclude = '''
 )
 '''
 
+[tool.ruff.format]
+indent-style = "space"
+
 [tool.ruff.lint]
 select = [
   "E",    # pycodestyle errors

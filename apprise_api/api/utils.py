@@ -47,6 +47,13 @@ from .urlfilter import AppriseURLFilter
 # Get an instance of a logger
 logger = logging.getLogger("django")
 
+# Support JSON formats
+# text/json
+# text/x-json
+# application/json
+# application/x-json
+MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
+
 
 class AppriseStoreMode:
     """

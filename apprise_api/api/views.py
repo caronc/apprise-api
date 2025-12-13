@@ -48,6 +48,7 @@ from .forms import (
 )
 from .payload_mapper import remap_fields
 from .utils import (
+    MIME_IS_JSON,
     AppriseStoreMode,
     ConfigCache,
     apply_global_filters,
@@ -64,12 +65,7 @@ logger = logging.getLogger("django")
 # multipart/form-data
 MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencoded)", re.I)
 
-# Support JSON formats
-# text/json
-# text/x-json
-# application/json
-# application/x-json
-MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
+
 
 # Parsing of Accept; the following amounts to Accept All
 # */*

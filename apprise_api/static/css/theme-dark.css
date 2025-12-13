@@ -277,9 +277,18 @@ Buttons & Chips
   border: 1px solid #434c5e !important;
 }
 
+.card-panel.selected {
+  background-color: #3f523f !important;
+
+}
+
 .chip.selected {
   color: #fff;
   background-color: #258528 !important;
+}
+
+.url-selected-icon i {
+  color: #bbb;
 }
 
 /* =========================================
