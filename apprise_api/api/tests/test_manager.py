@@ -25,7 +25,7 @@ import json
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
-from django.urls import resolve
+from django.urls import Resolver404, resolve
 
 
 class ManagerPageTests(SimpleTestCase):
@@ -167,5 +167,20 @@ class ManagerPageTests(SimpleTestCase):
                 payload = json.loads(response.content.decode("utf-8"))
                 assert payload == ["abc", "def"]
                 m.assert_called_once_with()
+
+    @override_settings(APPRISE_API_ONLY=True)
+    def test_api_only_blocks_config_list_if_present(self) -> None:
+        """
+        Test our inability to access /cfg if APPRISE_API_ONLY set to true
+        """
+        paths = ("/", "/cfg", "/cfg/key", "/details")
+        for path in paths:
+            try:
+                resolve(path)
+            except Resolver404:
+                self.skipTest(f"Path not present in URLconf: {path}")
+
+            response = self.client.get(path)
+            assert response.status_code == 421
 
 

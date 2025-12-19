@@ -21,10 +21,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 
 class WelcomePageTests(SimpleTestCase):
     def test_welcome_page_status_code(self):
         response = self.client.get("/")
         assert response.status_code == 200
+
+    @override_settings(APPRISE_API_ONLY=True)
+    def test_welcome_page_api_only_returns_421(self) -> None:
+        response = self.client.get("/")
+        assert response.status_code == 421

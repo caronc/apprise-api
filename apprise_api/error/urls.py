@@ -27,5 +27,6 @@ from . import views
 
 urlpatterns = [
     re_path(r"^_/404/?$", views.Error404View.as_view(), name="http_404"),
+    re_path(r"^_/421/?$", views.Error421View.as_view(), name="http_421"),
     re_path(r"^_/50x/?$", views.Error50xView.as_view(), name="http_50x"),
 ]

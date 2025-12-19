@@ -33,6 +33,13 @@ class ErrorTests(SimpleTestCase):
         response = self.client.get("/_/404")
         assert response.status_code == 404
 
+    def test_get_421(self):
+        """
+        Test 421
+        """
+        response = self.client.get("/_/421")
+        assert response.status_code == 421
+
     def test_get_50x(self):
         """
         Test 50x

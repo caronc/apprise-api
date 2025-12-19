@@ -76,6 +76,52 @@ class Error404View(View):
         )
 
 
+class Error421View(View):
+    """
+    Render a 421 page for errors
+
+    Proxy must pass:
+      - HTTP_X_ERROR_CODE
+      - HTTP_X_ORIGINAL_URI
+      - HTTP_X_ORIGINAL_METHOD
+    """
+
+    template_name = "421.html"
+
+    def get(self, request):
+
+        original_uri = request.META.get("HTTP_X_ORIGINAL_URI", request.path)
+        original_method = request.META.get("HTTP_X_ORIGINAL_METHOD", request.method)
+        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get(
+            "REMOTE_ADDR"
+        )
+
+        context = {
+            "original_uri": original_uri,
+            "original_method": original_method,
+            "remote_ip": remote_ip,
+        }
+
+        # Detect the format our response should be in
+        json_response = (
+            MIME_IS_JSON.match(
+                request.content_type
+                if request.content_type
+                else request.headers.get("accept", request.headers.get("content-type", ""))
+            )
+            is not None
+        )
+
+        return (
+            render(request, self.template_name, context=context, status=421)
+            if not json_response
+            else JsonResponse(
+                {"error": _("Page not found")},
+                safe=False,
+                status=421,
+            )
+        )
+
 class Error50xView(View):
     """
     50x Error Code Response

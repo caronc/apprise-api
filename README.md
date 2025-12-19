@@ -465,6 +465,7 @@ curl -X POST -d '{"tag":"leaders teamA, leaders teamB", "body":"meeting now"}' \
 | 204        | no content            | There was no configuration (or it was empty) found by the specified `{KEY}`
 | 400        | bad request           | Your API call did not conform to what was documented here
 | 405        | method not accepted   | Your API call identified an action that has been disabled due to the Server configuration (such as a `apprise://` `APPRISE_RECURSION_MAX` being exceeded).
+| 421        | misdirected request   | This is the value returned by any web requests made to the general website if `APPRISE_API_ONLY` is set to `yes`.  Otherwise this return value is not used.
 | 424        | failed dependency     | At least one notification could not be sent.  This can be due to<br/> - Not all notifications intended to be actioned could follow through (due to upstrem failures).<br/>You didn't idenify a tag associated with what was defined in your configuration.<br/>The tag(s) you specified do not match with those defined in your configuration.
 | 431        | fields too large      | This can happen if you're payload is larger then 3MB (default value).  See `APPRISE_UPLOAD_MAX_MEMORY_SIZE` to adjust this.
 | 500        | internal server error | This can occur if there was an issue saving your configuration to disk (usually the cause of permission issues).

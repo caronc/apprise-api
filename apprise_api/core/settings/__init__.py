@@ -284,6 +284,20 @@ APPRISE_PLUGIN_PATHS = os.environ.get("APPRISE_PLUGIN_PATHS", os.path.join(BASE_
 # Setting this to zero disables the limit
 APPRISE_MAX_ATTACHMENTS = int(os.environ.get("APPRISE_MAX_ATTACHMENTS", 6))
 
+# Apprise API Only mode:
+# - Disable entire Web Page and only allow the API interface to work
+# - Website requests returns 421 (Misdirected Request) for what would otherwise
+#   have been part of the Apprise Website host if this is set to 'no'.
+# - The default value of this is 'no'
+APPRISE_API_ONLY = os.environ.get("APPRISE_API_ONLY", "no")[0].lower() in (
+    "a",
+    "y",
+    "1",
+    "t",
+    "e",
+    "+",
+)
+
 # Allow Admin mode:
 # - showing a list of configuration keys (when STATEFUL_MODE is set to simple)
 APPRISE_ADMIN = os.environ.get("APPRISE_ADMIN", "no")[0].lower() in (

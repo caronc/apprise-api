@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{# Remove the left sidebar entirely #}
+{% block sidebar %}
+{% endblock sidebar %}
+{# Remove scripts used only by “full UI” pages #}
+{% block head_js_optional %}
+{% endblock head_js_optional %}
+{% block scripts_optional %}
+{% endblock scripts_optional %}
+{% block onload %}
+{% endblock onload %}
+{# Make the main page full width #}
+{% block main_page %}
+  <div class="col s12 error-content">
+    {% block body %}
+      <div class="section error-page center">
+        <h1>421 - {% trans "Misdirected Request" %}</h1>
+        <i class="material-icons spotlight">block</i>
+        <p>
+          {% blocktrans %}
+      The resource you requested is not accessible due to the server configuration
+      {% endblocktrans %}
+        </p>
+        <hr />
+        <pre><code><i class="material-icons">cloud</i>{{ remote_ip }} - {{original_method}} - {{ original_uri }}</code></pre>
+      </div>
+    {% endblock body %}
+  {% endblock main_page %}

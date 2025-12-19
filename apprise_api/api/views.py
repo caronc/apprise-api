@@ -35,6 +35,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
+from error.views import Error421View
 
 import apprise
 
@@ -112,6 +113,7 @@ class ResponseCode:
     method_not_allowed = 405
     method_not_accepted = 406
     expectation_failed = 417
+    misdirected_request = 421
     failed_dependency = 424
     fields_too_large = 431
     internal_server_error = 500
@@ -243,6 +245,11 @@ class WelcomeView(View):
     def get(self, request):
         default_key = "KEY"
         key = request.GET.get("key", default_key).strip()
+
+        if settings.APPRISE_API_ONLY:
+            # API Mode only - Nothing further to parse
+            return Error421View.as_view()(request)
+
         return render(
             request,
             self.template_name,
@@ -315,6 +322,10 @@ class DetailsView(View):
         Handle a GET request
         """
 
+        if settings.APPRISE_API_ONLY:
+            # API Mode only - Nothing further to parse
+            return Error421View.as_view()(request)
+
         # Detect the format our response should be in
         json_response = (
             MIME_IS_JSON.match(
@@ -381,6 +392,10 @@ class ConfigView(View):
         """
         Handle a GET request
         """
+        if settings.APPRISE_API_ONLY:
+            # API Mode only - Nothing further to parse
+            return Error421View.as_view()(request)
+
         return render(
             request,
             self.template_name,
@@ -414,6 +429,10 @@ class ConfigListView(View):
         """
         Handle a GET request
         """
+        if settings.APPRISE_API_ONLY:
+            # API Mode only - Nothing further to parse
+            return Error421View.as_view()(request)
+
         # Detect the format our response should be in
         json_response = (
             MIME_IS_JSON.match(
