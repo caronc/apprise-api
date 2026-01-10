@@ -44,7 +44,7 @@
                 <code>{{ BASE_URL }}/notify/</code>
               </td>
               <td>
-                {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you need help
+                {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://appriseit.com/services/">Apprise Wiki</a> if you need help
           constructing your URL(s).{% endblocktrans %}
                 <div class="section">
                   <table>
@@ -120,7 +120,7 @@
 									       	&nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"
 </code></pre>
                         <pre><code class="bash">
-                          # {% blocktrans %}Send an web based file attachment to a <a href="https://github.com/caronc/apprise/wiki/Notify_discord" target="_blank">Discord</a> server:{% endblocktrans %}<br />
+                          # {% blocktrans %}Send an web based file attachment to a <a href="https://appriseit.com/services/discord/" target="_blank">Discord</a> server:{% endblocktrans %}<br />
                           curl -X POST -F 'urls=discord://credentials' \<br />
                           &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \ <br />
 													&nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"
@@ -280,7 +280,7 @@
                   </td>
                   <td>
                     {% blocktrans %}Used to add a new Apprise configuration or a set of URLs and associates them with configuration
-            identified with the id of <em>{{key}}</em>. See the <a target="_blank" href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you need help
+            identified with the id of <em>{{key}}</em>. See the <a target="_blank" href="https://appriseit.com/services/">Apprise Wiki</a> if you need help
             constructing your URLs.{% endblocktrans %}
                     <div class="section">
                       <table>

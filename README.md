@@ -2,12 +2,12 @@
 
 Take advantage of [Apprise](https://github.com/caronc/apprise) through your network with a user-friendly API.
 
-- Send notifications to more than 100+ services.
+- Send notifications to more than 120+ services.
 - An incredibly lightweight gateway to Apprise.
-- A production ready micro-service at your disposal.
+- A production-ready micro-service at your disposal.
 - A Simple Website to verify and test your configuration with.
 
-Apprise API was designed to easily fit into existing (and new) eco-systems that are looking for a simple notification solution.
+Apprise API was designed to easily fit into existing (and new) ecosystems that are looking for a simple notification solution.
 
 [![Paypal](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MHANV39UZNQ5E)
 [![Follow](https://img.shields.io/twitter/follow/l2gnux)](https://twitter.com/l2gnux/)<br/>
@@ -21,7 +21,7 @@ Apprise API was designed to easily fit into existing (and new) eco-systems that 
 There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser allowing you to create and save as many configurations as you'd like. Each configuration is differentiated by a unique `{KEY}` that you decide on:<br/>
 ![Screenshot of GUI - Using Keys](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
 
-Below is a screenshot of how you can assign your Apprise URLs to your `{KEY}`. You can define both TEXT or YAML [Apprise configurations](https://github.com/caronc/apprise/wiki/config).<br/>
+Below is a screenshot of how you can assign your Apprise URLs to your `{KEY}`. You can define both TEXT or YAML [Apprise configurations](https://appriseit.com/config/).<br/>
 ![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
 
 Below is a screenshot of the review tab where you can preview what Apprise URL(s) got loaded from your defined configuration. It also allows you to view the tags associated with them (if any). Should you chose to send a test notification via this API, you can select the tags in advance you wish to target from here.<br/>
@@ -52,7 +52,7 @@ docker pull caronc/apprise:latest
 #
 # /tmp         Temporary files, suitable for `tmpfs` in hardened deployments.
 #
-# The below example sets a the APPRISE_WORKER_COUNT to a small value (over-riding
+# The below example sets a the APPRISE_WORKER_COUNT to a small value (overriding
 # a full production environment setting).  This may be all that is needed for
 # a light-weight self hosted solution.
 #
@@ -60,7 +60,7 @@ docker pull caronc/apprise:latest
 # straight to a file found in the `/config` path.  In simple home configurations
 # this is sometimes the ideal expectation.
 #
-# Set your User ID or Group ID if you wish to over-ride the default of 1000
+# Set your User ID or Group ID if you wish to override the default of 1000
 # in the below example, we make sure it runs as the user we created the container as
 
 docker run --name apprise \
@@ -205,7 +205,7 @@ Stateless `/notify` usage can still use `/attach` for file uploads and optionall
 
 ## Apprise URLs
 
-📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://github.com/caronc/apprise/wiki) to support the services you wish to leverage. Visit <https://github.com/caronc/apprise/wiki> to see the ever-growing list of the services supported today.
+📣 In order to trigger a notification, you first need to define one or more [Apprise URLs](https://appriseit.com/services/) to support the services you wish to leverage. Visit <https://appriseit.com/services/> to see the ever-growing list of the services supported today.
 
 ## API Details
 
@@ -215,7 +215,7 @@ You can perform status or health checks on your server configuration by accessin
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/status` |  GET  | Simply returns a server status.  The server http response code is a `200` if the server is working correcty and a `417` if there was an unexpected issue.  You can set the `Accept` header to `application/json` or `text/plain` for different response outputs.
+| `/status` |  GET  | Simply returns a server status.  The server http response code is a `200` if the server is working correctly and a `417` if there was an unexpected issue.  You can set the `Accept` header to `application/json` or `text/plain` for different response outputs.
 
 Below is a sample of just a simple text response:
 ```bash
@@ -255,7 +255,7 @@ The above output may look like this:
 
 ### Stateless Solution
 
-Some people may wish to only have a sidecar solution that does require use of any persistent storage.  The following API endpoint can be used to directly send a notification of your choice to any of the [supported services by Apprise](https://github.com/caronc/apprise/wiki) without any storage based requirements:
+Some people may wish to only have a sidecar solution that does require use of any persistent storage.  The following API endpoint can be used to directly send a notification of your choice to any of the [supported services by Apprise](https://appriseit.com/services/) without any storage based requirements:
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
@@ -335,17 +335,17 @@ curl -X POST \
 
 ### Persistent (Stateful) Storage Solution
 
-You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://github.com/caronc/apprise/wiki/CLI_Usage) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
+You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://appriseit.com/guides/) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
 | `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the *config* parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are *text* and *yaml*. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. This path does not work if `APPRISE_CONFIG_LOCK` is set.
-| `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://github.com/caronc/apprise/wiki/config)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
-| `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://github.com/caronc/apprise/wiki/config)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
+| `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
+| `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
-| `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://github.com/caronc/apprise/wiki/Development_Apprise_Details#apprise-details)
+| `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
 As an example, the `/json/urls/{KEY}` response might return something like this:
@@ -402,7 +402,7 @@ curl -X POST \
     http://localhost:8000/notify/abc123
 ```
 
-🏷️ Leveraging *tagging* allows you to associate one or more tags (or categories) with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same *tag* allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://github.com/caronc/apprise/wiki/config)) that can be saved to the persistent storage previously associated with a `{KEY}`.
+🏷️ Leveraging *tagging* allows you to associate one or more tags (or categories) with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same *tag* allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://appriseit.com/config/)) that can be saved to the persistent storage previously associated with a `{KEY}`.
 
 ```bash
 # Send notification(s) to a {KEY} defined as 'abc123'
@@ -466,7 +466,7 @@ curl -X POST -d '{"tag":"leaders teamA, leaders teamB", "body":"meeting now"}' \
 | 400        | bad request           | Your API call did not conform to what was documented here
 | 405        | method not accepted   | Your API call identified an action that has been disabled due to the Server configuration (such as a `apprise://` `APPRISE_RECURSION_MAX` being exceeded).
 | 421        | misdirected request   | This is the value returned by any web requests made to the general website if `APPRISE_API_ONLY` is set to `yes`.  Otherwise this return value is not used.
-| 424        | failed dependency     | At least one notification could not be sent.  This can be due to<br/> - Not all notifications intended to be actioned could follow through (due to upstrem failures).<br/>You didn't idenify a tag associated with what was defined in your configuration.<br/>The tag(s) you specified do not match with those defined in your configuration.
+| 424        | failed dependency     | At least one notification could not be sent.  This can be due to<br/> - Not all notifications intended to be actioned could follow through (due to upstream failures).<br/>You didn't idenify a tag associated with what was defined in your configuration.<br/>The tag(s) you specified do not match with those defined in your configuration.
 | 431        | fields too large      | This can happen if you're payload is larger then 3MB (default value).  See `APPRISE_UPLOAD_MAX_MEMORY_SIZE` to adjust this.
 | 500        | internal server error | This can occur if there was an issue saving your configuration to disk (usually the cause of permission issues).
 
@@ -474,24 +474,23 @@ curl -X POST -d '{"tag":"leaders teamA, leaders teamB", "body":"meeting now"}' \
 ### API Notes
 
 - `{KEY}` must be 1-128 alphanumeric characters in length. In addition to this, the underscore (`_`) and dash (`-`) are also accepted.
-  - Consider using keys like `sha1`, `sha512`, `uuid`, etc to secure shared namespaces if you wish to open your platform to others. Or keep it simple in a controlled environment and just use the default string `apprise` as your key (and as illustrated in the examples above). You can over-ride this default value by setting the `APPRISE_DEFAULT_CONFIG_ID`(see below).
+  - Consider using keys like `sha1`, `sha512`, `uuid`, etc to secure shared namespaces if you wish to open your platform to others. Or keep it simple in a controlled environment and just use the default string `apprise` as your key (and as illustrated in the examples above). You can override this default value by setting the `APPRISE_DEFAULT_CONFIG_ID`(see below).
 - Specify the `Content-Type` of `application/json` to use the JSON support otherwise the default expected format is `application/x-www-form-urlencoded` (whether it is specified or not).
 - There is no authentication (or SSL encryption) required to use this API; this is by design. The intention here is to be a light-weight and fast micro-service.
 - There are no additional dependencies (such as database requirements, etc) should you choose to use the optional persistent store (mounted as `/config`).
 
 ### Environment Variables
 
-The use of environment variables allow you to provide over-rides to default settings.
+The use of environment variables allow you to provide overrides to default settings.
 
 | Variable             | Description |
 |--------------------- | ----------- |
 | `PUID` | The User ID you wish the Apprise services under the hood to run as when the container starts as root and no explicit `--user` / `user:` has been set. The default is `1000` if not otherwise specified.
 | `PGID` | The Group ID used in the same scenario as `PUID`. If the container is started with an explicit `--user` or `user:`, that value takes precedence and `PUID` / `PGID` are not consulted for process privileges.
-| `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6).  Nothing is done if `IPV6_ONLY` is also set as this creates an ambigious setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
-| `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6).  Nothing is done if `IPV4_ONLY` is also set as this creates an ambigious setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
+| `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6).  Nothing is done if `IPV6_ONLY` is also set as this creates an ambiguous setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
+| `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6).  Nothing is done if `IPV4_ONLY` is also set as this creates an ambiguous setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
 | `HTTP_PORT` | Force the default listening port to be something other then `8000` within the Docker container. **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
 | `STRICT_MODE` | Applicable only to container deployments; if this is set to `yes`, the NginX instance will not return content on any invalid or unsupported request.  This is incredibly useful for those hosting Apprise publicly and pairs nicely with fail2ban.  By default, the system does not operate in this strict mode.
-| `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
@@ -504,7 +503,7 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_UPLOAD_MAX_MEMORY_SIZE` | Over-ride the in-memory accepted payload size (defined in MB). By default it is set to `3` (Megabytes). There is no reason the HTTP payload (excluding attachments) should exceed this limit.  This value is only configurable for those who have edge cases where there are exceptions to this rule.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
 | `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
-| `APPRISE_CONFIG_LOCK` | Locks down your API hosting so that you can no longer delete/update/access stateful information. Your configuration is still referenced when stateful calls are made to `/notify`.  The idea of this switch is to allow someone to set their (Apprise) configuration up and then as an added security tactic, they may choose to lock their configuration down (in a read-only state). Those who use the Apprise CLI tool may still do it, however the `--config` (`-c`) switch will not successfully reference this access point anymore. You can however use the `apprise://` plugin without any problem ([see here for more details](https://github.com/caronc/apprise/wiki/Notify_apprise_api)). This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
+| `APPRISE_CONFIG_LOCK` | Locks down your API hosting so that you can no longer delete/update/access stateful information. Your configuration is still referenced when stateful calls are made to `/notify`.  The idea of this switch is to allow someone to set their (Apprise) configuration up and then as an added security tactic, they may choose to lock their configuration down (in a read-only state). Those who use the Apprise CLI tool may still do it, however the `--config` (`-c`) switch will not successfully reference this access point anymore. You can however use the `apprise://` plugin without any problem ([see here for more details](https://appriseit.com/services/apprise_api/)). This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 | `APPRISE_ADMIN` | Enables admin mode. This removes the distinction between users and admins and allows listing stored configuration keys (when `STATEFUL_MODE` is set to `simple`). This defaults to `no` and can be set to `yes`.
 | `APPRISE_INTERPRET_EMOJIS` | Override the Apprise `interpret-emojis` setting. This defaults to `none` (not set), but can be enforced to `no` or `yes`.
 | `APPRISE_DENY_SERVICES` | A comma separated set of entries identifying what plugins to deny access to. You only need to identify one schema entry associated with a plugin to in turn disable all of it.  Hence, if you wanted to disable the `glib` plugin, you do not need to additionally include `qt` as well since it's included as part of the (`dbus`) package; consequently specifying `qt` would in turn disable the `glib` module as well (another way to accomplish the same task).  To exclude/disable more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified. By default, this is initialized to `windows, dbus, gnome, macosx, syslog` (blocking local actions from being issued inside of the docker container)
@@ -513,8 +512,8 @@ The use of environment variables allow you to provide over-rides to default sett
 | `APPRISE_ATTACH_DENY_URLS` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always reject.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. The `APPRISE_ATTACH_DENY_URLS` is always processed before the `APPRISE_ATTACH_ALLOW_URLS` list. Use a space and/or a comma to identify more then one entry. By default this is set to `127.0.* localhost*`.
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
-| `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://github.com/caronc/apprise/wiki/decorator_notify). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
-| `APPRISE_RECURSION_MAX` | This defines the number of times one Apprise API Server can (recursively) call another.  This is to both support and mitigate abuse through [the `apprise://` schema](https://github.com/caronc/apprise/wiki/Notify_apprise_api) for those who choose to use it. When leveraged properly, you can increase this (recursion max) value and successfully load balance the handling of many notification requests through many additional API Servers.  By default this value is set to `1` (one).
+| `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://appriseit.com/dev/decorator/). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
+| `APPRISE_RECURSION_MAX` | This defines the number of times one Apprise API Server can (recursively) call another.  This is to both support and mitigate abuse through [the `apprise://` schema](https://appriseit.com/services/apprise_api/) for those who choose to use it. When leveraged properly, you can increase this (recursion max) value and successfully load balance the handling of many notification requests through many additional API Servers.  By default this value is set to `1` (one).
 | `APPRISE_WEBHOOK_URL` | Define a Webhook that Apprise should `POST` results to upon each notification call made.  This must be in the format of an `http://` or `https://` URI.  By default no URL is specified and no webhook is actioned.
 | `APPRISE_WORKER_COUNT` | Over-ride the number of workers to run.  by default this is calculated `(2 * CPUS_DETECTED) + 1` [as advised by Gunicorn's website](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Hobby enthusiasts and/or users who are simply setting up Apprise to support their home (light-weight usage) may wish to set this value to `1` to limit the resources the Apprise server prepares for itself.
 | `APPRISE_WORKER_TIMEOUT` | Over-ride the worker timeout value (in seconds); by default this is `300` (5 min) which should be more than enough time to send all pending notifications.
@@ -902,7 +901,7 @@ apprise -vvv --tag=devops \
 ```
 
 
-If you're server has the `APPRISE_CONFIG_LOCK` set, you can still leverage [the `apprise://` plugin](https://github.com/caronc/apprise/wiki/Notify_apprise_api) to trigger our pre-saved notifications:
+If you're server has the `APPRISE_CONFIG_LOCK` set, you can still leverage [the `apprise://` plugin](https://appriseit.com/services/apprise_api/) to trigger our pre-saved notifications:
 ```bash
 # Swap {KEY} with your apprise key you configured on your API
 apprise -vvv --body="There are donut's in the front hall if anyone wants any" \

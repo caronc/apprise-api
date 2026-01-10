@@ -42,6 +42,12 @@ dependencies = [
   "django-prometheus"
 ]
 
+[project.urls]
+Homepage = "https://appriseit.com"
+Source = "https://github.com/caronc/apprise-api"
+Tracker = "https://github.com/caronc/apprise-api/issues"
+Documentation = "https://appriseit.com"
+
 [project.optional-dependencies]
 dev = [
   "pytest",

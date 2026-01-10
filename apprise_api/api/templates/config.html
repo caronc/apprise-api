@@ -90,7 +90,7 @@
             <div>
               {% blocktrans %}
               <i class="material-icons">lightbulb_outline</i>You can always refer to the
-              <a href="https://github.com/caronc/apprise/wiki#notification-services">Apprise Wiki</a> if you're having troubles assembling your URL(s).
+              <a href="https://appriseit.com/services/">Apprise Wiki</a> if you're having troubles assembling your URL(s).
               {% endblocktrans %}
             </div>
           </li>
@@ -157,7 +157,7 @@
             <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
           </div>
-          {% blocktrans %}You may also create an <a href="https://github.com/caronc/apprise/wiki/config#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+          {% blocktrans %}You may also create an <a href="https://appriseit.com/config/#cli" target="_blank">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
           <div class="code-snippet"
                data-copy-text='include {{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
                data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'></div>
