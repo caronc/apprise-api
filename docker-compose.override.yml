@@ -3,13 +3,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: apprise-api-dev
-    container_name: apprise-api-dev
+    image: apprise-dev
+    container_name: apprise-dev
     user: "${PUID:-1000}:${PGID:-1000}"
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
+      APPRISE_ADMIN: "y"
     volumes:
+      - ./apprise_api/static:/usr/share/nginx/html/s:ro
       - ./apprise_api:/opt/apprise/webapp:ro
       - ./config:/config
       - ./plugin:/plugin

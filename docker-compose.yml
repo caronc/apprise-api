@@ -4,10 +4,11 @@ services:
     container_name: apprise
     ports:
       - "8000:8000"
-    user: "${PUID:-1000}:${PGID:-1000}"
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
+      APPRISE_ADMIN: "y"
+
     volumes:
       - ./config:/config
       - ./plugin:/plugin

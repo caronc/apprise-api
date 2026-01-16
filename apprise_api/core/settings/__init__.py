@@ -133,7 +133,7 @@ WSGI_APPLICATION = "core.wsgi.application"
 
 # Define our base URL
 # The default value is to be a single slash
-BASE_URL = os.environ.get("BASE_URL", "")
+BASE_URL = os.environ.get("APPRISE_BASE_URL", os.environ.get("BASE_URL", "")).rstrip("/")
 
 # Define our default configuration ID to use
 APPRISE_DEFAULT_CONFIG_ID = os.environ.get("APPRISE_DEFAULT_CONFIG_ID", "apprise")
@@ -141,8 +141,11 @@ APPRISE_DEFAULT_CONFIG_ID = os.environ.get("APPRISE_DEFAULT_CONFIG_ID", "apprise
 # Define our Prometheus Namespace
 PROMETHEUS_METRIC_NAMESPACE = "apprise"
 
+# Make all reverse() / {% url %} prefixed
+FORCE_SCRIPT_NAME = BASE_URL or None
+
 # Static files relative path (CSS, JavaScript, Images)
-STATIC_URL = BASE_URL + "/s/"
+STATIC_URL = f"{BASE_URL}/s/"
 
 # Default theme can be either 'light' or 'dark'
 APPRISE_DEFAULT_THEME = os.environ.get("APPRISE_DEFAULT_THEME", SiteTheme.LIGHT)

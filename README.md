@@ -118,7 +118,6 @@ services:
     container_name: apprise
     ports:
       - "8000:8000"
-    user: "${PUID:-1000}:${PGID:-1000}"
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
@@ -129,11 +128,14 @@ services:
       - ./attach:/attach
 ```
 
-To ignore the development override and use only the image based setup from
-`docker-compose.yml`, run:
+For production deployments, do not use `docker-compose.override.yml`.
+Deploy using only `docker-compose.yml`, so the container uses the immutable image and its bundled static assets.
 ```bash
 # Pre-create the paths you will mount to
 mkdir -p attach config plugin
+
+# Ensure you've got the latest image:
+docker pull caronc/apprise:latest
 
 # Ignore override, use only the base file
 PUID=$(id -u) PGID=$(id -g) \
@@ -517,7 +519,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_WEBHOOK_URL` | Define a Webhook that Apprise should `POST` results to upon each notification call made.  This must be in the format of an `http://` or `https://` URI.  By default no URL is specified and no webhook is actioned.
 | `APPRISE_WORKER_COUNT` | Over-ride the number of workers to run.  by default this is calculated `(2 * CPUS_DETECTED) + 1` [as advised by Gunicorn's website](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Hobby enthusiasts and/or users who are simply setting up Apprise to support their home (light-weight usage) may wish to set this value to `1` to limit the resources the Apprise server prepares for itself.
 | `APPRISE_WORKER_TIMEOUT` | Over-ride the worker timeout value (in seconds); by default this is `300` (5 min) which should be more than enough time to send all pending notifications.
-| `BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
+| `APPRISE_BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
 | `LOG_LEVEL`    | Adjust the log level to the console. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
 | `DEBUG`            | This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 
@@ -809,15 +811,17 @@ tox -e runserver -- "localhost:8080"
 tox -e runserver -- "0.0.0.0:8080"
 ```
 
-### Docker Containers
-For development, the repository includes a `docker-compose.override.yml` file
-that extends `docker-compose.yml` to build from source and bind-mount the code.
-Running:
+### Docker Compose for Development
+Running `docker compose up` in a fresh checkout will automatically apply `docker-compose.override.yml`.
+This mounts the local source tree and static assets into the container so UI and template changes are
+reflected immediately without rebuilding the image.
 ```bash
 # Pre-create the paths you will mount to
 mkdir -p attach config plugin
+```
 
-# Dev workflow: base + override
+Then:
+```bash
 PUID=$(id -u) PGID=$(id -g) docker compose up
 ```
 
