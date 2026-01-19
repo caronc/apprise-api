@@ -16,6 +16,8 @@ Apprise API was designed to easily fit into existing (and new) ecosystems that a
 [![CodeCov Status](https://codecov.io/github/caronc/apprise-api/branch/master/graph/badge.svg)](https://codecov.io/github/caronc/apprise-api)
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
+Visit the [Official Documentation](https://appriseit.com/getting-started/) site for more information on the Aprise API.
+
 ## Screenshots
 
 There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser allowing you to create and save as many configurations as you'd like. Each configuration is differentiated by a unique `{KEY}` that you decide on:<br/>

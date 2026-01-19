@@ -5,6 +5,17 @@
   margin-top: 0.5rem;
 }
 
+/* Keep sidebar items left-aligned */
+.side-menu ul.collection > a.collection-item {
+  text-align: left;
+}
+
+/* Sidebar icon alignment */
+.side-menu ul.collection > a.collection-item i.material-icons {
+  float: left;
+  margin-right: 0.75rem;
+}
+
 @media (max-width: 992px) {
   .main-layout {
     display: flex;
