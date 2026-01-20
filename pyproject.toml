@@ -27,11 +27,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apprise-api"
-version = "1.3.0"
+version = "1.3.1"
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
-  "apprise == 1.9.6",
+  "apprise == 1.9.7",
   "django",
   "gevent",
   "gunicorn",
@@ -43,10 +43,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://appriseit.com"
+Homepage = "https://appriseit.com/"
 Source = "https://github.com/caronc/apprise-api"
 Tracker = "https://github.com/caronc/apprise-api/issues"
-Documentation = "https://appriseit.com"
+Documentation = "https://appriseit.com/api/"
 
 [project.optional-dependencies]
 dev = [
