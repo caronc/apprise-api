@@ -46,7 +46,7 @@ jobs:
         with:
           images: |
             ghcr.io/${{ steps.set-ghcr-repository.outputs.ghcr-repository }}
-            name=docker.io/caronc/apprise-api,enable=${{ steps.push-other-places.outputs.enable }}
+            name=docker.io/caronc/apprise,enable=${{ steps.push-other-places.outputs.enable }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
