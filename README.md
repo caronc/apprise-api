@@ -16,7 +16,7 @@ Apprise API was designed to easily fit into existing (and new) ecosystems that a
 [![CodeCov Status](https://codecov.io/github/caronc/apprise-api/branch/master/graph/badge.svg)](https://codecov.io/github/caronc/apprise-api)
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
-Visit the [Official Documentation](https://appriseit.com/getting-started/) site for more information on the Aprise API.
+Visit the [Official Documentation](https://appriseit.com/getting-started/) site for more information on the Apprise API.
 
 ## Screenshots
 
