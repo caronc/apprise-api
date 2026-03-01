@@ -39,7 +39,10 @@ dependencies = [
   "paho-mqtt < 2.0.0",
   "gntp",
   "cryptography",
-  "django-prometheus"
+  "django-prometheus",
+  "PGPy",
+  "smpplib",
+  "slixmpp >= 1.10.0",
 ]
 
 [project.urls]

@@ -24,6 +24,12 @@ requests
 paho-mqtt < 2.0.0
 gntp
 cryptography
+# Pretty Good Privacy (PGP) Provides mailto:// and deltachat:// support
+PGPy
+# Provides smpp:// support
+smpplib
+# For xmpp:// support
+slixmpp >= 1.10.0
 
 # prometheus metrics
 django-prometheus
