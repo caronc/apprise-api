@@ -52,24 +52,22 @@ def remap_fields(rules, payload, form=None):
 
     # First generate our expected keys; only these can be mapped
     expected_keys = set(form.fields.keys())
-    for _key, value in rules.items():
-        key = _key.lower()
+    for key, value in rules.items():
         if key in payload and not value:
             # Remove element
             del payload[key]
             continue
 
-        vkey = value.lower()
-        if vkey in expected_keys and key in payload:
-            if key not in expected_keys or vkey not in payload:
+        if value in expected_keys and key in payload:
+            if key not in expected_keys or value not in payload:
                 # replace
-                payload[vkey] = payload[key]
+                payload[value] = payload[key]
                 del payload[key]
 
-            elif vkey in payload:
+            elif value in payload:
                 # swap
-                _tmp = payload[vkey]
-                payload[vkey] = payload[key]
+                _tmp = payload[value]
+                payload[value] = payload[key]
                 payload[key] = _tmp
 
         elif key in expected_keys or key in payload:

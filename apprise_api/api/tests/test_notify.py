@@ -1448,3 +1448,57 @@ class NotifyTests(SimpleTestCase):
         response = self.client.post("/notify/{}".format(key), data=form_data, **headers)
         assert response.status_code == 400
         assert mock_notify.call_count == 0
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_by_loaded_urls_rule_mapping_preserves_source_case(
+        self, mock_notify
+    ):
+        """
+        Test that rule-based field remapping preserves source key case
+        with stateless notifications.
+        """
+
+        mock_notify.return_value = True
+
+        key = "test_notify_rule_mapping_preserves_source_case"
+
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"urls": "mailto://user:pass@yahoo.ca"},
+        )
+        assert response.status_code == 200
+
+        #
+        # JSON payload using mixed-case source keys
+        #
+        json_data = {
+            "Title": "Test Notification",
+            "Description": "Test Notification Description",
+        }
+
+        response = self.client.post(
+            "/notify/{}?:Title=title&:Description=body".format(key),
+            data=json.dumps(json_data),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+        mock_notify.reset_mock()
+
+        #
+        # Case-sensitive verification:
+        # lower-case payload should not match mixed-case rule names
+        #
+        json_data = {
+            "title": "Test Notification",
+            "description": "Test Notification Description",
+        }
+
+        response = self.client.post(
+            "/notify/{}?:Title=title&:Description=body".format(key),
+            data=json.dumps(json_data),
+            content_type="application/json",
+        )
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
