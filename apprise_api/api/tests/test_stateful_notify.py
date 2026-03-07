@@ -431,6 +431,7 @@ class StatefulNotifyTests(SimpleTestCase):
     def test_stateful_group_dictlist_notify(self, mock_post):
         """
         Test the handling of a group defined as a list of dictionaries
+        while remaining case sensitive
         """
 
         # our key to use
@@ -521,3 +522,87 @@ class StatefulNotifyTests(SimpleTestCase):
 
         # Reset our count
         mock_post.reset_mock()
+
+    @patch("requests.post")
+    def test_stateful_notify_rule_mapping_preserves_source_case(self, mock_post):
+        """
+        Test that rule-based field remapping preserves source key case
+        for both FORM and JSON payloads.
+        """
+
+        key = "test_stateful_notify_rule_mapping_preserves_source_case"
+
+        request = Mock()
+        request.content = b"ok"
+        request.status_code = requests.codes.ok
+        mock_post.return_value = request
+
+        # Ensure required plugins are enabled
+        N_MGR["pbul"].enabled = True
+        N_MGR["json"].enabled = True
+
+        urls = [
+            "pushbullet=pbul://tokendetails",
+            "private,json=json://hostname",
+        ]
+
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"config": "\r\n".join(urls)},
+        )
+        assert response.status_code == 200
+
+        #
+        # FORM payload using mixed-case source keys
+        #
+        form_data = {
+            "Title": "Test Notification",
+            "Description": "Test Notification Description",
+            "tags": "private",
+        }
+
+        response = self.client.post(
+            f"/notify/{key}/?:Title=title&:Description=body&:tags=tag",
+            form_data,
+        )
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        mock_post.reset_mock()
+
+        #
+        # JSON payload using mixed-case source keys
+        #
+        json_data = {
+            "Title": "Test Notification",
+            "Description": "Test Notification Description",
+            "tags": "private",
+        }
+
+        response = self.client.post(
+            f"/notify/{key}/?:Title=title&:Description=body&:tags=tag",
+            dumps(json_data),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert mock_post.call_count == 1
+
+        mock_post.reset_mock()
+
+        #
+        # Case-sensitive verification:
+        # lower-case payload should not match mixed-case rule names
+        #
+        json_data = {
+            "title": "Test Notification",
+            "description": "Test Notification Description",
+            "tags": "private",
+        }
+
+        response = self.client.post(
+            f"/notify/{key}/?:Title=title&:Description=body&:tags=tag",
+            dumps(json_data),
+            content_type="application/json",
+        )
+        assert response.status_code == 400
+        assert mock_post.call_count == 0
