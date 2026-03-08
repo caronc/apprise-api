@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>
+# Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
@@ -27,7 +27,7 @@ from core.themes import SiteTheme
 
 # Project metadata for templates
 APP_AUTHOR = "Chris Caron"
-APP_COPYRIGHT = "Copyright (C) 2025 Chris Caron <lead2gold@gmail.com>"
+APP_COPYRIGHT = "Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>"
 APP_LICENSE = "MIT"
 APP_URL = "https://github.com/caronc/apprise-api"
 APP_VERSION = "1.3.1"
