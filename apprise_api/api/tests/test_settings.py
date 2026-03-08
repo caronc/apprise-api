@@ -49,7 +49,7 @@ class BaseUrlParsingTests(SimpleTestCase):
             _raw_base = os.environ.get(
                 "APPRISE_BASE_URL",
                 os.environ.get("BASE_URL", "")
-            ).strip(" /")
+            ).strip().strip("/")
 
             return f"/{_raw_base}" if _raw_base else ""
 
@@ -74,6 +74,14 @@ class BaseUrlParsingTests(SimpleTestCase):
         self.assertEqual(self._get_base_url(apprise_base="apprise/"), "/apprise")
         self.assertEqual(self._get_base_url(apprise_base="/apprise"), "/apprise")
         self.assertEqual(self._get_base_url(apprise_base="apprise"), "/apprise")
+
+        # 3b. Strip tabs and newlines (not just spaces)
+        self.assertEqual(self._get_base_url(apprise_base="\t/apprise\n"), "/apprise")
+        self.assertEqual(self._get_base_url(apprise_base="\n/apprise\n"), "/apprise")
+
+        # 3c. Normalize multiple leading slashes to a single slash
+        self.assertEqual(self._get_base_url(apprise_base="///apprise"), "/apprise")
+        self.assertEqual(self._get_base_url(apprise_base="///apprise///"), "/apprise")
 
         # 4. Handle empty/root paths safely (must result in an empty string)
         self.assertEqual(self._get_base_url(apprise_base="/"), "")
