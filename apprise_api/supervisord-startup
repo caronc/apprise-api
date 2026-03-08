@@ -102,6 +102,15 @@ apply_base_url_to_nginx() {
       echo "         Please use APPRISE_BASE_URL instead."
    fi
    
+   # Reject values containing newlines or carriage returns; these would split
+   # across grep lines and silently pass validation while corrupting nginx config
+   case "$base_url" in
+      *$'\n'*|*$'\r'*)
+         echo "ERROR: APPRISE_BASE_URL contains line breaks. Aborting."
+         exit 1
+         ;;
+   esac
+
    # Trim whitespace and trailing slashes
    base_url=$(echo "$base_url" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's|/*$||')
 
@@ -112,10 +121,22 @@ apply_base_url_to_nginx() {
       return 0
    fi
 
-   # Ensure it starts with a leading slash
-   [[ "$base_url" != /* ]] && base_url="/$base_url"
+   # Normalize to exactly one leading slash (collapse e.g. ///apprise -> /apprise)
+   base_url=$(echo "$base_url" | sed 's|^/*|/|')
+
+   # Validate: only allow safe URL path characters (alphanumeric, '/', '-', '_', '.')
+   # Reject anything else (regex metacharacters, control characters, etc.)
+   if echo "$base_url" | grep -q '[^a-zA-Z0-9/_.-]'; then
+      echo "ERROR: APPRISE_BASE_URL contains invalid characters (only alphanumeric, '/', '-', '_', and '.' are allowed). Aborting."
+      exit 1
+   fi
 
    echo "Nginx BASE_URL prefix support enabled: ${base_url}"
+
+   # Escape dots for safe literal use in an nginx regex (the only regex
+   # metacharacter permitted by the charset validation above is '.')
+   local base_url_regex
+   base_url_regex=$(printf '%s' "$base_url" | sed 's/\./\\./g')
 
    # Write the generic rewrite rules directly to the included config file
    cat <<EOF > "$conf_file"
@@ -128,7 +149,7 @@ apply_base_url_to_nginx() {
             return 301 ${base_url}/\$is_args\$args;
         }
 
-        if (\$uri ~ "^${base_url}(?<apprise_path>/.*)$") {
+        if (\$uri ~ "^${base_url_regex}(?<apprise_path>/.*)$") {
             rewrite ^ \$apprise_path last;
         }
 EOF
