@@ -148,8 +148,11 @@ WSGI_APPLICATION = "core.wsgi.application"
 #   /apprise/ -> /apprise
 #   apprise   -> /apprise
 #   /         -> ''
-# Fetch the environment variable and strip whitespace
-_raw_base = os.environ.get("APPRISE_BASE_URL", os.environ.get("BASE_URL", "")).strip(" /")
+# Fetch the environment variable and strip whitespace, then trim slashes
+_raw_base = os.environ.get(
+    "APPRISE_BASE_URL",
+    os.environ.get("BASE_URL", ""),
+).strip().strip("/")
 
 # Prepend exactly one slash if a path exists, otherwise leave it empty
 BASE_URL = f"/{_raw_base}" if _raw_base else ""
