@@ -169,7 +169,8 @@ EOF
 # Permissions
 chmod 1777 /tmp/apprise 2>/dev/null || true
 chown -R "$USER:$GROUP" /attach /config /config/store \
-   /plugin /opt/apprise /tmp/apprise 2>/dev/null || true
+   /plugin /opt/apprise 2>/dev/null || true
+chown --no-dereference "$USER:$GROUP" /tmp/apprise 2>/dev/null || true
 
 # Setup Base URL (if one was provided)
 apply_base_url_to_nginx
