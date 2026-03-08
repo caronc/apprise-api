@@ -491,9 +491,9 @@ The use of environment variables allow you to provide overrides to default setti
 |--------------------- | ----------- |
 | `PUID` | The User ID you wish the Apprise services under the hood to run as when the container starts as root and no explicit `--user` / `user:` has been set. The default is `1000` if not otherwise specified.
 | `PGID` | The Group ID used in the same scenario as `PUID`. If the container is started with an explicit `--user` or `user:`, that value takes precedence and `PUID` / `PGID` are not consulted for process privileges.
-| `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6).  Nothing is done if `IPV6_ONLY` is also set as this creates an ambiguous setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
-| `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6).  Nothing is done if `IPV4_ONLY` is also set as this creates an ambiguous setup.  **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
-| `HTTP_PORT` | Force the default listening port to be something other then `8000` within the Docker container. **Note**: This only works if the container is not explicitly started with `--user` or `user:`.
+| `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6). If `IPV6_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
+| `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6). If `IPV4_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
+| `HTTP_PORT` | Force the default listening port to be something other than `8000` within the Docker container.
 | `STRICT_MODE` | Applicable only to container deployments; if this is set to `yes`, the NginX instance will not return content on any invalid or unsupported request.  This is incredibly useful for those hosting Apprise publicly and pairs nicely with fail2ban.  By default, the system does not operate in this strict mode.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.

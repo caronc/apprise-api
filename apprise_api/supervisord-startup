@@ -90,6 +90,96 @@ else
    GROUP=$(id -gn 2>/dev/null || echo apprise)
 fi
 
+
+apply_base_url_to_nginx() {
+   # Prioritize APPRISE_BASE_URL, fallback to BASE_URL
+   local base_url="${APPRISE_BASE_URL:-${BASE_URL:-}}"
+   local conf_file="/tmp/apprise/nginx-base-url.conf"
+   
+   # Log a helpful deprecation warning if they are using the old variable
+   if [ -z "${APPRISE_BASE_URL+x}" ] && [ -n "${BASE_URL+x}" ]; then
+      echo "WARNING: The BASE_URL environment variable is deprecated."
+      echo "         Please use APPRISE_BASE_URL instead."
+   fi
+   
+   # Reject values containing newlines or carriage returns; these would split
+   # across grep lines and silently pass validation while corrupting nginx config
+   case "$base_url" in
+      *$'\n'*|*$'\r'*)
+         echo "ERROR: APPRISE_BASE_URL contains line breaks. Aborting."
+         exit 1
+         ;;
+   esac
+
+   # Trim whitespace and trailing slashes
+   base_url=$(echo "$base_url" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's|/*$||')
+
+   # If empty or just a slash, write an empty config file to disable prefixing
+   if [ -z "$base_url" ] || [ "$base_url" = "/" ]; then
+      echo "Nginx BASE_URL prefix support disabled"
+      > "$conf_file"
+      return 0
+   fi
+
+   # Normalize to exactly one leading slash (collapse e.g. ///apprise -> /apprise)
+   base_url=$(echo "$base_url" | sed 's|^/*|/|')
+
+   # Validate: only allow safe URL path characters (alphanumeric, '/', '-', '_', '.')
+   # Reject anything else (regex metacharacters, control characters, etc.)
+   if echo "$base_url" | grep -q '[^a-zA-Z0-9/_.-]'; then
+      echo "ERROR: APPRISE_BASE_URL contains invalid characters (only alphanumeric, '/', '-', '_', and '.' are allowed). Aborting."
+      exit 1
+   fi
+
+   echo "Nginx BASE_URL prefix support enabled: ${base_url}"
+
+   # Escape dots for safe literal use in an nginx regex (the only regex
+   # metacharacter permitted by the charset validation above is '.')
+   local base_url_regex
+   base_url_regex=$(printf '%s' "$base_url" | sed 's/\./\\./g')
+
+   # Write the generic rewrite rules directly to the included config file
+   cat <<EOF > "$conf_file"
+        # Redirect absolute root to the prefixed base URL
+        if (\$uri = /) {
+            return 302 ${base_url}/\$is_args\$args;
+        }
+
+        location = ${base_url} {
+            return 301 ${base_url}/\$is_args\$args;
+        }
+
+        if (\$uri ~ "^${base_url_regex}(?<apprise_path>/.*)$") {
+            rewrite ^ \$apprise_path last;
+        }
+EOF
+}
+
+apply_port_to_nginx() {
+   local port="${HTTP_PORT:-8000}"
+   local port_conf="/tmp/apprise/nginx-listen-port.conf"
+
+   if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
+      echo "ERROR: Both IPV4_ONLY and IPV6_ONLY are set. Exiting."
+      exit 1
+
+   elif [ "${IPV4_ONLY+x}" ]; then
+      echo "Network mode: IPv4-only on TCP/IP Port ${port}"
+      echo "listen ${port};" > "$port_conf"
+
+   elif [ "${IPV6_ONLY+x}" ]; then
+      echo "Network mode: IPv6-only on TCP/IP Port ${port}"
+      echo "listen [::]:${port};" > "$port_conf"
+
+   else
+      echo "Network mode: IPv4 and IPv6 on TCP/IP Port ${port}"
+      cat <<EOF > "$port_conf"
+        listen ${port};
+        listen [::]:${port};
+EOF
+   fi
+}
+
 # Ensure runtime directories exist; in non-root mode we just best-effort mkdir
 [ ! -d /attach ] && mkdir -p /attach 2>/dev/null || true
 [ ! -d /config ] && mkdir -p /config 2>/dev/null || true
@@ -100,42 +190,14 @@ fi
 # Permissions
 chmod 1777 /tmp/apprise 2>/dev/null || true
 chown -R "$USER:$GROUP" /attach /config /config/store \
-   /plugin /opt/apprise /tmp/apprise 2>/dev/null || true
+   /plugin /opt/apprise 2>/dev/null || true
+chown --no-dereference "$USER:$GROUP" /tmp/apprise 2>/dev/null || true
 
-if [ ! -z "${HTTP_PORT}" ]; then
-  echo -n "Nginx/HTTP over-ride TCP/IP Listen Port: ${HTTP_PORT} ... "
-  if [ -w "$NGINX_CONF" ]; then
-    sed -i -e "s/^\([ \t]*listen[ \t]\+[^0-9]*\)\([^;]\+\);\(.*\)/\1${HTTP_PORT};\3/g" \
-       "$NGINX_CONF" &>/dev/null && echo "Done." || echo "Failed!"
-  else
-    echo "Skipped ($NGINX_FILENAME not writable)."
-  fi
-fi
+# Setup Base URL (if one was provided)
+apply_base_url_to_nginx
 
-if [ "${IPV4_ONLY+x}" ] && [ "${IPV6_ONLY+x}" ]; then
-  echo "ERROR: Both IPV4_ONLY and IPV6_ONLY are set. Exiting."
-  exit 1
-
-# Handle IPV4_ONLY flag
-elif [ "${IPV4_ONLY+x}" ]; then
-  echo -n "Network mode: IPv4-only (IPV4_ONLY set) ... "
-  if [ -w "$NGINX_CONF" ]; then
-    sed -ibak -e '/IPv6 Support/d' "$NGINX_CONF" && \
-       echo "Done." || echo "Failed!"
-  else
-    echo "Skipped ($NGINX_FILENAME not writable)."
-  fi
-
-# Handle IPV6_ONLY flag
-elif [ "${IPV6_ONLY+x}" ]; then
-  echo -n "Network mode: IPv6-only (IPV6_ONLY set) ... "
-  if [ -w "$NGINX_CONF" ]; then
-    sed -ibak -e '/IPv4 Support/d' "$NGINX_CONF" && \
-       echo "Done." || echo "Failed!"
-  else
-    echo "Skipped ($NGINX_FILENAME not writable)."
-  fi
-fi
+# Setup Internal Port hosting (if one was provided)
+apply_port_to_nginx
 
 if [ $STRICT_MODE -eq 0 ]; then
   echo -n "Enforcing nginx strict mode ... "
@@ -153,12 +215,6 @@ fi
 echo "Resolution of 'localhost' inside container:"
 getent ahosts localhost || true
 
-# Get our Port Information
-PORT=$(grep -m1 -E '^[ \t]*listen[ \t]+' "$NGINX_CONF" 2>/dev/null | \
-   sed -e 's/^[^0-9]\+\([0-9]\+\).*/\1/g')
-PORT=${PORT:=Unknown}
-
-echo "Listening on TCP/IP Port: ${PORT}"
 # Working directory
 cd /opt/apprise
 

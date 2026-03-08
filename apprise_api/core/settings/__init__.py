@@ -132,8 +132,27 @@ LOGGING = {
 WSGI_APPLICATION = "core.wsgi.application"
 
 # Define our base URL
-# The default value is to be a single slash
-BASE_URL = os.environ.get("APPRISE_BASE_URL", os.environ.get("BASE_URL", "")).rstrip("/")
+#
+# Prefer APPRISE_BASE_URL for documentation and new deployments, but
+# continue to support the legacy BASE_URL environment variable for
+# backward compatibility. APPRISE_BASE_URL takes precedence when both are
+# defined.
+#
+# Examples:
+#   APPRISE_BASE_URL=/apprise
+#   BASE_URL=/apprise
+#
+# A blank value means the application is hosted at the site root.
+
+# Normalize the base path so that:
+#   /apprise/ -> /apprise
+#   apprise   -> /apprise
+#   /         -> ''
+# Fetch the environment variable and strip whitespace
+_raw_base = os.environ.get("APPRISE_BASE_URL", os.environ.get("BASE_URL", "")).strip(" /")
+
+# Prepend exactly one slash if a path exists, otherwise leave it empty
+BASE_URL = f"/{_raw_base}" if _raw_base else ""
 
 # Define our default configuration ID to use
 APPRISE_DEFAULT_CONFIG_ID = os.environ.get("APPRISE_DEFAULT_CONFIG_ID", "apprise")
