@@ -76,13 +76,27 @@
                 {% if entry.protocols %}
                   <li>
                     <strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong>
-                    <code>{{ entry.protocols|join:", " }}</code>
+                    <code>
+                      {% for schema in entry.protocols %}
+                        <a href="https://appriseit.com/tools/url-builder/?schema={{ schema }}"
+                           target="_blank"
+                           rel="noopener noreferrer">{{ schema }}</a>
+                        {% if not forloop.last %},{% endif %}
+                      {% endfor %}
+                    </code>
                   </li>
                 {% endif %}
                 {% if entry.secure_protocols %}
                   <li>
                     <strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong>
-                    <code>{{ entry.secure_protocols|join:", " }}</code>
+                    <code>
+                      {% for schema in entry.secure_protocols %}
+                        <a href="https://appriseit.com/tools/url-builder/?schema={{ schema }}"
+                           target="_blank"
+                           rel="noopener noreferrer">{{ schema }}</a>
+                        {% if not forloop.last %},{% endif %}
+                      {% endfor %}
+                    </code>
                   </li>
                 {% endif %}
                 <li>

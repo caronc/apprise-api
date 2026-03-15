@@ -222,10 +222,20 @@
             </div>
             {{ field.errors }}
           {% elif field.name == 'format' %}
-            <div class="input-field config-format-field">
-              {{ field.label_tag }}
-              {{ field }}
-              {{ field.errors }}
+            <div class="config-toolbar" style="justify-content: space-between;">
+              <div class="input-field config-format-field">
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+              </div>
+              <a href="https://appriseit.com/tools/url-builder/"
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 class="btn waves-effect waves-light config-url-builder-btn"
+                 style="margin-bottom: 0.75rem">
+                {% trans "Apprise URL Builder" %}
+                <i class="material-icons right">build</i>
+              </a>
             </div>
           {% else %}
             <div class="input-field">
