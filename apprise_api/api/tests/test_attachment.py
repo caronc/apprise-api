@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 import base64
 from contextlib import suppress
+import os
 from os.path import dirname, getsize, join
 from shutil import rmtree
 from tempfile import TemporaryDirectory
@@ -88,6 +89,15 @@ class AttachmentTests(SimpleTestCase):
 
             a = Attachment("file")
             assert a.filename
+
+            # Test with an explicit path already provided (covers the
+            # 'if not path:' False branch — mkstemp is skipped)
+            import tempfile
+
+            fd, explicit_path = tempfile.mkstemp(dir=self.tmp_dir.name)
+            os.close(fd)
+            a = Attachment("explicit.txt", path=explicit_path, delete=False)
+            assert a._path == explicit_path
 
     def test_form_file_attachment_parsing(self):
         """
@@ -269,6 +279,18 @@ class AttachmentTests(SimpleTestCase):
         result = parse_attachments(attachment_payload, {})
         assert isinstance(result, list)
         assert len(result) == 0
+
+        # dict with a valid non-empty filename — exercises the False branch
+        # of 'elif not filename:' (filename is provided and non-empty, so the
+        # fallback-to-default branch is not taken)
+        attachment_payload = {
+            "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
+            "filename": "myfile.bin",
+        }
+        result = parse_attachments(attachment_payload, {})
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0].name == "myfile.bin"
 
         # filename provided, but its empty (and/or contains whitespace)
         attachment_payload = {

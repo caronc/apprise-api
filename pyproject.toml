@@ -78,6 +78,7 @@ filterwarnings = ["once::Warning"]
 testpaths = ["apprise_api"]
 
 [tool.coverage.run]
+branch = true
 data_file = ".coverage-reports/.coverage"
 parallel = false
 concurrency = ["multiprocessing"]

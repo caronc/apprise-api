@@ -1488,6 +1488,11 @@ class NotifyView(View):
         elif level == "TRACE":
             level = logging.DEBUG - 1
 
+        if not isinstance(level, int):
+            # The configured default log level is not a recognised value;
+            # fall back to WARNING so LogCapture receives a valid integer.
+            level = logging.WARNING
+
         # Initialize our response object
         response = None
 
@@ -2023,6 +2028,11 @@ class StatelessNotifyView(View):
 
         elif level == "TRACE":
             level = logging.DEBUG - 1
+
+        if not isinstance(level, int):
+            # The configured default log level is not a recognised value;
+            # fall back to WARNING so LogCapture receives a valid integer.
+            level = logging.WARNING
 
         # Initialize our response object
         response = None

@@ -151,6 +151,16 @@ class NotifyTests(SimpleTestCase):
             # Reset our mock object
             mock_notify.reset_mock()
 
+        # Submit with an invalid format choice — NotifyForm fails validation
+        # (covers the False branch of 'if form.is_valid()' at the form
+        # parse block, leaving content empty and returning 400)
+        response = self.client.post(
+            "/notify/{}".format(key),
+            {"format": "invalid_format_xyz", "body": "test"},
+        )
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
         # Long Filename
         attach_data = {
             "attachment": SimpleUploadedFile(
@@ -1502,3 +1512,34 @@ class NotifyTests(SimpleTestCase):
         )
         assert response.status_code == 400
         assert mock_notify.call_count == 0
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_invalid_default_log_level(self, mock_notify):
+        """
+        Test that a request proceeds when the configured default log level is
+        not one of the recognised values.  The level string then falls through
+        every branch in the level-to-int conversion chain, covering the final
+        'elif level == "TRACE"' False branch.
+        """
+        mock_notify.return_value = True
+
+        key = "test_notify_invalid_default_log_level"
+
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        from django.conf import settings as _settings
+
+        bad_logging = {
+            **_settings.LOGGING,
+            "loggers": {
+                **_settings.LOGGING["loggers"],
+                "apprise": {
+                    **_settings.LOGGING["loggers"]["apprise"],
+                    "level": "NOTSET",
+                },
+            },
+        }
+        with override_settings(LOGGING=bad_logging):
+            response = self.client.post("/notify/{}".format(key), {"body": "test"})
+        assert response.status_code == 200

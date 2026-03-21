@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from json import loads
+import time
 from unittest import mock
 
 from django.test import SimpleTestCase
@@ -313,3 +314,32 @@ class HealthCheckTests(SimpleTestCase):
                     "CONFIG_PERMISSION_ISSUE",
                 ],
             }
+
+    def test_healthcheck_lazy_stale_mtime(self):
+        """
+        Test that lazy healthcheck re-checks when the cached .tmp_hc file
+        exists but is older than 30 seconds (covers the delta > 30 False
+        branch at the 'if delta <= 30.00' guards).
+        """
+        # First call: creates .tmp_hc files and primes can_write_config
+        result = healthcheck(lazy=False)
+        assert result["can_write_config"] is True
+        assert result["persistent_storage"] is True
+
+        # Second call with mocked mtime returning 60 seconds in the past —
+        # delta > 30 so we skip the early-return branch and re-verify.
+        old_time = time.time() - 60
+        with mock.patch("apprise_api.api.utils.os.path.getmtime", return_value=old_time):
+            result = healthcheck(lazy=True)
+        assert result["can_write_config"] is True
+        assert result["persistent_storage"] is True
+
+    def test_healthcheck_memory_storage_mode(self):
+        """
+        Test that when APPRISE_STORAGE_MODE is 'memory' the persistent-storage
+        elif branch is skipped (store.mode == MEMORY so the elif is False).
+        """
+        with override_settings(APPRISE_STORAGE_MODE="memory"):
+            result = healthcheck(lazy=False)
+        assert result["persistent_storage"] is False
+        assert "STORE_PERMISSION_ISSUE" not in result["details"]

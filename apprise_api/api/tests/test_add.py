@@ -133,6 +133,15 @@ class AddTests(SimpleTestCase):
         response = self.client.post("/add/{}".format(key), {"urls": "slack://-/-/-"})
         assert response.status_code == 400
 
+        # Submit with an invalid config format choice — AddByConfigForm
+        # fails validation (False branch of 'if form.is_valid()') while
+        # AddByUrlForm still succeeds via the valid 'urls' field.
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": "invalid_format_xyz", "urls": "mailto://user:pass@yahoo.ca"},
+        )
+        assert response.status_code == 200
+
         # Test with JSON
         response = self.client.post(
             "/add/{}".format(key),

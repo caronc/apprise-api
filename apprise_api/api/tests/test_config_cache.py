@@ -149,6 +149,13 @@ def test_apprise_config_list_simple_mode(tmpdir):
     assert len(keys) == 10
     assert sorted(keys) == sorted(text_keys + yaml_keys)
 
+    # Add a subdirectory — keys() must skip non-file entries (covers the
+    # 'if os.path.isfile(path): False' branch)
+    subdir = os.path.join(str(tmpdir), "subdir")
+    os.makedirs(subdir)
+    keys = acc_obj.keys()
+    assert len(keys) == 10
+
 
 def test_apprise_config_list_hash_mode(tmpdir):
     """
