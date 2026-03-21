@@ -1514,7 +1514,7 @@ class NotifyView(View):
                 content.get("body"),
                 title=content.get("title", ""),
                 notify_type=content.get("type", apprise.NotifyType.INFO.value),
-                tag=content.get("tag"),
+                tag=(content.get("tag") or None),
                 attach=attach,
             )
 

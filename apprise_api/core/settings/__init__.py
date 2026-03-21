@@ -21,9 +21,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import logging
 import os
 
 from core.themes import SiteTheme
+
+# Register apprise's custom log levels before Django's dictConfig() runs.
+if not hasattr(logging, "TRACE"):
+    logging.TRACE = logging.DEBUG - 1
+    logging.addLevelName(logging.TRACE, "TRACE")
 
 # Project metadata for templates
 APP_AUTHOR = "Chris Caron"
@@ -107,9 +113,12 @@ TEMPLATES = [
     },
 ]
 
+_LOG_LEVEL = os.environ.get("LOG_LEVEL", "debug" if DEBUG else "info").upper()
+
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
+    # preserve loggers created by third-party libraries
+    "disable_existing_loggers": False,
     "formatters": {
         "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
     },
@@ -119,11 +128,14 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "debug" if DEBUG else "info").upper(),
+            "level": _LOG_LEVEL,
+            # Prevent double-logging
+            "propagate": False,
         },
         "apprise": {
             "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "debug" if DEBUG else "info").upper(),
+            "level": _LOG_LEVEL,
+            "propagate": False,
         },
     },
 }
@@ -332,12 +344,16 @@ APPRISE_ADMIN = os.environ.get("APPRISE_ADMIN", "no")[0].lower() in (
 )
 
 # Allow Interpret Emojis override
-APPRISE_INTERPRET_EMOJIS = None if "APPRISE_INTERPRET_EMOJIS" not in os.environ \
-    else os.environ.get("APPRISE_INTERPRET_EMOJIS", "yes")[0].lower() in (
-    "a",
-    "y",
-    "1",
-    "t",
-    "e",
-    "+",
+APPRISE_INTERPRET_EMOJIS = (
+    None
+    if "APPRISE_INTERPRET_EMOJIS" not in os.environ
+    else os.environ.get("APPRISE_INTERPRET_EMOJIS", "yes")[0].lower()
+    in (
+        "a",
+        "y",
+        "1",
+        "t",
+        "e",
+        "+",
+    )
 )
