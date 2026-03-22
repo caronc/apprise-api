@@ -59,8 +59,9 @@ class StatefulNotifyTests(SimpleTestCase):
         response = self.client.post("/get/{}".format(key))
         assert response.status_code == 403
 
+    @patch("requests.request")
     @patch("requests.post")
-    def test_stateful_configuration_io(self, mock_post):
+    def test_stateful_configuration_io(self, mock_post, mock_request):
         """
         Test the writing, removal, writing and removal of configuration to
         verify it persists and is removed when expected
@@ -73,6 +74,7 @@ class StatefulNotifyTests(SimpleTestCase):
         request.content = b"ok"
         request.status_code = requests.codes.ok
         mock_post.return_value = request
+        mock_request.return_value = request
 
         # Monkey Patch
         N_MGR["mailto"].enabled = True
@@ -121,9 +123,10 @@ class StatefulNotifyTests(SimpleTestCase):
             # We sent the notification successfully
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
             assert response.status_code == 200
-            assert mock_post.call_count == 1
+            assert mock_request.call_count == 1
 
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             form_data = {
                 "payload": "## test notification",
@@ -138,9 +141,10 @@ class StatefulNotifyTests(SimpleTestCase):
                 form_data,
             )
             assert response.status_code == 200
-            assert mock_post.call_count == 1
+            assert mock_request.call_count == 1
 
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             form_data = {
                 "payload": "## test notification",
@@ -156,9 +160,10 @@ class StatefulNotifyTests(SimpleTestCase):
                 content_type="application/json",
             )
             assert response.status_code == 200
-            assert mock_post.call_count == 1
+            assert mock_request.call_count == 1
 
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             form_data = {
                 "body": "## test notification",
@@ -176,9 +181,10 @@ class StatefulNotifyTests(SimpleTestCase):
             # No one to notify
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
             assert response.status_code == 424
-            assert mock_post.call_count == 0
+            assert mock_request.call_count == 0
 
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             # Now empty our data
             response = self.client.post("/del/{}".format(key))
@@ -190,6 +196,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             # Reset our count
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
         # Now we do a similar approach as the above except we remove the
         # configuration from under the application
@@ -225,10 +232,11 @@ class StatefulNotifyTests(SimpleTestCase):
             # No one to notify (no tag specified)
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
             assert response.status_code == 424
-            assert mock_post.call_count == 0
+            assert mock_request.call_count == 0
 
             # Reset our configuration
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             #
             # Test tagging now
@@ -249,10 +257,11 @@ class StatefulNotifyTests(SimpleTestCase):
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
             # + (plus) not supported at this time
             assert response.status_code == 400
-            assert mock_post.call_count == 0
+            assert mock_request.call_count == 0
 
             # Reset our configuration
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             form_data = {
                 "body": "## test notification",
@@ -271,9 +280,10 @@ class StatefulNotifyTests(SimpleTestCase):
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
             # + (plus) not supported at this time
             assert response.status_code == 400
-            assert mock_post.call_count == 0
+            assert mock_request.call_count == 0
 
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             form_data = {
                 "body": "## test notification",
@@ -291,9 +301,10 @@ class StatefulNotifyTests(SimpleTestCase):
 
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
             assert response.status_code == 200
-            assert mock_post.call_count == 1
+            assert mock_request.call_count == 1
 
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
             form_data = {
                 "body": "## test notification",
@@ -312,8 +323,8 @@ class StatefulNotifyTests(SimpleTestCase):
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
             assert response.status_code == 200
 
-            # 2 endpoints hit
-            assert mock_post.call_count == 2
+            # 2 endpoints hit (pbul via requests.post, json via requests.request)
+            assert mock_post.call_count + mock_request.call_count == 2
 
             # Now remove the file directly (as though one
             # removed the configuration directory)
@@ -331,8 +342,9 @@ class StatefulNotifyTests(SimpleTestCase):
 
             # Reset our count
             mock_post.reset_mock()
+            mock_request.reset_mock()
 
-    @patch("requests.post")
+    @patch("requests.request")
     def test_stateful_group_dict_notify(self, mock_post):
         """
         Test the handling of a group defined as a dictionary
@@ -427,7 +439,7 @@ class StatefulNotifyTests(SimpleTestCase):
         # Reset our count
         mock_post.reset_mock()
 
-    @patch("requests.post")
+    @patch("requests.request")
     def test_stateful_group_dictlist_notify(self, mock_post):
         """
         Test the handling of a group defined as a list of dictionaries
@@ -523,7 +535,7 @@ class StatefulNotifyTests(SimpleTestCase):
         # Reset our count
         mock_post.reset_mock()
 
-    @patch("requests.post")
+    @patch("requests.request")
     def test_stateful_notify_rule_mapping_preserves_source_case(self, mock_post):
         """
         Test that rule-based field remapping preserves source key case

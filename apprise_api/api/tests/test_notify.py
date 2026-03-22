@@ -294,7 +294,7 @@ class NotifyTests(SimpleTestCase):
                 # Reset our mock object
                 mock_notify.reset_mock()
 
-    @mock.patch("requests.post")
+    @mock.patch("requests.request")
     def test_notify_with_tags(self, mock_post):
         """
         Test notification handling when setting tags
@@ -410,7 +410,7 @@ class NotifyTests(SimpleTestCase):
         assert response["message"] == form_data["body"]
         assert response["type"] == apprise.NotifyType.WARNING.value
 
-    @mock.patch("requests.post")
+    @mock.patch("requests.request")
     def test_notify_with_tags_via_apprise(self, mock_post):
         """
         Test notification handling when setting tags via the Apprise CLI
@@ -660,7 +660,7 @@ class NotifyTests(SimpleTestCase):
             assert response.status_code == 431
             assert mock_post.call_count == 0
 
-    @mock.patch("requests.post")
+    @mock.patch("requests.request")
     def test_advanced_notify_with_tags(self, mock_post):
         """
         Test advanced notification handling when setting tags

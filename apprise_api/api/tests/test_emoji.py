@@ -39,7 +39,7 @@ class NotifyWithEmojiTests(SimpleTestCase):
     Test notifications with Emoji Settings
     """
 
-    @mock.patch("requests.post")
+    @mock.patch("requests.request")
     def test_stateful_notify_with_emoji(self, mock_post):
         """
         Test adding a simple stateful notification with emoji flags
@@ -85,7 +85,7 @@ class NotifyWithEmojiTests(SimpleTestCase):
             assert mock_post.call_count == 1
 
             details = mock_post.call_args_list[0]
-            assert details[0][0].startswith("http://localhost")
+            assert details[0][1].startswith("http://localhost")
 
             payload = json.loads(details[1]["data"])
             assert payload["title"] == "😃"
@@ -101,7 +101,7 @@ class NotifyWithEmojiTests(SimpleTestCase):
             assert mock_post.call_count == 1
 
             details = mock_post.call_args_list[0]
-            assert details[0][0].startswith("http://localhost")
+            assert details[0][1].startswith("http://localhost")
 
             payload = json.loads(details[1]["data"])
             assert payload["title"] == ":grin:"
@@ -110,7 +110,7 @@ class NotifyWithEmojiTests(SimpleTestCase):
         # Reset our mock object
         mock_post.reset_mock()
 
-    @mock.patch("requests.post")
+    @mock.patch("requests.request")
     def test_stateless_notify_with_emoji(self, mock_post):
         """
         Test adding a simple stateless notification with emoji flags
@@ -141,7 +141,7 @@ class NotifyWithEmojiTests(SimpleTestCase):
             assert mock_post.call_count == 1
 
             details = mock_post.call_args_list[0]
-            assert details[0][0].startswith("http://localhost")
+            assert details[0][1].startswith("http://localhost")
 
             payload = json.loads(details[1]["data"])
             assert payload["title"] == "😃"
@@ -161,7 +161,7 @@ class NotifyWithEmojiTests(SimpleTestCase):
             assert mock_post.call_count == 1
 
             details = mock_post.call_args_list[0]
-            assert details[0][0].startswith("http://localhost")
+            assert details[0][1].startswith("http://localhost")
 
             payload = json.loads(details[1]["data"])
             assert payload["title"] == ":grin:"
