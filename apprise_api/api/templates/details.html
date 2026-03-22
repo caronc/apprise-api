@@ -9,7 +9,7 @@
       <h4>{% trans "Apprise Details" %}</h4>
       <p>
         {% blocktrans %}The following services are supported by this
-        <a target="_blank" href="https://github.com/caronc/apprise">Apprise</a>
+        <a target="_blank" href="https://github.com/caronc/apprise" rel="noopener noreferrer">Apprise</a>
         instance.{% endblocktrans %}
       </p>
       <p>
@@ -76,13 +76,27 @@
                 {% if entry.protocols %}
                   <li>
                     <strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong>
-                    <code>{{ entry.protocols|join:", " }}</code>
+                    <code>
+                      {% for schema in entry.protocols %}
+                        <a href="https://appriseit.com/tools/url-builder/?schema={{ schema }}"
+                           target="_blank"
+                           rel="noopener noreferrer">{{ schema }}</a>
+                        {% if not forloop.last %},{% endif %}
+                      {% endfor %}
+                    </code>
                   </li>
                 {% endif %}
                 {% if entry.secure_protocols %}
                   <li>
                     <strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong>
-                    <code>{{ entry.secure_protocols|join:", " }}</code>
+                    <code>
+                      {% for schema in entry.secure_protocols %}
+                        <a href="https://appriseit.com/tools/url-builder/?schema={{ schema }}"
+                           target="_blank"
+                           rel="noopener noreferrer">{{ schema }}</a>
+                        {% if not forloop.last %},{% endif %}
+                      {% endfor %}
+                    </code>
                   </li>
                 {% endif %}
                 <li>
@@ -165,7 +179,7 @@ $result = curl_exec($ch);
         </li>
       </ul>
       <p>
-        {% blocktrans %}More details on the JSON format can be found <a href="https://appriseit.com/dev/apprise_details/" target="_blank">here</a>.{% endblocktrans %}
+        {% blocktrans %}More details on the JSON format can be found <a href="https://appriseit.com/dev/apprise_details/" target="_blank" rel="noopener noreferrer">here</a>.{% endblocktrans %}
       </p>
     </div>
   </div>

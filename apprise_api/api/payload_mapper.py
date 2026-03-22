@@ -64,7 +64,7 @@ def remap_fields(rules, payload, form=None):
                 payload[value] = payload[key]
                 del payload[key]
 
-            elif value in payload:
+            else:
                 # swap
                 _tmp = payload[value]
                 payload[value] = payload[key]

@@ -851,3 +851,38 @@ Apprise Configuration Editor (Grid Overlay)
 .config-format-field label[for="id_format"] {
   font-size: 0.9rem;
 }
+
+/* =========================================
+Config Page Toolbar (URL Builder)
+========================================= */
+
+.config-toolbar {
+  margin-bottom: 0.2rem;
+}
+
+.config-toolbar-text {
+  margin: 0 0 0.5rem 0;
+}
+
+.config-url-builder-btn {
+  white-space: nowrap;
+}
+
+@media (min-width: 601px) {
+  .config-toolbar {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .config-toolbar .col {
+    margin-bottom: 0;
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+  .config-url-builder-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}

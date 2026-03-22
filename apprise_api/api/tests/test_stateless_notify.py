@@ -796,3 +796,69 @@ class StatelessNotifyTests(SimpleTestCase):
 
             # nothing was changed
             assert N_MGR["json"].enabled is True
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_stateless_notify_invalid_form(self, mock_notify):
+        """
+        Test that posting a form with an invalid choice field causes the form
+        to fail validation, leaving content empty and returning 400.
+        """
+        mock_notify.return_value = True
+
+        # An invalid 'format' choice value makes NotifyByUrlForm invalid —
+        # the form False branch is taken and we get a 400 response.
+        response = self.client.post(
+            "/notify",
+            {"format": "invalid_format_xyz", "urls": "mailto://user:pass@yahoo.ca", "body": "test"},
+        )
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_stateless_notify_empty_format(self, mock_notify):
+        """
+        Test that a JSON payload with an explicit empty 'format' field causes
+        body_format to be falsy, skipping the body_format kwarg assignment.
+        """
+        mock_notify.return_value = True
+
+        # JSON payload with format="" — body_format is "" (falsy) so the
+        # 'if body_format:' branch is not taken
+        response = self.client.post(
+            "/notify",
+            data=json.dumps({"body": "test", "urls": "mailto://user:pass@yahoo.ca", "format": ""}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_stateless_notify_invalid_default_log_level(self, mock_notify):
+        """
+        Test that a request proceeds when the configured default log level is
+        not one of the recognised values.  The level string then falls through
+        every branch in the level-to-int conversion chain, covering the final
+        'elif level == "TRACE"' False branch.
+        """
+        mock_notify.return_value = True
+
+        from django.conf import settings as _settings
+
+        bad_logging = {
+            **_settings.LOGGING,
+            "loggers": {
+                **_settings.LOGGING["loggers"],
+                "apprise": {
+                    **_settings.LOGGING["loggers"]["apprise"],
+                    "level": "NOTSET",
+                },
+            },
+        }
+        with override_settings(LOGGING=bad_logging):
+            response = self.client.post(
+                "/notify",
+                data=json.dumps({"body": "test", "urls": "mailto://user:pass@yahoo.ca"}),
+                content_type="application/json",
+            )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
