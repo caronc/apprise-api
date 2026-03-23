@@ -96,6 +96,14 @@ A_MGR = apprise.manager_attachment.AttachmentManager()
 # Access our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
 
+# Opt into library eviction: when APPRISE_ALLOW_SERVICES or
+# APPRISE_DENY_SERVICES disables a plugin whose optional dependencies are
+# no longer needed by any other enabled plugin, the Apprise API actively
+# removes those modules from sys.modules to reclaim memory.  This is an
+# API-specific choice; third-party embedders of the Apprise library default
+# to False and retain all loaded modules.
+N_MGR.evict_on_disable = True
+
 # Prepare our Attachment URL Filter
 ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
