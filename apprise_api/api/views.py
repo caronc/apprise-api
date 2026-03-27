@@ -76,7 +76,7 @@ ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
 # Tags separated by space , &, or + are and'ed together
 # Tags separated by commas (even commas wrapped in spaces) are "or'ed" together
 # We start with a regular expression used to clean up provided tags
-TAG_VALIDATION_RE = re.compile(r"^\s*[a-z0-9\s| ,_-]+\s*$", re.IGNORECASE)
+TAG_VALIDATION_RE = re.compile(r"^[a-z0-9\s| ,_-]+$", re.IGNORECASE)
 
 # In order to separate our tags only by comma's or '|' entries found
 TAG_DETECT_RE = re.compile(r"\s*([a-z0-9\s_&+-]+)(?=$|\s*[|,]\s*[a-z0-9\s&+_-|,])", re.I)
