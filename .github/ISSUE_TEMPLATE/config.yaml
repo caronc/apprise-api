@@ -1,6 +1,9 @@
 blank_issues_enabled: false
 contact_links:
   - name: Documentation (Apprise Docs)
+    url: https://appriseit.com/api/
+    about: Documentation
+  - name: Documentation Source (Apprise Docs)
     url: https://github.com/caronc/apprise-docs
     about: Documentation updates, fixes, and translation work belong here.
   - name: Support and Questions

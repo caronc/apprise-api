@@ -37,10 +37,9 @@ import re
 import shutil
 import tempfile
 
+import apprise
 from django.conf import settings
 import requests
-
-import apprise
 
 from .urlfilter import AppriseURLFilter
 
@@ -283,10 +282,7 @@ def parse_attachments(attachment_payload, files_request):
         file_count = len(files_request)
 
     # Attachment Count
-    count = (
-        (len(attachment_payload) if isinstance(attachment_payload, (set, tuple, list)) else 0)
-        + file_count
-    )
+    count = (len(attachment_payload) if isinstance(attachment_payload, (set, tuple, list)) else 0) + file_count
 
     if isinstance(attachment_payload, dict | str | bytes):
         # Convert and adjust counter

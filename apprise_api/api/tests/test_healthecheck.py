@@ -247,8 +247,7 @@ class HealthCheckTests(SimpleTestCase):
                 ],
             }
 
-            with mock.patch("os.path.getmtime") as mock_getmtime, \
-                mock.patch("os.fdopen", side_effect=OSError()):
+            with mock.patch("os.path.getmtime") as mock_getmtime, mock.patch("os.fdopen", side_effect=OSError()):
                 mock_getmtime.side_effect = OSError()
                 mock_makedirs.side_effect = None
                 result = healthcheck(lazy=False)
@@ -275,8 +274,10 @@ class HealthCheckTests(SimpleTestCase):
 
             # Test a case where we simply do not define a persistent store path
             # health checks will always disable persistent storage
-            with override_settings(APPRISE_STORAGE_DIR=""), \
-                mock.patch("apprise.PersistentStore.flush", return_value=False):
+            with (
+                override_settings(APPRISE_STORAGE_DIR=""),
+                mock.patch("apprise.PersistentStore.flush", return_value=False),
+            ):
                 result = healthcheck(lazy=False)
                 assert result == {
                     "persistent_storage": False,

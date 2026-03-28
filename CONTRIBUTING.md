@@ -16,20 +16,19 @@ This file is intentionally concise and focuses on contribution expectations and 
 
 ## Quick Checklist Before You Submit
 
-- Lint passes:
+- Lint and style checks pass:
   ```bash
   tox -e lint
   ```
-  This also validates the OpenAPI spec (`swagger.yaml`) and checks Django templates.
+  This also validates the OpenAPI spec (`swagger.yaml`) and checks Django
+  templates. If it reports issues, auto-fix with:
+  ```bash
+  tox -e format
+  ```
 
 - Tests pass:
   ```bash
   tox -e test
-  ```
-
-- Code is formatted:
-  ```bash
-  tox -e format
   ```
 
 - For broader changes, run the full quality gate:
@@ -106,23 +105,30 @@ docker compose -f docker-compose.swagger.yml up -d
 
 ### Linting and Formatting
 
-Linting checks:
+`tox -e lint` runs all checks in read-only mode:
 
-- Ruff for Python linting
+- Ruff lint check (`ruff check`)
+- Ruff style check (`ruff format --check`)
 - djlint for Django template linting
 - OpenAPI validation for `swagger.yaml`
-
-Run:
 
 ```bash
 tox -e lint
 ```
 
-Auto-format:
+`tox -e format` auto-fixes everything it can:
+
+- Ruff lint auto-fix (`ruff check --fix`)
+- Ruff style formatting (`ruff format`)
+- djlint template reformatting
+- CSS formatting via css-beautify
 
 ```bash
 tox -e format
 ```
+
+The workflow is: run `tox -e lint` to see what is wrong, then `tox -e format`
+to fix it, then re-run `tox -e lint` to confirm clean.
 
 ### Tests and Coverage
 
