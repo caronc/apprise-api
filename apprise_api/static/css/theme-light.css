@@ -1,3 +1,18 @@
+/* Support Banner */
+.support-banner {
+  background-color: rgba(0, 77, 64, 0.07);
+  color: #004d40;
+  border-bottom: 1px solid rgba(0, 77, 64, 0.15);
+}
+
+.support-banner a {
+  color: #004d40;
+}
+
+.support-banner-close {
+  color: #004d40;
+}
+
 /* Typography & Icons */
 em {
   color: #004d40;
