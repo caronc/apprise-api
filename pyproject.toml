@@ -56,7 +56,7 @@ dev = [
   "pytest",
   "pytest-cov",
   "pytest-django",
-  "ruff",
+  "ruff==0.15.8",
   "djlint",
   "jsbeautifier",
   "openapi-spec-validator",
@@ -118,24 +118,6 @@ exclude = [
   "venv",
 ]
 
-[tool.black]
-# Added for backwards support and alternative cleanup
-# when needed
-line-length = 120
-target-version = ['py39']
-extend-exclude = '''
-/(
-  tests/data \
-  bin \
-  build \
-  dist \
-  .eggs \
-  .tox \
-  .local \
-  .venv \
-  venv
-)
-'''
 
 [tool.ruff.format]
 indent-style = "space"
@@ -153,12 +135,6 @@ select = [
   "SIM",  # flake8-simplify
   "T20",  # flake8-print (catches stray `print`)
   "RUF",  # Ruff-native rules
-]
-
-extend-select = [
-   "E501",   # Spacing
-   "Q000",   # Quoting
-   "I"  # Automatically sort imports with isort logic
 ]
 
 ignore = [
@@ -184,7 +160,7 @@ keep-runtime-typing = true
 inline-quotes = "double"
 
 [tool.ruff.lint.isort]
-known-first-party = ["apprise"]
+known-first-party = ["apprise_api"]
 force-sort-within-sections = true
 combine-as-imports = true
 order-by-type = true

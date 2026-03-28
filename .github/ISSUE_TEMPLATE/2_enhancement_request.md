@@ -1,15 +1,27 @@
 ---
 name: 💡 Enhancement Request
-about: Got a great idea? Let us know!
+about: Suggest an improvement to the Apprise API
 title: ''
 labels: 'enhancement'
 assignees: ''
 
 ---
 
-:bulb: **The Idea**
-<!-- Share your thoughts; try to be detailed if you can -->
+## The Idea
+<!-- What should the Apprise API do, and why is it valuable? -->
 
-:hammer: **Breaking Feature**
-<!-- Would your idea disrupt or drastically change the flow
-   of Apprise or how it currently works? If so explain it here.  -->
+## Use-Case
+<!-- Real-world scenario, who benefits, and how -->
+
+## Proposed Change
+<!-- Endpoint, behaviour, configuration, or URL changes -->
+
+## Compatibility Impact
+- Would this be a breaking change? Yes / No
+- If yes, describe what breaks and any migration path.
+
+## Alternatives Considered
+<!-- Any other approaches you considered -->
+
+## Additional Context
+<!-- Links, screenshots, logs, references -->
