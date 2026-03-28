@@ -7,8 +7,6 @@ import time
 from django.test import Client, SimpleTestCase
 from django.urls import reverse
 
-from ..views import TAG_VALIDATION_RE
-
 
 class RealisticReDoSTests(SimpleTestCase):
     """
