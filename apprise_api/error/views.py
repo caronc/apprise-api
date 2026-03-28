@@ -45,9 +45,7 @@ class Error404View(View):
 
         original_uri = request.META.get("HTTP_X_ORIGINAL_URI", request.path)
         original_method = request.META.get("HTTP_X_ORIGINAL_METHOD", request.method)
-        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get(
-            "REMOTE_ADDR"
-        )
+        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR")
 
         context = {
             "original_uri": original_uri,
@@ -92,9 +90,7 @@ class Error421View(View):
 
         original_uri = request.META.get("HTTP_X_ORIGINAL_URI", request.path)
         original_method = request.META.get("HTTP_X_ORIGINAL_METHOD", request.method)
-        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get(
-            "REMOTE_ADDR"
-        )
+        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR")
 
         context = {
             "original_uri": original_uri,
@@ -122,6 +118,7 @@ class Error421View(View):
             )
         )
 
+
 class Error50xView(View):
     """
     50x Error Code Response
@@ -138,9 +135,7 @@ class Error50xView(View):
 
         original_uri = request.META.get("HTTP_X_ORIGINAL_URI", request.path)
         original_method = request.META.get("HTTP_X_ORIGINAL_METHOD", request.method)
-        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get(
-            "REMOTE_ADDR"
-        )
+        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR")
 
         context = {
             "original_uri": original_uri,
@@ -167,4 +162,3 @@ class Error50xView(View):
                 status=500,
             )
         )
-

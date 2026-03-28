@@ -21,9 +21,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.conf import settings
-
 import apprise
+from django.conf import settings
 
 from .utils import ConfigCache, gen_unique_config_id
 
@@ -57,12 +56,10 @@ def apprise_metadata(request):
     return {
         "APPRISE_LIB_VERSION": apprise.__version__,
         "APPRISE_LIB_URL": "http://github.com/caronc/apprise",
-
         "APPRISE_API_VERSION": settings.APP_VERSION,
         "APPRISE_API_URL": settings.APP_URL,
         "APPRISE_API_LICENSE": settings.APP_LICENSE,
         "APPRISE_API_COPYRIGHT": settings.APP_COPYRIGHT,
-
         "APPRISE_AUTHOR": settings.APP_AUTHOR,
     }
 

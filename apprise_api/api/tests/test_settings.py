@@ -46,10 +46,7 @@ class BaseUrlParsingTests(SimpleTestCase):
 
         with mock.patch.dict(os.environ, env, clear=True):
             # Simulate the exact logic from settings/__init__.py
-            _raw_base = os.environ.get(
-                "APPRISE_BASE_URL",
-                os.environ.get("BASE_URL", "")
-            ).strip().strip("/")
+            _raw_base = os.environ.get("APPRISE_BASE_URL", os.environ.get("BASE_URL", "")).strip().strip("/")
 
             return f"/{_raw_base}" if _raw_base else ""
 
@@ -58,16 +55,10 @@ class BaseUrlParsingTests(SimpleTestCase):
         Test that priority, fallback, and slash-stripping behave correctly
         """
         # 1. Prioritize APPRISE_BASE_URL over legacy BASE_URL
-        self.assertEqual(
-            self._get_base_url(apprise_base="/apprise", base="/wrong"),
-            "/apprise"
-        )
+        self.assertEqual(self._get_base_url(apprise_base="/apprise", base="/wrong"), "/apprise")
 
         # 2. Fallback to BASE_URL if APPRISE_BASE_URL is not set
-        self.assertEqual(
-            self._get_base_url(apprise_base=None, base="/apprise"),
-            "/apprise"
-        )
+        self.assertEqual(self._get_base_url(apprise_base=None, base="/apprise"), "/apprise")
 
         # 3. Strip trailing/leading slashes and whitespace aggressively
         self.assertEqual(self._get_base_url(apprise_base="  /apprise/  "), "/apprise")

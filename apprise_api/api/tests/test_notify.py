@@ -24,12 +24,11 @@ from inspect import cleandoc
 import json
 from unittest import mock
 
+import apprise
 from django.core.exceptions import RequestDataTooBig
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, override_settings
 import requests
-
-import apprise
 
 from ..forms import NotifyForm
 
@@ -1274,8 +1273,7 @@ class NotifyTests(SimpleTestCase):
         mock_send.reset_mock()
 
         # Send our service with the `mailto://` denied
-        with override_settings(APPRISE_ALLOW_SERVICES=""), \
-            override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
+        with override_settings(APPRISE_ALLOW_SERVICES=""), override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
             # Send our notification as a JSON object
             response = self.client.post(
                 "/notify/{}".format(key),
@@ -1313,8 +1311,7 @@ class NotifyTests(SimpleTestCase):
         mock_send.reset_mock()
 
         # Send our service with the `mailto://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="invalid, mailtos"), \
-            override_settings(APPRISE_DENY_SERVICES=""):
+        with override_settings(APPRISE_ALLOW_SERVICES="invalid, mailtos"), override_settings(APPRISE_DENY_SERVICES=""):
             # Send our notification as a JSON object
             response = self.client.post(
                 "/notify/{}".format(key),
@@ -1460,9 +1457,7 @@ class NotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 0
 
     @mock.patch("apprise.Apprise.notify")
-    def test_notify_by_loaded_urls_rule_mapping_preserves_source_case(
-        self, mock_notify
-    ):
+    def test_notify_by_loaded_urls_rule_mapping_preserves_source_case(self, mock_notify):
         """
         Test that rule-based field remapping preserves source key case
         with stateless notifications.

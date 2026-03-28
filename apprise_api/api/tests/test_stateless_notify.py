@@ -24,13 +24,12 @@
 import json
 from unittest import mock
 
+import apprise
 from django.core.exceptions import RequestDataTooBig
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 import requests
-
-import apprise
 
 from ..forms import NotifyByUrlForm
 
@@ -675,10 +674,11 @@ class StatelessNotifyTests(SimpleTestCase):
         mock_send.reset_mock()
 
         # Send our service with the `json://` denied
-        with override_settings(APPRISE_ALLOW_SERVICES=""), \
-            override_settings(APPRISE_STATELESS_STORAGE="yes"), \
-            override_settings(APPRISE_DENY_SERVICES="json"):
-
+        with (
+            override_settings(APPRISE_ALLOW_SERVICES=""),
+            override_settings(APPRISE_STATELESS_STORAGE="yes"),
+            override_settings(APPRISE_DENY_SERVICES="json"),
+        ):
             # Send our notification as a JSON object
             response = self.client.post(
                 "/notify",
@@ -700,9 +700,7 @@ class StatelessNotifyTests(SimpleTestCase):
         mock_send.reset_mock()
 
         # Send our service with the `json://` denied
-        with override_settings(APPRISE_ALLOW_SERVICES=""), \
-             override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
-
+        with override_settings(APPRISE_ALLOW_SERVICES=""), override_settings(APPRISE_DENY_SERVICES="invalid, syslog"):
             # Send our notification as a JSON object
             response = self.client.post(
                 "/notify",
@@ -740,8 +738,7 @@ class StatelessNotifyTests(SimpleTestCase):
         mock_send.reset_mock()
 
         # Send our service with the `json://` being the only accepted type
-        with override_settings(APPRISE_ALLOW_SERVICES="invalid, jsons"), \
-             override_settings(APPRISE_DENY_SERVICES=""):
+        with override_settings(APPRISE_ALLOW_SERVICES="invalid, jsons"), override_settings(APPRISE_DENY_SERVICES=""):
             # Send our notification as a JSON object
             response = self.client.post(
                 "/notify",

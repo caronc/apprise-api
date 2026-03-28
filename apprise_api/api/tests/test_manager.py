@@ -182,5 +182,3 @@ class ManagerPageTests(SimpleTestCase):
 
             response = self.client.get(path)
             assert response.status_code == 421
-
-

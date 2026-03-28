@@ -23,10 +23,9 @@
 import json
 from unittest import mock
 
+import apprise
 from django.test import SimpleTestCase, override_settings
 import requests
-
-import apprise
 
 from ..forms import NotifyForm
 
