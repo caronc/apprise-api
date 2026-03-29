@@ -180,7 +180,7 @@ a.active {
 
 /* Error details text under the line */
 .api-status-details {
-  color: #ffcdd2;
+  color: #b71c1c;
 }
 
 .api-status-icon.status-ok {
@@ -209,26 +209,32 @@ a.active {
 
 /* 2. Comments */
 .apprise-config-highlight .hljs-comment {
-  color: #777 !important;
+  color: #6b737b !important;
   font-style: italic !important;
 }
 
-/* 3. Tags / Keywords */
+/* 3. Tags / Keywords (group declarations e.g. <work>=devops,devteam) */
 .apprise-config-highlight .hljs-keyword,
 .apprise-config-highlight .hljs-section,
 .apprise-config-highlight .hljs-name {
   color: #6a9955 !important;
 }
 
-/* 4. Numbers / Constants */
-.apprise-config-highlight .hljs-number,
-.apprise-config-highlight .hljs-literal {
-  color: #c586c0 !important;
+/* 4. Tag names and YAML keys (e.g. me,family before the =) */
+.apprise-config-highlight .hljs-meta,
+.apprise-config-highlight .hljs-attr {
+  color: #0550ae !important;
 }
 
-/* 5. Standard Text */
+/* 5. Numbers / Constants */
+.apprise-config-highlight .hljs-number,
+.apprise-config-highlight .hljs-literal {
+  color: #8250df !important;
+}
+
+/* 6. Standard Text */
 .apprise-config-highlight {
-  color: #d4d4d4 !important;
+  color: #1f2328 !important;
 }
 
 .notify-attachments-list .attachment-chip {

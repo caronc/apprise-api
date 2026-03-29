@@ -32,7 +32,8 @@
       <script src="{% static 'js/highlight.pack.js' %}"></script>
     {% endblock head_js_optional %}
     <!--theme-->
-    <link rel="stylesheet"
+    <link id="theme-stylesheet"
+          rel="stylesheet"
           href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.css">
     <title>
       {% block title %}
@@ -46,7 +47,8 @@
       <div class="nav row nav-color z-depth-2">
         <div class="col s12">
           <a href="{% url 'welcome' %}">
-            <img class="apprise-logo left"
+            <img id="apprise-logo-main"
+                 class="apprise-logo left"
                  src="{% get_static_prefix %}logo-{{ request.theme|safe }}.png"
                  alt="{% trans "Apprise Logo" %}" />
           </a>
@@ -109,7 +111,9 @@
                 </svg>
               </a>
               <span class="nav-divider"></span>
-              <a href="{{ request.path }}?theme={{ request.next_theme }}"
+              <a id="theme-toggle"
+                 href="{{ request.path }}?theme={{ request.next_theme }}"
+                 data-theme="{{ request.theme|safe }}"
                  class="tooltipped"
                  data-position="bottom"
                  data-tooltip="{% trans "Toggle light / dark theme" %}">
@@ -278,6 +282,34 @@
                     document.cookie = COOKIE + '=1; path=/; expires=' + expires.toUTCString();
                 });
             }
+        })();
+
+        // No-refresh theme toggle
+        (function() {
+            const toggle = document.querySelector('#theme-toggle');
+            const sheet  = document.querySelector('#theme-stylesheet');
+            const logo   = document.querySelector('#apprise-logo-main');
+            if (!toggle || !sheet) return;
+            const staticPrefix = '{% get_static_prefix %}';
+
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                const current = toggle.dataset.theme;
+                const next    = current === 'dark' ? 'light' : 'dark';
+
+                // Swap stylesheet and logo in-place — no reload
+                sheet.href = staticPrefix + 'css/theme-' + next + '.css';
+                if (logo) logo.src = staticPrefix + 'logo-' + next + '.png';
+
+                // Update toggle state so a second click reverses correctly
+                toggle.dataset.theme = next;
+                toggle.href = window.location.pathname + '?theme=' + current;
+
+                // Persist to cookie so the server knows the preference on next load
+                const expires = new Date();
+                expires.setFullYear(expires.getFullYear() + 1);
+                document.cookie = 'theme=' + next + '; path=/; expires=' + expires.toUTCString();
+            });
         })();
 
         // Initial state
