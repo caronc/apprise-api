@@ -102,6 +102,16 @@ class WebhookTests(SimpleTestCase):
 
         mock_post.reset_mock()
 
+        with (
+            mock.patch("apprise_api.api.utils.apprise.URLBase.parse_url", return_value=None),
+            override_settings(APPRISE_WEBHOOK_URL="https://localhost/webhook"),
+        ):
+            # parse_url returns None (unparseable despite valid schema)
+            send_webhook({})
+            assert mock_post.call_count == 0
+
+        mock_post.reset_mock()
+
         with override_settings(APPRISE_WEBHOOK_URL="invalid://hostname"):
             # Invalid webhook defined
             send_webhook({})

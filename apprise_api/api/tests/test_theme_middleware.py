@@ -41,3 +41,15 @@ class AutoThemeMiddlewareTest(SimpleTestCase):
         _response = middleware(request)
 
         self.assertEqual(request.theme, SiteTheme.LIGHT)
+
+    def test_theme_set_when_valid_theme_given(self):
+        def get_response(req):
+            return HttpResponse()
+
+        middleware = AutoThemeMiddleware(get_response)
+
+        for theme in (SiteTheme.DARK, SiteTheme.LIGHT):
+            request = self.factory.get("/", {"theme": theme})
+            request.COOKIES = {}
+            _response = middleware(request)
+            self.assertEqual(request.theme, theme)
