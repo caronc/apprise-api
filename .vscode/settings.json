@@ -1,0 +1,29 @@
+{
+  // Use the Ruff extension (charliermarsh.ruff) as the sole formatter and linter
+  // for Python files. Install it from the VS Code marketplace or via
+  //   ext install charliermarsh.ruff
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      // Apply all auto-fixable lint violations on save (isort, pyupgrade, etc.)
+      "source.fixAll.ruff": "explicit",
+      // Keep imports sorted on save
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+
+  // Ruff reads its configuration from pyproject.toml automatically, so no
+  // separate ruff.configuration key is needed. Leave the extension defaults.
+
+  // Testing
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["apprise_api"],
+  "python.testing.cwd": "${workspaceFolder}",
+
+  // Python path
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/apprise_api"
+  }
+}
