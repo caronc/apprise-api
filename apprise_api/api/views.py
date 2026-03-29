@@ -24,6 +24,7 @@ import json
 import logging
 import re
 
+import apprise
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
@@ -36,8 +37,6 @@ from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
 from error.views import Error421View
-
-import apprise
 
 from .forms import (
     AUTO_DETECT_CONFIG_KEYWORD,
@@ -65,7 +64,6 @@ logger = logging.getLogger("django")
 # application/x-www-form-urlencoded
 # multipart/form-data
 MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencoded)", re.I)
-
 
 
 # Parsing of Accept; the following amounts to Accept All

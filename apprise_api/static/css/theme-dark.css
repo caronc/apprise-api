@@ -1,3 +1,18 @@
+/* Support Banner */
+.support-banner {
+  background-color: rgba(44, 182, 166, 0.08);
+  color: #8fbcbb;
+  border-bottom: 1px solid rgba(44, 182, 166, 0.15);
+}
+
+.support-banner a {
+  color: #8fbcbb;
+}
+
+.support-banner-close {
+  color: #8fbcbb;
+}
+
 /* =========================================
 Global Dark Theme Variables & Overrides
 ========================================= */
@@ -385,24 +400,30 @@ Health Check & Notifications
 
 /* 2. Comments */
 .apprise-config-highlight .hljs-comment {
-  color: #666 !important;
+  color: #7c8491 !important;
   font-style: italic !important;
 }
 
-/* 3. Tags / Keywords */
+/* 3. Tags / Keywords (group declarations e.g. <work>=devops,devteam) */
 .apprise-config-highlight .hljs-keyword,
 .apprise-config-highlight .hljs-section,
 .apprise-config-highlight .hljs-name {
   color: #c586c0 !important;
 }
 
-/* 4. Numbers / Constants */
+/* 4. Tag names and YAML keys (e.g. me,family before the =) */
+.apprise-config-highlight .hljs-meta,
+.apprise-config-highlight .hljs-attr {
+  color: #79b8ff !important;
+}
+
+/* 5. Numbers / Constants */
 .apprise-config-highlight .hljs-number,
 .apprise-config-highlight .hljs-literal {
   color: #b5cea8 !important;
 }
 
-/* 5. Standard Text */
+/* 6. Standard Text */
 .apprise-config-highlight {
   color: #d4d4d4 !important;
 }

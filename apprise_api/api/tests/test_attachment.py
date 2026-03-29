@@ -489,7 +489,6 @@ class AttachmentTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             parse_attachments(attachment_payload, {})
 
-
     def test_form_file_attachment_parsing_multivalue_single_key(self):
         """
         Regression: MultiValueDict under a single key must not lose files.
@@ -509,7 +508,6 @@ class AttachmentTests(SimpleTestCase):
             assert isinstance(result, list)
             assert len(result) == 3
 
-
     def test_form_file_attachment_parsing_unique_keys(self):
         """
         Support curl: -F attach1=@... -F attach2=@...
@@ -523,7 +521,6 @@ class AttachmentTests(SimpleTestCase):
             result = parse_attachments(None, files_request)
             assert isinstance(result, list)
             assert len(result) == 2
-
 
     def test_form_file_attachment_parsing_payload_dict_plus_files(self):
         """
@@ -546,7 +543,6 @@ class AttachmentTests(SimpleTestCase):
             assert isinstance(result, list)
             assert len(result) == 3
 
-
     def test_form_file_attachment_parsing_max_attachments_payload_plus_files(self):
         """
         Verify APPRISE_MAX_ATTACHMENTS enforcement accounts for payload + all FILES.
@@ -568,5 +564,3 @@ class AttachmentTests(SimpleTestCase):
             # 2 (payload) + 2 (files) = 4 > max=3
             with self.assertRaises(ValueError):
                 parse_attachments(attachment_payload, files_request)
-
-

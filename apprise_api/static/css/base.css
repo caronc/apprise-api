@@ -1,5 +1,53 @@
 /* =========================================
-1. Main Layout & Navigation
+1. Support Banner
+========================================= */
+.support-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  gap: 0.75rem;
+}
+
+.support-banner a {
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.support-banner a:hover {
+  text-decoration: underline;
+}
+
+.support-banner-icon {
+  font-size: 1rem;
+  vertical-align: middle;
+  margin-right: 0.25rem;
+  color: #e05c5c;
+}
+
+.support-banner-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.support-banner-close:hover {
+  opacity: 1;
+}
+
+.support-banner-close .material-icons {
+  font-size: 1.1rem;
+  vertical-align: middle;
+}
+
+/* =========================================
+2. Main Layout & Navigation
 ========================================= */
 .main-layout {
   margin-top: 0.5rem;
@@ -64,11 +112,42 @@
   font-size: 0.75rem;
 }
 
-.theme {
-  text-align: right;
-  display: block;
-  float: none;
-  margin-top: 0.4rem;
+/* Social + theme icon row in the nav */
+li.social-theme-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+}
+
+li.social-theme-nav a {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+li.social-theme-nav a:hover {
+  opacity: 1;
+}
+
+li.social-theme-nav svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+li.social-theme-nav i.material-icons {
+  font-size: 1.4rem;
+}
+
+.nav-divider {
+  display: inline-block;
+  width: 1px;
+  height: 1.1rem;
+  background: currentColor;
+  opacity: 0.2;
+  margin: 0 0.1rem;
 }
 
 .nav ul i {
@@ -112,11 +191,6 @@ img.apprise-mini-logo {
   padding: 0 0.25rem;
 }
 
-.theme {
-  text-align: right;
-  display: block;
-  float: right;
-}
 
 a.apprise-api-ver,
 a.apprise-lib-ver {

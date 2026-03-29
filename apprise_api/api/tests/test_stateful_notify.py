@@ -27,11 +27,10 @@ import os
 import re
 from unittest.mock import Mock, patch
 
+import apprise
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 import requests
-
-import apprise
 
 from ..forms import NotifyForm
 from ..utils import ConfigCache

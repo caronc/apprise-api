@@ -1,11 +1,23 @@
 ---
 name: ❓ Support Question
-about: Ask a question about Apprise
+about: Ask a question about the Apprise API (prefer Discussions)
 title: ''
 labels: 'question'
 assignees: ''
 
 ---
 
-:question: **Question**
-<!-- Go ahead and ask your question here :) -->
+## Please Use Discussions for Support Questions
+https://github.com/caronc/apprise-api/discussions
+
+If you are filing an issue anyway, include:
+
+## Question
+<!-- Ask your question here -->
+
+## Environment
+- Apprise API version:
+- Apprise version:
+- Python version:
+- OS and distribution:
+- Install method:

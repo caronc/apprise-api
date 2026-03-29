@@ -144,7 +144,7 @@
           <pre><code class="bash">apprise --body=&quot;Test Message&quot; \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg \ <br />
+               &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg<br />
                </code></pre>
         </div>
         {% if not CONFIG_LOCK %}

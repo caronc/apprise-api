@@ -22,10 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import apprise
 from django import forms
 from django.utils.translation import gettext_lazy as _
-
-import apprise
 
 # Auto-Detect Keyword
 AUTO_DETECT_CONFIG_KEYWORD = "auto"

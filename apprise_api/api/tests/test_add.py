@@ -26,11 +26,10 @@ import json
 from unittest import mock
 from unittest.mock import patch
 
+from apprise import ConfigFormat
 from django.core.exceptions import RequestDataTooBig
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
-
-from apprise import ConfigFormat
 
 from ..forms import AUTO_DETECT_CONFIG_KEYWORD
 
