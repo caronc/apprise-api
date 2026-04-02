@@ -59,5 +59,8 @@ max_requests_jitter = 50
 # Logging
 # '-' means log to stdout.
 errorlog = "-"
-accesslog = "-"
+# Access logging is handled entirely by nginx, which sits in front of
+# gunicorn and already logs every request
+# Enabling gunicorn's own access log produces duplicate entries
+accesslog = None
 loglevel = "warn"
