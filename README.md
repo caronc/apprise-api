@@ -1018,6 +1018,27 @@ The colon `:` prefix is the switch that starts the re-mapping rule engine.  You 
 1. `:existing_key=`: By setting no value, the existing key is simply removed from the payload entirely
 1. `:expected_key=A value to give it`: You can also fix an expected apprise key to a pre-generated string value.
 
+### Nested / Subfield Mapping
+
+If your third-party payload contains nested objects you can reach into them using **dot-notation** on the source side of the mapping rule:
+
+```bash
+# Payload sent by the third-party tool:
+# {
+#   "event":     { "title": "CPU spike", "state": "critical" },
+#   "component": { "name": "web-server-01" }
+# }
+#
+# Map nested fields to the flat Apprise fields:
+curl -X POST \
+    -H "Content-Type: application/json" \
+    -d '{"event":{"title":"CPU spike","state":"critical"},"component":{"name":"web-server-01"}}' \
+    "http://localhost:8000/notify/{KEY}?:event.title=title&:event.state=type&:component.name=body"
+```
+
+**Notes:**
+- Only the **source** side of the rule may use dot-notation; the target must be a flat Apprise field (`title`, `body`, `type`, `format`, etc.).
+- The maximum traversal depth defaults to **5** levels and is controlled by the `APPRISE_WEBHOOK_MAPPING_MAX_DEPTH` environment variable.
 
 ## Metrics Collection & Analysis
 

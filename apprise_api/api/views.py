@@ -996,7 +996,21 @@ class NotifyView(View):
             if rules:
                 # Create a copy
                 data = request.POST.copy()
-                remap_fields(rules, data)
+                if not remap_fields(rules, data):
+                    status = ResponseCode.bad_request
+                    msg = _("Payload field mapping failed using KEY: {}").format(key)
+                    return (
+                        HttpResponse(msg, status=status, content_type="text/plain")
+                        if not json_response
+                        else JsonResponse(
+                            {
+                                "error": msg,
+                            },
+                            encoder=JSONEncoder,
+                            safe=False,
+                            status=status,
+                        )
+                    )
 
             else:
                 # Just create a pointer
@@ -1014,7 +1028,21 @@ class NotifyView(View):
 
                 # Apply content rules
                 if rules:
-                    remap_fields(rules, content)
+                    if not remap_fields(rules, content):
+                        status = ResponseCode.bad_request
+                        msg = _("Payload field mapping failed using KEY: {}").format(key)
+                        return (
+                            HttpResponse(msg, status=status, content_type="text/plain")
+                            if not json_response
+                            else JsonResponse(
+                                {
+                                    "error": msg,
+                                },
+                                encoder=JSONEncoder,
+                                safe=False,
+                                status=status,
+                            )
+                        )
 
             except RequestDataTooBig:
                 # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
@@ -1670,7 +1698,21 @@ class StatelessNotifyView(View):
             if rules:
                 # Create a copy
                 data = request.POST.copy()
-                remap_fields(rules, data, form=NotifyByUrlForm())
+                if not remap_fields(rules, data, form=NotifyByUrlForm()):
+                    status = ResponseCode.bad_request
+                    msg = _("Payload field mapping failed")
+                    return (
+                        HttpResponse(msg, status=status, content_type="text/plain")
+                        if not json_response
+                        else JsonResponse(
+                            {
+                                "error": msg,
+                            },
+                            encoder=JSONEncoder,
+                            safe=False,
+                            status=status,
+                        )
+                    )
 
             else:
                 # Just create a pointer
@@ -1688,7 +1730,21 @@ class StatelessNotifyView(View):
 
                 # Apply content rules
                 if rules:
-                    remap_fields(rules, content, form=NotifyByUrlForm())
+                    if not remap_fields(rules, content, form=NotifyByUrlForm()):
+                        status = ResponseCode.bad_request
+                        msg = _("Payload field mapping failed")
+                        return (
+                            HttpResponse(msg, status=status, content_type="text/plain")
+                            if not json_response
+                            else JsonResponse(
+                                {
+                                    "error": msg,
+                                },
+                                encoder=JSONEncoder,
+                                safe=False,
+                                status=status,
+                            )
+                        )
 
             except RequestDataTooBig:
                 # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually

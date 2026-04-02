@@ -21,9 +21,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
-from ..payload_mapper import remap_fields
+from ..payload_mapper import remap_fields, _get_nested
 
 
 class NotifyPayloadMapper(SimpleTestCase):
@@ -220,3 +220,141 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         # There are no rules applied since nothing aligned
         assert payload == payload_orig
+
+    def test_remap_fields_subfields(self):
+        """
+        Test dot-notation (subfield) payload mapping
+        """
+
+        #
+        # Basic subfield mapping: event.title -> title, event.state -> type,
+        # component.name -> body  (mirrors the issue-306 use-case)
+        #
+        rules = {
+            "event.title": "title",
+            "event.state": "type",
+            "component.name": "body",
+        }
+        payload = {
+            "event": {
+                "title": "CPU spike",
+                "state": "critical",
+            },
+            "component": {
+                "name": "web-server-01",
+            },
+        }
+
+        result = remap_fields(rules, payload)
+
+        assert result is True
+        assert payload["title"] == "CPU spike"
+        assert payload["type"] == "critical"
+        assert payload["body"] == "web-server-01"
+
+        #
+        # Deeply nested path (3 levels)
+        #
+        rules = {"a.b.c": "body"}
+        payload = {"a": {"b": {"c": "deep value"}}}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["body"] == "deep value"
+
+        #
+        # Missing intermediate key — warning logged, returns False
+        #
+        rules = {"missing.field": "body"}
+        payload = {"other": "data"}
+
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+
+        assert result is False
+        assert "missing.field" in "\n".join(cm.output)
+        assert "body" not in payload
+
+        #
+        # Missing leaf key — warning logged, returns False
+        #
+        rules = {"event.missing_leaf": "title"}
+        payload = {"event": {"state": "ok"}}
+
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+
+        assert result is False
+        assert "event.missing_leaf" in "\n".join(cm.output)
+        assert "title" not in payload
+
+        #
+        # Intermediate node is not a dict (e.g. it's a string) — warning logged, returns False
+        #
+        rules = {"event.title.extra": "body"}
+        payload = {"event": {"title": "flat string"}}
+
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+
+        assert result is False
+        assert "event.title.extra" in "\n".join(cm.output)
+        assert "body" not in payload
+
+        #
+        # Path exceeds APPRISE_WEBHOOK_MAPPING_MAX_DEPTH — warning logged, returns False
+        #
+        rules = {"a.b.c": "body"}
+        payload = {"a": {"b": {"c": "too deep"}}}
+
+        with self.assertLogs("django", level="WARNING") as cm, override_settings(APPRISE_WEBHOOK_MAPPING_MAX_DEPTH=2):
+            result = remap_fields(rules, payload)
+
+        assert result is False
+        assert "exceeds the maximum depth" in "\n".join(cm.output)
+        assert "body" not in payload
+
+        #
+        # Dot-notation source with empty value (no-op — path resolved, but no
+        # valid target).  Returns True because path resolution succeeded.
+        #
+        rules = {"event.title": ""}
+        payload = {"event": {"title": "hello"}, "body": "existing"}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["body"] == "existing"
+        assert "title" not in payload
+
+        #
+        # Dot-notation source pointing to a non-expected apprise field — no-op
+        # Returns True because path resolution succeeded.
+        #
+        rules = {"event.title": "nonexistent_apprise_field"}
+        payload = {"event": {"title": "hello"}}
+
+        assert remap_fields(rules, payload) is True
+        assert "nonexistent_apprise_field" not in payload
+
+    def test_get_nested(self):
+        """
+        Test the _get_nested helper directly
+        """
+
+        # Happy path
+        payload = {"a": {"b": {"c": 42}}}
+        value, found = _get_nested(payload, ["a", "b", "c"], "a.b.c")
+        assert found is True
+        assert value == 42
+
+        # Missing key at first level
+        with self.assertLogs("django", level="WARNING") as cm:
+            value, found = _get_nested({}, ["missing"], "missing")
+        assert found is False
+        assert value is None
+        assert "missing" in "\n".join(cm.output)
+
+        # Intermediate value is not a dict
+        payload = {"a": "not-a-dict"}
+        with self.assertLogs("django", level="WARNING") as cm:
+            value, found = _get_nested(payload, ["a", "b"], "a.b")
+        assert found is False
+        assert "a.b" in "\n".join(cm.output)

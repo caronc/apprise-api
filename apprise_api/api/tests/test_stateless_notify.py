@@ -859,3 +859,45 @@ class StatelessNotifyTests(SimpleTestCase):
             )
         assert response.status_code == 200
         assert mock_notify.call_count == 1
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_stateless_notify_subfield_mapping(self, mock_notify):
+        """
+        Test dot-notation subfield mapping rules at the HTTP layer (stateless).
+
+        A missing subfield path must return 400 and not attempt to send.
+        """
+        mock_notify.return_value = True
+
+        # Missing subfield — form POST, plain-text response → 400
+        with self.assertLogs("django", level="WARNING") as _:
+            response = self.client.post(
+                "/notify/?:event.missing=body",
+                data={"event": "not-a-dict"},
+            )
+        assert response.status_code == 400
+        assert b"mapping failed" in response.content
+        assert mock_notify.call_count == 0
+
+        mock_notify.reset_mock()
+
+        # Missing subfield — JSON payload → 400
+        with self.assertLogs("django", level="WARNING") as _:
+            response = self.client.post(
+                "/notify/?:event.missing=body",
+                data=json.dumps({"urls": "mailto://user:pass@yahoo.ca", "event": {"title": "hi"}}),
+                content_type="application/json",
+            )
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        mock_notify.reset_mock()
+
+        # Valid nested mapping — JSON payload → 200
+        response = self.client.post(
+            "/notify/?:event.title=body",
+            data=json.dumps({"urls": "mailto://user:pass@yahoo.ca", "event": {"title": "hello"}}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
