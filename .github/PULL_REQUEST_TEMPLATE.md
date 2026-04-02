@@ -12,7 +12,7 @@
 * [ ] The change is tested and works locally.
 * [ ] No commented-out code in this PR.
 * [ ] No lint errors (use `tox -e lint` and optionally `tox -e format`).
-* [ ] Test coverage added or updated (use `tox -e qa`).
+* [ ] Test coverage added or updated (use `tox -e test`).
 
 ## Testing
 <!-- If your change is testable by others, define how to validate it here -->
@@ -25,6 +25,5 @@ cd apprise-api
 # Run the unit tests
 tox -e test
 
-# Alternatively, spin up the full stack with Docker
-docker compose up
-```
+# Run a local instance of the api at http://localhost:8000
+tox -e runserver

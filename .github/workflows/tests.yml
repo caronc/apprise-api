@@ -58,10 +58,9 @@ jobs:
         coverage xml
         coverage report
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v6
-      with:
-        files: ./coverage.xml
+- name: Upload to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.xml
         fail_ci_if_error: false
-        token: ${{ secrets.CODECOV_TOKEN }}
-
