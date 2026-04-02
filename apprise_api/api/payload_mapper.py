@@ -25,9 +25,31 @@
 import logging
 
 from api.forms import NotifyForm
+from django.conf import settings
 
 # Get an instance of a logger
 logger = logging.getLogger("django")
+
+
+def _get_nested(payload, path_parts, source_key):
+    """
+    Traverse nested dicts following path_parts.
+
+    Returns a ``(value, found)`` tuple.  Logs a WARNING when the path cannot
+    be fully resolved so the operator can diagnose misconfigured mapping rules.
+    """
+    current = payload
+    for i, part in enumerate(path_parts):
+        if not isinstance(current, dict) or part not in current:
+            partial = ".".join(path_parts[: i + 1])
+            logger.warning(
+                "Payload mapping path '%s' not found in payload (stopped at '%s')",
+                source_key,
+                partial,
+            )
+            return None, False
+        current = current[part]
+    return current, True
 
 
 def remap_fields(rules, payload, form=None):
@@ -45,14 +67,53 @@ def remap_fields(rules, payload, form=None):
     can allow 3rd party programs that post 'subject' and 'content' to
     be remapped to say 'title' and 'body' respectively
 
+    Dot-notation keys (e.g. ``event.title``) are interpreted as paths into
+    nested dictionaries within the payload.  The resolved value is then
+    mapped to the target Apprise field.  A WARNING is logged when the path
+    cannot be found, so operators can diagnose misconfigured rules.
+
+    The maximum traversal depth is controlled by the
+    ``APPRISE_WEBHOOK_MAPPING_MAX_DEPTH`` Django setting (default: 5).
+
     """
 
     # Prepare our Form (identifies our expected keys)
     form = NotifyForm() if form is None else form
 
+    max_depth = getattr(settings, "APPRISE_WEBHOOK_MAPPING_MAX_DEPTH", 5)
+
     # First generate our expected keys; only these can be mapped
     expected_keys = set(form.fields.keys())
     for key, value in rules.items():
+        # ------------------------------------------------------------------
+        # Dot-notation (subfield) path handling
+        # ------------------------------------------------------------------
+        if "." in key:
+            path_parts = key.split(".")
+
+            if len(path_parts) > max_depth:
+                logger.warning(
+                    "Payload mapping path '%s' exceeds the maximum depth of %d; skipping",
+                    key,
+                    max_depth,
+                )
+                return False
+
+            nested_value, found = _get_nested(payload, path_parts, key)
+            if not found:
+                # Warning already emitted by _get_nested
+                return False
+
+            if value in expected_keys:
+                # Map the nested value to the flat Apprise field
+                payload[value] = nested_value
+            # Any other combination (empty value, non-expected target) is a
+            # no-op for dot-notation sources — skip silently.
+            continue
+
+        # ------------------------------------------------------------------
+        # Flat field handling (original behaviour)
+        # ------------------------------------------------------------------
         if key in payload and not value:
             # Remove element
             del payload[key]

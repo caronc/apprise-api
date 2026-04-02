@@ -1538,3 +1538,65 @@ class NotifyTests(SimpleTestCase):
         with override_settings(LOGGING=bad_logging):
             response = self.client.post("/notify/{}".format(key), {"body": "test"})
         assert response.status_code == 200
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_subfield_mapping(self, mock_notify):
+        """
+        Test dot-notation subfield mapping rules at the HTTP layer (stateful).
+
+        A missing subfield path must:
+          - emit a WARNING
+          - return 400 (not attempt to send the notification)
+        """
+        mock_notify.return_value = True
+
+        key = "test_notify_subfield_mapping"
+
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        # Successful subfield mapping — form POST
+        response = self.client.post(
+            f"/notify/{key}/?:event.title=title&:event.body=body",
+            {"event": '{"title": "hi", "body": "world"}'},
+        )
+        # The form POST path delivers flat keys only; the nested JSON dict value
+        # won't resolve — expect 400, not 200
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        mock_notify.reset_mock()
+
+        # Successful subfield mapping — JSON payload
+        with self.assertLogs("django", level="WARNING") as _:
+            # event.missing does not exist → mapping fails → 400
+            response = self.client.post(
+                f"/notify/{key}/?:event.missing=body",
+                data=json.dumps({"event": {"title": "hi"}}),
+                content_type="application/json",
+            )
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        mock_notify.reset_mock()
+
+        # Depth exceeded — JSON payload
+        with self.assertLogs("django", level="WARNING") as _, override_settings(APPRISE_WEBHOOK_MAPPING_MAX_DEPTH=1):
+            response = self.client.post(
+                f"/notify/{key}/?:event.title=body",
+                data=json.dumps({"event": {"title": "hi"}}),
+                content_type="application/json",
+            )
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        mock_notify.reset_mock()
+
+        # Valid nested mapping succeeds — JSON payload
+        response = self.client.post(
+            f"/notify/{key}/?:event.title=body",
+            data=json.dumps({"event": {"title": "hello world"}}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
