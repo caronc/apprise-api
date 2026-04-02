@@ -74,6 +74,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e TZ=America/Toronto \
    -d caronc/apprise:latest
 ```
 
@@ -93,6 +94,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e TZ=America/Toronto \
    -v /etc/apprise:/config \
    -d apprise/local:latest
 
@@ -105,6 +107,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e TZ=America/Toronto \
    -v ./config:/config \
    -d apprise/local:latest
 ```
@@ -124,6 +127,7 @@ services:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
+      TZ: America/Toronto
     volumes:
       - ./config:/config
       - ./plugin:/plugin
@@ -166,6 +170,7 @@ services:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
+      TZ: America/Toronto
 
     # Persistent state
     volumes:
@@ -525,6 +530,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_BASE_URL`    | Those who are hosting the API behind a proxy that requires a subpath to gain access to this API should specify this path here as well.  By default this is not set at all.
 | `LOG_LEVEL`    | Adjust the log level to the console. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`.
 | `DEBUG`            | This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
+| `TZ` | Sets the timezone for all log timestamps produced by both Nginx and the application. Both services run inside the same container and share this setting. Defaults to `Etc/UTC` if not specified. Any IANA timezone name is accepted (e.g. `America/New_York`, `Europe/London`) as `tzdata` is included in the container image. See the [list of tz database time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for valid values.
 
 
 ## Nginx Overrides
@@ -569,6 +575,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e TZ=America/Toronto \
    -d caronc/apprise:latest
 ```
 
@@ -672,6 +679,8 @@ spec:
               value: "1000"
             - name: PUID
               value: "1000"
+            - name: TZ
+              value: America/Toronto
           image: caronc/apprise:1.1
           name: apprise
           ports:
@@ -762,6 +771,8 @@ spec:
               value: "1"
             - name: APPRISE_ADMIN
               value: "y"
+            - name: TZ
+              value: America/Toronto
           ports:
             - containerPort: 8000
               name: http
