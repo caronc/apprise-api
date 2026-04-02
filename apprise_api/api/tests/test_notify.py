@@ -1581,9 +1581,7 @@ class NotifyTests(SimpleTestCase):
         mock_notify.reset_mock()
 
         # Depth exceeded — JSON payload
-        with self.assertLogs("django", level="WARNING") as _, override_settings(
-            APPRISE_WEBHOOK_MAPPING_MAX_DEPTH=1
-        ):
+        with self.assertLogs("django", level="WARNING") as _, override_settings(APPRISE_WEBHOOK_MAPPING_MAX_DEPTH=1):
             response = self.client.post(
                 f"/notify/{key}/?:event.title=body",
                 data=json.dumps({"event": {"title": "hi"}}),

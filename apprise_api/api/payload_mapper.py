@@ -24,9 +24,8 @@
 # import the logging library
 import logging
 
-from django.conf import settings
-
 from api.forms import NotifyForm
+from django.conf import settings
 
 # Get an instance of a logger
 logger = logging.getLogger("django")
@@ -86,7 +85,6 @@ def remap_fields(rules, payload, form=None):
     # First generate our expected keys; only these can be mapped
     expected_keys = set(form.fields.keys())
     for key, value in rules.items():
-
         # ------------------------------------------------------------------
         # Dot-notation (subfield) path handling
         # ------------------------------------------------------------------

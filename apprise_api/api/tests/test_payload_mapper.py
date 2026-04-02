@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 from django.test import SimpleTestCase, override_settings
 
-from ..payload_mapper import remap_fields, _get_nested
+from ..payload_mapper import _get_nested, remap_fields
 
 
 class NotifyPayloadMapper(SimpleTestCase):
