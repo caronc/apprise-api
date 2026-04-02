@@ -12,6 +12,7 @@ ENV PYTHONUNBUFFERED=1
 ENV APPRISE_CONFIG_DIR=/config
 ENV APPRISE_ATTACH_DIR=/attach
 ENV APPRISE_PLUGIN_PATHS=/plugin
+ENV TZ=Etc/UTC
 
 FROM base AS runtime
 
@@ -21,8 +22,9 @@ COPY ./requirements.txt /etc/requirements.txt
 RUN set -eux && \
     echo "Installing nginx" && \
         apt-get update -qq && \
-        apt-get install -y -qq \
-            nginx && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            nginx \
+            tzdata && \
     echo "Installing tools" && \
         apt-get install -y -qq \
             curl sed git && \

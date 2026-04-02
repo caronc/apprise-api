@@ -8,6 +8,7 @@ services:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
+      TZ: America/Toronto
 
     volumes:
       - ./config:/config
