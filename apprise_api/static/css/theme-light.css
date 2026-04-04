@@ -1,25 +1,101 @@
-/* Support Banner */
+/*
+ * Apprise API — Light Theme
+ *
+ * Colour palette derived from the Apprise documentation site (Starlight):
+ *
+ *   --sl-color-bg             #ffffff       page background
+ *   --sl-color-bg-nav         #f6f7fa       nav / sidebar background
+ *   --sl-color-bg-inline-code #edeef3       subtle lifted surface (gray-6)
+ *   --sl-color-gray-5         #c1c3c9       borders, dividers
+ *   --sl-color-gray-4         #888c96       muted / placeholder text
+ *   --sl-color-gray-3         #555a62       secondary text
+ *   --sl-color-gray-2         #34383f       primary text
+ *   --sl-color-gray-1         #23262f       headings / strong text
+ *   --sl-color-accent         #148c80       brand teal (interactive)
+ *   --sl-color-accent-high    #0f5f57       darker teal (hover / active)
+ *   --sl-color-accent-low     #c8f0ea       tint (selected states, tints)
+ */
+
+/* =========================================
+Support Banner
+========================================= */
 .support-banner {
-  background-color: rgba(0, 77, 64, 0.07);
-  color: #004d40;
-  border-bottom: 1px solid rgba(0, 77, 64, 0.15);
+  background-color: rgba(20, 140, 128, 0.07);
+  color: #0f5f57;
+  border-bottom: 1px solid rgba(20, 140, 128, 0.15);
 }
 
 .support-banner a {
-  color: #004d40;
+  color: #148c80;
 }
 
 .support-banner-close {
-  color: #004d40;
+  color: #148c80;
 }
 
-/* Typography & Icons */
+/* =========================================
+Navigation
+========================================= */
+.nav.nav-color,
+nav {
+  background: #f6f7fa !important;
+  color: #23262f;
+  box-shadow: 0 1px 0 #c1c3c9 !important;
+}
+
+nav a,
+nav .brand-logo,
+nav ul a {
+  color: #23262f;
+}
+
+nav ul li.active,
+nav ul a:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+i.material-icons {
+  color: #555a62;
+}
+
+i.material-icons:hover {
+  color: #23262f;
+}
+
+/* =========================================
+Footer
+========================================= */
+.page-footer {
+  background-color: #0f5f57;
+  color: #c8f0ea;
+}
+
+.page-footer-legal {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  color: #c8f0ea;
+}
+
+.page-footer-legal a {
+  color: #c8f0ea;
+}
+
+/* =========================================
+Global Typography
+========================================= */
 em {
-  color: #004d40;
+  color: #148c80;
 }
 
+pre code {
+  background-color: #edeef3 !important;
+  color: #34383f;
+}
+
+/* =========================================
+Status & Indicators
+========================================= */
 .url-enabled {
-  color: #004d40;
+  color: #148c80;
 }
 
 .url-disabled {
@@ -27,83 +103,143 @@ em {
 }
 
 .no-config .info {
-  color: #004d40;
+  color: #148c80;
 }
 
 .api-details .plugin-index {
-  color: #666;
+  color: #888c96;
 }
 
 #overview strong {
-  color: #004d40;
-  background-color: #eee;
+  color: #148c80;
+  background-color: #edeef3;
 }
 
-/* Tabs - Prefixed with 'body' to override Materialize */
+/* Loading spinner */
+.api-status-icon.status-loading {
+  color: #90caf9;
+}
+
+.api-status-details {
+  color: #b71c1c;
+}
+
+.api-status-icon.status-ok {
+  color: #148c80;
+}
+
+.api-status-icon.status-error {
+  color: #ef5350;
+}
+
+/* =========================================
+Links
+========================================= */
+.collection a.collection-item,
+a,
+a:hover,
+a.active {
+  color: #148c80 !important;
+}
+
+/* Footer links sit on dark teal — need light colour */
+.page-footer a,
+.page-footer-legal a {
+  color: #c8f0ea !important;
+}
+
+/* =========================================
+Tabs
+========================================= */
+
+/* Container — bottom border only; tabs sit above it */
+.tabs {
+  background-color: transparent !important;
+  border-bottom: 2px solid #148c80 !important;
+}
+
+/* Inactive tabs: surface-coloured, rounded top corners */
 body .tabs .tab a {
-  color: #004d40;
-  background-color: #f3f3f3;
-  border-bottom: 1px solid #464646;
+  background-color: #edeef3 !important;
+  color: #888c96 !important;
+  border: 1px solid #c1c3c9 !important;
+  border-bottom: none !important;
+  margin-bottom: -1px;
 }
 
-body .tabs .tab a:hover,
-body .tabs .tab a.active {
-  color: #004d40;
-  background-color: #eee;
+/* Hover */
+body .tabs .tab a:hover {
+  background-color: #ffffff !important;
+  color: #148c80 !important;
+  border-color: #c1c3c9 !important;
+  border-bottom: none !important;
+}
+
+/* Active — white bg merges with content below the tab bar.
+   :focus included so clicking does not trigger a colour change. */
+body .tabs .tab a.active,
+body .tabs .tab a.active:focus {
+  background-color: #ffffff !important;
+  color: #0f5f57 !important;
+  border: 1px solid #148c80 !important;
+  border-bottom: 2px solid #ffffff !important;
+}
+
+/* Indicator: hide it — a.active is reliable enough with the HTML
+   class on load and the border treatment gives a clear active signal */
+body .tabs .indicator {
+  display: none !important;
 }
 
 body .tabs .tab.disabled a,
 body .tabs .tab.disabled a:hover,
 body .tabs .tab.disabled a i,
 body .tabs .tab.disabled a:hover i {
-  background-color: #ccc !important;
-  color: #666 !important;
+  background-color: #f3f4f6 !important;
+  color: #c1c3c9 !important;
+  cursor: default;
+  border-color: #e0e1e5 !important;
+  border-bottom: none !important;
 }
 
-body .tabs .tab a:focus,
-body.tabs .tab a:focus.active {
-  background-color: #eee !important;
+body .tabs .tab a:focus {
+  background-color: #f6f7fa !important;
 }
 
-body .tabs .indicator {
-  background-color: #004d40;
-}
-
-/* Standard Hovers */
+/* =========================================
+Collection & Hover States
+========================================= */
 .collection a.collection-item:not(.active):hover,
 .tabs .tab a:focus,
 .tabs .tab a:focus.active {
-  background-color: #eee !important;
+  background-color: #edeef3 !important;
 }
 
-.collection a.collection-item,
-a,
-a:hover,
-a.active {
-  color: #004d40 !important;
-}
-
-/* Cards & Lists */
+/* =========================================
+Cards & Lists
+========================================= */
 #url-list .card-panel {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  background-color: #f3f3f3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  background-color: #edeef3;
 }
 
 #url-list .url-header code.url-text {
-  background-color: #fff;
-  color: #464646;
+  background-color: #ffffff;
+  color: #34383f;
 }
 
 #url-list .card-panel .url-id {
-  color: #aaa;
+  color: #888c96;
 }
 
-/* Buttons & Chips */
+/* =========================================
+Buttons & Chips
+========================================= */
 .btn,
 .btn-large,
 .btn-small {
-  color: #004d40;
-  background-color: #e5e9f0;
+  color: #0f5f57;
+  background-color: #edeef3;
 }
 
 .btn:focus,
@@ -113,38 +249,37 @@ a.active {
 .btn-large:hover,
 .btn-small:hover,
 .btn:hover {
-  color: #000 !important;
-  background-color: #8fbcbb;
+  color: #0f5f57 !important;
+  background-color: #c8f0ea;
 }
 
 .btn-flat {
-  background-color: #e5e9f0;
-  color: #004d40;
+  background-color: #edeef3;
+  color: #148c80;
 }
 
 .chip {
-  background-color: #fff !important;
-  border: 1px solid #464646 !important;
-  color: #464646 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #c1c3c9 !important;
+  color: #34383f !important;
 }
 
 .card-panel.selected {
-  background-color: #d8e9d8 !important;
-
+  background-color: #c8f0ea !important;
 }
 
 .url-selected-icon i {
-  color: #666
+  color: #888c96;
 }
 
 .chip.selected {
-  background-color: #258528 !important;
-  color: white !important;
+  background-color: #148c80 !important;
+  color: #ffffff !important;
 }
 
 .file-selected {
-  color: #039be5;
-  background-color: #f3f3f3;
+  color: #148c80;
+  background-color: #edeef3;
 }
 
 #url-list .copy-url-btn:hover,
@@ -153,54 +288,27 @@ a.active {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* Health Check */
+/* =========================================
+Health Check
+========================================= */
 #health-check {
-  background-color: #f883791f;
+  background-color: #fff5f5;
 }
 
-/* Notifications */
-.copy-toast.swal2-popup {
-  background-color: #f3f3f3;
-  color: #464646;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .25);
-  border-radius: 4px;
-  padding: .35rem .8rem;
-}
-
-.copy-toast .swal2-title {
-  margin: 0;
-  font-size: .9rem;
-  font-weight: 500;
-}
-
-/* Loading spinner */
-.api-status-icon.status-loading {
-  color: #90caf9;
-}
-
-/* Error details text under the line */
-.api-status-details {
-  color: #b71c1c;
-}
-
-.api-status-icon.status-ok {
-  color: #265228;
-}
-
-.api-status-icon.status-error {
-  color: #ef5350;
-}
-
+/* =========================================
+Config Editor — textarea border override
+========================================= */
 .apprise-config-editor textarea {
-  caret-color: black !important;
+  caret-color: #23262f !important;
+  border: 1px solid #c1c3c9 !important;
 }
 
 .apprise-config-editor .apprise-config-highlight {
-  background-color: #fff !important;
-  color: #d4d4d4;
+  background-color: #ffffff !important;
+  color: #34383f;
 }
 
-/* 1. URLs  */
+/* 1. URLs */
 .apprise-config-highlight .hljs-string,
 .apprise-config-highlight .hljs-symbol,
 .apprise-config-highlight .hljs-link {
@@ -213,14 +321,14 @@ a.active {
   font-style: italic !important;
 }
 
-/* 3. Tags / Keywords (group declarations e.g. <work>=devops,devteam) */
+/* 3. Tags / Keywords */
 .apprise-config-highlight .hljs-keyword,
 .apprise-config-highlight .hljs-section,
 .apprise-config-highlight .hljs-name {
   color: #6a9955 !important;
 }
 
-/* 4. Tag names and YAML keys (e.g. me,family before the =) */
+/* 4. Tag names and YAML keys */
 .apprise-config-highlight .hljs-meta,
 .apprise-config-highlight .hljs-attr {
   color: #0550ae !important;
@@ -237,14 +345,66 @@ a.active {
   color: #1f2328 !important;
 }
 
-.notify-attachments-list .attachment-chip {
-  background-color: #eee;
-  color: #004d40;
+/* =========================================
+Highlight.js (general code blocks)
+========================================= */
+.hljs {
+  background-color: #edeef3;
+  color: #34383f;
 }
 
-/* SweetAlert2 – log colouring */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #148c80;
+}
+
+.hljs-literal,
+.hljs-number,
+.hljs-variable {
+  color: #0f5f57;
+}
+
+.hljs-string {
+  color: #34383f;
+}
+
+.hljs-section,
+.hljs-title {
+  color: #555a62;
+}
+
+.hljs-attribute,
+.hljs-name,
+.hljs-tag {
+  color: #888c96;
+}
+
+/* =========================================
+Notifications — SweetAlert2
+========================================= */
+.copy-toast.swal2-popup {
+  background-color: #edeef3;
+  color: #34383f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: .35rem .8rem;
+}
+
+.copy-toast .swal2-title {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 500;
+}
+
+.notify-attachments-list .attachment-chip {
+  background-color: #edeef3;
+  color: #148c80;
+}
+
+/* SweetAlert2 — log colouring */
 .swal2-popup .notify-log-panel {
-  background-color: #eee;
+  background-color: #edeef3;
 }
 
 .swal2-popup .logs .log_DEBUG {

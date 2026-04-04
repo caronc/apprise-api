@@ -1,75 +1,130 @@
-/* Support Banner */
+/*
+ * Apprise API — Dark Theme
+ *
+ * Colour palette derived from the Apprise documentation site (Starlight):
+ *
+ *   --sl-color-bg             #17181c       page background (deepest)
+ *   --sl-color-bg-nav         #23262f       nav / sidebar / elevated surfaces
+ *   --sl-color-bg-inline-code #34383f       lifted surface, inputs (gray-5)
+ *   --sl-color-gray-5         #34383f       borders, dividers, tabs bg
+ *   --sl-color-gray-4         #555a62       muted icons / disabled text
+ *   --sl-color-gray-3         #888c96       secondary / placeholder text
+ *   --sl-color-gray-2         #c1c3c9       primary body text
+ *   --sl-color-gray-1         #edeef3       light labels, near-white text
+ *   --sl-color-white          #ffffff       pure white (headings)
+ *   --sl-color-accent         #2cb6a6       brand teal (interactive)
+ *   --sl-color-accent-high    #7de6da       lighter teal (hover / active text)
+ *   --sl-color-accent-low     #0b3b37       deep teal tint (selected states)
+ */
+
+/* =========================================
+Support Banner
+========================================= */
 .support-banner {
   background-color: rgba(44, 182, 166, 0.08);
-  color: #8fbcbb;
+  color: #7de6da;
   border-bottom: 1px solid rgba(44, 182, 166, 0.15);
 }
 
 .support-banner a {
-  color: #8fbcbb;
+  color: #7de6da;
 }
 
 .support-banner-close {
-  color: #8fbcbb;
+  color: #7de6da;
 }
 
 /* =========================================
-Global Dark Theme Variables & Overrides
+Global Base
 ========================================= */
 html {
-  color: #d8dee9;
-  background-color: #2e3440;
+  color: #c1c3c9;
+  background-color: #17181c;
 }
 
+/* =========================================
+Typography
+========================================= */
 h1 {
-  color: #eceff4 !important;
+  color: #ffffff !important;
+}
+
+h2 {
+  color: #edeef3;
+}
+
+h3 {
+  color: #edeef3;
 }
 
 h4 {
-  color: #e5e9f0;
+  color: #edeef3;
 }
 
 h5 {
-  color: #8fbcbb;
-}
-
-a {
-  color: #ebcb8b;
-}
-
-a:hover {
-  color: #d08770;
+  color: #2cb6a6;
 }
 
 em {
-  color: #5e81ac !important;
+  color: #2cb6a6 !important;
 }
 
-.dropdown-content li>span:hover {
-  background-color: #4c566a !important;
+pre code {
+  background-color: #17181c !important;
+  color: #c1c3c9;
 }
 
-.select-wrapper input.select-dropdown:focus {
-  border-bottom: 1px solid #4c566a !important;
+/* =========================================
+Navigation
+========================================= */
+.nav.nav-color,
+nav {
+  background: #23262f !important;
+  color: #c1c3c9;
+  box-shadow: 0 1px 0 #34383f !important;
 }
 
-.dropdown-content li>a,
-.dropdown-content li>span {
-  background-color: #171b23 !important;
-  color: #eceff4;
+nav a,
+nav .brand-logo,
+nav ul a {
+  color: #c1c3c9;
+}
+
+nav ul li.active,
+nav ul a:hover {
+  background-color: rgba(0, 0, 0, 0.15);
 }
 
 i.material-icons {
-  color: #6e7d9c;
+  color: #555a62;
 }
 
 i.material-icons:hover {
-  color: #57637a;
+  color: #888c96;
 }
 
-/* Status Colors */
+/* =========================================
+Footer
+========================================= */
+.page-footer {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+.page-footer-legal {
+  border-top: 1px solid #34383f;
+  color: #888c96;
+}
+
+.page-footer-legal a {
+  color: #888c96;
+}
+
+/* =========================================
+Status & Indicators
+========================================= */
 .url-enabled {
-  color: #02c7a6;
+  color: #2cb6a6;
 }
 
 .url-disabled {
@@ -77,291 +132,16 @@ i.material-icons:hover {
 }
 
 .no-config .info {
-  color: #4c566a;
+  color: #34383f;
 }
 
 .api-details .plugin-index {
-  color: #666;
-}
-
-/* =========================================
-Navigation & Footer
-========================================= */
-.nav.nav-color,
-nav {
-  background: #171b23 !important;
-  color: #d8dee9;
-}
-
-nav a,
-nav .brand-logo,
-nav ul a {
-  color: #d8dee9;
-}
-
-nav ul li.active,
-nav ul a:hover {
-  background-color: rgba(0, 0, 0, .1);
-}
-
-.page-footer {
-  color: #d8dee9;
-  background-color: #ee6e73;
-}
-
-/* =========================================
-Components: Cards, Collections, Collapsibles
-========================================= */
-.card-panel,
-.card {
-  background-color: #4c566a;
-}
-
-.card .card-image .card-title {
-  color: #d8dee9;
-}
-
-.card .card-reveal {
-  background-color: #d8dee9;
-}
-
-#url-list .card-panel {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  background: #2f3946;
-}
-
-#url-list .url-header code.url-text {
-  background-color: #212733;
-  color: #e0e6f0;
-}
-
-#url-list .card-panel .url-id {
-  color: #777;
-}
-
-.collection {
-  border-color: #525252;
-}
-
-.collection .collection-item {
-  background-color: #2e3440;
-  border-color: #666;
-  color: #d8dee9;
-}
-
-.collection a.collection-item {
-  color: #d8dee9;
-}
-
-a,
-a:hover,
-a.active {
-  color: #6e7d9c;
-}
-
-.collection a.collection-item:not(.active):hover {
-  background-color: #1b1e26 !important;
-}
-
-.collapsible {
-  border: 1px solid #525252;
-}
-
-.collapsible-header {
-  background-color: #2e3440;
-  border-bottom: 1px solid #4c566a;
-}
-
-.collapsible-body {
-  border-bottom: 1px solid #434c5e;
-  background-color: #2e3440;
-}
-
-/* =========================================
-Tabs - Prefixed with 'body' to override Materialize
-========================================= */
-.tabs {
-  background-color: transparent;
-  border-bottom: none;
-}
-
-.tabs .tab {
-  background-color: transparent;
-}
-
-body .tabs .tab a {
-  background-color: #4c566a !important;
-  color: #d8dee9 !important;
-  border-bottom: 1px solid #464646 !important;
-}
-
-body .tabs .tab a:hover,
-body .tabs .tab a.active {
-  color: #eceff4;
-  background-color: #8fbcbb;
-}
-
-body .tabs .tab.disabled a,
-body .tabs .tab.disabled a:hover,
-body .tabs .tab.disabled a i,
-body .tabs .tab.disabled a:hover i {
-  background-color: #171b23 !important;
-  color: #666 !important;
-}
-
-body .tabs .tab a:focus,
-body.tabs .tab a:focus.active {
-  background-color: #1b1e26 !important;
-}
-
-body .tabs .indicator {
-  background-color: #d8dee9;
-}
-
-/* =========================================
-Inputs & Code
-========================================= */
-/* Added body prefix to ensure dark input backgrounds win */
-body input,
-body textarea {
-  color: #e5e9f0;
-  border: 1px solid #2e3440;
-  background-color: #1b1e26;
-}
-
-/* Materialize Input Focus overrides */
-input:not([type]):focus:not([readonly]),
-textarea.materialize-textarea:focus:not([readonly]) {
-  border-bottom: 1px solid #8fbcbb;
-}
-
-input:not([type]):focus:not([readonly])+label,
-textarea.materialize-textarea:focus:not([readonly])+label {
-  color: #8fbcbb;
-}
-
-pre code {
-  background-color: #111 !important;
-  color: #d8dee9;
+  color: #888c96;
 }
 
 #overview strong {
-  color: #d8dee9 !important;
-  background-color: #373e4d;
-}
-
-.file-selected {
-  color: #ebcb8b;
-  background-color: #2e3440;
-}
-
-/* =========================================
-Buttons & Chips
-========================================= */
-.btn,
-.btn-large,
-.btn-small {
-  color: #e5e9f0;
-  background-color: #2e3440;
-}
-
-.btn:focus,
-.btn-large:focus,
-.btn-small:focus,
-.btn-floating:focus,
-.btn-large:hover,
-.btn-small:hover,
-.btn:hover {
-  background-color: #1b1e26;
-}
-
-.btn-flat {
-  background-color: transparent;
-  color: #d8dee9;
-}
-
-#url-list .copy-url-btn:hover,
-.config-id-copy.btn-flat:hover,
-.snippet-copy-btn:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-}
-
-.chip {
-  color: #d8dee9;
-  background-color: #2e3440 !important;
-  border: 1px solid #434c5e !important;
-}
-
-.card-panel.selected {
-  background-color: #3f523f !important;
-
-}
-
-.chip.selected {
-  color: #fff;
-  background-color: #258528 !important;
-}
-
-.url-selected-icon i {
-  color: #bbb;
-}
-
-/* =========================================
-Health Check & Notifications
-========================================= */
-#health-check {
-  background-color: #2f3946;
-  /* Darker bg for health check */
-  color: #d8dee9;
-}
-
-.swal2-popup {
-  background-color: #2e3440;
-  color: #e5e9f0;
-}
-
-.copy-toast.swal2-popup {
-  background-color: #2f3946;
-  color: #e5e9f0;
-}
-
-.copy-toast .swal2-title {
-  margin: 0;
-  font-size: .9rem;
-  font-weight: 500;
-}
-
-/* HighlightJS Overrides */
-.hljs {
-  color: #d8dee9;
-  background: #4c566a;
-}
-
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-subst {
-  color: #4fa1ba;
-}
-
-.hljs-literal,
-.hljs-number,
-.hljs-variable {
-  color: teal;
-}
-
-.hljs-string {
-  color: #d8dee9;
-}
-
-.hljs-section,
-.hljs-title {
-  color: #900;
-}
-
-.hljs-attribute,
-.hljs-name,
-.hljs-tag {
-  color: navy;
+  color: #edeef3 !important;
+  background-color: #34383f;
 }
 
 /* Loading spinner */
@@ -369,7 +149,6 @@ Health Check & Notifications
   color: #90caf9;
 }
 
-/* Error details text under the line */
 .api-status-details {
   color: #ffcdd2;
 }
@@ -382,16 +161,259 @@ Health Check & Notifications
   color: #ef5350;
 }
 
+/* =========================================
+Links
+========================================= */
+a,
+a.active {
+  color: #2cb6a6 !important;
+}
+
+a:hover {
+  color: #7de6da !important;
+}
+
+/* Collection sidebar items — muted, not teal */
+.collection a.collection-item {
+  color: #c1c3c9 !important;
+}
+
+/* =========================================
+Dropdowns & Selects
+========================================= */
+.dropdown-content li>span:hover {
+  background-color: #34383f !important;
+}
+
+.select-wrapper input.select-dropdown:focus {
+  border-bottom: 1px solid #34383f !important;
+}
+
+.dropdown-content li>a,
+.dropdown-content li>span {
+  background-color: #17181c !important;
+  color: #c1c3c9;
+}
+
+/* =========================================
+Components: Cards, Collections, Collapsibles
+========================================= */
+.card-panel,
+.card {
+  background-color: #23262f;
+}
+
+.card .card-image .card-title {
+  color: #edeef3;
+}
+
+.card .card-reveal {
+  background-color: #23262f;
+}
+
+#url-list .card-panel {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  background: #23262f;
+}
+
+#url-list .url-header code.url-text {
+  background-color: #17181c;
+  color: #c1c3c9;
+}
+
+#url-list .card-panel .url-id {
+  color: #555a62;
+}
+
+.collection {
+  border-color: #34383f;
+}
+
+.collection .collection-item {
+  background-color: #23262f;
+  border-color: #34383f;
+  color: #c1c3c9;
+}
+
+.collection a.collection-item {
+  color: #c1c3c9;
+}
+
+.collection a.collection-item:not(.active):hover {
+  background-color: #34383f !important;
+}
+
+.collapsible {
+  border: 1px solid #34383f;
+}
+
+.collapsible-header {
+  background-color: #23262f;
+  border-bottom: 1px solid #34383f;
+}
+
+.collapsible-body {
+  border-bottom: 1px solid #34383f;
+  background-color: #17181c;
+}
+
+/* =========================================
+Tabs
+========================================= */
+
+/* Container — bottom border only; tabs sit above it */
+.tabs {
+  background-color: transparent !important;
+  border-bottom: 2px solid #2cb6a6 !important;
+}
+
+/* Inactive tabs: slightly elevated surface, rounded top corners */
+body .tabs .tab a {
+  background-color: #23262f !important;
+  color: #555a62 !important;
+  border: 1px solid #34383f !important;
+  border-bottom: none !important;
+  margin-bottom: -1px;
+}
+
+/* Hover */
+body .tabs .tab a:hover {
+  background-color: #2c3040 !important;
+  color: #7de6da !important;
+  border-color: #34383f !important;
+  border-bottom: none !important;
+}
+
+/* Active — page-background merges with content below the tab bar.
+   :focus included so clicking does not trigger a colour change. */
+body .tabs .tab a.active,
+body .tabs .tab a.active:focus {
+  background-color: #17181c !important;
+  color: #2cb6a6 !important;
+  border: 1px solid #2cb6a6 !important;
+  border-bottom: 2px solid #17181c !important;
+}
+
+/* Indicator: hide it — a.active is the signal */
+body .tabs .indicator {
+  display: none !important;
+}
+
+body .tabs .tab.disabled a,
+body .tabs .tab.disabled a:hover,
+body .tabs .tab.disabled a i,
+body .tabs .tab.disabled a:hover i {
+  background-color: #1e2128 !important;
+  color: #34383f !important;
+  cursor: default;
+  border-color: #2a2e38 !important;
+  border-bottom: none !important;
+}
+
+body .tabs .tab a:focus {
+  background-color: #23262f !important;
+}
+
+/* =========================================
+Inputs & Code
+========================================= */
+body input,
+body textarea {
+  color: #edeef3;
+  border: 1px solid #34383f;
+  background-color: #17181c;
+}
+
+/* Materialize focus overrides */
+input:not([type]):focus:not([readonly]),
+textarea.materialize-textarea:focus:not([readonly]) {
+  border-bottom: 1px solid #2cb6a6;
+}
+
+input:not([type]):focus:not([readonly])+label,
+textarea.materialize-textarea:focus:not([readonly])+label {
+  color: #2cb6a6;
+}
+
+.file-selected {
+  color: #7de6da;
+  background-color: #23262f;
+}
+
+/* =========================================
+Buttons & Chips
+========================================= */
+.btn,
+.btn-large,
+.btn-small {
+  color: #edeef3;
+  background-color: #34383f;
+}
+
+.btn:focus,
+.btn-large:focus,
+.btn-small:focus,
+.btn-floating:focus,
+.btn-large:hover,
+.btn-small:hover,
+.btn:hover {
+  background-color: #23262f;
+  color: #edeef3;
+}
+
+.btn-flat {
+  background-color: transparent;
+  color: #c1c3c9;
+}
+
+#url-list .copy-url-btn:hover,
+.config-id-copy.btn-flat:hover,
+.snippet-copy-btn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.chip {
+  color: #c1c3c9;
+  background-color: #34383f !important;
+  border: 1px solid #555a62 !important;
+}
+
+/* Selected card: deep teal tint (mirrors accent-low) */
+.card-panel.selected {
+  background-color: #0b3b37 !important;
+}
+
+.chip.selected {
+  color: #ffffff;
+  background-color: #148c80 !important;
+}
+
+.url-selected-icon i {
+  color: #888c96;
+}
+
+/* =========================================
+Health Check
+========================================= */
+#health-check {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+/* =========================================
+Config Editor — textarea border override
+========================================= */
 .apprise-config-editor textarea {
-  caret-color: white !important;
+  caret-color: #edeef3 !important;
+  border: 1px solid #34383f !important;
 }
 
 .apprise-config-editor .apprise-config-highlight {
-  background-color: #1b1e26;
-  color: #d4d4d4;
+  background-color: #17181c;
+  color: #c1c3c9;
 }
 
-/* 1. URLs  */
+/* 1. URLs */
 .apprise-config-highlight .hljs-string,
 .apprise-config-highlight .hljs-symbol,
 .apprise-config-highlight .hljs-link {
@@ -404,14 +426,14 @@ Health Check & Notifications
   font-style: italic !important;
 }
 
-/* 3. Tags / Keywords (group declarations e.g. <work>=devops,devteam) */
+/* 3. Tags / Keywords */
 .apprise-config-highlight .hljs-keyword,
 .apprise-config-highlight .hljs-section,
 .apprise-config-highlight .hljs-name {
   color: #c586c0 !important;
 }
 
-/* 4. Tag names and YAML keys (e.g. me,family before the =) */
+/* 4. Tag names and YAML keys */
 .apprise-config-highlight .hljs-meta,
 .apprise-config-highlight .hljs-attr {
   color: #79b8ff !important;
@@ -425,17 +447,71 @@ Health Check & Notifications
 
 /* 6. Standard Text */
 .apprise-config-highlight {
-  color: #d4d4d4 !important;
+  color: #c1c3c9 !important;
+}
+
+/* =========================================
+Highlight.js (general code blocks)
+========================================= */
+.hljs {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #2cb6a6;
+}
+
+.hljs-literal,
+.hljs-number,
+.hljs-variable {
+  color: #7de6da;
+}
+
+.hljs-string {
+  color: #c1c3c9;
+}
+
+.hljs-section,
+.hljs-title {
+  color: #888c96;
+}
+
+.hljs-attribute,
+.hljs-name,
+.hljs-tag {
+  color: #7de6da;
+}
+
+/* =========================================
+Notifications — SweetAlert2
+========================================= */
+.swal2-popup {
+  background-color: #23262f;
+  color: #edeef3;
+}
+
+.copy-toast.swal2-popup {
+  background-color: #23262f;
+  color: #edeef3;
+}
+
+.copy-toast .swal2-title {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 500;
 }
 
 .notify-attachments-list .attachment-chip {
-  background-color: #171b23;
-  color: #eceff4;
+  background-color: #23262f;
+  color: #c1c3c9;
 }
 
-/* SweetAlert2 – log colouring */
+/* SweetAlert2 — log colouring */
 .swal2-popup .notify-log-panel {
-  background-color: #1b1e26;
+  background-color: #17181c;
 }
 
 .swal2-popup .logs .log_DEBUG {

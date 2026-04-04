@@ -24,7 +24,7 @@
   font-size: 1rem;
   vertical-align: middle;
   margin-right: 0.25rem;
-  color: #e05c5c;
+  color: inherit;
 }
 
 .support-banner-close {
@@ -425,13 +425,17 @@ textarea {
 }
 
 /* Base Tab Structure */
+
 .tabs .tab a {
-  border-radius: 25px 25px 0 0;
+  border-radius: 0.4rem 0.4rem 0 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 body .tabs .tab a:hover,
 body .tabs .tab a.active {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 body .tabs .tab.disabled a,
