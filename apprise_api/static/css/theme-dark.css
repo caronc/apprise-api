@@ -70,7 +70,7 @@ em {
 }
 
 pre code {
-  background-color: #17181c !important;
+  background-color: #0d0f12 !important;
   color: #c1c3c9;
 }
 
@@ -181,18 +181,63 @@ a:hover {
 /* =========================================
 Dropdowns & Selects
 ========================================= */
-.dropdown-content li>span:hover {
-  background-color: #34383f !important;
-}
 
-.select-wrapper input.select-dropdown:focus {
+/* Trigger input */
+.select-wrapper input.select-dropdown {
+  color: #c1c3c9;
   border-bottom: 1px solid #34383f !important;
 }
 
+.select-wrapper input.select-dropdown:focus {
+  border-bottom: 1px solid #2cb6a6 !important;
+}
+
+/* Caret arrow */
+.select-wrapper .caret {
+  fill: #888c96;
+}
+
+/* Dropdown list container */
+.dropdown-content {
+  background-color: #23262f;
+  border: 1px solid #34383f;
+  border-radius: 0.4rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Every item — base state */
 .dropdown-content li>a,
 .dropdown-content li>span {
-  background-color: #17181c !important;
-  color: #c1c3c9;
+  background-color: #23262f !important;
+  color: #c1c3c9 !important;
+}
+
+/* Hover */
+.dropdown-content li>a:hover,
+.dropdown-content li>span:hover,
+.dropdown-content li:hover>span {
+  background-color: #34383f !important;
+  color: #7de6da !important;
+}
+
+/* Selected / active item */
+.dropdown-content li.active>a,
+.dropdown-content li.selected>span,
+.dropdown-content li.active>span {
+  background-color: #0b3b37 !important;
+  color: #2cb6a6 !important;
+  font-weight: 600;
+}
+
+/* Focus label */
+.select-wrapper+label,
+.input-field>label {
+  color: #555a62;
+}
+
+.select-wrapper input.select-dropdown:focus+label,
+.input-field>label.active {
+  color: #2cb6a6;
 }
 
 /* =========================================
@@ -255,6 +300,143 @@ Components: Cards, Collections, Collapsibles
 .collapsible-body {
   border-bottom: 1px solid #34383f;
   background-color: #17181c;
+}
+
+/* =========================================
+Inline Tab Chip (step references)
+========================================= */
+.tab-chip {
+  background-color: #23262f;
+  border-color: #34383f;
+  color: #c1c3c9;
+}
+
+.tab-chip .material-icons {
+  color: #888c96;
+}
+
+/* =========================================
+Code blocks — key/ID highlight + hljs overrides
+========================================= */
+
+/* The <em> tag used to highlight the config key inside pre>code.
+   No background shading — colour only. */
+pre code em {
+  color: #9cdcfe;
+  font-style: normal;
+}
+
+/* hljs palette — aligned with the site's teal/gray palette:
+   keywords/builtins → #2cb6a6  (brand teal)
+   strings/numbers   → #7de6da  (light teal)
+   comments          → #888c96  (muted gray, italic)
+   plain text        → #c1c3c9  (standard body text) */
+pre code.bash.hljs,
+pre code.hljs {
+  color: #c1c3c9;
+  background-color: #0d0f12;
+}
+
+/* Quoted string values ("Test Message", "POST") */
+pre code .hljs-string,
+pre code .hljs-symbol {
+  color: #7de6da;
+}
+
+/* Built-in shell commands: curl, apprise */
+pre code .hljs-built_in {
+  color: #2cb6a6;
+}
+
+/* Shell keywords */
+pre code .hljs-keyword,
+pre code .hljs-selector-tag,
+pre code .hljs-subst {
+  color: #2cb6a6;
+}
+
+/* Flags and options: -X, -F, --body, --tag */
+pre code .hljs-attr,
+pre code .hljs-attribute,
+pre code .hljs-meta {
+  color: #c1c3c9;
+}
+
+/* Variables, numbers, constants */
+pre code .hljs-variable,
+pre code .hljs-template-variable,
+pre code .hljs-params,
+pre code .hljs-literal,
+pre code .hljs-number {
+  color: #7de6da;
+}
+
+/* Comments */
+pre code .hljs-comment,
+pre code .hljs-quote {
+  color: #888c96;
+  font-style: italic;
+}
+
+/* Section / title */
+pre code .hljs-section,
+pre code .hljs-title,
+pre code .hljs-name,
+pre code .hljs-tag {
+  color: #888c96;
+}
+
+/* Function/class titles (.hljs-title.function_ etc. beat plain .hljs-title
+   in specificity — must be overridden explicitly) */
+pre code .hljs-title.function_,
+pre code .hljs-title.class_,
+pre code .hljs-title.class_.inherited__ {
+  color: #2cb6a6;
+}
+
+/* Types, language variables ($this, self), template tags */
+pre code .hljs-type,
+pre code .hljs-variable.language_,
+pre code .hljs-template-tag,
+pre code .hljs-doctag {
+  color: #7de6da;
+}
+
+/* Operators, bullets — plain text, not highlighted */
+pre code .hljs-operator,
+pre code .hljs-bullet {
+  color: #c1c3c9;
+}
+
+/* Regexps — treat like strings */
+pre code .hljs-regexp,
+pre code .hljs-meta .hljs-string {
+  color: #7de6da;
+}
+
+/* Meta keywords (e.g. !important) */
+pre code .hljs-meta .hljs-keyword {
+  color: #2cb6a6;
+}
+
+/* =========================================
+Config ID Bar
+========================================= */
+.config-id-bar {
+  background-color: #23262f;
+  border: 1px solid #34383f;
+}
+
+.config-id-bar .config-id-label {
+  color: #888c96;
+}
+
+code.config-id {
+  color: #7de6da;
+  background-color: #17181c;
+  border: 1px solid #34383f;
+  padding: 0.15em 0.45em;
+  border-radius: 0.3rem;
 }
 
 /* =========================================
@@ -393,6 +575,37 @@ Buttons & Chips
 }
 
 /* =========================================
+Welcome Page Collapsibles
+========================================= */
+.api-welcome .collapsible>li {
+  border-color: #34383f;
+}
+
+.api-welcome .collapsible-header {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+.api-welcome .collapsible-header i.material-icons {
+  color: #2cb6a6;
+}
+
+.api-welcome .collapsible-header:hover {
+  background-color: #2c3040;
+  color: #7de6da;
+}
+
+.api-welcome .collapsible>li.active>.collapsible-header {
+  background-color: #2c3040;
+  color: #7de6da;
+  border-bottom-color: #34383f;
+}
+
+.api-welcome .collapsible-body {
+  background-color: #17181c;
+}
+
+/* =========================================
 Health Check
 ========================================= */
 #health-check {
@@ -405,44 +618,44 @@ Config Editor — textarea border override
 ========================================= */
 .apprise-config-editor textarea {
   caret-color: #edeef3 !important;
-  border: 1px solid #34383f !important;
+  border: 1px solid #2a2e38 !important;
 }
 
 .apprise-config-editor .apprise-config-highlight {
-  background-color: #17181c;
+  background-color: #0d0f12;
   color: #c1c3c9;
 }
 
-/* 1. URLs */
+/* 1. URL values — accent-high teal, brightest element, the primary content */
 .apprise-config-highlight .hljs-string,
 .apprise-config-highlight .hljs-symbol,
 .apprise-config-highlight .hljs-link {
-  color: #9cdcfe !important;
+  color: #7de6da !important;
 }
 
-/* 2. Comments */
+/* 2. Comments — muted, clearly suppressed */
 .apprise-config-highlight .hljs-comment {
-  color: #7c8491 !important;
+  color: #555a62 !important;
   font-style: italic !important;
 }
 
-/* 3. Tags / Keywords */
+/* 3. Group tag declarations (<work>=devops) — brand teal, structural */
 .apprise-config-highlight .hljs-keyword,
 .apprise-config-highlight .hljs-section,
 .apprise-config-highlight .hljs-name {
-  color: #c586c0 !important;
+  color: #2cb6a6 !important;
 }
 
-/* 4. Tag names and YAML keys */
+/* 4. YAML keys (url:, tag:) — brand teal, structural labels */
 .apprise-config-highlight .hljs-meta,
 .apprise-config-highlight .hljs-attr {
-  color: #79b8ff !important;
+  color: #2cb6a6 !important;
 }
 
-/* 5. Numbers / Constants */
+/* 5. Numbers / Constants — neutral body text, minor role */
 .apprise-config-highlight .hljs-number,
 .apprise-config-highlight .hljs-literal {
-  color: #b5cea8 !important;
+  color: #888c96 !important;
 }
 
 /* 6. Standard Text */
@@ -471,7 +684,7 @@ Highlight.js (general code blocks)
 }
 
 .hljs-string {
-  color: #c1c3c9;
+  color: #7de6da;
 }
 
 .hljs-section,

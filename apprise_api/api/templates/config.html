@@ -4,14 +4,17 @@
 
 {% block body %}
   {% if STATEFUL_MODE != 'disabled' %}
-    <span class="config-id-wrapper"><b>{% trans "Config ID" %}:</b>
-      <code class="config-id">{{ key }}</code>
-      <button type="button"
-              class="btn-flat btn-small config-id-copy"
-              title="{% trans "Copy Config ID to Clipboard" %}">
-        <i class="material-icons">content_copy</i>
-      </button>
-    </span>
+    <div class="config-id-bar">
+      <span class="config-id-label">{% trans "Config ID" %}</span>
+      <span class="config-id-wrapper">
+        <code class="config-id">{{ key }}</code>
+        <button type="button"
+                class="btn-flat btn-small config-id-copy"
+                title="{% trans "Copy Config ID to Clipboard" %}">
+          <i class="material-icons">content_copy</i>
+        </button>
+      </span>
+    </div>
     <div class="row">
       <div class="col s12">
         <ul class="tabs config-overview">
@@ -83,7 +86,7 @@
           <li>
             <div>
               {% blocktrans %}
-              Use the <strong><i class="material-icons">settings</i> Configuration</strong> section to prepare and save your Apprise configuration.
+              Use the <span class="tab-chip"><i class="material-icons">settings</i> Configuration</span> section to prepare and save your Apprise configuration.
               {% endblocktrans %}
             </div>
             <div>
@@ -95,18 +98,18 @@
           </li>
           <li>
             {% blocktrans %}
-              Use the <strong><i class="material-icons">web</i> Review</strong> section to review what was parsed/detected from your defined configuration.
+              Use the <span class="tab-chip"><i class="material-icons">web</i> Review</span> section to review what was parsed/detected from your defined configuration.
               {% endblocktrans %}
           </li>
           <li>
             <div>
               {% blocktrans %}
-              Use the <strong><i class="material-icons">announcement</i> Notifications</strong> section to test out your saved configuration.
+              Use the <span class="tab-chip"><i class="material-icons">announcement</i> Notifications</span> section to test out your saved configuration.
             {% endblocktrans %}
             </div>
             <div>
               {% blocktrans %}
-              <i class="material-icons">lightbulb_outline</i>: The number also provided in the <strong><i class="material-icons">announcement</i> Notifications</strong>
+              <i class="material-icons">lightbulb_outline</i>: The number also provided in the <span class="tab-chip"><i class="material-icons">announcement</i> Notifications</span>
               tab identifies how many notifications will be sent (based on tags/configuration provided) when using this section.
             {% endblocktrans %}
             </div>

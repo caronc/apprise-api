@@ -412,6 +412,72 @@ textarea {
   padding: 1rem 2rem;
 }
 
+/* =========================================
+Welcome Page Collapsibles
+========================================= */
+.api-welcome .collapsible {
+  box-shadow: none;
+  border: none;
+  margin: 0.75rem 0 1rem;
+}
+
+.api-welcome .collapsible>li {
+  border-radius: 0.4rem;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+  box-shadow: none;
+  border: 1px solid;
+  /* color from theme */
+}
+
+.api-welcome .collapsible>li:last-child {
+  margin-bottom: 0;
+}
+
+.api-welcome .collapsible-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem 0.55rem 0.85rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  border-bottom: none;
+}
+
+/* Chevron on right — rotates 180° when item is open */
+.api-welcome .collapsible-header::after {
+  content: 'expand_more';
+  font-family: 'Material Icons';
+  font-size: 1.25rem;
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+
+.api-welcome .collapsible>li.active>.collapsible-header {
+  border-radius: 0.4rem 0.4rem 0 0;
+  border-bottom: 1px solid;
+}
+
+.api-welcome .collapsible>li.active>.collapsible-header::after {
+  transform: rotate(180deg);
+}
+
+.api-welcome .collapsible-body {
+  border-radius: 0 0 0.4rem 0.4rem;
+  padding: 0.85rem 1rem;
+  border-top: none;
+}
+
+.api-welcome .collapsible-body .code-snippet {
+  margin-bottom: 0.85rem;
+}
+
+.api-welcome .collapsible-body .code-snippet:last-child {
+  margin-bottom: 0;
+}
+
 .no-config .info {
   font-size: 3.3rem;
 }
@@ -420,8 +486,30 @@ textarea {
   display: inline-block;
 }
 
-#overview pre {
-  margin-left: 2.0rem;
+/* Inline tab chip — used in getting-started steps to reference a tab by name */
+.tab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+  font-weight: 600;
+  font-size: 0.875em;
+  border: 1px solid;
+  vertical-align: middle;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.tab-chip .material-icons {
+  font-size: 1em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Key/ID highlight inside code blocks — suppress global em italic */
+pre code em {
+  font-style: normal;
 }
 
 /* Base Tab Structure */
@@ -602,15 +690,32 @@ body .tabs .tab.disabled a:hover i {
   font-size: 1.1rem;
 }
 
+.config-id-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.config-id-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
 .config-id-wrapper {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  margin-left: 0.25rem;
 }
 
 .config-id-copy.btn-flat {
-  margin-left: 0.2rem;
+  margin-left: 0.1rem;
 }
 
 code.config-id {
