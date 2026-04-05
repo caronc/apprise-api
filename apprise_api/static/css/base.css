@@ -237,7 +237,7 @@ Side Nav (replaces legacy Materialize collection sidebar)
   float: right;
   font-style: normal;
   margin: 0;
-  padding: 0;
+  padding: 0.18rem 0 0 0;
   list-style: none;
   display: flex;
   flex-direction: column;

@@ -454,24 +454,53 @@
     if (anchorEl) {
       anchorEl.disabled = true;
     }
+    Swal.fire({
+      title: '{% trans "Notification" %}',
+      html: '{% trans "Sending test notification..." %}',
+    });
+    Swal.showLoading();
     try {
       const response = await fetch('{% url "notify" key %}', {
         method: 'POST',
-        headers: { 'Accept': 'application/json' },
+        headers: {
+          'Accept': 'text/html',
+          'X-Apprise-Log-Level': 'debug',
+        },
         body: formData,
       });
-      const result = await response.json().catch(() => ({}));
+      const html = await response.text();
       if (response.ok) {
         Swal.fire({
           title: '{% trans "Notification" %}',
-          html: '{% trans "Test notification sent." %}',
-          icon: 'success'
+          html:
+            '<p class="notify-summary">' +
+            '{% trans "Test notification sent." %}' +
+            '</p>' +
+            '<div class="notify-log-panel">' + html + '</div>',
+          icon: 'success',
+          width: '80em'
+        });
+      } else if (response.status == 424) {
+        Swal.fire({
+          title: '{% trans "Notification" %}',
+          html:
+            '<p class="notify-summary">' +
+            '{% trans "One or more test notifications were not sent." %}' +
+            '</p>' +
+            '<div class="notify-log-panel">' + html + '</div>',
+          icon: 'warning',
+          width: '80em'
         });
       } else {
         Swal.fire({
           title: '{% trans "Notification" %}',
-          html: result.error || '{% trans "Failed to send test notification." %}',
-          icon: 'error'
+          html:
+            '<p class="notify-summary">' +
+            '{% trans "Failed to send test notification." %}' +
+            '</p>' +
+            '<div class="notify-log-panel">' + html + '</div>',
+          icon: 'error',
+          width: '80em'
         });
       }
     } catch (e) {
