@@ -55,10 +55,26 @@
           <li>
             <span>
               {% trans "Verify your Apprise API Status:" %}
-              <i id="api-status-icon"
-                 class="material-icons api-status-icon status-loading">
-                autorenew
-              </i>
+              <span id="api-status-icon"
+                    class="api-status-icon status-icon-stack status-loading"
+                    aria-hidden="true">
+                <span class="status-icon status-icon-loading">
+                  {% include 'icons/status-loading.svg' %}
+
+                </span>
+                <span class="status-icon status-icon-ok">
+                  {% include 'icons/status-ok.svg' %}
+
+                </span>
+                <span class="status-icon status-icon-error">
+                  {% include 'icons/status-error.svg' %}
+
+                </span>
+                <span class="status-icon status-icon-disabled">
+                  {% include 'icons/status-disabled.svg' %}
+
+                </span>
+              </span>
             </span>
             <div id="api-status-details" class="api-status-details"></div>
           </li>
@@ -85,8 +101,8 @@
           </li>
           <li>
             <div>
-              {% blocktrans %}
-              Use the <span class="tab-chip"><i class="material-icons">settings</i> Configuration</span> section to prepare and save your Apprise configuration.
+              {% blocktrans with config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}
+              Use the {{ config_chip }} section to prepare and save your Apprise configuration.
               {% endblocktrans %}
             </div>
             <div>
@@ -97,19 +113,19 @@
             </div>
           </li>
           <li>
-            {% blocktrans %}
-              Use the <span class="tab-chip"><i class="material-icons">web</i> Review</span> section to review what was parsed/detected from your defined configuration.
+            {% blocktrans with review_chip='<a href="#review" class="tab-chip tab-chip-link"><i class="material-icons">web</i> Review</a>'|safe %}
+              Use the {{ review_chip }} section to review what was parsed/detected from your defined configuration.
               {% endblocktrans %}
           </li>
           <li>
             <div>
-              {% blocktrans %}
-              Use the <span class="tab-chip"><i class="material-icons">announcement</i> Notifications</span> section to test out your saved configuration.
+              {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}
+              Use the {{ notify_chip }} section to test out your saved configuration.
             {% endblocktrans %}
             </div>
             <div>
-              {% blocktrans %}
-              <i class="material-icons">lightbulb_outline</i>: The number also provided in the <span class="tab-chip"><i class="material-icons">announcement</i> Notifications</span>
+              {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}
+              <i class="material-icons">lightbulb_outline</i>: The number also provided in the {{ notify_chip }}
               tab identifies how many notifications will be sent (based on tags/configuration provided) when using this section.
             {% endblocktrans %}
             </div>
@@ -192,7 +208,7 @@
         </div>
         {% blocktrans %}When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:{% endblocktrans %}
         <div class="code-snippet"
-             data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+             data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
           <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
@@ -224,7 +240,7 @@
             </div>
             {{ field.errors }}
           {% elif field.name == 'format' %}
-            <div class="config-toolbar" style="justify-content: space-between;">
+            <div class="config-toolbar">
               <div class="input-field config-format-field">
                 {{ field.label_tag }}
                 {{ field }}
@@ -233,8 +249,7 @@
               <a href="https://appriseit.com/tools/url-builder/"
                  target="_blank"
                  rel="noopener noreferrer"
-                 class="btn waves-effect waves-light config-url-builder-btn"
-                 style="margin-bottom: 0.75rem">
+                 class="btn waves-effect waves-light config-url-builder-btn">
                 {% trans "Apprise URL Builder" %}
                 <i class="material-icons right">build</i>
               </a>
@@ -247,10 +262,12 @@
             </div>
           {% endif %}
         {% endfor %}
-        <button class="btn waves-effect waves-light" type="submit" name="action">
-          {% trans "Save Configuration" %}
-          <i class="material-icons right">save</i>
-        </button>
+        <div class="config-form-actions">
+          <button class="btn waves-effect waves-light" type="submit" name="action">
+            {% trans "Save Configuration" %}
+            <i class="material-icons right">save</i>
+          </button>
+        </div>
       </form>
     {% else %}
       <h5>{% trans "Your Configuration Is Locked" %}</h5>
@@ -259,19 +276,22 @@
   </div>
   <div id="review" class="col s12">
     {% if not CONFIG_LOCK %}
-      <div class="section no-config">
-        <div class="divider"></div>
-        <div>
-          <i class="material-icons info">info</i>
-          {% blocktrans %}Once you have successfully loaded <i>at least one Apprise URL</i> on the <strong><i class="material-icons">settings</i> Configuration</strong> section, your loaded entries will display here.
-          {% endblocktrans %}
+      <div class="section no-config review-empty-state">
+        <div class="review-empty-card">
+          <div class="review-empty-lead">
+            <i class="material-icons info" aria-hidden="true">info</i>
+            <div class="review-empty-copy">
+              <p>
+                {% blocktrans with config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}Once you have successfully loaded <i>at least one Apprise URL</i> on the {{ config_chip }} section, your loaded entries will display here.{% endblocktrans %}
+              </p>
+            </div>
+          </div>
         </div>
-        <div class="divider"></div>
       </div>
       <div class="section has-config">
         <h5>{% trans "Loaded Configuration" %}</h5>
-        <div>
-          {% blocktrans %}<strong>Tip:</strong> Click on a tag (🏷️) to pre-select it in the <strong><i class="material-icons">announcement</i>Notifications</strong> section.{% endblocktrans %}
+        <div class="loaded-config-tip">
+          {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}<strong>Tip:</strong> Click on a tag (🏷️) to pre-select it in the {{ notify_chip }} section.{% endblocktrans %}
         </div>
         <div id="url-list"></div>
         <div id="url-list-progress" class="progress" style="width:70%">
@@ -312,12 +332,6 @@
           {# Where we will render the selected files #}
           <div class="notify-attachments-list"></div>
         </div>
-        <div class="input-field col s12 m2">
-          <span class="btn btn-clear-form waves-effect waves-light">
-            <label>{% trans "Clear Form" %}</label>
-            <i class="material-icons">restore_page</i>
-          </span>
-        </div>
       </div>
       <div class="row">
         <div class="input-field col s12">
@@ -333,10 +347,16 @@
           {{ form_notify.body.errors }}
         </div>
       </div>
-      <button class="btn waves-effect waves-light" type="submit" name="action">
-        {% trans "Send Notification" %}
-        <i class="material-icons right">send</i>
-      </button>
+      <div class="notify-form-actions">
+        <button class="btn waves-effect waves-light" type="submit" name="action">
+          {% trans "Send Notification" %}
+          <i class="material-icons right">send</i>
+        </button>
+        <span class="btn btn-clear-form waves-effect waves-light">
+          <span class="btn-text">{% trans "Clear Form" %}</span>
+          <i class="material-icons">restore_page</i>
+        </span>
+      </div>
     </form>
   </div>
 </div>
@@ -423,7 +443,6 @@
   function initAppriseConfigEditor() {
     const textarea = document.getElementById('id_config');
     const code = document.getElementById('config-highlight');
-    const tabsElem = document.querySelector('.tabs');
     if (!textarea || !code) return;
     // Disable browser spell-check and similar “helpful” features
     textarea.setAttribute('spellcheck', 'false');
@@ -444,6 +463,9 @@
       }
       code.innerHTML = text;
       if (typeof hljs !== 'undefined') {
+        // v11 sets data-highlighted="yes" after first highlight and refuses to
+        // re-highlight the same element; remove it so each keystroke re-runs.
+        code.removeAttribute('data-highlighted');
         if (typeof hljs.highlightElement === 'function') {
           hljs.highlightElement(code);
         } else if (typeof hljs.highlightBlock === 'function') {
@@ -467,19 +489,104 @@
         code.scrollTop = textarea.scrollTop;
       }).observe(textarea);
     }
-    // --- Tab Switching Logic ---
-    if (tabsElem && typeof M !== 'undefined') {
-      M.Tabs.init(tabsElem, {
-        onShow: function (tabContent) {
-          if (tabContent.id === 'config') {
-            setTimeout(update, 10);
-          }
-        }
-      });
-    }
+    // Make tab switches able to refresh the highlighted config panel.
+    window.__appriseConfigEditorRefresh = function () {
+      setTimeout(update, 10);
+    };
     // Initial Load
     update();
   }
+  let configTabsInstance = null;
+  let configTabsHashBound = false;
+
+  function setConfigTabHash(hash) {
+    if (!hash || hash[0] !== '#') {
+      return;
+    }
+    const url = window.location.pathname + window.location.search + hash;
+    if (window.location.hash !== hash) {
+      history.replaceState(null, '', url);
+    }
+  }
+
+  function selectConfigTabFromHash() {
+    const tabsElem = document.querySelector('.tabs.config-overview');
+    const hash = window.location.hash || '';
+    if (!tabsElem || !hash || hash[0] !== '#') {
+      return;
+    }
+
+    const selector = 'a[href="' + hash + '"]';
+    const tabLink = tabsElem.querySelector(selector);
+    if (!tabLink) {
+      return;
+    }
+
+    const tabItem = tabLink.closest('li.tab');
+    if (tabItem && tabItem.classList.contains('disabled')) {
+      return;
+    }
+
+    if (configTabsInstance && typeof configTabsInstance.select === 'function') {
+      try {
+        configTabsInstance.select(hash.slice(1));
+        return;
+      } catch (e) {
+        console.warn('Unable to select tab from hash via Materialize', e);
+      }
+    }
+
+    tabLink.click();
+  }
+
+  function initConfigTabs() {
+    const tabsElem = document.querySelector('.tabs.config-overview');
+    if (!tabsElem) {
+      return;
+    }
+
+    if (typeof M !== 'undefined' && M.Tabs) {
+      configTabsInstance = M.Tabs.getInstance(tabsElem);
+      if (!configTabsInstance) {
+        configTabsInstance = M.Tabs.init(tabsElem, {
+          onShow: function (tabContent) {
+            if (!tabContent || !tabContent.id) {
+              return;
+            }
+            setConfigTabHash('#' + tabContent.id);
+            if (tabContent.id === 'config' && typeof window.__appriseConfigEditorRefresh === 'function') {
+              window.__appriseConfigEditorRefresh();
+            }
+          }
+        });
+      }
+    }
+
+    tabsElem.querySelectorAll('li.tab a[href^="#"]').forEach(function (anchor) {
+      if (anchor.dataset.hashWired === '1') {
+        return;
+      }
+      anchor.dataset.hashWired = '1';
+      anchor.addEventListener('click', function () {
+        const parent = anchor.closest('li.tab');
+        if (parent && parent.classList.contains('disabled')) {
+          return;
+        }
+        const hash = anchor.getAttribute('href');
+        setConfigTabHash(hash);
+      });
+    });
+
+    if (!configTabsHashBound) {
+      window.addEventListener('hashchange', function () {
+        selectConfigTabFromHash();
+      });
+      configTabsHashBound = true;
+    }
+
+    selectConfigTabFromHash();
+  }
+
   function update_count() {
     const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
     document.querySelectorAll(".card-count").forEach(function (e) {
@@ -806,6 +913,9 @@
       // Remove our restrictions on sending notifications
       document.querySelector('.config-overview li a[href="#notify"]')
         .parentNode.classList.remove('disabled');
+      // If the user landed on a hash-targeted tab (e.g. #notify), try again
+      // now that the tab may be enabled.
+      selectConfigTabFromHash();
       // Disable any no-config entries
       document.querySelectorAll('.no-config').forEach(function (e) {
         e.style.display = 'none';
@@ -831,6 +941,17 @@
         let result = await response.json();
         // Set our configuration so it's visible
         document.querySelector('#id_config').value = result.config;
+        // Keep the overlay-highlight editor in sync with async-loaded config.
+        if (typeof window.__appriseConfigEditorRefresh === 'function') {
+          window.__appriseConfigEditorRefresh();
+        } else {
+          // initAppriseConfigEditor() may not be wired yet on a very fast load.
+          setTimeout(function () {
+            if (typeof window.__appriseConfigEditorRefresh === 'function') {
+              window.__appriseConfigEditorRefresh();
+            }
+          }, 25);
+        }
         // Set our format
         document.querySelector('#id_format').value = result.format;
         // dispatch our event to update our select box
@@ -922,6 +1043,32 @@
   // variable for tracking uploaded attachments
   let notifyAttachments = [];
 
+  function markNotifyMinimumMissing() {
+    const bodyInput = document.querySelector('#id_body');
+    const browseBtn = document.querySelector('#notify .notify-attachments-field .btn-file');
+    if (bodyInput) {
+      bodyInput.classList.add('notify-missing');
+    }
+    if (browseBtn) {
+      browseBtn.classList.add('notify-missing');
+    }
+  }
+
+  function clearNotifyMinimumMissing() {
+    const bodyInput = document.querySelector('#id_body');
+    const browseBtn = document.querySelector('#notify .notify-attachments-field .btn-file');
+    if (bodyInput) {
+      bodyInput.classList.remove('notify-missing');
+    }
+    if (browseBtn) {
+      browseBtn.classList.remove('notify-missing');
+    }
+  }
+
+  function getSelectedNotifyTargetCount() {
+    return document.querySelectorAll('#url-list li.card-panel.selected').length;
+  }
+
   function renderAttachmentList(listEl) {
     listEl.innerHTML = '';
     notifyAttachments.forEach(function (file, index) {
@@ -938,6 +1085,9 @@
         e.preventDefault();
         notifyAttachments.splice(index, 1);
         renderAttachmentList(listEl);
+        if (notifyAttachments.length > 0) {
+          clearNotifyMinimumMissing();
+        }
       });
 
       listEl.appendChild(chip);
@@ -989,6 +1139,7 @@
       clearBtn.addEventListener('click', function (e) {
         e.preventDefault();
         resetNotifyForm();
+        clearNotifyMinimumMissing();
       });
     }
 
@@ -1019,13 +1170,53 @@
         fileInput.value = '';
       }
       renderAttachmentList(list);
+      if (notifyAttachments.length > 0) {
+        clearNotifyMinimumMissing();
+      }
     });
+
+    const bodyInput = document.querySelector('#id_body');
+    if (bodyInput && bodyInput.dataset.notifyValidationWired !== '1') {
+      bodyInput.dataset.notifyValidationWired = '1';
+      bodyInput.addEventListener('input', function () {
+        const hasBody = bodyInput.value.trim().length > 0;
+        if (hasBody || notifyAttachments.length > 0) {
+          clearNotifyMinimumMissing();
+        }
+      });
+    }
   }
 
   function notify_init() {
     // over-ride manual submit for a nicer user experience
     document.querySelector('#donotify').onsubmit = function (event) {
       event.preventDefault();
+      const selectedTargets = getSelectedNotifyTargetCount();
+      if (selectedTargets < 1) {
+        Swal.fire({
+          title: '{% trans "Notification" %}',
+          html: '{% trans "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending." %}',
+          icon: 'warning'
+        });
+        return false;
+      }
+
+      const bodyInput = document.querySelector('#id_body');
+      const hasBody = bodyInput ? bodyInput.value.trim().length > 0 : false;
+      const hasAttachment = notifyAttachments.length > 0;
+
+      // Minimum payload gate: allow body-only OR attachment-only.
+      if (!hasBody && !hasAttachment) {
+        markNotifyMinimumMissing();
+        Swal.fire({
+          title: '{% trans "Notification" %}',
+          html: '{% trans "Please provide at least a message body or one attachment before sending." %}',
+          icon: 'warning'
+        });
+        return false;
+      }
+
+      clearNotifyMinimumMissing();
       const chipElement = document.querySelector('.chips');
       const chipInput = document.querySelector('.chips > input');
       if (chipInput.value) {
@@ -1163,6 +1354,8 @@
   }
   // Hide tag field since we use the pretty Materialize Chip setup instead
   document.querySelector('#id_tag').style.display = 'none';
+  // Sync config tabs with URL hash and allow direct hash deep links.
+  initConfigTabs();
   /* Initialize our page */
   main_init();
   // Config ID copy-to-clipboard
@@ -1210,7 +1403,7 @@
     {% if not CONFIG_LOCK %}
       /* Initialze our configuration */
       config_init();
-      hljs.initHighlightingOnLoad();
+      hljs.highlightAll();
       initAppriseConfigEditor();
     {% endif %}
     notify_init();

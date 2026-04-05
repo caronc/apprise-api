@@ -106,8 +106,75 @@ Status & Indicators
   color: #148c80;
 }
 
+.review-empty-card {
+  background-color: #f6f7fa;
+  border-color: #c1c3c9;
+}
+
+.review-empty-lead .info {
+  color: #555a62;
+}
+
+.loaded-config-tip {
+  color: #555a62;
+}
+
 .api-details .plugin-index {
+  color: #555a62;
+  background-color: #ffffff;
+  border-color: #d8d9df;
+}
+
+.api-details .collapsible>li {
+  border-color: #c1c3c9;
+}
+
+.api-details .collapsible-header {
+  background-color: #edeef3;
+  color: #34383f;
+}
+
+.api-details .collapsible-header:hover {
+  background-color: #ffffff;
+  color: #0f5f57;
+}
+
+.api-details .collapsible>li.active>.collapsible-header {
+  background-color: #ffffff;
+  color: #0f5f57;
+  border-bottom-color: #c1c3c9;
+}
+
+.api-details .collapsible-body {
+  background-color: #ffffff;
+}
+
+.api-details .plugin-chevron {
   color: #888c96;
+}
+
+.api-details .collapsible>li.active .plugin-chevron {
+  color: #148c80;
+}
+
+.api-details .plugin-service-btn {
+  color: #34383f !important;
+  border-color: #c1c3c9;
+  background-color: #f6f7fa;
+}
+
+.api-details .plugin-service-btn .material-icons {
+  color: #555a62;
+}
+
+.api-details .plugin-service-btn:hover {
+  color: #0f5f57 !important;
+  border-color: #9dd6cf;
+  background-color: #e5f4f2;
+}
+
+.api-details .plugin-service-btn:hover .material-icons {
+  color: #148c80;
 }
 
 #overview strong {
@@ -359,18 +426,22 @@ Tabs
 
 /* Inactive tabs: surface-coloured, rounded top corners */
 body .tabs .tab a {
-  background-color: #edeef3 !important;
-  color: #888c96 !important;
-  border: 1px solid #c1c3c9 !important;
+  background-color: #f6f7fa !important;
+  color: #626b79 !important;
+  border: 1px solid #c7ccd6 !important;
   border-bottom: none !important;
   margin-bottom: -1px;
 }
 
+body .tabs .tab a i {
+  color: inherit !important;
+}
+
 /* Hover */
 body .tabs .tab a:hover {
-  background-color: #ffffff !important;
-  color: #148c80 !important;
-  border-color: #c1c3c9 !important;
+  background-color: #eef8f6 !important;
+  color: #11796f !important;
+  border-color: #9ccdc6 !important;
   border-bottom: none !important;
 }
 
@@ -378,8 +449,8 @@ body .tabs .tab a:hover {
    :focus included so clicking does not trigger a colour change. */
 body .tabs .tab a.active,
 body .tabs .tab a.active:focus {
-  background-color: #ffffff !important;
-  color: #0f5f57 !important;
+  background-color: #e6f5f2 !important;
+  color: #0f6f66 !important;
   border: 1px solid #148c80 !important;
   border-bottom: 2px solid #ffffff !important;
 }
@@ -394,15 +465,16 @@ body .tabs .tab.disabled a,
 body .tabs .tab.disabled a:hover,
 body .tabs .tab.disabled a i,
 body .tabs .tab.disabled a:hover i {
-  background-color: #f3f4f6 !important;
-  color: #c1c3c9 !important;
+  background-color: #f2f4f8 !important;
+  color: #a9b0bc !important;
   cursor: default;
-  border-color: #e0e1e5 !important;
+  border-color: #d9dee6 !important;
   border-bottom: none !important;
+  opacity: 0.9;
 }
 
 body .tabs .tab a:focus {
-  background-color: #f6f7fa !important;
+  background-color: #eef8f6 !important;
 }
 
 /* =========================================
@@ -411,7 +483,58 @@ Collection & Hover States
 .collection a.collection-item:not(.active):hover,
 .tabs .tab a:focus,
 .tabs .tab a:focus.active {
-  background-color: #edeef3 !important;
+  background-color: #eef8f6 !important;
+}
+
+/* =========================================
+Side Nav
+========================================= */
+:root {
+  --apprise-mini-badge-bg: #148c80;
+  --apprise-mini-badge-ring: #0f5f57;
+  --apprise-mini-badge-horn: #eaf3f2;
+  --apprise-mini-badge-horn-stroke: #c5d2d0;
+  --apprise-logo-wave: #9fb0b3;
+  --apprise-logo-body-1: #39c0b7;
+  --apprise-logo-body-2: #0f5f57;
+  --apprise-logo-text-1: #1a7c74;
+  --apprise-logo-text-2: #0b4d47;
+  --menu-icon-accent: #148c80;
+  --menu-icon-coffee: #8b3a1a;
+  --menu-icon-heart: #c0392b;
+}
+
+.side-nav-group {
+  background-color: #f6f7fa;
+  border: 1px solid #d8d9df;
+}
+
+.side-nav-label {
+  color: #7b8493;
+}
+
+.side-nav-item {
+  color: #34383f !important;
+  border-top-color: #e2e3e8;
+}
+
+.side-nav-item:hover {
+  background-color: #edeef3;
+  color: #148c80 !important;
+}
+
+.side-nav-group--support {
+  border-color: #e8d5d5;
+  background-color: #fdf8f8;
+}
+
+.side-nav-group--support .side-nav-item {
+  border-top-color: #eedcdc;
+}
+
+.side-nav-group--support .side-nav-item:hover {
+  background-color: #faeaea;
+  color: #a83232 !important;
 }
 
 /* =========================================
@@ -455,6 +578,26 @@ Buttons & Chips
 .btn-flat {
   background-color: #edeef3;
   color: #148c80;
+}
+
+#config .config-toolbar .config-url-builder-btn,
+#config .config-toolbar .config-url-builder-btn:visited,
+#config .config-toolbar .config-url-builder-btn:hover,
+#config .config-toolbar .config-url-builder-btn:focus {
+  color: #0f5f57 !important;
+}
+
+#notify .notify-form-actions .btn-clear-form {
+  background-color: #f3f5f8;
+  border-color: #cdd3dc;
+  color: #5d6675;
+}
+
+#notify .notify-form-actions .btn-clear-form:hover,
+#notify .notify-form-actions .btn-clear-form:focus {
+  background-color: #e9edf3;
+  border-color: #b7c0cc;
+  color: #3f4856 !important;
 }
 
 .chip {
@@ -522,7 +665,36 @@ Welcome Page Collapsibles
 Health Check
 ========================================= */
 #health-check {
-  background-color: #fff5f5;
+  background-color: #fcf9fa;
+  color: #34383f;
+  border-color: #f1dede;
+}
+
+#health-check .health-check-title {
+  color: #2f2d33 !important;
+  border-bottom-color: #e6dadd;
+}
+
+#health-check .health-check-icon--error {
+  color: #d14949;
+}
+
+#health-check .health-check-list li {
+  background-color: #fffdfd;
+  border-color: #ecdfe2;
+}
+
+#health-check .health-check-more {
+  background-color: #fffdfd;
+  border-color: #ecdfe2;
+}
+
+#health-check .health-check-more summary {
+  color: #0f6f66;
+}
+
+#health-check .health-check-more-content {
+  border-top: 1px solid #ecdfe2;
 }
 
 /* =========================================
@@ -613,6 +785,39 @@ Highlight.js (general code blocks)
 /* =========================================
 Notifications — SweetAlert2
 ========================================= */
+.swal2-popup {
+  background-color: #ffffff;
+  color: #34383f;
+}
+
+.swal2-popup .swal2-actions .swal2-styled {
+  border-radius: 0.42rem;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.swal2-popup .swal2-confirm.swal2-styled {
+  background-color: #148c80 !important;
+  color: #ffffff !important;
+}
+
+.swal2-popup .swal2-confirm.swal2-styled:hover,
+.swal2-popup .swal2-confirm.swal2-styled:focus {
+  background-color: #0f7a70 !important;
+}
+
+.swal2-popup .swal2-cancel.swal2-styled {
+  background-color: #eceff4 !important;
+  color: #555a62 !important;
+  border: 1px solid #c7cdd7 !important;
+}
+
+.swal2-popup .swal2-cancel.swal2-styled:hover,
+.swal2-popup .swal2-cancel.swal2-styled:focus {
+  background-color: #e3e8ef !important;
+  color: #34383f !important;
+}
+
 .copy-toast.swal2-popup {
   background-color: #edeef3;
   color: #34383f;

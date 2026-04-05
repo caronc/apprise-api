@@ -135,8 +135,75 @@ Status & Indicators
   color: #34383f;
 }
 
+.review-empty-card {
+  background-color: #23262f;
+  border-color: #34383f;
+}
+
+.review-empty-lead .info {
+  color: #555a62;
+}
+
+.loaded-config-tip {
+  color: #aeb4be;
+}
+
 .api-details .plugin-index {
+  color: #aeb4be;
+  background-color: #17181c;
+  border-color: #3d4350;
+}
+
+.api-details .collapsible>li {
+  border-color: #34383f;
+}
+
+.api-details .collapsible-header {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+.api-details .collapsible-header:hover {
+  background-color: #2c3040;
+  color: #7de6da;
+}
+
+.api-details .collapsible>li.active>.collapsible-header {
+  background-color: #2c3040;
+  color: #7de6da;
+  border-bottom-color: #34383f;
+}
+
+.api-details .collapsible-body {
+  background-color: #17181c;
+}
+
+.api-details .plugin-chevron {
+  color: #666c78;
+}
+
+.api-details .collapsible>li.active .plugin-chevron {
+  color: #7de6da;
+}
+
+.api-details .plugin-service-btn {
+  color: #c1c3c9 !important;
+  border-color: #555a62;
+  background-color: #23262f;
+}
+
+.api-details .plugin-service-btn .material-icons {
   color: #888c96;
+}
+
+.api-details .plugin-service-btn:hover {
+  color: #7de6da !important;
+  border-color: #2cb6a6;
+  background-color: #2c3040;
+}
+
+.api-details .plugin-service-btn:hover .material-icons {
+  color: #7de6da;
 }
 
 #overview strong {
@@ -176,6 +243,56 @@ a:hover {
 /* Collection sidebar items — muted, not teal */
 .collection a.collection-item {
   color: #c1c3c9 !important;
+}
+
+/* =========================================
+Side Nav
+========================================= */
+:root {
+  --apprise-mini-badge-bg: #2cb6a6;
+  --apprise-mini-badge-ring: #0b3b37;
+  --apprise-mini-badge-horn: #f2f8f8;
+  --apprise-mini-badge-horn-stroke: #c8d6d5;
+  --apprise-logo-wave: #89a0a5;
+  --apprise-logo-body-1: #4ed1c8;
+  --apprise-logo-body-2: #1f8780;
+  --apprise-logo-text-1: #8de8dd;
+  --apprise-logo-text-2: #3ab5aa;
+  --menu-icon-accent: #2cb6a6;
+  --menu-icon-coffee: #c07050;
+  --menu-icon-heart: #e05c5c;
+}
+
+.side-nav-group {
+  background-color: #23262f;
+  border: 1px solid #34383f;
+}
+
+.side-nav-label {
+  color: #6f7582;
+}
+
+.side-nav-item {
+  color: #c1c3c9 !important;
+  border-top-color: #34383f;
+}
+
+.side-nav-item:hover {
+  background-color: #2c3040;
+  color: #7de6da !important;
+}
+
+.side-nav-group--support {
+  border-color: #3a2e2e;
+}
+
+.side-nav-group--support .side-nav-item {
+  border-top-color: #3a2e2e;
+}
+
+.side-nav-group--support .side-nav-item:hover {
+  background-color: #2e2525;
+  color: #f0a0a0 !important;
 }
 
 /* =========================================
@@ -452,7 +569,7 @@ Tabs
 /* Inactive tabs: slightly elevated surface, rounded top corners */
 body .tabs .tab a {
   background-color: #23262f !important;
-  color: #555a62 !important;
+  color: #888c96 !important;
   border: 1px solid #34383f !important;
   border-bottom: none !important;
   margin-bottom: -1px;
@@ -462,7 +579,7 @@ body .tabs .tab a {
 body .tabs .tab a:hover {
   background-color: #2c3040 !important;
   color: #7de6da !important;
-  border-color: #34383f !important;
+  border-color: #555a62 !important;
   border-bottom: none !important;
 }
 
@@ -471,7 +588,7 @@ body .tabs .tab a:hover {
 body .tabs .tab a.active,
 body .tabs .tab a.active:focus {
   background-color: #17181c !important;
-  color: #2cb6a6 !important;
+  color: #7de6da !important;
   border: 1px solid #2cb6a6 !important;
   border-bottom: 2px solid #17181c !important;
 }
@@ -548,6 +665,26 @@ Buttons & Chips
   color: #c1c3c9;
 }
 
+#config .config-toolbar .config-url-builder-btn,
+#config .config-toolbar .config-url-builder-btn:visited,
+#config .config-toolbar .config-url-builder-btn:hover,
+#config .config-toolbar .config-url-builder-btn:focus {
+  color: #edeef3 !important;
+}
+
+#notify .notify-form-actions .btn-clear-form {
+  background-color: #2a2f3a;
+  border-color: #4b5260;
+  color: #b8bec8;
+}
+
+#notify .notify-form-actions .btn-clear-form:hover,
+#notify .notify-form-actions .btn-clear-form:focus {
+  background-color: #323845;
+  border-color: #616a7c;
+  color: #d1d6de !important;
+}
+
 #url-list .copy-url-btn:hover,
 .config-id-copy.btn-flat:hover,
 .snippet-copy-btn:hover {
@@ -611,6 +748,34 @@ Health Check
 #health-check {
   background-color: #23262f;
   color: #c1c3c9;
+  border-color: #34383f;
+}
+
+#health-check .health-check-title {
+  color: #edeef3;
+  border-bottom-color: #3d4350;
+}
+
+#health-check .health-check-icon--error {
+  color: #ff7373;
+}
+
+#health-check .health-check-list li {
+  background-color: #1f222a;
+  border-color: #34383f;
+}
+
+#health-check .health-check-more {
+  background-color: #1f222a;
+  border-color: #34383f;
+}
+
+#health-check .health-check-more summary {
+  color: #7de6da;
+}
+
+#health-check .health-check-more-content {
+  border-top: 1px solid #34383f;
 }
 
 /* =========================================
@@ -704,6 +869,34 @@ Notifications — SweetAlert2
 .swal2-popup {
   background-color: #23262f;
   color: #edeef3;
+}
+
+.swal2-popup .swal2-actions .swal2-styled {
+  border-radius: 0.42rem;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.swal2-popup .swal2-confirm.swal2-styled {
+  background-color: #2cb6a6 !important;
+  color: #0f1e1c !important;
+}
+
+.swal2-popup .swal2-confirm.swal2-styled:hover,
+.swal2-popup .swal2-confirm.swal2-styled:focus {
+  background-color: #38c8b8 !important;
+}
+
+.swal2-popup .swal2-cancel.swal2-styled {
+  background-color: #34383f !important;
+  color: #c1c3c9 !important;
+  border: 1px solid #555a62 !important;
+}
+
+.swal2-popup .swal2-cancel.swal2-styled:hover,
+.swal2-popup .swal2-cancel.swal2-styled:focus {
+  background-color: #3f444d !important;
+  color: #edeef3 !important;
 }
 
 .copy-toast.swal2-popup {

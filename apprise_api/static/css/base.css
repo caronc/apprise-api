@@ -53,15 +53,101 @@
   margin-top: 0.5rem;
 }
 
-/* Keep sidebar items left-aligned */
-.side-menu ul.collection>a.collection-item {
-  text-align: left;
+/* =========================================
+Side Nav (replaces legacy Materialize collection sidebar)
+========================================= */
+
+/* Stack the groups with consistent gaps */
+.side-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* padding slightly inside the column */
+  padding-right: 0.25rem;
 }
 
-/* Sidebar icon alignment */
-.side-menu ul.collection>a.collection-item i.material-icons {
-  float: left;
-  margin-right: 0.75rem;
+.side-nav-group {
+  display: block;
+  height: auto;
+  line-height: normal;
+  min-height: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+  /* border + background colours come from theme */
+}
+
+.side-nav-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0.08rem 0 0.18rem;
+  padding: 0 0.15rem;
+  opacity: 0.72;
+}
+
+.side-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.4rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  /* border-top separator (theme overrides the colour) */
+  border-top: 1px solid transparent;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.side-nav-item:first-child {
+  border-top: none;
+}
+
+/* SVG icon wrapper */
+.menu-icon,
+.topbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.menu-icon svg,
+.topbar-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+}
+
+/* Heart icon uses fill rather than stroke */
+.menu-icon--heart svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Accent-coloured icon modifiers — colour tokens set per-theme */
+.menu-icon--accent {
+  color: var(--menu-icon-accent, currentColor);
+}
+
+.menu-icon--coffee {
+  color: var(--menu-icon-coffee, currentColor);
+}
+
+.menu-icon--heart {
+  color: var(--menu-icon-heart, currentColor);
 }
 
 @media (max-width: 992px) {
@@ -88,6 +174,9 @@
 
 .nav ul li {
   list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .nav ul {
@@ -103,13 +192,21 @@
 
 /* Apprise Library text – tight to the top-right */
 .nav ul li .apprise-lib-ver {
-  line-height: 1.1;
-  margin-top: 0.1rem;
+  line-height: 1.15;
+  margin-top: 0;
 }
 
 .nav ul li.api-status-nav,
 .nav ul li .apprise-lib-ver {
   font-size: 0.75rem;
+}
+
+.nav ul li.api-status-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  line-height: 1.1;
+  margin-top: 0.18rem;
 }
 
 /* Social + theme icon row in the nav */
@@ -124,6 +221,10 @@ li.social-theme-nav {
 li.social-theme-nav a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
   opacity: 0.75;
   transition: opacity 0.15s ease;
 }
@@ -132,13 +233,17 @@ li.social-theme-nav a:hover {
   opacity: 1;
 }
 
-li.social-theme-nav svg {
-  width: 1.4rem;
-  height: 1.4rem;
+li.social-theme-nav .topbar-icon {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
-li.social-theme-nav i.material-icons {
-  font-size: 1.4rem;
+li.social-theme-nav .topbar-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+  fill: currentColor;
+  stroke: none;
 }
 
 .nav-divider {
@@ -176,19 +281,20 @@ li.social-theme-nav i.material-icons {
   margin: -0.3em .5em 0 0;
 }
 
-img.apprise-logo,
-img.apprise-mini-logo {
+.apprise-logo {
   max-width: 100%;
   display: block;
+  height: 5em;
+  width: auto;
 }
 
-img.apprise-logo {
-  height: 6em;
-}
-
-img.apprise-mini-logo {
-  height: 2em;
-  padding: 0 0.25rem;
+.apprise-mini-logo {
+  max-width: 100%;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 1.0rem;
+  width: 1.0rem;
+  margin-right: 0.16rem;
 }
 
 
@@ -196,6 +302,13 @@ a.apprise-api-ver,
 a.apprise-lib-ver {
   color: inherit;
   text-decoration: none;
+}
+
+a.apprise-lib-ver {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.06rem;
 }
 
 .page-footer-legal {
@@ -227,6 +340,11 @@ code {
   white-space: normal;
   padding: 0.2rem;
   border-radius: 4px;
+}
+
+/* Inside <pre>, preserve newlines that hljs injects when converting <br> tags */
+pre code {
+  white-space: pre;
 }
 
 h1,
@@ -303,18 +421,46 @@ textarea {
   max-width: 70rem;
 }
 
+.api-details .collapsible {
+  box-shadow: none;
+  border: none;
+  margin: 0.75rem 0 1rem;
+}
+
+.api-details .collapsible>li {
+  border-radius: 0.45rem;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+  box-shadow: none;
+  border: 1px solid;
+}
+
+.api-details .collapsible>li:last-child {
+  margin-bottom: 0;
+}
+
 .api-details .collapsible-header {
   display: flex;
   align-items: center;
-  padding: 0.6rem 1rem;
+  gap: 0.45rem;
+  padding: 0.62rem 1rem 0.62rem 0.85rem;
+  font-weight: 500;
+  font-size: 0.94rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  border-bottom: none;
 }
 
 .api-details .plugin-index {
   font-family: monospace;
-  font-size: 0.9rem;
-  width: 3rem;
-  text-align: right;
-  margin-right: 0.5rem;
+  font-size: 0.82rem;
+  min-width: 2.65rem;
+  text-align: center;
+  margin-right: 0.3rem;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 0.13rem 0.45rem;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
 }
 
 .api-details .plugin-chevron,
@@ -322,16 +468,78 @@ textarea {
   margin-right: 0.4rem;
 }
 
+.api-details .plugin-chevron {
+  transition: transform 0.2s ease, color 0.15s ease, opacity 0.15s ease;
+  opacity: 0.75;
+}
+
+.api-details .collapsible>li.active .plugin-chevron {
+  transform: rotate(90deg);
+  opacity: 1;
+}
+
 /* Apprise API status indicator */
 .api-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   vertical-align: middle;
-  margin-left: 0.25rem;
+  margin-left: 0.3rem;
   font-size: 1.1rem;
+  line-height: 1;
 }
 
 /* Loading spinner */
 .api-status-icon.status-loading {
   animation: api-spin 1s linear infinite;
+}
+
+.status-icon-stack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.12rem;
+  height: 1.12rem;
+  margin-left: 0.3rem;
+  font-size: 0;
+}
+
+.status-icon-stack.status-loading {
+  animation: none;
+}
+
+.status-icon-stack .status-icon {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.status-icon-stack .status-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: block;
+}
+
+.status-icon-stack.status-loading .status-icon-loading,
+.status-icon-stack.status-ok .status-icon-ok,
+.status-icon-stack.status-error .status-icon-error,
+.status-icon-stack.status-disabled .status-icon-disabled {
+  display: inline-flex;
+}
+
+.status-icon-stack.status-loading .status-icon-loading svg {
+  animation: api-spin 1s linear infinite;
+}
+
+.topbar-status-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-left: 0;
 }
 
 /* Error details text under the line */
@@ -341,22 +549,17 @@ textarea {
   font-size: 0.85rem;
 }
 
-.nav ul li.api-status-nav {
-  margin-top: 0.15rem;
+.api-status-nav #nav-api-status-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  line-height: 1;
 }
 
-.nav ul li.api-status-nav i {
-  font-size: 1.4em;
-}
-
-.api-status-icon {
-  vertical-align: middle;
-  margin-left: 0.25rem;
-  font-size: 1.1rem;
-}
-
-.api-status-icon.status-loading {
-  animation: api-spin 1s linear infinite;
+#theme-toggle .topbar-icon svg {
+  transform: translateX(0.03rem);
 }
 
 @keyframes api-spin {
@@ -374,20 +577,59 @@ textarea {
   flex: 1 1 auto;
   margin: 0;
   padding: 0;
+  font-weight: 500;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.api-details .plugin-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-left: 0.5rem;
+.api-details .collapsible>li.active>.collapsible-header {
+  border-bottom: 1px solid;
 }
 
-.api-details .plugin-actions .material-icons {
-  font-size: 1.2rem;
+.api-details .plugin-service-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.api-details .plugin-service-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.api-details .plugin-service-meta h5 {
+  margin: 0;
+}
+
+.api-details .plugin-service-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.api-details .plugin-service-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid;
+  border-radius: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  line-height: 1.2;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.api-details .plugin-service-btn .material-icons {
+  font-size: 1rem;
 }
 
 .getting-started li {
@@ -482,6 +724,39 @@ Welcome Page Collapsibles
   font-size: 3.3rem;
 }
 
+.review-empty-state {
+  margin-top: 0.55rem;
+}
+
+.review-empty-card {
+  border: 1px solid;
+  border-radius: 0.6rem;
+  padding: 0.9rem 1rem;
+}
+
+.review-empty-lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.review-empty-lead .info {
+  font-size: 2.45rem;
+  line-height: 1;
+  margin-top: 0.05rem;
+  flex-shrink: 0;
+}
+
+.review-empty-copy p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.loaded-config-tip {
+  margin-bottom: 0.8rem;
+  line-height: 1.5;
+}
+
 #overview strong {
   display: inline-block;
 }
@@ -499,6 +774,18 @@ Welcome Page Collapsibles
   vertical-align: middle;
   line-height: 1.4;
   white-space: nowrap;
+}
+
+.tab-chip-link,
+.tab-chip-link:hover,
+.tab-chip-link:focus {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.tab-chip-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
 }
 
 .tab-chip .material-icons {
@@ -723,6 +1010,29 @@ code.config-id {
   font-weight: 700;
 }
 
+.swal2-popup .cfggen-modal-copy {
+  text-align: center;
+}
+
+.swal2-popup .cfggen-modal-copy p {
+  margin: 0.35rem 0;
+}
+
+.swal2-popup .cfggen-modal-copy .config-id-bar {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0.75rem auto;
+  max-width: 100%;
+}
+
+.swal2-popup .cfggen-modal-copy code.config-id {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .code-snippet {
   position: relative;
   margin-bottom: 1rem;
@@ -776,33 +1086,139 @@ code.config-id {
 
 /* Health Check */
 #health-check {
-  border-radius: 25px;
-  padding: 2em;
+  border-radius: 16px;
+  padding: 1.45rem 1.6rem;
   margin-bottom: 2em;
+  border: 1px solid transparent;
 }
 
-#health-check h4 {
-  font-size: 30px;
+#health-check .health-check-title {
+  font-size: 1.65rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid transparent;
 }
 
-#health-check h4 .material-icons,
-#health-check li .material-icons {
-  margin-top: -0.2em;
+#health-check .health-check-intro {
+  margin: 0 0 0.9rem;
+  font-size: 1.02rem;
 }
 
-#health-check li .material-icons {
-  font-size: 30px;
+#health-check .health-check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
 }
 
-#health-check ul {
-  list-style-type: disc;
-  padding-left: 2em;
+#health-check .health-check-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-#health-check ul strong {
+#health-check .health-check-list {
+  list-style: none;
+  margin: 0.95rem 0 0.25rem;
+  padding: 0;
+}
+
+#health-check .health-check-list li {
+  margin-bottom: 0.8rem;
+  padding: 0.75rem 0.9rem 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+}
+
+#health-check .health-check-list li:last-child {
+  margin-bottom: 0;
+}
+
+#health-check .health-check-list li strong {
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1.12rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+#health-check p {
+  margin-top: 0.45rem;
+  line-height: 1.45;
+}
+
+#health-check>p {
+  margin-top: 0.9rem;
+}
+
+#health-check .health-check-more {
+  margin-top: 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  padding: 0.2rem 0.75rem 0.3rem;
+}
+
+#health-check .health-check-more summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  padding: 0.35rem 0;
+}
+
+#health-check .health-check-more summary::-webkit-details-marker {
+  display: none;
+}
+
+#health-check .health-check-more summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 0.4rem;
+  transition: transform 0.15s ease;
+}
+
+#health-check .health-check-more[open] summary::before {
+  transform: rotate(90deg);
+}
+
+#health-check .health-check-more-content {
+  margin-top: 0.15rem;
+  padding-top: 0.3rem;
+}
+
+#health-check .health-check-snippet {
+  margin: 0.4rem 0 0.7rem;
+}
+
+#health-check .health-check-snippet pre {
+  margin: 0;
+  border-radius: 0.45rem;
+  overflow-x: auto;
+}
+
+#health-check .health-check-snippet code {
   display: block;
+  padding: 0.6rem 0.75rem;
+  white-space: pre;
+}
+
+@media (max-width: 640px) {
+  #health-check {
+    padding: 1.1rem 1rem;
+  }
+
+  #health-check .health-check-title {
+    font-size: 1.5rem;
+  }
 }
 
 .notify-top-row .input-field>label {
@@ -821,6 +1237,50 @@ code.config-id {
 .notify-attachments-field .btn-file {
   display: inline-flex;
   margin-top: 0.25rem;
+}
+
+#notify #id_body.notify-missing {
+  border-color: rgba(255, 183, 77, 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(255, 183, 77, 0.55);
+}
+
+#notify .notify-attachments-field .btn-file.notify-missing {
+  box-shadow: inset 0 0 0 1px rgba(255, 183, 77, 0.7), 0 0 0 2px rgba(255, 183, 77, 0.2);
+}
+
+#notify .notify-attachments-field .btn-file,
+#notify .notify-form-actions .btn,
+#notify .notify-form-actions .btn-clear-form,
+#config .config-toolbar .config-url-builder-btn,
+#config .config-form-actions .btn {
+  min-height: 2.8rem;
+  height: 2.8rem;
+  line-height: 2.8rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 1rem;
+}
+
+#notify .notify-attachments-field .btn-file i.material-icons,
+#notify .notify-form-actions .btn i.material-icons,
+#notify .notify-form-actions .btn-clear-form i.material-icons,
+#config .config-toolbar .config-url-builder-btn i.material-icons,
+#config .config-form-actions .btn i.material-icons {
+  font-size: 1.3rem;
+  line-height: 1;
+  margin: 0;
+}
+
+#notify .notify-attachments-field .btn-file i.right,
+#notify .notify-form-actions .btn i.right,
+#notify .notify-form-actions .btn-clear-form i.right,
+#config .config-toolbar .config-url-builder-btn i.right,
+#config .config-form-actions .btn i.right {
+  margin-left: 0.45rem;
+  margin-right: 0;
 }
 
 .notify-attachments-list {
@@ -863,24 +1323,27 @@ code.config-id {
 }
 
 .btn-clear-form {
-  min-height: 4rem;
-  height: auto;
-  width: 100%;
+  min-height: 2.8rem;
+  height: 2.8rem;
+  width: auto;
   border-radius: 10px;
-  display: flex;
+  border: 1px solid transparent;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0.45rem;
   padding: 0.5rem 0.9rem;
   line-height: 1;
+  font-weight: 500;
 }
 
-.btn-clear-form label {
+.btn-clear-form .btn-text {
   display: block;
-  text-align: left;
+  text-align: center;
   font-size: 0.95rem;
   color: inherit;
-  max-width: 10.5ch;
-  white-space: normal;
+  max-width: none;
+  white-space: nowrap;
   word-break: keep-all;
   line-height: 1.15;
 }
@@ -888,9 +1351,64 @@ code.config-id {
 .btn-clear-form i {
   margin: 0;
   flex: 0 0 auto;
-  font-size: 2.6rem;
+  font-size: 1.35rem;
   line-height: 1;
-  opacity: 0.95;
+  opacity: 0.85;
+}
+
+.notify-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+#notify .notify-top-row .select-wrapper input.select-dropdown {
+  font-size: 1.12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#notify .notify-top-row .dropdown-content.select-dropdown {
+  overflow-x: hidden;
+}
+
+#notify .notify-top-row .dropdown-content.select-dropdown li>span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 992px) {
+
+  #notify .notify-form-actions .btn,
+  #notify .notify-form-actions .btn-clear-form,
+  #notify .notify-attachments-field .btn-file,
+  #config .config-toolbar .config-url-builder-btn,
+  #config .config-form-actions .btn {
+    min-height: 2.7rem;
+    height: 2.7rem;
+    line-height: 2.7rem;
+  }
+
+  #notify .notify-top-row .select-wrapper input.select-dropdown {
+    font-size: 1.02rem;
+  }
+}
+
+@media (max-width: 600px) {
+  #notify .notify-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #notify .notify-form-actions .btn,
+  #notify .notify-form-actions .btn-clear-form {
+    width: 100%;
+  }
 }
 
 /* SweetAlert2 – notification summary and logs */
@@ -1040,6 +1558,10 @@ Config Page Toolbar (URL Builder)
 ========================================= */
 
 .config-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.2rem;
 }
 
@@ -1048,12 +1570,21 @@ Config Page Toolbar (URL Builder)
 }
 
 .config-url-builder-btn {
+  margin-bottom: 0.75rem;
   white-space: nowrap;
+}
+
+.config-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
 }
 
 @media (min-width: 601px) {
   .config-toolbar {
-    display: flex;
     align-items: flex-end;
   }
 
@@ -1064,8 +1595,17 @@ Config Page Toolbar (URL Builder)
 
 /* Mobile layout */
 @media (max-width: 600px) {
+  .config-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .config-url-builder-btn {
     width: 100%;
     margin-top: 0.5rem;
+  }
+
+  #config .config-form-actions .btn {
+    width: 100%;
   }
 }
