@@ -174,18 +174,10 @@ Status & Indicators
   background-color: #f6f7fa;
 }
 
-.api-details .plugin-service-btn .material-icons {
-  color: #555a62;
-}
-
 .api-details .plugin-service-btn:hover {
   color: #0f5f57 !important;
   border-color: #9dd6cf;
   background-color: #e5f4f2;
-}
-
-.api-details .plugin-service-btn:hover .material-icons {
-  color: #148c80;
 }
 
 .api-details .plugin-service-btn--external {

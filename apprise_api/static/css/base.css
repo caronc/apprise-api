@@ -647,10 +647,6 @@ textarea {
   stroke-linejoin: round;
 }
 
-.api-details .plugin-service-btn .material-icons {
-  font-size: 1rem;
-}
-
 .getting-started li {
   padding: 0.3em 0;
 }
@@ -939,14 +935,6 @@ body .tabs .tab.disabled a:hover i {
   border-radius: 5px;
   margin-top: 0.8rem;
   display: block;
-}
-
-#url-list .service_name {
-  width: 40rem;
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 #url-list .card-panel .url-id {
@@ -1596,27 +1584,6 @@ Apprise Configuration Editor (Grid Overlay)
   line-height: inherit !important;
 }
 
-.apprise-config-editor textarea,
-.apprise-config-highlight {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
-  font-size: 14px !important;
-  line-height: 22px !important;
-  letter-spacing: 0px !important;
-  padding: 15px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.apprise-config-editor textarea {
-  border: 1px solid #444 !important;
-  border-radius: 4px;
-}
-
-.apprise-config-highlight {
-  border: 1px solid transparent !important;
-  border-radius: 4px;
-}
-
 .config-format-field {
   margin-bottom: 0.75rem;
 }
@@ -1642,10 +1609,6 @@ Config Page Toolbar (URL Builder)
   margin-bottom: 0.2rem;
 }
 
-.config-toolbar-text {
-  margin: 0 0 0.5rem 0;
-}
-
 .config-url-builder-btn {
   margin-bottom: 0.75rem;
   white-space: nowrap;
@@ -1658,16 +1621,6 @@ Config Page Toolbar (URL Builder)
   flex-wrap: wrap;
   gap: 0.6rem;
   margin-top: 0.75rem;
-}
-
-@media (min-width: 601px) {
-  .config-toolbar {
-    align-items: flex-end;
-  }
-
-  .config-toolbar .col {
-    margin-bottom: 0;
-  }
 }
 
 /* Mobile layout */
