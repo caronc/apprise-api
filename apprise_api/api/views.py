@@ -542,13 +542,13 @@ class AddView(View):
                 content = json.loads(request.body.decode("utf-8"))
 
             except RequestDataTooBig:
-                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
-                # when there is a very large flie attachment that can't be pulled out of the
-                # payload without exceeding memory limitations (default is 3MB)
+                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually
+                # the case when there is a very large flie attachment that can't be pulled
+                # out of the payload without exceeding memory limitations (default is 3MB)
                 logger.warning(
                     "ADD - %s - JSON Payload Exceeded %dMB; operaton aborted using KEY: %s",
                     request.META["REMOTE_ADDR"],
-                    (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576),
+                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
                     key,
                 )
 
@@ -994,13 +994,13 @@ class NotifyView(View):
                     remap_fields(rules, content)
 
             except RequestDataTooBig:
-                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
-                # when there is a very large flie attachment that can't be pulled out of the
-                # payload without exceeding memory limitations (default is 3MB)
+                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually
+                # the case when there is a very large flie attachment that can't be pulled
+                # out of the payload without exceeding memory limitations (default is 3MB)
                 logger.warning(
                     "NOTIFY - %s - JSON Payload Exceeded %dMB using KEY: %s",
                     request.META["REMOTE_ADDR"],
-                    (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576),
+                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
                     key,
                 )
 
@@ -1668,13 +1668,13 @@ class StatelessNotifyView(View):
                     remap_fields(rules, content, form=NotifyByUrlForm())
 
             except RequestDataTooBig:
-                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
-                # when there is a very large flie attachment that can't be pulled out of the
-                # payload without exceeding memory limitations (default is 3MB)
+                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually
+                # the case when there is a very large flie attachment that can't be pulled
+                # out of the payload without exceeding memory limitations (default is 3MB)
                 logger.warning(
                     "NOTIFY - %s - JSON Payload Exceeded %dMB; operaton aborted",
                     request.META["REMOTE_ADDR"],
-                    (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576),
+                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
                 )
 
                 status = ResponseCode.fields_too_large
