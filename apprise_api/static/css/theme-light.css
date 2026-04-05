@@ -566,13 +566,24 @@ Side Nav
 Cards & Lists
 ========================================= */
 #url-list .card-panel {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 18px rgba(34, 42, 55, 0.08);
   background-color: #edeef3;
+  border-color: #c9ccd5;
+}
+
+#url-list .card-panel:hover {
+  border-color: #a8b0be;
+  box-shadow: 0 10px 20px rgba(34, 42, 55, 0.12);
 }
 
 #url-list .url-header code.url-text {
   background-color: #ffffff;
   color: #34383f;
+  border: 1px solid #d5d9e2;
+}
+
+#url-list .url-plugin-title {
+  color: #888c96;
 }
 
 #url-list .card-panel .url-id {
@@ -633,10 +644,44 @@ Buttons & Chips
 
 .card-panel.selected {
   background-color: #c8f0ea !important;
+  border-color: #7fc9be !important;
 }
 
 .url-selected-icon i {
   color: #888c96;
+}
+
+#url-list .url-disabled-indicator {
+  color: #be7a1f;
+}
+
+#url-list .card-panel.url-item-disabled {
+  background-color: #fff7ee !important;
+  border-color: #d39a58 !important;
+  box-shadow: inset 0 0 0 1px rgba(190, 122, 31, 0.14);
+  opacity: 0.94;
+}
+
+#url-list .card-panel.url-item-disabled:hover {
+  transform: none;
+}
+
+#url-list .card-panel.url-item-disabled .chip {
+  opacity: 0.58;
+}
+
+#url-list .card-panel.url-item-disabled .url-selected-icon i {
+  color: #a1a8b3;
+}
+
+#url-list .card-panel.url-item-disabled .url-plugin-title {
+  color: #9f6112;
+  opacity: 0.9;
+}
+
+#url-list .card-panel.url-item-disabled code.url-text {
+  color: #6b5b47;
+  background-color: #fff2e1;
 }
 
 .chip.selected {
@@ -650,9 +695,31 @@ Buttons & Chips
 }
 
 #url-list .copy-url-btn:hover,
+#url-list .review-test-btn:hover,
 .config-id-copy.btn-flat:hover,
 .snippet-copy-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+#url-list .review-test-btn {
+  color: #1d6059;
+  background-color: #e7edf2;
+  border-color: #c0cad6;
+}
+
+#url-list .review-test-btn:hover,
+#url-list .review-test-btn:focus {
+  color: #0f5f57;
+  background-color: #d7f2ee;
+  border-color: #74bcb1;
+}
+
+#url-list .review-test-btn[disabled],
+#url-list .review-test-btn[disabled]:hover,
+#url-list .review-test-btn[disabled]:focus {
+  color: #8b93a0;
+  background-color: #eff2f6;
+  border-color: #d7dde6;
 }
 
 /* =========================================

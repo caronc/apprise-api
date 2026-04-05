@@ -389,13 +389,24 @@ Components: Cards, Collections, Collapsibles
 }
 
 #url-list .card-panel {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
   background: #23262f;
+  border-color: #34383f;
+}
+
+#url-list .card-panel:hover {
+  border-color: #4a5060;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
 }
 
 #url-list .url-header code.url-text {
   background-color: #17181c;
   color: #c1c3c9;
+  border: 1px solid #2a2e38;
+}
+
+#url-list .url-plugin-title {
+  color: #888c96;
 }
 
 #url-list .card-panel .url-id {
@@ -711,9 +722,31 @@ Buttons & Chips
 }
 
 #url-list .copy-url-btn:hover,
+#url-list .review-test-btn:hover,
 .config-id-copy.btn-flat:hover,
 .snippet-copy-btn:hover {
   background-color: rgba(255, 255, 255, 0.06);
+}
+
+#url-list .review-test-btn {
+  color: #d4d9e2;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: #4c535f;
+}
+
+#url-list .review-test-btn:hover,
+#url-list .review-test-btn:focus {
+  color: #eef4ff;
+  background-color: rgba(44, 182, 166, 0.14);
+  border-color: #2cb6a6;
+}
+
+#url-list .review-test-btn[disabled],
+#url-list .review-test-btn[disabled]:hover,
+#url-list .review-test-btn[disabled]:focus {
+  color: #6d7380;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: #3f4552;
 }
 
 .chip {
@@ -725,6 +758,7 @@ Buttons & Chips
 /* Selected card: deep teal tint (mirrors accent-low) */
 .card-panel.selected {
   background-color: #0b3b37 !important;
+  border-color: #1f6f67 !important;
 }
 
 .chip.selected {
@@ -734,6 +768,39 @@ Buttons & Chips
 
 .url-selected-icon i {
   color: #888c96;
+}
+
+#url-list .url-disabled-indicator {
+  color: #f5c46a;
+}
+
+#url-list .card-panel.url-item-disabled {
+  background-color: #1d2129 !important;
+  border-color: #6b4d26 !important;
+  box-shadow: inset 0 0 0 1px rgba(245, 196, 106, 0.12);
+  opacity: 0.92;
+}
+
+#url-list .card-panel.url-item-disabled:hover {
+  transform: none;
+}
+
+#url-list .card-panel.url-item-disabled .url-plugin-title {
+  color: #d2a761;
+  opacity: 0.92;
+}
+
+#url-list .card-panel.url-item-disabled code.url-text {
+  color: #aeb5c1;
+  background-color: #161a21;
+}
+
+#url-list .card-panel.url-item-disabled .chip {
+  opacity: 0.58;
+}
+
+#url-list .card-panel.url-item-disabled .url-selected-icon i {
+  color: #646b78;
 }
 
 /* =========================================

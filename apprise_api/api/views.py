@@ -2241,6 +2241,8 @@ class JsonUrlView(View):
             response["urls"].append(
                 {
                     "id": notification.url_id(),
+                    "service_name": str(notification.service_name) if notification.service_name else "",
+                    "enabled": bool(notification.enabled),
                     "url": notification.url(privacy=privacy),
                     "tags": notification.tags,
                 }

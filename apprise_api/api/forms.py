@@ -24,6 +24,7 @@
 
 import apprise
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 # Auto-Detect Keyword
@@ -88,7 +89,7 @@ class AddByConfigForm(forms.Form):
     config = forms.CharField(
         label=_("Configuration"),
         widget=forms.Textarea(),
-        max_length=4096,
+        max_length=settings.APPRISE_CONFIG_MAX_LENGTH,
         required=False,
     )
 

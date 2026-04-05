@@ -167,7 +167,7 @@
                       {% include 'icons/settings.svg' %}
 
                     </span>
-                    <span>{% trans "Configuration Manager" %}</span>
+                    <span class="side-nav-text">{% trans "Configuration Manager" %}</span>
                   </a>
                   {% if not CONFIG_LOCK %}
                     <a class="side-nav-item"
@@ -177,7 +177,7 @@
                         {% include 'icons/refresh.svg' %}
 
                       </span>
-                      <span>{% trans "New Configuration" %}</span>
+                      <span class="side-nav-text">{% trans "New Configuration" %}</span>
                     </a>
                   {% endif %}
                   {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN %}
@@ -186,7 +186,7 @@
                         {% include 'icons/list.svg' %}
 
                       </span>
-                      <span>{% trans "Configuration List" %}</span>
+                      <span class="side-nav-text">{% trans "Configuration List" %}</span>
                     </a>
                   {% endif %}
                   <a class="side-nav-item" href="{% url 'details' %}">
@@ -194,7 +194,7 @@
                       {% include 'icons/search.svg' %}
 
                     </span>
-                    <span>{% trans "Available Plugins" %}</span>
+                    <span class="side-nav-text">{% trans "Available Plugins" %}</span>
                   </a>
                 </nav>
               {% endif %}
@@ -208,7 +208,7 @@
                     {% include 'icons/bell.svg' %}
 
                   </span>
-                  <span>{% trans "Notification Services" %}</span>
+                  <span class="side-nav-text">{% trans "Notification Services" %}</span>
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
@@ -218,7 +218,7 @@
                     {% include 'icons/book-open.svg' %}
 
                   </span>
-                  <span>{% trans "Configuration Help" %}</span>
+                  <span class="side-nav-text">{% trans "Configuration Help" %}</span>
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
@@ -228,7 +228,7 @@
                     {% include 'icons/library.svg' %}
 
                   </span>
-                  <span>{% trans "Documentation" %}</span>
+                  <span class="side-nav-text">{% trans "Documentation" %}</span>
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
@@ -238,7 +238,7 @@
                     {% include 'icons/tool.svg' %}
 
                   </span>
-                  <span>{% trans "Apprise URL Builder" %}</span>
+                  <span class="side-nav-text">{% trans "Apprise URL Builder" %}</span>
                 </a>
               </nav>
               <div class="side-nav-label">{% trans "Support Development" %}</div>
@@ -251,7 +251,7 @@
                     {% include 'icons/coffee.svg' %}
 
                   </span>
-                  <strong>{% trans "Buy Developer A Coffee" %}</strong>
+                  <strong class="side-nav-text">{% trans "Buy Developer A Coffee" %}</strong>
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
@@ -261,7 +261,7 @@
                     {% include 'icons/heart.svg' %}
 
                   </span>
-                  <strong>{% trans "Sponsor Apprise Development" %}</strong>
+                  <strong class="side-nav-text">{% trans "Sponsor Apprise Development" %}</strong>
                 </a>
               </nav>
               {% block menu %}
@@ -395,6 +395,21 @@
                     document.cookie = COOKIE + '=1; path=/; expires=' + expires.toUTCString();
                 });
             }
+        })();
+
+        // Ensure icon-only mobile menu still exposes labels via native tooltip
+        (function() {
+            document.querySelectorAll('.side-menu .side-nav-item').forEach(function(link) {
+                const label = link.querySelector('.side-nav-text');
+                if (!label) {
+                    return;
+                }
+                const text = label.textContent.trim();
+                if (text.length > 0 && !link.getAttribute('title')) {
+                    link.setAttribute('title', text);
+                    link.setAttribute('aria-label', text);
+                }
+            });
         })();
 
         // No-refresh theme toggle
@@ -623,33 +638,36 @@
     window.setInterval(appriseStatusUpdate, 30000);
   }
 
-  document.querySelector('#cfg-gen').addEventListener('click', function(e) {
-    e.preventDefault();
+  const cfgGenLink = document.querySelector('#cfg-gen');
+  if (cfgGenLink) {
+    cfgGenLink.addEventListener('click', function(e) {
+      e.preventDefault();
 
-    Swal.fire({
-      title: '{% trans "New Configuration" %}',
-      html: `
-        <div class="cfggen-modal-copy">
-          <p>{% trans "This will generate a new Apprise configuration ID and transition over to it. Please note your current ID before continuing." %}</p>
-          <div class="config-id-bar config-id-bar--modal">
-            <span class="config-id-label">{% trans "Config ID" %}</span>
-            <span class="config-id-wrapper">
-              <code class="config-id">{{ DEFAULT_CONFIG_ID }}</code>
-            </span>
+      Swal.fire({
+        title: '{% trans "New Configuration" %}',
+        html: `
+          <div class="cfggen-modal-copy">
+            <p>{% trans "This will generate a new Apprise configuration ID and transition over to it. Please note your current ID before continuing." %}</p>
+            <div class="config-id-bar config-id-bar--modal">
+              <span class="config-id-label">{% trans "Config ID" %}</span>
+              <span class="config-id-wrapper">
+                <code class="config-id">{{ DEFAULT_CONFIG_ID }}</code>
+              </span>
+            </div>
+            <p>{% trans "Do you still wish to proceed?" %}</p>
           </div>
-          <p>{% trans "Do you still wish to proceed?" %}</p>
-        </div>
-      `,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: '{% trans "Yes" %}',
-      cancelButtonText: '{% trans "No" %}'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = e.currentTarget.href;
-      }
+        `,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: '{% trans "Yes" %}',
+        cancelButtonText: '{% trans "No" %}'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = e.currentTarget.href;
+        }
+      });
     });
-  });
+  }
 
   // Register custom Apprise TEXT config language
   hljs.registerLanguage('apprise-config', function(hljs) {

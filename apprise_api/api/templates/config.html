@@ -401,6 +401,92 @@
       : 'notifications_off';
   }
 
+  function getReviewPluginTitle(serviceName, url) {
+    if (serviceName && serviceName.trim().length) {
+      return serviceName.trim().toUpperCase();
+    }
+    const match = (url || '').match(/^([a-z0-9+.-]+):\/\//i);
+    if (!match || !match[1]) {
+      return '{% trans "Unknown Plugin" %}';
+    }
+    return match[1].split('+')[0].replace(/[^a-z0-9_-]/gi, '').toUpperCase();
+  }
+
+  function decodeHtmlEntities(value) {
+    const text = String(value || '');
+    if (!text.includes('&')) {
+      return text;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+  }
+
+  function setReviewUrlTextWithBreaks(codeEl, url) {
+    const normalized = decodeHtmlEntities(url);
+    codeEl.textContent = '';
+    const pieces = normalized.split(/([?&])/);
+    pieces.forEach(function (piece, index) {
+      if (piece.length > 0) {
+        codeEl.appendChild(document.createTextNode(piece));
+      }
+      if ((piece === '?' || piece === '&') && index < pieces.length - 1) {
+        codeEl.appendChild(document.createElement('wbr'));
+      }
+    });
+    codeEl.dataset.rawUrl = normalized;
+  }
+
+  async function sendReviewTestNotification(tags, anchorEl) {
+    if (!tags || tags.length === 0) {
+      Swal.fire({
+        title: '{% trans "Notification" %}',
+        html: '{% trans "This test action requires at least one tag on the target entry." %}',
+        icon: 'warning'
+      });
+      return;
+    }
+    const formData = new FormData();
+    formData.append('title', '{% trans "Apprise API Test" %}');
+    formData.append('body', '{% trans "Message Body" %}');
+    formData.append('tag', tags.join(','));
+
+    if (anchorEl) {
+      anchorEl.disabled = true;
+    }
+    try {
+      const response = await fetch('{% url "notify" key %}', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: formData,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok) {
+        Swal.fire({
+          title: '{% trans "Notification" %}',
+          html: '{% trans "Test notification sent." %}',
+          icon: 'success'
+        });
+      } else {
+        Swal.fire({
+          title: '{% trans "Notification" %}',
+          html: result.error || '{% trans "Failed to send test notification." %}',
+          icon: 'error'
+        });
+      }
+    } catch (e) {
+      Swal.fire({
+        title: '{% trans "Notification" %}',
+        html: '{% trans "Failed to send test notification." %}',
+        icon: 'error'
+      });
+    } finally {
+      if (anchorEl) {
+        anchorEl.disabled = false;
+      }
+    }
+  }
+
   function resetNotifyForm() {
     const form = document.querySelector('#donotify');
     if (!form) {
@@ -608,7 +694,7 @@
   }
 
   function update_count() {
-    const p_count = document.querySelectorAll('#url-list li.card-panel.selected').length;
+    const p_count = document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
     document.querySelectorAll(".card-count").forEach(function (e) {
       e.textContent = `(${p_count})`;
     })
@@ -733,20 +819,20 @@
       onChipAdd: function (e, data) {
         var $this = this;
         const chip = data.childNodes[0].textContent;
-        document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function (e) {
+        document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip[name=${chip}]`).forEach(function (e) {
           if (!e.classList.contains('selected')) {
             e.classList.add('selected');
-            const p = e.parentNode;
+            const p = e.closest('li.card-panel');
             if (!p.classList.contains('selected')) {
               p.classList.add('selected');
             }
             updateCardSelectedIcon(p);
           }
         })
-        document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function (e) {
+        document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip.chip-notag`).forEach(function (e) {
           if (e.classList.contains('selected')) {
             e.classList.remove('selected');
-            const p = e.parentNode;
+            const p = e.closest('li.card-panel');
             if (!p.querySelector('.selected')) {
               if (p.classList.contains('selected')) {
                 p.classList.remove('selected');
@@ -764,11 +850,11 @@
       onChipDelete: function (e, data) {
         var $this = this;
         const chip = data.childNodes[0].textContent;
-        document.querySelectorAll(`#url-list .chip[name=${chip}]`).forEach(function (e) {
+        document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip[name=${chip}]`).forEach(function (e) {
           if (e.classList.contains('selected')) {
             e.classList.remove('selected');
           }
-          const p = e.parentNode;
+          const p = e.closest('li.card-panel');
           if (!p.querySelector('.selected')) {
             if (p.classList.contains('selected')) {
               p.classList.remove('selected');
@@ -778,11 +864,11 @@
         })
         if ($this.chipsData.length == 0) {
           // last item
-          document.querySelectorAll(`#url-list .chip.chip-notag`).forEach(function (e) {
+          document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip.chip-notag`).forEach(function (e) {
             if (!e.classList.contains('selected')) {
               e.classList.add('selected');
             }
-            const p = e.parentNode;
+            const p = e.closest('li.card-panel');
             if (!p.classList.contains('selected')) {
               p.classList.add('selected');
             }
@@ -816,15 +902,56 @@
     let urlList = document.createElement('ul');
     // Create a list item for each url retrieved
     data.urls.forEach(function (entry) {
+      const isEnabled = entry.enabled !== false;
+      const entryTags = Array.isArray(entry.tags) ? entry.tags.slice() : [];
       let li = document.createElement('li');
       li.setAttribute('class', 'card-panel url-item');
+      if (!isEnabled) {
+        li.classList.add('url-item-disabled');
+        li.title = `{% trans "This Apprise API instance has disabled support for" %} ${getReviewPluginTitle(entry.service_name, entry.url)}.`;
+      }
+      // Header row: plugin title + optional id
+      let meta = document.createElement('div');
+      meta.setAttribute('class', 'url-meta');
+      let pluginTitle = document.createElement('span');
+      pluginTitle.setAttribute('class', 'url-plugin-title');
+      pluginTitle.textContent = getReviewPluginTitle(entry.service_name, entry.url);
+      meta.appendChild(pluginTitle);
+      let metaRight = document.createElement('div');
+      metaRight.setAttribute('class', 'url-meta-right');
+      // Optional URL ID
+      if (entry.id) {
+        let url_id = document.createElement('code');
+        url_id.setAttribute('class', 'url-id');
+        url_id.textContent = entry.id;
+        metaRight.appendChild(url_id);
+      }
+      if (!isEnabled) {
+        let status = document.createElement('span');
+        status.setAttribute('class', 'url-disabled-indicator');
+        status.innerHTML = `{% include 'icons/status-warning.svg' %}`;
+        metaRight.appendChild(status);
+      }
+      if (isEnabled) {
+        let sel = document.createElement('div');
+        sel.setAttribute('class', 'url-selected-icon');
+        let selIcon = document.createElement('i');
+        selIcon.setAttribute('class', 'material-icons');
+        selIcon.textContent = li.classList.contains('selected')
+          ? 'notifications_active'
+          : 'notifications_off';
+        sel.appendChild(selIcon);
+        metaRight.appendChild(sel);
+      }
+      meta.appendChild(metaRight);
+      li.appendChild(meta);
       // Header row: URL + copy button
       let header = document.createElement('div');
       header.setAttribute('class', 'url-header');
       // URL text
       let code = document.createElement('code');
       code.setAttribute('class', 'url-text');
-      code.textContent = entry.url;
+      setReviewUrlTextWithBreaks(code, entry.url);
       header.appendChild(code);
       // Copy button
       let copyBtn = document.createElement('button');
@@ -838,40 +965,58 @@
       copyBtn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        copyToClipboard(entry.url, copyBtn);
+        copyToClipboard(code.dataset.rawUrl || decodeHtmlEntities(entry.url), copyBtn);
       }, false);
       header.appendChild(copyBtn);
       li.appendChild(header);
 
-      let sel = document.createElement('div');
-      sel.setAttribute('class', 'url-selected-icon');
+      // Tag row
+      let tagRow = document.createElement('div');
+      tagRow.setAttribute('class', 'url-tags-row');
+      let tagList = document.createElement('div');
+      tagList.setAttribute('class', 'url-tags');
+      tagRow.appendChild(tagList);
 
-      let selIcon = document.createElement('i');
-      selIcon.setAttribute('class', 'material-icons');
-      selIcon.textContent = li.classList.contains('selected')
-        ? 'notifications_active'
-        : 'notifications_off';
-
-      sel.appendChild(selIcon);
-      li.appendChild(sel);
-
-      // Optional URL ID (as before)
-      if (entry.id) {
-        let url_id = document.createElement('code');
-        url_id.setAttribute('class', 'url-id');
-        url_id.textContent = entry.id;
-        li.appendChild(url_id);
+      const testTags = entryTags.filter(function (t) {
+        return typeof t === 'string' && t.trim().length > 0;
+      });
+      let testBtn = document.createElement('button');
+      testBtn.type = 'button';
+      testBtn.setAttribute('class', 'review-test-btn btn-flat btn-small');
+      testBtn.setAttribute('title', '{% trans "Send Test Notification" %}');
+      if (testTags.length === 0 || !isEnabled) {
+        testBtn.setAttribute('disabled', 'disabled');
       }
+      let testIcon = document.createElement('i');
+      testIcon.setAttribute('class', 'material-icons');
+      testIcon.textContent = 'send';
+      testBtn.appendChild(testIcon);
+      testBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isEnabled) {
+          Swal.fire({
+            title: '{% trans "Notification" %}',
+            html: '{% trans "This notification service is disabled in this Apprise API instance." %}',
+            icon: 'warning'
+          });
+          return;
+        }
+        sendReviewTestNotification(testTags, testBtn);
+      }, false);
+      tagRow.appendChild(testBtn);
+      li.appendChild(tagRow);
+
       urlList.appendChild(li);
       // Store `all` tag
-      entry.tags.unshift('all')
-      if (entry.tags.length === 1) {
+      entryTags.unshift('all')
+      if (entryTags.length === 1) {
         // This entry triggers when no tags are defined
         // Store '' (empty) tag for notice generation
-        entry.tags.unshift('')
+        entryTags.unshift('')
       }
       // Get our tags associate with the URL
-      entry.tags.forEach(function (tag) {
+      entryTags.forEach(function (tag) {
         let chip = document.createElement('div');
         chip.setAttribute('class', `chip`);
         if (tag.length > 0) {
@@ -883,43 +1028,49 @@
           })
           if (index >= 0) {
             chip.classList.add('selected');
-            li.classList.add('selected');
-          }
-          li.appendChild(chip);
-          chip.addEventListener('click', function (e) {
-            e.preventDefault();
-            const index = chipInstance.chipsData.findIndex(function (e) {
-              return e.tag === tag;
-            });
-            if (index < 0) {
-              chipInstance.addChip({ tag: this.getAttribute('name'), image: '' });
-            } else {
-              chipInstance.deleteChip(index);
+            if (isEnabled) {
+              li.classList.add('selected');
             }
-          }, false);
+          }
+          tagList.appendChild(chip);
+          if (isEnabled) {
+            chip.addEventListener('click', function (e) {
+              e.preventDefault();
+              const index = chipInstance.chipsData.findIndex(function (e) {
+                return e.tag === tag;
+              });
+              if (index < 0) {
+                chipInstance.addChip({ tag: this.getAttribute('name'), image: '' });
+              } else {
+                chipInstance.deleteChip(index);
+              }
+            }, false);
+          }
         } else {
           // no tags were defined for this element
           chip.classList.add('chip-notag');
           chip.textContent = '🔖 no-tag';
-          if (chipInstance.chipsData.length === 0) {
+          if (chipInstance.chipsData.length === 0 && isEnabled) {
             chip.classList.add('selected');
             if (!li.classList.contains('selected')) {
               li.classList.add('selected');
             }
           }
-          li.appendChild(chip);
-          chip.addEventListener('click', function (e) {
-            e.preventDefault();
-            while (chipInstance.chipsData.length > 0) {
-              chipInstance.deleteChip(0);
-            }
-            chip.classList.add('selected');
-            if (!li.classList.contains('selected')) {
-              li.classList.add('selected');
-            }
-            // apply any updates to our icon
-            update_count();
-          });
+          tagList.appendChild(chip);
+          if (isEnabled) {
+            chip.addEventListener('click', function (e) {
+              e.preventDefault();
+              while (chipInstance.chipsData.length > 0) {
+                chipInstance.deleteChip(0);
+              }
+              chip.classList.add('selected');
+              if (!li.classList.contains('selected')) {
+                li.classList.add('selected');
+              }
+              // apply any updates to our icon
+              update_count();
+            });
+          }
         }
         updateCardSelectedIcon(li);
       });
@@ -1090,7 +1241,7 @@
   }
 
   function getSelectedNotifyTargetCount() {
-    return document.querySelectorAll('#url-list li.card-panel.selected').length;
+    return document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
   }
 
   function renderAttachmentList(listEl) {
