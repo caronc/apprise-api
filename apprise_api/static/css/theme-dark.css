@@ -135,6 +135,17 @@ Status & Indicators
   color: #34383f;
 }
 
+.notify-target-guidance {
+  background-color: #23262f;
+  border-color: #34383f;
+  color: #c1c3c9;
+}
+
+.notify-target-guidance-title,
+.notify-target-guidance-icon {
+  color: #ffbf6b;
+}
+
 .review-empty-card {
   background-color: #23262f;
   border-color: #34383f;
@@ -204,6 +215,18 @@ Status & Indicators
 
 .api-details .plugin-service-btn:hover .material-icons {
   color: #7de6da;
+}
+
+.api-details .plugin-service-btn--external {
+  color: #9cece2 !important;
+  border-color: #2f5a62;
+  background-color: #21353a;
+}
+
+.api-details .plugin-service-btn--external:hover {
+  color: #c3fff7 !important;
+  border-color: #4d8993;
+  background-color: #284149;
 }
 
 #overview strong {
@@ -430,6 +453,16 @@ Inline Tab Chip (step references)
 
 .tab-chip .material-icons {
   color: #888c96;
+}
+
+.tab-chip-external {
+  background-color: #21353a;
+  border-color: #2f5a62;
+  color: #9cece2;
+}
+
+.tab-chip-external .material-icons {
+  color: #7de6da;
 }
 
 /* =========================================

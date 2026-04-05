@@ -628,6 +628,25 @@ textarea {
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
+.api-details .plugin-service-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.api-details .plugin-service-icon svg {
+  width: 1rem;
+  height: 1rem;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .api-details .plugin-service-btn .material-icons {
   font-size: 1rem;
 }
@@ -794,6 +813,10 @@ Welcome Page Collapsibles
   vertical-align: middle;
 }
 
+.tab-chip-external {
+  margin: 0 0.15rem;
+}
+
 /* Key/ID highlight inside code blocks — suppress global em italic */
 pre code em {
   font-style: normal;
@@ -802,10 +825,25 @@ pre code em {
 /* Base Tab Structure */
 
 .tabs .tab a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   border-radius: 0.4rem 0.4rem 0 0;
   font-size: 0.85rem;
   letter-spacing: 0.03em;
+  line-height: 1.15;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tabs .tab a .material-icons {
+  font-size: 1.15rem;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.tabs .tab a .card-count {
+  margin-left: 0.1rem;
 }
 
 body .tabs .tab a:hover,
@@ -1227,6 +1265,45 @@ code.config-id {
   display: block;
   margin: 0 0 0.2rem 0;
   font-size: 0.9rem;
+}
+
+.notify-target-guidance {
+  margin-top: 0.5rem;
+  margin-bottom: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid;
+  border-radius: 0.55rem;
+  line-height: 1.5;
+}
+
+.notify-target-guidance-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.notify-target-guidance-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.notify-target-guidance-icon svg {
+  width: 1rem;
+  height: 1rem;
+  stroke: currentColor;
+  fill: none;
+}
+
+.notify-target-keyword {
+  font-weight: 700;
 }
 
 .notify-attachments-field input[type=file] {

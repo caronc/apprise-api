@@ -55,43 +55,58 @@
                 </div>
                 <div class="plugin-service-actions">
                   {% if entry.secure_protocols %}
-                    <a class="plugin-service-btn"
+                    <a class="plugin-service-btn plugin-service-btn--external"
                        href="https://appriseit.com/tools/url-builder/?schema={{ entry.secure_protocols|first }}"
                        target="_blank"
                        rel="noopener noreferrer">
-                      <i class="material-icons">build</i>
-                      <span>{% trans "URL Builder" %}</span>
+                      <span class="plugin-service-icon" aria-hidden="true">
+                        {% include 'icons/tool.svg' %}
+
+                      </span>
+                      <span>{% trans "Apprise URL Builder" %}</span>
                     </a>
                   {% elif entry.protocols %}
-                    <a class="plugin-service-btn"
+                    <a class="plugin-service-btn plugin-service-btn--external"
                        href="https://appriseit.com/tools/url-builder/?schema={{ entry.protocols|first }}"
                        target="_blank"
                        rel="noopener noreferrer">
-                      <i class="material-icons">build</i>
-                      <span>{% trans "URL Builder" %}</span>
+                      <span class="plugin-service-icon" aria-hidden="true">
+                        {% include 'icons/tool.svg' %}
+
+                      </span>
+                      <span>{% trans "Apprise URL Builder" %}</span>
                     </a>
                   {% else %}
-                    <a class="plugin-service-btn"
+                    <a class="plugin-service-btn plugin-service-btn--external"
                        href="https://appriseit.com/tools/url-builder/"
                        target="_blank"
                        rel="noopener noreferrer">
-                      <i class="material-icons">build</i>
-                      <span>{% trans "URL Builder" %}</span>
+                      <span class="plugin-service-icon" aria-hidden="true">
+                        {% include 'icons/tool.svg' %}
+
+                      </span>
+                      <span>{% trans "Apprise URL Builder" %}</span>
                     </a>
                   {% endif %}
-                  <a class="plugin-service-btn"
+                  <a class="plugin-service-btn plugin-service-btn--external"
                      href="{{ entry.setup_url }}"
                      target="_blank"
                      rel="noopener noreferrer">
-                    <i class="material-icons">menu_book</i>
-                    <span>{% trans "Setup guide" %}</span>
+                    <span class="plugin-service-icon" aria-hidden="true">
+                      {% include 'icons/book-open.svg' %}
+
+                    </span>
+                    <span>{% trans "Setup Guide" %}</span>
                   </a>
-                  <a class="plugin-service-btn"
+                  <a class="plugin-service-btn plugin-service-btn--external"
                      href="{{ entry.service_url }}"
                      target="_blank"
                      rel="noopener noreferrer">
-                    <i class="material-icons">open_in_new</i>
-                    <span>{% trans "Service website" %}</span>
+                    <span class="plugin-service-icon" aria-hidden="true">
+                      {% include 'icons/library.svg' %}
+
+                    </span>
+                    <span>{% trans "Service Website" %}</span>
                   </a>
                 </div>
               </div>
