@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 # import the logging library
 import logging
+import re
 
 from api.forms import NotifyForm
 from django.conf import settings
@@ -30,25 +31,121 @@ from django.conf import settings
 # Get an instance of a logger
 logger = logging.getLogger("django")
 
+# Matches a single [N] subscript at the start of a string.
+_SUBSCRIPT_RE = re.compile(r'^\[(\d+)\]')
 
-def _get_nested(payload, path_parts, source_key):
+
+def _parse_path(key):
     """
-    Traverse nested dicts following path_parts.
+    Parse a mapping key into a flat, ordered list of traversal steps.
 
-    Returns a ``(value, found)`` tuple.  Logs a WARNING when the path cannot
-    be fully resolved so the operator can diagnose misconfigured mapping rules.
+    Each step is a ``('key', name)`` or ``('index', N)`` tuple:
+
+    * ``('key', name)``  – perform a dict lookup for *name*.
+    * ``('index', N)``   – dereference integer index *N* of the current list.
+
+    Supported forms::
+
+        "title"                 → [('key', 'title')]
+        "event.title"           → [('key', 'event'), ('key', 'title')]
+        "items[0]"              → [('key', 'items'), ('index', 0)]
+        "items[0].objectURI"    → [('key', 'items'), ('index', 0),
+                                    ('key', 'objectURI')]
+        "a[0][2][2].b[3]"       → [('key', 'a'), ('index', 0), ('index', 2),
+                                    ('index', 2), ('key', 'b'), ('index', 3)]
+
+    Returns ``(steps, None)`` on success.  Returns ``(None, reason)`` when
+    the key contains malformed bracket notation — any of:
+
+    * Missing closing bracket  e.g. ``items[0``
+    * Missing opening bracket  e.g. ``items0]``
+    * Non-integer index        e.g. ``items[abc]``
+    """
+    steps = []
+    for segment in key.split("."):
+        if not segment:
+            return None, f"empty segment in path '{key}'"
+
+        if "[" not in segment and "]" not in segment:
+            # Plain dict key — no bracket characters at all
+            steps.append(("key", segment))
+            continue
+
+        # At least one bracket character is present.
+        # A stray ']' before any '[' is immediately malformed.
+        bracket_pos = segment.find("[")
+        if bracket_pos == -1:
+            return None, (
+                f"malformed bracket notation at '{segment}'"
+                f" (unexpected ']' with no matching '[')"
+            )
+
+        key_name = segment[:bracket_pos]
+        remaining = segment[bracket_pos:]
+
+        if key_name:
+            steps.append(("key", key_name))
+
+        # Consume every [N] subscript greedily; any leftover chars are malformed.
+        while remaining:
+            m = _SUBSCRIPT_RE.match(remaining)
+            if not m:
+                return None, (
+                    f"malformed bracket notation at '{segment}';"
+                    f" expected [N] where N is a non-negative integer"
+                )
+            steps.append(("index", int(m.group(1))))
+            remaining = remaining[m.end():]
+
+    return steps, None
+
+
+def _get_nested(payload, steps, source_key):
+    """
+    Traverse *payload* using the pre-parsed *steps* produced by
+    :func:`_parse_path`.
+
+    Each step is a ``('key', name)`` or ``('index', N)`` tuple.
+
+    Returns ``(value, True)`` on success.  Logs a WARNING and returns
+    ``(None, False)`` when traversal cannot be completed (missing key,
+    not-indexable node, or out-of-range index).
     """
     current = payload
-    for i, part in enumerate(path_parts):
-        if not isinstance(current, dict) or part not in current:
-            partial = ".".join(path_parts[: i + 1])
-            logger.warning(
-                "Payload mapping path '%s' not found in payload (stopped at '%s')",
-                source_key,
-                partial,
-            )
-            return None, False
-        current = current[part]
+    for step_type, step_val in steps:
+        if step_type == "key":
+            if not isinstance(current, dict) or step_val not in current:
+                logger.warning(
+                    "Payload mapping path '%s' not found in payload"
+                    " (stopped at key '%s')",
+                    source_key,
+                    step_val,
+                )
+                return None, False
+            current = current[step_val]
+
+        else:  # 'index'
+            if not isinstance(current, (list, tuple)):
+                logger.warning(
+                    "Payload mapping path '%s': [%d] is not indexable"
+                    " (expected a list/array, got %s)",
+                    source_key,
+                    step_val,
+                    type(current).__name__,
+                )
+                return None, False
+            try:
+                current = current[step_val]
+            except IndexError:
+                logger.warning(
+                    "Payload mapping path '%s': index [%d] is out of range"
+                    " (length %d)",
+                    source_key,
+                    step_val,
+                    len(current),
+                )
+                return None, False
+
     return current, True
 
 
@@ -72,8 +169,22 @@ def remap_fields(rules, payload, form=None):
     mapped to the target Apprise field.  A WARNING is logged when the path
     cannot be found, so operators can diagnose misconfigured rules.
 
+    Array-index notation is also supported and may be combined freely with
+    dot-notation.  Multiple consecutive subscripts are allowed::
+
+        items[0].objectURI          # list → dict
+        data[0][2][2].value[3]      # list of lists, then dict → list
+
+    Each ``key[N]`` segment performs a dict lookup for *key* then dereferences
+    index *N* of the resulting list.  Invalid notation (missing bracket,
+    non-integer index, out-of-range index, or a non-list node) is handled
+    gracefully: a WARNING is logged and ``False`` is returned.
+
     The maximum traversal depth is controlled by the
     ``APPRISE_WEBHOOK_MAPPING_MAX_DEPTH`` Django setting (default: 5).
+    Depth is counted as the total number of individual traversal steps —
+    each dict key lookup *and* each array index dereference counts as one
+    step — so ``a[0][1].b[2]`` has a depth of 5.
 
     """
 
@@ -86,12 +197,22 @@ def remap_fields(rules, payload, form=None):
     expected_keys = set(form.fields.keys())
     for key, value in rules.items():
         # ------------------------------------------------------------------
-        # Dot-notation (subfield) path handling
+        # Dot-notation and/or array-index path handling.
+        # Any bracket character (either '[' or ']') triggers this branch so
+        # that stray/unmatched brackets are caught and rejected as malformed
+        # rather than silently falling through to flat-field handling.
         # ------------------------------------------------------------------
-        if "." in key:
-            path_parts = key.split(".")
+        if "." in key or "[" in key or "]" in key:
+            steps, err = _parse_path(key)
+            if steps is None:
+                logger.warning(
+                    "Payload mapping path '%s': %s",
+                    key,
+                    err,
+                )
+                return False
 
-            if len(path_parts) > max_depth:
+            if len(steps) > max_depth:
                 logger.warning(
                     "Payload mapping path '%s' exceeds the maximum depth of %d; skipping",
                     key,
@@ -99,7 +220,7 @@ def remap_fields(rules, payload, form=None):
                 )
                 return False
 
-            nested_value, found = _get_nested(payload, path_parts, key)
+            nested_value, found = _get_nested(payload, steps, key)
             if not found:
                 # Warning already emitted by _get_nested
                 return False
@@ -108,7 +229,7 @@ def remap_fields(rules, payload, form=None):
                 # Map the nested value to the flat Apprise field
                 payload[value] = nested_value
             # Any other combination (empty value, non-expected target) is a
-            # no-op for dot-notation sources — skip silently.
+            # no-op for dot/index sources — skip silently.
             continue
 
         # ------------------------------------------------------------------

@@ -1020,7 +1020,7 @@ The colon `:` prefix is the switch that starts the re-mapping rule engine.  You 
 
 ### Nested / Subfield Mapping
 
-If your third-party payload contains nested objects you can reach into them using **dot-notation** on the source side of the mapping rule:
+If your third-party payload contains nested objects, use **dot-notation** on the source side to walk into them:
 
 ```bash
 # Payload sent by the third-party tool:
@@ -1036,9 +1036,27 @@ curl -X POST \
     "http://localhost:8000/notify/{KEY}?:event.title=title&:event.state=type&:component.name=body"
 ```
 
+If your payload contains **arrays**, use **bracket-notation** (`[N]`) to dereference an element by index. Dot-notation and bracket-notation can be freely combined:
+
+```bash
+# Payload from a forum / project-management webhook (e.g. Scoold / Para):
+# {
+#   "items": [ { "title": "New post", "objectURI": "https://example.com/q/1234" } ]
+# }
+curl -X POST \
+    -H "Content-Type: application/json" \
+    -d '{"items":[{"title":"New post","objectURI":"https://example.com/q/1234"}]}' \
+    "http://localhost:8000/notify/{KEY}?:items[0].title=title&:items[0].objectURI=body"
+```
+
+Multiple consecutive subscripts traverse nested arrays — `matrix[0][1]` gives row 0, column 1.
+
 **Notes:**
-- Only the **source** side of the rule may use dot-notation; the target must be a flat Apprise field (`title`, `body`, `type`, `format`, etc.).
-- The maximum traversal depth defaults to **5** levels and is controlled by the `APPRISE_WEBHOOK_MAPPING_MAX_DEPTH` environment variable.
+- Only the **source** side of the rule may use path notation; the target must be a flat Apprise field (`title`, `body`, `type`, `format`, `tag`, etc.).
+- `N` in `[N]` must be a non-negative integer. Unmatched brackets (`key[0`, `key0]`) and non-integer indices (`key[abc]`) are both rejected with a `WARNING`.
+- If any step cannot be resolved (missing key, index out of range, or a non-list node at an index step), the request returns **400** and a `WARNING` is logged — no notification is sent.
+- **Depth** counts every individual traversal operation: each dict-key lookup _and_ each array-index dereference. `items[0].objectURI` = 3 steps; `a[0][1][2].value[3]` = 6 steps.
+- The maximum traversal depth defaults to **5** and is controlled by the `APPRISE_WEBHOOK_MAPPING_MAX_DEPTH` environment variable.
 
 ## Metrics Collection & Analysis
 
