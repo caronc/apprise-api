@@ -59,6 +59,7 @@ def _parse_path(key):
 
     * Missing closing bracket  e.g. ``items[0``
     * Missing opening bracket  e.g. ``items0]``
+    * Stray ``]`` before ``[`` e.g. ``a]b[0]``
     * Non-integer index        e.g. ``items[abc]``
     """
     steps = []
@@ -79,6 +80,10 @@ def _parse_path(key):
 
         key_name = segment[:bracket_pos]
         remaining = segment[bracket_pos:]
+
+        # A ']' appearing before the first '[' is malformed (e.g. 'a]b[0]').
+        if "]" in key_name:
+            return None, (f"malformed bracket notation at '{segment}'; unexpected ']' before '['")
 
         if key_name:
             steps.append(("key", key_name))
@@ -165,13 +170,18 @@ def remap_fields(rules, payload, form=None):
     Array-index notation is also supported and may be combined freely with
     dot-notation.  Multiple consecutive subscripts are allowed::
 
-        items[0].objectURI          # list → dict
-        data[0][2][2].value[3]      # list of lists, then dict → list
+        items[0].objectURI          # list -> dict
+        data[0][2][2].value[3]      # list of lists, then dict -> list
 
     Each ``key[N]`` segment performs a dict lookup for *key* then dereferences
     index *N* of the resulting list.  Invalid notation (missing bracket,
     non-integer index, out-of-range index, or a non-list node) is handled
     gracefully: a WARNING is logged and ``False`` is returned.
+
+    **Empty target and nested paths:** setting an empty target value (e.g.
+    ``:event.title=``) for a nested-path source is a no-op — the path is
+    resolved but nothing is removed or written.  Only flat top-level keys
+    support deletion via an empty target (``?:key=``).
 
     The maximum traversal depth is controlled by the
     ``APPRISE_WEBHOOK_MAPPING_MAX_DEPTH`` Django setting (default: 5).

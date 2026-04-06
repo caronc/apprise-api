@@ -428,6 +428,17 @@ class NotifyPayloadMapper(SimpleTestCase):
         assert "body" not in payload
 
         #
+        # Malformed: stray ']' before '[' within a segment (e.g. a]b[0])
+        #
+        rules = {"a]b[0]": "body"}
+        payload = {"a]b": [["x"]]}
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+        assert result is False
+        assert "malformed" in "\n".join(cm.output)
+        assert "body" not in payload
+
+        #
         # Malformed: non-integer index -> returns False, warning logged
         #
         rules = {"items[abc]": "body"}
@@ -534,6 +545,11 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         # Malformed: partial subscript mid-chain e.g. key[0][abc]
         steps, err = _parse_path("key[0][abc]")
+        assert steps is None
+        assert "malformed" in err
+
+        # Malformed: stray ']' before '[' within a segment e.g. a]b[0]
+        steps, err = _parse_path("a]b[0]")
         assert steps is None
         assert "malformed" in err
 

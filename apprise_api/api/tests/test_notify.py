@@ -1555,13 +1555,14 @@ class NotifyTests(SimpleTestCase):
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
         assert response.status_code == 200
 
-        # Successful subfield mapping — form POST
+        # Subfield mapping via form POST — expected to fail (400).
+        # Form POST delivers flat string values; the "event" key arrives as a
+        # plain string, not a nested dict, so the dot-notation path cannot be
+        # resolved.
         response = self.client.post(
             f"/notify/{key}/?:event.title=title&:event.body=body",
             {"event": '{"title": "hi", "body": "world"}'},
         )
-        # The form POST path delivers flat keys only; the nested JSON dict value
-        # won't resolve — expect 400, not 200
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
