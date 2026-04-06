@@ -27,3 +27,4 @@ tox -e test
 
 # Run a local instance of the api at http://localhost:8000
 tox -e runserver
+```
