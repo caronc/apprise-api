@@ -249,7 +249,15 @@ APPRISE_ATTACH_ALLOW_URLS = os.environ.get("APPRISE_ATTACH_ALLOW_URL", "*").lowe
 
 # The maximum size in bytes that a request body may be before raising an error
 # (defined in MB)
-DATA_UPLOAD_MAX_MEMORY_SIZE = abs(int(os.environ.get("APPRISE_UPLOAD_MAX_MEMORY_SIZE", 3))) * 1048576
+APPRISE_UPLOAD_MAX_MEMORY_SIZE = abs(int(os.environ.get("APPRISE_UPLOAD_MAX_MEMORY_SIZE", 3))) * 1048576
+
+# The maximum configuration payload size (in bytes) accepted by form/API
+# configuration updates. This value is configured in KB and converted to bytes
+# (KB * 1024). It is capped by APPRISE_UPLOAD_MAX_MEMORY_SIZE (bytes).
+APPRISE_CONFIG_MAX_LENGTH = min(
+    abs(int(os.environ.get("APPRISE_CONFIG_MAX_LENGTH", 512))) * 1024,
+    APPRISE_UPLOAD_MAX_MEMORY_SIZE,
+)
 
 # When set Apprise API Locks itself down so that future (configuration)
 # changes can not be made or accessed.  It disables access to:

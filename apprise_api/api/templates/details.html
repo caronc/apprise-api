@@ -47,17 +47,69 @@
                 {% endif %}
               {% endif %}
               <span class="service_name">{{ entry.service_name }}</span>
-              <span class="plugin-actions">
-                <a href="{{ entry.setup_url }}" target="_blank">
-                  <i class="material-icons">help</i>
-                </a>
-                <a href="{{ entry.service_url }}" target="_blank">
-                  <i class="material-icons">explore</i>
-                </a>
-              </span>
             </div>
             <div class="collapsible-body">
-              <h5>{{ entry.service_name }}</h5>
+              <div class="plugin-service-row">
+                <div class="plugin-service-meta">
+                  <h5>{{ entry.service_name }}</h5>
+                </div>
+                <div class="plugin-service-actions">
+                  {% if entry.secure_protocols %}
+                    <a class="plugin-service-btn plugin-service-btn--external"
+                       href="https://appriseit.com/tools/url-builder/?schema={{ entry.secure_protocols|first }}"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                      <span class="plugin-service-icon" aria-hidden="true">
+                        {% include 'icons/tool.svg' %}
+
+                      </span>
+                      <span>{% trans "Apprise URL Builder" %}</span>
+                    </a>
+                  {% elif entry.protocols %}
+                    <a class="plugin-service-btn plugin-service-btn--external"
+                       href="https://appriseit.com/tools/url-builder/?schema={{ entry.protocols|first }}"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                      <span class="plugin-service-icon" aria-hidden="true">
+                        {% include 'icons/tool.svg' %}
+
+                      </span>
+                      <span>{% trans "Apprise URL Builder" %}</span>
+                    </a>
+                  {% else %}
+                    <a class="plugin-service-btn plugin-service-btn--external"
+                       href="https://appriseit.com/tools/url-builder/"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                      <span class="plugin-service-icon" aria-hidden="true">
+                        {% include 'icons/tool.svg' %}
+
+                      </span>
+                      <span>{% trans "Apprise URL Builder" %}</span>
+                    </a>
+                  {% endif %}
+                  <a class="plugin-service-btn plugin-service-btn--external"
+                     href="{{ entry.setup_url }}"
+                     target="_blank"
+                     rel="noopener noreferrer">
+                    <span class="plugin-service-icon" aria-hidden="true">
+                      {% include 'icons/book-open.svg' %}
+
+                    </span>
+                    <span>{% trans "Setup Guide" %}</span>
+                  </a>
+                  <a class="plugin-service-btn plugin-service-btn--external"
+                     href="{{ entry.service_url }}"
+                     target="_blank"
+                     rel="noopener noreferrer">
+                    <span class="plugin-service-icon" aria-hidden="true">
+                      {% include 'icons/library.svg' %}
+
+                    </span>
+                    <span>{% trans "Service Website" %}</span>
+                  </a>
+                </div>
+              </div>
               {% if show_all and not entry.enabled %}
                 <i class="url-disabled material-icons">report</i>
                 {% blocktrans %}
@@ -100,10 +152,10 @@
                   </li>
                 {% endif %}
                 <li>
-                  <pre><code class="bash">
-# {% blocktrans %}Apprise URL Formatting{% endblocktrans %}</br>
-{% for url in entry.details.templates %}{{ url }}<br />{% endfor %}
-                  </code></pre>
+                  {# djlint:off #}
+                  <pre><code class="bash"># {% blocktrans %}Apprise URL Formatting{% endblocktrans %}<br />
+                  {% for url in entry.details.templates %}{{ url }}<br />{% endfor %}</code></pre>
+                  {# djlint:on #}
                 </li>
                 <li>
                   <p>
@@ -130,11 +182,11 @@
             <i class="material-icons">code</i>Curl Example
           </div>
           <div class="collapsible-body">
-            <pre><code class="bash">
-#{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
-curl -H "Accept: application/json" \<br />
-&nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"
-            </code></pre>
+            {# djlint:off #}
+            <pre><code class="bash">#{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
+            curl -H "Accept: application/json" \<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"</code></pre>
+            {# djlint:on #}
           </div>
         </li>
         <li>
@@ -142,8 +194,8 @@ curl -H "Accept: application/json" \<br />
             <i class="material-icons">code</i>Python Example
           </div>
           <div class="collapsible-body">
-            <pre><code class="python">
-import json<br />
+            {# djlint:off #}
+            <pre><code class="python">import json<br />
 from urllib.request import Request<br />
 <br /># The URL<br />
 req = Request(<br />
@@ -151,8 +203,8 @@ req = Request(<br />
 &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
 &nbsp;&nbsp;&nbsp;&nbsp;{"Accept": "application/json"},<br />
 &nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
-)
-            </code></pre>
+)</code></pre>
+            {# djlint:on #}
           </div>
         </li>
         <li>
@@ -160,8 +212,8 @@ req = Request(<br />
             <i class="material-icons">code</i>PHP Example
           </div>
           <div class="collapsible-body">
-            <pre><code class="php">
-&lt;?php<br />
+            {# djlint:off #}
+            <pre><code class="php">&lt;?php<br />
 <br />
 // The URL<br />
 $url = '{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
@@ -173,8 +225,8 @@ $ch = curl_init($url);<br />
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));<br />
 <br />
 //Execute the request<br />
-$result = curl_exec($ch);
-            </code></pre>
+$result = curl_exec($ch);</code></pre>
+            {# djlint:on #}
           </div>
         </li>
       </ul>
@@ -184,3 +236,75 @@ $result = curl_exec($ch);
     </div>
   </div>
 {% endblock body %}
+{# djlint:off #}
+{% block jsfooter %}
+  function showCopyToast(anchorEl, message) {
+    var msg = message || '{% trans "Copied to clipboard" %}';
+    if (window.Swal && Swal.fire) {
+      Swal.fire({
+        toast: true,
+        target: anchorEl || document.body,
+        position: 'top-end',
+        title: msg,
+        showConfirmButton: false,
+        timer: 1600,
+        timerProgressBar: true,
+        customClass: { popup: 'copy-toast' }
+      });
+      return;
+    }
+    if (window.M && M.toast) { M.toast({ html: msg }); }
+  }
+
+  async function copyToClipboard(text, anchorEl, message) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showCopyToast(anchorEl, message);
+        return;
+      } catch (e) { /* fall through */ }
+    }
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showCopyToast(anchorEl, message); }
+    catch (e) { /* ignore */ }
+    finally { document.body.removeChild(ta); }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.details-api .collapsible-body pre').forEach(function(pre) {
+      if (pre.parentNode.classList.contains('code-snippet')) { return; }
+      var code = pre.querySelector('code');
+      var copyText = (code ? code.innerText : pre.innerText).trim();
+      var snippet = document.createElement('div');
+      snippet.className = 'code-snippet';
+      snippet.dataset.copyText = copyText;
+      pre.parentNode.insertBefore(snippet, pre);
+      snippet.appendChild(pre);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'snippet-copy-btn btn-flat btn-small';
+      btn.title = '{% trans "Copy to clipboard" %}';
+
+      var icon = document.createElement('i');
+      icon.className = 'material-icons';
+      icon.textContent = 'content_copy';
+      btn.appendChild(icon);
+
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        copyToClipboard(copyText, btn, '{% trans "Copied to clipboard" %}');
+      }, false);
+
+      snippet.appendChild(btn);
+    });
+  });
+{% endblock jsfooter %}
+{# djlint:on #}

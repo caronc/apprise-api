@@ -542,13 +542,13 @@ class AddView(View):
                 content = json.loads(request.body.decode("utf-8"))
 
             except RequestDataTooBig:
-                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
-                # when there is a very large flie attachment that can't be pulled out of the
-                # payload without exceeding memory limitations (default is 3MB)
+                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
+                # the case when there is a very large file attachment that can't be pulled
+                # out of the payload without exceeding memory limitations (default is 3MB)
                 logger.warning(
-                    "ADD - %s - JSON Payload Exceeded %dMB; operaton aborted using KEY: %s",
+                    "ADD - %s - JSON Payload Exceeded %dMB; operation aborted using KEY: %s",
                     request.META["REMOTE_ADDR"],
-                    (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576),
+                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
                     key,
                 )
 
@@ -667,6 +667,29 @@ class AddView(View):
                 )
 
         elif "config" in content:
+            if len(content["config"]) > settings.APPRISE_CONFIG_MAX_LENGTH:
+                # Configuration payload exceeds the maximum allowed length
+                logger.warning(
+                    "ADD - %s - Config payload exceeds maximum allowed length (%d bytes) using KEY: %s",
+                    request.META["REMOTE_ADDR"],
+                    settings.APPRISE_CONFIG_MAX_LENGTH,
+                    key,
+                )
+                msg = _("The configuration payload is too large")
+                status = ResponseCode.bad_request
+                return (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse(
+                        {
+                            "error": msg,
+                        },
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status,
+                    )
+                )
+
             fmt = content.get("format", "").lower()
             if fmt not in [i[0] for i in CONFIG_FORMATS]:
                 # Format must be one supported by apprise
@@ -994,13 +1017,13 @@ class NotifyView(View):
                     remap_fields(rules, content)
 
             except RequestDataTooBig:
-                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
-                # when there is a very large flie attachment that can't be pulled out of the
-                # payload without exceeding memory limitations (default is 3MB)
+                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
+                # the case when there is a very large file attachment that can't be pulled
+                # out of the payload without exceeding memory limitations (default is 3MB)
                 logger.warning(
                     "NOTIFY - %s - JSON Payload Exceeded %dMB using KEY: %s",
                     request.META["REMOTE_ADDR"],
-                    (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576),
+                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
                     key,
                 )
 
@@ -1668,13 +1691,13 @@ class StatelessNotifyView(View):
                     remap_fields(rules, content, form=NotifyByUrlForm())
 
             except RequestDataTooBig:
-                # DATA_UPLOAD_MAX_MEMORY_SIZE exceeded it's value; this is usually the case
-                # when there is a very large flie attachment that can't be pulled out of the
-                # payload without exceeding memory limitations (default is 3MB)
+                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
+                # the case when there is a very large file attachment that can't be pulled
+                # out of the payload without exceeding memory limitations (default is 3MB)
                 logger.warning(
-                    "NOTIFY - %s - JSON Payload Exceeded %dMB; operaton aborted",
+                    "NOTIFY - %s - JSON Payload Exceeded %dMB; operation aborted",
                     request.META["REMOTE_ADDR"],
-                    (settings.DATA_UPLOAD_MAX_MEMORY_SIZE / 1048576),
+                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
                 )
 
                 status = ResponseCode.fields_too_large
@@ -2241,6 +2264,8 @@ class JsonUrlView(View):
             response["urls"].append(
                 {
                     "id": notification.url_id(),
+                    "service_name": str(notification.service_name) if notification.service_name else "",
+                    "enabled": bool(notification.enabled),
                     "url": notification.url(privacy=privacy),
                     "tags": notification.tags,
                 }

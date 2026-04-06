@@ -1,75 +1,130 @@
-/* Support Banner */
+/*
+ * Apprise API — Dark Theme
+ *
+ * Colour palette derived from the Apprise documentation site (Starlight):
+ *
+ *   --sl-color-bg             #17181c       page background (deepest)
+ *   --sl-color-bg-nav         #23262f       nav / sidebar / elevated surfaces
+ *   --sl-color-bg-inline-code #34383f       lifted surface, inputs (gray-5)
+ *   --sl-color-gray-5         #34383f       borders, dividers, tabs bg
+ *   --sl-color-gray-4         #555a62       muted icons / disabled text
+ *   --sl-color-gray-3         #888c96       secondary / placeholder text
+ *   --sl-color-gray-2         #c1c3c9       primary body text
+ *   --sl-color-gray-1         #edeef3       light labels, near-white text
+ *   --sl-color-white          #ffffff       pure white (headings)
+ *   --sl-color-accent         #2cb6a6       brand teal (interactive)
+ *   --sl-color-accent-high    #7de6da       lighter teal (hover / active text)
+ *   --sl-color-accent-low     #0b3b37       deep teal tint (selected states)
+ */
+
+/* =========================================
+Support Banner
+========================================= */
 .support-banner {
   background-color: rgba(44, 182, 166, 0.08);
-  color: #8fbcbb;
+  color: #7de6da;
   border-bottom: 1px solid rgba(44, 182, 166, 0.15);
 }
 
 .support-banner a {
-  color: #8fbcbb;
+  color: #7de6da;
 }
 
 .support-banner-close {
-  color: #8fbcbb;
+  color: #7de6da;
 }
 
 /* =========================================
-Global Dark Theme Variables & Overrides
+Global Base
 ========================================= */
 html {
-  color: #d8dee9;
-  background-color: #2e3440;
+  color: #c1c3c9;
+  background-color: #17181c;
 }
 
+/* =========================================
+Typography
+========================================= */
 h1 {
-  color: #eceff4 !important;
+  color: #ffffff !important;
+}
+
+h2 {
+  color: #edeef3;
+}
+
+h3 {
+  color: #edeef3;
 }
 
 h4 {
-  color: #e5e9f0;
+  color: #edeef3;
 }
 
 h5 {
-  color: #8fbcbb;
-}
-
-a {
-  color: #ebcb8b;
-}
-
-a:hover {
-  color: #d08770;
+  color: #2cb6a6;
 }
 
 em {
-  color: #5e81ac !important;
+  color: #2cb6a6 !important;
 }
 
-.dropdown-content li>span:hover {
-  background-color: #4c566a !important;
+pre code {
+  background-color: #0d0f12 !important;
+  color: #c1c3c9;
 }
 
-.select-wrapper input.select-dropdown:focus {
-  border-bottom: 1px solid #4c566a !important;
+/* =========================================
+Navigation
+========================================= */
+.nav.nav-color,
+nav {
+  background: #23262f !important;
+  color: #c1c3c9;
+  box-shadow: 0 1px 0 #34383f !important;
 }
 
-.dropdown-content li>a,
-.dropdown-content li>span {
-  background-color: #171b23 !important;
-  color: #eceff4;
+nav a,
+nav .brand-logo,
+nav ul a {
+  color: #c1c3c9;
+}
+
+nav ul li.active,
+nav ul a:hover {
+  background-color: rgba(0, 0, 0, 0.15);
 }
 
 i.material-icons {
-  color: #6e7d9c;
+  color: #555a62;
 }
 
 i.material-icons:hover {
-  color: #57637a;
+  color: #888c96;
 }
 
-/* Status Colors */
+/* =========================================
+Footer
+========================================= */
+.page-footer {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+.page-footer-legal {
+  border-top: 1px solid #34383f;
+  color: #888c96;
+}
+
+.page-footer-legal a {
+  color: #888c96;
+}
+
+/* =========================================
+Status & Indicators
+========================================= */
 .url-enabled {
-  color: #02c7a6;
+  color: #2cb6a6;
 }
 
 .url-disabled {
@@ -77,291 +132,106 @@ i.material-icons:hover {
 }
 
 .no-config .info {
-  color: #4c566a;
+  color: #34383f;
+}
+
+.notify-target-guidance {
+  background-color: #23262f;
+  border-color: #34383f;
+  color: #c1c3c9;
+}
+
+.notify-target-guidance-title,
+.notify-target-guidance-icon {
+  color: #ffbf6b;
+}
+
+.review-empty-card {
+  background-color: #23262f;
+  border-color: #34383f;
+}
+
+.review-empty-lead .info {
+  color: #555a62;
+}
+
+.loaded-config-heading-status-text {
+  background-color: #0b3b37;
+  border-color: #2f7f77;
+  color: #cffff9;
+}
+
+.loaded-config-tip {
+  background-color: #23262f;
+  border-color: #34383f;
+  color: #aeb4be;
 }
 
 .api-details .plugin-index {
-  color: #666;
+  color: #aeb4be;
+  background-color: #17181c;
+  border-color: #3d4350;
 }
 
-/* =========================================
-Navigation & Footer
-========================================= */
-.nav.nav-color,
-nav {
-  background: #171b23 !important;
-  color: #d8dee9;
+.api-details .collapsible>li {
+  border-color: #34383f;
 }
 
-nav a,
-nav .brand-logo,
-nav ul a {
-  color: #d8dee9;
+.api-details .collapsible-header {
+  background-color: #23262f;
+  color: #c1c3c9;
 }
 
-nav ul li.active,
-nav ul a:hover {
-  background-color: rgba(0, 0, 0, .1);
+.api-details .collapsible-header:hover {
+  background-color: #2c3040;
+  color: #7de6da;
 }
 
-.page-footer {
-  color: #d8dee9;
-  background-color: #ee6e73;
+.api-details .collapsible>li.active>.collapsible-header {
+  background-color: #2c3040;
+  color: #7de6da;
+  border-bottom-color: #34383f;
 }
 
-/* =========================================
-Components: Cards, Collections, Collapsibles
-========================================= */
-.card-panel,
-.card {
-  background-color: #4c566a;
+.api-details .collapsible-body {
+  background-color: #17181c;
 }
 
-.card .card-image .card-title {
-  color: #d8dee9;
+.api-details .plugin-chevron {
+  color: #666c78;
 }
 
-.card .card-reveal {
-  background-color: #d8dee9;
+.api-details .collapsible>li.active .plugin-chevron {
+  color: #7de6da;
 }
 
-#url-list .card-panel {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  background: #2f3946;
+.api-details .plugin-service-btn {
+  color: #c1c3c9 !important;
+  border-color: #555a62;
+  background-color: #23262f;
 }
 
-#url-list .url-header code.url-text {
-  background-color: #212733;
-  color: #e0e6f0;
+.api-details .plugin-service-btn:hover {
+  color: #7de6da !important;
+  border-color: #2cb6a6;
+  background-color: #2c3040;
 }
 
-#url-list .card-panel .url-id {
-  color: #777;
+.api-details .plugin-service-btn--external {
+  color: #9cece2 !important;
+  border-color: #2f5a62;
+  background-color: #21353a;
 }
 
-.collection {
-  border-color: #525252;
-}
-
-.collection .collection-item {
-  background-color: #2e3440;
-  border-color: #666;
-  color: #d8dee9;
-}
-
-.collection a.collection-item {
-  color: #d8dee9;
-}
-
-a,
-a:hover,
-a.active {
-  color: #6e7d9c;
-}
-
-.collection a.collection-item:not(.active):hover {
-  background-color: #1b1e26 !important;
-}
-
-.collapsible {
-  border: 1px solid #525252;
-}
-
-.collapsible-header {
-  background-color: #2e3440;
-  border-bottom: 1px solid #4c566a;
-}
-
-.collapsible-body {
-  border-bottom: 1px solid #434c5e;
-  background-color: #2e3440;
-}
-
-/* =========================================
-Tabs - Prefixed with 'body' to override Materialize
-========================================= */
-.tabs {
-  background-color: transparent;
-  border-bottom: none;
-}
-
-.tabs .tab {
-  background-color: transparent;
-}
-
-body .tabs .tab a {
-  background-color: #4c566a !important;
-  color: #d8dee9 !important;
-  border-bottom: 1px solid #464646 !important;
-}
-
-body .tabs .tab a:hover,
-body .tabs .tab a.active {
-  color: #eceff4;
-  background-color: #8fbcbb;
-}
-
-body .tabs .tab.disabled a,
-body .tabs .tab.disabled a:hover,
-body .tabs .tab.disabled a i,
-body .tabs .tab.disabled a:hover i {
-  background-color: #171b23 !important;
-  color: #666 !important;
-}
-
-body .tabs .tab a:focus,
-body.tabs .tab a:focus.active {
-  background-color: #1b1e26 !important;
-}
-
-body .tabs .indicator {
-  background-color: #d8dee9;
-}
-
-/* =========================================
-Inputs & Code
-========================================= */
-/* Added body prefix to ensure dark input backgrounds win */
-body input,
-body textarea {
-  color: #e5e9f0;
-  border: 1px solid #2e3440;
-  background-color: #1b1e26;
-}
-
-/* Materialize Input Focus overrides */
-input:not([type]):focus:not([readonly]),
-textarea.materialize-textarea:focus:not([readonly]) {
-  border-bottom: 1px solid #8fbcbb;
-}
-
-input:not([type]):focus:not([readonly])+label,
-textarea.materialize-textarea:focus:not([readonly])+label {
-  color: #8fbcbb;
-}
-
-pre code {
-  background-color: #111 !important;
-  color: #d8dee9;
+.api-details .plugin-service-btn--external:hover {
+  color: #c3fff7 !important;
+  border-color: #4d8993;
+  background-color: #284149;
 }
 
 #overview strong {
-  color: #d8dee9 !important;
-  background-color: #373e4d;
-}
-
-.file-selected {
-  color: #ebcb8b;
-  background-color: #2e3440;
-}
-
-/* =========================================
-Buttons & Chips
-========================================= */
-.btn,
-.btn-large,
-.btn-small {
-  color: #e5e9f0;
-  background-color: #2e3440;
-}
-
-.btn:focus,
-.btn-large:focus,
-.btn-small:focus,
-.btn-floating:focus,
-.btn-large:hover,
-.btn-small:hover,
-.btn:hover {
-  background-color: #1b1e26;
-}
-
-.btn-flat {
-  background-color: transparent;
-  color: #d8dee9;
-}
-
-#url-list .copy-url-btn:hover,
-.config-id-copy.btn-flat:hover,
-.snippet-copy-btn:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-}
-
-.chip {
-  color: #d8dee9;
-  background-color: #2e3440 !important;
-  border: 1px solid #434c5e !important;
-}
-
-.card-panel.selected {
-  background-color: #3f523f !important;
-
-}
-
-.chip.selected {
-  color: #fff;
-  background-color: #258528 !important;
-}
-
-.url-selected-icon i {
-  color: #bbb;
-}
-
-/* =========================================
-Health Check & Notifications
-========================================= */
-#health-check {
-  background-color: #2f3946;
-  /* Darker bg for health check */
-  color: #d8dee9;
-}
-
-.swal2-popup {
-  background-color: #2e3440;
-  color: #e5e9f0;
-}
-
-.copy-toast.swal2-popup {
-  background-color: #2f3946;
-  color: #e5e9f0;
-}
-
-.copy-toast .swal2-title {
-  margin: 0;
-  font-size: .9rem;
-  font-weight: 500;
-}
-
-/* HighlightJS Overrides */
-.hljs {
-  color: #d8dee9;
-  background: #4c566a;
-}
-
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-subst {
-  color: #4fa1ba;
-}
-
-.hljs-literal,
-.hljs-number,
-.hljs-variable {
-  color: teal;
-}
-
-.hljs-string {
-  color: #d8dee9;
-}
-
-.hljs-section,
-.hljs-title {
-  color: #900;
-}
-
-.hljs-attribute,
-.hljs-name,
-.hljs-tag {
-  color: navy;
+  color: #edeef3 !important;
+  background-color: #34383f;
 }
 
 /* Loading spinner */
@@ -369,7 +239,6 @@ Health Check & Notifications
   color: #90caf9;
 }
 
-/* Error details text under the line */
 .api-status-details {
   color: #ffcdd2;
 }
@@ -382,60 +251,771 @@ Health Check & Notifications
   color: #ef5350;
 }
 
+/* =========================================
+Links
+========================================= */
+a,
+a.active {
+  color: #2cb6a6 !important;
+}
+
+a:hover {
+  color: #7de6da !important;
+}
+
+/* Collection sidebar items — muted, not teal */
+.collection a.collection-item {
+  color: #c1c3c9 !important;
+}
+
+/* =========================================
+Side Nav
+========================================= */
+:root {
+  --apprise-mini-badge-bg: #2cb6a6;
+  --apprise-mini-badge-ring: #0b3b37;
+  --apprise-mini-badge-horn: #f2f8f8;
+  --apprise-mini-badge-horn-stroke: #c8d6d5;
+  --apprise-logo-wave: #89a0a5;
+  --apprise-logo-body-1: #4ed1c8;
+  --apprise-logo-body-2: #1f8780;
+  --apprise-logo-text-1: #8de8dd;
+  --apprise-logo-text-2: #3ab5aa;
+  --menu-icon-accent: #2cb6a6;
+  --menu-icon-coffee: #c07050;
+  --menu-icon-heart: #e05c5c;
+}
+
+.side-nav-group {
+  background-color: #23262f;
+  border: 1px solid #34383f;
+}
+
+.side-nav-label {
+  color: #6f7582;
+}
+
+.side-nav-item {
+  color: #c1c3c9 !important;
+  border-top-color: #34383f;
+}
+
+.side-nav-item:hover {
+  background-color: #2c3040;
+  color: #7de6da !important;
+}
+
+.side-nav-group--support {
+  border-color: #3a2e2e;
+}
+
+.side-nav-group--support .side-nav-item {
+  border-top-color: #3a2e2e;
+}
+
+.side-nav-group--support .side-nav-item:hover {
+  background-color: #2e2525;
+  color: #f0a0a0 !important;
+}
+
+/* =========================================
+Dropdowns & Selects
+========================================= */
+
+/* Trigger input */
+.select-wrapper input.select-dropdown {
+  color: #c1c3c9;
+  border-bottom: 1px solid #34383f !important;
+}
+
+.select-wrapper input.select-dropdown:focus {
+  border-bottom: 1px solid #2cb6a6 !important;
+}
+
+/* Caret arrow */
+.select-wrapper .caret {
+  fill: #888c96;
+}
+
+/* Dropdown list container */
+.dropdown-content {
+  background-color: #23262f;
+  border: 1px solid #34383f;
+  border-radius: 0.4rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Every item — base state */
+.dropdown-content li>a,
+.dropdown-content li>span {
+  background-color: #23262f !important;
+  color: #c1c3c9 !important;
+}
+
+/* Hover */
+.dropdown-content li>a:hover,
+.dropdown-content li>span:hover,
+.dropdown-content li:hover>span {
+  background-color: #34383f !important;
+  color: #7de6da !important;
+}
+
+/* Selected / active item */
+.dropdown-content li.active>a,
+.dropdown-content li.selected>span,
+.dropdown-content li.active>span {
+  background-color: #0b3b37 !important;
+  color: #2cb6a6 !important;
+  font-weight: 600;
+}
+
+/* Focus label */
+.select-wrapper+label,
+.input-field>label {
+  color: #555a62;
+}
+
+.select-wrapper input.select-dropdown:focus+label,
+.input-field>label.active {
+  color: #2cb6a6;
+}
+
+/* =========================================
+Components: Cards, Collections, Collapsibles
+========================================= */
+.card-panel,
+.card {
+  background-color: #23262f;
+}
+
+.card .card-image .card-title {
+  color: #edeef3;
+}
+
+.card .card-reveal {
+  background-color: #23262f;
+}
+
+#url-list .card-panel {
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  background: #23262f;
+  border-color: #34383f;
+}
+
+#url-list .card-panel:hover {
+  border-color: #4a5060;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+#url-list .url-header code.url-text {
+  background-color: #17181c;
+  color: #c1c3c9;
+  border: 1px solid #2a2e38;
+}
+
+#url-list .url-plugin-title {
+  color: #888c96;
+}
+
+#url-list .card-panel .url-id {
+  color: #555a62;
+}
+
+.collection {
+  border-color: #34383f;
+}
+
+.collection .collection-item {
+  background-color: #23262f;
+  border-color: #34383f;
+  color: #c1c3c9;
+}
+
+.collection a.collection-item {
+  color: #c1c3c9;
+}
+
+.collection a.collection-item:not(.active):hover {
+  background-color: #34383f !important;
+}
+
+.collapsible {
+  border: 1px solid #34383f;
+}
+
+.collapsible-header {
+  background-color: #23262f;
+  border-bottom: 1px solid #34383f;
+}
+
+.collapsible-body {
+  border-bottom: 1px solid #34383f;
+  background-color: #17181c;
+}
+
+/* =========================================
+Inline Tab Chip (step references)
+========================================= */
+.tab-chip {
+  background-color: #23262f;
+  border-color: #34383f;
+  color: #c1c3c9;
+}
+
+.tab-chip .material-icons {
+  color: #888c96;
+}
+
+.tab-chip-external {
+  background-color: #21353a;
+  border-color: #2f5a62;
+  color: #9cece2;
+}
+
+.tab-chip-external .material-icons {
+  color: #7de6da;
+}
+
+/* =========================================
+Code blocks — key/ID highlight + hljs overrides
+========================================= */
+
+/* The <em> tag used to highlight the config key inside pre>code.
+   No background shading — colour only. */
+pre code em {
+  color: #9cdcfe;
+  font-style: normal;
+}
+
+/* hljs palette — aligned with the site's teal/gray palette:
+   keywords/builtins → #2cb6a6  (brand teal)
+   strings/numbers   → #7de6da  (light teal)
+   comments          → #888c96  (muted gray, italic)
+   plain text        → #c1c3c9  (standard body text) */
+pre code.bash.hljs,
+pre code.hljs {
+  color: #c1c3c9;
+  background-color: #0d0f12;
+}
+
+/* Quoted string values ("Test Message", "POST") */
+pre code .hljs-string,
+pre code .hljs-symbol {
+  color: #7de6da;
+}
+
+/* Built-in shell commands: curl, apprise */
+pre code .hljs-built_in {
+  color: #2cb6a6;
+}
+
+/* Shell keywords */
+pre code .hljs-keyword,
+pre code .hljs-selector-tag,
+pre code .hljs-subst {
+  color: #2cb6a6;
+}
+
+/* Flags and options: -X, -F, --body, --tag */
+pre code .hljs-attr,
+pre code .hljs-attribute,
+pre code .hljs-meta {
+  color: #c1c3c9;
+}
+
+/* Variables, numbers, constants */
+pre code .hljs-variable,
+pre code .hljs-template-variable,
+pre code .hljs-params,
+pre code .hljs-literal,
+pre code .hljs-number {
+  color: #7de6da;
+}
+
+/* Comments */
+pre code .hljs-comment,
+pre code .hljs-quote {
+  color: #888c96;
+  font-style: italic;
+}
+
+/* Section / title */
+pre code .hljs-section,
+pre code .hljs-title,
+pre code .hljs-name,
+pre code .hljs-tag {
+  color: #888c96;
+}
+
+/* Function/class titles (.hljs-title.function_ etc. beat plain .hljs-title
+   in specificity — must be overridden explicitly) */
+pre code .hljs-title.function_,
+pre code .hljs-title.class_,
+pre code .hljs-title.class_.inherited__ {
+  color: #2cb6a6;
+}
+
+/* Types, language variables ($this, self), template tags */
+pre code .hljs-type,
+pre code .hljs-variable.language_,
+pre code .hljs-template-tag,
+pre code .hljs-doctag {
+  color: #7de6da;
+}
+
+/* Operators, bullets — plain text, not highlighted */
+pre code .hljs-operator,
+pre code .hljs-bullet {
+  color: #c1c3c9;
+}
+
+/* Regexps — treat like strings */
+pre code .hljs-regexp,
+pre code .hljs-meta .hljs-string {
+  color: #7de6da;
+}
+
+/* Meta keywords (e.g. !important) */
+pre code .hljs-meta .hljs-keyword {
+  color: #2cb6a6;
+}
+
+/* =========================================
+Config ID Bar
+========================================= */
+.config-id-bar {
+  background-color: #23262f;
+  border: 1px solid #34383f;
+}
+
+.config-id-bar .config-id-label {
+  color: #888c96;
+}
+
+code.config-id {
+  color: #7de6da;
+  background-color: #17181c;
+  border: 1px solid #34383f;
+  padding: 0.15em 0.45em;
+  border-radius: 0.3rem;
+}
+
+/* =========================================
+Tabs
+========================================= */
+
+/* Container — bottom border only; tabs sit above it */
+.tabs {
+  background-color: transparent !important;
+  border-bottom: 2px solid #2cb6a6 !important;
+}
+
+/* Inactive tabs: slightly elevated surface, rounded top corners */
+body .tabs .tab a {
+  background-color: #23262f !important;
+  color: #888c96 !important;
+  border: 1px solid #34383f !important;
+  border-bottom: none !important;
+  margin-bottom: -1px;
+}
+
+/* Hover */
+body .tabs .tab a:hover {
+  background-color: #2c3040 !important;
+  color: #7de6da !important;
+  border-color: #555a62 !important;
+  border-bottom: none !important;
+}
+
+/* Active — page-background merges with content below the tab bar.
+   :focus included so clicking does not trigger a colour change. */
+body .tabs .tab a.active,
+body .tabs .tab a.active:focus {
+  background-color: #17181c !important;
+  color: #7de6da !important;
+  border: 1px solid #2cb6a6 !important;
+  border-bottom: 2px solid #17181c !important;
+}
+
+/* Indicator: hide it — a.active is the signal */
+body .tabs .indicator {
+  display: none !important;
+}
+
+body .tabs .tab.disabled a,
+body .tabs .tab.disabled a:hover,
+body .tabs .tab.disabled a i,
+body .tabs .tab.disabled a:hover i {
+  background-color: #1e2128 !important;
+  color: #34383f !important;
+  cursor: default;
+  border-color: #2a2e38 !important;
+  border-bottom: none !important;
+}
+
+body .tabs .tab a:focus {
+  background-color: #23262f !important;
+}
+
+/* =========================================
+Inputs & Code
+========================================= */
+body input,
+body textarea {
+  color: #edeef3;
+  border: 1px solid #34383f;
+  background-color: #17181c;
+}
+
+/* Materialize focus overrides */
+input:not([type]):focus:not([readonly]),
+textarea.materialize-textarea:focus:not([readonly]) {
+  border-bottom: 1px solid #2cb6a6;
+}
+
+input:not([type]):focus:not([readonly])+label,
+textarea.materialize-textarea:focus:not([readonly])+label {
+  color: #2cb6a6;
+}
+
+.file-selected {
+  color: #7de6da;
+  background-color: #23262f;
+}
+
+/* =========================================
+Buttons & Chips
+========================================= */
+.btn,
+.btn-large,
+.btn-small {
+  color: #edeef3;
+  background-color: #34383f;
+}
+
+.btn:focus,
+.btn-large:focus,
+.btn-small:focus,
+.btn-floating:focus,
+.btn-large:hover,
+.btn-small:hover,
+.btn:hover {
+  background-color: #23262f;
+  color: #edeef3;
+}
+
+.btn-flat {
+  background-color: transparent;
+  color: #c1c3c9;
+}
+
+#config .config-toolbar .config-url-builder-btn,
+#config .config-toolbar .config-url-builder-btn:visited,
+#config .config-toolbar .config-url-builder-btn:hover,
+#config .config-toolbar .config-url-builder-btn:focus {
+  color: #edeef3 !important;
+}
+
+#notify .notify-form-actions .btn-clear-form {
+  background-color: #2a2f3a;
+  border-color: #4b5260;
+  color: #b8bec8;
+}
+
+#notify .notify-form-actions .btn-clear-form:hover,
+#notify .notify-form-actions .btn-clear-form:focus {
+  background-color: #323845;
+  border-color: #616a7c;
+  color: #d1d6de !important;
+}
+
+#url-list .copy-url-btn:hover,
+#url-list .review-test-btn:hover,
+.config-id-copy.btn-flat:hover,
+.snippet-copy-btn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+#url-list .review-test-btn {
+  color: #c1c3c9;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+#url-list .review-test-btn:hover,
+#url-list .review-test-btn:focus {
+  color: #eef4ff;
+}
+
+#url-list .review-test-btn[disabled],
+#url-list .review-test-btn[disabled]:hover,
+#url-list .review-test-btn[disabled]:focus {
+  color: #6d7380;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: #3f4552;
+}
+
+.chip {
+  color: #c1c3c9;
+  background-color: #34383f !important;
+  border: 1px solid #555a62 !important;
+}
+
+/* Selected card: deep teal tint (mirrors accent-low) */
+.card-panel.selected {
+  background-color: #0b3b37 !important;
+  border-color: #1f6f67 !important;
+}
+
+.chip.selected {
+  color: #ffffff;
+  background-color: #148c80 !important;
+}
+
+.url-selected-icon i {
+  color: #888c96;
+}
+
+#url-list .url-disabled-indicator {
+  color: #f5c46a;
+}
+
+#url-list .card-panel.url-item-disabled {
+  background-color: #1d2129 !important;
+  border-color: #6b4d26 !important;
+  box-shadow: inset 0 0 0 1px rgba(245, 196, 106, 0.12);
+  opacity: 0.92;
+}
+
+#url-list .card-panel.url-item-disabled:hover {
+  transform: none;
+}
+
+#url-list .card-panel.url-item-disabled .url-plugin-title {
+  color: #d2a761;
+  opacity: 0.92;
+}
+
+#url-list .card-panel.url-item-disabled code.url-text {
+  color: #aeb5c1;
+  background-color: #161a21;
+}
+
+#url-list .card-panel.url-item-disabled .chip {
+  opacity: 0.58;
+}
+
+#url-list .card-panel.url-item-disabled .url-selected-icon i {
+  color: #646b78;
+}
+
+/* =========================================
+Welcome Page Collapsibles
+========================================= */
+.api-welcome .collapsible>li {
+  border-color: #34383f;
+}
+
+.api-welcome .collapsible-header {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+.api-welcome .collapsible-header i.material-icons {
+  color: #2cb6a6;
+}
+
+.api-welcome .collapsible-header:hover {
+  background-color: #2c3040;
+  color: #7de6da;
+}
+
+.api-welcome .collapsible>li.active>.collapsible-header {
+  background-color: #2c3040;
+  color: #7de6da;
+  border-bottom-color: #34383f;
+}
+
+.api-welcome .collapsible-body {
+  background-color: #17181c;
+}
+
+/* =========================================
+Health Check
+========================================= */
+#health-check {
+  background-color: #23262f;
+  color: #c1c3c9;
+  border-color: #34383f;
+}
+
+#health-check .health-check-title {
+  color: #edeef3;
+  border-bottom-color: #3d4350;
+}
+
+#health-check .health-check-icon--error {
+  color: #ff7373;
+}
+
+#health-check .health-check-list li {
+  background-color: #1f222a;
+  border-color: #34383f;
+}
+
+#health-check .health-check-more {
+  background-color: #1f222a;
+  border-color: #34383f;
+}
+
+#health-check .health-check-more summary {
+  color: #7de6da;
+}
+
+#health-check .health-check-more-content {
+  border-top: 1px solid #34383f;
+}
+
+/* =========================================
+Config Editor — textarea border override
+========================================= */
 .apprise-config-editor textarea {
-  caret-color: white !important;
+  caret-color: #edeef3 !important;
+  border: 1px solid #2a2e38 !important;
 }
 
 .apprise-config-editor .apprise-config-highlight {
-  background-color: #1b1e26;
-  color: #d4d4d4;
+  background-color: #0d0f12;
+  color: #c1c3c9;
 }
 
-/* 1. URLs  */
+/* 1. URL values — accent-high teal, brightest element, the primary content */
 .apprise-config-highlight .hljs-string,
 .apprise-config-highlight .hljs-symbol,
 .apprise-config-highlight .hljs-link {
-  color: #9cdcfe !important;
+  color: #7de6da !important;
 }
 
-/* 2. Comments */
+/* 2. Comments — muted, clearly suppressed */
 .apprise-config-highlight .hljs-comment {
-  color: #7c8491 !important;
+  color: #555a62 !important;
   font-style: italic !important;
 }
 
-/* 3. Tags / Keywords (group declarations e.g. <work>=devops,devteam) */
+/* 3. Group tag declarations (<work>=devops) — brand teal, structural */
 .apprise-config-highlight .hljs-keyword,
 .apprise-config-highlight .hljs-section,
 .apprise-config-highlight .hljs-name {
-  color: #c586c0 !important;
+  color: #2cb6a6 !important;
 }
 
-/* 4. Tag names and YAML keys (e.g. me,family before the =) */
+/* 4. YAML keys (url:, tag:) — brand teal, structural labels */
 .apprise-config-highlight .hljs-meta,
 .apprise-config-highlight .hljs-attr {
-  color: #79b8ff !important;
+  color: #2cb6a6 !important;
 }
 
-/* 5. Numbers / Constants */
+/* 5. Numbers / Constants — neutral body text, minor role */
 .apprise-config-highlight .hljs-number,
 .apprise-config-highlight .hljs-literal {
-  color: #b5cea8 !important;
+  color: #888c96 !important;
 }
 
 /* 6. Standard Text */
 .apprise-config-highlight {
-  color: #d4d4d4 !important;
+  color: #c1c3c9 !important;
+}
+
+/* =========================================
+Highlight.js (general code blocks)
+========================================= */
+.hljs {
+  background-color: #23262f;
+  color: #c1c3c9;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #2cb6a6;
+}
+
+.hljs-literal,
+.hljs-number,
+.hljs-variable {
+  color: #7de6da;
+}
+
+.hljs-string {
+  color: #7de6da;
+}
+
+.hljs-section,
+.hljs-title {
+  color: #888c96;
+}
+
+.hljs-attribute,
+.hljs-name,
+.hljs-tag {
+  color: #7de6da;
+}
+
+/* =========================================
+Notifications — SweetAlert2
+========================================= */
+.swal2-popup {
+  background-color: #23262f;
+  color: #edeef3;
+}
+
+.swal2-popup .swal2-actions .swal2-styled {
+  border-radius: 0.42rem;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.swal2-popup .swal2-confirm.swal2-styled {
+  background-color: #2cb6a6 !important;
+  color: #0f1e1c !important;
+}
+
+.swal2-popup .swal2-confirm.swal2-styled:hover,
+.swal2-popup .swal2-confirm.swal2-styled:focus {
+  background-color: #38c8b8 !important;
+}
+
+.swal2-popup .swal2-cancel.swal2-styled {
+  background-color: #34383f !important;
+  color: #c1c3c9 !important;
+  border: 1px solid #555a62 !important;
+}
+
+.swal2-popup .swal2-cancel.swal2-styled:hover,
+.swal2-popup .swal2-cancel.swal2-styled:focus {
+  background-color: #3f444d !important;
+  color: #edeef3 !important;
+}
+
+.copy-toast.swal2-popup {
+  background-color: #23262f;
+  color: #edeef3;
+}
+
+.copy-toast .swal2-title {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 500;
 }
 
 .notify-attachments-list .attachment-chip {
-  background-color: #171b23;
-  color: #eceff4;
+  background-color: #23262f;
+  color: #c1c3c9;
 }
 
-/* SweetAlert2 – log colouring */
+/* SweetAlert2 — log colouring */
 .swal2-popup .notify-log-panel {
-  background-color: #1b1e26;
+  background-color: #17181c;
 }
 
 .swal2-popup .logs .log_DEBUG {
