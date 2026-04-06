@@ -667,6 +667,29 @@ class AddView(View):
                 )
 
         elif "config" in content:
+            if len(content["config"]) > settings.APPRISE_CONFIG_MAX_LENGTH:
+                # Configuration payload exceeds the maximum allowed length
+                logger.warning(
+                    "ADD - %s - Config payload exceeds maximum allowed length (%d bytes) using KEY: %s",
+                    request.META["REMOTE_ADDR"],
+                    settings.APPRISE_CONFIG_MAX_LENGTH,
+                    key,
+                )
+                msg = _("The configuration payload is too large")
+                status = ResponseCode.bad_request
+                return (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse(
+                        {
+                            "error": msg,
+                        },
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status,
+                    )
+                )
+
             fmt = content.get("format", "").lower()
             if fmt not in [i[0] for i in CONFIG_FORMATS]:
                 # Format must be one supported by apprise

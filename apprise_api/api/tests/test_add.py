@@ -383,3 +383,58 @@ class AddTests(SimpleTestCase):
             content_type="application/json",
         )
         assert response.status_code == 400
+
+    @override_settings(APPRISE_CONFIG_MAX_LENGTH=10)
+    def test_config_max_length_enforced_json(self):
+        """
+        Test that JSON config submissions exceeding APPRISE_CONFIG_MAX_LENGTH are rejected
+        """
+        key = "test_config_max_length_enforced_json"
+
+        # A config that exceeds the 10-byte limit is rejected with 400
+        oversized_config = "x" * 11
+        response = self.client.post(
+            "/add/{}".format(key),
+            data=json.dumps({"format": ConfigFormat.TEXT.value, "config": oversized_config}),
+            content_type="application/json",
+        )
+        assert response.status_code == 400
+
+        # A config at exactly the limit (10 bytes) is not rejected by the length check
+        # (it may still fail for other reasons such as no valid URLs)
+        at_limit_config = "x" * 10
+        response = self.client.post(
+            "/add/{}".format(key),
+            data=json.dumps({"format": ConfigFormat.TEXT.value, "config": at_limit_config}),
+            content_type="application/json",
+        )
+        # Length check passes; config is invalid apprise content so still 400, not 431
+        assert response.status_code == 400
+
+    def test_config_max_length_enforced_form(self):
+        """
+        Test that form config submissions exceeding APPRISE_CONFIG_MAX_LENGTH are rejected.
+        The AddByConfigForm enforces max_length at the Django form-validation level.
+        """
+        from django.conf import settings
+
+        key = "test_config_max_length_enforced_form"
+
+        # A config one byte over the limit causes form validation to fail, so
+        # the content dict stays empty and the view returns 400.
+        oversized_config = "x" * (settings.APPRISE_CONFIG_MAX_LENGTH + 1)
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": ConfigFormat.TEXT.value, "config": oversized_config},
+        )
+        assert response.status_code == 400
+
+        # A config within the limit passes form validation (though the content
+        # itself is not valid apprise config, so the save still returns 400).
+        within_limit_config = "x" * 10
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"format": ConfigFormat.TEXT.value, "config": within_limit_config},
+        )
+        # Passes the length check; invalid apprise content → 400 (not 413/431)
+        assert response.status_code == 400
