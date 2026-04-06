@@ -32,7 +32,7 @@ from django.conf import settings
 logger = logging.getLogger("django")
 
 # Matches a single [N] subscript at the start of a string.
-_SUBSCRIPT_RE = re.compile(r'^\[(\d+)\]')
+_SUBSCRIPT_RE = re.compile(r"^\[(\d+)\]")
 
 
 def _parse_path(key):
@@ -41,8 +41,8 @@ def _parse_path(key):
 
     Each step is a ``('key', name)`` or ``('index', N)`` tuple:
 
-    * ``('key', name)``  – perform a dict lookup for *name*.
-    * ``('index', N)``   – dereference integer index *N* of the current list.
+    * ``('key', name)``  - perform a dict lookup for *name*.
+    * ``('index', N)``   - dereference integer index *N* of the current list.
 
     Supported forms::
 
@@ -75,10 +75,7 @@ def _parse_path(key):
         # A stray ']' before any '[' is immediately malformed.
         bracket_pos = segment.find("[")
         if bracket_pos == -1:
-            return None, (
-                f"malformed bracket notation at '{segment}'"
-                f" (unexpected ']' with no matching '[')"
-            )
+            return None, (f"malformed bracket notation at '{segment}' (unexpected ']' with no matching '[')")
 
         key_name = segment[:bracket_pos]
         remaining = segment[bracket_pos:]
@@ -91,11 +88,10 @@ def _parse_path(key):
             m = _SUBSCRIPT_RE.match(remaining)
             if not m:
                 return None, (
-                    f"malformed bracket notation at '{segment}';"
-                    f" expected [N] where N is a non-negative integer"
+                    f"malformed bracket notation at '{segment}'; expected [N] where N is a non-negative integer"
                 )
             steps.append(("index", int(m.group(1))))
-            remaining = remaining[m.end():]
+            remaining = remaining[m.end() :]
 
     return steps, None
 
@@ -116,8 +112,7 @@ def _get_nested(payload, steps, source_key):
         if step_type == "key":
             if not isinstance(current, dict) or step_val not in current:
                 logger.warning(
-                    "Payload mapping path '%s' not found in payload"
-                    " (stopped at key '%s')",
+                    "Payload mapping path '%s' not found in payload (stopped at key '%s')",
                     source_key,
                     step_val,
                 )
@@ -127,8 +122,7 @@ def _get_nested(payload, steps, source_key):
         else:  # 'index'
             if not isinstance(current, (list, tuple)):
                 logger.warning(
-                    "Payload mapping path '%s': [%d] is not indexable"
-                    " (expected a list/array, got %s)",
+                    "Payload mapping path '%s': [%d] is not indexable (expected a list/array, got %s)",
                     source_key,
                     step_val,
                     type(current).__name__,
@@ -138,8 +132,7 @@ def _get_nested(payload, steps, source_key):
                 current = current[step_val]
             except IndexError:
                 logger.warning(
-                    "Payload mapping path '%s': index [%d] is out of range"
-                    " (length %d)",
+                    "Payload mapping path '%s': index [%d] is out of range (length %d)",
                     source_key,
                     step_val,
                     len(current),
