@@ -292,9 +292,25 @@
         </div>
       </div>
       <div class="section has-config">
-        <h5>{% trans "Loaded Configuration" %}</h5>
+        <div class="loaded-config-heading">
+          <h5>{% trans "Loaded Configuration" %}</h5>
+          <p class="loaded-config-heading-status">
+            {% blocktrans %}<span class="loaded-config-heading-status-text"><span class="card-count" data-count-format="plain">0</span> notification(s) selected for sending</span>{% endblocktrans %}
+          </p>
+        </div>
         <div class="loaded-config-tip">
-          {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}<strong>Tip:</strong> Click on a tag (🏷️) to pre-select it in the {{ notify_chip }} section, or add more entries in the {{ config_chip }} section.{% endblocktrans %}
+          <ul class="loaded-config-tip-list">
+            <li>{% trans "Review the parsed destinations below before sending." %}</li>
+            <li>
+              {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}Select a tag (🏷️) on any entry to include it in {{ notify_chip }}.{% endblocktrans %}
+            </li>
+            <li>
+              {% blocktrans with send_icon='<i class="material-icons loaded-config-tip-send-icon">send</i>'|safe %}Use {{ send_icon }} to run a quick test and inspect the full debug output for that entry.{% endblocktrans %}
+            </li>
+            <li>
+              {% blocktrans with config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}Need more destinations? Add or update them in {{ config_chip }}.{% endblocktrans %}
+            </li>
+          </ul>
         </div>
         <div id="url-list"></div>
         <div id="url-list-progress" class="progress" style="width:70%">
@@ -725,7 +741,7 @@
   function update_count() {
     const p_count = document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
     document.querySelectorAll(".card-count").forEach(function (e) {
-      e.textContent = `(${p_count})`;
+      e.textContent = e.dataset.countFormat === 'plain' ? `${p_count}` : `(${p_count})`;
     })
     const guidance = document.querySelector('#notify-target-guidance');
     if (guidance) {
@@ -1124,6 +1140,10 @@
       document.querySelectorAll('.no-config').forEach(function (e) {
         e.style.display = 'none';
       });
+      // If only one URL is defined, force full-width (no 2-column grid)
+      if (urlList.childNodes.length === 1) {
+        urlList.classList.add('url-list-single');
+      }
       // Save our list to the screen
       document.querySelector('#url-list').appendChild(urlList);
       //

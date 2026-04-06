@@ -821,9 +821,93 @@ Welcome Page Collapsibles
   line-height: 1.5;
 }
 
+.loaded-config-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.loaded-config-heading h5 {
+  margin: 0;
+}
+
+.loaded-config-heading-status {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.loaded-config-heading-status-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.24rem 0.7rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.loaded-config-heading-status-text .card-count {
+  margin-left: 0;
+  font-weight: 800;
+}
+
 .loaded-config-tip {
+  border: 1px solid;
+  border-radius: 0.8rem;
+  padding: 0.85rem 1rem 0.9rem;
   margin-bottom: 0.8rem;
   line-height: 1.5;
+}
+
+.loaded-config-tip-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+  column-gap: 2.5rem;
+}
+
+.loaded-config-tip-list li {
+  margin-bottom: 0.35rem;
+  break-inside: avoid;
+}
+
+.loaded-config-tip-list li:last-child {
+  margin-bottom: 0;
+}
+
+.loaded-config-tip-send-icon {
+  font-size: 1em;
+  vertical-align: middle;
+  line-height: 1;
+  position: relative;
+  top: -0.05em;
+}
+
+@media (min-width: 1200px) {
+  .loaded-config-tip-list {
+    columns: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .loaded-config-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .loaded-config-heading-status-text {
+    white-space: normal;
+  }
+
+  .loaded-config-tip {
+    padding: 0.8rem 0.85rem 0.9rem;
+  }
 }
 
 #overview strong {
@@ -963,6 +1047,11 @@ body .tabs .tab.disabled a:hover i {
   #url-list ul {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* When only one URL is defined, always span the full width */
+#url-list ul.url-list-single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 #url-list .card-panel {

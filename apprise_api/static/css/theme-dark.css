@@ -155,7 +155,15 @@ Status & Indicators
   color: #555a62;
 }
 
+.loaded-config-heading-status-text {
+  background-color: #0b3b37;
+  border-color: #2f7f77;
+  color: #cffff9;
+}
+
 .loaded-config-tip {
+  background-color: #23262f;
+  border-color: #34383f;
   color: #aeb4be;
 }
 

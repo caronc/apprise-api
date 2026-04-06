@@ -132,7 +132,15 @@ Status & Indicators
   color: #555a62;
 }
 
+.loaded-config-heading-status-text {
+  background-color: #e6f5f2;
+  border-color: #9fd6ce;
+  color: #0f5f57;
+}
+
 .loaded-config-tip {
+  background-color: #f6f7fa;
+  border-color: #d8d9df;
   color: #555a62;
 }
 
