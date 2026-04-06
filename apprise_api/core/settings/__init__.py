@@ -251,9 +251,9 @@ APPRISE_ATTACH_ALLOW_URLS = os.environ.get("APPRISE_ATTACH_ALLOW_URL", "*").lowe
 # (defined in MB)
 APPRISE_UPLOAD_MAX_MEMORY_SIZE = abs(int(os.environ.get("APPRISE_UPLOAD_MAX_MEMORY_SIZE", 3))) * 1048576
 
-# The maximum configuration payload size accepted by form/API configuration
-# updates (defined in characters). This is independent of upload body limits.
-# This value is defined in KB, but can never be more than APPRISE_UPLOAD_MAX_MEMORY_SIZE.
+# The maximum configuration payload size (in bytes) accepted by form/API
+# configuration updates. This value is configured in KB and converted to bytes
+# (KB * 1024). It is capped by APPRISE_UPLOAD_MAX_MEMORY_SIZE (bytes).
 APPRISE_CONFIG_MAX_LENGTH = min(
     abs(int(os.environ.get("APPRISE_CONFIG_MAX_LENGTH", 512))) * 1024,
     APPRISE_UPLOAD_MAX_MEMORY_SIZE,
