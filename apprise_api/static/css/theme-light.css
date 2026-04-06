@@ -71,12 +71,18 @@ Footer
 }
 
 .page-footer-legal {
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  color: #c8f0ea;
+  border-top: 1px solid #c1c3c9;
+  color: #6f7582;
+  opacity: 1;
 }
 
 .page-footer-legal a {
-  color: #c8f0ea;
+  color: #0f5f57 !important;
+  font-weight: 600;
+}
+
+.page-footer-legal hr {
+  border-color: #c1c3c9;
 }
 
 /* =========================================
@@ -224,10 +230,14 @@ a.active {
   color: #148c80 !important;
 }
 
-/* Footer links sit on dark teal — need light colour */
-.page-footer a,
+/* Footer links on light legal footer need strong contrast */
+.page-footer-legal,
+.page-footer-legal small {
+  color: #616b7a !important;
+}
+
 .page-footer-legal a {
-  color: #c8f0ea !important;
+  color: #0f5f57 !important;
 }
 
 /* =========================================
@@ -702,16 +712,14 @@ Buttons & Chips
 }
 
 #url-list .review-test-btn {
-  color: #1d6059;
-  background-color: #e7edf2;
-  border-color: #c0cad6;
+  color: #148c80;
+  background-color: transparent;
+  border-color: transparent;
 }
 
 #url-list .review-test-btn:hover,
 #url-list .review-test-btn:focus {
   color: #0f5f57;
-  background-color: #d7f2ee;
-  border-color: #74bcb1;
 }
 
 #url-list .review-test-btn[disabled],

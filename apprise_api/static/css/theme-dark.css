@@ -729,16 +729,14 @@ Buttons & Chips
 }
 
 #url-list .review-test-btn {
-  color: #d4d9e2;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: #4c535f;
+  color: #c1c3c9;
+  background-color: transparent;
+  border-color: transparent;
 }
 
 #url-list .review-test-btn:hover,
 #url-list .review-test-btn:focus {
   color: #eef4ff;
-  background-color: rgba(44, 182, 166, 0.14);
-  border-color: #2cb6a6;
 }
 
 #url-list .review-test-btn[disabled],
