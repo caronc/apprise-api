@@ -326,6 +326,12 @@ APPRISE_PLUGIN_PATHS = os.environ.get("APPRISE_PLUGIN_PATHS", os.path.join(BASE_
 # Setting this to zero disables the limit
 APPRISE_MAX_ATTACHMENTS = int(os.environ.get("APPRISE_MAX_ATTACHMENTS", 6))
 
+# The maximum depth allowed when traversing nested (dot-notation) subfields in
+# third-party webhook payload mapping rules.  For example, `:event.title=title`
+# has a depth of 2.  Raising this value too high could permit deeply recursive
+# traversal; keep it low to avoid abuse.
+APPRISE_WEBHOOK_MAPPING_MAX_DEPTH = abs(int(os.environ.get("APPRISE_WEBHOOK_MAPPING_MAX_DEPTH", 5)))
+
 # Apprise API Only mode:
 # - Disable entire Web Page and only allow the API interface to work
 # - Website requests returns 421 (Misdirected Request) for what would otherwise
