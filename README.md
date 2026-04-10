@@ -1043,7 +1043,7 @@ If your payload contains **arrays**, use **bracket-notation** (`[N]`) to derefer
 # {
 #   "items": [ { "title": "New post", "objectURI": "https://example.com/q/1234" } ]
 # }
-curl -X POST \
+curl -g -X POST \
     -H "Content-Type: application/json" \
     -d '{"items":[{"title":"New post","objectURI":"https://example.com/q/1234"}]}' \
     "http://localhost:8000/notify/{KEY}?:items[0].title=title&:items[0].objectURI=body"
