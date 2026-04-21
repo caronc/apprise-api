@@ -52,9 +52,11 @@ timeout = int(os.environ.get("APPRISE_WORKER_TIMEOUT", 300))
 worker_class = "gevent"
 
 # Get workers memory consumption under control by leveraging gunicorn
-# worker recycling timeout
-max_requests = 1000
-max_requests_jitter = 50
+# worker recycling. Workers are restarted after handling this many requests,
+# which forces Python to release accumulated memory. Lower values help
+# in low-traffic deployments where workers would otherwise run indefinitely.
+max_requests = int(os.environ.get("APPRISE_WORKER_MAX_REQUESTS", 1000))
+max_requests_jitter = int(os.environ.get("APPRISE_WORKER_MAX_REQUESTS_JITTER", 50))
 
 # Logging
 # '-' means log to stdout.
