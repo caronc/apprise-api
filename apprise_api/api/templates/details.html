@@ -56,7 +56,7 @@
                 <div class="plugin-service-actions">
                   {% if entry.secure_protocols %}
                     <a class="plugin-service-btn plugin-service-btn--external"
-                       href="https://appriseit.com/tools/url-builder/?schema={{ entry.secure_protocols|first }}"
+                       href="https://appriseit.com/url-builder/?schema={{ entry.secure_protocols|first }}"
                        target="_blank"
                        rel="noopener noreferrer">
                       <span class="plugin-service-icon" aria-hidden="true">
@@ -67,7 +67,7 @@
                     </a>
                   {% elif entry.protocols %}
                     <a class="plugin-service-btn plugin-service-btn--external"
-                       href="https://appriseit.com/tools/url-builder/?schema={{ entry.protocols|first }}"
+                       href="https://appriseit.com/url-builder/?schema={{ entry.protocols|first }}"
                        target="_blank"
                        rel="noopener noreferrer">
                       <span class="plugin-service-icon" aria-hidden="true">
@@ -78,7 +78,7 @@
                     </a>
                   {% else %}
                     <a class="plugin-service-btn plugin-service-btn--external"
-                       href="https://appriseit.com/tools/url-builder/"
+                       href="https://appriseit.com/url-builder/"
                        target="_blank"
                        rel="noopener noreferrer">
                       <span class="plugin-service-icon" aria-hidden="true">
@@ -130,7 +130,7 @@
                     <strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong>
                     <code>
                       {% for schema in entry.protocols %}
-                        <a href="https://appriseit.com/tools/url-builder/?schema={{ schema }}"
+                        <a href="https://appriseit.com/url-builder/?schema={{ schema }}"
                            target="_blank"
                            rel="noopener noreferrer">{{ schema }}</a>
                         {% if not forloop.last %},{% endif %}
@@ -143,7 +143,7 @@
                     <strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong>
                     <code>
                       {% for schema in entry.secure_protocols %}
-                        <a href="https://appriseit.com/tools/url-builder/?schema={{ schema }}"
+                        <a href="https://appriseit.com/url-builder/?schema={{ schema }}"
                            target="_blank"
                            rel="noopener noreferrer">{{ schema }}</a>
                         {% if not forloop.last %},{% endif %}
