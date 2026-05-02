@@ -22,6 +22,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# Timezone setup: ensure all processes (nginx, gunicorn, Python logging) use
+# the same timezone so log timestamps are always aligned.
+#
+# When TZ is set it is the authority: /etc/localtime is updated to match so
+# that C programs such as nginx, which read the file directly, agree with
+# Python (which reads TZ via time.tzset() in gunicorn.conf.py).
+#
+# When TZ is not set it is derived from the environment in priority order:
+#   1. /etc/localtime symlink target  (common Docker host-timezone pattern)
+#   2. /etc/timezone                  (plain-file bind-mount fallback)
+# The derived name is exported as TZ so Python and nginx both pick it up.
+if [ -n "${TZ}" ]; then
+   if [ -f "/usr/share/zoneinfo/${TZ}" ]; then
+      echo "${TZ}" > /etc/timezone 2>/dev/null || true
+      echo "Timezone: ${TZ}"
+   else
+      echo "WARNING: TZ='${TZ}' is not a valid timezone name; timestamps may be inaccurate"
+   fi
+elif [ -L /etc/localtime ]; then
+   _tz=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')
+   if [ -n "${_tz}" ] && [ -f "/usr/share/zoneinfo/${_tz}" ]; then
+      export TZ="${_tz}"
+      echo "Timezone derived from /etc/localtime symlink: ${TZ}"
+   fi
+elif [ -f /etc/timezone ]; then
+   _tz=$(cat /etc/timezone 2>/dev/null | tr -d '[:space:]')
+   if [ -n "${_tz}" ] && [ -f "/usr/share/zoneinfo/${_tz}" ]; then
+      export TZ="${_tz}"
+      echo "Timezone derived from /etc/timezone: ${TZ}"
+   fi
+fi
+
 # Nginx configuration file
 NGINX_CONF=/opt/apprise/webapp/etc/nginx.conf
 echo "$STRICT_MODE" | cut -c1 | grep -E -m1 -q -i '\(a|y|1|e|t|+)\)' 2>/dev/null

@@ -23,13 +23,23 @@
 # THE SOFTWARE.
 import multiprocessing
 import os
+import time
 
 # This file is launched with the call:
 # gunicorn --config <this file> core.wsgi:application
 
+# Apply the TZ environment variable before workers are forked so that Python's
+# time functions (used by logging formatters) use the same timezone as every
+# other process in the container (nginx, supervisord, etc.).
+if hasattr(time, "tzset"):
+    time.tzset()
+
 raw_env = [
     "LANG={}".format(os.environ.get("LANG", "en_US.UTF-8")),
     "DJANGO_SETTINGS_MODULE=core.settings",
+    # Carry the resolved TZ into every worker so Python's logging formatter
+    # uses the same timezone as nginx (which reads /etc/localtime directly).
+    "TZ={}".format(os.environ.get("TZ", "Etc/UTC")),
 ]
 
 # This is the path as prepared in the docker compose
@@ -66,3 +76,10 @@ errorlog = "-"
 # Enabling gunicorn's own access log produces duplicate entries
 accesslog = None
 loglevel = "warn"
+
+
+def post_fork(_server, _worker):
+    # Re-apply TZ in each worker after fork so Python's time functions
+    # (used by the logging formatter) use the same timezone as nginx.
+    if hasattr(time, "tzset"):
+        time.tzset()
