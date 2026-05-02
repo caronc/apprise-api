@@ -36,7 +36,7 @@ APP_AUTHOR = "Chris Caron"
 APP_COPYRIGHT = "Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>"
 APP_LICENSE = "MIT"
 APP_URL = "https://github.com/caronc/apprise-api"
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.4.1"
 
 # Disable Timezones
 USE_TZ = False

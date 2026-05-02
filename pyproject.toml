@@ -27,7 +27,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apprise-api"
-version = "1.4.0"
+version = "1.4.1"
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
