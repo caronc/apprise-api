@@ -608,8 +608,9 @@
     // The Paint Logic
     const update = () => {
       let text = textarea.value;
-      // Normalize CRLF/CR to LF
-      text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+      // Normalize all line-ending variants to LF so the highlight overlay stays
+      // in sync with the textarea cursor.
+      text = text.replace(/[\r\v\f]+(\n)?/g, '\n')
                  .replace(new RegExp('<', 'g'), '&lt;').replace(new RegExp('>', 'g'), '&gt;');
       if (text[text.length - 1] === "\n") {
         text += " ";
