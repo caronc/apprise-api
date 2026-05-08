@@ -65,6 +65,85 @@ class StatelessNotifyTests(SimpleTestCase):
         ]
 
     @mock.patch("apprise.Apprise.notify")
+    def test_notify_accepts_advanced_tag_expression_from_query_string(self, mock_notify):
+        """
+        Stateless notify should accept tag and tags query-string fallbacks.
+        """
+        mock_notify.return_value = True
+
+        payload = {
+            "urls": "mailto://user:pass@hotmail.com",
+            "body": "test notification",
+        }
+
+        response = self.client.post("/notify?tag=family:2", payload)
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["tag"] == ["family:2"]
+
+        mock_notify.reset_mock()
+        response = self.client.post("/notify?tags=3:friends:4", payload)
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["tag"] == ["3:friends:4"]
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_accepts_tag_list_without_reparsing(self, mock_notify):
+        """
+        Stateless notify should pass list-form JSON tags through as-is.
+        """
+        mock_notify.return_value = True
+
+        response = self.client.post(
+            "/notify",
+            data=json.dumps(
+                {
+                    "urls": "mailto://user:pass@hotmail.com",
+                    "body": "test notification",
+                    "tag": ["family", "3:friends:4"],
+                }
+            ),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["tag"] == ["family", "3:friends:4"]
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_rejects_invalid_tag_query_string(self, mock_notify):
+        """
+        Stateless notify should reject unsupported tag syntax from the query string.
+        """
+        response = self.client.post(
+            "/notify?tag=family:",
+            {
+                "urls": "mailto://user:pass@hotmail.com",
+                "body": "test notification",
+            },
+        )
+
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_rejects_non_string_tag_payload(self, mock_notify):
+        """
+        Stateless notify should reject tag payloads that are not strings or lists.
+        """
+        response = self.client.post(
+            "/notify",
+            data=json.dumps(
+                {
+                    "urls": "mailto://user:pass@hotmail.com",
+                    "body": "test notification",
+                    "tag": {"name": "family"},
+                }
+            ),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+    @mock.patch("apprise.Apprise.notify")
     def test_notify(self, mock_notify):
         """
         Test sending a simple notification

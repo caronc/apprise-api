@@ -56,6 +56,8 @@ class NotifyTests(SimpleTestCase):
             "family:2",
             "3:friends:4",
         ]
+        with self.assertRaises(ValueError):
+            parse_tag_expression("family:")
 
     @mock.patch("apprise.Apprise.notify")
     def test_notify_accepts_advanced_tag_expression(self, mock_notify):

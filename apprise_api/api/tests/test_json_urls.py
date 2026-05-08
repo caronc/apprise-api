@@ -209,6 +209,8 @@ class JsonUrlsTests(SimpleTestCase):
         """
         assert service_retry(_Notification(3), "mailto://user:pass@example.com?retry=2") == 3
         assert service_retry(_Notification(), "mailto://user:pass@example.com?retry=2") == 2
+        assert service_retry(_Notification(), "mailto://user:pass@example.com?retry=bad") == 0
+        assert service_retry(_Notification(), None) == 0
         assert service_retry(_Notification(), "mailto://user:pass@example.com") == 0
 
     def test_service_optional_falls_back_to_url_parameter(self):
@@ -219,4 +221,7 @@ class JsonUrlsTests(SimpleTestCase):
         assert service_optional(_Notification(), "mailto://host?optional=yes") is True
         assert service_optional(_Notification(), "mailto://host?optional=true") is True
         assert service_optional(_Notification(), "mailto://host?optional=no") is False
+        assert service_optional(_Notification(), None) is False
+        with patch("apprise_api.api.views.urlsplit", side_effect=TypeError):
+            assert service_optional(_Notification(), "mailto://host?optional=yes") is False
         assert service_optional(_Notification(), "mailto://host") is False
