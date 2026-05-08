@@ -1496,11 +1496,15 @@
           return;
         }
         const priority = parseInt(detail.priority || 0, 10) || 0;
+        const token = `${priority}:${String(detail.name)}`;
+        if (!notifyTagOptionMap[token] || notifyTagOptionMap[token].exact !== true) {
+          return;
+        }
         displayTagDetails.push({
           name: String(detail.name),
           priority: priority,
-          token: `${priority}:${String(detail.name)}`,
-          exact: `${priority}:${String(detail.name)}`,
+          token: token,
+          exact: token,
           scope: 'exact'
         });
       });
