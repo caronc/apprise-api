@@ -475,6 +475,10 @@ components:
           $ref: '#/components/schemas/NotificationFormat'
         tag:
           type: string
+          description: >
+            Optional Apprise tag expression. Supports tag, priority:tag,
+            tag:retry, and priority:tag:retry tokens. Comma or pipe separates
+            OR groups; whitespace, ampersand, or plus separates AND terms.
       required:
         - body
 
@@ -557,6 +561,10 @@ components:
         tag:
           type: string
           default: all
+          description: >
+            Optional Apprise tag expression. Supports tag, priority:tag,
+            tag:retry, and priority:tag:retry tokens. Comma or pipe separates
+            OR groups; whitespace, ampersand, or plus separates AND terms.
       required:
         - body
 
@@ -573,6 +581,10 @@ components:
           $ref: '#/components/schemas/NotificationFormat'
         tag:
           type: string
+          description: >
+            Optional Apprise tag expression. Supports tag, priority:tag,
+            tag:retry, and priority:tag:retry tokens. Comma or pipe separates
+            OR groups; whitespace, ampersand, or plus separates AND terms.
         attach:
           type: array
           items:
@@ -594,6 +606,10 @@ components:
           $ref: '#/components/schemas/NotificationFormat'
         tag:
           type: string
+          description: >
+            Optional Apprise tag expression. Supports tag, priority:tag,
+            tag:retry, and priority:tag:retry tokens. Comma or pipe separates
+            OR groups; whitespace, ampersand, or plus separates AND terms.
       required:
         - body
 
@@ -602,6 +618,7 @@ components:
       properties:
         tags:
           type: array
+          description: Bare tag names available in this configuration.
           items:
             type: string
         urls:
@@ -614,9 +631,34 @@ components:
       properties:
         id:
           type: string
+        service_name:
+          type: string
+        enabled:
+          type: boolean
         url:
           type: string
+        retry:
+          type: integer
+          description: Configured retry count for this URL.
+        optional:
+          type: boolean
+          description: Whether failures from this URL are ignored when determining notification success.
         tags:
           type: array
+          description: Bare tag names associated with this URL.
           items:
             type: string
+        tag_details:
+          type: array
+          description: Structured tag metadata, including priority-aware exact tokens.
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              priority:
+                type: integer
+              token:
+                type: string
+              exact:
+                type: string

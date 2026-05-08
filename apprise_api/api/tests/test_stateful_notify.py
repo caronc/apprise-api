@@ -254,9 +254,8 @@ class StatefulNotifyTests(SimpleTestCase):
             del form.cleaned_data["attachment"]
 
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
-            # + (plus) not supported at this time
-            assert response.status_code == 400
-            assert mock_request.call_count == 0
+            assert response.status_code == 200
+            assert mock_request.call_count == 1
 
             # Reset our configuration
             mock_post.reset_mock()
@@ -277,9 +276,8 @@ class StatefulNotifyTests(SimpleTestCase):
             del form.cleaned_data["attachment"]
 
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
-            # + (plus) not supported at this time
-            assert response.status_code == 400
-            assert mock_request.call_count == 0
+            assert response.status_code == 200
+            assert mock_request.call_count == 1
 
             mock_post.reset_mock()
             mock_request.reset_mock()

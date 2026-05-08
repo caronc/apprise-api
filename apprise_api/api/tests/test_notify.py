@@ -31,6 +31,7 @@ from django.test import SimpleTestCase, override_settings
 import requests
 
 from ..forms import NotifyForm
+from ..views import parse_tag_expression
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -40,6 +41,49 @@ class NotifyTests(SimpleTestCase):
     """
     Test notifications
     """
+
+    def test_parse_advanced_tag_expression_preserves_boolean_logic(self):
+        """
+        Advanced tag tokens should not change existing OR/AND behavior.
+        """
+        assert parse_tag_expression("family friends") == [("family", "friends")]
+        assert parse_tag_expression("family+friends") == [("family", "friends")]
+        assert parse_tag_expression("family&friends") == [("family", "friends")]
+        assert parse_tag_expression("1:family 3:friends") == [("1:family", "3:friends")]
+        assert parse_tag_expression("1:family+3:friends") == [("1:family", "3:friends")]
+        assert parse_tag_expression("friends 4:family") == [("friends", "4:family")]
+        assert parse_tag_expression("family:2, 3:friends:4") == [
+            "family:2",
+            "3:friends:4",
+        ]
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_accepts_advanced_tag_expression(self, mock_notify):
+        """
+        Stateful notify should pass advanced tag expressions through to Apprise.
+        """
+        mock_notify.return_value = True
+        key = "test_notify_accepts_advanced_tag_expression"
+
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"urls": "mailto://user:pass@yahoo.ca"},
+        )
+        assert response.status_code == 200
+
+        response = self.client.post(
+            "/notify/{}".format(key),
+            {
+                "body": "test notification",
+                "tag": "1:family 3:friends, friends 4:family",
+            },
+        )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert mock_notify.call_args.kwargs["tag"] == [
+            ("1:family", "3:friends"),
+            ("friends", "4:family"),
+        ]
 
     @mock.patch("apprise.Apprise.notify")
     def test_notify_by_loaded_urls(self, mock_notify):

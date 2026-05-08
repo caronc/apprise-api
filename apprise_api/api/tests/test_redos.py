@@ -62,6 +62,8 @@ class ReDoSTests(SimpleTestCase):
             "tag-two",
             "tag1, tag2",
             "tag1 | tag2",
+            "tag&tag",
+            "tag+tag",
             "  tag  ",  # Leading/trailing spaces are allowed inside the match
             "\t\ttag\t\t",
             "tag\nnewline",
@@ -74,8 +76,6 @@ class ReDoSTests(SimpleTestCase):
             "tag!",
             "tag@home",
             "<script>",
-            "tag&tag",
-            "tag+tag",
         ]
 
         for tag in invalid_tags:

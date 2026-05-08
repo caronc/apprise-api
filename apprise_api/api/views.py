@@ -23,6 +23,7 @@
 import json
 import logging
 import re
+from urllib.parse import parse_qs, urlsplit
 
 import apprise
 from django.conf import settings
@@ -71,16 +72,120 @@ MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencod
 # <blank>
 ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
 
-# Tags separated by space , &, or + are and'ed together
+# Tags separated by space, &, or + are and'ed together
 # Tags separated by commas (even commas wrapped in spaces) are "or'ed" together
-# We start with a regular expression used to clean up provided tags
-TAG_VALIDATION_RE = re.compile(r"^[a-z0-9\s| ,_-]+$", re.IGNORECASE)
+# We start with a regular expression used to clean up provided tag expressions.
+TAG_VALIDATION_RE = re.compile(r"^[a-z0-9\s| ,_:+&-]+$", re.IGNORECASE)
 
-# In order to separate our tags only by comma's or '|' entries found
-TAG_DETECT_RE = re.compile(r"\s*([a-z0-9\s_&+-]+)(?=$|\s*[|,]\s*[a-z0-9\s&+_-|,])", re.I)
+# Split OR groups only on commas or pipes.
+TAG_OR_DELIM_RE = re.compile(r"\s*[|,]\s*")
 
-# Break apart our objects anded together
+# Break apart our objects anded together.
 TAG_AND_DELIM_RE = re.compile(r"[\s&+]+")
+
+# A single Apprise tag token. Supports [priority:]name[:retry].
+TAG_TOKEN_RE = re.compile(
+    r"^(?:[0-9]+:)?[a-z0-9][a-z0-9_-]*(?::[0-9]+)?$",
+    re.IGNORECASE,
+)
+
+
+def parse_tag_expression(tag):
+    """
+    Convert a user-provided tag expression into Apprise's OR/AND structure.
+
+    Commas and pipes are OR separators. Whitespace, ampersands, and plus signs are AND
+    separators. Individual tokens may use Apprise's advanced tag syntax:
+    [priority:]tag[:retry].
+    """
+    if not isinstance(tag, str) or not TAG_VALIDATION_RE.match(tag):
+        raise ValueError("Unsupported characters found in tag definition")
+
+    tags = []
+    for group in TAG_OR_DELIM_RE.split(tag):
+        group = group.strip()
+        if not group:
+            continue
+
+        tokens = [token for token in TAG_AND_DELIM_RE.split(group) if token]
+        if not tokens or any(not TAG_TOKEN_RE.match(token) for token in tokens):
+            raise ValueError("Unsupported characters found in tag definition")
+
+        tags.append(tuple(tokens) if len(tokens) > 1 else tokens[0])
+
+    return tags
+
+
+def tag_detail(tag):
+    """
+    Return JSON-safe tag metadata for an Apprise tag object or plain string.
+    """
+    raw_tag = str(tag)
+    match = TAG_TOKEN_RE.match(raw_tag)
+    if match and getattr(tag, "priority", None) is None:
+        parts = raw_tag.split(":")
+        if len(parts) > 1 and parts[0].isdigit():
+            priority = int(parts[0])
+            tag_name = parts[1]
+            has_priority = True
+        else:
+            priority = 0
+            tag_name = parts[0]
+            has_priority = False
+    else:
+        tag_name = raw_tag
+        priority = getattr(tag, "priority", 0)
+        has_priority = getattr(tag, "has_priority", False)
+    token = f"{priority}:{tag_name}" if has_priority or priority else tag_name
+
+    return {
+        "name": tag_name,
+        "priority": priority,
+        "token": token,
+        "exact": f"{priority}:{tag_name}",
+    }
+
+
+def tag_names(tags):
+    """
+    Return only bare tag names for UI autocomplete and legacy API consumers.
+    """
+    return {tag_detail(tag)["name"] for tag in tags}
+
+
+def service_retry(notification, url):
+    """
+    Return the configured retry count for a rendered notification URL.
+    """
+    retry = getattr(notification, "retry", 0) or 0
+    if retry:
+        return retry
+
+    try:
+        value = parse_qs(urlsplit(url).query).get("retry", [0])[0]
+        return int(value)
+
+    except (TypeError, ValueError):
+        return 0
+
+
+def service_optional(notification, url):
+    """
+    Return whether a rendered notification URL is marked optional.
+    """
+    optional = getattr(notification, "optional", None)
+    if optional is True:
+        return True
+
+    try:
+        values = parse_qs(urlsplit(url).query).get("optional")
+        if values:
+            return str(values[0]).lower() in {"1", "yes", "true", "on"}
+
+    except (TypeError, ValueError):
+        pass
+
+    return bool(optional)
 
 
 class JSONEncoder(DjangoJSONEncoder):
@@ -1188,7 +1293,10 @@ class NotifyView(View):
                 content["tag"] = tag
 
             elif isinstance(tag, str):
-                if not TAG_VALIDATION_RE.match(tag):
+                try:
+                    content["tag"] = parse_tag_expression(tag)
+
+                except ValueError:
                     # Invalid entry found in list
                     logger.warning(
                         "NOTIFY - %s - Ignored invalid tag specified (type %s): %s using KEY: %s",
@@ -1212,23 +1320,6 @@ class NotifyView(View):
                             status=status,
                         )
                     )
-
-                # If we get here, our specified tag was valid
-                tags = []
-                for _tag in TAG_DETECT_RE.findall(tag):
-                    tag = _tag.strip()
-                    if not tag:
-                        continue
-
-                    # Disect our results
-                    group = TAG_AND_DELIM_RE.split(tag)
-                    if len(group) > 1:
-                        tags.append(tuple(group))
-                    else:
-                        tags.append(tag)
-
-                # Assign our tags
-                content["tag"] = tags
 
             else:  # Could be int, float or some other unsupported type
                 logger.warning(
@@ -1819,6 +1910,72 @@ class StatelessNotifyView(View):
             content["urls"] = settings.APPRISE_STATELESS_URLS
 
         #
+        # Allow 'tag' value to be specified as part of the URL parameters
+        # if not found otherwise defined.
+        #
+        tag = content.get("tag") if content.get("tag") else content.get("tags")
+        if not tag:
+            if "tag" in request.GET:
+                tag = request.GET["tag"]
+
+            elif "tags" in request.GET:
+                tag = request.GET["tags"]
+
+        if tag:
+            if isinstance(tag, list | set | tuple):
+                content["tag"] = tag
+
+            elif isinstance(tag, str):
+                try:
+                    content["tag"] = parse_tag_expression(tag)
+
+                except ValueError:
+                    logger.warning(
+                        "NOTIFY - %s - Ignored invalid tag specified (type %s): %s",
+                        request.META["REMOTE_ADDR"],
+                        str(type(tag)),
+                        str(tag)[:12],
+                    )
+
+                    status = ResponseCode.bad_request
+                    msg = _("Unsupported characters found in tag definition")
+                    return (
+                        HttpResponse(msg, status=status, content_type="text/plain")
+                        if not json_response
+                        else JsonResponse(
+                            {
+                                "error": msg,
+                            },
+                            encoder=JSONEncoder,
+                            safe=False,
+                            status=status,
+                        )
+                    )
+
+            else:
+                logger.warning(
+                    "NOTIFY - %s - Ignored invalid tag specified (type %s): %s",
+                    request.META["REMOTE_ADDR"],
+                    str(type(tag)),
+                    str(tag)[:12],
+                )
+
+                status = ResponseCode.bad_request
+                msg = _("Unsupported characters found in tag definition")
+                return (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse(
+                        {
+                            "error": msg,
+                        },
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status,
+                    )
+                )
+
+        #
         # Allow 'format' value to be specified as part of the URL
         # parameters if not found otherwise defined.
         #
@@ -2135,7 +2292,7 @@ class StatelessNotifyView(View):
                 content.get("body"),
                 title=content.get("title", ""),
                 notify_type=content.get("type", apprise.NotifyType.INFO.value),
-                tag="all",
+                tag=(content.get("tag") or "all"),
                 attach=attach,
             )
 
@@ -2314,19 +2471,30 @@ class JsonUrlView(View):
         a_obj.add(ac_obj)
 
         for notification in a_obj.find(tag):
+            details = sorted(
+                [tag_detail(t) for t in notification.tags],
+                key=lambda item: (item["name"], item["priority"]),
+            )
+            url = notification.url(privacy=privacy)
+            retry = service_retry(notification, url)
+            optional = service_optional(notification, url)
+
             # Set Notification
             response["urls"].append(
                 {
                     "id": notification.url_id(),
                     "service_name": str(notification.service_name) if notification.service_name else "",
                     "enabled": bool(notification.enabled),
-                    "url": notification.url(privacy=privacy),
-                    "tags": notification.tags,
+                    "url": url,
+                    "retry": retry,
+                    "optional": optional,
+                    "tags": sorted(tag_names(notification.tags)),
+                    "tag_details": details,
                 }
             )
 
             # Store Tags
-            response["tags"] |= notification.tags
+            response["tags"] |= tag_names(notification.tags)
 
         # Return our retrieved content
         return JsonResponse(response, encoder=JSONEncoder, safe=False, status=ResponseCode.okay)

@@ -537,6 +537,31 @@ Side Nav
   --apprise-mini-badge-ring: #0f5f57;
   --apprise-mini-badge-horn: #eaf3f2;
   --apprise-mini-badge-horn-stroke: #c5d2d0;
+  --review-priority-badge-bg: #ffd166;
+  --review-priority-badge-text: #23262f;
+  --review-priority-badge-ring: #b98500;
+  --review-priority-badge-halo: rgba(255, 255, 255, 0.86);
+  --review-priority-badge-shadow: rgba(34, 42, 55, 0.24);
+  --review-retry-badge-bg: #e3e8ee;
+  --review-retry-badge-text: #34383f;
+  --review-retry-badge-ring: #aeb7c4;
+  --review-retry-badge-halo: rgba(255, 255, 255, 0.68);
+  --review-retry-badge-shadow: rgba(34, 42, 55, 0.16);
+  --review-optional-badge-bg: #dff3ef;
+  --review-optional-badge-text: #0f5f57;
+  --review-optional-badge-ring: #8dd4cb;
+  --review-optional-badge-halo: rgba(255, 255, 255, 0.68);
+  --review-optional-badge-shadow: rgba(34, 42, 55, 0.14);
+  --review-autocomplete-scroll-track: #eef2f6;
+  --review-autocomplete-scroll-thumb: #aeb7c4;
+  --review-autocomplete-section-border: #d9e0e8;
+  --review-autocomplete-hover-bg: #e8f7f4;
+  --review-autocomplete-hover-text: #0f5f57;
+  --review-priority-option-bg: #e8f7f4;
+  --review-priority-option-text: #0f5f57;
+  --review-priority-option-ring: #8dd4cb;
+  --review-priority-option-hover-bg: #c8f0ea;
+  --review-priority-option-hover-text: #0b4d47;
   --apprise-logo-wave: #9fb0b3;
   --apprise-logo-body-1: #39c0b7;
   --apprise-logo-body-2: #0f5f57;
@@ -705,6 +730,17 @@ Buttons & Chips
 .chip.selected {
   background-color: #148c80 !important;
   color: #ffffff !important;
+}
+
+#notify .chips .chip.notify-tag-chip {
+  background-color: #148c80 !important;
+  border-color: #0f5f57 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(34, 42, 55, 0.14);
+}
+
+#notify .chips .chip.notify-tag-chip .close {
+  color: inherit;
 }
 
 .file-selected {

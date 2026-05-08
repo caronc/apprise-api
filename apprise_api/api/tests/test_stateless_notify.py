@@ -43,6 +43,28 @@ class StatelessNotifyTests(SimpleTestCase):
     """
 
     @mock.patch("apprise.Apprise.notify")
+    def test_notify_accepts_advanced_tag_expression(self, mock_notify):
+        """
+        Stateless notify should also respect tag filters when provided.
+        """
+        mock_notify.return_value = True
+
+        response = self.client.post(
+            "/notify",
+            {
+                "urls": "mailto://user:pass@hotmail.com",
+                "body": "test notification",
+                "tag": "family:2, 3:friends:4",
+            },
+        )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
+        assert mock_notify.call_args.kwargs["tag"] == [
+            "family:2",
+            "3:friends:4",
+        ]
+
+    @mock.patch("apprise.Apprise.notify")
     def test_notify(self, mock_notify):
         """
         Test sending a simple notification

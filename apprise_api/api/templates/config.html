@@ -417,6 +417,24 @@
       : 'notifications_off';
   }
 
+  function updateCardSelectedBadges(cardEl, group, retry) {
+    const groupBadge = cardEl.querySelector('.review-group-badge');
+    if (groupBadge) {
+      groupBadge.textContent = group ? String(group) : '';
+      groupBadge.title = group
+        ? `{% trans "Escalation group" %} ${group}`
+        : '';
+    }
+
+    const retryBadge = cardEl.querySelector('.review-retry-badge');
+    if (retryBadge) {
+      retryBadge.textContent = retry > 0 ? `x${retry}` : '';
+      retryBadge.title = retry > 0
+        ? `{% trans "Maximum number of retries attempted if the service fails before giving up" %}: ${retry}`
+        : '';
+    }
+  }
+
   function getReviewPluginTitle(serviceName, url) {
     if (serviceName && serviceName.trim().length) {
       return serviceName.trim().toUpperCase();
@@ -462,10 +480,19 @@
       });
       return;
     }
+    const debugTags = tags.map(function (tag) {
+      const token = parseNotifyTagToken(tag);
+      if (!token) {
+        return tag;
+      }
+      return token.priority === null
+        ? `${token.name}:0`
+        : `${token.priority}:${token.name}:0`;
+    });
     const formData = new FormData();
     formData.append('title', '{% trans "Apprise API Test" %}');
     formData.append('body', '{% trans "Message Body" %}');
-    formData.append('tag', tags.join(','));
+    formData.append('tag', debugTags.join(','));
 
     if (anchorEl) {
       anchorEl.disabled = true;
@@ -750,7 +777,388 @@
     if (guidance) {
       guidance.style.display = p_count === 0 ? null : 'none';
     }
+    updateReviewEscalationBadges();
   }
+
+  function parseNotifyTagToken(value) {
+    const token = String(value || '').trim();
+    const match = token.match(/^(?:(\d+):)?([A-Za-z0-9][A-Za-z0-9_-]*)(?::(\d+))?$/);
+    if (!match) {
+      return null;
+    }
+    const priority = match[1] !== undefined ? parseInt(match[1], 10) : null;
+    return {
+      name: match[2].toLowerCase(),
+      priority: priority,
+      retry: match[3] !== undefined ? parseInt(match[3], 10) : null,
+      exact: priority === null ? null : `${priority}:${match[2].toLowerCase()}`
+    };
+  }
+
+  function parseNotifyTagExpression(value) {
+    const expression = String(value || '').trim();
+    if (!expression) {
+      return [];
+    }
+    const tokens = expression.split(/[\s&+]+/).filter(function (token) {
+      return token.length > 0;
+    }).map(parseNotifyTagToken);
+    if (tokens.length === 0 || tokens.some(function (token) { return !token; })) {
+      return [];
+    }
+    return tokens;
+  }
+
+  function chipMatchesNotifyToken(chipEl, token) {
+    if (!chipEl || !token) {
+      return false;
+    }
+    if (token.name === 'all') {
+      return chipEl.dataset.tagName === 'all';
+    }
+    if (token.priority === null) {
+      return chipEl.dataset.tagName === token.name;
+    }
+    return chipEl.dataset.tagScope === 'exact' && chipEl.dataset.tagExact === token.exact;
+  }
+
+  function chipReflectsNotifyToken(chipEl, token) {
+    if (!chipEl || !token) {
+      return false;
+    }
+    if (token.name === 'all') {
+      return chipEl.dataset.tagName === 'all';
+    }
+    if (token.priority === null) {
+      return chipEl.dataset.tagScope !== 'exact' && chipEl.dataset.tagName === token.name;
+    }
+    return chipEl.dataset.tagScope === 'exact' && chipEl.dataset.tagExact === token.exact;
+  }
+
+  function selectedNotifyExpressions() {
+    const chipElement = document.querySelector('.chips');
+    const chipInstance = chipElement ? M.Chips.getInstance(chipElement) : null;
+    if (!chipInstance) {
+      return [];
+    }
+    return chipInstance.chipsData.map(function (chip) {
+      return parseNotifyTagExpression(chip.tag);
+    }).filter(function (tokens) {
+      return tokens.length > 0;
+    });
+  }
+
+  function cardMatchesNotifyTokens(card, tokens) {
+    const chips = Array.from(card.querySelectorAll('.chip[data-tag-name]'));
+    return tokens.every(function (token) {
+      return chips.some(function (chip) {
+        return chipMatchesNotifyToken(chip, token);
+      });
+    });
+  }
+
+  function cardMatchingChips(card, token) {
+    return Array.from(card.querySelectorAll('.chip[data-tag-name]')).filter(function (chip) {
+      return chipMatchesNotifyToken(chip, token);
+    });
+  }
+
+  function cardEscalationChips(card, token) {
+    return Array.from(card.querySelectorAll('.chip[data-tag-name]')).filter(function (chip) {
+      if (!token || token.name === 'all') {
+        return false;
+      }
+      if (token.priority !== null) {
+        return chipMatchesNotifyToken(chip, token);
+      }
+      return chip.dataset.tagScope === 'exact' && chip.dataset.tagName === token.name;
+    });
+  }
+
+  function buildEscalationGroups(expressions) {
+    const groups = {};
+    const cards = Array.from(
+      document.querySelectorAll('#url-list li.card-panel:not(.url-item-disabled)')
+    );
+    expressions.forEach(function (tokens) {
+      tokens.forEach(function (token) {
+        if (!token || token.name === 'all' || token.priority !== null) {
+          return;
+        }
+        groups[token.name] = groups[token.name] || new Set();
+        cards.forEach(function (card) {
+          if (!cardMatchesNotifyTokens(card, tokens)) {
+            return;
+          }
+          cardEscalationChips(card, token).forEach(function (chip) {
+            groups[token.name].add(parseInt(chip.dataset.tagPriority || '0', 10));
+          });
+        });
+      });
+    });
+
+    Object.keys(groups).forEach(function (name) {
+      const priorityMap = {};
+      const priorities = Array.from(groups[name]).sort(function (a, b) {
+        return a - b;
+      });
+      if (priorities.length <= 1) {
+        groups[name] = priorityMap;
+        return;
+      }
+      priorities.forEach(function (priority, index) {
+        priorityMap[priority] = index + 1;
+      });
+      groups[name] = priorityMap;
+    });
+    return groups;
+  }
+
+  function cardEscalationState(card, expressions, groups) {
+    let group = null;
+    const serviceRetry = parseInt(card.dataset.retryCount || '0', 10) || 0;
+    let retry = serviceRetry;
+    expressions.some(function (tokens) {
+      if (!cardMatchesNotifyTokens(card, tokens)) {
+        return false;
+      }
+      retry = serviceRetry;
+      tokens.some(function (token) {
+        if (token.retry !== null) {
+          retry = token.retry;
+          return true;
+        }
+        return false;
+      });
+      tokens.forEach(function (token) {
+        if (!token || token.name === 'all') {
+          return;
+        }
+        if (token.priority !== null) {
+          return;
+        }
+        cardEscalationChips(card, token).forEach(function (chip) {
+          const priority = parseInt(chip.dataset.tagPriority || '0', 10);
+          const tokenGroup = groups[token.name] && groups[token.name][priority];
+          if (tokenGroup) {
+            group = group === null ? tokenGroup : Math.min(group, tokenGroup);
+          }
+        });
+      });
+      return true;
+    });
+    return { group: group, retry: retry };
+  }
+
+  function updateReviewEscalationBadges() {
+    const expressions = selectedNotifyExpressions();
+    const groups = buildEscalationGroups(expressions);
+    document.querySelectorAll('#url-list li.card-panel').forEach(function (card) {
+      if (!card.classList.contains('selected') || card.classList.contains('url-item-disabled')) {
+        updateCardSelectedBadges(card, null, parseInt(card.dataset.retryCount || '0', 10) || 0);
+        return;
+      }
+      const state = cardEscalationState(card, expressions, groups);
+      updateCardSelectedBadges(card, state.group, state.retry);
+    });
+  }
+
+  function reviewTagChipsForNotifyTag(tag) {
+    const tokens = parseNotifyTagExpression(tag);
+    if (tokens.length === 0) {
+      return [];
+    }
+    const cards = Array.from(
+      document.querySelectorAll('#url-list li.card-panel:not(.url-item-disabled)')
+    );
+    return cards.reduce(function (matches, card) {
+      if (!cardMatchesNotifyTokens(card, tokens)) {
+        return matches;
+      }
+      const chips = Array.from(card.querySelectorAll('.chip[data-tag-name]'));
+      return matches.concat(chips.filter(function (chip) {
+        return tokens.some(function (token) {
+          return chipReflectsNotifyToken(chip, token);
+        });
+      }));
+    }, []);
+  }
+
+  function reviewChipMatchesNotifyTag(chip, tag) {
+    const tokens = parseNotifyTagExpression(tag);
+    if (tokens.length === 0) {
+      return false;
+    }
+    return tokens.every(function (token) {
+      return chipReflectsNotifyToken(chip, token);
+    });
+  }
+
+  function decorateNotifyChips() {
+    const chipElement = document.querySelector('#notify .chips');
+    const chipInstance = chipElement ? M.Chips.getInstance(chipElement) : null;
+    if (!chipElement || !chipInstance) {
+      return;
+    }
+    Array.from(chipElement.querySelectorAll('.chip')).forEach(function (chip, index) {
+      const tag = chipInstance.chipsData[index] && chipInstance.chipsData[index].tag
+        ? chipInstance.chipsData[index].tag
+        : chip.textContent.replace(/\s*close\s*$/i, '').trim();
+      const token = parseNotifyTagToken(tag);
+      chip.classList.add('notify-tag-chip');
+      chip.classList.toggle('notify-tag-chip-all', token && token.name === 'all');
+      chip.classList.toggle('notify-tag-chip-exact', token && token.priority !== null);
+      chip.dataset.notifyTagToken = tag;
+    });
+  }
+
+  function notifyChipTag(chipInstance, chipElement) {
+    if (chipElement.dataset.notifyTagToken) {
+      return chipElement.dataset.notifyTagToken;
+    }
+    if (chipElement.parentNode) {
+      const chips = Array.from(chipElement.parentNode.querySelectorAll('.chip'));
+      const index = chips.indexOf(chipElement);
+      if (index >= 0 && chipInstance.chipsData[index] && chipInstance.chipsData[index].tag) {
+        return chipInstance.chipsData[index].tag;
+      }
+    }
+    return chipElement.textContent.replace(/\s*close\s*$/i, '').trim();
+  }
+
+  function buildNotifyTagOptions(data) {
+    const optionMap = {
+      all: { token: 'all', name: 'all', exact: false, priority: null, hasChildren: false }
+    };
+    const priorityMap = {};
+
+    (Array.isArray(data.tags) ? data.tags : []).forEach(function (tag) {
+      const name = String(tag).toLowerCase();
+      optionMap[name] = {
+        token: name,
+        name: name,
+        exact: false,
+        priority: null,
+        hasChildren: false
+      };
+      priorityMap[name] = priorityMap[name] || {};
+    });
+
+    (Array.isArray(data.urls) ? data.urls : []).forEach(function (entry) {
+      (Array.isArray(entry.tag_details) ? entry.tag_details : []).forEach(function (detail) {
+        if (!detail || !detail.name) {
+          return;
+        }
+        const name = String(detail.name).toLowerCase();
+        const priority = parseInt(detail.priority || 0, 10) || 0;
+        const token = `${priority}:${name}`;
+        priorityMap[name] = priorityMap[name] || {};
+        priorityMap[name][priority] = token;
+        optionMap[name] = optionMap[name] || {
+          token: name,
+          name: name,
+          exact: false,
+          priority: null,
+          hasChildren: false
+        };
+      });
+    });
+
+    Object.keys(priorityMap).forEach(function (name) {
+      const priorities = Object.keys(priorityMap[name]).map(function (priority) {
+        return parseInt(priority, 10);
+      }).sort(function (a, b) {
+        return a - b;
+      });
+      if (priorities.length <= 1) {
+        return;
+      }
+      optionMap[name].hasChildren = true;
+      priorities.forEach(function (priority) {
+        const token = priorityMap[name][priority];
+        optionMap[token] = {
+          token: token,
+          name: name,
+          exact: true,
+          priority: priority,
+          hasChildren: false
+        };
+      });
+    });
+
+    const options = Object.keys(optionMap).sort(function (a, b) {
+      const itemA = optionMap[a];
+      const itemB = optionMap[b];
+      if (itemA.name !== itemB.name) {
+        if (itemA.name === 'all') {
+          return -1;
+        }
+        if (itemB.name === 'all') {
+          return 1;
+        }
+        return itemA.name.localeCompare(itemB.name);
+      }
+      if (itemA.exact !== itemB.exact) {
+        return itemA.exact ? 1 : -1;
+      }
+      return (itemA.priority || 0) - (itemB.priority || 0);
+    }).map(function (key) {
+      return optionMap[key];
+    });
+    return options;
+  }
+
+  function decorateNotifyAutocompleteOptions(optionMap) {
+    window.requestAnimationFrame(function () {
+      document.querySelectorAll('#notify .autocomplete-content').forEach(function (menu) {
+        menu.classList.add('notify-tag-autocomplete');
+      });
+      document.querySelectorAll('.autocomplete-content li').forEach(function (item) {
+        const token = item.textContent.trim();
+        const option = optionMap[token];
+        item.classList.remove(
+          'notify-tag-option-parent',
+          'notify-tag-option-exact'
+        );
+        if (!option) {
+          return;
+        }
+        item.classList.toggle('notify-tag-option-parent', option.hasChildren);
+        item.classList.toggle('notify-tag-option-exact', option.exact);
+        const label = item.querySelector('span');
+        if (label && option.exact) {
+          label.textContent = '';
+          const priority = document.createElement('span');
+          priority.setAttribute('class', 'notify-tag-option-priority-label');
+          priority.textContent = String(option.priority);
+          label.appendChild(priority);
+          const hiddenToken = document.createElement('span');
+          hiddenToken.setAttribute('class', 'notify-tag-option-token-text');
+          hiddenToken.textContent = `:${option.name}`;
+          label.appendChild(hiddenToken);
+        }
+      });
+    });
+  }
+
+  function setReviewChipSelected(chip, selected) {
+    const card = chip.closest('li.card-panel');
+    if (selected) {
+      chip.classList.add('selected');
+      if (card) {
+        card.classList.add('selected');
+        updateCardSelectedIcon(card);
+      }
+      return;
+    }
+
+    chip.classList.remove('selected');
+    if (card && !card.querySelector('.chip.selected')) {
+      card.classList.remove('selected');
+      updateCardSelectedIcon(card);
+    }
+  }
+
   function showCopyToast(anchorEl, message) {
     const msg = message || '{% trans "URL copied to clipboard" %}';
     // Try SweetAlert2 first so we can anchor to the card
@@ -852,8 +1260,13 @@
     // choose from. Tags are based off ones found in the saved
     // configuration.
     const data = await jsonResponse.json();
-    const external_data = tags.concat(data.tags).reduce(function (result, item) {
-      result[item] = null;
+    const notifyTagOptions = buildNotifyTagOptions(data);
+    const notifyTagOptionMap = notifyTagOptions.reduce(function (result, item) {
+      result[item.token] = item;
+      return result;
+    }, {});
+    const external_data = notifyTagOptions.reduce(function (result, item) {
+      result[item.token] = null;
       return result;
     }, {})
     const chipElement = document.querySelector('.chips');
@@ -862,19 +1275,17 @@
       secondaryPlaceholder: '{% trans "Add another?" %}',
       autocompleteOptions: {
         data: external_data,
-        minLength: 0
+        minLength: 0,
+        onSearch: function () {
+          decorateNotifyAutocompleteOptions(notifyTagOptionMap);
+        }
       },
       onChipAdd: function (e, data) {
         var $this = this;
-        const chip = data.childNodes[0].textContent;
-        document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip[name=${chip}]`).forEach(function (e) {
+        const chip = notifyChipTag($this, data);
+        reviewTagChipsForNotifyTag(chip).forEach(function (e) {
           if (!e.classList.contains('selected')) {
-            e.classList.add('selected');
-            const p = e.closest('li.card-panel');
-            if (!p.classList.contains('selected')) {
-              p.classList.add('selected');
-            }
-            updateCardSelectedIcon(p);
+            setReviewChipSelected(e, true);
           }
         })
         document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip.chip-notag`).forEach(function (e) {
@@ -890,25 +1301,20 @@
           }
         })
         $this.chipsData.forEach(function (e, index) {
-          if (!(e.tag in external_data))
+          if (!(e.tag in external_data) && parseNotifyTagExpression(e.tag).length === 0)
             $this.deleteChip(index);
         })
+        decorateNotifyChips();
         update_count();
       },
       onChipDelete: function (e, data) {
         var $this = this;
-        const chip = data.childNodes[0].textContent;
-        document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip[name=${chip}]`).forEach(function (e) {
-          if (e.classList.contains('selected')) {
-            e.classList.remove('selected');
+        const chip = notifyChipTag($this, data);
+        reviewTagChipsForNotifyTag(chip).forEach(function (e) {
+          if (!e.classList.contains('selected')) {
+            return;
           }
-          const p = e.closest('li.card-panel');
-          if (!p.querySelector('.selected')) {
-            if (p.classList.contains('selected')) {
-              p.classList.remove('selected');
-            }
-          }
-          updateCardSelectedIcon(p);
+          setReviewChipSelected(e, false);
         })
         if ($this.chipsData.length == 0) {
           // last item
@@ -923,9 +1329,18 @@
             updateCardSelectedIcon(p);
           })
         }
+        decorateNotifyChips();
         update_count();
       }
     });
+    const chipInput = chipElement.querySelector('input');
+    if (chipInput) {
+      ['focus', 'input', 'keyup', 'click'].forEach(function (eventName) {
+        chipInput.addEventListener(eventName, function () {
+          decorateNotifyAutocompleteOptions(notifyTagOptionMap);
+        });
+      });
+    }
     {% else %}
     {# Empty external data set #}
     const data = {
@@ -940,10 +1355,13 @@
     const chipInstance = M.Chips.getInstance(chipElement);
     if (params.tag) {
       // our GET parameters to be treated as template values
-      var tagRe = new RegExp('[^[A-Za-z0-9_-]+');
+      var tagRe = new RegExp('\\s*[|,]\\s*');
       params.tag.split(tagRe).forEach(function (tag, index) {
-        chipInstance.addChip({ tag: tag, image: '' });
+        if (tag.trim().length) {
+          chipInstance.addChip({ tag: tag.trim(), image: '' });
+        }
       });
+      decorateNotifyChips();
     }
     {% if not CONFIG_LOCK %}
     // Now build our our loaded list of configuration for our welcome page
@@ -954,6 +1372,7 @@
       const entryTags = Array.isArray(entry.tags) ? entry.tags.slice() : [];
       let li = document.createElement('li');
       li.setAttribute('class', 'card-panel url-item');
+      li.dataset.retryCount = String(parseInt(entry.retry || 0, 10) || 0);
       if (!isEnabled) {
         li.classList.add('url-item-disabled');
         li.title = `{% trans "This Apprise API instance has disabled support for" %} ${getReviewPluginTitle(entry.service_name, entry.url)}.`;
@@ -967,6 +1386,20 @@
       meta.appendChild(pluginTitle);
       let metaRight = document.createElement('div');
       metaRight.setAttribute('class', 'url-meta-right');
+      let retryBadge = null;
+      if (isEnabled) {
+        retryBadge = document.createElement('span');
+        retryBadge.setAttribute('class', 'review-retry-badge');
+        metaRight.appendChild(retryBadge);
+      }
+      if (isEnabled && entry.optional === true) {
+        let optionalBadge = document.createElement('span');
+        optionalBadge.setAttribute('class', 'review-optional-badge material-icons');
+        optionalBadge.setAttribute('aria-label', '{% trans "Optional service" %}');
+        optionalBadge.title = '{% trans "Optional service: failures are ignored when determining notification success" %}';
+        optionalBadge.textContent = 'check_circle';
+        metaRight.appendChild(optionalBadge);
+      }
       // Optional URL ID
       if (entry.id) {
         let url_id = document.createElement('code');
@@ -989,6 +1422,9 @@
           ? 'notifications_active'
           : 'notifications_off';
         sel.appendChild(selIcon);
+        let groupBadge = document.createElement('span');
+        groupBadge.setAttribute('class', 'review-group-badge');
+        sel.appendChild(groupBadge);
         metaRight.appendChild(sel);
       }
       meta.appendChild(metaRight);
@@ -1025,9 +1461,57 @@
       tagList.setAttribute('class', 'url-tags');
       tagRow.appendChild(tagList);
 
-      const testTags = entryTags.filter(function (t) {
+      const entryTagDetails = Array.isArray(entry.tag_details)
+        ? entry.tag_details.slice()
+        : entryTags.map(function (tag) {
+            return {
+              name: String(tag),
+              priority: 0,
+              token: String(tag),
+              exact: `0:${String(tag)}`
+            };
+          });
+      const testTags = entryTagDetails.map(function (detail) {
+        return detail && detail.token ? detail.token : null;
+      }).filter(function (t) {
         return typeof t === 'string' && t.trim().length > 0;
       });
+      const displayTagDetails = [{
+        name: 'all',
+        priority: 0,
+        token: 'all',
+        exact: '0:all'
+      }];
+      entryTags.forEach(function (tag) {
+        displayTagDetails.push({
+          name: String(tag),
+          priority: 0,
+          token: String(tag),
+          exact: `0:${String(tag)}`,
+          scope: 'broad'
+        });
+      });
+      entryTagDetails.forEach(function (detail) {
+        if (!detail || !detail.name) {
+          return;
+        }
+        const priority = parseInt(detail.priority || 0, 10) || 0;
+        displayTagDetails.push({
+          name: String(detail.name),
+          priority: priority,
+          token: `${priority}:${String(detail.name)}`,
+          exact: `${priority}:${String(detail.name)}`,
+          scope: 'exact'
+        });
+      });
+      if (entryTagDetails.length === 0) {
+        displayTagDetails.unshift({
+          name: '',
+          priority: 0,
+          token: '',
+          exact: ''
+        });
+      }
       let testBtn = document.createElement('button');
       testBtn.type = 'button';
       testBtn.setAttribute('class', 'review-test-btn btn-flat btn-small');
@@ -1056,23 +1540,28 @@
       li.appendChild(tagRow);
 
       urlList.appendChild(li);
-      // Store `all` tag
-      entryTags.unshift('all')
-      if (entryTags.length === 1) {
-        // This entry triggers when no tags are defined
-        // Store '' (empty) tag for notice generation
-        entryTags.unshift('')
-      }
       // Get our tags associate with the URL
-      entryTags.forEach(function (tag) {
+      const renderedTags = new Set();
+      displayTagDetails.forEach(function (detail) {
+        const tag = detail && detail.token ? detail.token : String(detail.name || '');
+        const tagName = String(detail.name || tag).toLowerCase();
+        const tagExact = String(detail.exact || tag).toLowerCase();
+        if (renderedTags.has(tag)) {
+          return;
+        }
+        renderedTags.add(tag);
         let chip = document.createElement('div');
         chip.setAttribute('class', `chip`);
         if (tag.length > 0) {
           // we're dealing with a valid tag
-          chip.setAttribute('name', tag);
+          chip.dataset.tagName = tagName;
+          chip.dataset.tagToken = tag;
+          chip.dataset.tagExact = tagExact;
+          chip.dataset.tagPriority = String(parseInt(detail.priority || 0, 10) || 0);
+          chip.dataset.tagScope = detail.scope || 'exact';
           chip.textContent = `🏷️ ${tag}`;
           const index = chipInstance.chipsData.findIndex(function (e) {
-            return e.tag === tag;
+            return reviewChipMatchesNotifyTag(chip, e.tag);
           })
           if (index >= 0) {
             chip.classList.add('selected');
@@ -1085,10 +1574,10 @@
             chip.addEventListener('click', function (e) {
               e.preventDefault();
               const index = chipInstance.chipsData.findIndex(function (e) {
-                return e.tag === tag;
+                return reviewChipMatchesNotifyTag(chip, e.tag);
               });
               if (index < 0) {
-                chipInstance.addChip({ tag: this.getAttribute('name'), image: '' });
+                chipInstance.addChip({ tag: this.dataset.tagToken, image: '' });
               } else {
                 chipInstance.deleteChip(index);
               }
@@ -1415,6 +1904,7 @@
   }
 
   function notify_init() {
+    decorateNotifyChips();
     // over-ride manual submit for a nicer user experience
     document.querySelector('#donotify').onsubmit = function (event) {
       event.preventDefault();
