@@ -826,6 +826,17 @@ tox -e runserver -- "localhost:8080"
 tox -e runserver -- "0.0.0.0:8080"
 ```
 
+To test Apprise API against a specific Apprise core branch:
+
+```bash
+tox -e runserver -- --branch=1341-retries-and-priorities
+```
+
+The `--branch` option force-reinstalls Apprise from the named GitHub branch with
+pip caching disabled. Running `tox -e runserver` without `--branch` switches the
+environment back to the PyPI Apprise package when a branch build had previously
+been installed.
+
 ### Docker Compose for Development
 Running `docker compose up` in a fresh checkout will automatically apply `docker-compose.override.yml`.
 This mounts the local source tree and static assets into the container so UI and template changes are
