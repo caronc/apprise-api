@@ -294,9 +294,21 @@
       <div class="section has-config">
         <div class="loaded-config-heading">
           <h5>{% trans "Loaded Configuration" %}</h5>
-          <p class="loaded-config-heading-status">
-            {% blocktrans %}<span class="loaded-config-heading-status-text"><span class="card-count" data-count-format="plain">0</span> notification(s) selected for sending</span>{% endblocktrans %}
-          </p>
+          <div class="loaded-config-heading-meta">
+            <label class="review-selected-filter"
+                   title="{% trans "Show only selected notification services" %}">
+              <input id="review-selected-filter-toggle"
+                     type="checkbox"
+                     aria-label="{% trans "Show only selected notification services" %}"
+                     disabled>
+              <span class="review-selected-filter-track" aria-hidden="true">
+                <span class="review-selected-filter-knob"></span>
+              </span>
+            </label>
+            <p class="loaded-config-heading-status">
+              {% blocktrans %}<span class="loaded-config-heading-status-text"><span class="card-count" data-count-format="plain">0</span> notification(s) selected for sending</span>{% endblocktrans %}
+            </p>
+          </div>
         </div>
         <div class="loaded-config-tip">
           <ul class="loaded-config-tip-list">
@@ -773,11 +785,30 @@
     document.querySelectorAll(".card-count").forEach(function (e) {
       e.textContent = e.dataset.countFormat === 'plain' ? `${p_count}` : `(${p_count})`;
     })
+    const reviewFilter = document.querySelector('#review-selected-filter-toggle');
+    if (reviewFilter) {
+      reviewFilter.disabled = p_count === 0;
+      if (p_count === 0) {
+        reviewFilter.checked = false;
+      }
+      applyReviewSelectedFilter();
+    }
     const guidance = document.querySelector('#notify-target-guidance');
     if (guidance) {
       guidance.style.display = p_count === 0 ? null : 'none';
     }
     updateReviewEscalationBadges();
+  }
+
+  function applyReviewSelectedFilter() {
+    const reviewFilter = document.querySelector('#review-selected-filter-toggle');
+    const filterActive = reviewFilter && reviewFilter.checked && !reviewFilter.disabled;
+    document.querySelectorAll('#url-list li.card-panel').forEach(function (card) {
+      card.classList.toggle(
+        'review-filter-hidden',
+        filterActive && !card.classList.contains('selected')
+      );
+    });
   }
 
   function parseNotifyTagToken(value) {
@@ -2077,6 +2108,12 @@
   document.querySelector('#id_tag').style.display = 'none';
   // Sync config tabs with URL hash and allow direct hash deep links.
   initConfigTabs();
+  const reviewSelectedFilter = document.querySelector('#review-selected-filter-toggle');
+  if (reviewSelectedFilter) {
+    reviewSelectedFilter.addEventListener('change', function () {
+      applyReviewSelectedFilter();
+    });
+  }
   /* Initialize our page */
   main_init();
   // Config ID copy-to-clipboard

@@ -138,6 +138,19 @@ Status & Indicators
   color: #0f5f57;
 }
 
+:root {
+  --review-filter-toggle-bg: #e6e9ef;
+  --review-filter-toggle-ring: #c7ccd5;
+  --review-filter-toggle-knob: #ffffff;
+  --review-filter-toggle-shadow: rgba(34, 42, 55, 0.18);
+  --review-filter-toggle-inner-shadow: rgba(34, 42, 55, 0.12);
+  --review-filter-toggle-active-bg: #c8f0ea;
+  --review-filter-toggle-active-ring: #39c0b7;
+  --review-filter-toggle-active-knob: #0f5f57;
+  --review-filter-toggle-active-halo: rgba(57, 192, 183, 0.2);
+  --review-filter-toggle-focus: #148c80;
+}
+
 .loaded-config-tip {
   background-color: #f6f7fa;
   border-color: #d8d9df;

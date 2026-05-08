@@ -833,6 +833,14 @@ Welcome Page Collapsibles
   margin: 0;
 }
 
+.loaded-config-heading-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
 .loaded-config-heading-status {
   margin: 0;
   flex-shrink: 0;
@@ -854,6 +862,84 @@ Welcome Page Collapsibles
 .loaded-config-heading-status-text .card-count {
   margin-left: 0;
   font-weight: 800;
+}
+
+.review-selected-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 1.55rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.review-selected-filter input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.review-selected-filter-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 3rem;
+  height: 1.55rem;
+  border: 1px solid var(--review-filter-toggle-ring);
+  border-radius: 999px;
+  background: var(--review-filter-toggle-bg);
+  padding-left: 0 !important;
+  box-shadow: inset 0 1px 3px var(--review-filter-toggle-inner-shadow);
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.review-selected-filter input+.review-selected-filter-track::before,
+.review-selected-filter input+.review-selected-filter-track::after {
+  content: none !important;
+  display: none !important;
+}
+
+.review-selected-filter-knob {
+  position: absolute;
+  left: 0.18rem;
+  top: 50%;
+  width: 1.12rem;
+  height: 1.12rem;
+  border-radius: 999px;
+  background: var(--review-filter-toggle-knob);
+  box-shadow: 0 1px 4px var(--review-filter-toggle-shadow);
+  transform: translateY(-50%);
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+
+.review-selected-filter input:checked+.review-selected-filter-track {
+  border-color: var(--review-filter-toggle-active-ring);
+  background: var(--review-filter-toggle-active-bg);
+  box-shadow:
+    inset 0 1px 3px var(--review-filter-toggle-inner-shadow),
+    0 0 0 2px var(--review-filter-toggle-active-halo);
+}
+
+.review-selected-filter input:checked+.review-selected-filter-track .review-selected-filter-knob {
+  transform: translate(1.42rem, -50%);
+  background: var(--review-filter-toggle-active-knob);
+}
+
+.review-selected-filter input:focus-visible+.review-selected-filter-track {
+  outline: 2px solid var(--review-filter-toggle-focus);
+  outline-offset: 2px;
+}
+
+.review-selected-filter:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .loaded-config-tip {
@@ -903,6 +989,11 @@ Welcome Page Collapsibles
 
   .loaded-config-heading-status-text {
     white-space: normal;
+  }
+
+  .loaded-config-heading-meta {
+    align-self: stretch;
+    justify-content: flex-start;
   }
 
   .loaded-config-tip {
@@ -1072,6 +1163,10 @@ body .tabs .tab.disabled a:hover i {
 
 #url-list .card-panel.url-item-disabled {
   cursor: not-allowed;
+}
+
+#url-list .card-panel.review-filter-hidden {
+  display: none;
 }
 
 #url-list .card-panel.url-item-disabled .chip {
