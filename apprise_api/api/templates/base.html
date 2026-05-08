@@ -454,9 +454,12 @@
         if (typeof hljs !== 'undefined') {
           hljs.addPlugin({
             'before:highlightElement': function(opts) {
-              opts.el.innerHTML = opts.el.innerHTML
+              const normalizedHtml = opts.el.innerHTML
                 .replace(/<\/?br\s*\/?>([ \t]*\n[ \t]*)?/gi, '\n')
                 .replace(/\n[ \t]+/g, '\n');
+              const plainText = document.createElement('div');
+              plainText.innerHTML = normalizedHtml;
+              opts.el.textContent = plainText.textContent;
             }
           });
         }
