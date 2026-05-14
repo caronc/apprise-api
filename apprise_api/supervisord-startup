@@ -22,36 +22,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# Timezone setup: ensure all processes (nginx, gunicorn, Python logging) use
-# the same timezone so log timestamps are always aligned.
+# Timezone setup: align every process in the container to the same timezone
+# so that log timestamps from nginx, gunicorn, and Python all agree.
+
+# - TZ is the single source of truth.  If the caller does not supply it, it
+# defaults to Etc/UTC.
+# - IF TZ is resolved it is exported (so every child process inherits it) and
+# /etc/localtime is updated to point at the matching zoneinfo file. This is
+# to keep nginx in sync with gunicorn
+# - The container works correctly in non-root mode as well as  no write access
+# to /etc/localtime is required.
+# - /etc/localtime is only updated as a secondary best-effort measure so that
+# any third-party tool that reads the timezone file directly (rather than going
+# through localtime()) also stays in sync.  This step is silently skipped when
+# the container runs as a non-root user; it has no effect on Apprise-API itself
+# (specifically Nginx or Python/Gunicorn)
 #
-# When TZ is set it is the authority: /etc/localtime is updated to match so
-# that C programs such as nginx, which read the file directly, agree with
-# Python (which reads TZ via time.tzset() in gunicorn.conf.py).
-#
-# When TZ is not set it is derived from the environment in priority order:
-#   1. /etc/localtime symlink target  (common Docker host-timezone pattern)
-#   2. /etc/timezone                  (plain-file bind-mount fallback)
-# The derived name is exported as TZ so Python and nginx both pick it up.
-if [ -n "${TZ}" ]; then
-   if [ -f "/usr/share/zoneinfo/${TZ}" ]; then
-      echo "${TZ}" > /etc/timezone 2>/dev/null || true
-      echo "Timezone: ${TZ}"
-   else
-      echo "WARNING: TZ='${TZ}' is not a valid timezone name; timestamps may be inaccurate"
-   fi
-elif [ -L /etc/localtime ]; then
-   _tz=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')
-   if [ -n "${_tz}" ] && [ -f "/usr/share/zoneinfo/${_tz}" ]; then
-      export TZ="${_tz}"
-      echo "Timezone derived from /etc/localtime symlink: ${TZ}"
-   fi
-elif [ -f /etc/timezone ]; then
-   _tz=$(cat /etc/timezone 2>/dev/null | tr -d '[:space:]')
-   if [ -n "${_tz}" ] && [ -f "/usr/share/zoneinfo/${_tz}" ]; then
-      export TZ="${_tz}"
-      echo "Timezone derived from /etc/timezone: ${TZ}"
-   fi
+TZ="${TZ:-Etc/UTC}"
+export TZ
+
+if [ -f "/usr/share/zoneinfo/${TZ}" ]; then
+   ln -sf "/usr/share/zoneinfo/${TZ}" /etc/localtime 2>/dev/null || true
+   printf '%s\n' "${TZ}" > /etc/timezone 2>/dev/null || true
+   echo "Timezone: ${TZ}"
+else
+   echo "WARNING: TZ='${TZ}' not found in /usr/share/zoneinfo/; timestamps may be inaccurate"
 fi
 
 # Nginx configuration file

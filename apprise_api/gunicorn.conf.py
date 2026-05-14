@@ -37,8 +37,7 @@ if hasattr(time, "tzset"):
 raw_env = [
     "LANG={}".format(os.environ.get("LANG", "en_US.UTF-8")),
     "DJANGO_SETTINGS_MODULE=core.settings",
-    # Carry the resolved TZ into every worker so Python's logging formatter
-    # uses the same timezone as nginx (which reads /etc/localtime directly).
+    # Carry TZ into every worker environment.
     "TZ={}".format(os.environ.get("TZ", "Etc/UTC")),
 ]
 
@@ -79,7 +78,8 @@ loglevel = "warn"
 
 
 def post_fork(_server, _worker):
-    # Re-apply TZ in each worker after fork so Python's time functions
-    # (used by the logging formatter) use the same timezone as nginx.
+    # Re-apply TZ in each worker after the fork.
+    # to ensure each forked worker initialises from the TZ env var rather than
+    # from whatever state it inherited from the parent.
     if hasattr(time, "tzset"):
         time.tzset()
