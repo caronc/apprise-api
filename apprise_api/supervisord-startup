@@ -24,20 +24,25 @@
 
 # Timezone setup: align every process in the container to the same timezone
 # so that log timestamps from nginx, gunicorn, and Python all agree.
-
-# - TZ is the single source of truth.  If the caller does not supply it, it
-# defaults to Etc/UTC.
-# - IF TZ is resolved it is exported (so every child process inherits it) and
-# /etc/localtime is updated to point at the matching zoneinfo file. This is
-# to keep nginx in sync with gunicorn
-# - The container works correctly in non-root mode as well as  no write access
-# to /etc/localtime is required.
-# - /etc/localtime is only updated as a secondary best-effort measure so that
-# any third-party tool that reads the timezone file directly (rather than going
-# through localtime()) also stays in sync.  This step is silently skipped when
-# the container runs as a non-root user; it has no effect on Apprise-API itself
-# (specifically Nginx or Python/Gunicorn)
 #
+# TZ is the single source of truth.  If not supplied it defaults to Etc/UTC,
+# matching the Dockerfile default.  Exporting TZ before supervisord starts is
+# sufficient: both Python (via time.tzset() in gunicorn.conf.py) and nginx
+# (via the C library's localtime(), which checks TZ before falling back to
+# /etc/localtime) inherit it from their parent process.  The container works
+# correctly in non-root mode for exactly this reason — no file-system write is
+# required for timezone handling to take effect.
+#
+# Note: users who previously relied on bind-mounting the host's /etc/localtime
+# or /etc/timezone to propagate the host timezone without setting TZ should now
+# pass TZ explicitly (e.g. -e TZ=America/New_York) to guarantee consistent
+# behaviour across all processes.
+#
+# /etc/localtime and /etc/timezone are also updated as a secondary best-effort
+# measure so that any tool that reads those files directly (bypassing the C
+# library's localtime()) also sees the correct zone.  Both writes are silently
+# skipped when the container runs as a non-root user; this has no effect on
+# nginx or Python, which read TZ from the environment.
 TZ="${TZ:-Etc/UTC}"
 export TZ
 

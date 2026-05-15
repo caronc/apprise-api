@@ -78,8 +78,8 @@ loglevel = "warn"
 
 
 def post_fork(_server, _worker):
-    # Re-apply TZ in each worker after the fork.
-    # to ensure each forked worker initialises from the TZ env var rather than
-    # from whatever state it inherited from the parent.
+    # Re-apply TZ in each worker after the fork to ensure each freshly forked
+    # worker initialises from the TZ env var rather than from whatever cached
+    # timezone state it inherited from the parent process.
     if hasattr(time, "tzset"):
         time.tzset()
