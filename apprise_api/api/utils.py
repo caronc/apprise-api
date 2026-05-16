@@ -423,10 +423,12 @@ def parse_attachments(attachment_payload, files_request):
         except (AttributeError, TypeError):
             raise ValueError(f"An invalid filename was provided for attachment {no}") from None
 
-        #
-        # Prepare our Attachment
-        #
-        attachment = Attachment(filename)
+        # Honor the wire Content-Type; octet-stream means "unset" here
+        wire_mimetype = getattr(meta, "content_type", None)
+        if wire_mimetype == "application/octet-stream":
+            wire_mimetype = None
+
+        attachment = Attachment(filename, mimetype=wire_mimetype)
         try:
             with open(attachment.path, "wb") as f:
                 # Write our content to disk

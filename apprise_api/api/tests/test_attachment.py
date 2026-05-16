@@ -564,3 +564,37 @@ class AttachmentTests(SimpleTestCase):
             # 2 (payload) + 2 (files) = 4 > max=3
             with self.assertRaises(ValueError):
                 parse_attachments(attachment_payload, files_request)
+
+    def test_form_file_attachment_parsing_honors_wire_content_type(self):
+        """
+        Multipart Content-Type should win over filename extension guessing.
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            files_request = {
+                "file1": SimpleUploadedFile(
+                    "attachment.001",
+                    b"\xff\xd8\xff\xe0",
+                    content_type="image/jpeg",
+                )
+            }
+            result = parse_attachments(None, files_request)
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0].mimetype == "image/jpeg"
+
+    def test_form_file_attachment_parsing_octet_stream_falls_back_to_filename(self):
+        """
+        Django's "application/octet-stream" default must not suppress filename guessing.
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            files_request = {
+                "file1": SimpleUploadedFile(
+                    "poster.jpg",
+                    b"\xff\xd8\xff\xe0",
+                    content_type="application/octet-stream",
+                )
+            }
+            result = parse_attachments(None, files_request)
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0].mimetype == "image/jpeg"
