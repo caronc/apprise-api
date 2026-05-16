@@ -378,3 +378,10 @@ APPRISE_INTERPRET_EMOJIS = (
         "+",
     )
 )
+
+# Allow HTTP Redirects override
+# By default Apprise follows HTTP 3xx redirects, matching the behaviour of
+# the underlying requests library.  Set APPRISE_HTTP_REDIRECTS=no to disable
+# redirect following globally across all plugins without touching individual
+# URLs.
+APPRISE_HTTP_REDIRECTS = os.environ.get("APPRISE_HTTP_REDIRECTS", "yes")[0].lower() in ("a", "y", "1", "t", "e", "+")

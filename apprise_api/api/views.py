@@ -1489,6 +1489,8 @@ class NotifyView(View):
             "storage_mode": settings.APPRISE_STORAGE_MODE,
             # Emoji configuration (values are None, True, or False)
             "interpret_emojis": settings.APPRISE_INTERPRET_EMOJIS,
+            # HTTP redirect behaviour (values are None, True, or False)
+            "http_redirects": settings.APPRISE_HTTP_REDIRECTS,
         }
 
         if body_format:
@@ -2111,6 +2113,8 @@ class StatelessNotifyView(View):
             "plugin_paths": settings.APPRISE_PLUGIN_PATHS,
             # Emoji configuration (values are None, True, or False)
             "interpret_emojis": settings.APPRISE_INTERPRET_EMOJIS,
+            # HTTP redirect behaviour (values are None, True, or False)
+            "http_redirects": settings.APPRISE_HTTP_REDIRECTS,
         }
         if settings.APPRISE_STATELESS_STORAGE:
             # Persistent Storage is allowed with Stateless queries
