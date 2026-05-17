@@ -598,3 +598,37 @@ class AttachmentTests(SimpleTestCase):
             assert isinstance(result, list)
             assert len(result) == 1
             assert result[0].mimetype == "image/jpeg"
+
+    def test_form_file_attachment_parsing_normalizes_mixed_case_content_type(self):
+        """
+        Mixed-case Content-Type must be lowercased before reaching Apprise.
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            files_request = {
+                "file1": SimpleUploadedFile(
+                    "attachment.001",
+                    b"\xff\xd8\xff\xe0",
+                    content_type="Image/JPEG",
+                )
+            }
+            result = parse_attachments(None, files_request)
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0].mimetype == "image/jpeg"
+
+    def test_form_file_attachment_parsing_uppercase_octet_stream_falls_back_to_filename(self):
+        """
+        Uppercase "application/octet-stream" must still defer to filename guessing.
+        """
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            files_request = {
+                "file1": SimpleUploadedFile(
+                    "poster.jpg",
+                    b"\xff\xd8\xff\xe0",
+                    content_type="APPLICATION/OCTET-STREAM",
+                )
+            }
+            result = parse_attachments(None, files_request)
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0].mimetype == "image/jpeg"

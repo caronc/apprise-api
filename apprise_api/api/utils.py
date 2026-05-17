@@ -423,9 +423,13 @@ def parse_attachments(attachment_payload, files_request):
         except (AttributeError, TypeError):
             raise ValueError(f"An invalid filename was provided for attachment {no}") from None
 
-        # Honor the wire Content-Type; octet-stream means "unset" here
-        wire_mimetype = getattr(meta, "content_type", None)
+        # lower() protects case from the Apprise case sensitive guessing:
+        #  - Content-Type: Image/JPEG
+        #  - APPLICATION/OCTET-STREAM
+        wire_mimetype = getattr(meta, "content_type", "").strip().lower() or None
+
         if wire_mimetype == "application/octet-stream":
+            # disabling mimetype before Attachment() object allows for guessing of type
             wire_mimetype = None
 
         attachment = Attachment(filename, mimetype=wire_mimetype)
