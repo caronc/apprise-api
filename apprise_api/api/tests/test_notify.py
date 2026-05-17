@@ -982,6 +982,21 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Preare our form data
+        form_data = {
+            "body": "test notifiction",
+            "attachments": "https://localhost/invalid/path/to/image.png",
+        }
+
+        # Send our notification
+        response = self.client.post("/notify/{}".format(key), form_data)
+        # We fail because we couldn't retrieve our attachment
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
     @mock.patch("apprise.Apprise.notify")
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """
@@ -1152,7 +1167,6 @@ class NotifyTests(SimpleTestCase):
         # Reset our mock object
         mock_notify.reset_mock()
 
-        # Preare our JSON data (and support attachments keyword as plural alias)
         json_data = {
             "body": "test message",
             "format": None,

@@ -415,6 +415,27 @@ class StatelessNotifyTests(SimpleTestCase):
         # Reset our mock object
         mock_notify.reset_mock()
 
+        # Preare our form data (support attachments keyword)
+        form_data = {
+            "body": "test notifiction",
+            "urls": ", ".join(
+                [
+                    "mailto://user:pass@hotmail.com",
+                    "mailto://user:pass@gmail.com",
+                ]
+            ),
+            "attachments": "https://localhost/invalid/path/to/image.png",
+        }
+
+        # Send our notification
+        response = self.client.post("/notify", form_data)
+        # We fail because we couldn't retrieve our attachment
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
         # Preare our json data (and support attach keyword as alias)
         json_data = {
             "body": "test notifiction",
@@ -441,7 +462,7 @@ class StatelessNotifyTests(SimpleTestCase):
         # Reset our mock object
         mock_notify.reset_mock()
 
-        # Preare our json data (and support attachments keyword as plural alias)
+        # Preare our json data (and support attachments keyword as alias)
         json_data = {
             "body": "test notifiction",
             "urls": ", ".join(
