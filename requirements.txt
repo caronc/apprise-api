@@ -21,7 +21,7 @@ gunicorn
 requests
 
 ## 3rd Party Service support
-paho-mqtt < 2.0.0
+paho-mqtt >= 2.1.0
 gntp
 cryptography
 # Pretty Good Privacy (PGP) Provides mailto:// and deltachat:// support
