@@ -1152,6 +1152,27 @@ class NotifyTests(SimpleTestCase):
         # Reset our mock object
         mock_notify.reset_mock()
 
+        # Preare our JSON data (and support attachments keyword as plural alias)
+        json_data = {
+            "body": "test message",
+            "format": None,
+            "attachments": "https://localhost/invalid/path/to/image.png",
+        }
+
+        response = self.client.post(
+            "/notify/{}".format(key),
+            data=json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        # We failed to send notification because we couldn't fetch the
+        # attachment
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
         json_data = {
             "body": "test message",
         }

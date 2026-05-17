@@ -1233,10 +1233,21 @@ class NotifyView(View):
                 # Acquire kw (alias) attach to work with them
                 content["attachment"] = [a for a in request.POST.getlist("attach") if isinstance(a, str) and a.strip()]
 
+            elif "attachments" in request.POST:
+                # Acquire kw (plural alias) attachments to work with them
+                content["attachment"] = [
+                    a for a in request.POST.getlist("attachments") if isinstance(a, str) and a.strip()
+                ]
+
             elif content.get("attach"):
                 # Acquire kw (alias) attach from payload to work with
                 content["attachment"] = content["attach"]
                 del content["attach"]
+
+            elif content.get("attachments"):
+                # Acquire kw (plural alias) attachments from payload to work with
+                content["attachment"] = content["attachments"]
+                del content["attachments"]
 
         if "attachment" in content or request.FILES:
             try:
@@ -2173,10 +2184,19 @@ class StatelessNotifyView(View):
                 # Acquire kw (alias) attach to work with them
                 content["attachment"] = request.POST.getlist("attach")
 
+            elif "attachments" in request.POST:
+                # Acquire kw (plural alias) attachments to work with them
+                content["attachment"] = request.POST.getlist("attachments")
+
             elif content.get("attach"):
                 # Acquire kw (alias) attach from payload to work with
                 content["attachment"] = content["attach"]
                 del content["attach"]
+
+            elif content.get("attachments"):
+                # Acquire kw (plural alias) attachments from payload to work with
+                content["attachment"] = content["attachments"]
+                del content["attachments"]
 
         if "attachment" in content or request.FILES:
             try:

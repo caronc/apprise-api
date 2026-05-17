@@ -438,6 +438,31 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Preare our json data (and support attachments keyword as plural alias)
+        json_data = {
+            "body": "test notifiction",
+            "urls": ", ".join(
+                [
+                    "mailto://user:pass@hotmail.com",
+                    "mailto://user:pass@gmail.com",
+                ]
+            ),
+            "attachments": "https://localhost/invalid/path/to/image.png",
+        }
+
+        response = self.client.post(
+            "/notify/",
+            data=json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        # We fail because we couldn't retrieve our attachment
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
     @override_settings(APPRISE_RECURSION_MAX=1)
     @mock.patch("apprise.Apprise.notify")
     def test_stateless_notify_recursion(self, mock_notify):
