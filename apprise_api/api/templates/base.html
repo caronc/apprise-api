@@ -649,6 +649,8 @@
   if (cfgGenLink) {
     cfgGenLink.addEventListener('click', function(e) {
       e.preventDefault();
+      const newConfigurationHref = cfgGenLink.href;
+      const currentConfigurationId = '{{ DEFAULT_CONFIG_ID|escapejs }}';
 
       Swal.fire({
         title: '{% trans "New Configuration" %}',
@@ -659,6 +661,11 @@
               <span class="config-id-label">{% trans "Config ID" %}</span>
               <span class="config-id-wrapper">
                 <code class="config-id">{{ DEFAULT_CONFIG_ID }}</code>
+                <button type="button"
+                        class="btn-flat btn-small config-id-copy cfggen-id-copy"
+                        title="{% trans "Copy Config ID to Clipboard" %}">
+                  <i class="material-icons">content_copy</i>
+                </button>
               </span>
             </div>
             <p>{% trans "Do you still wish to proceed?" %}</p>
@@ -667,13 +674,61 @@
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: '{% trans "Yes" %}',
-        cancelButtonText: '{% trans "No" %}'
+        cancelButtonText: '{% trans "No" %}',
+        didOpen: function (popup) {
+          const copyBtn = popup.querySelector('.cfggen-id-copy');
+          if (!copyBtn) {
+            return;
+          }
+          copyBtn.addEventListener('click', function (copyEvent) {
+            copyEvent.preventDefault();
+            copyEvent.stopPropagation();
+            appriseCopyToClipboard(
+              currentConfigurationId,
+              '{% trans "Config ID copied to clipboard" %}'
+            );
+          });
+        }
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location.href = e.currentTarget.href;
+          window.location.href = newConfigurationHref;
         }
       });
     });
+  }
+
+  async function appriseCopyToClipboard(text, message) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        appriseShowCopyToast(message);
+        return;
+      } catch (e) {
+        console.warn('navigator.clipboard failed, falling back', e);
+      }
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      appriseShowCopyToast(message);
+    } catch (e) {
+      console.warn('document.execCommand("copy") failed', e);
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  }
+
+  function appriseShowCopyToast(message) {
+    if (window.M && M.toast) {
+      M.toast({ html: message || '{% trans "Copied to clipboard" %}' });
+    }
   }
 
   // Register custom Apprise TEXT config language

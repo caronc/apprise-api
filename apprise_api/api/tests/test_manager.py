@@ -70,6 +70,23 @@ class ManagerPageTests(SimpleTestCase):
         response = self.client.get("/cfg/valid-key")
         assert response.status_code == 200
 
+    def test_new_configuration_link_captures_href_before_confirmation(self):
+        """
+        The new configuration confirmation resolves asynchronously, so the
+        click event's currentTarget can no longer be used inside the callback.
+        """
+        response = self.client.get("/cfg/valid-key")
+        assert response.status_code == 200
+
+        content = response.content.decode("utf-8")
+        assert "const newConfigurationHref = cfgGenLink.href;" in content
+        assert "window.location.href = newConfigurationHref;" in content
+        assert "window.location.href = e.currentTarget.href;" not in content
+        assert "cfggen-id-copy" in content
+        assert "content_copy" in content
+        assert "appriseCopyToClipboard(" in content
+        assert "Config ID copied to clipboard" in content
+
     def test_get_config(self):
         """
         Test retrieving configuration
