@@ -1240,14 +1240,16 @@ class NotifyView(View):
                 ]
 
             elif content.get("attach"):
-                # Acquire kw (alias) attach from payload to work with
+                # Acquire kw (alias) attach from payload to work with.
+                # Preserve the original alias key as downstream validation
+                # may still inspect the submitted payload structure.
                 content["attachment"] = content["attach"]
-                del content["attach"]
 
             elif content.get("attachments"):
-                # Acquire kw (alias) attachments from payload to work with
+                # Acquire kw (alias) attachments from payload to work with.
+                # Preserve the original alias key as downstream validation
+                # may still inspect the submitted payload structure.
                 content["attachment"] = content["attachments"]
-                del content["attachments"]
 
         if "attachment" in content or request.FILES:
             try:
