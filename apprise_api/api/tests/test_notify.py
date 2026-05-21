@@ -997,6 +997,21 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Verify each alias alone (no body) routes to Bad Attachment, not the
+        # minimum-requirements gate — confirming attach-only payloads are valid.
+        for _alias in ("attach", "attachment", "attachments"):
+            form_data = {
+                _alias: "https://localhost/invalid/path/to/image.png",
+            }
+            response = self.client.post("/notify/{}".format(key), form_data)
+            assert response.status_code == 400
+            assert b"Bad Attachment" in response.content
+            assert mock_notify.call_count == 0
+            mock_notify.reset_mock()
+
     @mock.patch("apprise.Apprise.notify")
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
         """
@@ -1186,6 +1201,24 @@ class NotifyTests(SimpleTestCase):
 
         # Reset our mock object
         mock_notify.reset_mock()
+
+        # Test every alias alone (no body) via JSON to confirm attach-only
+        # payloads are accepted and resolve to Bad Attachment, not the
+        # minimum-requirements gate.  Also exercises the 'attachment' canonical
+        # key path directly, which skips alias renaming.
+        for _alias in ("attach", "attachment", "attachments"):
+            json_data = {
+                _alias: "https://localhost/invalid/path/to/image.png",
+            }
+            response = self.client.post(
+                "/notify/{}".format(key),
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
+            assert response.status_code == 400
+            assert b"Bad Attachment" in response.content
+            assert mock_notify.call_count == 0
+            mock_notify.reset_mock()
 
         json_data = {
             "body": "test message",

@@ -484,6 +484,73 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Test the canonical 'attachment' key directly in a JSON body (with
+        # body present).  This exercises the no-op branch where the key is
+        # already canonical and requires no renaming.
+        json_data = {
+            "body": "test notifiction",
+            "urls": ", ".join(
+                [
+                    "mailto://user:pass@hotmail.com",
+                    "mailto://user:pass@gmail.com",
+                ]
+            ),
+            "attachment": "https://localhost/invalid/path/to/image.png",
+        }
+
+        response = self.client.post(
+            "/notify/",
+            data=json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        assert b"Bad Attachment" in response.content
+        assert mock_notify.call_count == 0
+
+        # Reset our mock object
+        mock_notify.reset_mock()
+
+        # Verify all three aliases via form-data with no body present.
+        # The attachment handling must now run before the minimum-requirements
+        # check so that attach-only payloads reach Bad Attachment instead of
+        # "Payload lacks minimum requirements".
+        _urls = ", ".join(
+            [
+                "mailto://user:pass@hotmail.com",
+                "mailto://user:pass@gmail.com",
+            ]
+        )
+        for _alias in ("attach", "attachment", "attachments"):
+            form_data = {
+                "urls": _urls,
+                _alias: "https://localhost/invalid/path/to/image.png",
+            }
+            response = self.client.post("/notify", form_data)
+            assert response.status_code == 400
+            assert b"Bad Attachment" in response.content
+            assert mock_notify.call_count == 0
+            mock_notify.reset_mock()
+
+        # Same coverage via JSON body (no body field) for all three aliases.
+        for _alias in ("attach", "attachment", "attachments"):
+            json_data = {
+                "urls": _urls,
+                _alias: "https://localhost/invalid/path/to/image.png",
+            }
+            response = self.client.post(
+                "/notify/",
+                data=json.dumps(json_data),
+                content_type="application/json",
+            )
+            assert response.status_code == 400
+            assert b"Bad Attachment" in response.content
+            assert mock_notify.call_count == 0
+            mock_notify.reset_mock()
+
     @override_settings(APPRISE_RECURSION_MAX=1)
     @mock.patch("apprise.Apprise.notify")
     def test_stateless_notify_recursion(self, mock_notify):
