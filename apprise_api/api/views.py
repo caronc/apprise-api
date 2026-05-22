@@ -1221,22 +1221,29 @@ class NotifyView(View):
             )
 
         # Handle Attachments
+        # Normalize all three accepted attachment aliases — 'attach',
+        # 'attachment', and 'attachments' — into the canonical 'attachment'
+        # key before calling parse_attachments.  Priority order (highest
+        # first): attach > attachment > attachments.  POST form-data keys are
+        # resolved before JSON body keys of the same name so that multipart
+        # form submissions always take precedence.
         attach = None
-        if not content.get("attachment"):
-            if "attachment" in request.POST:
-                # Acquire attachments to work with them
-                content["attachment"] = [
-                    a for a in request.POST.getlist("attachment") if isinstance(a, str) and a.strip()
-                ]
-
-            elif "attach" in request.POST:
-                # Acquire kw (alias) attach to work with them
-                content["attachment"] = [a for a in request.POST.getlist("attach") if isinstance(a, str) and a.strip()]
-
-            elif content.get("attach"):
-                # Acquire kw (alias) attach from payload to work with
-                content["attachment"] = content["attach"]
-                del content["attach"]
+        _post_key = next(
+            (k for k in ("attach", "attachment", "attachments") if k in request.POST),
+            None,
+        )
+        if _post_key:
+            # Collect URL strings from form-data, discarding blank entries.
+            content["attachment"] = [a for a in request.POST.getlist(_post_key) if isinstance(a, str) and a.strip()]
+        else:
+            # Resolve from the JSON body in the same priority order, then
+            # rename the alias to the canonical 'attachment' key.
+            _json_key = next(
+                (k for k in ("attach", "attachment", "attachments") if content.get(k)),
+                None,
+            )
+            if _json_key and _json_key != "attachment":
+                content["attachment"] = content.pop(_json_key)
 
         if "attachment" in content or request.FILES:
             try:
@@ -1996,8 +2003,64 @@ class StatelessNotifyView(View):
         if not content.get("title") and "title" in request.GET:
             content["title"] = request.GET["title"]
 
+        # Handle Attachments
+        # Normalize all three accepted attachment aliases — 'attach',
+        # 'attachment', and 'attachments' — into the canonical 'attachment'
+        # key before calling parse_attachments.  Priority order (highest
+        # first): attach > attachment > attachments.  POST form-data keys are
+        # resolved before JSON body keys of the same name so that multipart
+        # form submissions always take precedence.
+        attach = None
+        _post_key = next(
+            (k for k in ("attach", "attachment", "attachments") if k in request.POST),
+            None,
+        )
+        if _post_key:
+            # Collect URL strings from form-data, discarding blank entries.
+            content["attachment"] = [a for a in request.POST.getlist(_post_key) if isinstance(a, str) and a.strip()]
+        else:
+            # Resolve from the JSON body in the same priority order, then
+            # rename the alias to the canonical 'attachment' key.
+            _json_key = next(
+                (k for k in ("attach", "attachment", "attachments") if content.get(k)),
+                None,
+            )
+            if _json_key and _json_key != "attachment":
+                content["attachment"] = content.pop(_json_key)
+
+        if "attachment" in content or request.FILES:
+            try:
+                attach = parse_attachments(content.get("attachment"), request.FILES)
+
+            except (TypeError, ValueError) as e:
+                # Invalid entry found in list
+                logger.warning(
+                    "NOTIFY - %s - Bad attachment: %s",
+                    request.META["REMOTE_ADDR"],
+                    str(e),
+                )
+
+                status = ResponseCode.bad_request
+                msg = _("Bad Attachment")
+                return (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse(
+                        {
+                            "error": msg,
+                        },
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status,
+                    )
+                )
+
         # Some basic error checking
-        if not content.get("body") or content.get("type", apprise.NotifyType.INFO.value) not in apprise.NOTIFY_TYPES:
+        # A notification requires at minimum a body or at least one valid
+        # attachment; either is sufficient to proceed.
+        if (not content.get("body") and not attach) or content.get(
+            "type", apprise.NotifyType.INFO.value
+        ) not in apprise.NOTIFY_TYPES:
             logger.warning(
                 "NOTIFY - %s - Payload lacks minimum requirements",
                 request.META["REMOTE_ADDR"],
@@ -2161,49 +2224,6 @@ class StatelessNotifyView(View):
                     status=status,
                 )
             )
-
-        # Handle Attachments
-        attach = None
-        if not content.get("attachment"):
-            if "attachment" in request.POST:
-                # Acquire attachments to work with them
-                content["attachment"] = request.POST.getlist("attachment")
-
-            elif "attach" in request.POST:
-                # Acquire kw (alias) attach to work with them
-                content["attachment"] = request.POST.getlist("attach")
-
-            elif content.get("attach"):
-                # Acquire kw (alias) attach from payload to work with
-                content["attachment"] = content["attach"]
-                del content["attach"]
-
-        if "attachment" in content or request.FILES:
-            try:
-                attach = parse_attachments(content.get("attachment"), request.FILES)
-
-            except (TypeError, ValueError) as e:
-                # Invalid entry found in list
-                logger.warning(
-                    "NOTIFY - %s - Bad attachment: %s",
-                    request.META["REMOTE_ADDR"],
-                    str(e),
-                )
-
-                status = ResponseCode.bad_request
-                msg = _("Bad Attachment")
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
 
         # Our return content type can be controlled by the Accept keyword
         # If it includes /* or /html somewhere then we return html, otherwise
