@@ -756,6 +756,15 @@ Buttons & Chips
   color: inherit;
 }
 
+#notify .chips input {
+  color: #34383f;
+  caret-color: #148c80;
+}
+
+#notify .chips input::placeholder {
+  color: #888c96;
+}
+
 .file-selected {
   color: #148c80;
   background-color: #edeef3;

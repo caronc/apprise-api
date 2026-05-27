@@ -1270,6 +1270,7 @@ body .tabs .tab.disabled a:hover i {
 
 #notify .chips input {
   min-width: 8rem;
+  width: auto !important;
 }
 
 #notify .chips .chip.notify-tag-chip {
@@ -2099,6 +2100,7 @@ Apprise Configuration Editor (Grid Overlay)
   font-size: 14px !important;
   line-height: 22px !important;
   letter-spacing: 0px !important;
+  tab-size: 2;
   padding: 15px !important;
   width: 100% !important;
   box-sizing: border-box !important;

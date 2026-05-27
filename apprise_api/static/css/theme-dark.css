@@ -821,6 +821,15 @@ Buttons & Chips
   color: inherit;
 }
 
+#notify .chips input {
+  color: #c1c3c9;
+  caret-color: #2cb6a6;
+}
+
+#notify .chips input::placeholder {
+  color: #888c96;
+}
+
 .url-selected-icon i {
   color: #888c96;
 }

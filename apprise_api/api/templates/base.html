@@ -454,6 +454,10 @@
         if (typeof hljs !== 'undefined') {
           hljs.addPlugin({
             'before:highlightElement': function(opts) {
+              // Skip the live config editor — it manages its own whitespace
+              // via normalizeConfigEditorText() and must not have leading
+              // indentation stripped (that would destroy YAML structure).
+              if (opts.el.id === 'config-highlight') return;
               const normalizedHtml = opts.el.innerHTML
                 .replace(/<\/?br\s*\/?>([ \t]*\n[ \t]*)?/gi, '\n')
                 .replace(/\n[ \t]+/g, '\n');
