@@ -644,17 +644,33 @@
     if (formatLabel) {
       formatLabel.classList.add('active');
     }
+    const normalizeConfigEditorText = (value) => {
+      return value.replace(/\r\n?/g, '\n').replace(/[\v\f]/g, '\n');
+    };
+
+    const normalizeConfigEditorOffset = (value, offset) => {
+      return normalizeConfigEditorText(value.slice(0, offset)).length;
+    };
+
     // The Paint Logic
     const update = () => {
-      let text = textarea.value;
-      // Normalize all line-ending variants to LF so the highlight overlay stays
-      // in sync with the textarea cursor.
-      text = text.replace(/[\r\v\f]+(\n)?/g, '\n')
-                 .replace(new RegExp('<', 'g'), '&lt;').replace(new RegExp('>', 'g'), '&gt;');
+      const rawText = textarea.value;
+      let text = normalizeConfigEditorText(rawText);
+
+      // Keep the real editable value and the visible highlight layer on the
+      // same line-ending model. Otherwise the hidden textarea caret can drift
+      // away from the rendered text on CRLF-pasted content.
+      if (rawText !== text) {
+        const start = normalizeConfigEditorOffset(rawText, textarea.selectionStart);
+        const end = normalizeConfigEditorOffset(rawText, textarea.selectionEnd);
+        textarea.value = text;
+        textarea.setSelectionRange(start, end);
+      }
+
       if (text[text.length - 1] === "\n") {
         text += " ";
       }
-      code.innerHTML = text;
+      code.textContent = text;
       if (typeof hljs !== 'undefined') {
         // v11 sets data-highlighted="yes" after first highlight and refuses to
         // re-highlight the same element; remove it so each keystroke re-runs.
