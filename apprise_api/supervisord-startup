@@ -48,7 +48,7 @@ export TZ
 
 if [ -f "/usr/share/zoneinfo/${TZ}" ]; then
    ln -sf "/usr/share/zoneinfo/${TZ}" /etc/localtime 2>/dev/null || true
-   printf '%s\n' "${TZ}" > /etc/timezone 2>/dev/null || true
+   ( printf '%s\n' "${TZ}" > /etc/timezone ) 2>/dev/null || true
    echo "Timezone: ${TZ}"
 else
    echo "WARNING: TZ='${TZ}' not found in /usr/share/zoneinfo/; timestamps may be inaccurate"

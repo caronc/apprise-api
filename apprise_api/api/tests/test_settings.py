@@ -22,10 +22,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import importlib.util
 import os
 from unittest import mock
 
+from django.conf import global_settings
 from django.test import SimpleTestCase
+
+# Path to the settings module under test, resolved relative to this file:
+#   apprise_api/api/tests/ -> ../../ -> apprise_api/ -> core/settings/__init__.py
+_SETTINGS_PATH = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "core", "settings", "__init__.py")
+)
+
+
+def _load_settings(extra_env=None):
+    """Execute core/settings/__init__.py as a fresh module in a controlled environment.
+
+    Returns the module so callers can inspect settings values (e.g. TIME_ZONE)
+    as they would be set for a given environment, independently of Django's
+    already-cached settings object.
+    """
+    env = extra_env or {}
+    spec = importlib.util.spec_from_file_location("_settings_under_test", _SETTINGS_PATH)
+    assert spec is not None and spec.loader is not None, "Could not load spec from {}".format(_SETTINGS_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    with mock.patch.dict(os.environ, env, clear=True):
+        spec.loader.exec_module(mod)
+    return mod
 
 
 class BaseUrlParsingTests(SimpleTestCase):
@@ -78,3 +102,32 @@ class BaseUrlParsingTests(SimpleTestCase):
         self.assertEqual(self._get_base_url(apprise_base="/"), "")
         self.assertEqual(self._get_base_url(apprise_base="   "), "")
         self.assertEqual(self._get_base_url(apprise_base=None, base=None), "")
+
+
+class TimezoneSettingsTests(SimpleTestCase):
+    """
+    Ensure TIME_ZONE follows the container TZ environment variable.
+    """
+
+    def test_time_zone_from_tz_env(self):
+        """TIME_ZONE must equal TZ when the env variable is present."""
+        mod = _load_settings({"TZ": "America/Toronto"})
+        self.assertEqual(mod.TIME_ZONE, "America/Toronto")
+
+    def test_time_zone_various_zones(self):
+        """TIME_ZONE must follow TZ across a representative set of zones."""
+        for tz in ("Europe/Madrid", "Asia/Tokyo", "America/New_York", "Etc/UTC"):
+            mod = _load_settings({"TZ": tz})
+            self.assertEqual(mod.TIME_ZONE, tz)
+
+    def test_time_zone_default(self):
+        """Without TZ, TIME_ZONE defaults to Etc/UTC"""
+        mod = _load_settings()  # TZ intentionally absent from environment
+        self.assertEqual(mod.TIME_ZONE, "Etc/UTC")
+        self.assertNotEqual(
+            mod.TIME_ZONE,
+            global_settings.TIME_ZONE,
+            "TIME_ZONE must not fall back to Django's built-in default "
+            "({!r}). Define TIME_ZONE = os.environ.get('TZ', 'Etc/UTC') "
+            "in core/settings/__init__.py.".format(global_settings.TIME_ZONE),
+        )

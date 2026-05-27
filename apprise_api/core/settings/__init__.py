@@ -38,6 +38,13 @@ APP_LICENSE = "MIT"
 APP_URL = "https://github.com/caronc/apprise-api"
 APP_VERSION = "1.4.1"
 
+# Mirror the container's TZ environment variable so Django does not
+# override the process timezone with its own default (America/Chicago).
+# Django unconditionally calls os.environ["TZ"] = TIME_ZONE + time.tzset()
+# during settings load, which would otherwise clobber any TZ set before
+# gunicorn workers are forked.
+TIME_ZONE = os.environ.get("TZ", "Etc/UTC")
+
 # Disable Timezones
 USE_TZ = False
 
