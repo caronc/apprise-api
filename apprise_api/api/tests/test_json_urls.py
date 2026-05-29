@@ -182,6 +182,7 @@ class JsonUrlsTests(SimpleTestCase):
         plain = tag_detail(_Tag("family"))
         prioritized = tag_detail(_Tag("family", priority=1, has_priority=True))
         prioritized_string = tag_detail("2:email")
+        plain_string = tag_detail("alerts")
 
         assert plain == {
             "name": "family",
@@ -200,6 +201,12 @@ class JsonUrlsTests(SimpleTestCase):
             "priority": 2,
             "token": "2:email",
             "exact": "2:email",
+        }
+        assert plain_string == {
+            "name": "alerts",
+            "priority": 0,
+            "token": "alerts",
+            "exact": "0:alerts",
         }
         assert tag_names(["2:email", _Tag("family")]) == {"email", "family"}
 

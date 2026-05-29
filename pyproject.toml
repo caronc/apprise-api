@@ -31,7 +31,7 @@ version = "1.4.1"
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
-  "apprise == 1.10.0",
+  "apprise == 1.11.0",
   "django",
   "gevent",
   "gunicorn",
