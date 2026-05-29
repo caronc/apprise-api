@@ -43,7 +43,7 @@ dependencies = [
   "PGPy",
   "smpplib",
   "slixmpp >= 1.10.0",
-  # Provides Threema Gateway E2E encryption support
+  # Provides Keybase & Threema Gateway E2E encryption support
   "PyNaCl",
 ]
 
