@@ -29,7 +29,7 @@ PGPy
 # Provides smpp:// support
 smpplib
 # For xmpp:// support
-slixmpp >= 1.10.0
+slixmpp >= 1.16.0
 
 # prometheus metrics
 django-prometheus
