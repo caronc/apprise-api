@@ -42,7 +42,7 @@ dependencies = [
   "django-prometheus",
   "PGPy",
   "smpplib",
-  "slixmpp >= 1.10.0",
+  "slixmpp >= 1.16.0",
 ]
 
 [project.urls]
