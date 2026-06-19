@@ -67,5 +67,5 @@ jobs:
       uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: coverage.xml
+        files: coverage.xml
         fail_ci_if_error: false
