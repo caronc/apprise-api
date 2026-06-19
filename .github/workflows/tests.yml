@@ -37,6 +37,11 @@ jobs:
     - name: Acquire sources
       uses: actions/checkout@v6
 
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version-file: ".python-version"
+
     - name: Install prerequisites
       run: |
         sudo apt-get update
