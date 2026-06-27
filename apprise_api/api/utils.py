@@ -173,11 +173,18 @@ class HTTPAttachment(A_MGR["http"]):
     Web Attachments
     """
 
-    def __init__(self, filename, delete=True, **kwargs):
+    def __init__(self, filename=None, delete=True, **kwargs):
         """
         Initialize our attachment
         """
-        self._filename = filename
+        # Pop any name that parse_url() extracted from a ?name= query
+        # parameter.  We must remove it from kwargs before passing to
+        # AttachBase to avoid "multiple values for keyword argument 'name'".
+        # Priority: explicit filename arg > URL ?name= > None (auto-detect).
+        url_name = kwargs.pop("name", None)
+        effective_name = filename if filename is not None else url_name
+
+        self._filename = effective_name
         self.delete = delete
         self._path = None
         try:
@@ -194,11 +201,11 @@ class HTTPAttachment(A_MGR["http"]):
 
         except FileNotFoundError:
             raise ValueError(
-                "Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR)
+                "Could not prepare {} attachment in {}".format(effective_name, settings.APPRISE_ATTACH_DIR)
             ) from None
 
         # Prepare our item
-        super().__init__(name=filename, **kwargs)
+        super().__init__(name=effective_name, **kwargs)
 
         # Update our file size based on the settings value
         self.max_file_size = settings.APPRISE_ATTACH_SIZE
@@ -345,7 +352,27 @@ def parse_attachments(attachment_payload, files_request):
                     # We are not allowed to use this entry
                     raise ValueError(f"Denied attachment {no} (blocked web request): {entry}")
 
-                attachment = HTTPAttachment(filename, **A_MGR["http"].parse_url(entry))
+                _parsed = A_MGR["http"].parse_url(entry)
+                # Sanitize any URL-derived ?name=: strip directory components
+                # (?name=/etc/passwd → "passwd") and treat an empty or
+                # whitespace-only result as not specified so the fallback
+                # chain below still applies.
+                if "name" in _parsed:
+                    _sanitized = os.path.basename(_parsed["name"]).strip()
+                    if _sanitized:
+                        _parsed["name"] = _sanitized
+                    else:
+                        del _parsed["name"]
+
+                # ?name= wins when present; otherwise derive from the URL path
+                # basename so .../6dba.jpg doesn't get renamed to attachment.001.
+                # Only fall back to attachment.NNN when no name can be found.
+                if "name" not in _parsed:
+                    _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
+                    if not _path_name:
+                        _parsed["name"] = filename
+
+                attachment = HTTPAttachment(**_parsed)
                 if not attachment:
                     # We failed to retrieve the attachment
                     raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
@@ -366,10 +393,28 @@ def parse_attachments(attachment_payload, files_request):
                                     f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
                                 )
 
-                            attachment = HTTPAttachment(
-                                filename,
-                                **A_MGR["http"].parse_url(entry[AttachmentPayload.URL]),
-                            )
+                            _parsed = A_MGR["http"].parse_url(entry[AttachmentPayload.URL])
+                            # Sanitize any URL-derived ?name= (same rules
+                            # as the string-URL path above).
+                            if "name" in _parsed:
+                                _sanitized = os.path.basename(_parsed["name"]).strip()
+                                if _sanitized:
+                                    _parsed["name"] = _sanitized
+                                else:
+                                    del _parsed["name"]
+
+                            # User-provided dict filename overrides all URL
+                            # derived names.  If absent, prefer URL ?name=
+                            # then path basename, then attachment.NNN.
+                            _dict_filename = entry.get("filename", "").strip()
+                            if _dict_filename:
+                                _parsed["name"] = _dict_filename
+                            elif "name" not in _parsed:
+                                _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
+                                if not _path_name:
+                                    _parsed["name"] = filename
+
+                            attachment = HTTPAttachment(**_parsed)
                             if not attachment:
                                 # We failed to retrieve the attachment
                                 raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
