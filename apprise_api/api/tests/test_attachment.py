@@ -632,3 +632,170 @@ class AttachmentTests(SimpleTestCase):
             assert isinstance(result, list)
             assert len(result) == 1
             assert result[0].mimetype == "image/jpeg"
+
+    def test_http_attachment_name_priority(self):
+        """HTTPAttachment name resolution: explicit > ?name= > None (auto)."""
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            # ?name= from URL (no explicit filename): no TypeError, name used
+            a = HTTPAttachment(
+                host="example.com",
+                fullpath="/thumbnails/6dba.jpg",
+                secure=True,
+                name="thumbnail.jpg",
+            )
+            assert a._name == "thumbnail.jpg"
+            assert a.filename == "thumbnail.jpg"
+
+            # Explicit filename beats URL's ?name=
+            a = HTTPAttachment(
+                "explicit.jpg",
+                host="example.com",
+                fullpath="/thumbnails/6dba.jpg",
+                secure=True,
+                name="url_name.jpg",
+            )
+            assert a._name == "explicit.jpg"
+            assert a.filename == "explicit.jpg"
+
+            # No filename, no ?name= -> auto-detect during download
+            a = HTTPAttachment(
+                host="example.com",
+                fullpath="/thumbnails/6dba.jpg",
+                secure=True,
+            )
+            assert a._name is None
+            assert a.filename is None
+
+    @patch("requests.get")
+    def test_url_attachment_name_resolution(self, mock_get):
+        """parse_attachments derives attachment name from URL intelligently."""
+        response = mock.Mock()
+        response.status_code = requests.codes.ok
+        response.raise_for_status.return_value = True
+        response.headers = {}
+        response.iter_content.return_value = iter([b"data"])
+        response.__enter__ = lambda s, *a, **kw: response
+        response.__exit__ = mock.Mock(return_value=False)
+        mock_get.return_value = response
+
+        # ?name= in URL: name is taken from query param (no TypeError)
+        result = parse_attachments(
+            ["https://example.com/thumbnails/6dba.jpg?name=thumbnail.jpg"],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "thumbnail.jpg"
+
+        # URL has a filename in path, no ?name=: _name stays None so
+        # AttachHTTP.download() can discover the basename naturally
+        result = parse_attachments(
+            ["https://example.com/thumbnails/6dba96988a83163dcffe0d75e4a28bc5.jpg"],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name is None
+
+        # URL has no path filename: fallback to attachment.NNN
+        result = parse_attachments(["https://example.com/"], {})
+        assert len(result) == 1
+        assert result[0]._name == "attachment.001"
+
+        # ?name= is empty: treated as not specified; name from URL path
+        result = parse_attachments(
+            ["https://example.com/thumbnails/6dba.jpg?name="],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name is None
+
+        # ?name= is whitespace only (%20 is a URL-encoded space): same as empty
+        result = parse_attachments(
+            ["https://example.com/thumbnails/6dba.jpg?name=%20%20%20"],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name is None
+
+        # ?name= has path traversal: only basename is kept
+        result = parse_attachments(
+            ["https://example.com/thumbnails/6dba.jpg?name=/etc/passwd"],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "passwd"
+
+        # ?name= has relative path traversal: only basename is kept
+        result = parse_attachments(
+            ["https://example.com/thumbnails/6dba.jpg?name=../../secret.jpg"],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "secret.jpg"
+
+        # ?name= empty with no path filename: still falls back to NNN
+        result = parse_attachments(
+            ["https://example.com/?name="],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "attachment.001"
+
+    @patch("requests.get")
+    def test_dict_url_attachment_name_resolution(self, mock_get):
+        """parse_attachments dict+url form: filename priority order."""
+        response = mock.Mock()
+        response.status_code = requests.codes.ok
+        response.raise_for_status.return_value = True
+        response.headers = {}
+        response.iter_content.return_value = iter([b"data"])
+        response.__enter__ = lambda s, *a, **kw: response
+        response.__exit__ = mock.Mock(return_value=False)
+        mock_get.return_value = response
+
+        # Dict filename overrides URL ?name= (explicit user choice wins)
+        result = parse_attachments(
+            [{"url": "https://example.com/img.jpg?name=url_name.jpg", "filename": "custom.jpg"}],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "custom.jpg"
+
+        # No dict filename + URL ?name=: URL name used (no TypeError)
+        result = parse_attachments(
+            [{"url": "https://example.com/img.jpg?name=thumbnail.jpg"}],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "thumbnail.jpg"
+
+        # No dict filename, no ?name=, path has filename: auto-detect
+        result = parse_attachments(
+            [{"url": "https://example.com/thumbnails/photo.jpg"}],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name is None
+
+        # No dict filename, no ?name=, no path filename: attachment.NNN
+        result = parse_attachments(
+            [{"url": "https://example.com/"}],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "attachment.001"
+
+        # URL ?name= empty: treated as not specified; path basename used
+        result = parse_attachments(
+            [{"url": "https://example.com/thumbnails/photo.jpg?name="}],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name is None
+
+        # URL ?name= path traversal: only basename kept
+        result = parse_attachments(
+            [{"url": "https://example.com/img.jpg?name=/etc/passwd"}],
+            {},
+        )
+        assert len(result) == 1
+        assert result[0]._name == "passwd"
