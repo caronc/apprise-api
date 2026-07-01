@@ -35,7 +35,7 @@ jobs:
 
     steps:
     - name: Acquire sources
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set up Python
       uses: actions/setup-python@v6
@@ -64,7 +64,7 @@ jobs:
         coverage report
 
     - name: Upload to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
