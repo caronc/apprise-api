@@ -335,6 +335,77 @@ class NotifyPayloadMapper(SimpleTestCase):
         assert remap_fields(rules, payload) is True
         assert "nonexistent_apprise_field" not in payload
 
+        #
+        # Without ::json modifier, subfield mapping on a string event fails (returns False, warning logged)
+        #
+        rules = {"event.title": "title"}
+        payload = {"event": '{"title": "hi"}'}
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+        assert result is False
+        assert "event.title" in "\n".join(cm.output)
+
+        #
+        # Subfield mapping with explicit ::json modifier
+        #
+        rules = {
+            "event::json.title": "title",
+            "event::json.body": "body",
+        }
+        payload = {"event": '{"title": "hi", "body": "world"}'}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["title"] == "hi"
+        assert payload["body"] == "world"
+
+        #
+        # List index mapping with explicit ::json modifier (modifier on list key)
+        #
+        rules = {"items::json[0].value": "body"}
+        payload = {"items": '[{"value": "nested value"}]'}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["body"] == "nested value"
+
+        #
+        # List index mapping with explicit ::json modifier (modifier on list element)
+        #
+        rules = {"items[0]::json.value": "body"}
+        payload = {"items": ['{"value": "nested value"}']}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["body"] == "nested value"
+
+        #
+        # Flat field mapping with explicit ::json modifier
+        #
+        rules = {"event::json": "body"}
+        payload = {"event": '{"title": "hi"}'}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["body"] == {"title": "hi"}
+
+        #
+        # Invalid JSON string with modifier — fails gracefully (warning logged)
+        #
+        rules = {"event::json.title": "title"}
+        payload = {"event": "{invalid json}"}
+
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+
+        assert result is False
+        assert "event::json.title" in "\n".join(cm.output)
+
+        #
+        # Double-nested stringified JSON parsing
+        #
+        rules = {"event::json.info::json.title": "title"}
+        payload = {"event": '{"info": "{\\"title\\": \\"nested CPU spike\\"}"}'}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["title"] == "nested CPU spike"
+
     def test_remap_fields_array_index(self):
         """
         Test bracket/array-index notation in remap_fields:
@@ -494,39 +565,56 @@ class NotifyPayloadMapper(SimpleTestCase):
         # Plain key
         steps, err = _parse_path("title")
         assert err is None
-        assert steps == [("key", "title")]
+        assert steps == [("key", "title", False)]
 
         # Dot-notation
         steps, err = _parse_path("a.b.c")
         assert err is None
-        assert steps == [("key", "a"), ("key", "b"), ("key", "c")]
+        assert steps == [("key", "a", False), ("key", "b", False), ("key", "c", False)]
 
         # Single subscript
         steps, err = _parse_path("items[0]")
         assert err is None
-        assert steps == [("key", "items"), ("index", 0)]
+        assert steps == [("key", "items", False), ("index", 0, False)]
 
         # Subscript + subfield
         steps, err = _parse_path("items[0].objectURI")
         assert err is None
-        assert steps == [("key", "items"), ("index", 0), ("key", "objectURI")]
+        assert steps == [("key", "items", False), ("index", 0, False), ("key", "objectURI", False)]
 
         # Chained subscripts
         steps, err = _parse_path("a[0][2][2]")
         assert err is None
-        assert steps == [("key", "a"), ("index", 0), ("index", 2), ("index", 2)]
+        assert steps == [("key", "a", False), ("index", 0, False), ("index", 2, False), ("index", 2, False)]
 
         # Full complex path
         steps, err = _parse_path("key[0][2][2].value[3]")
         assert err is None
         assert steps == [
-            ("key", "key"),
-            ("index", 0),
-            ("index", 2),
-            ("index", 2),
-            ("key", "value"),
-            ("index", 3),
+            ("key", "key", False),
+            ("index", 0, False),
+            ("index", 2, False),
+            ("index", 2, False),
+            ("key", "value", False),
+            ("index", 3, False),
         ]
+
+        # Explicit JSON modifiers
+        steps, err = _parse_path("event::json.title")
+        assert err is None
+        assert steps == [("key", "event", True), ("key", "title", False)]
+
+        steps, err = _parse_path("items[0]::json.value")
+        assert err is None
+        assert steps == [("key", "items", False), ("index", 0, True), ("key", "value", False)]
+
+        steps, err = _parse_path("items::json[0].value")
+        assert err is None
+        assert steps == [("key", "items", True), ("index", 0, False), ("key", "value", False)]
+
+        steps, err = _parse_path("a[0]::json[1]")
+        assert err is None
+        assert steps == [("key", "a", False), ("index", 0, True), ("index", 1, False)]
 
         # Malformed: missing closing bracket
         steps, err = _parse_path("items[0")
@@ -563,7 +651,7 @@ class NotifyPayloadMapper(SimpleTestCase):
         # equivalent to "items[0]".
         steps, err = _parse_path("items.[0]")
         assert err is None
-        assert steps == [("key", "items"), ("index", 0)]
+        assert steps == [("key", "items", False), ("index", 0, False)]
 
     def test_get_nested(self):
         """

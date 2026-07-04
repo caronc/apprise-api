@@ -39,20 +39,20 @@ def _parse_path(key):
     """
     Parse a mapping key into a flat, ordered list of traversal steps.
 
-    Each step is a ``('key', name)`` or ``('index', N)`` tuple:
+    Each step is a ``('key', name, parse_json)`` or ``('index', N, parse_json)`` tuple:
 
-    * ``('key', name)``  - perform a dict lookup for *name*.
-    * ``('index', N)``   - dereference integer index *N* of the current list.
+    * ``('key', name, parse_json)``   - perform a dict lookup for *name*.
+    * ``('index', N, parse_json)``    - dereference integer index *N* of the current list.
 
     Supported forms::
 
-        "title"                 → [('key', 'title')]
-        "event.title"           → [('key', 'event'), ('key', 'title')]
-        "items[0]"              → [('key', 'items'), ('index', 0)]
-        "items[0].objectURI"    → [('key', 'items'), ('index', 0),
-                                    ('key', 'objectURI')]
-        "a[0][2][2].b[3]"       → [('key', 'a'), ('index', 0), ('index', 2),
-                                    ('index', 2), ('key', 'b'), ('index', 3)]
+        "title"                 → [('key', 'title', False)]
+        "event.title"           → [('key', 'event', False), ('key', 'title', False)]
+        "items[0]"              → [('key', 'items', False), ('index', 0, False)]
+        "items[0].objectURI"    → [('key', 'items', False), ('index', 0, False),
+                                    ('key', 'objectURI', False)]
+        "a[0][2][2].b[3]"       → [('key', 'a', False), ('index', 0, False), ('index', 2, False),
+                                    ('index', 2, False), ('key', 'b', False), ('index', 3, False)]
 
     Returns ``(steps, None)`` on success.  Returns ``(None, reason)`` when
     the key contains malformed bracket notation — any of:
@@ -67,36 +67,65 @@ def _parse_path(key):
         if not segment:
             return None, f"empty segment in path '{key}'"
 
-        if "[" not in segment and "]" not in segment:
-            # Plain dict key — no bracket characters at all
-            steps.append(("key", segment))
+        if "::json" in segment:
+            parts = segment.split("::json", 1)
+            left, right = parts[0], parts[1]
+        else:
+            left, right = segment, ""
+
+        segment_steps = []
+
+        # Helper to parse a part of a segment (like left or right)
+        def parse_part(part, parse_json_on_last, steps_out):
+            if not part:
+                return True
+
+            if "[" not in part and "]" not in part:
+                # Plain dict key — no bracket characters at all
+                steps_out.append(("key", part, parse_json_on_last))
+                return True
+
+            # At least one bracket character is present.
+            # A stray ']' before any '[' is immediately malformed.
+            bracket_pos = part.find("[")
+            if bracket_pos == -1:
+                return False
+
+            key_name = part[:bracket_pos]
+            remaining = part[bracket_pos:]
+
+            # A ']' appearing before the first '[' is malformed (e.g. 'a]b[0]').
+            if "]" in key_name:
+                return False
+
+            part_steps = []
+            if key_name:
+                part_steps.append(("key", key_name))
+
+            # Consume every [N] subscript greedily; any leftover chars are malformed.
+            while remaining:
+                m = _SUBSCRIPT_RE.match(remaining)
+                if not m:
+                    return False
+                part_steps.append(("index", int(m.group(1))))
+                remaining = remaining[m.end() :]
+
+            for i, step in enumerate(part_steps):
+                is_last = i == len(part_steps) - 1
+                steps_out.append((step[0], step[1], parse_json_on_last if is_last else False))
+
+            return True
+
+        if not parse_part(left, "::json" in segment, segment_steps):
+            return None, f"malformed segment '{segment}'"
+
+        if not parse_part(right, False, segment_steps):
+            return None, f"malformed segment '{segment}'"
+
+        if not segment_steps:
             continue
 
-        # At least one bracket character is present.
-        # A stray ']' before any '[' is immediately malformed.
-        bracket_pos = segment.find("[")
-        if bracket_pos == -1:
-            return None, (f"malformed bracket notation at '{segment}' (unexpected ']' with no matching '[')")
-
-        key_name = segment[:bracket_pos]
-        remaining = segment[bracket_pos:]
-
-        # A ']' appearing before the first '[' is malformed (e.g. 'a]b[0]').
-        if "]" in key_name:
-            return None, (f"malformed bracket notation at '{segment}'; unexpected ']' before '['")
-
-        if key_name:
-            steps.append(("key", key_name))
-
-        # Consume every [N] subscript greedily; any leftover chars are malformed.
-        while remaining:
-            m = _SUBSCRIPT_RE.match(remaining)
-            if not m:
-                return None, (
-                    f"malformed bracket notation at '{segment}'; expected [N] where N is a non-negative integer"
-                )
-            steps.append(("index", int(m.group(1))))
-            remaining = remaining[m.end() :]
+        steps.extend(segment_steps)
 
     return steps, None
 
@@ -106,14 +135,14 @@ def _get_nested(payload, steps, source_key):
     Traverse *payload* using the pre-parsed *steps* produced by
     :func:`_parse_path`.
 
-    Each step is a ``('key', name)`` or ``('index', N)`` tuple.
+    Each step is a ``(step_type, step_val, parse_json)`` tuple.
 
     Returns ``(value, True)`` on success.  Logs a WARNING and returns
     ``(None, False)`` when traversal cannot be completed (missing key,
     not-indexable node, or out-of-range index).
     """
     current = payload
-    for step_type, step_val in steps:
+    for step_type, step_val, parse_json in steps:
         if step_type == "key":
             if not isinstance(current, dict) or step_val not in current:
                 logger.warning(
@@ -143,6 +172,14 @@ def _get_nested(payload, steps, source_key):
                     len(current),
                 )
                 return None, False
+
+        if parse_json and isinstance(current, str):
+            try:
+                import json
+
+                current = json.loads(current)
+            except (json.JSONDecodeError, TypeError, ValueError):
+                pass
 
     return current, True
 
@@ -205,7 +242,7 @@ def remap_fields(rules, payload, form=None):
         # that stray/unmatched brackets are caught and rejected as malformed
         # rather than silently falling through to flat-field handling.
         # ------------------------------------------------------------------
-        if "." in key or "[" in key or "]" in key:
+        if "." in key or "[" in key or "]" in key or "::json" in key:
             steps, err = _parse_path(key)
             if steps is None:
                 logger.warning(
