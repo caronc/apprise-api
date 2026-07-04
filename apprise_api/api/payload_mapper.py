@@ -247,14 +247,9 @@ def remap_fields(rules, payload, form=None):
                 continue
 
             if value in expected_keys:
-                if key not in expected_keys or value not in payload:
-                    payload[value] = payload[key]
-                    del payload[key]
-                else:
-                    _tmp = payload[value]
-                    payload[value] = payload[key]
-                    payload[key] = _tmp
-            elif key in expected_keys or key in payload:
+                payload[value] = payload[key]
+                del payload[key]
+            else:
                 payload[key] = value
             continue
 

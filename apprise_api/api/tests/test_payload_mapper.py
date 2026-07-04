@@ -427,7 +427,6 @@ class NotifyPayloadMapper(SimpleTestCase):
         assert remap_fields(rules, payload) is True
         assert payload["title"] == "nested value"
 
-        #
         # Mapping dict/list to scalar fields (body/title/etc.) fails validation
         #
         rules = {"event::json": "body"}
@@ -436,6 +435,22 @@ class NotifyPayloadMapper(SimpleTestCase):
             result = remap_fields(rules, payload)
         assert result is False
         assert "assigned a dictionary or list value" in "\n".join(cm.output)
+
+        #
+        # Literal key containing "::json" — deleted
+        #
+        rules = {"event::json": ""}
+        payload = {"event::json": "literal value"}
+        assert remap_fields(rules, payload) is True
+        assert "event::json" not in payload
+
+        #
+        # Literal key containing "::json" — assigned to non-expected value
+        #
+        rules = {"event::json": "non_expected_value"}
+        payload = {"event::json": "literal value"}
+        assert remap_fields(rules, payload) is True
+        assert payload["event::json"] == "non_expected_value"
 
     def test_remap_fields_array_index(self):
         """
@@ -683,6 +698,16 @@ class NotifyPayloadMapper(SimpleTestCase):
         steps, err = _parse_path("items.[0]")
         assert err is None
         assert steps == [("key", "items", False), ("index", 0, False)]
+
+        # Malformed: modifier followed by invalid subscript
+        steps, err = _parse_path("event::json[abc]")
+        assert steps is None
+        assert "malformed" in err
+
+        # Modifier-only segment continues without adding steps
+        steps, err = _parse_path("a.::json.b")
+        assert err is None
+        assert steps == [("key", "a", False), ("key", "b", False)]
 
     def test_get_nested(self):
         """
