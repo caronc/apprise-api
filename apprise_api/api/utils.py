@@ -352,17 +352,9 @@ def parse_attachments(attachment_payload, files_request):
                     # We are not allowed to use this entry
                     raise ValueError(f"Denied attachment {no} (blocked web request): {entry}")
 
+                # apprise's own parse_url() already sanitizes ?name= (strips
+                # directory components and only sets the key when non-empty)
                 _parsed = A_MGR["http"].parse_url(entry)
-                # Sanitize any URL-derived ?name=: strip directory components
-                # (?name=/etc/passwd → "passwd") and treat an empty or
-                # whitespace-only result as not specified so the fallback
-                # chain below still applies.
-                if "name" in _parsed:
-                    _sanitized = os.path.basename(_parsed["name"]).strip()
-                    if _sanitized:
-                        _parsed["name"] = _sanitized
-                    else:
-                        del _parsed["name"]
 
                 # ?name= wins when present; otherwise derive from the URL path
                 # basename so .../6dba.jpg doesn't get renamed to attachment.001.
@@ -393,15 +385,9 @@ def parse_attachments(attachment_payload, files_request):
                                     f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
                                 )
 
+                            # apprise's own parse_url() already sanitizes
+                            # ?name= (same rules as the string-URL path above).
                             _parsed = A_MGR["http"].parse_url(entry[AttachmentPayload.URL])
-                            # Sanitize any URL-derived ?name= (same rules
-                            # as the string-URL path above).
-                            if "name" in _parsed:
-                                _sanitized = os.path.basename(_parsed["name"]).strip()
-                                if _sanitized:
-                                    _parsed["name"] = _sanitized
-                                else:
-                                    del _parsed["name"]
 
                             # User-provided dict filename overrides all URL
                             # derived names.  If absent, prefer URL ?name=
