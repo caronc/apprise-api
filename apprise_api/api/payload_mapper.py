@@ -318,4 +318,20 @@ def remap_fields(rules, payload, form=None):
             # assignment
             payload[key] = value
 
+    # ------------------------------------------------------------------
+    # Validate final payload values for expected scalar fields.
+    # Expected fields format, type, title, and body must be scalar values.
+    # ------------------------------------------------------------------
+    scalar_fields = {"format", "type", "title", "body"}
+    for field in scalar_fields:
+        if field in payload:
+            val = payload[field]
+            if isinstance(val, dict | list):
+                logger.warning(
+                    "Payload mapping error: Field '%s' was assigned a dictionary or list value, "
+                    "which is not a valid scalar.",
+                    field,
+                )
+                return False
+
     return True

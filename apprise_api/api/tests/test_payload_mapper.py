@@ -377,13 +377,16 @@ class NotifyPayloadMapper(SimpleTestCase):
         assert payload["body"] == "nested value"
 
         #
-        # Flat field mapping with explicit ::json modifier
+        # Flat field mapping with explicit ::json modifier - fails because target
+        # field 'body' is a scalar field and cannot receive a dictionary.
         #
         rules = {"event::json": "body"}
         payload = {"event": '{"title": "hi"}'}
 
-        assert remap_fields(rules, payload) is True
-        assert payload["body"] == {"title": "hi"}
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+        assert result is False
+        assert "assigned a dictionary or list value" in "\n".join(cm.output)
 
         #
         # Invalid JSON string with modifier — fails gracefully (warning logged)
@@ -423,6 +426,16 @@ class NotifyPayloadMapper(SimpleTestCase):
 
         assert remap_fields(rules, payload) is True
         assert payload["title"] == "nested value"
+
+        #
+        # Mapping dict/list to scalar fields (body/title/etc.) fails validation
+        #
+        rules = {"event::json": "body"}
+        payload = {"event": '{"nested": "value"}'}
+        with self.assertLogs("django", level="WARNING") as cm:
+            result = remap_fields(rules, payload)
+        assert result is False
+        assert "assigned a dictionary or list value" in "\n".join(cm.output)
 
     def test_remap_fields_array_index(self):
         """
