@@ -406,6 +406,24 @@ class NotifyPayloadMapper(SimpleTestCase):
         assert remap_fields(rules, payload) is True
         assert payload["title"] == "nested CPU spike"
 
+        #
+        # Literal key containing "::json" — bypassed and mapped literally
+        #
+        rules = {"event::json": "body"}
+        payload = {"event::json": "literal value"}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["body"] == "literal value"
+
+        #
+        # Literal key containing "::json" whose value is stringified JSON — parsed using double modifier
+        #
+        rules = {"event::json::json.title": "title"}
+        payload = {"event::json": '{"title": "nested value"}'}
+
+        assert remap_fields(rules, payload) is True
+        assert payload["title"] == "nested value"
+
     def test_remap_fields_array_index(self):
         """
         Test bracket/array-index notation in remap_fields:

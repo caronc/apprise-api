@@ -68,7 +68,7 @@ def _parse_path(key):
             return None, f"empty segment in path '{key}'"
 
         if "::json" in segment:
-            parts = segment.split("::json", 1)
+            parts = segment.rsplit("::json", 1)
             left, right = parts[0], parts[1]
         else:
             left, right = segment, ""
@@ -236,6 +236,28 @@ def remap_fields(rules, payload, form=None):
     # First generate our expected keys; only these can be mapped
     expected_keys = set(form.fields.keys())
     for key, value in rules.items():
+        # ------------------------------------------------------------------
+        # If the key contains "::json" but exists literally in the payload,
+        # we treat it as a flat field mapping to preserve backward
+        # compatibility for literal key names containing "::json".
+        # ------------------------------------------------------------------
+        if "::json" in key and key in payload:
+            if not value:
+                del payload[key]
+                continue
+
+            if value in expected_keys:
+                if key not in expected_keys or value not in payload:
+                    payload[value] = payload[key]
+                    del payload[key]
+                else:
+                    _tmp = payload[value]
+                    payload[value] = payload[key]
+                    payload[key] = _tmp
+            elif key in expected_keys or key in payload:
+                payload[key] = value
+            continue
+
         # ------------------------------------------------------------------
         # Dot-notation and/or array-index path handling.
         # Any bracket character (either '[' or ']') triggers this branch so
