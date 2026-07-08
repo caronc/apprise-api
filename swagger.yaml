@@ -61,6 +61,9 @@ paths:
         Returns a list of supported notification services.
         If Accept header is 'text/html', renders a UI page.
         If Accept header is 'application/json', returns the JSON structure.
+
+        Each service's `format` argument always lists `values: [text, html,
+        markdown]`
       tags:
         - Meta
       parameters:
@@ -77,6 +80,20 @@ paths:
             application/json:
               schema:
                 type: object
+              example:
+                version: "1.13.0"
+                schemas:
+                  - service_name: JSON
+                    protocols: ["json"]
+                    secure_protocols: ["jsons"]
+                    details:
+                      args:
+                        format:
+                          name: "Notify Format"
+                          type: "choice:string"
+                          values: ["text", "html", "markdown"]
+                          default: "text"
+                          supported: ["text", "html", "markdown"]
             text/html:
               schema:
                 type: string
