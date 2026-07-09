@@ -1397,8 +1397,22 @@ class NotifyView(View):
                 )
             )
 
-        # Acquire our body format (if identified)
-        body_format = content.get("format", apprise.NotifyFormat.TEXT.value)
+        # Acquire our body format (if identified). Formatting is entirely
+        # optional:
+        #  - "format" absent from the payload entirely: falls back to the
+        #    server-configured APPRISE_DEFAULT_FORMAT (unset by default)
+        #    rather than assuming TEXT.
+        #  - "format" explicitly blank or null: forces pass-through, even
+        #    overriding a configured APPRISE_DEFAULT_FORMAT -- the caller
+        #    is explicitly telling us not to apply one.
+        #  - "format" set to a value: used as-is (validated below).
+        if "format" not in content:
+            body_format = settings.APPRISE_DEFAULT_FORMAT
+        else:
+            body_format = content.get("format")
+            if isinstance(body_format, str):
+                body_format = body_format.strip()
+            body_format = body_format or None
         if body_format and body_format not in apprise.NOTIFY_FORMATS:
             logger.warning(
                 "NOTIFY - %s - Format parameter contains an unsupported value (%s) using KEY: %s",
@@ -2083,8 +2097,22 @@ class StatelessNotifyView(View):
                 )
             )
 
-        # Acquire our body format (if identified)
-        body_format = content.get("format", apprise.NotifyFormat.TEXT.value)
+        # Acquire our body format (if identified). Formatting is entirely
+        # optional:
+        #  - "format" absent from the payload entirely: falls back to the
+        #    server-configured APPRISE_DEFAULT_FORMAT (unset by default)
+        #    rather than assuming TEXT.
+        #  - "format" explicitly blank or null: forces pass-through, even
+        #    overriding a configured APPRISE_DEFAULT_FORMAT -- the caller
+        #    is explicitly telling us not to apply one.
+        #  - "format" set to a value: used as-is (validated below).
+        if "format" not in content:
+            body_format = settings.APPRISE_DEFAULT_FORMAT
+        else:
+            body_format = content.get("format")
+            if isinstance(body_format, str):
+                body_format = body_format.strip()
+            body_format = body_format or None
         if body_format and body_format not in apprise.NOTIFY_FORMATS:
             logger.warning(
                 "NOTIFY - %s - Format parameter contains an unsupported value (%s)",

@@ -417,12 +417,16 @@ components:
 
     NotificationFormat:
       type: string
-      description: Text format of the message body.
+      description: >-
+        Text format of the message body. Optional -- if omitted, no
+        format is applied and the content is passed through untouched
+        (unless the server has APPRISE_DEFAULT_FORMAT configured).
+        Sending this as an empty string or null also forces
+        pass-through, even overriding a configured server default.
       enum:
         - text
         - markdown
         - html
-      default: text
 
     StatusResponse:
       type: object
