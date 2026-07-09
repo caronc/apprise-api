@@ -417,6 +417,7 @@ components:
 
     NotificationFormat:
       type: string
+      nullable: true
       description: >-
         Text format of the message body. Optional -- if omitted, no
         format is applied and the content is passed through untouched
@@ -427,6 +428,7 @@ components:
         - text
         - markdown
         - html
+        - ""
 
     StatusResponse:
       type: object
