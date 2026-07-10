@@ -164,6 +164,9 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Required to prevent None from being passed into self.client.post()
         del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         response = self.client.post("/notify", form.cleaned_data)
         assert response.status_code == 200
@@ -181,6 +184,9 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Required to prevent None from being passed into self.client.post()
         del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         response = self.client.post("/notify", form.cleaned_data)
         assert response.status_code == 200
@@ -269,6 +275,10 @@ class StatelessNotifyTests(SimpleTestCase):
         form = NotifyByUrlForm(form_data, attach_data)
         assert form.is_valid()
 
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
+
         # Send our notification
         response = self.client.post("/notify", form.cleaned_data)
 
@@ -301,6 +311,9 @@ class StatelessNotifyTests(SimpleTestCase):
                 # Required to prevent None from being passed into
                 # self.client.post()
                 del form.cleaned_data["attachment"]
+                if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+                    # format is optional; None cannot be encoded as POST data
+                    del form.cleaned_data["format"]
 
                 # Send our notification
                 response = self.client.post("/notify", form.cleaned_data)
@@ -327,6 +340,9 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Required to prevent None from being passed into self.client.post()
         del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # Send our notification
         response = self.client.post("/notify", form.cleaned_data)
@@ -365,6 +381,9 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Required to prevent None from being passed into self.client.post()
         del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         response = self.client.post("/notify", form.cleaned_data)
         assert response.status_code == 424
@@ -582,6 +601,9 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Required to prevent None from being passed into self.client.post()
         del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # recursion value is within correct limits
         response = self.client.post("/notify", form.cleaned_data, **headers)
@@ -667,6 +689,9 @@ class StatelessNotifyTests(SimpleTestCase):
 
         # Required to prevent None from being passed into self.client.post()
         del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # This still works as the environment variable kicks in
         response = self.client.post("/notify", form.cleaned_data)
