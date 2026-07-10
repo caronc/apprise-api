@@ -10,6 +10,7 @@ services:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
+      APPRISE_DEFAULT_FORMAT: "text"
     volumes:
       - ./apprise_api/static:/usr/share/nginx/html/s:ro
       - ./apprise_api:/opt/apprise/webapp:ro

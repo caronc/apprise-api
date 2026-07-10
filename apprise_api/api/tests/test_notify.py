@@ -112,14 +112,18 @@ class NotifyTests(SimpleTestCase):
         form = NotifyForm(data=form_data)
         assert form.is_valid()
 
-        # Required to prevent None from being passed into self.client.post()
-        del form.cleaned_data["attachment"]
-
         # we always set a type if one wasn't done so already
         assert form.cleaned_data["type"] == apprise.NotifyType.INFO.value
 
-        # we always set a format if one wasn't done so already
-        assert form.cleaned_data["format"] == apprise.NotifyFormat.TEXT.value
+        # format is entirely optional; it stays unset (None) if the caller
+        # never specified one, rather than defaulting to TEXT
+        assert form.cleaned_data["format"] is None
+
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # Send our notification
         response = self.client.post("/notify/{}".format(key), form.cleaned_data)
@@ -136,6 +140,10 @@ class NotifyTests(SimpleTestCase):
         # At a minimum, just an attachment is required
         form = NotifyForm(form_data, attach_data)
         assert form.is_valid()
+
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # Send our notification
         response = self.client.post("/notify/{}".format(key), form.cleaned_data)
@@ -154,6 +162,10 @@ class NotifyTests(SimpleTestCase):
         # At a minimum, just a body is required
         form = NotifyForm(form_data, attach_data)
         assert form.is_valid()
+
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # Send our notification
         response = self.client.post("/notify/{}".format(key), form.cleaned_data)
@@ -182,6 +194,10 @@ class NotifyTests(SimpleTestCase):
             # At a minimum, just a body is required
             form = NotifyForm(form_data, attach_data)
             assert form.is_valid()
+
+            if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+                # format is optional; None cannot be encoded as POST data
+                del form.cleaned_data["format"]
 
             # Prepare our header
             headers = {
@@ -219,6 +235,10 @@ class NotifyTests(SimpleTestCase):
         form = NotifyForm(form_data, attach_data)
         assert form.is_valid()
 
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
+
         # Send our notification
         response = self.client.post("/notify/{}".format(key), form.cleaned_data)
 
@@ -240,6 +260,10 @@ class NotifyTests(SimpleTestCase):
             # At a minimum, just a body is required
             form = NotifyForm(form_data, attach_data)
             assert form.is_valid()
+
+            if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+                # format is optional; None cannot be encoded as POST data
+                del form.cleaned_data["format"]
 
             # Send our notification
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
@@ -264,6 +288,9 @@ class NotifyTests(SimpleTestCase):
             assert form.is_valid()
             # Required to prevent None from being passed into self.client.post()
             del form.cleaned_data["attachment"]
+            if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+                # format is optional; None cannot be encoded as POST data
+                del form.cleaned_data["format"]
 
             data = {
                 **form.cleaned_data,
@@ -297,6 +324,10 @@ class NotifyTests(SimpleTestCase):
             form = NotifyForm(form_data, attach_data)
             assert form.is_valid()
 
+            if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+                # format is optional; None cannot be encoded as POST data
+                del form.cleaned_data["format"]
+
             # Send our notification
             response = self.client.post("/notify/{}".format(key), form.cleaned_data)
 
@@ -327,6 +358,9 @@ class NotifyTests(SimpleTestCase):
                 # Required to prevent None from being passed into
                 # self.client.post()
                 del form.cleaned_data["attachment"]
+                if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+                    # format is optional; None cannot be encoded as POST data
+                    del form.cleaned_data["format"]
 
                 # Send our notification
                 response = self.client.post("/notify/{}".format(key), form.cleaned_data)
@@ -931,14 +965,18 @@ class NotifyTests(SimpleTestCase):
         form = NotifyForm(data=form_data)
         assert form.is_valid()
 
-        # Required to prevent None from being passed into self.client.post()
-        del form.cleaned_data["attachment"]
-
         # we always set a type if one wasn't done so already
         assert form.cleaned_data["type"] == apprise.NotifyType.INFO.value
 
-        # we always set a format if one wasn't done so already
-        assert form.cleaned_data["format"] == apprise.NotifyFormat.TEXT.value
+        # format is entirely optional; it stays unset (None) if the caller
+        # never specified one, rather than defaulting to TEXT
+        assert form.cleaned_data["format"] is None
+
+        # Required to prevent None from being passed into self.client.post()
+        del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # Set our return value; first we return a true, then we fail
         # on the second call
