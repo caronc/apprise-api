@@ -74,6 +74,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -d caronc/apprise:latest
 ```
@@ -94,6 +95,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -v /etc/apprise:/config \
    -d apprise/local:latest
@@ -107,6 +109,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -v ./config:/config \
    -d apprise/local:latest
@@ -127,6 +130,7 @@ services:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
+      APPRISE_DEFAULT_FORMAT: "text"
       TZ: America/Toronto
     volumes:
       - ./config:/config
@@ -170,6 +174,7 @@ services:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
+      APPRISE_DEFAULT_FORMAT: "text"
       TZ: America/Toronto
 
     # Persistent state
@@ -268,7 +273,7 @@ Some people may wish to only have a sidecar solution that does require use of an
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
+| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.
 
 Stateless `/notify` calls do not require `/config`, but they do leverage `/attach` for file uploads (assuming `APPRISE_ATTACH_SIZE` is not set to `0` (zero).  You can optionally use `/plugin` if you have custom Apprise plugins you wish to use.
 
@@ -352,7 +357,7 @@ You can pre-save all of your Apprise configuration and/or set of Apprise URLs an
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
-| `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. The default value if nothing is specified is `text`.
+| `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
@@ -517,6 +522,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_ADMIN` | Enables admin mode. This removes the distinction between users and admins and allows listing stored configuration keys (when `STATEFUL_MODE` is set to `simple`). This defaults to `no` and can be set to `yes`.
 | `APPRISE_INTERPRET_EMOJIS` | Override the Apprise `interpret-emojis` setting. This defaults to `none` (not set), but can be enforced to `no` or `yes`.
 | `APPRISE_HTTP_REDIRECTS` | By default, Apprise follows HTTP 3xx redirects, matching the behaviour of the underlying requests library. Set to `no` to disable redirect following globally across all plugins without having to add `redirect=no` to every individual URL. Individual URLs can always override this with `?redirect=yes` or `?redirect=no` regardless of this setting. This defaults to `yes`.
+| `APPRISE_DEFAULT_FORMAT` | Formatting is entirely optional and off by default: a request that does not specify `format` is passed through untouched rather than assumed to be `text`. Set this to `text`, `html`, or `markdown` (case-insensitive; a blank or whitespace-only value is treated the same as unset) to apply a server-wide default when a request leaves `format` out entirely. If a request *does* include `format` but sends it blank or `null`, that is treated as the caller deliberately asking for no formatting, and always wins over this setting. A `format` value set to `text`, `html`, or `markdown` on an individual request also always takes priority over this setting. By default this is not set at all. Note: the Web UI always submits an explicit format selection (even its default "Ignore" choice), so this setting only ever comes into play for direct API/`curl`-style calls that omit the field.
 | `APPRISE_DENY_SERVICES` | A comma separated set of entries identifying what plugins to deny access to. You only need to identify one schema entry associated with a plugin to in turn disable all of it.  Hence, if you wanted to disable the `glib` plugin, you do not need to additionally include `qt` as well since it's included as part of the (`dbus`) package; consequently specifying `qt` would in turn disable the `glib` module as well (another way to accomplish the same task).  To exclude/disable more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified. By default, this is initialized to `windows, dbus, gnome, macosx, syslog` (blocking local actions from being issued inside of the docker container)
 | `APPRISE_ALLOW_SERVICES` | A comma separated set of entries identifying what plugins to allow access to. You may only use alpha-numeric characters as is the restriction of Apprise Schemas (schema://) anyway.  To exclusively include more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified.
 | `APPRISE_API_ONLY` | This option will disable the entire access to web administration interface and only the API will be available for use. By default, this option will be set to `no`, or you can omit this variable if you wish.
@@ -577,6 +583,7 @@ docker run --name apprise \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
    -e APPRISE_ADMIN=y \
+   -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -d caronc/apprise:latest
 ```
