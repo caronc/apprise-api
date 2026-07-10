@@ -24,6 +24,7 @@
 import logging
 import os
 
+import apprise
 from core.themes import SiteTheme
 
 # Register apprise's custom log levels before Django's dictConfig() runs.
@@ -385,3 +386,17 @@ APPRISE_INTERPRET_EMOJIS = (
 # redirect following globally across all plugins without touching individual
 # URLs.
 APPRISE_HTTP_REDIRECTS = os.environ.get("APPRISE_HTTP_REDIRECTS", "yes")[0].lower() in ("a", "y", "1", "t", "e", "+")
+
+# Allow a server-wide default input body format to be configured.
+# Formatting is entirely optional and unset (None) by default: content is
+# passed straight through to each service untouched unless the caller
+# explicitly sets `format` on their request, or an operator opts every
+# request into a default by setting this variable. A blank or whitespace-
+# only value (including "" or " ") is treated the same as unset. The
+# value is matched case-insensitively against apprise.NotifyFormat, so any
+# format Apprise recognizes today -- or adds in the future -- is accepted
+# here automatically; anything else is ignored and treated as unset.
+_apprise_default_format = os.environ.get("APPRISE_DEFAULT_FORMAT", "").strip().lower()
+APPRISE_DEFAULT_FORMAT = (
+    _apprise_default_format if _apprise_default_format in {f.value for f in apprise.NotifyFormat} else None
+)

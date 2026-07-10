@@ -44,13 +44,15 @@ NOTIFICATION_TYPES = (
     (apprise.NotifyType.FAILURE.value, _("Failure")),
 )
 
-# Define our potential input text categories
+# Define our potential input text categories. IGNORE (pass-through, no
+# format specified) is listed first since it is the default: formatting
+# is entirely optional and is only applied if explicitly chosen.
 INPUT_FORMATS = (
+    # As-is - do not interpret it
+    (None, _("IGNORE")),
     (apprise.NotifyFormat.TEXT.value, _("TEXT")),
     (apprise.NotifyFormat.MARKDOWN.value, _("MARKDOWN")),
     (apprise.NotifyFormat.HTML.value, _("HTML")),
-    # As-is - do not interpret it
-    (None, _("IGNORE")),
 )
 
 URLS_MAX_LEN = 1024
@@ -171,13 +173,17 @@ class NotifyForm(forms.Form):
 
     def clean_format(self):
         """
-        We just ensure there is a format always set
+        Format is entirely optional. An unset value passes through to
+        Apprise as None, which delivers the content untouched rather
+        than assuming TEXT.
+
+        This form always submits an explicit selection -- even the
+        default "IGNORE" choice is a real, visible option the user
+        picked (or left picked). APPRISE_DEFAULT_FORMAT is only meant
+        to help callers who omit the field entirely, which cannot
+        happen through this form, so it is not applied here.
         """
-        data = self.cleaned_data["format"]
-        if not data:
-            # Always set a type
-            data = apprise.NotifyFormat.TEXT.value
-        return data
+        return self.cleaned_data["format"] or None
 
 
 class NotifyByUrlForm(NotifyForm):
