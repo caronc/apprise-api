@@ -31,8 +31,8 @@ from .. import *  # noqa F403
 # Debug is always on when running in debug mode
 DEBUG = True
 
-# Allowed hosts is not required in debug mode
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS environment variable
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(" ")
 
 # Over-ride the default URLConf for debugging
 ROOT_URLCONF = "core.settings.debug.urls"
