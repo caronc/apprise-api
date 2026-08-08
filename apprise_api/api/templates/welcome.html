@@ -366,8 +366,7 @@
                           <div class="collapsible-header">
                             <i class="material-icons">code</i>Python Example
                           </div>
-                          <div class="collapsible-body">
-                            {# djlint:off #}
+                          <div class="collapsible-body">{# djlint:off #}
                             <pre><code class="python">import json<br />
                             from urllib.request import Request<br />
                             <br />
@@ -381,15 +380,13 @@
                             &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br />
                             )</code></pre>
-                            {# djlint:on #}
-                          </div>
+                            {# djlint:on #}</div>
                         </li>
                         <li>
                           <div class="collapsible-header">
                             <i class="material-icons">code</i>PHP Example
                           </div>
-                          <div class="collapsible-body">
-                            {# djlint:off #}
+                          <div class="collapsible-body">{# djlint:off #}
                             <pre><code class="php">&lt;?php<br />
                             <br />
                             // The URL if the key was <em>{{key}}</em><br />
@@ -421,8 +418,7 @@
                             // Close our handler<br />
                             curl_close($ch);<br />
                             ?&gt;</code></pre>
-                            {# djlint:on #}
-                          </div>
+                            {# djlint:on #}</div>
                         </li>
                       </ul>
                     </div>
@@ -440,19 +436,16 @@
                         <div class="collapsible-header">
                           <i class="material-icons">code</i>Curl Example
                         </div>
-                        <div class="collapsible-body">
-                          {# djlint:off #}
+                        <div class="collapsible-body">{# djlint:off #}
                           <pre><code class="bash"># {% blocktrans %}Remove previously loaded configuration associated with the id of <em>{{key}}</em>{% endblocktrans %}<br />
                           curl -X POST {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em></code></pre>
-                          {# djlint:on #}
-                        </div>
+                          {# djlint:on #}</div>
                       </li>
                       <li>
                         <div class="collapsible-header">
                           <i class="material-icons">code</i>Python Example
                         </div>
-                        <div class="collapsible-body">
-                          {# djlint:off #}
+                        <div class="collapsible-body">{# djlint:off #}
                           <pre><code class="python">import json<br />
                           from urllib.request import Request<br />
                           <br /># The request if the key was <em>{{key}}</em><br />
@@ -462,15 +455,13 @@
                           &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
                           &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br />
                           )</code></pre>
-                          {# djlint:on #}
-                        </div>
+                          {# djlint:on #}</div>
                       </li>
                       <li>
                         <div class="collapsible-header">
                           <i class="material-icons">code</i>PHP Example
                         </div>
-                        <div class="collapsible-body">
-                          {# djlint:off #}
+                        <div class="collapsible-body">{# djlint:off #}
                           <pre><code class="php">&lt;?php<br />
                           <br />
                           // The URL if the key was <em>{{key}}</em><br />
@@ -488,8 +479,7 @@
                           // Close our handler<br />
                           curl_close($ch);<br />
                           ?&gt;</code></pre>
-                          {# djlint:on #}
-                        </div>
+                          {# djlint:on #}</div>
                       </li>
                     </ul>
                   </td>

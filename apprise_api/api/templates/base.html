@@ -48,7 +48,6 @@
         <div class="col s12">
           <a href="{% url 'welcome' %}">
             {% include 'icons/apprise-logo.svg' %}
-
           </a>
           <small>&nbsp;<a class="apprise-api-ver" href="{{ APPRISE_API_URL }}" target="_new">v{{ APPRISE_API_VERSION }}</a></small>
           <ul>
@@ -66,19 +65,15 @@
                       aria-hidden="true">
                   <span class="status-icon status-icon-loading">
                     {% include 'icons/status-loading.svg' %}
-
                   </span>
                   <span class="status-icon status-icon-ok">
                     {% include 'icons/status-ok.svg' %}
-
                   </span>
                   <span class="status-icon status-icon-error">
                     {% include 'icons/status-error.svg' %}
-
                   </span>
                   <span class="status-icon status-icon-disabled">
                     {% include 'icons/status-disabled.svg' %}
-
                   </span>
                 </span>
               </a>
@@ -92,7 +87,6 @@
                  data-tooltip="{% trans "GitHub" %}">
                 <span class="topbar-icon">
                   {% include 'icons/topbar-github.svg' %}
-
                 </span>
               </a>
               <a href="https://discord.gg/EGg4rhmpC2"
@@ -103,7 +97,6 @@
                  data-tooltip="{% trans "Discord" %}">
                 <span class="topbar-icon">
                   {% include 'icons/topbar-discord.svg' %}
-
                 </span>
               </a>
               <a href="https://www.reddit.com/r/Apprise/"
@@ -114,7 +107,6 @@
                  data-tooltip="{% trans "Reddit" %}">
                 <span class="topbar-icon">
                   {% include 'icons/topbar-reddit.svg' %}
-
                 </span>
               </a>
               <span class="nav-divider"></span>
@@ -126,7 +118,6 @@
                  data-tooltip="{% trans "Toggle light / dark theme" %}">
                 <span class="topbar-icon">
                   {% include 'icons/topbar-theme.svg' %}
-
                 </span>
               </a>
             </li>
@@ -165,7 +156,6 @@
                   <a class="side-nav-item" href="{% url 'config' DEFAULT_CONFIG_ID %}">
                     <span class="menu-icon">
                       {% include 'icons/settings.svg' %}
-
                     </span>
                     <span class="side-nav-text">{% trans "Configuration Manager" %}</span>
                   </a>
@@ -175,7 +165,6 @@
                        href="{% url 'config' UNIQUE_CONFIG_ID %}">
                       <span class="menu-icon">
                         {% include 'icons/refresh.svg' %}
-
                       </span>
                       <span class="side-nav-text">{% trans "New Configuration" %}</span>
                     </a>
@@ -184,7 +173,6 @@
                     <a class="side-nav-item" id="cfg-list" href="{% url 'config_list' %}">
                       <span class="menu-icon">
                         {% include 'icons/list.svg' %}
-
                       </span>
                       <span class="side-nav-text">{% trans "Configuration List" %}</span>
                     </a>
@@ -192,7 +180,6 @@
                   <a class="side-nav-item" href="{% url 'details' %}">
                     <span class="menu-icon">
                       {% include 'icons/search.svg' %}
-
                     </span>
                     <span class="side-nav-text">{% trans "Available Plugins" %}</span>
                   </a>
@@ -206,7 +193,6 @@
                    href="https://appriseit.com/services/">
                   <span class="menu-icon">
                     {% include 'icons/bell.svg' %}
-
                   </span>
                   <span class="side-nav-text">{% trans "Notification Services" %}</span>
                 </a>
@@ -216,7 +202,6 @@
                    href="https://appriseit.com/config/">
                   <span class="menu-icon">
                     {% include 'icons/book-open.svg' %}
-
                   </span>
                   <span class="side-nav-text">{% trans "Configuration Help" %}</span>
                 </a>
@@ -226,7 +211,6 @@
                    href="https://appriseit.com/getting-started/">
                   <span class="menu-icon">
                     {% include 'icons/library.svg' %}
-
                   </span>
                   <span class="side-nav-text">{% trans "Documentation" %}</span>
                 </a>
@@ -236,7 +220,6 @@
                    href="https://appriseit.com/url-builder/">
                   <span class="menu-icon">
                     {% include 'icons/tool.svg' %}
-
                   </span>
                   <span class="side-nav-text">{% trans "Apprise URL Builder" %}</span>
                 </a>
@@ -249,7 +232,6 @@
                    href="https://www.paypal.com/donate/?hosted_button_id=CR6YF7KLQWQ5E">
                   <span class="menu-icon menu-icon--coffee">
                     {% include 'icons/coffee.svg' %}
-
                   </span>
                   <strong class="side-nav-text">{% trans "Buy Developer A Coffee" %}</strong>
                 </a>
@@ -259,7 +241,6 @@
                    href="https://github.com/sponsors/caronc">
                   <span class="menu-icon menu-icon--heart">
                     {% include 'icons/heart.svg' %}
-
                   </span>
                   <strong class="side-nav-text">{% trans "Sponsor Apprise Development" %}</strong>
                 </a>
@@ -281,7 +262,6 @@
                     <strong>
                       <span class="health-check-icon health-check-icon--error">
                         {% include 'icons/status-error.svg' %}
-
                       </span>
                       {% trans "Configuration Write Failure" %}
                     </strong>
@@ -304,7 +284,6 @@
                     <strong>
                       <span class="health-check-icon health-check-icon--error">
                         {% include 'icons/status-error.svg' %}
-
                       </span>
                       {% trans "Attachment Temporary Storage Write Failure" %}
                     </strong>
@@ -484,8 +463,8 @@
 {% block jsfooter %}
 {% endblock jsfooter %}
 </script>
-{# djlint:on #}
-{# djlint:off #}
+    {# djlint:on #}
+    {# djlint:off #}
 {% block scripts_optional %}
 {# Script Block 3 #}
 <script>
@@ -776,6 +755,6 @@
   });
 </script>
 {% endblock scripts_optional %}
-{# djlint:on #}
-</body>
+    {# djlint:on #}
+  </body>
 </html>

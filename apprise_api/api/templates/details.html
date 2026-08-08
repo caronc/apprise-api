@@ -61,7 +61,6 @@
                        rel="noopener noreferrer">
                       <span class="plugin-service-icon" aria-hidden="true">
                         {% include 'icons/tool.svg' %}
-
                       </span>
                       <span>{% trans "Apprise URL Builder" %}</span>
                     </a>
@@ -72,7 +71,6 @@
                        rel="noopener noreferrer">
                       <span class="plugin-service-icon" aria-hidden="true">
                         {% include 'icons/tool.svg' %}
-
                       </span>
                       <span>{% trans "Apprise URL Builder" %}</span>
                     </a>
@@ -83,7 +81,6 @@
                        rel="noopener noreferrer">
                       <span class="plugin-service-icon" aria-hidden="true">
                         {% include 'icons/tool.svg' %}
-
                       </span>
                       <span>{% trans "Apprise URL Builder" %}</span>
                     </a>
@@ -94,7 +91,6 @@
                      rel="noopener noreferrer">
                     <span class="plugin-service-icon" aria-hidden="true">
                       {% include 'icons/book-open.svg' %}
-
                     </span>
                     <span>{% trans "Setup Guide" %}</span>
                   </a>
@@ -104,7 +100,6 @@
                      rel="noopener noreferrer">
                     <span class="plugin-service-icon" aria-hidden="true">
                       {% include 'icons/library.svg' %}
-
                     </span>
                     <span>{% trans "Service Website" %}</span>
                   </a>
@@ -151,12 +146,10 @@
                     </code>
                   </li>
                 {% endif %}
-                <li>
-                  {# djlint:off #}
+                <li>{# djlint:off #}
                   <pre><code class="bash"># {% blocktrans %}Apprise URL Formatting{% endblocktrans %}<br />
                   {% for url in entry.details.templates %}{{ url }}<br />{% endfor %}</code></pre>
-                  {# djlint:on #}
-                </li>
+                  {# djlint:on #}</li>
                 <li>
                   <p>
                     {% blocktrans %}For more details and additional Apprise
@@ -181,20 +174,17 @@
           <div class="collapsible-header">
             <i class="material-icons">code</i>Curl Example
           </div>
-          <div class="collapsible-body">
-            {# djlint:off #}
+          <div class="collapsible-body">{# djlint:off #}
             <pre><code class="bash">#{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
             curl -H "Accept: application/json" \<br />
             &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"</code></pre>
-            {# djlint:on #}
-          </div>
+            {# djlint:on #}</div>
         </li>
         <li>
           <div class="collapsible-header">
             <i class="material-icons">code</i>Python Example
           </div>
-          <div class="collapsible-body">
-            {# djlint:off #}
+          <div class="collapsible-body">{# djlint:off #}
             <pre><code class="python">import json<br />
 from urllib.request import Request<br />
 <br /># The URL<br />
@@ -204,15 +194,13 @@ req = Request(<br />
 &nbsp;&nbsp;&nbsp;&nbsp;{"Accept": "application/json"},<br />
 &nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
 )</code></pre>
-            {# djlint:on #}
-          </div>
+            {# djlint:on #}</div>
         </li>
         <li>
           <div class="collapsible-header">
             <i class="material-icons">code</i>PHP Example
           </div>
-          <div class="collapsible-body">
-            {# djlint:off #}
+          <div class="collapsible-body">{# djlint:off #}
             <pre><code class="php">&lt;?php<br />
 <br />
 // The URL<br />
@@ -226,8 +214,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));<br />
 <br />
 //Execute the request<br />
 $result = curl_exec($ch);</code></pre>
-            {# djlint:on #}
-          </div>
+            {# djlint:on #}</div>
         </li>
       </ul>
       <p>
