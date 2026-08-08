@@ -27,6 +27,8 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, override_settings
 from django.urls import Resolver404, resolve
 
+from ..utils import AppriseStoreMode
+
 
 class ManagerPageTests(SimpleTestCase):
     """
@@ -199,3 +201,25 @@ class ManagerPageTests(SimpleTestCase):
 
             response = self.client.get(path)
             assert response.status_code == 421
+
+    @override_settings(APPRISE_API_ONLY=True, APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE=AppriseStoreMode.SIMPLE)
+    def test_api_only_still_serves_json_for_details_and_config_list(self) -> None:
+        """
+        APPRISE_API_ONLY disables the browsable HTML pages, not the JSON
+        API itself: a client explicitly asking for JSON is still "using
+        the API" (see the README's own description of this setting) and
+        must get its data back, even though the same paths remain blocked
+        for a browser-style request (no explicit JSON preference).
+        """
+        json_capable_paths = ("/cfg", "/details")
+        for path in json_capable_paths:
+            response = self.client.get(path, **{"HTTP_ACCEPT": "application/json"})
+            self.assertEqual(response.status_code, 200, path)
+            assert response["Content-Type"].startswith("application/json")
+
+        # These pages have no JSON form at all - API-only mode always
+        # blocks them, Accept header or not.
+        html_only_paths = ("/", "/cfg/key")
+        for path in html_only_paths:
+            response = self.client.get(path, **{"HTTP_ACCEPT": "application/json"})
+            self.assertEqual(response.status_code, 421, path)

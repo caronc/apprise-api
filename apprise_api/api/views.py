@@ -229,12 +229,10 @@ def _get_config_response(request, key):
     Used by both POST /get/<key> and POST /cfg/<key>.
     """
 
-    # Detect the format our response should be in
+    # Detect the format our response should be in.
     json_response = (
         MIME_IS_JSON.match(
-            request.content_type
-            if request.content_type
-            else request.headers.get("accept", request.headers.get("content-type", ""))
+            request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
         )
         is not None
     )
@@ -425,19 +423,17 @@ class DetailsView(View):
         Handle a GET request
         """
 
-        if settings.APPRISE_API_ONLY:
-            # API Mode only - Nothing further to parse
-            return Error421View.as_view()(request)
-
-        # Detect the format our response should be in
+        # Detect the format our response should be in.
         json_response = (
             MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
+                request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
             )
             is not None
         )
+
+        if settings.APPRISE_API_ONLY and not json_response:
+            # API Mode only disables the browsable HTML page.
+            return Error421View.as_view()(request)
 
         # Show All flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
@@ -532,19 +528,30 @@ class ConfigListView(View):
         """
         Handle a GET request
         """
-        if settings.APPRISE_API_ONLY:
-            # API Mode only - Nothing further to parse
-            return Error421View.as_view()(request)
-
-        # Detect the format our response should be in
+        # Detect the format our response should be in.
+        #
+        # This must check Accept first: Content-Type describes the
+        # *request* body, not the desired response, and a bodyless
+        # GET/POST still gets a Content-Type from the WSGI layer (commonly
+        # "text/plain" per the WSGI/CGI convention for an omitted
+        # Content-Type) even when the client never sent one - so checking
+        # it before Accept silently ignores an explicit
+        # "Accept: application/json" whenever there's no real request
+        # body, which is the common case for a JSON API client fetching
+        # data with a plain GET.
         json_response = (
             MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
+                request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
             )
             is not None
         )
+
+        if settings.APPRISE_API_ONLY and not json_response:
+            # API Mode only disables the browsable HTML page; a JSON API
+            # request for the key list is still "the API" and stays
+            # available (subject to the APPRISE_ADMIN check below, same as
+            # ever - this only restores JSON access, not who may use it).
+            return Error421View.as_view()(request)
 
         if not (settings.APPRISE_ADMIN and settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.SIMPLE):
             msg = _("The site has been configured to deny this request")
@@ -954,12 +961,20 @@ class DelView(View):
         """
         Handle a POST request
         """
-        # Detect the format our response should be in
+        # Detect the format our response should be in.
+        #
+        # This must check Accept first: Content-Type describes the
+        # *request* body, not the desired response, and a bodyless
+        # GET/POST still gets a Content-Type from the WSGI layer (commonly
+        # "text/plain" per the WSGI/CGI convention for an omitted
+        # Content-Type) even when the client never sent one - so checking
+        # it before Accept silently ignores an explicit
+        # "Accept: application/json" whenever there's no real request
+        # body, which is the common case for a JSON API client fetching
+        # data with a plain GET.
         json_response = (
             MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
+                request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
             )
             is not None
         )
