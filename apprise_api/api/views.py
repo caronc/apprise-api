@@ -22,14 +22,16 @@
 # THE SOFTWARE.
 import json
 import logging
+import queue
 import re
+import threading
 from urllib.parse import parse_qs, urlsplit
 
 import apprise
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
@@ -71,6 +73,9 @@ MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencod
 # */*
 # <blank>
 ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
+
+# Matches requests for live notification progress via Server-Sent Events.
+MIME_IS_EVENT_STREAM = re.compile(r"text/event-stream", re.I)
 
 # Tags separated by space, &, or + are and'ed together
 # Tags separated by commas (even commas wrapped in spaces) are "or'ed" together
@@ -186,6 +191,132 @@ def service_optional(notification, url):
         pass
 
     return bool(optional)
+
+
+def _notify_log_asctime(entry):
+    """Format a notification log time as ``YYYY-MM-DD HH:MM:SS,mmm``."""
+    return "{},{:03d}".format(
+        entry.time.strftime("%Y-%m-%d %H:%M:%S"),
+        entry.time.microsecond // 1000,
+    )
+
+
+def render_notify_logs(entries, json_response, content_type):
+    """
+    Render notification logs for the requested response format.
+
+    JSON uses ``[level, time, message]`` entries, HTML uses a log list,
+    and plain text uses one entry per line.
+    """
+    entries = list(entries)
+
+    if json_response:
+        return [[entry.level, _notify_log_asctime(entry), entry.message] for entry in entries]
+
+    if content_type == "text/html":
+        return '<ul class="logs">{}</ul>'.format(
+            "".join(
+                '<li class="log_{level}">'
+                '<div class="log_time">{time}</div>'
+                '<div class="log_level">{level}</div>'
+                '<div class="log_msg">{message}</div></li>'.format(
+                    level=entry.level,
+                    time=_notify_log_asctime(entry),
+                    message=escape(entry.message),
+                )
+                for entry in entries
+            )
+        )
+
+    # content_type == 'text/plain'
+    return "\n".join(str(entry) for entry in entries)
+
+
+def _stream_requested(request):
+    """
+    Return whether the caller requested a live event stream.
+
+    Callers may use ``Accept: text/event-stream`` or the ``?stream=1``
+    shortcut when setting headers is inconvenient.
+    """
+    return MIME_IS_EVENT_STREAM.search(request.headers.get("accept", "")) is not None or request.GET.get("stream") in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
+def _sse_event(event, data):
+    """Format one Server-Sent Event: a named event plus a JSON data line."""
+    return "event: {}\ndata: {}\n\n".format(event, json.dumps(data, cls=JSONEncoder))
+
+
+def stream_notify_response(a_obj, *, body, title, notify_type, tag, attach, log_level, match_always=True):
+    """
+    Stream notification progress while ``notify()`` runs in the background.
+
+    Log entries are sent as they occur. The stream ends with a ``result``
+    event, or an ``error`` event if notification processing raises.
+    """
+    events = queue.Queue()
+    done = object()
+
+    def log_callback(entry, service):
+        # Apprise requires a synchronous callback; the queue safely passes
+        # each entry to the response generator.
+        events.put(
+            _sse_event(
+                "log",
+                {
+                    "level": entry.level,
+                    "asctime": _notify_log_asctime(entry),
+                    "message": entry.message,
+                    # Include the service type, never its sensitive target URL.
+                    "service": getattr(service, "service_name", None),
+                },
+            )
+        )
+
+    def run():
+        try:
+            result = a_obj.notify(
+                body,
+                title=title,
+                notify_type=notify_type,
+                tag=tag,
+                match_always=match_always,
+                attach=attach,
+                log_level=log_level,
+                log_callback=log_callback,
+            )
+            events.put(
+                _sse_event(
+                    "result",
+                    {"status": result.status.name if result.status is not None else None},
+                )
+            )
+        except Exception as e:
+            events.put(_sse_event("error", {"message": str(e)}))
+        finally:
+            events.put(done)
+
+    # Standard threads work in tests and under gevent-enabled production workers.
+    threading.Thread(target=run, daemon=True).start()
+
+    def generator():
+        # Send an ignored SSE comment so headers arrive before the first event.
+        yield ": connected\n\n"
+        while True:
+            item = events.get()
+            if item is done:
+                return
+            yield item
+
+    response = StreamingHttpResponse(generator(), content_type="text/event-stream")
+    response["Cache-Control"] = "no-cache"
+    # Prevent proxies such as nginx from batching streamed events.
+    response["X-Accel-Buffering"] = "no"
+    return response
 
 
 class JSONEncoder(DjangoJSONEncoder):
@@ -1107,6 +1238,9 @@ class NotifyView(View):
             else MIME_IS_JSON.match(request.headers.get("accept", "")) is not None
         )
 
+        # Event streams use their own format instead of JSON, HTML, or text.
+        stream_response = _stream_requested(request)
+
         # rules
         rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ":"}
 
@@ -1634,7 +1768,7 @@ class NotifyView(View):
         # the global one set in the settings
         level = request.headers.get(
             "X-Apprise-Log-Level",
-            settings.LOGGING["loggers"]["apprise"]["level"],
+            settings.APPRISE_LOG_LEVEL,
         ).upper()
         if level not in (
             "CRITICAL",
@@ -1644,7 +1778,7 @@ class NotifyView(View):
             "DEBUG",
             "TRACE",
         ):
-            level = settings.LOGGING["loggers"]["apprise"]["level"].upper()
+            level = settings.APPRISE_LOG_LEVEL.upper()
 
         # Convert level to it's integer value
         if level == "CRITICAL":
@@ -1667,67 +1801,33 @@ class NotifyView(View):
 
         if not isinstance(level, int):
             # The configured default log level is not a recognised value;
-            # fall back to WARNING so LogCapture receives a valid integer.
+            # fall back to WARNING so notify() receives a valid integer.
             level = logging.WARNING
 
-        # Initialize our response object
-        response = None
-
-        esc = "<!!-!ESC!-!!>"
-
-        if json_response:
-            fmt = f'["%(levelname)s","%(asctime)s","{esc}%(message)s{esc}"]'
-
-        else:
-            # Format is only updated if the content_type is html
-            fmt = (
-                '<li class="log_%(levelname)s">'
-                '<div class="log_time">%(asctime)s</div>'
-                '<div class="log_level">%(levelname)s</div>'
-                f'<div class="log_msg">{esc}%(message)s{esc}</div></li>'
-                if content_type == "text/html"
-                else settings.LOGGING["formatters"]["standard"]["format"]
-            )
-
-        # Now specify our format (and over-ride the default):
-        with apprise.LogCapture(level=level, fmt=fmt) as logs:
-            # Perform our notification at this point
-            result = a_obj.notify(
-                content.get("body"),
+        if stream_response:
+            # Return live progress while notification runs in the background.
+            return stream_notify_response(
+                a_obj,
+                body=content.get("body"),
                 title=content.get("title", ""),
                 notify_type=content.get("type", apprise.NotifyType.INFO.value),
                 tag=(content.get("tag") or None),
                 attach=attach,
+                log_level=level,
             )
 
-        if json_response:
-            esc = re.escape(esc)
-            entries = re.findall(
-                r'\r*\n?(?P<head>\["[^"]+","[^"]+",)"{}(?P<to_escape>.+?)'
-                r'{}"(?P<tail>\]\r*\n?$)(?=$|\r*\n?\["[^"]+","[^"]+","{})'.format(esc, esc, esc),
-                logs.getvalue(),
-                re.DOTALL | re.MULTILINE,
-            )
+        # Capture notification logs at the caller's requested level.
+        result = a_obj.notify(
+            content.get("body"),
+            title=content.get("title", ""),
+            notify_type=content.get("type", apprise.NotifyType.INFO.value),
+            tag=(content.get("tag") or None),
+            attach=attach,
+            log_level=level,
+        )
 
-            # Prepare ourselves a JSON Response
-            response = json.loads("[{}]".format(",".join([e[0] + json.dumps(e[1].rstrip()) + e[2] for e in entries])))
-
-        elif content_type == "text/html":
-            # Iterate over our entries so that we can prepare to escape
-            # things to be presented as HTML
-            esc = re.escape(esc)
-            entries = re.findall(
-                r'\r*\n?(?P<head><li class="log_.+?){}(?P<to_escape>.+?)'
-                r'{}(?P<tail></div></li>\r*\n?$)(?=$|\r*\n?<li class="log_.+{})'.format(esc, esc, esc),
-                logs.getvalue(),
-                re.DOTALL | re.MULTILINE,
-            )
-
-            # Wrap logs in `<ul>` tag and escape our message body:
-            response = '<ul class="logs">{}</ul>'.format("".join([e[0] + escape(e[1]) + e[2] for e in entries]))
-
-        else:  # content_type == 'text/plain'
-            response = logs.getvalue()
+        # Format the structured logs for the response.
+        response = render_notify_logs(result.logs(), json_response, content_type)
 
         if settings.APPRISE_WEBHOOK_URL:
             webhook_payload = {
@@ -1816,6 +1916,9 @@ class StatelessNotifyView(View):
             if json_payload and ACCEPT_ALL.match(request.headers.get("accept", ""))
             else MIME_IS_JSON.match(request.headers.get("accept", "")) is not None
         )
+
+        # Event streams use their own format instead of JSON, HTML, or text.
+        stream_response = _stream_requested(request)
 
         # rules
         rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ":"}
@@ -2297,7 +2400,7 @@ class StatelessNotifyView(View):
         # the global one set in the settings
         level = request.headers.get(
             "X-Apprise-Log-Level",
-            settings.LOGGING["loggers"]["apprise"]["level"],
+            settings.APPRISE_LOG_LEVEL,
         ).upper()
         if level not in (
             "CRITICAL",
@@ -2307,7 +2410,7 @@ class StatelessNotifyView(View):
             "DEBUG",
             "TRACE",
         ):
-            level = settings.LOGGING["loggers"]["apprise"]["level"].upper()
+            level = settings.APPRISE_LOG_LEVEL.upper()
 
         # Convert level to it's integer value
         if level == "CRITICAL":
@@ -2330,67 +2433,33 @@ class StatelessNotifyView(View):
 
         if not isinstance(level, int):
             # The configured default log level is not a recognised value;
-            # fall back to WARNING so LogCapture receives a valid integer.
+            # fall back to WARNING so notify() receives a valid integer.
             level = logging.WARNING
 
-        # Initialize our response object
-        response = None
-
-        esc = "<!!-!ESC!-!!>"
-
-        if json_response:
-            fmt = f'["%(levelname)s","%(asctime)s","{esc}%(message)s{esc}"]'
-
-        else:
-            # Format is only updated if the content_type is html
-            fmt = (
-                '<li class="log_%(levelname)s">'
-                '<div class="log_time">%(asctime)s</div>'
-                '<div class="log_level">%(levelname)s</div>'
-                f'<div class="log_msg">{esc}%(message)s{esc}</div></li>'
-                if content_type == "text/html"
-                else settings.LOGGING["formatters"]["standard"]["format"]
-            )
-
-        # Now specify our format (and over-ride the default):
-        with apprise.LogCapture(level=level, fmt=fmt) as logs:
-            # Perform our notification at this point
-            result = a_obj.notify(
-                content.get("body"),
+        if stream_response:
+            # Return live progress while notification runs in the background.
+            return stream_notify_response(
+                a_obj,
+                body=content.get("body"),
                 title=content.get("title", ""),
                 notify_type=content.get("type", apprise.NotifyType.INFO.value),
                 tag=(content.get("tag") or "all"),
                 attach=attach,
+                log_level=level,
             )
 
-        if json_response:
-            esc = re.escape(esc)
-            entries = re.findall(
-                r'\r*\n?(?P<head>\["[^"]+","[^"]+",)"{}(?P<to_escape>.+?)'
-                r'{}"(?P<tail>\]\r*\n?$)(?=$|\r*\n?\["[^"]+","[^"]+","{})'.format(esc, esc, esc),
-                logs.getvalue(),
-                re.DOTALL | re.MULTILINE,
-            )
+        # Capture notification logs at the caller's requested level.
+        result = a_obj.notify(
+            content.get("body"),
+            title=content.get("title", ""),
+            notify_type=content.get("type", apprise.NotifyType.INFO.value),
+            tag=(content.get("tag") or "all"),
+            attach=attach,
+            log_level=level,
+        )
 
-            # Prepare ourselves a JSON Response
-            response = json.loads("[{}]".format(",".join([e[0] + json.dumps(e[1].rstrip()) + e[2] for e in entries])))
-
-        elif content_type == "text/html":
-            # Iterate over our entries so that we can prepare to escape
-            # things to be presented as HTML
-            esc = re.escape(esc)
-            entries = re.findall(
-                r'\r*\n?(?P<head><li class="log_.+?){}(?P<to_escape>.+?)'
-                r'{}(?P<tail></div></li>\r*\n?$)(?=$|\r*\n?<li class="log_.+{})'.format(esc, esc, esc),
-                logs.getvalue(),
-                re.DOTALL | re.MULTILINE,
-            )
-
-            # Wrap logs in `<ul>` tag and escape our message body:
-            response = '<ul class="logs">{}</ul>'.format("".join([e[0] + escape(e[1]) + e[2] for e in entries]))
-
-        else:  # content_type == 'text/plain'
-            response = logs.getvalue()
+        # Format the structured logs for the response.
+        response = render_notify_logs(result.logs(), json_response, content_type)
 
         if settings.APPRISE_WEBHOOK_URL:
             webhook_payload = {

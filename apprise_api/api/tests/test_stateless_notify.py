@@ -32,6 +32,7 @@ from django.test.utils import override_settings
 import requests
 
 from ..forms import NotifyByUrlForm
+from .helpers import notify_result
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -47,7 +48,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
         Stateless notify should also respect tag filters when provided.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         response = self.client.post(
             "/notify",
@@ -69,7 +70,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
         Stateless notify should accept tag and tags query-string fallbacks.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         payload = {
             "urls": "mailto://user:pass@hotmail.com",
@@ -90,7 +91,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
         Stateless notify should pass list-form JSON tags through as-is.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         response = self.client.post(
             "/notify",
@@ -150,7 +151,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # Preare our form data
         form_data = {
@@ -578,7 +579,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         headers = {
             "HTTP_X-APPRISE-ID": "abc123",
@@ -675,7 +676,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # Preare our form data (without url specified)
         # content will fall back to default configuration
@@ -706,7 +707,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # Preare our JSON data
         json_data = {
@@ -746,7 +747,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
         Test HTML log formatting block is triggered in StatelessNotifyView
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
         form_data = {
             "urls": "json://user@localhost",
             "body": "Testing HTML block",
@@ -776,7 +777,7 @@ class StatelessNotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # Preare our JSON data without any urls
         json_data = {
@@ -1039,7 +1040,7 @@ class StatelessNotifyTests(SimpleTestCase):
         Test that posting a form with an invalid choice field causes the form
         to fail validation, leaving content empty and returning 400.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # An invalid 'format' choice value makes NotifyByUrlForm invalid —
         # the form False branch is taken and we get a 400 response.
@@ -1056,7 +1057,7 @@ class StatelessNotifyTests(SimpleTestCase):
         Test that a JSON payload with an explicit empty 'format' field causes
         body_format to be falsy, skipping the body_format kwarg assignment.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # JSON payload with format="" — body_format is "" (falsy) so the
         # 'if body_format:' branch is not taken
@@ -1076,7 +1077,7 @@ class StatelessNotifyTests(SimpleTestCase):
         every branch in the level-to-int conversion chain, covering the final
         'elif level == "TRACE"' False branch.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         from django.conf import settings as _settings
 
@@ -1106,7 +1107,7 @@ class StatelessNotifyTests(SimpleTestCase):
 
         A missing subfield path must return 400 and not attempt to send.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # Missing subfield — form POST, plain-text response → 400
         with self.assertLogs("django", level="WARNING") as _:
@@ -1140,3 +1141,33 @@ class StatelessNotifyTests(SimpleTestCase):
         )
         assert response.status_code == 200
         assert mock_notify.call_count == 1
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_stream_emits_log_and_result_events(self, mock_notify):
+        """Stateless notifications can stream progress and results live."""
+        fake_service = type("FakeService", (), {"service_name": "JSON"})()
+
+        def fake_notify(*args, **kwargs):
+            log_callback = kwargs["log_callback"]
+            log_callback(
+                apprise.NotifyLogEntry(level="INFO", message="Sent JSON POST notification."),
+                fake_service,
+            )
+            return notify_result(True)
+
+        mock_notify.side_effect = fake_notify
+
+        response = self.client.post(
+            "/notify",
+            {"urls": "mailto://user:pass@yahoo.ca", "body": "hello"},
+            HTTP_ACCEPT="text/event-stream",
+        )
+        assert response.status_code == 200
+        assert response["Content-Type"] == "text/event-stream"
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        assert "event: log" in body
+        assert "Sent JSON POST notification." in body
+        assert "event: result" in body
+        assert '"status": "SUCCESS"' in body
+        assert "yahoo.ca" not in body

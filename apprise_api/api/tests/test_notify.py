@@ -32,6 +32,7 @@ import requests
 
 from ..forms import NotifyForm
 from ..views import parse_tag_expression
+from .helpers import notify_result
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -64,7 +65,7 @@ class NotifyTests(SimpleTestCase):
         """
         Stateful notify should pass advanced tag expressions through to Apprise.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
         key = "test_notify_accepts_advanced_tag_expression"
 
         response = self.client.post(
@@ -94,7 +95,7 @@ class NotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # our key to use
         key = "test_notify_by_loaded_urls"
@@ -858,22 +859,17 @@ class NotifyTests(SimpleTestCase):
         # We'll trigger on 2 entries
         assert mock_post.call_count == 2
 
-        # Test our posted data
-        response = json.loads(mock_post.call_args_list[0][1]["data"])
-        headers = mock_post.call_args_list[0][1]["headers"]
-        assert response["title"] == ""
-        assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO.value
-        # Verify we matched the first entry only
-        assert headers["url"] == "2"
-
-        response = json.loads(mock_post.call_args_list[1][1]["data"])
-        headers = mock_post.call_args_list[1][1]["headers"]
-        assert response["title"] == ""
-        assert response["message"] == form_data["body"]
-        assert response["type"] == apprise.NotifyType.INFO.value
-        # Verify we matched the first entry only
-        assert headers["url"] == "3"
+        # Concurrent notifications may finish in either order.
+        matched_urls = set()
+        for call in mock_post.call_args_list:
+            response = json.loads(call[1]["data"])
+            headers = call[1]["headers"]
+            assert response["title"] == ""
+            assert response["message"] == form_data["body"]
+            assert response["type"] == apprise.NotifyType.INFO.value
+            matched_urls.add(headers["url"])
+        # Verify we matched the second and third entries only
+        assert matched_urls == {"2", "3"}
 
         # Reset our object
         mock_post.reset_mock()
@@ -1057,7 +1053,7 @@ class NotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # our key to use
         key = "test_notify_by_loaded_urls_with_json"
@@ -1527,7 +1523,7 @@ class NotifyTests(SimpleTestCase):
         """
 
         # Set our return value
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         # our key to use
         key = "test_stateful_notify_recursion"
@@ -1615,7 +1611,7 @@ class NotifyTests(SimpleTestCase):
         with stateless notifications.
         """
 
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         key = "test_notify_rule_mapping_preserves_source_case"
 
@@ -1668,7 +1664,7 @@ class NotifyTests(SimpleTestCase):
         every branch in the level-to-int conversion chain, covering the final
         'elif level == "TRACE"' False branch.
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         key = "test_notify_invalid_default_log_level"
 
@@ -1700,7 +1696,7 @@ class NotifyTests(SimpleTestCase):
           - emit a WARNING
           - return 400 (not attempt to send the notification)
         """
-        mock_notify.return_value = True
+        mock_notify.return_value = notify_result(True)
 
         key = "test_notify_subfield_mapping"
 
@@ -1753,3 +1749,75 @@ class NotifyTests(SimpleTestCase):
         )
         assert response.status_code == 200
         assert mock_notify.call_count == 1
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_stream_emits_log_and_result_events(self, mock_notify):
+        """Stateful notifications can stream progress and results live."""
+        fake_service = type("FakeService", (), {"service_name": "JSON"})()
+
+        def fake_notify(*args, **kwargs):
+            log_callback = kwargs["log_callback"]
+            log_callback(
+                apprise.NotifyLogEntry(level="INFO", message="Sent JSON POST notification."),
+                fake_service,
+            )
+            return notify_result(True)
+
+        mock_notify.side_effect = fake_notify
+
+        key = "test_notify_stream_emits_log_and_result_events"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        response = self.client.post(
+            "/notify/{}".format(key),
+            {"body": "hello"},
+            HTTP_ACCEPT="text/event-stream",
+        )
+        assert response.status_code == 200
+        assert response["Content-Type"] == "text/event-stream"
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        assert "event: log" in body
+        assert "Sent JSON POST notification." in body
+        assert '"service": "JSON"' in body
+        # Keep sensitive notification targets out of the stream.
+        assert "yahoo.ca" not in body
+        assert "event: result" in body
+        assert '"status": "SUCCESS"' in body
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_stream_via_query_string(self, mock_notify):
+        """The stream query parameter works without an Accept header."""
+        mock_notify.return_value = notify_result(True)
+
+        key = "test_notify_stream_via_query_string_fallback"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        response = self.client.post("/notify/{}?stream=1".format(key), {"body": "hello"})
+        assert response.status_code == 200
+        assert response["Content-Type"] == "text/event-stream"
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        assert "event: result" in body
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_stream_reports_error(self, mock_notify):
+        """Notification exceptions end the stream with an error event."""
+        mock_notify.side_effect = ValueError("boom")
+
+        key = "test_notify_stream_reports_an_unexpected_notify_failure"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        response = self.client.post(
+            "/notify/{}".format(key),
+            {"body": "hello"},
+            HTTP_ACCEPT="text/event-stream",
+        )
+        assert response.status_code == 200
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        assert "event: error" in body
+        assert "boom" in body

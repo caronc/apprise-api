@@ -123,6 +123,9 @@ TEMPLATES = [
 
 _LOG_LEVEL = os.environ.get("LOG_LEVEL", "debug" if DEBUG else "info").upper()
 
+# Default notification log level when a request does not provide one.
+APPRISE_LOG_LEVEL = _LOG_LEVEL
+
 LOGGING = {
     "version": 1,
     # preserve loggers created by third-party libraries
@@ -131,7 +134,12 @@ LOGGING = {
         "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
     },
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "standard"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+            # Keep console output at the configured global level.
+            "level": _LOG_LEVEL,
+        },
     },
     "loggers": {
         "django": {
@@ -142,7 +150,8 @@ LOGGING = {
         },
         "apprise": {
             "handlers": ["console"],
-            "level": _LOG_LEVEL,
+            # Allow request-specific capture before the console filters output.
+            "level": "TRACE",
             "propagate": False,
         },
     },
