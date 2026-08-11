@@ -26,7 +26,7 @@ import os
 
 import apprise
 from core.themes import SiteTheme
-from core.utils import parse_bool
+from core.utils import parse_bool, parse_log_level
 
 # Register apprise's custom log levels before Django's dictConfig() runs.
 if not hasattr(logging, "TRACE"):
@@ -115,7 +115,13 @@ TEMPLATES = [
     },
 ]
 
-_LOG_LEVEL = os.environ.get("LOG_LEVEL", "debug" if DEBUG else "info").upper()
+# Keep Django startup safe when LOG_LEVEL is empty or unsupported.
+_LOG_LEVEL = logging.getLevelName(
+    parse_log_level(
+        os.environ.get("LOG_LEVEL"),
+        "DEBUG" if DEBUG else "INFO",
+    )
+)
 
 # Default notification log level when a request does not provide one.
 APPRISE_LOG_LEVEL = _LOG_LEVEL

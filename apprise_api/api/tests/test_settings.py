@@ -87,6 +87,32 @@ class LogLevelParsingTests(SimpleTestCase):
         self.assertEqual(parse_log_level("invalid", "invalid"), logging.WARNING)
 
 
+class LogLevelSettingsTests(SimpleTestCase):
+    """Ensure the configured console level is always safe for Django."""
+
+    def test_valid_levels_are_normalized(self):
+        """Whitespace and custom TRACE values become known level names."""
+        for value, expected in ((" error ", "ERROR"), ("TRACE", "TRACE")):
+            with self.subTest(value=value):
+                configured = _load_settings({"LOG_LEVEL": value})
+                self.assertEqual(configured.APPRISE_LOG_LEVEL, expected)
+                self.assertEqual(
+                    configured.LOGGING["handlers"]["console"]["level"],
+                    expected,
+                )
+
+    def test_invalid_level_uses_runtime_default(self):
+        """A bad environment value cannot prevent application startup."""
+        configured = _load_settings({"LOG_LEVEL": "not-a-level"})
+
+        # Tests load normal production settings, where DEBUG is disabled.
+        self.assertEqual(configured.APPRISE_LOG_LEVEL, "INFO")
+        self.assertEqual(
+            configured.LOGGING["handlers"]["console"]["level"],
+            "INFO",
+        )
+
+
 class StreamSizeSettingsTests(SimpleTestCase):
     """Validate live-stream memory and disk size settings."""
 
