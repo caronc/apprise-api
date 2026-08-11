@@ -273,7 +273,7 @@ Some people may wish to only have a sidecar solution that does require use of an
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.
+| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
 
 Stateless `/notify` calls do not require `/config`, but they do leverage `/attach` for file uploads (assuming `APPRISE_ATTACH_SIZE` is not set to `0` (zero).  You can optionally use `/plugin` if you have custom Apprise plugins you wish to use.
 
@@ -357,7 +357,7 @@ You can pre-save all of your Apprise configuration and/or set of Apprise URLs an
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
-| `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.
+| `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
@@ -471,6 +471,35 @@ curl -X POST -d '{"tag":"leaders teamA, leaders teamB", "body":"meeting now"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/projectX
 ```
+
+### Live Progress Streaming
+
+Both notification endpoints can stream progress as each service is notified. Use `?stream=yes` or send `Accept: text/event-stream`.
+
+Normal responses still wait for notification work to finish, but send retained
+logs one entry at a time. This avoids rebuilding a large result in memory. Live
+progress streaming sends logs while notification work is still running.
+
+The response contains `log` events followed by one `result` event. An unexpected processing failure produces an `error` event instead. See the `StreamEvent` schema in `swagger.yaml` for the event fields.
+
+Slow clients keep up to 2 MB in memory before using automatically cleaned temporary storage, which holds up to 256 MB by default. During normal operation, events remain ordered and are not omitted while the client stays connected.
+
+If the storage limit is reached or temporary storage fails, notification delivery continues and the stream reports an `ERROR` log asking the caller to contact the server administrator. Later logs continue whenever space becomes available.
+
+```bash
+curl -N -X POST -d '{"tag":"devops", "body":"repo outage"}' \
+    -H "Content-Type: application/json" \
+    "http://localhost:8000/notify/abc123?stream=yes"
+```
+
+```text
+event: log
+data: {"level": "INFO", "asctime": "2025-01-01 12:00:00,000", "message": "Sent to Telegram", "service": "Telegram"}
+
+event: result
+data: {"status": "SUCCESS"}
+```
+
 ### API Response Codes
 
 |  HTTP Code | Name                  | Effect                         |
@@ -516,6 +545,8 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_ATTACH_SIZE` | Over-ride the attachment size (defined in MB). By default it is set to `200` (Megabytes). You can set this up to a maximum value of `500` which is the restriction in place for NginX (internal hosting ervice) at this time.  If you set this to zero (`0`) then attachments will not be passed along even if provided.
 | `APPRISE_UPLOAD_MAX_MEMORY_SIZE` | Over-ride the in-memory accepted payload size (defined in MB). By default it is set to `3` (Megabytes). There is no reason the HTTP payload (excluding attachments) should exceed this limit.  This value is only configurable for those who have edge cases where there are exceptions to this rule.
 | `APPRISE_CONFIG_MAX_LENGTH` | Over-ride the maximum accepted configuration payload length (defined in KB). The value provided (in KB) is internally converted to bytes and can never exceed `APPRISE_UPLOAD_MAX_MEMORY_SIZE` (defined in MB). The default is `512` (KB).
+| `APPRISE_STREAM_MEMORY_SIZE` | Memory used by each live stream before waiting logs move to disk, in MB. The same value limits memory used by completed result logs. The default is `2`. Set it to `0` to use disk immediately when disk storage is enabled.
+| `APPRISE_STREAM_DISK_SIZE` | Temporary disk allowance for each live stream and, separately, each completed result, in MB. The default is `256`. Set it to `0` to disable temporary disk storage and keep result logs in memory. Live streams also remain in memory when the memory size is greater than `0`; when both sizes are `0`, live-stream backlog retention is disabled.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
 | `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
 | `APPRISE_CONFIG_LOCK` | Locks down your API hosting so that you can no longer delete/update/access stateful information. Your configuration is still referenced when stateful calls are made to `/notify`.  The idea of this switch is to allow someone to set their (Apprise) configuration up and then as an added security tactic, they may choose to lock their configuration down (in a read-only state). Those who use the Apprise CLI tool may still do it, however the `--config` (`-c`) switch will not successfully reference this access point anymore. You can however use the `apprise://` plugin without any problem ([see here for more details](https://appriseit.com/services/apprise_api/)). This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
