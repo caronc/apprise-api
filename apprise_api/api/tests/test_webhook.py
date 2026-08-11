@@ -21,6 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import io
 from json import loads
 from unittest import mock
 
@@ -32,6 +33,115 @@ from ..utils import send_webhook
 
 
 class WebhookTests(SimpleTestCase):
+    @mock.patch("requests.post")
+    def test_webhook_spools_large_payload(self, mock_post):
+        """Chunked webhook JSON is prepared on disk and read by requests."""
+        captured = {}
+
+        def post(_url, **kwargs):
+            """Read the file while send_webhook still owns it."""
+            captured["payload"] = loads(kwargs["data"].read())
+            response = mock.Mock()
+            response.status_code = requests.codes.ok
+            return response
+
+        mock_post.side_effect = post
+
+        chunks = iter(("{", '"status":0,', '"output":[]', "}"))
+        with override_settings(APPRISE_WEBHOOK_URL="https://localhost/webhook"):
+            send_webhook(chunks)
+
+        assert captured["payload"] == {"status": 0, "output": []}
+
+    @mock.patch("requests.post")
+    def test_webhook_contains_spool_failures(self, mock_post):
+        """Webhook buffering failures are logged without making a request."""
+        with (
+            mock.patch(
+                "apprise_api.api.utils.tempfile.TemporaryFile",
+                side_effect=OSError("disk unavailable"),
+            ),
+            override_settings(APPRISE_WEBHOOK_URL="https://localhost/webhook"),
+            self.assertLogs("django", level="WARNING"),
+        ):
+            send_webhook(iter(("{}",)))
+
+        mock_post.assert_not_called()
+
+        class ShortWriteFile(io.BytesIO):
+            """Report that only part of the first chunk was written."""
+
+            def write(self, value):
+                super().write(value[:-1])
+                return len(value) - 1
+
+        with (
+            mock.patch(
+                "apprise_api.api.utils.tempfile.TemporaryFile",
+                return_value=ShortWriteFile(),
+            ),
+            override_settings(APPRISE_WEBHOOK_URL="https://localhost/webhook"),
+            self.assertLogs("django", level="WARNING"),
+        ):
+            send_webhook(iter(("{}",)))
+
+        mock_post.assert_not_called()
+
+    @mock.patch("requests.post")
+    def test_webhook_contains_mapping_serialization_failure(self, mock_post):
+        """Invalid mapping content is reported without making a request."""
+        payload = {"unsupported": object()}
+
+        with (
+            override_settings(APPRISE_WEBHOOK_URL="https://localhost/webhook"),
+            self.assertLogs("django", level="WARNING"),
+        ):
+            # JSON preparation may fail before any network work begins.
+            send_webhook(payload)
+
+        mock_post.assert_not_called()
+
+    @mock.patch("requests.post")
+    def test_webhook_contains_cleanup_failure(self, mock_post):
+        """A close error is reported after a buffered webhook is sent."""
+
+        class CloseFailFile(io.BytesIO):
+            """Store normally but fail the first cleanup request."""
+
+            failed = False
+
+            def close(self):
+                if not self.failed:
+                    self.failed = True
+                    raise OSError("close failed")
+
+                super().close()
+
+        spool = CloseFailFile()
+
+        def post(_url, **kwargs):
+            """Read the complete request while the temporary file is open."""
+            assert loads(kwargs["data"].read()) == {}
+            response = mock.Mock()
+            response.status_code = requests.codes.ok
+            return response
+
+        mock_post.side_effect = post
+
+        with (
+            mock.patch(
+                "apprise_api.api.utils.tempfile.TemporaryFile",
+                return_value=spool,
+            ),
+            override_settings(APPRISE_WEBHOOK_URL="https://localhost/webhook"),
+            self.assertLogs("django", level="WARNING"),
+        ):
+            send_webhook(iter(("{}",)))
+
+        mock_post.assert_called_once()
+        # Finish cleanup after exercising the contained first failure.
+        spool.close()
+
     @mock.patch("requests.post")
     def test_webhook_testing(self, mock_post):
         """
@@ -123,14 +233,16 @@ class WebhookTests(SimpleTestCase):
         response.status_code = requests.codes.internal_server_error
         mock_post.return_value = response
         with override_settings(APPRISE_WEBHOOK_URL="http://localhost"):
-            send_webhook({})
+            with self.assertLogs("django", level="WARNING"):
+                send_webhook({})
             assert mock_post.call_count == 1
 
         mock_post.reset_mock()
 
         # A valid URL with a bad server response:
         mock_post.return_value = None
-        mock_post.side_effect = requests.RequestException("error")
+        mock_post.side_effect = requests.Timeout("timed out")
         with override_settings(APPRISE_WEBHOOK_URL="http://localhost"):
-            send_webhook({})
+            with self.assertLogs("django", level="WARNING"):
+                send_webhook({})
             assert mock_post.call_count == 1
