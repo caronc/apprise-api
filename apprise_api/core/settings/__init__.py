@@ -26,6 +26,7 @@ import os
 
 import apprise
 from core.themes import SiteTheme
+from core.utils import parse_bool
 
 # Register apprise's custom log levels before Django's dictConfig() runs.
 if not hasattr(logging, "TRACE"):
@@ -66,14 +67,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "+reua88v8rs4j!bcfdtinb-f0edxazf!$x_q1
 #    ./manage.py runserver
 #
 # Support 'yes', '1', 'true', 'enable', 'active', and +
-DEBUG = os.environ.get("DEBUG", "No")[0].lower() in (
-    "a",
-    "y",
-    "1",
-    "t",
-    "e",
-    "+",
-)
+DEBUG = parse_bool(os.environ.get("DEBUG", "No"))
 
 # allow all hosts by default otherwise read from the
 # ALLOWED_HOSTS environment variable
@@ -268,6 +262,29 @@ APPRISE_ATTACH_ALLOW_URLS = os.environ.get("APPRISE_ATTACH_ALLOW_URL", "*").lowe
 # (defined in MB)
 APPRISE_UPLOAD_MAX_MEMORY_SIZE = abs(int(os.environ.get("APPRISE_UPLOAD_MAX_MEMORY_SIZE", 3))) * 1048576
 
+
+def _stream_size_setting(name, default):
+    """Return a non-negative whole-MB stream setting in bytes."""
+    try:
+        # Environment values arrive as text, while defaults are whole MB.
+        value = int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be a non-negative whole number of MB.") from None
+
+    if value < 0:
+        raise ValueError(f"{name} must be a non-negative whole number of MB.")
+
+    # Django and the buffering code work with bytes.
+    return value * 1048576
+
+
+# Live logs use memory first, then one temporary file for a slow client.
+# These same limits are placed on AppriseAsset for completed result logs.
+APPRISE_STREAM_MEMORY_SIZE = _stream_size_setting("APPRISE_STREAM_MEMORY_SIZE", 2)
+
+# This allowance bounds the temporary file shared by captured logs.
+APPRISE_STREAM_DISK_SIZE = _stream_size_setting("APPRISE_STREAM_DISK_SIZE", 256)
+
 # The maximum configuration payload size (in bytes) accepted by form/API
 # configuration updates. This value is configured in KB and converted to bytes
 # (KB * 1024). It is capped by APPRISE_UPLOAD_MAX_MEMORY_SIZE (bytes).
@@ -292,7 +309,7 @@ APPRISE_CONFIG_MAX_LENGTH = min(
 # The idea here is that someone has set up the configuration they way they want
 # and do not want this information exposed any more then it needs to be.
 # it's a lock down mode if you will.
-APPRISE_CONFIG_LOCK = os.environ.get("APPRISE_CONFIG_LOCK", "no")[0].lower() in ("a", "y", "1", "t", "e", "+")
+APPRISE_CONFIG_LOCK = parse_bool(os.environ.get("APPRISE_CONFIG_LOCK", "no"))
 
 # Stateless posts to /notify/ will resort to this set of URLs if none
 # were otherwise posted with the URL request.
@@ -300,14 +317,7 @@ APPRISE_STATELESS_URLS = os.environ.get("APPRISE_STATELESS_URLS", "")
 
 # Allow stateless URLS to generate and/or work with persistent storage
 # By default this is set to no
-APPRISE_STATELESS_STORAGE = os.environ.get("APPRISE_STATELESS_STORAGE", "no")[0].lower() in (
-    "a",
-    "y",
-    "1",
-    "t",
-    "e",
-    "+",
-)
+APPRISE_STATELESS_STORAGE = parse_bool(os.environ.get("APPRISE_STATELESS_STORAGE", "no"))
 
 # Defines the stateful mode; possible values are:
 # - hash (default): content is hashed and zipped
@@ -354,39 +364,15 @@ APPRISE_WEBHOOK_MAPPING_MAX_DEPTH = abs(int(os.environ.get("APPRISE_WEBHOOK_MAPP
 # - Website requests returns 421 (Misdirected Request) for what would otherwise
 #   have been part of the Apprise Website host if this is set to 'no'.
 # - The default value of this is 'no'
-APPRISE_API_ONLY = os.environ.get("APPRISE_API_ONLY", "no")[0].lower() in (
-    "a",
-    "y",
-    "1",
-    "t",
-    "e",
-    "+",
-)
+APPRISE_API_ONLY = parse_bool(os.environ.get("APPRISE_API_ONLY", "no"))
 
 # Allow Admin mode:
 # - showing a list of configuration keys (when STATEFUL_MODE is set to simple)
-APPRISE_ADMIN = os.environ.get("APPRISE_ADMIN", "no")[0].lower() in (
-    "a",
-    "y",
-    "1",
-    "t",
-    "e",
-    "+",
-)
+APPRISE_ADMIN = parse_bool(os.environ.get("APPRISE_ADMIN", "no"))
 
 # Allow Interpret Emojis override
 APPRISE_INTERPRET_EMOJIS = (
-    None
-    if "APPRISE_INTERPRET_EMOJIS" not in os.environ
-    else os.environ.get("APPRISE_INTERPRET_EMOJIS", "yes")[0].lower()
-    in (
-        "a",
-        "y",
-        "1",
-        "t",
-        "e",
-        "+",
-    )
+    None if "APPRISE_INTERPRET_EMOJIS" not in os.environ else parse_bool(os.environ.get("APPRISE_INTERPRET_EMOJIS"))
 )
 
 # Allow HTTP Redirects override
@@ -394,7 +380,7 @@ APPRISE_INTERPRET_EMOJIS = (
 # the underlying requests library.  Set APPRISE_HTTP_REDIRECTS=no to disable
 # redirect following globally across all plugins without touching individual
 # URLs.
-APPRISE_HTTP_REDIRECTS = os.environ.get("APPRISE_HTTP_REDIRECTS", "yes")[0].lower() in ("a", "y", "1", "t", "e", "+")
+APPRISE_HTTP_REDIRECTS = parse_bool(os.environ.get("APPRISE_HTTP_REDIRECTS", "yes"))
 
 # Allow a server-wide default input body format to be configured.
 # Formatting is entirely optional and unset (None) by default: content is

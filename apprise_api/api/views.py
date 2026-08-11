@@ -20,14 +20,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from collections import deque
 import json
 import logging
 import queue
 import re
+import struct
+import tempfile
 import threading
+import time
 from urllib.parse import parse_qs, urlsplit
 
 import apprise
+from core.utils import parse_bool, parse_log_level
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
@@ -74,8 +79,360 @@ MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencod
 # <blank>
 ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
 
-# Matches requests for live notification progress via Server-Sent Events.
-MIME_IS_EVENT_STREAM = re.compile(r"text/event-stream", re.I)
+# Each disk entry starts with its byte length.
+_EVENT_SIZE = struct.Struct("!Q")
+
+# Report the first event moved to disk.
+_STREAM_PUT_SPOOLED = "spooled"
+
+# Report an event that could not be retained.
+_STREAM_PUT_FAILED = "failed"
+
+# This safe message is shown to a client after temporary storage is lost.
+_STREAM_STORAGE_WARNING = (
+    "Live log delivery reached a server storage limit or error. Some log "
+    "entries may be unavailable, but notification processing is continuing. "
+    "Please contact the server administrator."
+)
+
+
+def _safe_stream_log(level, message, *args, exc_info=None):
+    """Write an operational log without affecting notification delivery."""
+    try:  # noqa: SIM105 - keep the reason for suppressing handler failures clear.
+        logger.log(level, message, *args, exc_info=exc_info)
+    except Exception:
+        # A custom or broken logging handler must not stop notification work.
+        pass
+
+
+class _SpooledEventQueue:
+    """Keep a FIFO event stream in memory, then an anonymous temp file."""
+
+    def __init__(
+        self,
+        memory_bytes=None,
+        disk_bytes=None,
+    ):
+        # Keep this much waiting log data in memory before using disk.
+        # Tests may provide a value instead of using the server setting.
+        self._memory_byte_limit = settings.APPRISE_STREAM_MEMORY_SIZE if memory_bytes is None else memory_bytes
+
+        # Limit temporary disk use for this response.
+        self._disk_byte_limit = settings.APPRISE_STREAM_DISK_SIZE if disk_bytes is None else disk_bytes
+
+        # Memory holds the oldest events until its allowance is filled.
+        self._memory = deque()
+
+        # Count encoded bytes so non-ASCII text uses the correct allowance.
+        self._memory_bytes = 0
+
+        # Producers wake the response thread whenever a new event is ready.
+        self._condition = threading.Condition()
+
+        # Open the temporary file only when memory is full.
+        self._spool = None
+
+        # Point to the next disk event to read.
+        self._read_offset = 0
+
+        # Point to where the next complete disk event will be written.
+        self._write_offset = 0
+
+        # Number of complete events currently waiting on disk.
+        self._disk_count = 0
+
+        # Number of retained events still waiting for the client.
+        self._backlog = 0
+
+        # Largest backlog observed during this response.
+        self._max_backlog = 0
+
+        # Total number of events moved to temporary disk storage.
+        self._spooled_count = 0
+
+        # Total number of events that could not be retained.
+        self._unavailable_count = 0
+
+        # Report the first move to disk only once.
+        self._reported_slow = False
+
+        # Tell the response generator to send one visible storage warning.
+        self._storage_failed = False
+
+        # Avoid repeated disk work after temporary storage itself fails.
+        self._disk_unavailable = False
+
+        # Closed queues ignore entries produced after a client disconnects.
+        self._closed = False
+
+    def put(self, event):
+        """Queue an event and report the first spill or storage failure."""
+        with self._condition:
+            # A disconnected response no longer accepts log events.
+            if self._closed:
+                return None
+
+            # Limits are measured in encoded bytes, matching disk usage.
+            payload = event.encode("utf-8")
+
+            # A zero disk limit intentionally retains all events in memory.
+            memory_only = self._disk_byte_limit == 0 and self._memory_byte_limit > 0
+
+            if self._spool is None and (
+                memory_only
+                or (self._memory_byte_limit > 0 and self._memory_bytes + len(payload) <= self._memory_byte_limit)
+            ):
+                # Keep early events in memory while space remains.
+                self._memory.append((event, len(payload)))
+                self._memory_bytes += len(payload)
+
+            else:
+                if not self._disk_byte_limit:
+                    # Both limits are zero, so backlog retention is disabled.
+                    self._record_storage_limit("Notification stream buffering is disabled.")
+                    self._unavailable_count += 1
+
+                    return _STREAM_PUT_FAILED
+
+                if self._disk_unavailable:
+                    # Keep notification work moving after storage is lost.
+                    self._unavailable_count += 1
+
+                    return None
+
+                # Remember where valid disk content ends before writing.
+                previous_offset = self._write_offset
+
+                # Prefix the event with its size so it can be read safely.
+                record = _EVENT_SIZE.pack(len(payload)) + payload
+
+                if previous_offset + len(record) > self._disk_byte_limit:
+                    self._record_storage_limit("Notification stream reached its configured temporary storage limit.")
+                    self._unavailable_count += 1
+
+                    return _STREAM_PUT_FAILED
+
+                if self._spool is None:
+                    # TemporaryFile is unlinked automatically when closed.
+                    # It stays open until the stream drains or disconnects.
+                    try:
+                        self._spool = tempfile.TemporaryFile(  # noqa: SIM115
+                            mode="w+b", buffering=0
+                        )
+                    except OSError as error:
+                        # Creation failure leaves existing memory untouched.
+                        self._record_storage_failure("creation", error)
+                        self._unavailable_count += 1
+
+                        return _STREAM_PUT_FAILED
+
+                try:
+                    # Write after the last complete event.
+                    self._spool.seek(previous_offset)
+                    if self._spool.write(record) != len(record):
+                        raise OSError("Temporary storage accepted an incomplete event.")
+                except (OSError, ValueError) as error:
+                    # Remove a partial tail while preserving earlier events.
+                    try:
+                        # Discard only the incomplete record at the file end.
+                        self._spool.seek(previous_offset)
+                        self._spool.truncate()
+
+                    except (OSError, ValueError):
+                        # The original write error remains the useful failure.
+                        pass
+
+                    self._record_storage_failure("write", error)
+                    self._unavailable_count += 1
+
+                    if not self._disk_count:
+                        # No valid disk events remain for a reader to collect.
+                        self._close_spool()
+
+                    return _STREAM_PUT_FAILED
+
+                # Advance the valid end only after the full record is written.
+                self._write_offset = previous_offset + len(record)
+
+                # This complete event is now available to the reader.
+                self._disk_count += 1
+
+                # Keep a lifetime total even after this event is read.
+                self._spooled_count += 1
+
+            # Count only events that can still be delivered to the client.
+            self._backlog += 1
+
+            # Preserve the highest point for the final operational log.
+            self._max_backlog = max(self._max_backlog, self._backlog)
+
+            # Wake one response reader waiting for an event.
+            self._condition.notify()
+
+            if self._spool is not None and not self._reported_slow:
+                # Tell the caller only about the first move to disk.
+                self._reported_slow = True
+
+                return _STREAM_PUT_SPOOLED
+
+            return None
+
+    def get(self, timeout=None):
+        """Return the next event, waiting up to timeout when provided."""
+        # Use a fixed deadline so wakeups do not extend the requested wait.
+        deadline = time.monotonic() + timeout if timeout is not None else None
+
+        with self._condition:
+            while not self._backlog and not self._closed:
+                # Recalculate only the time left before the fixed deadline.
+                remaining = None if deadline is None else deadline - time.monotonic()
+
+                if remaining is not None and remaining <= 0:
+                    raise queue.Empty
+
+                # Sleep until a producer adds work, closes, or time expires.
+                self._condition.wait(remaining)
+
+            if not self._backlog:
+                # Closed and empty queues use the same signal as a timeout.
+                raise queue.Empty
+
+            if self._memory:
+                # Memory is older than disk because it was filled first.
+                event, size = self._memory.popleft()
+
+                # Return these bytes to the in-memory allowance.
+                self._memory_bytes -= size
+
+            else:
+                try:
+                    # Read exactly one length-prefixed event from disk.
+                    self._spool.seek(self._read_offset)
+
+                    # The first fixed-size value tells us how much text follows.
+                    size_data = self._spool.read(_EVENT_SIZE.size)
+
+                    if len(size_data) != _EVENT_SIZE.size:
+                        raise OSError("Incomplete event size in temporary storage.")
+
+                    size = _EVENT_SIZE.unpack(size_data)[0]
+
+                    # Read exactly the event size declared above.
+                    payload = self._spool.read(size)
+
+                    if len(payload) != size:
+                        raise OSError("Incomplete event in temporary storage.")
+
+                    # Events were stored as UTF-8 text by put().
+                    event = payload.decode("utf-8")
+
+                    # Point the next read just beyond this complete record.
+                    self._read_offset += _EVENT_SIZE.size + size
+
+                except (OSError, UnicodeError, ValueError) as error:
+                    # Drop unreadable disk entries but keep delivery running.
+                    self._record_storage_failure("read", error)
+
+                    # Every remaining disk event is now unavailable.
+                    self._unavailable_count += self._disk_count
+                    self._backlog -= self._disk_count
+                    self._disk_count = 0
+
+                    self._close_spool()
+
+                    raise queue.Empty from None
+
+                # One complete disk event was successfully restored.
+                self._disk_count -= 1
+
+                if not self._disk_count:
+                    # Release disk space as soon as the final event is read.
+                    self._close_spool()
+
+            # This event is no longer waiting for the client.
+            self._backlog -= 1
+
+            return event
+
+    def qsize(self):
+        """Return the number of events awaiting delivery."""
+        with self._condition:
+            return self._backlog
+
+    def storage_failed(self):
+        """Return whether temporary storage failed during this stream."""
+        with self._condition:
+            return self._storage_failed
+
+    def _record_storage_failure(self, operation, error):
+        """Record and report the first temporary-storage failure."""
+        if not self._disk_unavailable:
+            # Set this before logging because a custom handler may also fail.
+            self._storage_failed = True
+
+            # Future events can still use free memory, but no more disk writes.
+            self._disk_unavailable = True
+
+            _safe_stream_log(
+                logging.ERROR,
+                "Notification stream temporary storage %s failed; notification processing will continue.",
+                operation,
+                exc_info=(type(error), error, error.__traceback__),
+            )
+
+    def _record_storage_limit(self, message):
+        """Report the first configured storage limit reached by a stream."""
+        if not self._storage_failed:
+            # The response generator turns this into one client-facing warning.
+            self._storage_failed = True
+
+            _safe_stream_log(logging.WARNING, message)
+
+    def _close_spool(self):
+        """Close temporary storage without allowing cleanup to escape."""
+        # Detach first so another cleanup attempt cannot reuse this handle.
+        spool, self._spool = self._spool, None
+
+        # A future spool starts from the beginning of a new temporary file.
+        self._read_offset = 0
+        self._write_offset = 0
+
+        if spool is not None:
+            try:
+                # TemporaryFile removes its anonymous content when closed.
+                spool.close()
+
+            except (OSError, ValueError) as error:
+                self._record_storage_failure("cleanup", error)
+
+    def close(self):
+        """Release temporary storage and return backlog statistics."""
+        with self._condition:
+            # Save counts before clearing the queue for the caller's logs.
+            self._closed = True
+            stats = (
+                self._backlog,
+                self._max_backlog,
+                self._spooled_count,
+                self._unavailable_count,
+            )
+
+            # Release all retained in-memory event text.
+            self._memory.clear()
+            self._memory_bytes = 0
+
+            # Closing the queue also removes its anonymous temporary file.
+            self._close_spool()
+
+            # The closed queue has no remaining deliverable events.
+            self._backlog = 0
+            self._disk_count = 0
+
+            # Wake readers so they can observe the closed, empty state.
+            self._condition.notify_all()
+
+            return stats
+
 
 # Tags separated by space, &, or + are and'ed together
 # Tags separated by commas (even commas wrapped in spaces) are "or'ed" together
@@ -202,48 +559,206 @@ def _notify_log_asctime(entry):
 
 
 def render_notify_logs(entries, json_response, content_type):
-    """
-    Render notification logs for the requested response format.
+    """Yield logs as JSON, HTML, or plain text.
 
-    JSON uses ``[level, time, message]`` entries, HTML uses a log list,
-    and plain text uses one entry per line.
+    Entries are read only as the response needs them, including logs stored on
+    disk.
     """
-    entries = list(entries)
-
     if json_response:
-        return [[entry.level, _notify_log_asctime(entry), entry.message] for entry in entries]
+        # Open the details array before reading its first log entry.
+        yield "["
+
+        separator = ""
+        for entry in entries:
+            # Encode one entry at a time.
+            yield separator
+            yield json.dumps(
+                [entry.level, _notify_log_asctime(entry), entry.message],
+                cls=JSONEncoder,
+                separators=(",", ":"),
+            )
+            separator = ","
+
+        yield "]"
+        return
 
     if content_type == "text/html":
-        return '<ul class="logs">{}</ul>'.format(
-            "".join(
+        # The surrounding list is sent even when no log entries were captured.
+        yield '<ul class="logs">'
+
+        for entry in entries:
+            # Escape plugin messages before placing them into HTML.
+            yield (
                 '<li class="log_{level}">'
                 '<div class="log_time">{time}</div>'
                 '<div class="log_level">{level}</div>'
-                '<div class="log_msg">{message}</div></li>'.format(
-                    level=entry.level,
-                    time=_notify_log_asctime(entry),
-                    message=escape(entry.message),
-                )
-                for entry in entries
+                '<div class="log_msg">{message}</div></li>'
+            ).format(
+                level=entry.level,
+                time=_notify_log_asctime(entry),
+                message=escape(entry.message),
             )
+
+        yield "</ul>"
+        return
+
+    # Plain text uses separators before later entries to avoid a trailing line.
+    separator = ""
+    for entry in entries:
+        yield separator
+        yield str(entry)
+        separator = "\n"
+
+
+def render_notify_response(
+    entries,
+    json_response,
+    content_type,
+    error=None,
+):
+    """Yield the complete HTTP response while keeping log entries lazy."""
+    if json_response:
+        # Preserve the documented response envelope around streamed details.
+        yield '{"error":'
+        yield json.dumps(error, cls=JSONEncoder, separators=(",", ":"))
+        yield ',"details":'
+        yield from render_notify_logs(entries, True, content_type)
+        yield "}"
+        return
+
+    # Track whether plain text produced anything before using an error fallback.
+    rendered = False
+    for chunk in render_notify_logs(entries, False, content_type):
+        rendered = True
+        yield chunk
+
+    if not rendered and error is not None:
+        # Match the earlier behavior when a failed call captured no text logs.
+        yield str(error)
+
+
+class _ResultLogResponse:
+    """Stream one result and close its temporary log storage."""
+
+    def __init__(self, result, json_response, content_type, error=None):
+        # The result remains open until Django finishes or closes this stream.
+        self._result = result
+
+        # JSON responses include an envelope around the streamed log details.
+        self._json_response = json_response
+
+        # HTML and plain-text renderers use this to choose their output shape.
+        self._content_type = content_type
+
+        # Failed notifications include this message in the response envelope.
+        self._error = error
+
+        # Closing is safe to request more than once.
+        self._closed = False
+
+    def __iter__(self):
+        """Yield response chunks and release storage after delivery."""
+        try:
+            yield from render_notify_response(
+                self._result.logs(),
+                self._json_response,
+                self._content_type,
+                error=self._error,
+            )
+
+        finally:
+            # Normal completion and interrupted iteration share cleanup.
+            self.close()
+
+    def close(self):
+        """Release disk-backed result logs when Django closes the response."""
+        if not self._closed:
+            self._closed = True
+
+            # AppriseResult.close() safely handles memory-only results too.
+            self._result.close()
+
+
+def stream_result_response(
+    result,
+    *,
+    json_response,
+    content_type,
+    status,
+    error=None,
+):
+    """Stream a response and release result storage when it closes."""
+    content = _ResultLogResponse(
+        result,
+        json_response,
+        content_type,
+        error=error,
+    )
+
+    response = StreamingHttpResponse(
+        content,
+        status=status,
+        content_type=content_type,
+    )
+
+    # Compression middleware may stream-compress this response safely.
+    return response
+
+
+def iter_notify_webhook(source, result):
+    """Yield a completion webhook without joining all result logs."""
+    yield '{"source":'
+    yield json.dumps(source, cls=JSONEncoder, separators=(",", ":"))
+
+    yield ',"status":'
+    yield "0" if result else "1"
+
+    yield ',"output":'
+    if result is None:
+        # Unexpected notification failures have no structured result to read.
+        yield json.dumps(
+            "Notification processing failed.",
+            cls=JSONEncoder,
+            separators=(",", ":"),
         )
 
-    # content_type == 'text/plain'
-    return "\n".join(str(entry) for entry in entries)
+    else:
+        # Webhook output keeps its established JSON log-list shape.
+        yield from render_notify_logs(
+            result.logs(),
+            True,
+            "application/json",
+        )
+
+    yield "}"
+
+
+def send_notify_webhook(source, result):
+    """Send the completion webhook without changing notification results."""
+    if settings.APPRISE_WEBHOOK_URL:
+        try:
+            # The utility spools these chunks to disk before making the request.
+            send_webhook(iter_notify_webhook(source, result))
+        except Exception:
+            # Expected URL and network failures are logged by send_webhook.
+            # This final guard covers an unexpected library or handler error.
+            _safe_stream_log(
+                logging.ERROR,
+                "Unexpected error while sending the completion webhook.",
+                exc_info=True,
+            )
 
 
 def _stream_requested(request):
     """
     Return whether the caller requested a live event stream.
 
-    Callers may use ``Accept: text/event-stream`` or the ``?stream=1``
-    shortcut when setting headers is inconvenient.
+    Use ``Accept: text/event-stream`` or a truthy ``?stream=`` value.
     """
-    return MIME_IS_EVENT_STREAM.search(request.headers.get("accept", "")) is not None or request.GET.get("stream") in (
-        "1",
-        "true",
-        "yes",
-    )
+    media_types = (value.partition(";")[0].strip().lower() for value in request.headers.get("accept", "").split(","))
+    if "text/event-stream" in media_types:
+        return True
+    return parse_bool(request.GET.get("stream"), default=False)
 
 
 def _sse_event(event, data):
@@ -251,33 +766,53 @@ def _sse_event(event, data):
     return "event: {}\ndata: {}\n\n".format(event, json.dumps(data, cls=JSONEncoder))
 
 
-def stream_notify_response(a_obj, *, body, title, notify_type, tag, attach, log_level, match_always=True):
+def stream_notify_response(
+    a_obj,
+    *,
+    body,
+    title,
+    notify_type,
+    tag,
+    attach,
+    log_level,
+    webhook_source=None,
+    match_always=True,
+):
     """
     Stream notification progress while ``notify()`` runs in the background.
 
     Log entries are sent as they occur. The stream ends with a ``result``
     event, or an ``error`` event if notification processing raises.
     """
-    events = queue.Queue()
-    done = object()
+    events = _SpooledEventQueue()
+    finished = threading.Event()
+    final_event = [_sse_event("error", {"message": "Notification processing failed."})]
 
     def log_callback(entry, service):
         # Apprise requires a synchronous callback; the queue safely passes
         # each entry to the response generator.
-        events.put(
-            _sse_event(
-                "log",
-                {
-                    "level": entry.level,
-                    "asctime": _notify_log_asctime(entry),
-                    "message": entry.message,
-                    # Include the service type, never its sensitive target URL.
-                    "service": getattr(service, "service_name", None),
-                },
-            )
+        event = _sse_event(
+            "log",
+            {
+                "level": entry.level,
+                "asctime": _notify_log_asctime(entry),
+                "message": entry.message,
+                # Include the service type, never its sensitive target URL.
+                "service": getattr(service, "service_name", None),
+            },
         )
+        queue_status = events.put(event)
+        if queue_status == _STREAM_PUT_SPOOLED:
+            # Record slow readers without delaying notification delivery.
+            _safe_stream_log(
+                logging.WARNING,
+                "Notification stream backlog moved to temporary storage.",
+            )
 
     def run():
+        # The worker owns notification processing and prepares one final event.
+        result = None
+
         try:
             result = a_obj.notify(
                 body,
@@ -289,33 +824,117 @@ def stream_notify_response(a_obj, *, body, title, notify_type, tag, attach, log_
                 log_level=log_level,
                 log_callback=log_callback,
             )
-            events.put(
-                _sse_event(
-                    "result",
-                    {"status": result.status.name if result.status is not None else None},
-                )
+            final_event[0] = _sse_event(
+                "result",
+                {"status": result.status.name if result.status is not None else None},
             )
-        except Exception as e:
-            events.put(_sse_event("error", {"message": str(e)}))
-        finally:
-            events.put(done)
 
-    # Standard threads work in tests and under gevent-enabled production workers.
-    threading.Thread(target=run, daemon=True).start()
+            # Webhook rendering walks logs in bounded chunks when configured.
+            send_notify_webhook(webhook_source, result)
+
+        except Exception:
+            # Log internal details without exposing them to the caller.
+            _safe_stream_log(
+                logging.ERROR,
+                "Notification streaming failed.",
+                exc_info=True,
+            )
+            send_notify_webhook(webhook_source, None)
+
+        finally:
+            if result is not None:
+                # Live events are already queued, so retained result storage
+                # can be released after optional webhook delivery finishes.
+                result.close()
+
+            # Wake the response loop even when notification work failed.
+            finished.set()
 
     def generator():
-        # Send an ignored SSE comment so headers arrive before the first event.
-        yield ": connected\n\n"
-        while True:
-            item = events.get()
-            if item is done:
-                return
-            yield item
+        storage_warning_sent = False
+        try:
+            # Start work when Django begins sending the response.
+            try:
+                threading.Thread(target=run, daemon=True).start()
+            except RuntimeError:
+                _safe_stream_log(
+                    logging.ERROR,
+                    "Notification streaming could not start.",
+                    exc_info=True,
+                )
+                finished.set()
+
+            # Send an ignored SSE comment so headers arrive immediately.
+            yield ": connected\n\n"
+            while True:
+                if events.storage_failed() and not storage_warning_sent:
+                    # This alert bypasses the failed temporary storage.
+                    storage_warning_sent = True
+                    entry = apprise.NotifyLogEntry(level="ERROR", message=_STREAM_STORAGE_WARNING)
+                    yield _sse_event(
+                        "log",
+                        {
+                            "level": entry.level,
+                            "asctime": _notify_log_asctime(entry),
+                            "message": entry.message,
+                            "service": None,
+                        },
+                    )
+                    continue
+
+                if events.qsize():
+                    try:
+                        yield events.get(timeout=0.25)
+                    except queue.Empty:
+                        continue
+                    continue
+
+                if finished.is_set():
+                    # All queued logs were sent, so the final event can follow.
+                    break
+
+                try:
+                    yield events.get(timeout=0.25)
+                except queue.Empty:
+                    continue
+
+            yield final_event[0]
+        finally:
+            # This also runs when the client disconnects mid-stream.
+            pending, max_backlog, spooled, unavailable = events.close()
+            if not finished.is_set():
+                # The client is gone, but notification work may still finish.
+                _safe_stream_log(
+                    logging.WARNING,
+                    "Notification stream closed before notification processing finished.",
+                )
+            if pending:
+                # The client is gone, so only normal server logging remains.
+                _safe_stream_log(
+                    logging.WARNING,
+                    "Notification stream closed with %d pending event(s).",
+                    pending,
+                )
+            if spooled:
+                _safe_stream_log(
+                    logging.INFO,
+                    "Notification stream spooled %d event(s); peak backlog was %d.",
+                    spooled,
+                    max_backlog,
+                )
+            if unavailable:
+                _safe_stream_log(
+                    logging.WARNING,
+                    "Notification stream could not retain %d log event(s).",
+                    unavailable,
+                )
 
     response = StreamingHttpResponse(generator(), content_type="text/event-stream")
     response["Cache-Control"] = "no-cache"
     # Prevent proxies such as nginx from batching streamed events.
     response["X-Accel-Buffering"] = "no"
+    # Compression can buffer events, so keep this response uncompressed.
+    response["Content-Encoding"] = "identity"
     return response
 
 
@@ -568,14 +1187,7 @@ class DetailsView(View):
 
         # Show All flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
-        show_all = request.GET.get("all", "no")[0].lower() in (
-            "a",
-            "y",
-            "1",
-            "t",
-            "e",
-            "+",
-        )
+        show_all = parse_bool(request.GET.get("all"), default=False)
 
         # Our status
         status = ResponseCode.okay
@@ -661,15 +1273,8 @@ class ConfigListView(View):
         """
         # Detect the format our response should be in.
         #
-        # This must check Accept first: Content-Type describes the
-        # *request* body, not the desired response, and a bodyless
-        # GET/POST still gets a Content-Type from the WSGI layer (commonly
-        # "text/plain" per the WSGI/CGI convention for an omitted
-        # Content-Type) even when the client never sent one - so checking
-        # it before Accept silently ignores an explicit
-        # "Accept: application/json" whenever there's no real request
-        # body, which is the common case for a JSON API client fetching
-        # data with a plain GET.
+        # Accept chooses the response format. Content-Type may be a server
+        # default on an empty request, so check Accept first.
         json_response = (
             MIME_IS_JSON.match(
                 request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
@@ -678,10 +1283,7 @@ class ConfigListView(View):
         )
 
         if settings.APPRISE_API_ONLY and not json_response:
-            # API Mode only disables the browsable HTML page; a JSON API
-            # request for the key list is still "the API" and stays
-            # available (subject to the APPRISE_ADMIN check below, same as
-            # ever - this only restores JSON access, not who may use it).
+            # API-only mode hides HTML. JSON still follows the admin check.
             return Error421View.as_view()(request)
 
         if not (settings.APPRISE_ADMIN and settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.SIMPLE):
@@ -1094,15 +1696,8 @@ class DelView(View):
         """
         # Detect the format our response should be in.
         #
-        # This must check Accept first: Content-Type describes the
-        # *request* body, not the desired response, and a bodyless
-        # GET/POST still gets a Content-Type from the WSGI layer (commonly
-        # "text/plain" per the WSGI/CGI convention for an omitted
-        # Content-Type) even when the client never sent one - so checking
-        # it before Accept silently ignores an explicit
-        # "Accept: application/json" whenever there's no real request
-        # body, which is the common case for a JSON API client fetching
-        # data with a plain GET.
+        # Accept chooses the response format. Content-Type may be a server
+        # default on an empty request, so check Accept first.
         json_response = (
             MIME_IS_JSON.match(
                 request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
@@ -1727,7 +2322,9 @@ class NotifyView(View):
         #
         apply_global_filters()
 
-        # Prepare ourselves a default Asset
+        # Put result-log storage limits on the asset Apprise already receives.
+        kwargs["result_log_memory_size"] = settings.APPRISE_STREAM_MEMORY_SIZE
+        kwargs["result_log_disk_size"] = settings.APPRISE_STREAM_DISK_SIZE
         asset = apprise.AppriseAsset(**kwargs)
 
         # Prepare our apprise object
@@ -1764,45 +2361,11 @@ class NotifyView(View):
         else:
             content_type = "application/json"
 
-        # Acquire our log level from headers if defined, otherwise use
-        # the global one set in the settings
-        level = request.headers.get(
-            "X-Apprise-Log-Level",
+        # Use the request level when valid, then the configured default.
+        level = parse_log_level(
+            request.headers.get("X-Apprise-Log-Level"),
             settings.APPRISE_LOG_LEVEL,
-        ).upper()
-        if level not in (
-            "CRITICAL",
-            "ERROR",
-            "WARNING",
-            "INFO",
-            "DEBUG",
-            "TRACE",
-        ):
-            level = settings.APPRISE_LOG_LEVEL.upper()
-
-        # Convert level to it's integer value
-        if level == "CRITICAL":
-            level = logging.CRITICAL
-
-        elif level == "ERROR":
-            level = logging.ERROR
-
-        elif level == "WARNING":
-            level = logging.WARNING
-
-        elif level == "INFO":
-            level = logging.INFO
-
-        elif level == "DEBUG":
-            level = logging.DEBUG
-
-        elif level == "TRACE":
-            level = logging.DEBUG - 1
-
-        if not isinstance(level, int):
-            # The configured default log level is not a recognised value;
-            # fall back to WARNING so notify() receives a valid integer.
-            level = logging.WARNING
+        )
 
         if stream_response:
             # Return live progress while notification runs in the background.
@@ -1814,6 +2377,7 @@ class NotifyView(View):
                 tag=(content.get("tag") or None),
                 attach=attach,
                 log_level=level,
+                webhook_source=request.META.get("REMOTE_ADDR", ""),
             )
 
         # Capture notification logs at the caller's requested level.
@@ -1826,18 +2390,8 @@ class NotifyView(View):
             log_level=level,
         )
 
-        # Format the structured logs for the response.
-        response = render_notify_logs(result.logs(), json_response, content_type)
-
-        if settings.APPRISE_WEBHOOK_URL:
-            webhook_payload = {
-                "source": request.META["REMOTE_ADDR"],
-                "status": 0 if result else 1,
-                "output": response,
-            }
-
-            # Send our webhook (pass or fail)
-            send_webhook(webhook_payload)
+        # Send the optional webhook from a separate bounded walk of the logs.
+        send_notify_webhook(request.META.get("REMOTE_ADDR", ""), result)
 
         if not result:
             # If at least one notification couldn't be sent; change up
@@ -1850,22 +2404,12 @@ class NotifyView(View):
                 "" if not tag else f" (Tags: {tag})",
                 key,
             )
-            return (
-                HttpResponse(
-                    response if response else msg,
-                    status=status,
-                    content_type=content_type,
-                )
-                if not json_response
-                else JsonResponse(
-                    {
-                        "error": msg,
-                        "details": response,
-                    },
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+            return stream_result_response(
+                result,
+                json_response=json_response,
+                content_type=content_type,
+                status=status,
+                error=msg,
             )
 
         logger.info(
@@ -1877,18 +2421,11 @@ class NotifyView(View):
 
         # Return our success message
         status = ResponseCode.okay
-        return (
-            HttpResponse(response, status=status, content_type=content_type)
-            if not json_response
-            else JsonResponse(
-                {
-                    "error": None,
-                    "details": response,
-                },
-                encoder=JSONEncoder,
-                safe=False,
-                status=status,
-            )
+        return stream_result_response(
+            result,
+            json_response=json_response,
+            content_type=content_type,
+            status=status,
         )
 
 
@@ -2346,7 +2883,9 @@ class StatelessNotifyView(View):
         #
         apply_global_filters()
 
-        # Prepare ourselves a default Asset
+        # Put result-log storage limits on the asset Apprise already receives.
+        kwargs["result_log_memory_size"] = settings.APPRISE_STREAM_MEMORY_SIZE
+        kwargs["result_log_disk_size"] = settings.APPRISE_STREAM_DISK_SIZE
         asset = apprise.AppriseAsset(**kwargs)
 
         # Prepare our apprise object
@@ -2396,45 +2935,11 @@ class StatelessNotifyView(View):
         else:
             content_type = "application/json"
 
-        # Acquire our log level from headers if defined, otherwise use
-        # the global one set in the settings
-        level = request.headers.get(
-            "X-Apprise-Log-Level",
+        # Use the request level when valid, then the configured default.
+        level = parse_log_level(
+            request.headers.get("X-Apprise-Log-Level"),
             settings.APPRISE_LOG_LEVEL,
-        ).upper()
-        if level not in (
-            "CRITICAL",
-            "ERROR",
-            "WARNING",
-            "INFO",
-            "DEBUG",
-            "TRACE",
-        ):
-            level = settings.APPRISE_LOG_LEVEL.upper()
-
-        # Convert level to it's integer value
-        if level == "CRITICAL":
-            level = logging.CRITICAL
-
-        elif level == "ERROR":
-            level = logging.ERROR
-
-        elif level == "WARNING":
-            level = logging.WARNING
-
-        elif level == "INFO":
-            level = logging.INFO
-
-        elif level == "DEBUG":
-            level = logging.DEBUG
-
-        elif level == "TRACE":
-            level = logging.DEBUG - 1
-
-        if not isinstance(level, int):
-            # The configured default log level is not a recognised value;
-            # fall back to WARNING so notify() receives a valid integer.
-            level = logging.WARNING
+        )
 
         if stream_response:
             # Return live progress while notification runs in the background.
@@ -2446,6 +2951,7 @@ class StatelessNotifyView(View):
                 tag=(content.get("tag") or "all"),
                 attach=attach,
                 log_level=level,
+                webhook_source=request.META.get("REMOTE_ADDR", ""),
             )
 
         # Capture notification logs at the caller's requested level.
@@ -2458,18 +2964,8 @@ class StatelessNotifyView(View):
             log_level=level,
         )
 
-        # Format the structured logs for the response.
-        response = render_notify_logs(result.logs(), json_response, content_type)
-
-        if settings.APPRISE_WEBHOOK_URL:
-            webhook_payload = {
-                "source": request.META["REMOTE_ADDR"],
-                "status": 0 if result else 1,
-                "output": response,
-            }
-
-            # Send our webhook (pass or fail)
-            send_webhook(webhook_payload)
+        # Send the optional webhook from a separate bounded walk of the logs.
+        send_notify_webhook(request.META.get("REMOTE_ADDR", ""), result)
 
         if not result:
             # If at least one notification couldn't be sent; change up the
@@ -2482,22 +2978,12 @@ class StatelessNotifyView(View):
             status = ResponseCode.failed_dependency
             msg = _("One or more notifications could not be sent")
 
-            return (
-                HttpResponse(
-                    response if response else msg,
-                    status=status,
-                    content_type=content_type,
-                )
-                if not json_response
-                else JsonResponse(
-                    {
-                        "error": msg,
-                        "details": response,
-                    },
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+            return stream_result_response(
+                result,
+                json_response=json_response,
+                content_type=content_type,
+                status=status,
+                error=msg,
             )
 
         logger.info(
@@ -2507,18 +2993,11 @@ class StatelessNotifyView(View):
 
         # Return our success message
         status = ResponseCode.okay
-        return (
-            HttpResponse(response, status=status, content_type=content_type)
-            if not json_response
-            else JsonResponse(
-                {
-                    "error": None,
-                    "details": response,
-                },
-                encoder=JSONEncoder,
-                safe=False,
-                status=status,
-            )
+        return stream_result_response(
+            result,
+            json_response=json_response,
+            content_type=content_type,
+            status=status,
         )
 
 
@@ -2556,14 +3035,7 @@ class JsonUrlView(View):
 
         # Privacy flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
-        privacy = settings.APPRISE_CONFIG_LOCK or request.GET.get("privacy", "no")[0].lower() in (
-            "a",
-            "y",
-            "1",
-            "t",
-            "e",
-            "+",
-        )
+        privacy = settings.APPRISE_CONFIG_LOCK or parse_bool(request.GET.get("privacy"), default=False)
 
         # Optionally filter on tags. Use comma to identify more then one
         tag = request.GET.get("tag", "all")

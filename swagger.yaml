@@ -109,6 +109,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/RecursionHeader'
         - $ref: '#/components/parameters/IdHeader'
+        - $ref: '#/components/parameters/StreamQueryParam'
       requestBody:
         required: true
         content:
@@ -124,7 +125,10 @@ paths:
       responses:
         '200':
           description: >
-            Notification accepted. Response contains processing logs.
+            Notification accepted. Completed processing logs are transferred
+            one entry at a time. When `stream` is truthy or
+            `Accept: text/event-stream` is sent, a live event stream reports
+            the same information as it happens.
           content:
             text/plain:
               schema:
@@ -137,6 +141,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogResponse'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/StreamEvent'
         '204':
           description: No Content (No valid URLs provided).
         '400':
@@ -306,6 +313,7 @@ paths:
         - $ref: '#/components/parameters/key'
         - $ref: '#/components/parameters/RecursionHeader'
         - $ref: '#/components/parameters/IdHeader'
+        - $ref: '#/components/parameters/StreamQueryParam'
       requestBody:
         required: false
         content:
@@ -320,7 +328,11 @@ paths:
               $ref: '#/components/schemas/PersistentNotificationForm'
       responses:
         '200':
-          description: Notification accepted. Response contains logs.
+          description: >
+            Notification accepted. Completed logs are transferred one entry
+            at a time. When `stream` is truthy or `Accept: text/event-stream` is
+            sent, a live event stream reports the same information as it
+            happens.
           content:
             text/plain:
               schema:
@@ -331,6 +343,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogResponse'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/StreamEvent'
         '204':
           description: No configuration found for this key.
         '406':
@@ -403,6 +418,18 @@ components:
       schema:
         type: string
       description: Optional Unique ID to associate with the notification.
+    StreamQueryParam:
+      in: query
+      name: stream
+      schema:
+        type: string
+        default: "no"
+      required: false
+      description: >
+        Values beginning with "y", "1", "t", "e", or "a" stream
+        notification progress; `%2B` is also accepted. This matches other
+        Apprise API boolean options and is equivalent to sending
+        `Accept: text/event-stream`.
 
   schemas:
     NotificationType:
@@ -474,6 +501,32 @@ components:
             type: array
             items:
               type: string
+
+    StreamEvent:
+      type: string
+      description: >
+        A Server-Sent Events response. Each event has an `event: <name>`
+        line, a `data: <json>` line, and a blank line. It contains zero or
+        more `log` events followed by one `result` or `error` event. Slow
+        clients keep 2 MB in memory and use up to 256 MB of automatically
+        cleaned temporary storage by default. A storage limit or failure does
+        not stop notification delivery; the stream reports it as an `ERROR`
+        log and continues when space is available:
+          - `log`: `{"level": string, "asctime": string, "message": string,
+            "service": string|null}` — one captured log line as it's
+            produced; `service` is the service *type* (e.g. "JSON",
+            "Telegram"), never a URL.
+          - `result`: `{"status": string}` — the final
+            AppriseResultStatus (e.g. "SUCCESS", "FAILURE", "NOMATCH",
+            "PARTIAL", "TIMEOUT") once every service has finished.
+          - `error`: `{"message": string}` — sent instead of `result` if
+            notification processing raised unexpectedly.
+      example: |
+        event: log
+        data: {"level": "INFO", "asctime": "2025-01-01 12:00:00,000", "message": "Sent to Telegram", "service": "Telegram"}
+
+        event: result
+        data: {"status": "SUCCESS"}
 
     # JSON Request
     StatelessNotificationRequest:

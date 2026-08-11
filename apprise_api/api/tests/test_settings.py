@@ -23,9 +23,11 @@
 # THE SOFTWARE.
 
 import importlib.util
+import logging
 import os
 from unittest import mock
 
+from core.utils import parse_bool, parse_log_level
 from django.conf import global_settings
 from django.test import SimpleTestCase
 
@@ -50,6 +52,80 @@ def _load_settings(extra_env=None):
     with mock.patch.dict(os.environ, env, clear=True):
         spec.loader.exec_module(mod)
     return mod
+
+
+class BooleanParsingTests(SimpleTestCase):
+    """Test the shared loose boolean convention."""
+
+    def test_true_prefixes(self):
+        """Common affirmative prefixes are accepted."""
+        # Every value begins with one of the supported truthy characters.
+        for value in ("active", "yes", "1", "true", "enable", "+", "  Enabled"):
+            self.assertTrue(parse_bool(value))
+
+    def test_false_and_empty_values(self):
+        """Negative and empty values use the expected fallback."""
+        # Unrecognized prefixes keep the normal false default.
+        for value in ("no", "false", "0", "disabled", "", "   ", None):
+            self.assertFalse(parse_bool(value))
+
+        # Empty input can also preserve a caller-supplied true default.
+        self.assertTrue(parse_bool("", default=True))
+
+
+class LogLevelParsingTests(SimpleTestCase):
+    """Test shared notification log-level parsing."""
+
+    def test_valid_levels(self):
+        """Supported names map to their logging values."""
+        self.assertEqual(parse_log_level(" info "), logging.INFO)
+        self.assertEqual(parse_log_level("TRACE"), logging.DEBUG - 1)
+
+    def test_invalid_levels_use_safe_fallbacks(self):
+        """Invalid request and configured values fall back safely."""
+        self.assertEqual(parse_log_level("invalid", "ERROR"), logging.ERROR)
+        self.assertEqual(parse_log_level("invalid", "invalid"), logging.WARNING)
+
+
+class StreamSizeSettingsTests(SimpleTestCase):
+    """Validate live-stream memory and disk size settings."""
+
+    def test_defaults_and_overrides(self):
+        """Stream sizes use MB environment values and documented defaults."""
+        # Load once without overrides to verify the shipped allowances.
+        defaults = _load_settings()
+        self.assertEqual(defaults.APPRISE_STREAM_MEMORY_SIZE, 2 * 1048576)
+        self.assertEqual(defaults.APPRISE_STREAM_DISK_SIZE, 256 * 1048576)
+
+        # Environment values are whole megabytes and become bytes at startup.
+        configured = _load_settings(
+            {
+                "APPRISE_STREAM_MEMORY_SIZE": "4",
+                "APPRISE_STREAM_DISK_SIZE": "8",
+            }
+        )
+        self.assertEqual(configured.APPRISE_STREAM_MEMORY_SIZE, 4 * 1048576)
+        self.assertEqual(configured.APPRISE_STREAM_DISK_SIZE, 8 * 1048576)
+
+    def test_zero_is_allowed(self):
+        """Zero remains available for each documented fallback mode."""
+        # Operators can explicitly disable either buffering layer.
+        configured = _load_settings(
+            {
+                "APPRISE_STREAM_MEMORY_SIZE": "0",
+                "APPRISE_STREAM_DISK_SIZE": "0",
+            }
+        )
+        self.assertEqual(configured.APPRISE_STREAM_MEMORY_SIZE, 0)
+        self.assertEqual(configured.APPRISE_STREAM_DISK_SIZE, 0)
+
+    def test_invalid_values_fail_at_startup(self):
+        """Negative, fractional, and non-numeric sizes are rejected."""
+        # Apply every invalid shape to both supported size settings.
+        for name in ("APPRISE_STREAM_MEMORY_SIZE", "APPRISE_STREAM_DISK_SIZE"):
+            for value in ("-1", "1.5", "many"):
+                with self.subTest(name=name, value=value), self.assertRaisesRegex(ValueError, name):
+                    _load_settings({name: value})
 
 
 class BaseUrlParsingTests(SimpleTestCase):

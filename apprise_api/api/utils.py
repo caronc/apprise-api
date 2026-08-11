@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 import base64
 import binascii
+from collections.abc import Mapping
 from contextlib import suppress
 from datetime import datetime
 import errno
@@ -95,12 +96,8 @@ A_MGR = apprise.manager_attachment.AttachmentManager()
 # Access our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
 
-# Opt into library eviction: when APPRISE_ALLOW_SERVICES or
-# APPRISE_DENY_SERVICES disables a plugin whose optional dependencies are
-# no longer needed by any other enabled plugin, the Apprise API actively
-# removes those modules from sys.modules to reclaim memory.  This is an
-# API-specific choice; third-party embedders of the Apprise library default
-# to False and retain all loaded modules.
+# Let the API unload optional modules that no enabled service still needs.
+# Other applications embedding Apprise keep loaded modules by default.
 N_MGR.evict_on_disable = True
 
 # Prepare our Attachment URL Filter
@@ -802,9 +799,7 @@ def gen_unique_config_id():
 
 
 def send_webhook(payload):
-    """
-    POST our webhook results
-    """
+    """POST a mapping or JSON chunk iterator to the webhook."""
 
     # Prepare HTTP Headers
     headers = {
@@ -837,10 +832,34 @@ def send_webhook(payload):
     # specified that aren't otherwise part of this class
     params = {k: v for k, v in results.get("qsd", {}).items() if k not in base.template_args}
 
+    # Prepare both forms inside the protected block below.
+    body = None
+    data = None
+
     try:
-        requests.post(
+        # A mapping remains convenient for small callers and existing tests.
+        data = dumps(payload) if isinstance(payload, Mapping) else None
+
+        if data is None:
+            # Build large webhook bodies on disk instead of joining every log.
+            body = tempfile.TemporaryFile(mode="w+b")  # noqa: SIM115
+
+            for chunk in payload:
+                # Convert text chunks before writing to the binary file.
+                value = chunk.encode("utf-8") if isinstance(chunk, str) else chunk
+
+                # Never send JSON after an incomplete write.
+                if body.write(value) != len(value):
+                    raise OSError("Incomplete webhook temporary-file write.")
+
+            # Rewind so the request reads from the beginning.
+            body.seek(0)
+            data = body
+
+        response = requests.post(
             base.request_url,
-            data=dumps(payload),
+            # Small mappings use text; chunked results use the file.
+            data=data,
             params=params,
             headers=headers,
             auth=base.request_auth,
@@ -848,9 +867,35 @@ def send_webhook(payload):
             timeout=base.request_timeout,
         )
 
+        # Report HTTP failures even when the connection itself succeeded.
+        if not 200 <= response.status_code < 300:
+            logger.warning(
+                "The Apprise Webhook Result URL returned HTTP %d: %s",
+                response.status_code,
+                base.url(privacy=True),
+            )
+
     except requests.RequestException as e:
         logger.warning("A Connection error occurred sending the Apprise Webhook results to %s.", base.url(privacy=True))
         logger.debug("Socket Exception: %s", str(e))
+
+    except (OSError, TypeError, ValueError) as e:
+        # Preparation failures must not change the notification result.
+        logger.warning(
+            "The Apprise Webhook results could not be prepared for %s.",
+            base.url(privacy=True),
+        )
+        logger.debug("Webhook preparation exception: %s", str(e))
+
+    finally:
+        if body is not None:
+            try:
+                # TemporaryFile removes the buffered webhook when closed.
+                body.close()
+
+            except (OSError, ValueError) as e:
+                logger.warning("The Apprise Webhook temporary file could not be closed.")
+                logger.debug("Webhook cleanup exception: %s", str(e))
 
     return
 

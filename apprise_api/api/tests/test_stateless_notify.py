@@ -66,7 +66,7 @@ class StatelessNotifyTests(SimpleTestCase):
         ]
 
     @mock.patch("apprise.Apprise.notify")
-    def test_notify_accepts_advanced_tag_expression_from_query_string(self, mock_notify):
+    def test_notify_accepts_query_tag_expression(self, mock_notify):
         """
         Stateless notify should accept tag and tags query-string fallbacks.
         """
@@ -767,8 +767,9 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 200
         assert mock_notify.call_count == 1
         assert response["Content-Type"].startswith("text/html")
-        assert b'<ul class="logs">' in response.content
-        assert b'class="logs"' in response.content
+        # Standard notification output is now streamed in bounded chunks.
+        body = b"".join(response.streaming_content)
+        assert b'<ul class="logs">' in body
 
     @mock.patch("apprise.Apprise.notify")
     def test_notify_by_loaded_urls_with_json(self, mock_notify):
@@ -1143,7 +1144,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert mock_notify.call_count == 1
 
     @mock.patch("apprise.Apprise.notify")
-    def test_notify_stream_emits_log_and_result_events(self, mock_notify):
+    def test_notify_streams_logs_and_result(self, mock_notify):
         """Stateless notifications can stream progress and results live."""
         fake_service = type("FakeService", (), {"service_name": "JSON"})()
 
@@ -1171,3 +1172,51 @@ class StatelessNotifyTests(SimpleTestCase):
         assert "event: result" in body
         assert '"status": "SUCCESS"' in body
         assert "yahoo.ca" not in body
+
+    @mock.patch("api.views.send_webhook")
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_stream_sends_webhook(self, mock_notify, mock_webhook):
+        """Stateless streams send their completion webhook."""
+        mock_notify.return_value = notify_result(True)
+        payload = {}
+
+        # Consume the bounded webhook while its result storage is still open.
+        mock_webhook.side_effect = lambda chunks: payload.update(json.loads("".join(chunks)))
+
+        with override_settings(APPRISE_WEBHOOK_URL="https://localhost/webhook"):
+            response = self.client.post(
+                "/notify",
+                {"urls": "mailto://user:pass@yahoo.ca", "body": "hello"},
+                HTTP_ACCEPT="text/event-stream",
+            )
+            b"".join(response.streaming_content)
+
+        mock_webhook.assert_called_once()
+        assert payload["status"] == 0
+        assert isinstance(payload["output"], list)
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_stream_skips_gzip(self, mock_notify):
+        """Stateless event streams remain uncompressed for live delivery."""
+        fake_service = type("FakeService", (), {"service_name": "JSON"})()
+
+        def fake_notify(*args, **kwargs):
+            kwargs["log_callback"](
+                apprise.NotifyLogEntry(level="INFO", message="Sent JSON POST notification."),
+                fake_service,
+            )
+            return notify_result(True)
+
+        mock_notify.side_effect = fake_notify
+
+        response = self.client.post(
+            "/notify?stream=yes",
+            {"urls": "mailto://user:pass@yahoo.ca", "body": "hello"},
+            HTTP_ACCEPT_ENCODING="gzip, deflate",
+        )
+        assert response.status_code == 200
+        assert response["Content-Encoding"] == "identity"
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        assert "event: log" in body
+        assert "event: result" in body
