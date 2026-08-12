@@ -26,6 +26,33 @@ from django.test import SimpleTestCase
 
 
 class ErrorTests(SimpleTestCase):
+    def test_accept_selects_response_format(self):
+        """Error responses use Accept instead of request Content-Type."""
+        for url in ("/_/404", "/_/421", "/_/50x"):
+            with self.subTest(url=url):
+                response = self.client.get(
+                    url,
+                    CONTENT_TYPE="application/json",
+                    HTTP_ACCEPT="text/html",
+                )
+                assert response["Content-Type"].startswith("text/html")
+
+                response = self.client.get(url, HTTP_ACCEPT="application/json")
+                assert response["Content-Type"].startswith("application/json")
+
+                response = self.client.get(
+                    url,
+                    CONTENT_TYPE="application/json",
+                )
+                assert response["Content-Type"].startswith("application/json")
+
+                response = self.client.get(
+                    url,
+                    CONTENT_TYPE="application/json",
+                    HTTP_ACCEPT="*/*",
+                )
+                assert response["Content-Type"].startswith("application/json")
+
     def test_get_404(self):
         """
         Test 404
