@@ -25,12 +25,36 @@ import os
 import tempfile
 from unittest import mock
 
-from django.test import SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase
 
 from .. import utils
 
 
 class UtilsTests(SimpleTestCase):
+    def test_json_response_negotiation(self):
+        """Accept wins while wildcard or missing Accept uses Content-Type."""
+        cases = (
+            (None, None, False),
+            (None, "application/json", True),
+            ("*/*", "application/json", True),
+            ("application/json", "text/plain", True),
+            ("text/json", "text/plain", True),
+            ("text/html", "application/json", False),
+            ("text/plain", "application/json", False),
+        )
+        factory = RequestFactory()
+        for accept, content_type, expected in cases:
+            with self.subTest(
+                accept=accept,
+                content_type=content_type,
+            ):
+                headers = {} if accept is None else {"HTTP_ACCEPT": accept}
+                if content_type is not None:
+                    headers["CONTENT_TYPE"] = content_type
+
+                request = factory.get("/", **headers)
+                assert utils.is_json_response(request) is expected
+
     def test_touchdir(self):
         """
         Test touchdir()

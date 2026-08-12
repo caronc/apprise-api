@@ -1694,7 +1694,7 @@
       let response = await fetch('{% url "get" key %}', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json;charset=utf-8'
+          'Accept': 'application/json'
         },
       });
       if (response.status == 204) {

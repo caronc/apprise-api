@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 
 
-from api.utils import MIME_IS_JSON
+from api.utils import is_json_response
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
@@ -54,14 +54,7 @@ class Error404View(View):
         }
 
         # Detect the format our response should be in
-        json_response = (
-            MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
-            )
-            is not None
-        )
+        json_response = is_json_response(request)
 
         return (
             render(request, self.template_name, context=context, status=404)
@@ -99,14 +92,7 @@ class Error421View(View):
         }
 
         # Detect the format our response should be in
-        json_response = (
-            MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
-            )
-            is not None
-        )
+        json_response = is_json_response(request)
 
         return (
             render(request, self.template_name, context=context, status=421)
@@ -144,14 +130,7 @@ class Error50xView(View):
         }
 
         # Detect the format our response should be in
-        json_response = (
-            MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
-            )
-            is not None
-        )
+        json_response = is_json_response(request)
 
         return (
             render(request, self.template_name, context=context, status=500)

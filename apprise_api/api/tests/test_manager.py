@@ -89,6 +89,16 @@ class ManagerPageTests(SimpleTestCase):
         assert "appriseCopyToClipboard(" in content
         assert "Config ID copied to clipboard" in content
 
+    def test_configuration_fetch_requests_json(self):
+        """The configuration editor explicitly requests a JSON response."""
+        response = self.client.get("/cfg/valid-key")
+        assert response.status_code == 200
+
+        content = response.content.decode("utf-8")
+        request = content.split("let response = await fetch('/get/valid-key'", 1)[1].split("});", 1)[0]
+        assert "'Accept': 'application/json'" in request
+        assert "'Content-Type'" not in request
+
     def test_get_config(self):
         """
         Test retrieving configuration
@@ -136,6 +146,12 @@ class ManagerPageTests(SimpleTestCase):
         # response
         assert "Content-Type" in response
         assert response["Content-Type"].startswith("text/yaml")
+
+        # The configuration editor requests the same content as JSON.
+        response = self.client.post("/cfg/{}".format(key), HTTP_ACCEPT="application/json")
+        assert response.status_code == 200
+        assert response["Content-Type"].startswith("application/json")
+        assert response.json()["format"] == "yaml"
 
     def test_get_config_json_content_type_without_explicit_accept(self):
         """
