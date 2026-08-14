@@ -68,6 +68,9 @@ class HealthCheckTests(SimpleTestCase):
         assert content == {
             "config_lock": False,
             "attach_lock": False,
+            "stateful_enabled": True,
+            "max_attachments": 6,
+            "attach_size": 209715200,
             "status": {
                 "persistent_storage": True,
                 "can_write_config": True,
@@ -95,6 +98,9 @@ class HealthCheckTests(SimpleTestCase):
             assert content == {
                 "config_lock": True,
                 "attach_lock": False,
+                "stateful_enabled": True,
+                "max_attachments": 6,
+                "attach_size": 209715200,
                 "status": {
                     "persistent_storage": True,
                     "can_write_config": False,
@@ -121,6 +127,9 @@ class HealthCheckTests(SimpleTestCase):
             assert content == {
                 "config_lock": False,
                 "attach_lock": False,
+                "stateful_enabled": False,
+                "max_attachments": 6,
+                "attach_size": 209715200,
                 "status": {
                     "persistent_storage": True,
                     "can_write_config": False,
@@ -147,6 +156,9 @@ class HealthCheckTests(SimpleTestCase):
             assert content == {
                 "config_lock": False,
                 "attach_lock": True,
+                "stateful_enabled": True,
+                "max_attachments": 6,
+                "attach_size": 0,
                 "status": {
                     "persistent_storage": True,
                     "can_write_config": True,
@@ -173,6 +185,9 @@ class HealthCheckTests(SimpleTestCase):
             assert content == {
                 "config_lock": False,
                 "attach_lock": False,
+                "stateful_enabled": True,
+                "max_attachments": 0,
+                "attach_size": 209715200,
                 "status": {
                     "persistent_storage": True,
                     "can_write_config": True,

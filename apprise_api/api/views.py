@@ -401,6 +401,9 @@ class HealthCheckView(View):
                 {
                     "config_lock": settings.APPRISE_CONFIG_LOCK,
                     "attach_lock": settings.APPRISE_ATTACH_SIZE <= 0,
+                    "stateful_enabled": settings.APPRISE_STATEFUL_MODE != AppriseStoreMode.DISABLED,
+                    "max_attachments": settings.APPRISE_MAX_ATTACHMENTS,
+                    "attach_size": settings.APPRISE_ATTACH_SIZE,
                     "status": response,
                 },
                 encoder=JSONEncoder,
