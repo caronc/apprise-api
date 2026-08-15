@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import base64
 import importlib.util
 import logging
 import os
@@ -29,6 +30,7 @@ from unittest import mock
 
 from core.utils import parse_bool, parse_log_level
 from django.conf import global_settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
 # Path to the settings module under test, resolved relative to this file:
@@ -233,3 +235,58 @@ class TimezoneSettingsTests(SimpleTestCase):
             "({!r}). Define TIME_ZONE = os.environ.get('TZ', 'Etc/UTC') "
             "in core/settings/__init__.py.".format(global_settings.TIME_ZONE),
         )
+
+
+class BasicAuthSettingsTests(SimpleTestCase):
+    """Test the global Basic Auth environment settings."""
+
+    def test_unset_by_default(self):
+        """Neither variable set: the feature is fully off."""
+        mod = _load_settings()
+        self.assertIsNone(mod.APPRISE_USER)
+        self.assertIsNone(mod.APPRISE_PASSWORD)
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_REALM, "Apprise API")
+
+    def test_custom_realm(self):
+        """The login prompt label can identify a specific instance."""
+        mod = _load_settings({"APPRISE_BASIC_AUTH_REALM": "Home Alerts"})
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_REALM, "Home Alerts")
+
+    def test_both_set(self):
+        """Both set: the token is base64("user:pass")."""
+        mod = _load_settings({"APPRISE_USER": "alice", "APPRISE_PASSWORD": "secret"})
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b"alice:secret").decode())
+
+    def test_username_only_disables_auth(self):
+        """A username without a password disables auth and logs a warning."""
+        with self.assertLogs(level="WARNING") as cm:
+            mod = _load_settings({"APPRISE_USER": "alice"})
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+        self.assertIsNone(mod.APPRISE_USER)
+        self.assertTrue(any("APPRISE_PASSWORD" in message for message in cm.output))
+
+    def test_password_only(self):
+        """A password without a username is valid."""
+        mod = _load_settings({"APPRISE_PASSWORD": "secret"})
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b":secret").decode())
+
+    def test_colon_in_username_stops_startup(self):
+        """A colon in the global username stops startup."""
+        with self.assertRaises(ImproperlyConfigured):
+            _load_settings({"APPRISE_USER": "ali:ce", "APPRISE_PASSWORD": "secret"})
+
+    def test_both_present_but_empty_stops_startup(self):
+        """Explicitly blank global credentials stop startup."""
+        with self.assertRaises(ImproperlyConfigured):
+            _load_settings({"APPRISE_USER": "", "APPRISE_PASSWORD": ""})
+
+    def test_one_blank_value_stops_startup(self):
+        """One blank value with the other unset also stops startup."""
+        with self.assertRaises(ImproperlyConfigured):
+            _load_settings({"APPRISE_USER": ""})
+
+    def test_password_only_with_empty_username_is_valid(self):
+        """An empty username is valid when a password is supplied."""
+        mod = _load_settings({"APPRISE_USER": "", "APPRISE_PASSWORD": "secret"})
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b":secret").decode())

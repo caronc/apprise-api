@@ -22,12 +22,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import errno
+import gzip
 import os
+import time
 from unittest.mock import mock_open, patch
 
 from apprise import ConfigFormat
 
 from ..utils import AppriseConfigCache, AppriseStoreMode, SimpleFileExtension
+
+
+def _backdate(path, seconds_ago):
+    """Sets a file's mtime (and atime) `seconds_ago` seconds in the past."""
+    backdated = time.time() - seconds_ago
+    os.utime(path, (backdated, backdated))
 
 
 def test_apprise_config_io_hash_mode(tmpdir):
@@ -108,6 +116,22 @@ def test_apprise_config_io_hash_mode(tmpdir):
 
     # Verify that the content is retrievable
     assert acc_obj.get(key) == (content, ConfigFormat.YAML.value)
+
+
+def test_apprise_config_io_hash_mode_corrupt_encoding(tmpdir):
+    """Treat invalid stored text as a read failure."""
+    content = "mailto://test:pass@gmail.com"
+    key = "test_apprise_config_io_hash_corrupt"
+
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert acc_obj.put(key, content, ConfigFormat.TEXT.value)
+
+    conf_dir, filename = acc_obj.path(key)
+    full_path = os.path.join(conf_dir, "{}.{}".format(filename, ConfigFormat.TEXT.value))
+    with gzip.open(full_path, "wb") as f:
+        f.write(b"\xff\xfe not valid utf-8")
+
+    assert acc_obj.get(key) == (None, None)
 
 
 def test_apprise_config_list_simple_mode(tmpdir):
@@ -277,6 +301,22 @@ def test_apprise_config_io_simple_mode(tmpdir):
     assert acc_obj.get(key) == (content, ConfigFormat.YAML.value)
 
 
+def test_apprise_config_io_simple_mode_corrupt_encoding(tmpdir):
+    """Treat invalid stored text as a read failure."""
+    content = "mailto://test:pass@gmail.com"
+    key = "test_apprise_config_io_simple_corrupt"
+
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert acc_obj.put(key, content, ConfigFormat.TEXT.value)
+
+    conf_dir, filename = acc_obj.path(key)
+    full_path = os.path.join(conf_dir, "{}.{}".format(filename, SimpleFileExtension.TEXT))
+    with open(full_path, "wb") as f:
+        f.write(b"\xff\xfe not valid utf-8")
+
+    assert acc_obj.get(key) == (None, None)
+
+
 def test_apprise_config_io_disabled_mode(tmpdir):
     """
     Test Apprise Config Disk Put/Get using DISABLED mode
@@ -311,3 +351,199 @@ def test_apprise_config_io_disabled_mode(tmpdir):
 
     # Content never exists
     assert acc_obj.clear(key) is None
+
+
+def test_set_auth_rejects_colon_in_username(tmpdir):
+    """Reject usernames that conflict with Basic Auth's colon separator."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert not acc_obj.set_auth("colon_username_key", "ali:ce", "secret")
+    assert not acc_obj.has_auth("colon_username_key")
+
+
+def test_prune_unused_locks_hash_mode(tmpdir):
+    """Prune only old HASH-mode locks without configuration content."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+
+    old_key = "test_prune_hash_old"
+    young_key = "test_prune_hash_young"
+    configured_key = "test_prune_hash_configured"
+
+    assert acc_obj.set_auth(old_key, "alice", "secret")
+    assert acc_obj.set_auth(young_key, "alice", "secret")
+    assert acc_obj.set_auth(configured_key, "alice", "secret")
+    assert acc_obj.put(configured_key, "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+
+    old_path, old_filename = acc_obj.auth_path(old_key)
+    _backdate(os.path.join(old_path, old_filename), seconds_ago=1000)
+    configured_path, configured_filename = acc_obj.auth_path(configured_key)
+    _backdate(os.path.join(configured_path, configured_filename), seconds_ago=1000)
+
+    pruned = acc_obj.prune_unused_locks(older_than_seconds=500)
+
+    assert pruned == 1
+    assert not acc_obj.has_auth(old_key)
+    assert acc_obj.has_auth(young_key)
+    # Configuration content protects an old lock from pruning.
+    assert acc_obj.has_auth(configured_key)
+    assert acc_obj.get(configured_key) == ("mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+
+
+def test_prune_unused_locks_simple_mode(tmpdir):
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+
+    old_key = "test_prune_simple_old"
+    young_key = "test_prune_simple_young"
+    configured_key = "test_prune_simple_configured"
+
+    assert acc_obj.set_auth(old_key, "alice", "secret")
+    assert acc_obj.set_auth(young_key, "alice", "secret")
+    assert acc_obj.set_auth(configured_key, "alice", "secret")
+    assert acc_obj.put(configured_key, "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+
+    old_path, old_filename = acc_obj.auth_path(old_key)
+    _backdate(os.path.join(old_path, old_filename), seconds_ago=1000)
+    configured_path, configured_filename = acc_obj.auth_path(configured_key)
+    _backdate(os.path.join(configured_path, configured_filename), seconds_ago=1000)
+
+    pruned = acc_obj.prune_unused_locks(older_than_seconds=500)
+
+    assert pruned == 1
+    assert not acc_obj.has_auth(old_key)
+    assert acc_obj.has_auth(young_key)
+    # Same age as old_key's lock -- only survives because it has content.
+    assert acc_obj.has_auth(configured_key)
+    assert acc_obj.get(configured_key) == ("mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+
+
+def test_prune_removes_all_eligible(tmpdir):
+    """Prune every eligible lock without changing unlocked configurations."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+
+    keys = ["test_prune_multi_a", "test_prune_multi_b", "test_prune_multi_c"]
+    for key in keys:
+        assert acc_obj.set_auth(key, "alice", "secret")
+        path, filename = acc_obj.auth_path(key)
+        _backdate(os.path.join(path, filename), seconds_ago=1000)
+
+    # An unrelated, unlocked config -- pruning must never touch it.
+    unlocked_key = "test_prune_multi_unlocked"
+    assert acc_obj.put(unlocked_key, "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+
+    pruned = acc_obj.prune_unused_locks(older_than_seconds=500)
+
+    assert pruned == 3
+    for key in keys:
+        assert not acc_obj.has_auth(key)
+    assert acc_obj.get(unlocked_key) == ("mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+
+
+def test_prune_skips_remove_errors(tmpdir):
+    """A removal error does not stop the prune run."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+
+    key = "test_prune_remove_failure"
+    assert acc_obj.set_auth(key, "alice", "secret")
+    path, filename = acc_obj.auth_path(key)
+    _backdate(os.path.join(path, filename), seconds_ago=1000)
+
+    with patch("os.remove") as mock_remove:
+        mock_remove.side_effect = OSError(errno.EPERM)
+        pruned = acc_obj.prune_unused_locks(older_than_seconds=500)
+
+    assert pruned == 0
+    assert acc_obj.has_auth(key)
+
+
+def test_prune_skips_mtime_errors(tmpdir):
+    """Skip locks whose modification time cannot be read."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+
+    key = "test_prune_getmtime_failure"
+    assert acc_obj.set_auth(key, "alice", "secret")
+    path, filename = acc_obj.auth_path(key)
+    _backdate(os.path.join(path, filename), seconds_ago=1000)
+
+    with patch("os.path.getmtime") as mock_getmtime:
+        mock_getmtime.side_effect = OSError(errno.ENOENT)
+        pruned = acc_obj.prune_unused_locks(older_than_seconds=500)
+
+    assert pruned == 0
+    assert acc_obj.has_auth(key)
+
+
+def test_hash_prune_ignores_foreign_dirs(tmpdir):
+    """HASH-mode pruning only scans its two-character prefix directories."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+
+    foreign_dir = os.path.join(str(tmpdir), "store")
+    os.makedirs(foreign_dir)
+    foreign_lock = os.path.join(foreign_dir, ".notavalidhash.lock")
+    with open(foreign_lock, "w") as f:
+        f.write("not an auth lock")
+    _backdate(foreign_lock, seconds_ago=1000)
+
+    assert acc_obj.prune_unused_locks(older_than_seconds=500) == 0
+    assert os.path.isfile(foreign_lock)
+
+
+def test_hash_prune_skips_symlink_dirs(tmpdir):
+    """Do not follow prefix-directory links outside the configuration root."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+
+    outside_dir = os.path.join(str(tmpdir), "outside-the-config-root")
+    os.makedirs(outside_dir)
+    outside_lock = os.path.join(outside_dir, "." + ("a" * 54) + ".lock")
+    with open(outside_lock, "w") as f:
+        f.write("not an auth lock")
+    _backdate(outside_lock, seconds_ago=1000)
+
+    symlinked_prefix = os.path.join(str(tmpdir), "aa")
+    os.symlink(outside_dir, symlinked_prefix, target_is_directory=True)
+
+    assert acc_obj.prune_unused_locks(older_than_seconds=500) == 0
+    assert os.path.isfile(outside_lock)
+
+
+def test_simple_prune_ignores_bad_names(tmpdir):
+    """SIMPLE-mode pruning ignores invalid configuration keys."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    os.makedirs(str(tmpdir), exist_ok=True)
+
+    malformed_lock = os.path.join(str(tmpdir), ". not valid!.lock")
+    with open(malformed_lock, "w") as f:
+        f.write("not an auth lock")
+    _backdate(malformed_lock, seconds_ago=1000)
+
+    assert acc_obj.prune_unused_locks(older_than_seconds=500) == 0
+    assert os.path.isfile(malformed_lock)
+
+
+def test_prune_skips_list_errors(tmpdir):
+    """A directory listing error does not stop the prune run."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+
+    key = "test_prune_listdir_failure"
+    assert acc_obj.set_auth(key, "alice", "secret")
+    path, filename = acc_obj.auth_path(key)
+    _backdate(os.path.join(path, filename), seconds_ago=1000)
+
+    with patch("os.listdir") as mock_listdir:
+        mock_listdir.side_effect = OSError(errno.EACCES)
+        pruned = acc_obj.prune_unused_locks(older_than_seconds=500)
+
+    assert pruned == 0
+    assert acc_obj.has_auth(key)
+
+
+def test_prune_unused_locks_disabled_mode_is_a_noop(tmpdir):
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED)
+    assert acc_obj.prune_unused_locks(older_than_seconds=0) == 0
+
+
+def test_prune_missing_root(tmpdir):
+    """A missing configuration root has nothing to prune."""
+    acc_obj = AppriseConfigCache(os.path.join(str(tmpdir), "does-not-exist"), mode=AppriseStoreMode.HASH)
+    assert acc_obj.prune_unused_locks(older_than_seconds=0) == 0
+
+    acc_obj = AppriseConfigCache(os.path.join(str(tmpdir), "also-missing"), mode=AppriseStoreMode.SIMPLE)
+    assert acc_obj.prune_unused_locks(older_than_seconds=0) == 0

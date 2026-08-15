@@ -24,29 +24,50 @@
 from django.urls import re_path
 
 from . import views
+from .utils import CONFIG_KEY_REGEX
+
+_KEY = r"(?P<key>{})".format(CONFIG_KEY_REGEX)
 
 urlpatterns = [
     re_path(r"^$", views.WelcomeView.as_view(), name="welcome"),
     re_path(r"^status/?$", views.HealthCheckView.as_view(), name="health"),
+    re_path(
+        r"^status/{}/?$".format(_KEY),
+        views.KeyedHealthCheckView.as_view(),
+        name="health_key",
+    ),
     re_path(r"^details/?$", views.DetailsView.as_view(), name="details"),
     re_path(
-        r"^cfg/(?P<key>[\w_-]{1,128})/?$",
+        r"^cfg/{}/?$".format(_KEY),
         views.ConfigView.as_view(),
         name="config",
     ),
     re_path(r"^cfg/?$", views.ConfigListView.as_view(), name="config_list"),
-    re_path(r"^add/(?P<key>[\w_-]{1,128})/?$", views.AddView.as_view(), name="add"),
-    re_path(r"^del/(?P<key>[\w_-]{1,128})/?$", views.DelView.as_view(), name="del"),
-    re_path(r"^get/(?P<key>[\w_-]{1,128})/?$", views.GetView.as_view(), name="get"),
+    re_path(r"^add/{}/?$".format(_KEY), views.AddView.as_view(), name="add"),
+    # Bare routes read the key from X-Apprise-Config-ID, keeping it out of
+    # proxy and web server access logs.
+    re_path(r"^add/?$", views.AddView.as_view(), name="add_by_header"),
+    re_path(r"^del/{}/?$".format(_KEY), views.DelView.as_view(), name="del"),
+    re_path(r"^del/?$", views.DelView.as_view(), name="del_by_header"),
+    re_path(r"^get/{}/?$".format(_KEY), views.GetView.as_view(), name="get"),
+    re_path(r"^get/?$", views.GetView.as_view(), name="get_by_header"),
     re_path(
-        r"^notify/(?P<key>[\w_-]{1,128})/?$",
+        r"^auth/{}/?$".format(_KEY),
+        views.AuthView.as_view(),
+        name="auth",
+    ),
+    re_path(r"^auth/?$", views.AuthView.as_view(), name="auth_by_header"),
+    re_path(
+        r"^notify/{}/?$".format(_KEY),
         views.NotifyView.as_view(),
         name="notify",
     ),
+    # X-Apprise-Config-ID changes this from a stateless to a stateful send.
     re_path(r"^notify/?$", views.StatelessNotifyView.as_view(), name="s_notify"),
     re_path(
-        r"^json/urls/(?P<key>[\w_-]{1,128})/?$",
+        r"^json/urls/{}/?$".format(_KEY),
         views.JsonUrlView.as_view(),
         name="json_urls",
     ),
+    re_path(r"^json/urls/?$", views.JsonUrlView.as_view(), name="json_urls_by_header"),
 ]

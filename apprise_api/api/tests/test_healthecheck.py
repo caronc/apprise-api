@@ -69,6 +69,8 @@ class HealthCheckTests(SimpleTestCase):
             "config_lock": False,
             "attach_lock": False,
             "stateful_enabled": True,
+            "stateless_enabled": True,
+            "degraded": False,
             "max_attachments": 6,
             "attach_size": 209715200,
             "status": {
@@ -99,6 +101,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": True,
                 "attach_lock": False,
                 "stateful_enabled": True,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 6,
                 "attach_size": 209715200,
                 "status": {
@@ -128,6 +132,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": False,
                 "attach_lock": False,
                 "stateful_enabled": False,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 6,
                 "attach_size": 209715200,
                 "status": {
@@ -157,6 +163,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": False,
                 "attach_lock": True,
                 "stateful_enabled": True,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 6,
                 "attach_size": 0,
                 "status": {
@@ -186,6 +194,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": False,
                 "attach_lock": False,
                 "stateful_enabled": True,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 0,
                 "attach_size": 209715200,
                 "status": {
@@ -195,6 +205,50 @@ class HealthCheckTests(SimpleTestCase):
                     "details": ["OK"],
                 },
             }
+
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            # Status Check (Form based)
+            response = self.client.get("/status")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.content, b"OK")
+            assert response["Content-Type"].startswith("text/plain")
+
+            # JSON Response
+            response = self.client.get(
+                "/status",
+                content_type="application/json",
+                **{"HTTP_CONTENT_TYPE": "application/json"},
+            )
+            self.assertEqual(response.status_code, 200)
+            content = loads(response.content)
+            assert content == {
+                "config_lock": False,
+                "attach_lock": False,
+                "stateful_enabled": True,
+                "stateless_enabled": False,
+                "degraded": False,
+                "max_attachments": 6,
+                "attach_size": 209715200,
+                "status": {
+                    "persistent_storage": True,
+                    "can_write_config": True,
+                    "can_write_attach": True,
+                    "details": ["OK"],
+                },
+            }
+
+        with override_settings(APPRISE_STATEFUL_MODE="disabled", APPRISE_STATELESS_MODE="disabled"):
+            # Both notification modes are disabled, so the service is degraded.
+            response = self.client.get(
+                "/status",
+                content_type="application/json",
+                **{"HTTP_CONTENT_TYPE": "application/json"},
+            )
+            self.assertEqual(response.status_code, 200)
+            content = loads(response.content)
+            assert content["stateful_enabled"] is False
+            assert content["stateless_enabled"] is False
+            assert content["degraded"] is True
 
     def test_healthcheck_library(self):
         """

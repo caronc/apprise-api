@@ -21,12 +21,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import base64
 import logging
 import os
 
 import apprise
 from core.themes import SiteTheme
 from core.utils import parse_bool, parse_log_level
+from django.core.exceptions import ImproperlyConfigured
 
 # Register apprise's custom log levels before Django's dictConfig() runs.
 if not hasattr(logging, "TRACE"):
@@ -88,6 +90,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "core.middleware.csrf.OriginValidationMiddleware",
+    "core.middleware.auth.GlobalAuthMiddleware",
     "core.middleware.theme.AutoThemeMiddleware",
     "core.middleware.config.DetectConfigMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
@@ -212,6 +216,10 @@ APPRISE_STORAGE_DIR = os.environ.get("APPRISE_STORAGE_DIR", os.path.join(APPRISE
 # Default number of days to prune persistent storage
 APPRISE_STORAGE_PRUNE_DAYS = int(os.environ.get("APPRISE_STORAGE_PRUNE_DAYS", 30))
 
+# Prune unused authentication locks after this age in seconds.
+# The default is 30 days; locks with configuration are always retained.
+APPRISE_AUTH_PRUNE_SECONDS = int(os.environ.get("APPRISE_AUTH_PRUNE_SECONDS", 30 * 86400))
+
 # The default URL ID Length
 APPRISE_STORAGE_UID_LENGTH = int(os.environ.get("APPRISE_STORAGE_UID_LENGTH", 8))
 
@@ -323,6 +331,46 @@ APPRISE_CONFIG_MAX_LENGTH = min(
 # it's a lock down mode if you will.
 APPRISE_CONFIG_LOCK = parse_bool(os.environ.get("APPRISE_CONFIG_LOCK", "no"))
 
+# Optional global Basic Auth. A password may be used without a username.
+# A username requires a password.
+APPRISE_USER = os.environ.get("APPRISE_USER")
+APPRISE_PASSWORD = os.environ.get("APPRISE_PASSWORD")
+
+# Label shown when a client asks for Basic Auth credentials.
+APPRISE_BASIC_AUTH_REALM = os.environ.get("APPRISE_BASIC_AUTH_REALM", "Apprise API")
+
+# Prepare one Basic Auth token at startup.
+# Colons are reserved for separating the username and password.
+APPRISE_BASIC_AUTH_TOKEN = None
+if APPRISE_USER is not None or APPRISE_PASSWORD is not None:
+    if APPRISE_USER and ":" in APPRISE_USER:
+        raise ImproperlyConfigured("APPRISE_USER cannot contain ':'.")
+
+    if not APPRISE_USER and not APPRISE_PASSWORD:
+        # Empty environment substitutions must not create a blank account.
+        raise ImproperlyConfigured(
+            "APPRISE_USER and APPRISE_PASSWORD cannot both be empty; "
+            "unset both entirely to disable global authentication."
+        )
+
+    if APPRISE_USER and not APPRISE_PASSWORD:
+        # A username without a password is easy to guess and is disabled.
+        logging.warning(
+            "Only APPRISE_USER was set -- global authentication requires a password, so it has "
+            "been disabled. Set APPRISE_PASSWORD to enable it."
+        )
+        APPRISE_USER = None
+
+    else:
+        APPRISE_BASIC_AUTH_TOKEN = base64.b64encode(f"{APPRISE_USER or ''}:{APPRISE_PASSWORD or ''}".encode()).decode()
+
+# Optional browser-origin allow-list using ``scheme://host[:port]``.
+# Without it, Origin validation compares host and port only because bundled
+# nginx does not forward the original scheme. HTTPS deployments should set it.
+APPRISE_TRUSTED_ORIGINS = [
+    origin.strip().lower() for origin in os.environ.get("APPRISE_TRUSTED_ORIGINS", "").split(",") if origin.strip()
+]
+
 # Stateless posts to /notify/ will resort to this set of URLs if none
 # were otherwise posted with the URL request.
 APPRISE_STATELESS_URLS = os.environ.get("APPRISE_STATELESS_URLS", "")
@@ -336,6 +384,13 @@ APPRISE_STATELESS_STORAGE = parse_bool(os.environ.get("APPRISE_STATELESS_STORAGE
 # - simple: content is just written straight to disk 'as-is'
 # - disabled: disable all stateful functionality
 APPRISE_STATEFUL_MODE = os.environ.get("APPRISE_STATEFUL_MODE", "hash")
+
+# Defines the stateless mode; possible values are:
+# - enabled (default): stateless /notify/ calls are accepted
+# - disabled: stateless /notify/ calls are rejected
+# Keep this as a mode string so more choices can be added later.
+# parse_bool() accepts common values such as yes/no, true/false, and 1/0.
+APPRISE_STATELESS_MODE = "enabled" if parse_bool(os.environ.get("APPRISE_STATELESS_MODE", "enabled")) else "disabled"
 
 # Our Apprise Deny List
 # - By default we disable all non-remote calling services

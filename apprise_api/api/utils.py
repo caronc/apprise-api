@@ -29,6 +29,7 @@ from datetime import datetime
 import errno
 import gzip
 import hashlib
+import hmac
 from json import dumps
 
 # import the logging library
@@ -40,6 +41,8 @@ import tempfile
 
 import apprise
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
+from django.core.cache import cache
 from django.http import HttpRequest
 import requests
 
@@ -72,6 +75,23 @@ def is_json_response(request: HttpRequest) -> bool:
     return MIME_IS_JSON.match(accept) is not None or (
         ACCEPT_ALL.match(accept) is not None and MIME_IS_JSON.match(content_type) is not None
     )
+
+
+def is_authenticated(request: HttpRequest) -> bool:
+    """Return whether the request satisfies the global Basic Auth gate.
+
+    Authentication is optional. When enabled, the supplied token is compared
+    safely with the token prepared at startup.
+    """
+    if settings.APPRISE_BASIC_AUTH_TOKEN is None:
+        return True
+
+    provided = request.headers.get("authorization", "")
+    # RFC 7235: the auth-scheme token ("Basic") is case-insensitive.
+    if provided[:6].lower() != "basic ":
+        return False
+
+    return hmac.compare_digest(provided[6:], settings.APPRISE_BASIC_AUTH_TOKEN)
 
 
 class AppriseStoreMode:
@@ -522,6 +542,10 @@ SIMPLE_FILE_EXTENSION_MAPPING = {
 SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
 
 
+class AppriseAuthStorageError(Exception):
+    """Raised when an existing per-key authentication lock cannot be read."""
+
+
 class AppriseConfigCache:
     """
     Designed to make it easy to store/read contact back from disk in a cache
@@ -566,10 +590,14 @@ class AppriseConfigCache:
             return False
 
         # Write our file to a temporary file
-        d, tmp_path = tempfile.mkstemp(suffix=".tmp", dir=path)
-        # Close the file handle provided by mkstemp()
-        # We're reopening it, and it can't be renamed while open on Windows
-        os.close(d)
+        try:
+            d, tmp_path = tempfile.mkstemp(suffix=".tmp", dir=path)
+            # Close the temporary handle before reopening and renaming it.
+            os.close(d)
+
+        except OSError:
+            logger.error("Could not create a temporary file in {}".format(path))
+            return False
 
         if self.mode == AppriseStoreMode.HASH:
             try:
@@ -579,7 +607,8 @@ class AppriseConfigCache:
 
             except OSError:
                 # Handle failure
-                os.remove(tmp_path)
+                with suppress(OSError):
+                    os.remove(tmp_path)
                 return False
 
         else:  # AppriseStoreMode.SIMPLE
@@ -592,13 +621,21 @@ class AppriseConfigCache:
 
             except OSError:
                 # Handle failure
-                os.remove(tmp_path)
+                with suppress(OSError):
+                    os.remove(tmp_path)
                 return False
 
         # If we reach here we successfully wrote the content. We now safely
         # move our configuration into place. The following writes our content
         # to disk
-        shutil.move(tmp_path, os.path.join(path, "{}.{}".format(filename, fmt)))
+        try:
+            shutil.move(tmp_path, os.path.join(path, "{}.{}".format(filename, fmt)))
+
+        except OSError:
+            logger.error("Could not move temporary file into place for KEY: {}".format(key))
+            with suppress(OSError):
+                os.remove(tmp_path)
+            return False
 
         # perform tidy of any other lingering files of other type in case
         # configuration changed from TEXT -> YAML or YAML -> TEXT
@@ -677,9 +714,8 @@ class AppriseConfigCache:
                     # Write our content to disk
                     content = f.read().decode()
 
-            except OSError:
-                # all none return means to let upstream know we had a hard
-                # failure
+            except (OSError, UnicodeDecodeError):
+                # Two None values distinguish a read failure from a missing file.
                 return (None, None)
 
         else:  # AppriseStoreMode.SIMPLE
@@ -688,9 +724,8 @@ class AppriseConfigCache:
                     # Write our content to disk
                     content = f.read().decode()
 
-            except OSError:
-                # all none return means to let upstream know we had a hard
-                # failure
+            except (OSError, UnicodeDecodeError):
+                # Two None values distinguish a read failure from a missing file.
                 return (None, None)
 
         # return our read content
@@ -772,6 +807,231 @@ class AppriseConfigCache:
 
         return keys
 
+    def auth_path(self, key):
+        """Return the directory and hidden lock filename for a key.
+
+        The lock name does not use the config format, so switching between
+        text and YAML leaves authentication unchanged.
+        """
+        path, filename = self.path(key)
+        return path, ".{}.lock".format(filename)
+
+    def set_auth(self, key, username, password):
+        """Save hashed credentials for a key and report whether it worked.
+
+        Credentials are salted and written atomically through a private
+        temporary file. Usernames containing a colon are rejected because
+        the stored value uses ``username:password`` format.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return False
+
+        if username and ":" in username:
+            logger.error("Username cannot contain ':' for KEY: {}".format(key))
+            return False
+
+        try:
+            digest = make_password("{}:{}".format(username, password))
+
+        except (TypeError, UnicodeError):
+            logger.error("Could not hash authentication credentials for KEY: {}".format(key))
+            return False
+
+        path, filename = self.auth_path(key)
+        try:
+            os.makedirs(path, exist_ok=True)
+
+        except OSError:
+            logger.error("Could not create directory {}".format(path))
+            return False
+
+        full_path = os.path.join(path, filename)
+        try:
+            fd, tmp_path = tempfile.mkstemp(prefix="." + filename, dir=path)
+
+        except OSError:
+            logger.error("Could not create a temporary file in {}".format(path))
+            return False
+
+        try:
+            try:
+                with os.fdopen(fd, "w") as f:
+                    f.write(digest)
+
+                os.replace(tmp_path, full_path)
+
+            except OSError:
+                logger.error("Could not write authentication for KEY: {}".format(key))
+                return False
+
+        finally:
+            # A successful replacement consumes the temporary file.
+            # Otherwise, remove whatever was left behind.
+            with suppress(OSError):
+                os.remove(tmp_path)
+
+        return True
+
+    def get_auth(self, key):
+        """Return a key's stored credential digest, or None if no lock is set.
+
+        Raises ``AppriseAuthStorageError`` when an existing lock cannot be
+        read or decoded. Callers use this distinction to deny access instead
+        of treating a damaged lock as missing.
+        """
+        path, filename = self.auth_path(key)
+        full_path = os.path.join(path, filename)
+        try:
+            with open(full_path) as f:
+                return f.read().strip()
+
+        except FileNotFoundError:
+            return None
+
+        except (OSError, UnicodeDecodeError) as e:
+            logger.error("Could not read authentication for KEY: {} ({})".format(key, e))
+            raise AppriseAuthStorageError(str(e)) from e
+
+    def has_auth(self, key):
+        """True when this key currently has (or may have) per-key authentication set.
+
+        Fails closed: a lock file that exists but can't be read is treated
+        as protected, not as unprotected.
+        """
+        try:
+            return self.get_auth(key) is not None
+
+        except AppriseAuthStorageError:
+            return True
+
+    def verify_auth(self, key, username, password):
+        """Safely compare credentials with a key's stored digest.
+
+        A key without stored credentials, or one whose lock file could not
+        be read, never matches -- fails closed either way.
+        """
+        try:
+            stored = self.get_auth(key)
+
+        except AppriseAuthStorageError:
+            return False
+
+        if stored is None:
+            return False
+
+        return check_password("{}:{}".format(username, password), stored)
+
+    def clear_auth(self, key):
+        """Remove a key's lock file.
+
+        Returns None when absent, True when removed, and False on error.
+        """
+        path, filename = self.auth_path(key)
+        try:
+            os.remove(os.path.join(path, filename))
+            return True
+
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                return False
+            return None
+
+    def prune_unused_locks(self, older_than_seconds):
+        """Remove old authentication locks that have no configuration.
+
+        HASH mode is scanned directly because original key names cannot be
+        recovered. A concurrent ``/add`` may narrowly overlap pruning after
+        the full retention period; this accepted tradeoff avoids disk locking.
+        Returns the number of locks removed.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return 0
+
+        # HASH mode uses a 2-character directory and 54-character filename.
+        # SIMPLE mode uses the same key format accepted by the API.
+        # These checks leave unrelated files under APPRISE_CONFIG_DIR alone.
+        hash_prefix_pattern = re.compile(r"^[0-9a-f]{2}$")
+        hash_name_pattern = re.compile(r"^[0-9a-f]{54}$")
+
+        if self.mode == AppriseStoreMode.HASH:
+            # Lock files live two levels deep:
+            # root/<2-char-prefix>/.<hash-remainder>.lock
+            content_extensions = (apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value)
+            name_pattern = hash_name_pattern
+            lock_dirs = []
+            if os.path.isdir(self.root):
+                try:
+                    # Keep directory metadata so symlinks can be skipped.
+                    with os.scandir(self.root) as it:
+                        entries = list(it)
+
+                except OSError as e:
+                    logger.warning("Could not list directory {} while pruning: {}".format(self.root, e))
+                    entries = []
+
+                for entry in entries:
+                    if not hash_prefix_pattern.match(entry.name):
+                        continue
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            lock_dirs.append(entry.path)
+
+                    except OSError:
+                        continue
+
+        else:  # AppriseStoreMode.SIMPLE
+            content_extensions = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+            name_pattern = CONFIG_KEY_PATTERN
+            lock_dirs = [self.root] if os.path.isdir(self.root) else []
+
+        lock_suffix = ".lock"
+        now = datetime.now().timestamp()
+        pruned = 0
+        for directory in lock_dirs:
+            try:
+                filenames = os.listdir(directory)
+
+            except OSError as e:
+                logger.warning("Could not list directory {} while pruning: {}".format(directory, e))
+                continue
+
+            for filename in filenames:
+                if not (filename.startswith(".") and filename.endswith(lock_suffix)):
+                    continue
+
+                # Strip the leading '.' and trailing '.lock'.
+                name = filename[1 : -len(lock_suffix)]
+                if not name_pattern.match(name):
+                    continue
+
+                lock_path = os.path.join(directory, filename)
+                try:
+                    age = now - os.path.getmtime(lock_path)
+
+                except OSError:
+                    continue
+
+                if age < older_than_seconds:
+                    continue
+
+                has_content = any(
+                    os.path.isfile(os.path.join(directory, "{}.{}".format(name, ext))) for ext in content_extensions
+                )
+                if has_content:
+                    continue
+
+                try:
+                    os.remove(lock_path)
+
+                except OSError as e:
+                    logger.error("Could not prune stale unused authentication lock: {} ({})".format(name, e))
+                    continue
+
+                logger.info("Pruned stale unused authentication lock: {}".format(name))
+                pruned += 1
+
+        return pruned
+
 
 # Initialize our singleton
 ConfigCache = AppriseConfigCache(
@@ -779,6 +1039,162 @@ ConfigCache = AppriseConfigCache(
     salt=settings.SECRET_KEY,
     mode=settings.APPRISE_STATEFUL_MODE,
 )
+
+
+def basic_auth_credentials(request: HttpRequest):
+    """Decode Basic Auth into ``(username, password)``.
+
+    Missing or malformed credentials return ``(None, None)``.
+    """
+    header = request.headers.get("authorization", "")
+    # RFC 7235: the auth-scheme token ("Basic") is case-insensitive.
+    if header[:6].lower() != "basic ":
+        return None, None
+
+    try:
+        decoded = base64.b64decode(header[6:]).decode()
+
+    except (binascii.Error, UnicodeDecodeError):
+        return None, None
+
+    if ":" not in decoded:
+        return None, None
+
+    username, _, password = decoded.partition(":")
+    return username, password
+
+
+# This header keeps configuration keys out of URLs and access logs.
+# Validate it here because headers do not pass through Django's URL regex;
+# SIMPLE mode also uses the key in a filename.
+CONFIG_KEY_HEADER = "X-Apprise-Config-ID"
+
+# Shared configuration-key format for routes, middleware, and headers.
+# The unanchored form can be embedded in route patterns.
+# Use CONFIG_KEY_PATTERN when validating a complete value.
+CONFIG_KEY_REGEX = r"[\w_-]{1,128}"
+CONFIG_KEY_PATTERN = re.compile(r"^{}$".format(CONFIG_KEY_REGEX))
+
+
+def resolve_config_key(request: HttpRequest, key: str) -> str:
+    """Return the request's effective configuration key.
+
+    A valid header takes precedence over the URL key. An invalid header
+    returns an empty value instead of falling back to the URL.
+    """
+    header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+    if not header_key:
+        return key
+    return header_key if CONFIG_KEY_PATTERN.match(header_key) else ""
+
+
+def config_key_header_present_but_invalid(request: HttpRequest) -> bool:
+    """Return whether the request supplied an invalid config ID header."""
+    header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+    return bool(header_key) and not CONFIG_KEY_PATTERN.match(header_key)
+
+
+# Limit failed authentication attempts for each client and key.
+# All keyed routes share this cache-backed limit.
+# The default local-memory cache applies the limit per worker.
+_AUTH_FAILURE_CACHE_PREFIX = "apprise-auth-fail"
+_AUTH_FAILURE_WINDOW_SECONDS = 60
+_AUTH_FAILURE_MAX_ATTEMPTS = 20
+
+# Briefly cache successful checks so repeated requests avoid re-hashing.
+_AUTH_SUCCESS_CACHE_PREFIX = "apprise-auth-ok"
+_AUTH_SUCCESS_CACHE_SECONDS = 30
+
+
+def _client_ip(request: HttpRequest) -> str:
+    """Return the best available client address for throttling.
+
+    Bundled nginx supplies ``X-Real-IP``. Direct development servers fall
+    back to ``REMOTE_ADDR``. This value is never an authorization identity.
+    """
+    return request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR", "unknown")
+
+
+def _auth_throttle_cache_key(client_ip: str, key: str) -> str:
+    # Keep failures isolated to one client and configuration key.
+    return "{}:{}:{}".format(_AUTH_FAILURE_CACHE_PREFIX, client_ip, key)
+
+
+def _auth_rate_limited(client_ip: str, key: str) -> bool:
+    """True once this client has failed too many recent authentication attempts against this key."""
+    return cache.get(_auth_throttle_cache_key(client_ip, key), 0) >= _AUTH_FAILURE_MAX_ATTEMPTS
+
+
+def _record_auth_failure(client_ip: str, key: str) -> None:
+    """Counts one failed authentication attempt for this client against this key."""
+    cache_key = _auth_throttle_cache_key(client_ip, key)
+    if not cache.add(cache_key, 1, timeout=_AUTH_FAILURE_WINDOW_SECONDS):
+        try:
+            cache.incr(cache_key)
+
+        except ValueError:
+            # Expired between the add() and incr() calls above; start over.
+            cache.add(cache_key, 1, timeout=_AUTH_FAILURE_WINDOW_SECONDS)
+
+
+def _auth_success_cache_key(client_ip: str, key: str) -> str:
+    return "{}:{}:{}".format(_AUTH_SUCCESS_CACHE_PREFIX, client_ip, key)
+
+
+def _auth_success_fingerprint(username: str, password: str, stored: str) -> str:
+    """Fingerprint credentials that already passed the password check.
+
+    Including the stored digest invalidates the cache after a password
+    change. ``SECRET_KEY`` prevents a cache value from being forged.
+    """
+    mac = hmac.new(
+        settings.SECRET_KEY.encode("utf-8"),
+        "{}:{}:{}".format(username, password, stored).encode("utf-8"),
+        hashlib.sha256,
+    )
+    return mac.hexdigest()
+
+
+def key_auth_ok(request: HttpRequest, key: str) -> bool:
+    """Return whether a request may use a protected configuration key.
+
+    Global credentials can access every key. Otherwise, the key's credentials
+    are checked with success caching and failure throttling. Rate-limited
+    requests are marked so the view can return 429 instead of 401.
+    """
+    if getattr(request, "globally_authenticated", False):
+        return True
+
+    try:
+        stored = ConfigCache.get_auth(key)
+
+    except AppriseAuthStorageError:
+        # Fail closed: an unreadable lock file is treated as protected.
+        return False
+
+    if stored is None:
+        return settings.APPRISE_BASIC_AUTH_TOKEN is None
+
+    client_ip = _client_ip(request)
+    if _auth_rate_limited(client_ip, key):
+        request.apprise_auth_rate_limited = True
+        return False
+
+    username, password = basic_auth_credentials(request)
+    if username is None:
+        return False
+
+    success_cache_key = _auth_success_cache_key(client_ip, key)
+    fingerprint = _auth_success_fingerprint(username, password, stored)
+    if hmac.compare_digest(cache.get(success_cache_key, ""), fingerprint):
+        return True
+
+    if check_password("{}:{}".format(username, password), stored):
+        cache.set(success_cache_key, fingerprint, timeout=_AUTH_SUCCESS_CACHE_SECONDS)
+        return True
+
+    _record_auth_failure(client_ip, key)
+    return False
 
 
 def apply_global_filters():

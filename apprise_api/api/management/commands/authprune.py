@@ -22,24 +22,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import io
-
-from django.core import management
-from django.core.management.base import CommandError
-from django.test import SimpleTestCase
+from api.utils import ConfigCache
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
 
 
-class CommandTests(SimpleTestCase):
-    def test_command_style(self):
-        out = io.StringIO()
-        management.call_command("storeprune", days=40, stdout=out)
+class Command(BaseCommand):
+    help = f"Prune locked, never-configured keys older than {settings.APPRISE_AUTH_PRUNE_SECONDS} seconds"
 
-    def test_authprune_command_style(self):
-        out = io.StringIO()
-        management.call_command("authprune", seconds=2592000, stdout=out)
-        self.assertIn("pruned", out.getvalue())
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-s",
+            "--seconds",
+            type=int,
+            default=settings.APPRISE_AUTH_PRUNE_SECONDS,
+        )
 
-    def test_authprune_rejects_negative_seconds(self):
-        """Reject negative ages that would make every lock eligible."""
-        with self.assertRaises(CommandError):
-            management.call_command("authprune", seconds=-1, stdout=io.StringIO())
+    def handle(self, *args, **options):
+        if options["seconds"] < 0:
+            # A negative age would make every unused lock eligible.
+            raise CommandError("--seconds must not be negative")
+
+        pruned = ConfigCache.prune_unused_locks(options["seconds"])
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully pruned {pruned} unused authentication lock(s) (seconds: {options['seconds']})"
+            )
+        )

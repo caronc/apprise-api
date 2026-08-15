@@ -1220,3 +1220,25 @@ class StatelessNotifyTests(SimpleTestCase):
         body = b"".join(response.streaming_content).decode("utf-8")
         assert "event: log" in body
         assert "event: result" in body
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_disabled_mode_denies_notify(self, mock_notify):
+        """Disabled stateless mode rejects /notify requests."""
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            response = self.client.post(
+                "/notify",
+                {"urls": "mailto://user:pass@hotmail.com", "body": "test notification"},
+            )
+            assert response.status_code == 403
+            mock_notify.assert_not_called()
+
+            # JSON response shape matches every other access-control denial
+            response = self.client.post(
+                "/notify",
+                data=json.dumps({"urls": "mailto://user:pass@hotmail.com", "body": "test notification"}),
+                content_type="application/json",
+            )
+            assert response.status_code == 403
+            content = json.loads(response.content)
+            assert "error" in content
+            mock_notify.assert_not_called()
