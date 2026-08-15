@@ -37,9 +37,11 @@ from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import Resolver404, resolve, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.cache import never_cache
@@ -51,24 +53,38 @@ from .forms import (
     CONFIG_FORMATS,
     AddByConfigForm,
     AddByUrlForm,
+    AuthForm,
+    BrowserLoginForm,
     NotifyByUrlForm,
     NotifyForm,
 )
 from .payload_mapper import remap_fields
 from .utils import (
     _AUTH_FAILURE_WINDOW_SECONDS as AUTH_RATE_LIMIT_RETRY_AFTER_SECONDS,
+    AUTH_MODE_DISABLED,
+    AUTH_MODE_MASTER,
+    AUTH_MODE_SHARED,
     CONFIG_KEY_HEADER,
+    CONFIG_KEY_PATTERN,
     MIME_IS_JSON,
+    AppriseAuthStorageError,
     AppriseStoreMode,
     ConfigCache,
     apply_global_filters,
+    clear_web_auth_cookie,
+    config_auth_mode,
+    config_auth_username,
     config_key_header_present_but_invalid,
+    global_credentials_ok,
     healthcheck,
+    is_html_response,
     is_json_response,
     key_auth_ok,
+    key_credentials_ok,
     parse_attachments,
     resolve_config_key,
     send_webhook,
+    set_web_auth_cookie,
 )
 
 # Get an instance of a logger
@@ -989,9 +1005,7 @@ def _key_access_denied_response(request, key):
         msg = _("Too Many Requests")
         status = ResponseCode.too_many_requests
         response = (
-            HttpResponse(msg, status=status, content_type="text/plain")
-            if not is_json_response(request)
-            else JsonResponse(
+            JsonResponse(
                 {
                     "error": msg,
                 },
@@ -999,6 +1013,10 @@ def _key_access_denied_response(request, key):
                 safe=False,
                 status=status,
             )
+            if is_json_response(request)
+            else render(request, "429.html", {"retry_after": AUTH_RATE_LIMIT_RETRY_AFTER_SECONDS}, status=status)
+            if is_html_response(request)
+            else HttpResponse(msg, status=status, content_type="text/plain")
         )
         response["Retry-After"] = str(AUTH_RATE_LIMIT_RETRY_AFTER_SECONDS)
         return response
@@ -1011,9 +1029,7 @@ def _key_access_denied_response(request, key):
     msg = _("Access Denied")
     status = ResponseCode.unauthorized
     response = (
-        HttpResponse(msg, status=status, content_type="text/plain")
-        if not is_json_response(request)
-        else JsonResponse(
+        JsonResponse(
             {
                 "error": msg,
             },
@@ -1021,18 +1037,18 @@ def _key_access_denied_response(request, key):
             safe=False,
             status=status,
         )
+        if is_json_response(request)
+        else render(request, "401.html", status=status)
+        if is_html_response(request)
+        else HttpResponse(msg, status=status, content_type="text/plain")
     )
     response["WWW-Authenticate"] = 'Basic realm="{}: {}"'.format(settings.APPRISE_BASIC_AUTH_REALM, key)
     return response
 
 
 def _per_key_auth_unavailable_response(json_response):
-    """Return 403 when per-key authentication management is unavailable.
-
-    A global administrator must be configured before anyone can create,
-    replace, or remove a key's credentials.
-    """
-    msg = _("Per-key authentication requires global authentication (APPRISE_USER/APPRISE_PASSWORD) to be configured")
+    """Return 403 when authentication mode is disabled."""
+    msg = _("Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)")
     status = ResponseCode.no_access
     return (
         HttpResponse(msg, status=status, content_type="text/plain")
@@ -1213,14 +1229,169 @@ class WelcomeView(View):
             # API Mode only - Nothing further to parse
             return Error421View.as_view()(request)
 
+        if request.apprise_auth_permission == AUTH_MODE_SHARED:
+            # A shared browser login cannot inspect another key through examples.
+            key = request.apprise_web_auth_key
+
+        # Examples use the key's username when one is saved. The password is
+        # always shown as a placeholder and is never read from storage.
+        example_username = settings.APPRISE_USER
+        if settings.APPRISE_AUTH_REQUIRED and CONFIG_KEY_PATTERN.match(key):
+            example_username = config_auth_username(key) or example_username
+
         return render(
             request,
             self.template_name,
             {
                 "secure": request.scheme[-1].lower() == "s",
                 "key": key if key else default_key,
+                "AUTH_USERNAME": example_username,
             },
         )
+
+
+def _login_config_key(request, next_url):
+    """Return the Config ID named by a safe local login destination."""
+    if not next_url or not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return ""
+
+    path = urlsplit(next_url).path
+    if settings.BASE_URL and path.startswith("{}/".format(settings.BASE_URL)):
+        path = path[len(settings.BASE_URL) :]
+
+    try:
+        key = resolve(path).kwargs.get("key", "")
+    except Resolver404:
+        return ""
+    return key if isinstance(key, str) and CONFIG_KEY_PATTERN.match(key) else ""
+
+
+@method_decorator(never_cache, name="dispatch")
+class LoginView(View):
+    """Create a signed login used only by the browser interface."""
+
+    template_name = "login.html"
+
+    def get(self, request):
+        """Show the browser login form."""
+        if settings.APPRISE_API_ONLY:
+            return Error421View.as_view()(request)
+        if not settings.APPRISE_AUTH_REQUIRED:
+            return redirect("welcome")
+
+        next_url = request.GET.get("next", "")
+        key = request.GET.get("key", "").strip()
+        if not CONFIG_KEY_PATTERN.match(key):
+            key = _login_config_key(request, next_url)
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "AUTH_ENABLED": False,
+                "form_login": BrowserLoginForm(
+                    initial={
+                        "next": next_url,
+                        "key": key,
+                    }
+                ),
+            },
+        )
+
+    def post(self, request):
+        """Validate credentials and start the browser login."""
+        if settings.APPRISE_API_ONLY:
+            return Error421View.as_view()(request)
+        if not settings.APPRISE_AUTH_REQUIRED:
+            return redirect("welcome")
+        if not is_html_response(request):
+            return HttpResponse(
+                _("The login form is only available to the web interface"),
+                status=ResponseCode.method_not_accepted,
+                content_type="text/plain",
+            )
+
+        form = BrowserLoginForm(request.POST)
+        status = ResponseCode.unauthorized
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            key = form.cleaned_data["key"]
+
+            mode = None
+            if global_credentials_ok(username, password):
+                mode = AUTH_MODE_MASTER
+                key = None
+            elif CONFIG_KEY_PATTERN.match(key) and key_credentials_ok(request, key, username, password):
+                mode = AUTH_MODE_SHARED
+
+            if mode:
+                next_url = form.cleaned_data["next"] or (
+                    reverse("config", kwargs={"key": key}) if mode == AUTH_MODE_SHARED else reverse("welcome")
+                )
+                if not url_has_allowed_host_and_scheme(
+                    next_url,
+                    allowed_hosts={request.get_host()},
+                    require_https=request.is_secure(),
+                ):
+                    next_url = reverse("config", kwargs={"key": key}) if key else reverse("welcome")
+
+                response = redirect(next_url)
+                set_web_auth_cookie(response, request, mode, username, key)
+                response["Cache-Control"] = "no-store"
+                return response
+
+            if getattr(request, "apprise_auth_rate_limited", False):
+                status = ResponseCode.too_many_requests
+                form.add_error(None, _("Too many login attempts. Please wait and try again."))
+            else:
+                form.add_error(None, _("The username, password, or Config ID was not accepted."))
+        else:
+            status = ResponseCode.bad_request
+
+        response = render(
+            request,
+            self.template_name,
+            {"AUTH_ENABLED": False, "form_login": form},
+            status=status,
+        )
+        if status == ResponseCode.too_many_requests:
+            response["Retry-After"] = str(AUTH_RATE_LIMIT_RETRY_AFTER_SECONDS)
+        return response
+
+
+class LogoutView(View):
+    """End the signed browser login."""
+
+    template_name = "logout.html"
+
+    def get(self, request):
+        """Delete the browser login and show its confirmation page."""
+        if settings.APPRISE_API_ONLY:
+            return Error421View.as_view()(request)
+        if not settings.APPRISE_AUTH_REQUIRED:
+            return redirect("welcome")
+
+        response = render(request, self.template_name, {"AUTH_ENABLED": False})
+        clear_web_auth_cookie(response)
+        response["Cache-Control"] = "no-store"
+        return response
+
+
+# Client-facing labels for the caller's own request, not a description of
+# the server's overall auth configuration. Only two values are ever sent:
+# a caller is either restricted to one key's own access ("user") or is
+# not ("admin") -- global credentials report "admin", and so does a
+# request that needed none at all, since nothing is restricted either way.
+_PRIVILEGE_LABELS = {
+    AUTH_MODE_MASTER: "admin",
+    AUTH_MODE_SHARED: "user",
+    AUTH_MODE_DISABLED: "admin",
+}
 
 
 def _health_check_response(request):
@@ -1255,6 +1426,7 @@ def _health_check_response(request):
                 "max_attachments": settings.APPRISE_MAX_ATTACHMENTS,
                 "attach_size": settings.APPRISE_ATTACH_SIZE,
                 "status": response,
+                "privilege": _PRIVILEGE_LABELS[request.apprise_auth_permission],
             },
             encoder=JSONEncoder,
             safe=False,
@@ -1385,6 +1557,12 @@ class ConfigView(View):
         if not key_auth_ok(request, key):
             return _key_access_denied_response(request, key)
 
+        auth_mode = config_auth_mode(key)
+        auth_username = config_auth_username(key)
+        if auth_username is None and request.apprise_auth_permission == AUTH_MODE_SHARED:
+            # A legacy lock cannot reveal its username, but this request can.
+            auth_username = request.apprise_auth_username
+
         return render(
             request,
             self.template_name,
@@ -1393,6 +1571,8 @@ class ConfigView(View):
                 "form_url": AddByUrlForm(),
                 "form_cfg": AddByConfigForm(),
                 "form_notify": NotifyForm(),
+                "auth_mode": auth_mode,
+                "auth_username": auth_username or "",
             },
         )
 
@@ -1422,7 +1602,9 @@ class ConfigListView(View):
             # API-only mode hides HTML. JSON still follows the admin check.
             return Error421View.as_view()(request)
 
-        if not (settings.APPRISE_ADMIN and settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.SIMPLE):
+        # A configuration login never grants access to every saved ID.
+        global_access = not settings.APPRISE_AUTH_REQUIRED or getattr(request, "globally_authenticated", False)
+        if not (global_access and settings.APPRISE_ADMIN and settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.SIMPLE):
             msg = _("The site has been configured to deny this request")
             status = ResponseCode.no_access
             return (
@@ -1438,19 +1620,43 @@ class ConfigListView(View):
                 )
             )
 
+        stored_keys = ConfigCache.keys()
+        entries = []
+        for key in stored_keys:
+            username = None
+            assigned = False
+            if settings.APPRISE_AUTH_REQUIRED:
+                try:
+                    record = ConfigCache.get_auth_record(key)
+                    assigned = record is not None
+                    username = record[0] if assigned else None
+
+                except AppriseAuthStorageError:
+                    # A damaged lock remains protected, but has no safe username.
+                    assigned = True
+
+            entries.append(
+                {
+                    "key": key,
+                    "user": username,
+                    "assigned": assigned,
+                }
+            )
         status = ResponseCode.okay
         return (
             render(
                 request,
                 self.template_name,
                 {
-                    "keys": ConfigCache.keys(),
+                    "keys": entries,
                 },
                 status=status,
             )
             if not json_response
             else JsonResponse(
-                ConfigCache.keys(),
+                stored_keys
+                if not settings.APPRISE_AUTH_REQUIRED
+                else [{"key": entry["key"], "user": entry["user"]} for entry in entries],
                 encoder=JSONEncoder,
                 safe=False,
                 status=status,
@@ -1947,6 +2153,60 @@ class DelView(View):
 class AuthView(View):
     """Set, replace, or remove Basic Auth for one configuration key."""
 
+    template_name = "auth.html"
+
+    def get(self, request, key=None):
+        """Show the auth editor or return its current state as JSON."""
+        json_response = is_json_response(request)
+        if settings.APPRISE_API_ONLY and not json_response:
+            return Error421View.as_view()(request)
+
+        if not settings.APPRISE_AUTH_REQUIRED:
+            if is_html_response(request):
+                return render(request, "auth_disabled.html")
+            return _per_key_auth_unavailable_response(json_response)
+
+        key = resolve_config_key(request, key)
+        if not key:
+            if config_key_header_present_but_invalid(request):
+                return _invalid_key_response(request)
+            return _missing_key_response(request)
+
+        if not key_auth_ok(request, key):
+            return _key_access_denied_response(request, key)
+
+        mode = config_auth_mode(key)
+        # Only a saved per-key username belongs in this editor. The global
+        # username remains separate and is never copied into a new lock.
+        username = config_auth_username(key) if mode == AUTH_MODE_SHARED else ""
+        if username is None and request.apprise_auth_permission == AUTH_MODE_SHARED:
+            username = request.apprise_auth_username
+        shared_user = request.apprise_auth_permission == AUTH_MODE_SHARED
+        if json_response:
+            return JsonResponse(
+                {"mode": mode, "username": username},
+                encoder=JSONEncoder,
+                safe=False,
+                status=ResponseCode.okay,
+            )
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "key": key,
+                "auth_mode": mode,
+                "auth_username": username,
+                "shared_user": shared_user,
+                "form_auth": AuthForm(
+                    initial={"username": username},
+                    shared=shared_user,
+                    current_username=username,
+                    require_current=shared_user,
+                ),
+            },
+        )
+
     def post(self, request, key=None):
         """Set credentials from JSON, reading a missing key from the header."""
         json_response = is_json_response(request)
@@ -1962,7 +2222,7 @@ class AuthView(View):
                 else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
             )
 
-        if not settings.APPRISE_BASIC_AUTH_TOKEN:
+        if not settings.APPRISE_AUTH_REQUIRED:
             return _per_key_auth_unavailable_response(json_response)
 
         key = resolve_config_key(request, key)
@@ -2000,36 +2260,102 @@ class AuthView(View):
                 else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
             )
 
-        username = content.get("username") if isinstance(content, dict) else None
-        password = content.get("password") if isinstance(content, dict) else None
-        if not isinstance(username, str) or not isinstance(password, str):
+        if not isinstance(content, dict):
             status = ResponseCode.bad_request
-            msg = _("Both username and password are required")
+            msg = _("The JSON payload must be an object")
             return (
                 HttpResponse(msg, status=status, content_type="text/plain")
                 if not json_response
                 else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
             )
 
-        # Basic Auth uses the first colon to separate username and password.
-        # Apply the same username rule used by global authentication.
-        if ":" in username:
+        shared_user = request.apprise_auth_permission == AUTH_MODE_SHARED
+        browser_shared_user = shared_user and getattr(request, "apprise_web_auth_key", None) == key
+        current_username = ""
+        if shared_user:
+            current_username = config_auth_username(key)
+            if current_username is None:
+                # Legacy locks did not record their username. The successful
+                # login tells us which value must remain in use.
+                current_username = request.apprise_auth_username or ""
+
+        username = content.get("username")
+        current_password = content.get("current_password")
+        password = content.get("password")
+        password_confirm = content.get("password_confirm")
+        if (
+            not isinstance(password, str)
+            or (shared_user and not isinstance(password_confirm, str))
+            or (not shared_user and not isinstance(username, str))
+            or (shared_user and username is not None and not isinstance(username, str))
+            or (browser_shared_user and current_password is not None and not isinstance(current_password, str))
+        ):
             status = ResponseCode.bad_request
-            msg = _("Username cannot contain ':'")
+            msg = _("Valid username and password fields are required")
             return (
                 HttpResponse(msg, status=status, content_type="text/plain")
                 if not json_response
                 else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
             )
 
-        # Reject the trivial blank ``username:password`` credential pair.
-        if not username and not password:
+        # A password-only account has no username field in the shared editor.
+        form_data = content.copy()
+        if shared_user and username is None and not current_username:
+            form_data["username"] = ""
+
+        form = AuthForm(
+            form_data,
+            shared=shared_user,
+            current_username=current_username,
+            require_current=browser_shared_user,
+        )
+        if not form.is_valid():
             status = ResponseCode.bad_request
-            msg = _("Username and password cannot both be empty")
+            field, errors = next(iter(form.errors.items()))
+            msg = errors[0]
             return (
                 HttpResponse(msg, status=status, content_type="text/plain")
                 if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+                else JsonResponse(
+                    {"error": msg, "field": field},
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+            )
+
+        username = form.cleaned_data["username"]
+        password = form.cleaned_data["password"]
+        if browser_shared_user and not ConfigCache.verify_auth(
+            key,
+            username,
+            form.cleaned_data["current_password"],
+        ):
+            status = ResponseCode.bad_request
+            msg = _("The current password was not accepted")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse(
+                    {"error": msg, "field": "current_password"},
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+            )
+
+        if shared_user and ConfigCache.verify_auth(key, username, password):
+            status = ResponseCode.bad_request
+            msg = _("The new password must differ from the current password")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse(
+                    {"error": msg, "field": "password"},
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
             )
 
         if not ConfigCache.set_auth(key, username, password):
@@ -2053,17 +2379,21 @@ class AuthView(View):
         )
         status = ResponseCode.okay
         msg = _("Successfully set authentication")
-        return (
+        response = (
             HttpResponse(msg, status=status, content_type="text/plain")
             if not json_response
             else JsonResponse({"error": None}, encoder=JSONEncoder, safe=False, status=status)
         )
+        if shared_user and getattr(request, "apprise_web_auth_key", None) == key:
+            # Keep the current browser signed in with the newly saved digest.
+            set_web_auth_cookie(response, request, AUTH_MODE_SHARED, username, key)
+        return response
 
     def delete(self, request, key=None):
         """Remove per-key auth using a URL or header key."""
         json_response = is_json_response(request)
 
-        if not settings.APPRISE_BASIC_AUTH_TOKEN:
+        if not settings.APPRISE_AUTH_REQUIRED:
             return _per_key_auth_unavailable_response(json_response)
 
         key = resolve_config_key(request, key)
@@ -2074,6 +2404,17 @@ class AuthView(View):
 
         if not key_auth_ok(request, key):
             return _key_access_denied_response(request, key)
+
+        # Configuration users may rotate their password, but only the global
+        # administrator can remove their account.
+        if not getattr(request, "globally_authenticated", False):
+            status = ResponseCode.no_access
+            msg = _("Global administrator credentials are required to remove authentication")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            )
 
         result = ConfigCache.clear_auth(key)
         if result is False:

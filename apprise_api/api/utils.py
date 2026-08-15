@@ -30,7 +30,7 @@ import errno
 import gzip
 import hashlib
 import hmac
-from json import dumps
+from json import dumps, loads
 
 # import the logging library
 import logging
@@ -42,6 +42,7 @@ import tempfile
 import apprise
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.core import signing
 from django.core.cache import cache
 from django.http import HttpRequest
 import requests
@@ -57,6 +58,7 @@ logger = logging.getLogger("django")
 # application/json
 # application/x-json
 MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
+MIME_IS_HTML = re.compile(r"(^|,)\s*text/html(?:\s*;|\s*,|$)", re.I)
 
 # Parsing of Accept; the following amounts to Accept All
 # */*
@@ -77,14 +79,23 @@ def is_json_response(request: HttpRequest) -> bool:
     )
 
 
+def is_html_response(request: HttpRequest) -> bool:
+    """Return whether the client explicitly accepts a browser page."""
+    return MIME_IS_HTML.search(request.headers.get("accept", "")) is not None
+
+
 def is_authenticated(request: HttpRequest) -> bool:
     """Return whether the request satisfies the global Basic Auth gate.
 
     Authentication is optional. When enabled, the supplied token is compared
     safely with the token prepared at startup.
     """
-    if settings.APPRISE_BASIC_AUTH_TOKEN is None:
+    if not settings.APPRISE_AUTH_REQUIRED:
         return True
+
+    # Authentication may be enabled without an administrator account.
+    if settings.APPRISE_BASIC_AUTH_TOKEN is None:
+        return False
 
     provided = request.headers.get("authorization", "")
     # RFC 7235: the auth-scheme token ("Basic") is case-insensitive.
@@ -92,6 +103,18 @@ def is_authenticated(request: HttpRequest) -> bool:
         return False
 
     return hmac.compare_digest(provided[6:], settings.APPRISE_BASIC_AUTH_TOKEN)
+
+
+def global_credentials_ok(username: str, password: str) -> bool:
+    """Return whether a username and password match the global login."""
+    if settings.APPRISE_BASIC_AUTH_TOKEN is None:
+        return False
+
+    try:
+        provided = base64.b64encode("{}:{}".format(username, password).encode()).decode()
+    except UnicodeEncodeError:
+        return False
+    return hmac.compare_digest(provided, settings.APPRISE_BASIC_AUTH_TOKEN)
 
 
 class AppriseStoreMode:
@@ -546,6 +569,22 @@ class AppriseAuthStorageError(Exception):
     """Raised when an existing per-key authentication lock cannot be read."""
 
 
+# These values describe how a configuration key is protected.
+AUTH_MODE_DISABLED = "disabled"
+AUTH_MODE_MASTER = "master_lock"
+AUTH_MODE_SHARED = "shared_lock"
+
+# Browser pages use a signed cookie so their Logout button can end a session.
+# API clients continue to authenticate each request with Basic Auth.
+WEB_AUTH_COOKIE = "apprise_web_auth"
+WEB_AUTH_HEADER = "X-Apprise-Web-Auth"
+_WEB_AUTH_SIGNING_SALT = "apprise-api.web-auth"
+
+# New lock files retain the username for the GUI. Digest-only files from
+# earlier versions remain supported.
+_AUTH_RECORD_VERSION = 1
+
+
 class AppriseConfigCache:
     """
     Designed to make it easy to store/read contact back from disk in a cache
@@ -856,7 +895,16 @@ class AppriseConfigCache:
         try:
             try:
                 with os.fdopen(fd, "w") as f:
-                    f.write(digest)
+                    f.write(
+                        dumps(
+                            {
+                                "version": _AUTH_RECORD_VERSION,
+                                "username": username,
+                                "digest": digest,
+                            },
+                            separators=(",", ":"),
+                        )
+                    )
 
                 os.replace(tmp_path, full_path)
 
@@ -872,18 +920,17 @@ class AppriseConfigCache:
 
         return True
 
-    def get_auth(self, key):
-        """Return a key's stored credential digest, or None if no lock is set.
+    def get_auth_record(self, key):
+        """Return ``(username, digest)`` for a key, or ``None``.
 
         Raises ``AppriseAuthStorageError`` when an existing lock cannot be
-        read or decoded. Callers use this distinction to deny access instead
-        of treating a damaged lock as missing.
+        read. Older digest-only locks return ``(None, digest)``.
         """
         path, filename = self.auth_path(key)
         full_path = os.path.join(path, filename)
         try:
             with open(full_path) as f:
-                return f.read().strip()
+                stored = f.read().strip()
 
         except FileNotFoundError:
             return None
@@ -891,6 +938,37 @@ class AppriseConfigCache:
         except (OSError, UnicodeDecodeError) as e:
             logger.error("Could not read authentication for KEY: {} ({})".format(key, e))
             raise AppriseAuthStorageError(str(e)) from e
+
+        # JSON is the current format. Anything else is a legacy digest.
+        if not stored.startswith("{"):
+            return None, stored
+
+        try:
+            record = loads(stored)
+            username = record["username"]
+            digest = record["digest"]
+            if (
+                record.get("version") != _AUTH_RECORD_VERSION
+                or not isinstance(username, str)
+                or not isinstance(digest, str)
+            ):
+                raise ValueError
+
+        except (KeyError, TypeError, ValueError):
+            logger.error("Could not decode authentication for KEY: {}".format(key))
+            raise AppriseAuthStorageError("Invalid authentication record") from None
+
+        return username, digest
+
+    def get_auth(self, key):
+        """Return a key's credential digest, or ``None`` when unlocked."""
+        record = self.get_auth_record(key)
+        return None if record is None else record[1]
+
+    def get_auth_username(self, key):
+        """Return the saved username when the lock format provides it."""
+        record = self.get_auth_record(key)
+        return None if record is None else record[0]
 
     def has_auth(self, key):
         """True when this key currently has (or may have) per-key authentication set.
@@ -1041,6 +1119,24 @@ ConfigCache = AppriseConfigCache(
 )
 
 
+def config_auth_mode(key: str) -> str:
+    """Return how a configuration key is protected in this deployment."""
+    if not settings.APPRISE_AUTH_REQUIRED:
+        return AUTH_MODE_DISABLED
+    return AUTH_MODE_SHARED if ConfigCache.has_auth(key) else AUTH_MODE_MASTER
+
+
+def config_auth_username(key: str):
+    """Return the username used in examples and the authentication form."""
+    if config_auth_mode(key) == AUTH_MODE_SHARED:
+        try:
+            return ConfigCache.get_auth_username(key)
+        except AppriseAuthStorageError:
+            # The global administrator can still replace a damaged lock.
+            return None
+    return settings.APPRISE_USER
+
+
 def basic_auth_credentials(request: HttpRequest):
     """Decode Basic Auth into ``(username, password)``.
 
@@ -1155,16 +1251,8 @@ def _auth_success_fingerprint(username: str, password: str, stored: str) -> str:
     return mac.hexdigest()
 
 
-def key_auth_ok(request: HttpRequest, key: str) -> bool:
-    """Return whether a request may use a protected configuration key.
-
-    Global credentials can access every key. Otherwise, the key's credentials
-    are checked with success caching and failure throttling. Rate-limited
-    requests are marked so the view can return 429 instead of 401.
-    """
-    if getattr(request, "globally_authenticated", False):
-        return True
-
+def key_credentials_ok(request: HttpRequest, key: str, username: str, password: str) -> bool:
+    """Check supplied credentials against one configuration lock."""
     try:
         stored = ConfigCache.get_auth(key)
 
@@ -1173,28 +1261,142 @@ def key_auth_ok(request: HttpRequest, key: str) -> bool:
         return False
 
     if stored is None:
-        return settings.APPRISE_BASIC_AUTH_TOKEN is None
+        return False
 
     client_ip = _client_ip(request)
     if _auth_rate_limited(client_ip, key):
         request.apprise_auth_rate_limited = True
         return False
 
-    username, password = basic_auth_credentials(request)
-    if username is None:
-        return False
-
     success_cache_key = _auth_success_cache_key(client_ip, key)
     fingerprint = _auth_success_fingerprint(username, password, stored)
     if hmac.compare_digest(cache.get(success_cache_key, ""), fingerprint):
+        request.apprise_auth_permission = AUTH_MODE_SHARED
+        request.apprise_auth_username = username
         return True
 
     if check_password("{}:{}".format(username, password), stored):
         cache.set(success_cache_key, fingerprint, timeout=_AUTH_SUCCESS_CACHE_SECONDS)
+        request.apprise_auth_permission = AUTH_MODE_SHARED
+        request.apprise_auth_username = username
         return True
 
     _record_auth_failure(client_ip, key)
     return False
+
+
+def key_auth_ok(request: HttpRequest, key: str) -> bool:
+    """Return whether a request may use a protected configuration key.
+
+    Global credentials can access every key. A browser session is limited to
+    its saved key. API requests check Basic credentials on every request.
+    """
+    if getattr(request, "globally_authenticated", False):
+        request.apprise_auth_permission = AUTH_MODE_MASTER
+        return True
+
+    # The signed browser cookie never grants access to a different key.
+    if (
+        getattr(request, "apprise_auth_permission", AUTH_MODE_DISABLED) == AUTH_MODE_SHARED
+        and getattr(request, "apprise_web_auth_key", None) == key
+    ):
+        return True
+
+    # Turning authentication off restores the original open behavior.
+    if not settings.APPRISE_AUTH_REQUIRED:
+        request.apprise_auth_permission = AUTH_MODE_DISABLED
+        return True
+
+    username, password = basic_auth_credentials(request)
+    if username is None:
+        return False
+    return key_credentials_ok(request, key, username, password)
+
+
+def _web_auth_proof(mode: str, key=None):
+    """Return a private fingerprint of the credential backing a web login."""
+    if mode == AUTH_MODE_MASTER:
+        credential = settings.APPRISE_BASIC_AUTH_TOKEN
+    elif mode == AUTH_MODE_SHARED and key:
+        try:
+            credential = ConfigCache.get_auth(key)
+        except AppriseAuthStorageError:
+            return None
+    else:
+        return None
+
+    if not credential:
+        return None
+    return hmac.new(
+        settings.SECRET_KEY.encode("utf-8"),
+        credential.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def set_web_auth_cookie(response, request, mode: str, username: str, key=None) -> None:
+    """Store a signed, browser-session login without saving a password."""
+    payload = {
+        "mode": mode,
+        "username": username,
+        "key": key if mode == AUTH_MODE_SHARED else None,
+        "proof": _web_auth_proof(mode, key),
+    }
+    # A trusted HTTPS origin also covers TLS terminated by a reverse proxy.
+    secure = request.is_secure() or "https://{}".format(request.get_host()).lower() in settings.APPRISE_TRUSTED_ORIGINS
+    response.set_cookie(
+        WEB_AUTH_COOKIE,
+        signing.dumps(payload, salt=_WEB_AUTH_SIGNING_SALT, compress=True),
+        httponly=True,
+        secure=secure,
+        samesite="Lax",
+        path=settings.BASE_URL or "/",
+    )
+
+
+def clear_web_auth_cookie(response) -> None:
+    """Remove the browser login while leaving API credentials untouched."""
+    response.delete_cookie(
+        WEB_AUTH_COOKIE,
+        path=settings.BASE_URL or "/",
+        samesite="Lax",
+    )
+
+
+def restore_web_auth(request: HttpRequest, requested_key=None, allow_shared_without_key=False) -> bool:
+    """Restore a valid signed browser login onto the current request."""
+    value = request.COOKIES.get(WEB_AUTH_COOKIE)
+    if not value:
+        return False
+
+    try:
+        payload = signing.loads(value, salt=_WEB_AUTH_SIGNING_SALT)
+    except (signing.BadSignature, TypeError):
+        return False
+
+    mode = payload.get("mode") if isinstance(payload, dict) else None
+    username = payload.get("username") if isinstance(payload, dict) else None
+    key = payload.get("key") if isinstance(payload, dict) else None
+    proof = payload.get("proof") if isinstance(payload, dict) else None
+    if not isinstance(username, str) or not isinstance(proof, str):
+        return False
+
+    if mode == AUTH_MODE_SHARED:
+        # A shared login may use its key or a small set of general GUI pages.
+        if requested_key and key != requested_key:
+            return False
+        if not requested_key and not allow_shared_without_key:
+            return False
+
+    expected = _web_auth_proof(mode, key)
+    if expected is None or not hmac.compare_digest(proof, expected):
+        return False
+
+    request.apprise_auth_permission = mode
+    request.apprise_auth_username = username
+    request.apprise_web_auth_key = key
+    request.globally_authenticated = mode == AUTH_MODE_MASTER
+    return True
 
 
 def apply_global_filters():

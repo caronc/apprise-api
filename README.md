@@ -374,8 +374,9 @@ If both the URL and header contain a key, the header wins. An invalid header ret
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials when configured.
-| `/auth/{KEY}` |  POST  | Sets or replaces Basic Auth for `{KEY}`. Send `{"username": "...", "password": "..."}` as JSON. The first lock requires global credentials; later changes accept global or current key credentials. Configuration content is unchanged.
-| `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. `/del/{KEY}` removes both.
+| `/auth/{KEY}` |  GET  | Opens the authentication editor in a browser, or returns the current mode and username when JSON is requested. Passwords are never returned.
+| `/auth/{KEY}` |  POST  | Sets or replaces Basic Auth for `{KEY}`. Administrators may change both fields. Configuration users may only change their password and must include `password_confirm`.
+| `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
@@ -537,7 +538,7 @@ data: {"status": "SUCCESS"}
 - `{KEY}` must be 1-128 alphanumeric characters in length. In addition to this, the underscore (`_`) and dash (`-`) are also accepted.
   - Consider using keys like `sha1`, `sha512`, `uuid`, etc to secure shared namespaces if you wish to open your platform to others. Or keep it simple in a controlled environment and just use the default string `apprise` as your key (and as illustrated in the examples above). You can override this default value by setting the `APPRISE_DEFAULT_CONFIG_ID`(see below).
 - Specify the `Content-Type` of `application/json` to use the JSON support otherwise the default expected format is `application/x-www-form-urlencoded` (whether it is specified or not).
-- Authentication is disabled by default. Enable built-in HTTP Basic Auth with `APPRISE_USER` and/or `APPRISE_PASSWORD`; see [Authentication](#authentication).
+- Authentication is disabled by default. Set `APPRISE_AUTH_REQUIRED=yes` to enable it; see [Authentication](#authentication).
 - There are no additional dependencies (such as database requirements, etc) should you choose to use the optional persistent store (mounted as `/config`).
 
 ### Environment Variables
@@ -575,8 +576,9 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
 | `APPRISE_STATELESS_MODE` | Controls stateless `/notify` calls:<br/>📌 **enabled**: Accept stateless notifications. This is the default.<br/>📌 **disabled**: Reject stateless notifications. If stateful mode is also disabled, `/status` reports `degraded`.
 | `APPRISE_CONFIG_LOCK` | Blocks direct configuration adds, deletes, and retrieval. Saved configurations still work with `/notify` and the [`apprise://` plugin](https://appriseit.com/services/apprise_api/). Defaults to `no`.
-| `APPRISE_USER` | Optional global Basic Auth username. It requires `APPRISE_PASSWORD`; otherwise auth is disabled with a warning. Colons are invalid and stop startup.
-| `APPRISE_PASSWORD` | Optional global Basic Auth password. It may be used without a username. Explicitly blank credentials stop startup. See [Authentication](#authentication).
+| `APPRISE_AUTH_REQUIRED` | Enables built-in authentication when set to `yes`. Defaults to `no`. When disabled, `APPRISE_USER`, `APPRISE_PASSWORD`, and saved configuration logins are ignored. See [Authentication](#authentication).
+| `APPRISE_USER` | Optional administrator username used only when `APPRISE_AUTH_REQUIRED=yes`. It requires `APPRISE_PASSWORD`; colons are not allowed.
+| `APPRISE_PASSWORD` | Optional administrator password used only when `APPRISE_AUTH_REQUIRED=yes`. It may be used without a username. Leave it unset to run authentication without an administrator account.
 | `APPRISE_BASIC_AUTH_REALM` | Label shown in Basic Auth prompts. Defaults to `Apprise API`; use a different label for each instance sharing a host.
 | `APPRISE_TRUSTED_ORIGINS` | Origins allowed to make browser writes, separated by commas. Use `scheme://host[:port]`, such as `https://apprise.example.com`. HTTPS deployments should set this because bundled nginx does not forward the original scheme ([issue #275](https://github.com/caronc/apprise-api/issues/275)).
 | `APPRISE_ADMIN` | Enables admin mode. This removes the distinction between users and admins and allows listing stored configuration keys (when `STATEFUL_MODE` is set to `simple`). This defaults to `no` and can be set to `yes`.
@@ -610,27 +612,41 @@ The 2 files you can override are:
 ### Authentication
 
 #### Built-in Basic Auth
-Apprise API can protect every endpoint with HTTP Basic Auth. Set `APPRISE_PASSWORD` and, optionally, `APPRISE_USER`. Unauthenticated requests receive `401`:
+Apprise API can protect every endpoint with HTTP Basic Auth. Enable it with `APPRISE_AUTH_REQUIRED=yes`. Unauthenticated requests receive `401`:
 ```bash
 docker run --name apprise \
    -p 8000:8000 \
    -v /path/to/local/config:/config \
+   -e APPRISE_AUTH_REQUIRED=yes \
    -e APPRISE_USER=foobar \
    -e APPRISE_PASSWORD=your-password-here \
    caronc/apprise:latest
 ```
-`APPRISE_PASSWORD` may be used alone. `APPRISE_USER` alone disables auth with a warning. If neither is set, auth remains disabled. Per-key auth requires global credentials.
+
+| Mode | Settings | Result |
+| --- | --- | --- |
+| Disabled | `APPRISE_AUTH_REQUIRED=no` | Requests remain open. Administrator settings and saved configuration logins are ignored. |
+| Administrator enabled | `APPRISE_AUTH_REQUIRED=yes` with `APPRISE_PASSWORD` | The administrator can access every key and manage configuration logins. `APPRISE_USER` is optional. |
+| Administrator disabled | `APPRISE_AUTH_REQUIRED=yes` without `APPRISE_PASSWORD` | Only existing configuration logins can access their own keys. New logins cannot be created until an administrator password is configured. |
+
+`APPRISE_USER` without `APPRISE_PASSWORD` produces a warning and leaves the administrator account disabled. This is useful when each person should use only their assigned Config ID.
 
 Set `APPRISE_BASIC_AUTH_REALM` to give each instance a recognizable label in login prompts. It defaults to `Apprise API`.
 
 Basic Auth does not encrypt credentials. Use HTTPS whenever the server is reachable outside a trusted network.
 
+API clients continue to send Basic Auth with every request. Requests that explicitly accept `text/html` use the signed browser login, allowing **Logout** to end browser access without changing JSON or plain-text API behavior. Ordinary API calls cannot substitute this cookie for Basic Auth; only requests made by the web interface identify themselves as part of that browser login.
+
 #### Per-Configuration-ID Basic Auth
 Per-key auth lets users share one server without sharing administrator credentials. Each user receives a protected configuration key, while the administrator can recover any key.
 
-Protect a configuration with `POST /auth/{KEY}`. Setting, changing, or removing a lock requires global auth to remain configured. Without it, `/auth/{KEY}` returns `403`.
+In the web interface, open a configuration and select its lock icon or **Authentication** in the menu. Enter a username and password, then select **Save**. Global administrators can also use **Randomize** to generate both values.
 
-The first lock requires global credentials. Replacing or removing it accepts global or current key credentials:
+The configuration ID, username, and password are three separate values. Use random values when practical and share all three with the person who needs access. The password is never displayed again after it is saved.
+
+API clients can protect a configuration with `POST /auth/{KEY}`. An administrator is required to create the first login or remove one. An existing configuration user can still change their password when the administrator account is disabled.
+
+The first lock requires global credentials. Administrators may later change or remove it. Configuration users may change only their password and must enter it twice:
 ```bash
 # Set (or replace) a password just for this one configuration ID.
 # The very first time requires the global credentials:
@@ -642,15 +658,17 @@ curl -X POST -H "Content-Type: application/json" \
 # Replace it with the key's current credentials:
 curl -X POST -H "Content-Type: application/json" \
    -u alice:s3cret \
-   -d '{"username": "alice", "password": "new-password"}' \
+   -d '{"username": "alice", "password": "new-password", "password_confirm": "new-password"}' \
    http://localhost:8000/auth/my-config-id
 
-# Remove it again (the configuration itself is untouched):
-curl -X DELETE -u alice:new-password http://localhost:8000/auth/my-config-id
+# Remove it as the global administrator (the configuration is untouched):
+curl -X DELETE -u foobar:your-password-here http://localhost:8000/auth/my-config-id
 ```
 Once set, `/add`, `/del`, `/get`, `/cfg`, `/notify`, `/json/urls`, and `/status` for that key require its credentials or the global credentials. Other keys are unaffected. See the `/auth/{KEY}` endpoint above for setup details.
 
-A key remains protected if global auth is later removed, but its lock cannot be changed or removed until global auth returns. Keep global credentials configured while using per-key locks.
+Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring the original open behavior. Their saved files remain in place and take effect again when authentication is enabled.
+
+The web interface includes **Logout**, which ends its signed browser login immediately. Browsers may retain Basic Auth internally, but cached credentials cannot silently restore an HTML login.
 
 `APPRISE_CONFIG_LOCK` does not block setting, rotating, or removing per-key credentials.
 

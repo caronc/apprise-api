@@ -38,14 +38,14 @@ def _basic(user, password):
 class GlobalAuthMiddlewareTests(SimpleTestCase):
     """Test optional global HTTP Basic Auth across API endpoints."""
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_non_keyed_paths_require_global_auth(self):
         """Non-keyed endpoints cannot use per-key credentials."""
         self.assertEqual(self.client.get("/cfg").status_code, 401)
         self.assertEqual(self.client.get("/").status_code, 401)
         self.assertEqual(self.client.get("/details").status_code, 401)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_unlocked_key_requires_global_auth(self):
         """An unlocked key still requires configured global credentials."""
         self.assertEqual(self.client.post("/get/unlocked-key").status_code, 401)
@@ -60,18 +60,85 @@ class GlobalAuthMiddlewareTests(SimpleTestCase):
         # The disabled global gate must not return 401.
         self.assertNotEqual(response.status_code, 401)
 
-    def test_auth_header_is_ignored_when_auth_is_unset(self):
-        """Forwarded auth headers have no effect when global auth is disabled."""
+    def test_auth_headers_are_ignored_while_disabled(self):
+        """Web and API requests ignore every Authorization header while disabled."""
         for header in (
             _basic("someone", "something"),
             "Basic not-even-base64!!",
             "Bearer some-jwt-token",
             "",
         ):
-            response = self.client.get("/status", headers={"authorization": header})
-            self.assertEqual(response.status_code, 200, msg=repr(header))
+            with self.subTest(header=header):
+                api_response = self.client.get(
+                    "/status",
+                    headers={
+                        "accept": "application/json",
+                        "authorization": header,
+                    },
+                )
+                self.assertEqual(api_response.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+                web_response = self.client.get(
+                    "/",
+                    headers={
+                        "accept": "text/html",
+                        "authorization": header,
+                    },
+                )
+                self.assertEqual(web_response.status_code, 200)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=None)
+    def test_users_only_mode_denies_keyless_and_unlocked_access(self):
+        """Without an administrator, only saved configuration logins work."""
+        self.assertEqual(self.client.get("/status").status_code, 401)
+        self.assertEqual(self.client.get("/cfg", HTTP_ACCEPT="application/json").status_code, 401)
+        self.assertEqual(self.client.post("/get/unlocked-key").status_code, 401)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=None)
+    def test_users_only_mode_accepts_and_rotates_saved_login(self):
+        """A configuration user remains usable without an administrator."""
+        key = "users-only-key"
+        self.addCleanup(ConfigCache.clear_auth, key)
+        ConfigCache.set_auth(key, "alice", "secret")
+
+        response = self.client.post(
+            "/get/{}".format(key),
+            headers={"authorization": _basic("alice", "secret")},
+        )
+        self.assertNotEqual(response.status_code, 401)
+
+        response = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps(
+                {
+                    "username": "alice",
+                    "password": "new-secret",
+                    "password_confirm": "new-secret",
+                }
+            ),
+            content_type="application/json",
+            headers={"authorization": _basic("alice", "secret")},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(
+            "/get/{}".format(key),
+            headers={"authorization": _basic("alice", "new-secret")},
+        )
+        self.assertNotEqual(response.status_code, 401)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=None)
+    def test_users_only_mode_cannot_create_first_login(self):
+        """Creating a configuration login still requires an administrator."""
+        response = self.client.post(
+            "/auth/new-users-only-key",
+            data=dumps({"username": "alice", "password": "secret"}),
+            content_type="application/json",
+            headers={"authorization": _basic("alice", "secret")},
+        )
+        self.assertEqual(response.status_code, 401)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_missing_header_is_denied(self):
         response = self.client.get("/status")
         self.assertEqual(response.status_code, 401)
@@ -79,6 +146,7 @@ class GlobalAuthMiddlewareTests(SimpleTestCase):
         self.assertEqual(response["WWW-Authenticate"], 'Basic realm="Apprise API"')
 
     @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
         APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode(),
         APPRISE_BASIC_AUTH_REALM="Home Alerts",
     )
@@ -87,7 +155,7 @@ class GlobalAuthMiddlewareTests(SimpleTestCase):
         response = self.client.get("/status")
         self.assertEqual(response["WWW-Authenticate"], 'Basic realm="Home Alerts"')
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_wrong_credentials_are_denied(self):
         response = self.client.get("/status", headers={"authorization": _basic("alice", "wrong")})
         self.assertEqual(response.status_code, 401)
@@ -95,17 +163,17 @@ class GlobalAuthMiddlewareTests(SimpleTestCase):
         response = self.client.get("/status", headers={"authorization": _basic("bob", "secret")})
         self.assertEqual(response.status_code, 401)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_malformed_header_is_denied(self):
         response = self.client.get("/status", headers={"authorization": "NotBasic xyz"})
         self.assertEqual(response.status_code, 401)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_correct_credentials_are_accepted(self):
         response = self.client.get("/status", headers={"authorization": _basic("alice", "secret")})
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_denial_matches_response_format(self):
         response = self.client.get("/status")
         self.assertEqual(response.status_code, 401)
@@ -117,7 +185,7 @@ class GlobalAuthMiddlewareTests(SimpleTestCase):
         content = loads(response.content)
         self.assertIn("error", content)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_global_auth_covers_multiple_endpoints(self):
         """Global auth covers health checks and stateful endpoints."""
         good = {"authorization": _basic("alice", "secret")}
@@ -135,13 +203,13 @@ class GlobalAuthMiddlewareTests(SimpleTestCase):
         # Stateful get: denied without creds.
         self.assertEqual(self.client.post("/get/testkey").status_code, 401)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_bare_route_without_key_requires_global_auth(self):
         """A bare keyed route needs global auth when no key is supplied."""
         self.assertEqual(self.client.post("/get/").status_code, 401)
         self.assertEqual(self.client.post("/add/", {"urls": "json://localhost"}).status_code, 401)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_header_route_accepts_per_key_auth(self):
         """A header route accepts the key's credentials without global auth."""
         key = "middleware_defer_key"
@@ -163,7 +231,7 @@ class GlobalAuthMiddlewareTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"alice:secret").decode())
     def test_cfg_listing_requires_global_auth(self):
         """The admin listing ignores per-key headers and requires global auth."""
         response = self.client.get("/cfg", headers={"X-Apprise-Config-ID": "some-key"})

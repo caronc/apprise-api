@@ -23,11 +23,15 @@
 # THE SOFTWARE.
 """Reject cross-origin writes without affecting non-browser API clients."""
 
+import base64
 from json import dumps
 
 from django.test import SimpleTestCase, override_settings
 
 from ..utils import ConfigCache
+
+_MASTER_TOKEN = base64.b64encode(b"master:pass").decode()
+_BROWSER = {"accept": "text/html,application/xhtml+xml"}
 
 
 class OriginValidationTests(SimpleTestCase):
@@ -141,5 +145,85 @@ class TrustedOriginsSchemeTests(SimpleTestCase):
             "/add/origin_trusted_key",
             {"urls": "json://localhost"},
             headers={"origin": "https://testserver"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    @override_settings(
+        ALLOWED_HOSTS=["apprise.example.com"],
+        APPRISE_TRUSTED_ORIGINS=["https://apprise.example.com"],
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_custom_host_can_create_browser_login(self):
+        """A self-hosted HTTPS name works with the origin safeguard."""
+        response = self.client.post(
+            "/login",
+            data={"username": "master", "password": "pass", "next": "/"},
+            headers={
+                **_BROWSER,
+                "host": "apprise.example.com",
+                "origin": "https://apprise.example.com",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.cookies["apprise_web_auth"]["secure"])
+
+        page = self.client.get(
+            "/",
+            secure=True,
+            headers={**_BROWSER, "host": "apprise.example.com"},
+        )
+        self.assertEqual(page.status_code, 200)
+
+        # The custom host and browser Origin also work for a GUI write.
+        saved = self.client.post(
+            "/add/origin_trusted_key",
+            {"urls": "json://localhost"},
+            secure=True,
+            headers={
+                "accept": "application/json",
+                "host": "apprise.example.com",
+                "origin": "https://apprise.example.com",
+                "X-Apprise-Web-Auth": "1",
+            },
+        )
+        self.assertEqual(saved.status_code, 200)
+
+        # The browser cookie alone is never accepted as API authentication.
+        denied_api = self.client.get(
+            "/status",
+            secure=True,
+            headers={"accept": "application/json", "host": "apprise.example.com"},
+        )
+        self.assertEqual(denied_api.status_code, 401)
+        allowed_api = self.client.get(
+            "/status",
+            secure=True,
+            headers={
+                "accept": "application/json",
+                "authorization": "Basic {}".format(_MASTER_TOKEN),
+                "host": "apprise.example.com",
+            },
+        )
+        self.assertEqual(allowed_api.status_code, 200)
+
+    @override_settings(
+        ALLOWED_HOSTS=["apprise.example.com"],
+        APPRISE_TRUSTED_ORIGINS=["https://apprise.example.com"],
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_custom_host_rejects_foreign_login_origin(self):
+        response = self.client.post(
+            "/login",
+            data={"username": "master", "password": "pass"},
+            secure=True,
+            headers={
+                **_BROWSER,
+                "host": "apprise.example.com",
+                "origin": "https://evil.example.com",
+            },
         )
         self.assertEqual(response.status_code, 403)

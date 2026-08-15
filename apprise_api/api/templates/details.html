@@ -177,7 +177,7 @@
           <div class="collapsible-body">{# djlint:off #}
             <pre><code class="bash">#{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
             curl -H "Accept: application/json" \<br />
-            &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"</code></pre>
+            &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"</code></pre>
             {# djlint:on #}</div>
         </li>
         <li>
@@ -189,7 +189,7 @@
 from urllib.request import Request<br />
 <br /># The URL<br />
 req = Request(<br />
-&nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
 &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
 &nbsp;&nbsp;&nbsp;&nbsp;{"Accept": "application/json"},<br />
 &nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
@@ -204,7 +204,7 @@ req = Request(<br />
             <pre><code class="php">&lt;?php<br />
 <br />
 // The URL<br />
-$url = '{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
+$url = '{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
 <br />
 //Initiate cURL.<br />
 $ch = curl_init($url);<br />

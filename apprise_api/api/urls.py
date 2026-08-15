@@ -30,6 +30,8 @@ _KEY = r"(?P<key>{})".format(CONFIG_KEY_REGEX)
 
 urlpatterns = [
     re_path(r"^$", views.WelcomeView.as_view(), name="welcome"),
+    re_path(r"^login/?$", views.LoginView.as_view(), name="login"),
+    re_path(r"^logout/?$", views.LogoutView.as_view(), name="logout"),
     re_path(r"^status/?$", views.HealthCheckView.as_view(), name="health"),
     re_path(
         r"^status/{}/?$".format(_KEY),

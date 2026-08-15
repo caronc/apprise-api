@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Log In" %} - {% trans "Apprise API" %}
+{% endblock title %}
+{% block sidebar %}
+{% endblock sidebar %}
+{% block head_js_optional %}
+{% endblock head_js_optional %}
+{% block scripts_optional %}
+{% endblock scripts_optional %}
+{% block onload %}
+  // Keep labels clear of values retained after an unsuccessful login.
+  M.updateTextFields();
+  const loginError = document.querySelector('.browser-login-field.has-errors input');
+  (loginError || document.querySelector('#id_username')).focus();
+{% endblock onload %}
+{% block main_page %}
+  <main class="col s12 browser-login-layout">
+    <div class="section browser-login-page">
+      <div class="browser-login-card">
+        <span class="browser-login-icon" aria-hidden="true">
+          {% include 'icons/user.svg' %}
+        </span>
+        <div class="browser-login-heading center">
+          <h4>{% trans "Log In" %}</h4>
+          <p>{% trans "Provide the login credentials required to access the Apprise API." %}</p>
+        </div>
+        <form method="post" action="{% url 'login' %}" novalidate>
+          {{ form_login.next }}
+          {% if form_login.non_field_errors %}
+            <div class="auth-login-error" role="alert">
+              <i class="material-icons" aria-hidden="true">error_outline</i>
+              <div>{{ form_login.non_field_errors }}</div>
+            </div>
+          {% endif %}
+          <div class="input-field browser-login-field{% if form_login.username.errors %} has-errors{% endif %}">
+            {{ form_login.username }}
+            {{ form_login.username.label_tag }}
+            {{ form_login.username.errors }}
+          </div>
+          <div class="input-field concealed-field browser-login-field{% if form_login.password.errors %} has-errors{% endif %}">
+            {% include 'components/concealed_input.html' with field=form_login.password %}
+          </div>
+          {% trans "Show Config ID" as show_config_id %}
+          {% trans "Hide Config ID" as hide_config_id %}
+          <div class="input-field concealed-field browser-login-field{% if form_login.key.errors %} has-errors{% endif %}">
+            {% include 'components/concealed_input.html' with field=form_login.key show_label=show_config_id hide_label=hide_config_id %}
+          </div>
+          <p class="browser-login-note">
+            {% trans "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank." %}
+          </p>
+          <button class="btn waves-effect waves-light browser-login-submit"
+                  type="submit">
+            {% trans "Log In" %}
+            <i class="material-icons right">login</i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+  {% include 'components/legal_footer.html' %}
+{% endblock main_page %}

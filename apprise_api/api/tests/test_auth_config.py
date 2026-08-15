@@ -57,11 +57,14 @@ class AuthViewTests(SimpleTestCase):
             "auth_no_master_existing_key",
             "auth_locked_config_key",
             "auth_colon_username_key",
+            "auth_shared_rules_key",
+            "auth_password_only_key",
+            "auth_long_credentials_key",
         ):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_first_lock_requires_master(self):
         """A key's first lock requires global administrator credentials."""
         key = "auth_new_key"
@@ -87,7 +90,7 @@ class AuthViewTests(SimpleTestCase):
     def test_replace_requires_configured_master(self):
         """Existing key credentials cannot replace a lock without an administrator."""
         key = "auth_no_master_existing_key"
-        with override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN):
+        with override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN):
             self.client.post(
                 "/auth/{}".format(key),
                 data=dumps({"username": "alice", "password": "secret"}),
@@ -121,7 +124,7 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 403)
         self.assertIsNotNone(loads(response.content)["error"])
 
-    @override_settings(APPRISE_CONFIG_LOCK=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_CONFIG_LOCK=True, APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_auth_works_with_config_lock(self):
         """The configuration lock does not block per-key auth management."""
         key = "auth_locked_config_key"
@@ -137,22 +140,33 @@ class AuthViewTests(SimpleTestCase):
         # Replacing it while still locked also works.
         response = self.client.post(
             "/auth/{}".format(key),
-            data=dumps({"username": "alice", "password": "rotated"}),
+            data=dumps(
+                {
+                    "username": "alice",
+                    "password": "rotated",
+                    "password_confirm": "rotated",
+                }
+            ),
             content_type="application/json",
             headers={"authorization": _basic("alice", "secret")},
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "rotated"))
 
-        # And removing it.
+        # A configuration user cannot remove their own account.
         response = self.client.delete(
             "/auth/{}".format(key),
             headers={"authorization": _basic("alice", "rotated")},
         )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(ConfigCache.has_auth(key))
+
+        # The global administrator can remove it.
+        response = self.client.delete("/auth/{}".format(key), headers=_GOOD_MASTER)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ConfigCache.has_auth(key))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_auth_does_not_create_config(self):
         """Adding a key lock does not create configuration content."""
         key = "auth_new_key"
@@ -171,7 +185,7 @@ class AuthViewTests(SimpleTestCase):
 
         self.assertIsNone(ConfigCache.get(key)[0])
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_post_preserves_existing_config(self):
         key = "auth_existing_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
@@ -190,7 +204,7 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(config_before, config_after)
         self.assertEqual(fmt_before, fmt_after)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_post_rejects_missing_fields(self):
         key = "auth_missing_fields_key"
         response = self.client.post(
@@ -202,7 +216,7 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ConfigCache.has_auth(key))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_colon_username_rejected(self):
         """Reject usernames that conflict with Basic Auth's colon separator."""
         key = "auth_colon_username_key"
@@ -215,7 +229,7 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ConfigCache.has_auth(key))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_blank_credentials_rejected(self):
         """A blank username and password provide no protection."""
         key = "auth_colon_username_key"
@@ -228,7 +242,7 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ConfigCache.has_auth(key))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_one_blank_credential_allowed(self):
         """Either credential may be blank when the other provides protection."""
         key = "auth_colon_username_key"
@@ -241,7 +255,7 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(ConfigCache.has_auth(key))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_post_rejects_invalid_json(self):
         key = "auth_missing_fields_key"
         response = self.client.post(
@@ -252,7 +266,7 @@ class AuthViewTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_changes_require_existing_credentials(self):
         key = "auth_wrong_creds"
         self.client.post(
@@ -280,14 +294,138 @@ class AuthViewTests(SimpleTestCase):
         # The correct, existing credentials can replace it.
         response = self.client.post(
             "/auth/{}".format(key),
-            data=dumps({"username": "alice", "password": "newpass"}),
+            data=dumps(
+                {
+                    "username": "alice",
+                    "password": "newpass",
+                    "password_confirm": "newpass",
+                }
+            ),
             content_type="application/json",
             headers={"authorization": _basic("alice", "secret")},
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "newpass"))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_shared_user_can_only_change_password(self):
+        """A configuration user must retain their username and confirm the password."""
+        key = "auth_shared_rules_key"
+        ConfigCache.set_auth(key, "alice", "secret")
+        headers = {"authorization": _basic("alice", "secret")}
+
+        unchanged_password = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps(
+                {
+                    "username": "alice",
+                    "password": "secret",
+                    "password_confirm": "secret",
+                }
+            ),
+            content_type="application/json",
+            headers=headers,
+        )
+        self.assertEqual(unchanged_password.status_code, 400)
+        self.assertEqual(unchanged_password.json()["field"], "password")
+
+        changed_user = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps(
+                {
+                    "username": "bob",
+                    "password": "new-secret",
+                    "password_confirm": "new-secret",
+                }
+            ),
+            content_type="application/json",
+            headers=headers,
+        )
+        self.assertEqual(changed_user.status_code, 400)
+
+        mismatch = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps(
+                {
+                    "username": "alice",
+                    "password": "new-secret",
+                    "password_confirm": "different",
+                }
+            ),
+            content_type="application/json",
+            headers=headers,
+        )
+        self.assertEqual(mismatch.status_code, 400)
+        self.assertTrue(ConfigCache.verify_auth(key, "alice", "secret"))
+
+        changed_password = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps(
+                {
+                    "username": "alice",
+                    "password": "new-secret",
+                    "password_confirm": "new-secret",
+                }
+            ),
+            content_type="application/json",
+            headers=headers,
+        )
+        self.assertEqual(changed_password.status_code, 200)
+        self.assertTrue(ConfigCache.verify_auth(key, "alice", "new-secret"))
+
+        changed_both = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps({"username": "bob", "password": "admin-secret"}),
+            content_type="application/json",
+            headers=_GOOD_MASTER,
+        )
+        self.assertEqual(changed_both.status_code, 200)
+        self.assertTrue(ConfigCache.verify_auth(key, "bob", "admin-secret"))
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_password_only_user_can_omit_username(self):
+        """A shared password-only account keeps its intentionally blank username."""
+        key = "auth_password_only_key"
+        ConfigCache.set_auth(key, "", "secret")
+        response = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps(
+                {
+                    "password": "new-secret",
+                    "password_confirm": "new-secret",
+                }
+            ),
+            content_type="application/json",
+            headers={"authorization": _basic("", "secret")},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(ConfigCache.verify_auth(key, "", "new-secret"))
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_credential_lengths_are_limited(self):
+        """Reject credentials that are too long for the login form."""
+        key = "auth_long_credentials_key"
+        response = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps({"username": "a" * 256, "password": "secret"}),
+            content_type="application/json",
+            headers=_GOOD_MASTER,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(ConfigCache.has_auth(key))
+
+        response = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps({"username": "alice", "password": "s" * 256}),
+            content_type="application/json",
+            headers=_GOOD_MASTER,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(ConfigCache.has_auth(key))
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_delete_preserves_config(self):
         key = "auth_delete_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
@@ -299,13 +437,13 @@ class AuthViewTests(SimpleTestCase):
         )
         self.assertTrue(ConfigCache.has_auth(key))
 
-        response = self.client.delete("/auth/{}".format(key), headers={"authorization": _basic("alice", "secret")})
+        response = self.client.delete("/auth/{}".format(key), headers=_GOOD_MASTER)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ConfigCache.has_auth(key))
         # The configuration itself is untouched.
         self.assertIsNotNone(ConfigCache.get(key)[0])
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_delete_config_removes_auth(self):
         key = "auth_del_sweep_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
@@ -325,7 +463,7 @@ class AuthViewTests(SimpleTestCase):
         self.assertFalse(ConfigCache.has_auth(key))
         self.assertIsNone(ConfigCache.get(key)[0])
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_format_switch_preserves_auth(self):
         key = "auth_format_switch_key"
         self.client.post(
@@ -359,7 +497,7 @@ class AuthViewTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_keyed_endpoints_enforce_auth(self):
         key = "auth_status_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
@@ -393,7 +531,11 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(response_keyless.status_code, response_keyed.status_code)
         self.assertEqual(loads(response_keyless.content).keys(), loads(response_keyed.content).keys())
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_BASIC_AUTH_REALM="Home Alerts")
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_BASIC_AUTH_REALM="Home Alerts",
+    )
     def test_keyed_status_enforces_auth(self):
         key = "auth_status_key"
         self.client.post(
@@ -413,7 +555,7 @@ class AuthViewTests(SimpleTestCase):
             200,
         )
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode())
     def test_global_and_per_key_credentials_work(self):
         key = "auth_master_key"
         good_master = {"authorization": _basic("master", "pass")}
@@ -449,7 +591,7 @@ class AuthViewTests(SimpleTestCase):
     def test_admin_listing_ignores_per_key_auth(self):
         """A lock on one key must not protect the admin config listing."""
         key = "auth_status_key"
-        with override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN):
+        with override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN):
             # Use administrator credentials only while creating the first lock.
             self.client.post(
                 "/auth/{}".format(key),

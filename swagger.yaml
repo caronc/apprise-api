@@ -6,9 +6,9 @@ info:
     A lightweight REST framework that wraps the Apprise API Notification
     Library. See https://github.com/caronc/apprise-api for details.
 
-    Authentication is optional. Use basicAuth for global protection and
-    /auth/{key} for individual keys. Repeated failures for one client and
-    key return 429 with a Retry-After header.
+    Authentication is optional. APPRISE_AUTH_REQUIRED enables it; basicAuth
+    can then use an administrator or a login assigned to one key. Repeated
+    failures for one client and key return 429 with a Retry-After header.
   version: 1.5.2
 
 servers:
@@ -25,13 +25,58 @@ tags:
   - name: Meta
     description: Introspection and system endpoints.
 
-# Global Basic Auth is optional, so requests may omit credentials.
-# Global credentials also satisfy configured per-key authentication.
+# Basic Auth is optional, so requests may omit credentials when authentication
+# mode is disabled. Administrator credentials satisfy every keyed login.
 security:
   - {}
   - basicAuth: []
 
 paths:
+  /login:
+    get:
+      operationId: Meta_LoginForm
+      summary: Shows the web-interface login form.
+      description: Requests accepting text/html use a signed browser login; other API clients continue using Basic Auth.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '200':
+          description: Login form displayed.
+        '421':
+          description: The HTML interface is disabled.
+    post:
+      operationId: Meta_Login
+      summary: Starts a web-interface login.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '302':
+          description: Credentials accepted and browser login created.
+        '400':
+          description: Login fields are invalid.
+        '401':
+          description: Credentials were not accepted.
+        '403':
+          description: The browser Origin is not allowed.
+
+  /logout:
+    get:
+      operationId: Meta_Logout
+      summary: Ends the web-interface login.
+      description: Deletes the signed browser login without changing API credentials.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '200':
+          description: Browser login ended.
+        '302':
+          description: Authentication is disabled; return to the welcome page.
+        '421':
+          description: The HTML interface is disabled.
+
   /status:
     get:
       operationId: Meta_GetStatus
@@ -231,8 +276,9 @@ paths:
       operationId: Persistent_ListConfigurations
       summary: List all stored configuration keys.
       description: >
-        Returns a list of all Config Keys currently stored.
-        Requires APPRISE_ADMIN to be enabled in server settings.
+        With authentication mode disabled, returns the original list of Config
+        Key strings. When enabled, each item also includes its assigned
+        configuration username. Administrator access and APPRISE_ADMIN are required.
       tags:
         - Persistent
       responses:
@@ -241,14 +287,32 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                oneOf:
+                  - type: array
+                    description: Original response used when authentication is disabled.
+                    items:
+                      type: string
+                  - type: array
+                    description: Detailed response used when authentication is enabled.
+                    items:
+                      type: object
+                      required:
+                        - key
+                        - user
+                      properties:
+                        key:
+                          type: string
+                        user:
+                          type: string
+                          nullable: true
+                          description: >
+                            The assigned username, an empty string for password-only
+                            access, or null when no username is available.
             text/html:
               schema:
                 type: string
         '401':
-          description: Unauthorized (global authentication requirements were not met -- this admin listing has no per-key fallback).
+          description: Unauthorized (administrator credentials are required; this listing has no per-key fallback).
         '403':
           description: Forbidden (APPRISE_ADMIN not enabled).
 
@@ -358,14 +422,50 @@ paths:
           description: Internal Server Error.
 
   /auth/{key}:
+    get:
+      operationId: Persistent_GetKeyAuth
+      summary: Shows the Basic Auth state for {key}.
+      description: >
+        Returns JSON for API clients or the authentication editor for browsers.
+        The saved password is never returned.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Current authentication state.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mode, username]
+                properties:
+                  mode:
+                    type: string
+                    enum: [master_lock, shared_lock]
+                  username:
+                    type: string
+                    nullable: true
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden because authentication mode is disabled.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: Persistent_SetKeyAuth
       summary: Sets (or replaces) {key}'s own optional Basic Auth.
       description: >
-        Global auth must be configured. The first lock requires global
-        credentials; later changes accept global or current key credentials.
-        Configuration content is unchanged, and APPRISE_CONFIG_LOCK does not
-        block this operation. The request must use application/json.
+        Authentication mode must be enabled. The first login requires an
+        administrator account. Administrators may change both fields. A
+        configuration user may change only their password and must send the
+        same value as password_confirm. Configuration content is unchanged.
       tags:
         - Persistent
       security:
@@ -378,16 +478,23 @@ paths:
           application/json:
             schema:
               type: object
-              required: [username, password]
+              required: [password]
               description: >
-                At least one of username/password must be non-empty --
-                both blank authenticates as the trivial Basic Auth value
-                for ":", which protects nothing, and is rejected.
+                Global administrators must include username, which may be
+                blank. Configuration users must repeat their existing username
+                and include password_confirm. A blank existing username may be
+                omitted.
               properties:
                 username:
                   type: string
+                  maxLength: 255
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 255
+                password_confirm:
+                  type: string
+                  maxLength: 255
       responses:
         '200':
           description: Authentication set (or replaced).
@@ -406,16 +513,16 @@ paths:
         '400':
           description: >
             Bad Request (missing/invalid JSON payload, a Content-Type
-            other than application/json, a username containing ':', or
-            both username and password empty).
+            other than application/json, invalid credential lengths, a
+            username containing ':', a changed shared username, or passwords
+            that do not match).
         '401':
           description: >
             Unauthorized -- use global credentials for a first lock, or
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- global authentication is not configured, so per-key
-            authentication cannot be managed.
+            Forbidden -- authentication mode is disabled.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -424,8 +531,8 @@ paths:
       operationId: Persistent_DeleteKeyAuth
       summary: Removes {key}'s own Basic Auth.
       description: >
-        Removes only the authentication requirement. Global auth must remain
-        configured, and the POST credential rules also apply.
+        Removes only the authentication requirement. Global administrator
+        credentials are required.
       tags:
         - Persistent
       security:
@@ -436,12 +543,11 @@ paths:
         '200':
           description: Authentication removed.
         '401':
-          description: >
-            Unauthorized -- provide global or current key credentials.
+          description: Unauthorized -- the supplied credentials are invalid.
         '403':
           description: >
-            Forbidden -- global authentication is not configured, so per-key
-            authentication cannot be managed.
+            Forbidden -- authentication mode is disabled or configuration
+            credentials were used. An administrator account is required.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -683,6 +789,44 @@ paths:
           description: Internal Server Error.
 
   /auth/:
+    get:
+      operationId: Persistent_GetKeyAuthByHeader
+      summary: Header-based equivalent of GET /auth/{key}.
+      description: >
+        Identical to GET /auth/{key}, with the key supplied through
+        X-Apprise-Config-ID. The saved password is never returned.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      responses:
+        '200':
+          description: Current authentication state.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mode, username]
+                properties:
+                  mode:
+                    type: string
+                    enum: [master_lock, shared_lock]
+                  username:
+                    type: string
+                    nullable: true
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad Request (missing or invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden because authentication mode is disabled.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: Persistent_SetKeyAuthByHeader
       summary: Header-based equivalent of POST /auth/{key}.
@@ -701,16 +845,23 @@ paths:
           application/json:
             schema:
               type: object
-              required: [username, password]
+              required: [password]
               description: >
-                At least one of username/password must be non-empty --
-                both blank authenticates as the trivial Basic Auth value
-                for ":", which protects nothing, and is rejected.
+                Global administrators must include username, which may be
+                blank. Configuration users must repeat their existing username
+                and include password_confirm. A blank existing username may be
+                omitted.
               properties:
                 username:
                   type: string
+                  maxLength: 255
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 255
+                password_confirm:
+                  type: string
+                  maxLength: 255
       responses:
         '200':
           description: Authentication set (or replaced).
@@ -718,16 +869,16 @@ paths:
           description: >
             Bad Request (missing/invalid JSON payload, a missing/invalid
             X-Apprise-Config-ID, a Content-Type other than
-            application/json, a username containing ':', or both username
-            and password empty).
+            application/json, invalid credential lengths, a username
+            containing ':', a changed shared username, or passwords that do
+            not match).
         '401':
           description: >
             Unauthorized -- use global credentials for a first lock, or
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- global authentication is not configured, so per-key
-            authentication cannot be managed.
+            Forbidden -- authentication mode is disabled.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -737,7 +888,7 @@ paths:
       summary: Header-based equivalent of DELETE /auth/{key}.
       description: >
         Identical to DELETE /auth/{key}, key via X-Apprise-Config-ID
-        instead of the URL. 400 if that header is missing or invalid.
+        instead of the URL. Global administrator credentials are required.
       tags:
         - Persistent
       security:
@@ -750,12 +901,11 @@ paths:
         '400':
           description: Bad Request (missing or invalid X-Apprise-Config-ID).
         '401':
-          description: >
-            Unauthorized -- provide global or current key credentials.
+          description: Unauthorized -- the supplied credentials are invalid.
         '403':
           description: >
-            Forbidden -- global authentication is not configured, so per-key
-            authentication cannot be managed.
+            Forbidden -- authentication mode is disabled or configuration
+            credentials were used. An administrator account is required.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -812,9 +962,9 @@ components:
       type: http
       scheme: basic
       description: >
-        Optional global authentication configured with APPRISE_USER and/or
-        APPRISE_PASSWORD. When enabled, it protects every endpoint. Per-key
-        authentication can also be configured through /auth/{key}.
+        Enable authentication with APPRISE_AUTH_REQUIRED. APPRISE_PASSWORD and
+        optional APPRISE_USER create the administrator account. Without that
+        account, saved per-key logins still protect and access their own keys.
         APPRISE_BASIC_AUTH_REALM changes the label shown in login prompts.
 
   responses:

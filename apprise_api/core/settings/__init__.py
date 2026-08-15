@@ -113,6 +113,7 @@ TEMPLATES = [
                 "api.context_processors.stateful_mode",
                 "api.context_processors.config_lock",
                 "api.context_processors.admin_enabled",
+                "api.context_processors.authentication",
                 "api.context_processors.apprise_metadata",
             ],
         },
@@ -331,38 +332,32 @@ APPRISE_CONFIG_MAX_LENGTH = min(
 # it's a lock down mode if you will.
 APPRISE_CONFIG_LOCK = parse_bool(os.environ.get("APPRISE_CONFIG_LOCK", "no"))
 
-# Optional global Basic Auth. A password may be used without a username.
-# A username requires a password.
-APPRISE_USER = os.environ.get("APPRISE_USER")
-APPRISE_PASSWORD = os.environ.get("APPRISE_PASSWORD")
+# Authentication stays off unless it is explicitly requested. Credentials are
+# ignored while it is off, which preserves the behavior of older deployments.
+APPRISE_AUTH_REQUIRED = parse_bool(os.environ.get("APPRISE_AUTH_REQUIRED", "no"))
+APPRISE_USER = os.environ.get("APPRISE_USER") if APPRISE_AUTH_REQUIRED else None
+APPRISE_PASSWORD = os.environ.get("APPRISE_PASSWORD") if APPRISE_AUTH_REQUIRED else None
 
 # Label shown when a client asks for Basic Auth credentials.
 APPRISE_BASIC_AUTH_REALM = os.environ.get("APPRISE_BASIC_AUTH_REALM", "Apprise API")
 
-# Prepare one Basic Auth token at startup.
-# Colons are reserved for separating the username and password.
+# Prepare the optional administrator login once at startup. Configuration
+# logins can still be used when authentication is required without an admin.
 APPRISE_BASIC_AUTH_TOKEN = None
-if APPRISE_USER is not None or APPRISE_PASSWORD is not None:
+if not APPRISE_AUTH_REQUIRED:
+    logging.info("Authentication Mode: Disabled")
+elif not APPRISE_PASSWORD:
+    if APPRISE_USER and not APPRISE_PASSWORD:
+        logging.warning("APPRISE_USER was set without APPRISE_PASSWORD; the administration account is disabled.")
+    APPRISE_USER = None
+    APPRISE_PASSWORD = None
+    logging.info("Authentication Mode: Enabled - Administration Account Disabled")
+else:
+    # Basic Auth uses a colon between the username and password.
     if APPRISE_USER and ":" in APPRISE_USER:
         raise ImproperlyConfigured("APPRISE_USER cannot contain ':'.")
-
-    if not APPRISE_USER and not APPRISE_PASSWORD:
-        # Empty environment substitutions must not create a blank account.
-        raise ImproperlyConfigured(
-            "APPRISE_USER and APPRISE_PASSWORD cannot both be empty; "
-            "unset both entirely to disable global authentication."
-        )
-
-    if APPRISE_USER and not APPRISE_PASSWORD:
-        # A username without a password is easy to guess and is disabled.
-        logging.warning(
-            "Only APPRISE_USER was set -- global authentication requires a password, so it has "
-            "been disabled. Set APPRISE_PASSWORD to enable it."
-        )
-        APPRISE_USER = None
-
-    else:
-        APPRISE_BASIC_AUTH_TOKEN = base64.b64encode(f"{APPRISE_USER or ''}:{APPRISE_PASSWORD or ''}".encode()).decode()
+    APPRISE_BASIC_AUTH_TOKEN = base64.b64encode(f"{APPRISE_USER or ''}:{APPRISE_PASSWORD}".encode()).decode()
+    logging.info("Authentication Mode: Enabled - Administration Account Enabled")
 
 # Optional browser-origin allow-list using ``scheme://host[:port]``.
 # Without it, Origin validation compares host and port only because bundled

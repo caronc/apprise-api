@@ -79,6 +79,7 @@ class HealthCheckTests(SimpleTestCase):
                 "can_write_attach": True,
                 "details": ["OK"],
             },
+            "privilege": "admin",
         }
         assert response["Content-Type"].startswith("application/json")
 
@@ -111,6 +112,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": True,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_STATEFUL_MODE="disabled"):
@@ -142,6 +144,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": True,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_ATTACH_SIZE=0):
@@ -173,6 +176,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": False,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_MAX_ATTACHMENTS=0):
@@ -204,6 +208,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": True,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_STATELESS_MODE="disabled"):
@@ -235,6 +240,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": True,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_STATEFUL_MODE="disabled", APPRISE_STATELESS_MODE="disabled"):

@@ -241,12 +241,23 @@ class BasicAuthSettingsTests(SimpleTestCase):
     """Test the global Basic Auth environment settings."""
 
     def test_unset_by_default(self):
-        """Neither variable set: the feature is fully off."""
-        mod = _load_settings()
+        """Authentication is off unless explicitly enabled."""
+        with self.assertLogs(level="INFO") as cm:
+            mod = _load_settings()
+        self.assertFalse(mod.APPRISE_AUTH_REQUIRED)
         self.assertIsNone(mod.APPRISE_USER)
         self.assertIsNone(mod.APPRISE_PASSWORD)
         self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
         self.assertEqual(mod.APPRISE_BASIC_AUTH_REALM, "Apprise API")
+        self.assertTrue(any("Authentication Mode: Disabled" in message for message in cm.output))
+
+    def test_credentials_are_ignored_while_disabled(self):
+        """Credentials alone do not turn authentication on."""
+        mod = _load_settings({"APPRISE_USER": "alice", "APPRISE_PASSWORD": "secret"})
+        self.assertFalse(mod.APPRISE_AUTH_REQUIRED)
+        self.assertIsNone(mod.APPRISE_USER)
+        self.assertIsNone(mod.APPRISE_PASSWORD)
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
 
     def test_custom_realm(self):
         """The login prompt label can identify a specific instance."""
@@ -255,38 +266,69 @@ class BasicAuthSettingsTests(SimpleTestCase):
 
     def test_both_set(self):
         """Both set: the token is base64("user:pass")."""
-        mod = _load_settings({"APPRISE_USER": "alice", "APPRISE_PASSWORD": "secret"})
+        with self.assertLogs(level="INFO") as cm:
+            mod = _load_settings(
+                {
+                    "APPRISE_AUTH_REQUIRED": "yes",
+                    "APPRISE_USER": "alice",
+                    "APPRISE_PASSWORD": "secret",
+                }
+            )
+        self.assertTrue(mod.APPRISE_AUTH_REQUIRED)
         self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b"alice:secret").decode())
+        self.assertTrue(any("Administration Account Enabled" in message for message in cm.output))
 
     def test_username_only_disables_auth(self):
         """A username without a password disables auth and logs a warning."""
         with self.assertLogs(level="WARNING") as cm:
-            mod = _load_settings({"APPRISE_USER": "alice"})
+            mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_USER": "alice"})
+        self.assertTrue(mod.APPRISE_AUTH_REQUIRED)
         self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
         self.assertIsNone(mod.APPRISE_USER)
         self.assertTrue(any("APPRISE_PASSWORD" in message for message in cm.output))
 
     def test_password_only(self):
         """A password without a username is valid."""
-        mod = _load_settings({"APPRISE_PASSWORD": "secret"})
+        mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_PASSWORD": "secret"})
         self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b":secret").decode())
 
     def test_colon_in_username_stops_startup(self):
         """A colon in the global username stops startup."""
         with self.assertRaises(ImproperlyConfigured):
-            _load_settings({"APPRISE_USER": "ali:ce", "APPRISE_PASSWORD": "secret"})
+            _load_settings(
+                {
+                    "APPRISE_AUTH_REQUIRED": "yes",
+                    "APPRISE_USER": "ali:ce",
+                    "APPRISE_PASSWORD": "secret",
+                }
+            )
 
-    def test_both_present_but_empty_stops_startup(self):
-        """Explicitly blank global credentials stop startup."""
-        with self.assertRaises(ImproperlyConfigured):
-            _load_settings({"APPRISE_USER": "", "APPRISE_PASSWORD": ""})
+    def test_blank_credentials_enable_users_only_mode(self):
+        """Blank credentials leave the administrator account disabled."""
+        with self.assertLogs(level="INFO") as cm:
+            mod = _load_settings(
+                {
+                    "APPRISE_AUTH_REQUIRED": "yes",
+                    "APPRISE_USER": "",
+                    "APPRISE_PASSWORD": "",
+                }
+            )
+        self.assertTrue(mod.APPRISE_AUTH_REQUIRED)
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+        self.assertTrue(any("Administration Account Disabled" in message for message in cm.output))
 
-    def test_one_blank_value_stops_startup(self):
-        """One blank value with the other unset also stops startup."""
-        with self.assertRaises(ImproperlyConfigured):
-            _load_settings({"APPRISE_USER": ""})
+    def test_empty_username_without_password_uses_users_only_mode(self):
+        """An empty username does not create a blank administrator."""
+        mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_USER": ""})
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
 
     def test_password_only_with_empty_username_is_valid(self):
         """An empty username is valid when a password is supplied."""
-        mod = _load_settings({"APPRISE_USER": "", "APPRISE_PASSWORD": "secret"})
+        mod = _load_settings(
+            {
+                "APPRISE_AUTH_REQUIRED": "yes",
+                "APPRISE_USER": "",
+                "APPRISE_PASSWORD": "secret",
+            }
+        )
         self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b":secret").decode())

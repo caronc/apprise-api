@@ -6,8 +6,57 @@
   <h4>{% trans "Configuration List" %}</h4>
   {% if keys %}
     <ul class="collection z-depth-1">
-      {% for key in keys %}
-        <a class="collection-item" href="{% url 'config' key %}"><i class="material-icons">folder</i> {{ key }}</a>
+      {% for entry in keys %}
+        <li class="collection-item config-list-item">
+          {% if AUTH_ENABLED %}
+            <span class="config-auth-status {% if entry.assigned %}is-assigned{% else %}is-unassigned{% endif %}"
+                  title="{% if entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+              <span class="config-auth-icon" aria-hidden="true">
+                {% include 'icons/lock.svg' %}
+              </span>
+            </span>
+          {% else %}
+            <span class="config-auth-status is-disabled"
+                  title="{% trans "Authentication is disabled" %}">
+              <span class="config-auth-icon" aria-hidden="true">
+                {% include 'icons/unlock.svg' %}
+              </span>
+            </span>
+          {% endif %}
+          <span class="config-list-user"
+                title="{% if entry.user %}{{ entry.user }}{% else %}{% trans "No Username" %}{% endif %}">
+            {% if entry.user %}
+              {{ entry.user }}
+            {% else %}
+              -
+            {% endif %}
+          </span>
+          <a class="config-list-link" href="{% url 'config' entry.key %}">
+            <code id="config-list-id-{{ forloop.counter }}"
+                  class="config-id is-concealed"
+                  data-config-id-value="{{ entry.key }}"
+                  aria-label="{% trans "Config ID hidden" %}">••••••••</code>
+          </a>
+          <span class="config-list-actions">
+            <button type="button"
+                    class="btn-flat btn-small config-id-visibility"
+                    data-config-id-toggle
+                    aria-controls="config-list-id-{{ forloop.counter }}"
+                    aria-pressed="false"
+                    aria-label="{% trans "Show Config ID" %}"
+                    title="{% trans "Show Config ID" %}"
+                    data-show-label="{% trans "Show Config ID" %}"
+                    data-hide-label="{% trans "Hide Config ID" %}">
+              <i class="material-icons" aria-hidden="true">visibility</i>
+            </button>
+            <button type="button"
+                    class="btn-flat btn-small config-id-copy"
+                    data-config-id-copy="{{ entry.key }}"
+                    title="{% trans "Copy Config ID to Clipboard" %}">
+              <i class="material-icons" aria-hidden="true">content_copy</i>
+            </button>
+          </span>
+        </li>
       {% endfor %}
     </ul>
   {% else %}

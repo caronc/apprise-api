@@ -92,7 +92,7 @@ class ConfigIdHeaderTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(ConfigCache.get(key)[0])
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_auth_via_header(self):
         key = "header_auth_key"
         # Header-based first locks also require administrator credentials.
@@ -108,6 +108,13 @@ class ConfigIdHeaderTests(SimpleTestCase):
         response = self.client.delete(
             "/auth/",
             headers={"X-Apprise-Config-ID": key, "authorization": _basic("alice", "secret")},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(ConfigCache.has_auth(key))
+
+        response = self.client.delete(
+            "/auth/",
+            headers={"X-Apprise-Config-ID": key, **_GOOD_MASTER},
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ConfigCache.has_auth(key))
@@ -128,7 +135,7 @@ class ConfigIdHeaderTests(SimpleTestCase):
         self.assertEqual(by_url.status_code, by_header.status_code)
         self.assertEqual(loads(by_url.content).keys(), loads(by_header.content).keys())
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_status_header_enforces_per_key_auth(self):
         key = "header_status_key"
         self.client.post(
@@ -152,6 +159,38 @@ class ConfigIdHeaderTests(SimpleTestCase):
         response = self.client.get("/status")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"OK")
+
+    def test_status_reports_admin_privilege_when_auth_disabled(self):
+        """No global token configured means every caller is unrestricted."""
+        response = self.client.get("/status", **{"HTTP_ACCEPT": "application/json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(loads(response.content)["privilege"], "admin")
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_status_reports_admin_and_user_privilege(self):
+        key = "header_status_key"
+        self.client.post(
+            "/auth/{}".format(key),
+            data=dumps({"username": "alice", "password": "secret"}),
+            content_type="application/json",
+            headers=_GOOD_MASTER,
+        )
+
+        admin = self.client.get(
+            "/status",
+            headers={"X-Apprise-Config-ID": key, **_GOOD_MASTER},
+            **{"HTTP_ACCEPT": "application/json"},
+        )
+        self.assertEqual(admin.status_code, 200)
+        self.assertEqual(loads(admin.content)["privilege"], "admin")
+
+        user = self.client.get(
+            "/status",
+            headers={"X-Apprise-Config-ID": key, "authorization": _basic("alice", "secret")},
+            **{"HTTP_ACCEPT": "application/json"},
+        )
+        self.assertEqual(user.status_code, 200)
+        self.assertEqual(loads(user.content)["privilege"], "user")
 
     @staticmethod
     def _asset_spy_class():
@@ -248,7 +287,7 @@ class ConfigIdHeaderTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_cfg_header_controls_auth(self):
         """The header key controls configuration-page access and content."""
         url_key, header_key = "header_reject_key", "header_cfg_key"

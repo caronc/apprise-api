@@ -70,7 +70,7 @@ class AuthStorageHardeningTests(SimpleTestCase):
             ConfigCache.clear_auth(key)
 
     @unittest.skipIf(os.getuid() == 0, "root bypasses file permissions; can't simulate a real read failure")
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_unreadable_lock_fails_closed(self):
         """A lock file that can't be read must never look "unprotected"."""
         key = "hardening_unreadable_key"
@@ -101,7 +101,7 @@ class AuthStorageHardeningTests(SimpleTestCase):
         finally:
             os.chmod(full_path, 0o600)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_corrupt_lock_fails_closed(self):
         """Invalid lock-file text denies access without returning an error."""
         key = "hardening_corrupt_lock_key"
@@ -129,7 +129,7 @@ class AuthStorageHardeningTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_credentials_use_salted_hashes(self):
         """Identical credentials on two different keys must not hash identically."""
         key_a, key_b = "hardening_salted_a", "hardening_salted_b"
@@ -153,7 +153,7 @@ class AuthStorageHardeningTests(SimpleTestCase):
         self.assertTrue(ConfigCache.verify_auth(key_a, "alice", "secret"))
         self.assertTrue(ConfigCache.verify_auth(key_b, "alice", "secret"))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_lock_file_is_written_with_restrictive_permissions(self):
         key = "hardening_mode_key"
         self.client.post(
@@ -167,7 +167,7 @@ class AuthStorageHardeningTests(SimpleTestCase):
         mode = stat.S_IMODE(os.stat(full_path).st_mode)
         self.assertEqual(mode, 0o600)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_bad_unicode_preserves_lock(self):
         """Invalid Unicode must not replace an existing lock."""
         key = "hardening_surrogate_key"
@@ -183,14 +183,14 @@ class AuthStorageHardeningTests(SimpleTestCase):
             "/auth/{}".format(key),
             data=dumps({"username": "\ud800", "password": "secret"}),
             content_type="application/json",
-            headers={"authorization": _basic("alice", "secret")},
+            headers=_GOOD_MASTER,
         )
         self.assertEqual(response.status_code, 500)
 
         # The original lock remains usable after the failed update.
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "secret"))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_bad_unicode_leaves_no_new_lock(self):
         key = "hardening_surrogate_key"
         self.assertFalse(ConfigCache.has_auth(key))
@@ -213,7 +213,7 @@ class DelViewAuthOrderingTests(SimpleTestCase):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_failed_delete_keeps_auth_lock(self):
         key = "hardening_del_fail_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
@@ -234,7 +234,7 @@ class DelViewAuthOrderingTests(SimpleTestCase):
         # The configuration deletion failed, so its auth lock must survive.
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "secret"))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_successful_delete_removes_auth_lock(self):
         key = "hardening_del_fail_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
@@ -261,7 +261,7 @@ class AuthViewConfigLockTests(SimpleTestCase):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
-    @override_settings(APPRISE_CONFIG_LOCK=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_CONFIG_LOCK=True, APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_config_lock_does_not_block_setting_auth(self):
         key = "hardening_lock_seed_key"
 
@@ -283,7 +283,7 @@ class RouteAuthConsistencyTests(SimpleTestCase):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_config_editor_enforces_key_auth(self):
         key = "hardening_cfg_page_key"
         self.client.post(
@@ -302,7 +302,7 @@ class RouteAuthConsistencyTests(SimpleTestCase):
         )
         self.assertEqual(allowed.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_status_header_precedes_url_key(self):
         url_key, header_key = "hardening_url_key", "hardening_header_key"
         self.client.post(
@@ -337,7 +337,7 @@ class RouteAuthConsistencyTests(SimpleTestCase):
 
         return SpyAsset
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     @mock.patch("apprise.Apprise.notify")
     def test_notify_header_precedes_url_key(self, mock_notify):
         url_key, header_key = "hardening_url_key", "hardening_header_key"
@@ -376,7 +376,7 @@ class BaseUrlKeyedRouteTests(SimpleTestCase):
         ConfigCache.clear("hardening_base_url_key")
         ConfigCache.clear_auth("hardening_base_url_key")
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, FORCE_SCRIPT_NAME="/apprise")
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, FORCE_SCRIPT_NAME="/apprise")
     def test_per_key_auth_works_with_base_url(self):
         key = "hardening_base_url_key"
         self.client.post(
@@ -392,7 +392,7 @@ class BaseUrlKeyedRouteTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, FORCE_SCRIPT_NAME="/apprise")
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, FORCE_SCRIPT_NAME="/apprise")
     def test_header_auth_works_with_base_url(self):
         key = "hardening_base_url_key"
         self.client.post(
@@ -417,8 +417,10 @@ class KeyAuthRateLimitTests(SimpleTestCase):
 
     def tearDown(self):
         ConfigCache.clear_auth("hardening_throttle_key")
+        ConfigCache.clear_auth("hardening_throttle_other_key")
         cache.clear()
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_wrong_passwords_throttle_without_rehashing(self):
         key = "hardening_throttle_key"
         self.assertTrue(ConfigCache.set_auth(key, "alice", "secret"))
@@ -444,6 +446,7 @@ class KeyAuthRateLimitTests(SimpleTestCase):
             self.assertIn("Retry-After", response)
             self.assertEqual(spy_check_password.call_count, 3)
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_success_does_not_count_toward_throttle(self):
         key = "hardening_throttle_key"
         self.assertTrue(ConfigCache.set_auth(key, "alice", "secret"))
@@ -455,8 +458,13 @@ class KeyAuthRateLimitTests(SimpleTestCase):
             )
             self.assertEqual(wrong.status_code, 401)
 
-            # The same client can still access a different, unlocked key.
-            other = self.client.get("/status/hardening_throttle_other_key")
+            # The same client can still access a different protected key.
+            other_key = "hardening_throttle_other_key"
+            self.assertTrue(ConfigCache.set_auth(other_key, "bob", "other-secret"))
+            other = self.client.get(
+                "/status/{}".format(other_key),
+                headers={"authorization": _basic("bob", "other-secret")},
+            )
             self.assertEqual(other.status_code, 200)
 
     def test_unprotected_keys_never_engage_the_throttle(self):
@@ -465,6 +473,7 @@ class KeyAuthRateLimitTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(cache.get("apprise-auth-fail:127.0.0.1:hardening_throttle_unlocked_key"), None)
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_x_real_ip_used_for_throttling(self):
         """Nginx client addresses receive independent throttle counters."""
         key = "hardening_throttle_key"
@@ -491,6 +500,7 @@ class KeyAuthRateLimitTests(SimpleTestCase):
             )
             self.assertEqual(third.status_code, 429)
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_correct_attempts_use_cache(self):
         """Repeated valid credentials use the short-lived success cache."""
         key = "hardening_throttle_key"
@@ -506,6 +516,7 @@ class KeyAuthRateLimitTests(SimpleTestCase):
 
             self.assertEqual(spy_check_password.call_count, 1)
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_success_cache_rejects_other_password(self):
         """A cached success applies only to the exact credentials checked."""
         key = "hardening_throttle_key"
@@ -551,7 +562,7 @@ class AuthViewCsrfTests(SimpleTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ConfigCache.has_auth(key))
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_application_json_is_accepted(self):
         key = "hardening_csrf_key"
         response = self.client.post(
@@ -572,19 +583,19 @@ class BasicAuthSchemeCaseTests(SimpleTestCase):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode())
     def test_global_auth_accepts_lowercase_scheme(self):
         token = base64.b64encode(b"master:pass").decode()
         response = self.client.get("/status", headers={"authorization": "basic " + token})
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode())
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode())
     def test_global_auth_accepts_mixed_case_scheme(self):
         token = base64.b64encode(b"master:pass").decode()
         response = self.client.get("/status", headers={"authorization": "BaSiC " + token})
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_per_key_auth_accepts_lowercase_scheme(self):
         key = "hardening_case_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)

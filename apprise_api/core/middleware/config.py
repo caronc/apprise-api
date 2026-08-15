@@ -36,7 +36,7 @@ class DetectConfigMiddleware:
 
     """
 
-    _is_cfg_path = re.compile(r"/cfg/(?P<key>{})".format(CONFIG_KEY_REGEX))
+    _is_cfg_path = re.compile(r"/(cfg|auth)/(?P<key>{})".format(CONFIG_KEY_REGEX))
 
     def __init__(self, get_response):
         """

@@ -638,6 +638,95 @@ code.config-id {
   border-radius: 0.3rem;
 }
 
+.config-auth-link,
+.auth-account,
+.auth-logout-link {
+  color: #7de6da;
+}
+
+.config-auth-status.is-disabled {
+  color: #ff9355;
+}
+
+.config-auth-status.is-unassigned {
+  color: #888c96;
+}
+
+.config-auth-status.is-assigned {
+  color: #7de6da;
+}
+
+.auth-account.is-master {
+  /* The master account stays red even though top-bar links set their theme color. */
+  color: #ff8b8b !important;
+}
+
+.logout-page-icon {
+  color: #7de6da;
+}
+
+.logout-confirm-icon {
+  color: #7de6da;
+}
+
+.browser-login-card,
+.auth-editor-card,
+.auth-disabled-card {
+  color: #c1c3c9;
+  background-color: #1d1f25;
+  border-color: #2cb6a6;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
+}
+
+.browser-login-icon,
+.auth-card-icon {
+  color: #7de6da;
+}
+
+.auth-disabled-icon {
+  color: #ff9355;
+}
+
+.auth-login-error {
+  color: #ff8a80;
+  background-color: #3b171b;
+  border-color: #ef5350;
+}
+
+.input-field.has-errors label,
+.input-field.has-errors label.active,
+.input-field .errorlist {
+  color: #ff8a80;
+}
+
+.auth-randomize-option {
+  color: #888c96;
+  border-color: #555a62;
+}
+
+.auth-randomize-option:hover {
+  color: #7de6da;
+  border-color: #2cb6a6;
+}
+
+.auth-randomize-option.is-selected {
+  color: #7de6da;
+  background-color: #0b3b37;
+  border-color: #2cb6a6;
+}
+
+.auth-mode-badge {
+  background-color: #34383f;
+  border-color: #555a62;
+  color: #c1c3c9;
+}
+
+.auth-mode-badge.is-shared {
+  background-color: #0b3b37;
+  border-color: #2f7f77;
+  color: #7de6da;
+}
+
 /* =========================================
 Tabs
 ========================================= */
@@ -1024,6 +1113,11 @@ Notifications — SweetAlert2
 ========================================= */
 .swal2-popup {
   background-color: #23262f;
+  color: #edeef3;
+}
+
+.swal2-popup .swal2-title,
+.swal2-popup .swal2-html-container {
   color: #edeef3;
 }
 

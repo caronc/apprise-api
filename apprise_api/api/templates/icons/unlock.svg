@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 512 512"
+     aria-hidden="true">
+  <path d="M164 224v-52c0-53 43-96 96-96s96 43 96 96v24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="42"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        transform="rotate(-18 164 224)" />
+  <rect x="96"
+        y="210"
+        width="320"
+        height="230"
+        rx="34"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="28" />
+  <path d="M256 274a44 44 0 0 1 22 82l9 36c2 8-4 15-12 15h-38c-8 0-14-7-12-15l9-36a44 44 0 0 1 22-82z"
+        fill="currentColor" />
+</svg>

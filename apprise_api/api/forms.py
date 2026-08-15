@@ -25,7 +25,10 @@
 import apprise
 from django import forms
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
+from .utils import CONFIG_KEY_PATTERN
 
 # Auto-Detect Keyword
 AUTO_DETECT_CONFIG_KEYWORD = "auto"
@@ -57,6 +60,128 @@ INPUT_FORMATS = (
 
 URLS_MAX_LEN = 1024
 URLS_PLACEHOLDER = "mailto://user:pass@domain.com, slack://tokena/tokenb/tokenc, ..."
+AUTH_USERNAME_MAX_LEN = 255
+AUTH_PASSWORD_MAX_LEN = 255
+
+
+class BrowserLoginForm(forms.Form):
+    """Collect credentials for the web interface's signed login cookie."""
+
+    username = forms.CharField(
+        label=_("Username"),
+        required=False,
+        max_length=AUTH_USERNAME_MAX_LEN,
+        widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True}),
+    )
+    password = forms.CharField(
+        label=_("Password"),
+        max_length=AUTH_PASSWORD_MAX_LEN,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+    next = forms.CharField(required=False, max_length=2048, widget=forms.HiddenInput())
+    key = forms.RegexField(
+        regex=CONFIG_KEY_PATTERN,
+        label=_("Config ID"),
+        required=False,
+        max_length=128,
+        widget=forms.PasswordInput(
+            render_value=True,
+            attrs={"autocomplete": "off"},
+        ),
+    )
+
+    def clean_username(self):
+        """Keep form credentials consistent with Basic Auth parsing."""
+        username = self.cleaned_data["username"]
+        if ":" in username:
+            raise ValidationError(_("Username cannot contain ':'"))
+        return username
+
+
+class AuthForm(forms.Form):
+    """Validate credentials for one protected configuration."""
+
+    username = forms.CharField(
+        label=_("Username"),
+        required=False,
+        max_length=AUTH_USERNAME_MAX_LEN,
+        widget=forms.TextInput(
+            attrs={
+                "autocomplete": "off",
+                "autocapitalize": "none",
+                "spellcheck": "false",
+                "data-1p-ignore": "true",
+                "data-bwignore": "true",
+                "data-lpignore": "true",
+            }
+        ),
+    )
+    password = forms.CharField(
+        label=_("Password"),
+        max_length=AUTH_PASSWORD_MAX_LEN,
+        widget=forms.PasswordInput(
+            attrs={
+                "autocomplete": "new-password",
+                "data-1p-ignore": "true",
+                "data-bwignore": "true",
+                "data-lpignore": "true",
+            }
+        ),
+    )
+    current_password = forms.CharField(
+        label=_("Current Password"),
+        required=False,
+        max_length=AUTH_PASSWORD_MAX_LEN,
+        widget=forms.PasswordInput(
+            attrs={
+                "autocomplete": "off",
+                "data-1p-ignore": "true",
+                "data-bwignore": "true",
+                "data-lpignore": "true",
+            }
+        ),
+    )
+    password_confirm = forms.CharField(
+        label=_("Confirm Password"),
+        required=False,
+        max_length=AUTH_PASSWORD_MAX_LEN,
+        widget=forms.PasswordInput(
+            attrs={
+                "autocomplete": "new-password",
+                "data-1p-ignore": "true",
+                "data-bwignore": "true",
+                "data-lpignore": "true",
+            }
+        ),
+    )
+
+    def __init__(self, *args, shared=False, current_username="", require_current=False, **kwargs):
+        """Configure the extra fields used when a key user changes access."""
+        super().__init__(*args, **kwargs)
+        self.shared = shared
+        self.current_username = current_username or ""
+        if shared:
+            self.fields["username"].widget.attrs["readonly"] = True
+            self.fields["password"].label = _("New Password")
+            self.fields["password_confirm"].label = _("Confirm New Password")
+            self.fields["password_confirm"].required = True
+            self.fields["current_password"].required = require_current
+
+    def clean_username(self):
+        """Reject Basic Auth separators and changes by key users."""
+        username = self.cleaned_data["username"]
+        if ":" in username:
+            raise ValidationError(_("Username cannot contain ':'"))
+        if self.shared and username != self.current_username:
+            raise ValidationError(_("The username cannot be changed by a configuration user"))
+        return username
+
+    def clean(self):
+        """Require key users to enter the same new password twice."""
+        cleaned = super().clean()
+        if self.shared and cleaned.get("password") != cleaned.get("password_confirm"):
+            self.add_error("password_confirm", _("The passwords do not match"))
+        return cleaned
 
 
 class AddByUrlForm(forms.Form):
