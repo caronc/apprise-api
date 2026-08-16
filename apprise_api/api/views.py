@@ -1483,8 +1483,16 @@ class DetailsView(View):
 
     def get(self, request):
         """
-        Handle a GET request
+        Handle a GET request, applying per-key auth when the header supplies a key.
         """
+
+        raw_config_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+        if raw_config_key:
+            config_key = resolve_config_key(request, "")
+            if not config_key:
+                return _invalid_key_response(request)
+            if not key_auth_ok(request, config_key):
+                return _key_access_denied_response(request, config_key)
 
         # Detect the format our response should be in.
         json_response = is_json_response(request)

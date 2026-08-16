@@ -154,6 +154,57 @@ class ConfigIdHeaderTests(SimpleTestCase):
         )
         self.assertEqual(allowed.status_code, 200)
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_details_header_enforces_per_key_auth(self):
+        """/details has no key in its URL at all -- the header is the only way in."""
+        key = "header_details_key"
+        self.client.post(
+            "/auth/{}".format(key),
+            data=dumps({"username": "alice", "password": "secret"}),
+            content_type="application/json",
+            headers=_GOOD_MASTER,
+        )
+
+        no_creds = self.client.get("/details", headers={"X-Apprise-Config-ID": key})
+        self.assertEqual(no_creds.status_code, 401)
+
+        wrong_creds = self.client.get(
+            "/details",
+            headers={"X-Apprise-Config-ID": key, "authorization": _basic("alice", "wrong")},
+        )
+        self.assertEqual(wrong_creds.status_code, 401)
+
+        allowed = self.client.get(
+            "/details",
+            headers={"X-Apprise-Config-ID": key, "authorization": _basic("alice", "secret")},
+            **{"HTTP_ACCEPT": "application/json"},
+        )
+        self.assertEqual(allowed.status_code, 200)
+        self.assertIn("schemas", loads(allowed.content))
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_details_header_still_accepts_master_credentials(self):
+        response = self.client.get(
+            "/details",
+            headers={"X-Apprise-Config-ID": "any-key", **_GOOD_MASTER},
+            **{"HTTP_ACCEPT": "application/json"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_details_with_invalid_header_is_rejected(self):
+        response = self.client.get(
+            "/details",
+            headers={"X-Apprise-Config-ID": "not a valid key!!", **_GOOD_MASTER},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_details_without_header_is_unaffected(self):
+        """A keyless /details request behaves exactly as before this feature existed."""
+        response = self.client.get("/details", **{"HTTP_ACCEPT": "application/json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("schemas", loads(response.content))
+
     def test_status_without_header_is_unaffected(self):
         """A keyless status request remains unchanged."""
         response = self.client.get("/status")

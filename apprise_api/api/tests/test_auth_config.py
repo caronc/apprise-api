@@ -403,6 +403,19 @@ class AuthViewTests(SimpleTestCase):
         self.assertTrue(ConfigCache.verify_auth(key, "", "new-secret"))
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_password_only_lock_accepts_a_stray_whitespace_username(self):
+        """'', ' ', and no username at all must all authenticate the same password-only lock."""
+        key = "auth_password_only_whitespace_key"
+        ConfigCache.set_auth(key, "", "secret")
+
+        response = self.client.get(
+            "/status",
+            headers={"authorization": _basic(" ", "secret"), "X-Apprise-Config-ID": key},
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_credential_lengths_are_limited(self):
         """Reject credentials that are too long for the login form."""
         key = "auth_long_credentials_key"

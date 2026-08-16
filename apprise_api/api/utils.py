@@ -865,17 +865,22 @@ class AppriseConfigCache:
         if self.mode == AppriseStoreMode.DISABLED:
             return False
 
-        if username and ":" in username:
+        # Normalized username to avoid leading/trailing whitespace
+        username = (username or "").strip()
+
+        if ":" in username:
             logger.error("Username cannot contain ':' for KEY: {}".format(key))
             return False
 
         try:
+            # Hash the credentials using Django's password hasher, which includes a salt.
             digest = make_password("{}:{}".format(username, password))
 
         except (TypeError, UnicodeError):
             logger.error("Could not hash authentication credentials for KEY: {}".format(key))
             return False
 
+        # Write the credentials to a temporary file and then atomically move it into place.
         path, filename = self.auth_path(key)
         try:
             os.makedirs(path, exist_ok=True)
@@ -1148,6 +1153,7 @@ def basic_auth_credentials(request: HttpRequest):
         return None, None
 
     try:
+        # Decode the base64-encoded credentials. RFC 7617 requires UTF-8.
         decoded = base64.b64decode(header[6:]).decode()
 
     except (binascii.Error, UnicodeDecodeError):
@@ -1156,8 +1162,10 @@ def basic_auth_credentials(request: HttpRequest):
     if ":" not in decoded:
         return None, None
 
+    # Split into username and password at the first colon. RFC 7617 allows colons in passwords.
     username, _, password = decoded.partition(":")
-    return username, password
+    # Strip whitespace from the username to avoid accidental login failures.
+    return username.strip(), password
 
 
 # This header keeps configuration keys out of URLs and access logs.

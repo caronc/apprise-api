@@ -50,7 +50,7 @@ _KEY_IN_URL = re.compile(r"^/(cfg|add|del|get|notify|json/urls|auth|status)/(?P<
 
 # These bare routes may obtain their key from X-Apprise-Config-ID.
 # The bare /cfg admin listing has no per-key access and always uses global auth.
-_HEADER_ELIGIBLE_PATH = re.compile(r"^/(add|del|get|notify|json/urls|auth|status)/?$")
+_HEADER_ELIGIBLE_PATH = re.compile(r"^/(add|del|get|notify|json/urls|auth|status|details)/?$")
 
 # Login and logout remain reachable without a browser session.
 _LOGOUT_PATH = re.compile(r"^/logout/?$")

@@ -1962,7 +1962,8 @@ Authentication Editor
   margin: 0;
 }
 
-.auth-randomize-column {
+.auth-randomize-column,
+.auth-remove-option {
   display: flex;
   align-items: center;
   justify-content: center;

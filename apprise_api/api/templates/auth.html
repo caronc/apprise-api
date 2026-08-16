@@ -149,13 +149,15 @@
                         aria-pressed="true">{% trans "Password" %}</button>
               </div>
             </div>
-            <button id="auth-remove"
-                    class="btn waves-effect waves-light auth-remove-button"
-                    type="button"
-                    {% if auth_mode != 'shared_lock' %}hidden{% endif %}>
-              {% trans "Reset Access" %}
-              <i class="material-icons right">delete</i>
-            </button>
+            <div class="auth-remove-option">
+              <button id="auth-remove"
+                      class="btn waves-effect waves-light auth-remove-button"
+                      type="button"
+                      {% if auth_mode != 'shared_lock' %}hidden{% endif %}>
+                {% trans "Reset Access" %}
+                <i class="material-icons right">delete</i>
+              </button>
+            </div>
           </section>
         {% endif %}
       </div>
@@ -175,6 +177,7 @@
   const generateButton = document.querySelector('#auth-generate');
   const generateUser = document.querySelector('#auth-generate-user');
   const generatePassword = document.querySelector('#auth-generate-password');
+  const authIsAdmin = {% if shared_user %}false{% else %}true{% endif %};
 
   // Start with the first credential field, including read-only usernames.
   (authCurrentPassword || authUsername || authPassword).focus();
@@ -300,6 +303,8 @@
         throw error;
       }
 
+      const savedUsername = authUsername ? authUsername.value : '';
+      const savedPassword = authPassword.value;
       authPassword.value = '';
       if (authCurrentPassword) {
         authCurrentPassword.value = '';
@@ -310,8 +315,21 @@
       authSetShared(true);
       Swal.fire({
         title: '{% trans "Authentication" %}',
-        text: '{% trans "Configuration login saved." %}',
-        icon: 'success'
+        icon: 'success',
+        html: '{% trans "Configuration login saved." %}' + (authIsAdmin
+          ? ' <button type="button" id="auth-save-copy" class="btn-flat btn-large" title="{% trans "Copy Username and Password to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>'
+          : ''),
+        didOpen: function () {
+          const copyButton = document.getElementById('auth-save-copy');
+          if (copyButton) {
+            copyButton.addEventListener('click', function () {
+              appriseCopyToClipboard(
+                'USERNAME=' + savedUsername + '\nPASSWORD=' + savedPassword,
+                '{% trans "Username and password copied to clipboard" %}'
+              );
+            });
+          }
+        }
       });
     } catch (error) {
       const errorField = error.field ? document.getElementById('id_' + error.field) : null;
