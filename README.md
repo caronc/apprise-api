@@ -1060,6 +1060,31 @@ curl -g -X POST \
     -d '{"items":[{"title":"New post","objectURI":"https://example.com/q/1234"}]}' \
     "http://localhost:8000/notify/{KEY}?:items[0].title=title&:items[0].objectURI=body"
 ```
+
+### Parsing Stringified JSON Fields
+
+If a field in your third-party payload contains a stringified JSON string, you can instruct the engine to parse it as JSON by adding the `::json` modifier to that segment name in your mapping rules. This allows you to walk into it using dot-notation/bracket-notation or map the parsed object directly.
+
+For example, if a tool sends a form POST or JSON containing a stringified JSON string:
+
+```bash
+# Payload sent by the third-party tool:
+# {
+#   "event": "{\"title\": \"CPU spike\", \"state\": \"critical\"}"
+# }
+#
+# Parse the "event" string as JSON and map its subfields:
+curl -X POST \
+    -H "Content-Type: application/json" \
+    -d '{"event":"{\"title\":\"CPU spike\",\"state\":\"critical\"}"}' \
+    "http://localhost:8000/notify/{KEY}?:event::json.title=title&:event::json.state=type"
+```
+
+The double-colon modifier can be placed anywhere in the path where a string value needs to be parsed (e.g. `items::json[0].title` or `items[0]::json.title`).
+
+> [!IMPORTANT]
+> Mapped Apprise fields that expect scalar values (`body`, `title`, `type`, and `format`) cannot be assigned a raw parsed dictionary or list (e.g. `?:event::json=body` will fail validation). Ensure the mapping rule traverses down to a scalar value (e.g. `?:event::json.title=title`).
+
 ## Metrics Collection & Analysis
 
 Basic Prometheus support added through `/metrics` reference point.
