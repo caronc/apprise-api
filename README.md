@@ -375,7 +375,7 @@ If both the URL and header contain a key, the header wins. An invalid header ret
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials when configured.
 | `/auth/{KEY}` |  GET  | Opens the authentication editor in a browser, or returns the current mode and username when JSON is requested. Passwords are never returned.
-| `/auth/{KEY}` |  POST  | Sets or replaces Basic Auth for `{KEY}`. Administrators may change both fields. Configuration users may only change their password and must include `password_confirm`.
+| `/auth/{KEY}` |  POST  | Sets or replaces Basic Auth for `{KEY}`. Administrators may change both fields. A configuration user repeats the saved username and supplies a new password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
@@ -646,7 +646,7 @@ The configuration ID, username, and password are three separate values. Use rand
 
 API clients can protect a configuration with `POST /auth/{KEY}`. An administrator is required to create the first login or remove one. An existing configuration user can still change their password when the administrator account is disabled.
 
-The first lock requires global credentials. Administrators may later change or remove it. Configuration users may change only their password and must enter it twice:
+The first lock requires administrator credentials. Administrators may later change or remove it. API users authenticate with their current login, repeat the saved username, and supply a new password. The browser form also asks them to enter the new password twice.
 ```bash
 # Set (or replace) a password just for this one configuration ID.
 # The very first time requires the global credentials:
@@ -658,7 +658,7 @@ curl -X POST -H "Content-Type: application/json" \
 # Replace it with the key's current credentials:
 curl -X POST -H "Content-Type: application/json" \
    -u alice:s3cret \
-   -d '{"username": "alice", "password": "new-password", "password_confirm": "new-password"}' \
+   -d '{"username": "alice", "password": "new-password"}' \
    http://localhost:8000/auth/my-config-id
 
 # Remove it as the global administrator (the configuration is untouched):

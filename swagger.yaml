@@ -464,8 +464,9 @@ paths:
       description: >
         Authentication mode must be enabled. The first login requires an
         administrator account. Administrators may change both fields. A
-        configuration user may change only their password and must send the
-        same value as password_confirm. Configuration content is unchanged.
+        configuration user authenticates with the current login, repeats the
+        saved username, and sends a new password.
+        Configuration content is unchanged.
       tags:
         - Persistent
       security:
@@ -478,12 +479,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [password]
+              required: [username, password]
               description: >
-                Global administrators must include username, which may be
-                blank. Configuration users must repeat their existing username
-                and include password_confirm. A blank existing username may be
-                omitted.
+                Administrators include username, which may be blank.
+                Configuration users must repeat the saved username, including
+                an empty string for password-only access. password_confirm is
+                optional for API callers.
               properties:
                 username:
                   type: string
@@ -514,15 +515,16 @@ paths:
           description: >
             Bad Request (missing/invalid JSON payload, a Content-Type
             other than application/json, invalid credential lengths, a
-            username containing ':', a changed shared username, or passwords
-            that do not match).
+            username containing ':', or confirmation passwords that do not
+            match).
         '401':
           description: >
             Unauthorized -- use global credentials for a first lock, or
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- authentication mode is disabled.
+            Forbidden -- authentication mode is disabled, or a configuration
+            user attempted to change the saved username.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -845,12 +847,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [password]
+              required: [username, password]
               description: >
-                Global administrators must include username, which may be
-                blank. Configuration users must repeat their existing username
-                and include password_confirm. A blank existing username may be
-                omitted.
+                Administrators include username, which may be blank.
+                Configuration users must repeat the saved username, including
+                an empty string for password-only access. password_confirm is
+                optional for API callers.
               properties:
                 username:
                   type: string
@@ -870,15 +872,15 @@ paths:
             Bad Request (missing/invalid JSON payload, a missing/invalid
             X-Apprise-Config-ID, a Content-Type other than
             application/json, invalid credential lengths, a username
-            containing ':', a changed shared username, or passwords that do
-            not match).
+            containing ':', or confirmation passwords that do not match).
         '401':
           description: >
             Unauthorized -- use global credentials for a first lock, or
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- authentication mode is disabled.
+            Forbidden -- authentication mode is disabled, or a configuration
+            user attempted to change the saved username.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':

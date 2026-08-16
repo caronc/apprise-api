@@ -15,6 +15,7 @@ from django.test import RequestFactory, SimpleTestCase
 from django.test.utils import override_settings
 
 from .. import utils, views
+from ..forms import AuthForm
 from ..utils import (
     AUTH_MODE_MASTER,
     AUTH_MODE_SHARED,
@@ -58,6 +59,20 @@ class AuthUtilityCoverageTests(SimpleTestCase):
             binary = base64.b64encode(b"\xff:\xff").decode()
             request = self.factory.get("/", HTTP_AUTHORIZATION="Basic " + binary)
             self.assertEqual(utils.basic_auth_credentials(request), (None, None))
+
+    def test_shared_auth_form_rejects_changed_username(self):
+        """The form keeps the username guard even when used outside the view."""
+        form = AuthForm(
+            {
+                "username": "bob",
+                "password": "new-secret",
+                "password_confirm": "new-secret",
+            },
+            shared=True,
+            current_username="alice",
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("username", form.errors)
 
     def test_auth_record_failures_fail_closed(self):
         store = AppriseConfigCache("/tmp/auth-coverage", mode=AppriseStoreMode.SIMPLE)

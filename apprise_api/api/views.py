@@ -2285,9 +2285,9 @@ class AuthView(View):
         password_confirm = content.get("password_confirm")
         if (
             not isinstance(password, str)
-            or (shared_user and not isinstance(password_confirm, str))
-            or (not shared_user and not isinstance(username, str))
-            or (shared_user and username is not None and not isinstance(username, str))
+            or not isinstance(username, str)
+            or (browser_shared_user and not isinstance(password_confirm, str))
+            or (shared_user and password_confirm is not None and not isinstance(password_confirm, str))
             or (browser_shared_user and current_password is not None and not isinstance(current_password, str))
         ):
             status = ResponseCode.bad_request
@@ -2298,10 +2298,25 @@ class AuthView(View):
                 else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
             )
 
-        # A password-only account has no username field in the shared editor.
+        if shared_user and username is not None and username != current_username:
+            status = ResponseCode.no_access
+            msg = _("The username cannot be changed by a configuration user")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse(
+                    {"error": msg, "field": "username"},
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+            )
+
+        # API users repeat their saved username but do not need the browser's
+        # confirmation field.
         form_data = content.copy()
-        if shared_user and username is None and not current_username:
-            form_data["username"] = ""
+        if shared_user and not browser_shared_user and password_confirm is None:
+            form_data["password_confirm"] = password
 
         form = AuthForm(
             form_data,

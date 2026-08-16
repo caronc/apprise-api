@@ -309,7 +309,7 @@ class AuthViewTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_shared_user_can_only_change_password(self):
-        """A configuration user must retain their username and confirm the password."""
+        """A configuration user may change only the password."""
         key = "auth_shared_rules_key"
         ConfigCache.set_auth(key, "alice", "secret")
         headers = {"authorization": _basic("alice", "secret")}
@@ -341,7 +341,9 @@ class AuthViewTests(SimpleTestCase):
             content_type="application/json",
             headers=headers,
         )
-        self.assertEqual(changed_user.status_code, 400)
+        self.assertEqual(changed_user.status_code, 403)
+        self.assertEqual(changed_user.json()["field"], "username")
+        self.assertTrue(ConfigCache.verify_auth(key, "alice", "secret"))
 
         mismatch = self.client.post(
             "/auth/{}".format(key),
@@ -358,19 +360,22 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(mismatch.status_code, 400)
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "secret"))
 
-        changed_password = self.client.post(
+        same_username = self.client.post(
             "/auth/{}".format(key),
-            data=dumps(
-                {
-                    "username": "alice",
-                    "password": "new-secret",
-                    "password_confirm": "new-secret",
-                }
-            ),
+            data=dumps({"username": "alice", "password": "new-secret"}),
             content_type="application/json",
             headers=headers,
         )
-        self.assertEqual(changed_password.status_code, 200)
+        self.assertEqual(same_username.status_code, 200)
+        self.assertTrue(ConfigCache.verify_auth(key, "alice", "new-secret"))
+
+        missing_username = self.client.post(
+            "/auth/{}".format(key),
+            data=dumps({"password": "newer-secret"}),
+            content_type="application/json",
+            headers={"authorization": _basic("alice", "new-secret")},
+        )
+        self.assertEqual(missing_username.status_code, 400)
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "new-secret"))
 
         changed_both = self.client.post(
@@ -383,18 +388,13 @@ class AuthViewTests(SimpleTestCase):
         self.assertTrue(ConfigCache.verify_auth(key, "bob", "admin-secret"))
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
-    def test_password_only_user_can_omit_username(self):
-        """A shared password-only account keeps its intentionally blank username."""
+    def test_password_only_user_repeats_blank_username(self):
+        """A password-only account sends its intentionally blank username."""
         key = "auth_password_only_key"
         ConfigCache.set_auth(key, "", "secret")
         response = self.client.post(
             "/auth/{}".format(key),
-            data=dumps(
-                {
-                    "password": "new-secret",
-                    "password_confirm": "new-secret",
-                }
-            ),
+            data=dumps({"username": "", "password": "new-secret"}),
             content_type="application/json",
             headers={"authorization": _basic("", "secret")},
         )
