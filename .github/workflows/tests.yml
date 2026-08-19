@@ -69,3 +69,58 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
         fail_ci_if_error: false
+
+  docker-smoke-test:
+    name: Docker Build/Start Smoke Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Acquire sources
+      uses: actions/checkout@v7
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    # Run a smoke-test on build to ensure it compiles and ships correctly
+    - name: Build Image
+      uses: docker/build-push-action@v7
+      with:
+        context: .
+        load: true
+        push: false
+        tags: apprise-api:smoke-test
+
+    - name: Start container
+      run: |
+        docker run -d --name apprise-smoke -p 8000:8000 apprise-api:smoke-test
+
+    # Poll the status endpoint
+    #  - Tests: nginx -> gunicorn -> Django
+    #  - expect a 200 response
+    - name: Wait for a healthy response
+      # Wait up to 2 minutes before giving up
+      run: |
+        for i in $(seq 1 60); do
+          if ! docker ps -f name=apprise-smoke -f status=running | grep -q apprise-smoke; then
+            echo "Container exited early, Deployment Contains Issues."
+            exit 1
+          fi
+
+          if curl -sf http://localhost:8000/status; then
+            echo "Container is up and healthy."
+            exit 0
+          fi
+
+          sleep 2
+        done
+
+        echo "Timed out waiting for a healthy response."
+        exit 1
+
+    - name: Show container logs
+      if: always()
+      run: docker logs apprise-smoke
+
+    - name: Tear down container
+      if: always()
+      run: docker rm --force apprise-smoke
