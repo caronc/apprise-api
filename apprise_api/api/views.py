@@ -54,6 +54,7 @@ from .utils import (
     ConfigCache,
     apply_global_filters,
     healthcheck,
+    is_json_response,
     parse_attachments,
     send_webhook,
 )
@@ -65,12 +66,6 @@ logger = logging.getLogger("django")
 # application/x-www-form-urlencoded
 # multipart/form-data
 MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencoded)", re.I)
-
-
-# Parsing of Accept; the following amounts to Accept All
-# */*
-# <blank>
-ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
 
 # Tags separated by space, &, or + are and'ed together
 # Tags separated by commas (even commas wrapped in spaces) are "or'ed" together
@@ -230,12 +225,7 @@ def _get_config_response(request, key):
     """
 
     # Detect the format our response should be in.
-    json_response = (
-        MIME_IS_JSON.match(
-            request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
-        )
-        is not None
-    )
+    json_response = is_json_response(request)
 
     if settings.APPRISE_CONFIG_LOCK:
         # General Access Control
@@ -371,20 +361,8 @@ class HealthCheckView(View):
         """
         Handle a GET request
         """
-        # Detect the format our incoming payload
-        json_payload = (
-            MIME_IS_JSON.match(
-                request.content_type if request.content_type else request.headers.get("content-type", "")
-            )
-            is not None
-        )
-
         # Detect the format our response should be in
-        json_response = (
-            True
-            if json_payload and ACCEPT_ALL.match(request.headers.get("accept", ""))
-            else MIME_IS_JSON.match(request.headers.get("accept", "")) is not None
-        )
+        json_response = is_json_response(request)
 
         # Run our healthcheck; allow ?force which will cause the check to run each time
         response = healthcheck(lazy="force" not in request.GET)
@@ -427,12 +405,7 @@ class DetailsView(View):
         """
 
         # Detect the format our response should be in.
-        json_response = (
-            MIME_IS_JSON.match(
-                request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
-            )
-            is not None
-        )
+        json_response = is_json_response(request)
 
         if settings.APPRISE_API_ONLY and not json_response:
             # API Mode only disables the browsable HTML page.
@@ -531,23 +504,10 @@ class ConfigListView(View):
         """
         Handle a GET request
         """
-        # Detect the format our response should be in.
-        #
-        # This must check Accept first: Content-Type describes the
-        # *request* body, not the desired response, and a bodyless
-        # GET/POST still gets a Content-Type from the WSGI layer (commonly
-        # "text/plain" per the WSGI/CGI convention for an omitted
-        # Content-Type) even when the client never sent one - so checking
-        # it before Accept silently ignores an explicit
-        # "Accept: application/json" whenever there's no real request
-        # body, which is the common case for a JSON API client fetching
-        # data with a plain GET.
-        json_response = (
-            MIME_IS_JSON.match(
-                request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
-            )
-            is not None
-        )
+        # Detect the format our response should be in. An explicit Accept
+        # wins; a missing/wildcard Accept falls back to Content-Type so a
+        # JSON API client on a bodyless GET still gets a JSON reply.
+        json_response = is_json_response(request)
 
         if settings.APPRISE_API_ONLY and not json_response:
             # API Mode only disables the browsable HTML page; a JSON API
@@ -611,11 +571,7 @@ class AddView(View):
         )
 
         # Detect the format our response should be in
-        json_response = (
-            True
-            if json_payload and ACCEPT_ALL.match(request.headers.get("accept", ""))
-            else MIME_IS_JSON.match(request.headers.get("accept", "")) is not None
-        )
+        json_response = is_json_response(request)
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -964,23 +920,10 @@ class DelView(View):
         """
         Handle a POST request
         """
-        # Detect the format our response should be in.
-        #
-        # This must check Accept first: Content-Type describes the
-        # *request* body, not the desired response, and a bodyless
-        # GET/POST still gets a Content-Type from the WSGI layer (commonly
-        # "text/plain" per the WSGI/CGI convention for an omitted
-        # Content-Type) even when the client never sent one - so checking
-        # it before Accept silently ignores an explicit
-        # "Accept: application/json" whenever there's no real request
-        # body, which is the common case for a JSON API client fetching
-        # data with a plain GET.
-        json_response = (
-            MIME_IS_JSON.match(
-                request.headers.get("accept") or request.content_type or request.headers.get("content-type", "")
-            )
-            is not None
-        )
+        # Detect the format our response should be in. An explicit Accept
+        # wins; a missing/wildcard Accept falls back to Content-Type so a
+        # JSON API client on a bodyless GET still gets a JSON reply.
+        json_response = is_json_response(request)
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
@@ -1104,11 +1047,7 @@ class NotifyView(View):
         )
 
         # Detect the format our response should be in
-        json_response = (
-            True
-            if json_payload and ACCEPT_ALL.match(request.headers.get("accept", ""))
-            else MIME_IS_JSON.match(request.headers.get("accept", "")) is not None
-        )
+        json_response = is_json_response(request)
 
         # rules
         rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ":"}
@@ -1800,11 +1739,7 @@ class StatelessNotifyView(View):
         )
 
         # Detect the format our response should be in
-        json_response = (
-            True
-            if json_payload and ACCEPT_ALL.match(request.headers.get("accept", ""))
-            else MIME_IS_JSON.match(request.headers.get("accept", "")) is not None
-        )
+        json_response = is_json_response(request)
 
         # rules
         rules = {k[1:]: v for k, v in request.GET.items() if k[0] == ":"}

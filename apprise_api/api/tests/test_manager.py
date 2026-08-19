@@ -137,6 +137,29 @@ class ManagerPageTests(SimpleTestCase):
         assert "Content-Type" in response
         assert response["Content-Type"].startswith("text/yaml")
 
+    def test_get_config_json_content_type_without_explicit_accept(self):
+        """
+        The web UI's config tab loads existing configuration via a
+        fetch() call carrying an explicit JSON Content-Type but no
+        Accept override (so Accept defaults to */*). That must still be
+        honored as a request for a JSON response.
+        """
+
+        key = "test_cfg_config_json_"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        response = self.client.post(
+            "/cfg/{}".format(key),
+            content_type="application/json",
+            HTTP_ACCEPT="*/*",
+        )
+        assert response.status_code == 200
+        assert response["Content-Type"].startswith("application/json")
+        payload = response.json()
+        assert "config" in payload
+        assert "format" in payload
+
     def test_manage_cfg_list_content_type_defaults_to_html(self):
         """
         /cfg/ should render HTML by default when allowed.
