@@ -15,7 +15,8 @@ apprise == 1.12.0
 ## Apprise API Minimum Requirements
 django
 gevent
-gunicorn
+## newer gunicorn releases no longer pull it in as a base dependency
+gunicorn[gevent]
 
 ## for webhook support
 requests
