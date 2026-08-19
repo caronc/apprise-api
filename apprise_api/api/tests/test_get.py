@@ -85,3 +85,36 @@ class GetTests(SimpleTestCase):
         # response
         assert "Content-Type" in response
         assert response["Content-Type"].startswith("text/yaml")
+
+    def test_get_config_json_content_type_without_explicit_accept(self):
+        """
+        A browser fetch() call typically sends an explicit JSON
+        Content-Type but leaves Accept at its default of */*. That must
+        still be honored as a request for a JSON response (this is what
+        the web UI's config tab relies on to load existing configuration).
+        """
+
+        key = "test_get_config_json_"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        response = self.client.post(
+            "/get/{}".format(key),
+            content_type="application/json",
+            HTTP_ACCEPT="*/*",
+        )
+        assert response.status_code == 200
+        assert response["Content-Type"].startswith("application/json")
+        payload = response.json()
+        assert "config" in payload
+        assert "format" in payload
+
+        # An Accept that explicitly asks for something else still wins
+        # over the JSON Content-Type
+        response = self.client.post(
+            "/get/{}".format(key),
+            content_type="application/json",
+            HTTP_ACCEPT="text/plain",
+        )
+        assert response.status_code == 200
+        assert not response["Content-Type"].startswith("application/json")

@@ -39,6 +39,7 @@ import tempfile
 
 import apprise
 from django.conf import settings
+from django.http import HttpRequest
 import requests
 
 from .urlfilter import AppriseURLFilter
@@ -52,6 +53,24 @@ logger = logging.getLogger("django")
 # application/json
 # application/x-json
 MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
+
+# Parsing of Accept; the following amounts to Accept All
+# */*
+# <blank>
+ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
+
+
+def is_json_response(request: HttpRequest) -> bool:
+    """Return whether the request prefers a JSON response.
+
+    Accept takes priority. Missing or wildcard Accept falls back to the
+    request Content-Type for backward compatibility.
+    """
+    accept = request.headers.get("accept", "")
+    content_type = request.content_type or request.headers.get("content-type", "")
+    return MIME_IS_JSON.match(accept) is not None or (
+        ACCEPT_ALL.match(accept) is not None and MIME_IS_JSON.match(content_type) is not None
+    )
 
 
 class AppriseStoreMode:
