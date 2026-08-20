@@ -248,15 +248,13 @@ APPRISE_ATTACH_SIZE = int(os.environ.get("APPRISE_ATTACH_SIZE", 200)) * 1048576
 #     the URL based attachment is ignored and is not retrieved at all.
 #  - Set the list to * (a single astrix) to match all URLs and accepting all provided
 #    matches
-#  - The special token "internal" resolves the destination and rejects it if
-#     any resulting address is loopback, private, link-local, reserved,
-#     unspecified, multicast, or CGN shared space -- unlike a wildcard host
-#     entry, this catches DNS names and IP literals (including alternate
-#     encodings) that resolve to internal infrastructure, not just the exact
-#     spellings "127.0.*"/"localhost*" cover. It is included in the default
-#     below; remove it from a custom APPRISE_ATTACH_REJECT_URL only if you
-#     intentionally want attachments to be fetchable from internal hosts.
-APPRISE_ATTACH_DENY_URLS = os.environ.get("APPRISE_ATTACH_REJECT_URL", "127.0.* localhost* internal").lower()
+#  - The special token "internal" rejects loopback, private, link-local,
+#     reserved, unspecified, multicast, and CGN addresses -- including ones
+#     reached via DNS or alternate IP encodings, not just literal matches.
+#     It also blocks ordinary LAN devices (e.g. 192.168.*), so it's opt-in,
+#     not part of the default below. Add it to your own
+#     APPRISE_ATTACH_REJECT_URL for that hardening.
+APPRISE_ATTACH_DENY_URLS = os.environ.get("APPRISE_ATTACH_REJECT_URL", "127.0.* localhost*").lower()
 
 # The Allow list which is processed after the Deny list above
 APPRISE_ATTACH_ALLOW_URLS = os.environ.get("APPRISE_ATTACH_ALLOW_URL", "*").lower()
