@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  apprise-terramaster-tos7-app:
+    image: caronc/apprise:{{VERSION}}
+    container_name: apprise-terramaster-tos7-app
+    restart: unless-stopped
+    volumes:
+      - /Volume*/DockerAppData/apprise-terramaster-tos7-app/config:/config
+      - /Volume*/DockerAppData/apprise-terramaster-tos7-app/attach:/attach
+      - /Volume*/DockerAppData/apprise-terramaster-tos7-app/plugin:/plugin
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+      # The image requires to start as root only to align mounted volumes
+      # Permissions set via PUID/PGID then drops to non-root user.
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      # Lets the web UI persist and list saved configuration keys
+      # managing configuration through the browser.
+      - APPRISE_STATEFUL_MODE=simple
+      - APPRISE_WORKER_COUNT=1
+      - APPRISE_ADMIN=y
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+x-app-meta:
+  web:
+    port: 8000
+    protocol: http
