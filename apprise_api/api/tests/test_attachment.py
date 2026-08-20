@@ -26,6 +26,7 @@ from contextlib import suppress
 import os
 from os.path import dirname, getsize, join
 from shutil import rmtree
+import socket
 from tempfile import TemporaryDirectory
 from unittest import mock
 from unittest.mock import mock_open, patch
@@ -48,6 +49,19 @@ class AttachmentTests(SimpleTestCase):
     def setUp(self):
         # Prepare a temporary directory
         self.tmp_dir = TemporaryDirectory()
+
+        # The "internal" deny token (opt-in via APPRISE_ATTACH_REJECT_URL)
+        # resolves each attachment host as part of its SSRF check. Keep
+        # loopback hostnames resolving to loopback so that check still
+        # has something to catch; everything else gets a public address
+        # so tests don't depend on real DNS.
+        def _fake_getaddrinfo(host, *_args, **_kwargs):
+            addr = "127.0.0.1" if host in ("localhost", "localhost.localdomain") else "93.184.215.14"
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (addr, 0))]
+
+        getaddrinfo_patcher = mock.patch("socket.getaddrinfo", side_effect=_fake_getaddrinfo)
+        getaddrinfo_patcher.start()
+        self.addCleanup(getaddrinfo_patcher.stop)
 
     def tearDown(self):
         # Clear content if possible

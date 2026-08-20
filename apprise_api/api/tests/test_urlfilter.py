@@ -21,6 +21,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import socket
+from unittest import mock
+
 from django.test import SimpleTestCase
 
 from ..urlfilter import AppriseURLFilter
@@ -324,3 +327,160 @@ class AttachmentTests(SimpleTestCase):
 
         # These are blocked too since we have no allow list
         self.assertFalse(af.is_allowed("localhost"))
+
+    def test_internal_token_blocks_literal_addresses(self):
+        """
+        The "internal" deny token resolves and IP-classifies the
+        destination instead of string-matching it. Literal IP addresses
+        need no DNS resolution, so these cases are deterministic and
+        network-free.
+        """
+        af = AppriseURLFilter("*", "internal")
+
+        # Loopback, in a few different spellings/encodings
+        self.assertFalse(af.is_allowed("http://127.0.0.1/x"))
+        self.assertFalse(af.is_allowed("http://2130706433/x"))  # decimal 127.0.0.1
+        self.assertFalse(af.is_allowed("http://[::1]/x"))  # IPv6 loopback
+        self.assertFalse(af.is_allowed("http://[::ffff:127.0.0.1]/x"))  # IPv4-mapped
+
+        # RFC1918 private ranges
+        self.assertFalse(af.is_allowed("http://10.0.0.5/x"))
+        self.assertFalse(af.is_allowed("http://172.16.0.5/x"))
+        self.assertFalse(af.is_allowed("http://192.168.1.1/x"))
+
+        # Link-local / cloud metadata, unspecified, multicast, CGN shared space
+        self.assertFalse(af.is_allowed("http://169.254.169.254/x"))
+        self.assertFalse(af.is_allowed("http://0.0.0.0/x"))
+        self.assertFalse(af.is_allowed("http://224.0.0.1/x"))
+        self.assertFalse(af.is_allowed("http://100.64.0.1/x"))
+
+        # A real public address is unaffected
+        self.assertTrue(af.is_allowed("http://8.8.8.8/x"))
+
+    def test_internal_token_resolves_hostnames(self):
+        """
+        A hostname that resolves to an internal address must be blocked
+        the same way a literal internal IP is -- this is the exact
+        bypass class (an internal DNS name) that a wildcard host/spelling
+        deny list can't catch.
+        """
+        af = AppriseURLFilter("*", "internal")
+
+        with mock.patch(
+            "socket.getaddrinfo",
+            return_value=[(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.97.3", 0))],
+        ):
+            self.assertFalse(af.is_allowed("http://ssrf-marker.internal.example/x"))
+
+        with mock.patch(
+            "socket.getaddrinfo",
+            return_value=[(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.215.14", 0))],
+        ):
+            self.assertTrue(af.is_allowed("http://example.com/x"))
+
+    def test_internal_token_fails_closed_on_unresolvable_host(self):
+        """
+        A host that can't be resolved at all can't be proven safe, so it
+        must be treated as blocked rather than allowed.
+        """
+        af = AppriseURLFilter("*", "internal")
+
+        with mock.patch("socket.getaddrinfo", side_effect=socket.gaierror("name not known")):
+            self.assertFalse(af.is_allowed("http://this-does-not-resolve.invalid/x"))
+
+    def test_internal_token_fails_closed_on_resolution_timeout(self):
+        """
+        A hung resolver must not be able to stall the request; the
+        resolution is bounded by a hard timeout and treated as blocked
+        if it's exceeded.
+        """
+        af = AppriseURLFilter("*", "internal")
+
+        def _hang(*args, **kwargs):
+            # Long enough to guarantee it exceeds the patched timeout below.
+            import time
+
+            time.sleep(0.2)
+
+        with (
+            mock.patch("socket.getaddrinfo", side_effect=_hang),
+            mock.patch("apprise_api.api.urlfilter._RESOLVE_TIMEOUT_SEC", 0.01),
+        ):
+            self.assertFalse(af.is_allowed("http://slow-dns.example/x"))
+
+    def test_internal_token_skips_unparseable_resolved_records(self):
+        """
+        A malformed/unexpected address record from the resolver is
+        skipped rather than crashing the whole lookup; the destination is
+        still correctly classified using any remaining valid records.
+        """
+        af = AppriseURLFilter("*", "internal")
+
+        with mock.patch(
+            "socket.getaddrinfo",
+            return_value=[
+                # Malformed entry: not a parseable IP literal
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("not-an-ip", 0)),
+                # Valid public address
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 0)),
+            ],
+        ):
+            self.assertTrue(af.is_allowed("http://mixed-records.example/x"))
+
+        with mock.patch(
+            "socket.getaddrinfo",
+            return_value=[
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("not-an-ip", 0)),
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.1", 0)),
+            ],
+        ):
+            self.assertFalse(af.is_allowed("http://mixed-records-internal.example/x"))
+
+    def test_internal_token_in_allow_list_is_a_noop(self):
+        """
+        "internal" positive match handling.
+        """
+        af = AppriseURLFilter("internal", "")
+        self.assertFalse(af.is_allowed("http://8.8.8.8/x"))
+        self.assertFalse(af.is_allowed("http://example.com/x"))
+
+    def test_malformed_url_does_not_raise(self):
+        """
+        handling of malformed urls.
+        """
+        af = AppriseURLFilter("*", "127.0.* localhost* internal")
+
+        # Unbalanced IPv6 bracket: apprise's parse_url() raises here.
+        self.assertFalse(af.is_allowed("http://[/x"))
+        self.assertFalse(af.is_allowed("http://[::1/x"))
+
+    def test_unresolvable_host_does_not_raise(self):
+        """
+        A hostname whose IDNA encoding is invalid or too long raises
+        UnicodeError from socket.getaddrinfo(); verify we handle this.
+        """
+        af = AppriseURLFilter("*", "internal")
+
+        # 300 raw characters is long enough to fail IDNA encoding
+        # regardless of whether it also happens to get rejected earlier
+        # by apprise's own URL parsing.
+        self.assertFalse(af.is_allowed("http://" + "a" * 300 + "/x"))
+
+    def test_resolve_addresses_never_raises_on_bad_host(self):
+        """
+        _resolve_addresses() resolution failure handling.
+        """
+        from ..urlfilter import _resolve_addresses
+
+        self.assertIsNone(_resolve_addresses("a" * 300))
+        self.assertIsNone(_resolve_addresses("xn--" + "a" * 70))
+
+    def test_empty_parsed_host_is_blocked_not_crashed(self):
+        """
+        handling of unparsable hosts
+        """
+        af = AppriseURLFilter("*", "internal")
+
+        for host_value in ("", None):
+            with mock.patch("apprise_api.api.urlfilter.parse_url", return_value={"host": host_value}):
+                self.assertFalse(af.is_allowed("http://whatever/x"))
