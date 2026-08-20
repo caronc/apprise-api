@@ -76,3 +76,7 @@ target/
 
 # Apprise Gateway Variable/Test Configuration
 apprise_gw/var/*
+
+# TerraMaster TOS package build output
+# controlled via build-package.py
+packaging/terramaster/dist/

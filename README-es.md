@@ -2,7 +2,7 @@
 
 Aprovecha [Informar](https://github.com/caronc/apprise) a través de su red con una API fácil de usar.
 
-*   Envía notificaciones a más de 80 servicios.
+*   Envía notificaciones a más de 150 servicios.
 *   Una puerta de entrada increíblemente ligera a Apprise.
 *   Un microservicio listo para la producción a su disposición.
 
@@ -97,7 +97,7 @@ Se admiten las siguientes arquitecturas: `386`, `amd64`, `arm/v6`, `arm/v7`y `ar
 
 ## URL de Apprise
 
-📣 Para activar una notificación, primero debe definir una o más [URL de Apprise](https://appriseit.com) para respaldar los servicios que desea aprovechar. ¡Apprise admite más de 80 servicios de notificación hoy en día y siempre se está expandiendo para agregar soporte para más! Visite https://appriseit.com para ver la lista cada vez mayor de los servicios admitidos en la actualidad.
+📣 Para activar una notificación, primero debe definir una o más [URL de Apprise](https://appriseit.com) para respaldar los servicios que desea aprovechar. ¡Apprise admite más de 150 servicios de notificación hoy en día y siempre se está expandiendo para agregar soporte para más! Visite https://appriseit.com para ver la lista cada vez mayor de los servicios admitidos en la actualidad.
 
 ## Detalles de la API
 

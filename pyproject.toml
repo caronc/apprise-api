@@ -153,6 +153,10 @@ ignore = [
              # for now
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# Terra-Master TOS7 Support Build Script
+"packaging/terramaster/build-package.py" = ["T201"]
+
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
 
