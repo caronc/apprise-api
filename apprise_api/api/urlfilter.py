@@ -21,9 +21,90 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+import ipaddress
 import re
+import socket
 
 from apprise.utils.parse import parse_url
+
+# A reserved deny-list token; see the "internal" entry in the
+# AppriseURLFilter class docstring below for what it does.
+INTERNAL_TOKEN = "internal"
+
+# Slow DNS Handling
+_RESOLVE_TIMEOUT_SEC = 5
+
+# A shared, bounded pool for DNS resolution
+_RESOLVE_POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix="apprise-urlfilter-resolve")
+
+# 100.64.0.0/10 - RFC 6598 - Carrier-Grade NAT shared address space
+_CGN_SHARED_V4 = ipaddress.ip_network("100.64.0.0/10")
+
+
+def _is_blocked_address(addr) -> bool:
+    """
+    Return True if the given ipaddress.IPv4Address/IPv6Address should
+    never be reachable from an attachment fetch: loopback, private,
+    link-local, reserved, unspecified, multicast, or CGN shared space.
+    """
+    return (
+        addr.is_private
+        or addr.is_loopback
+        or addr.is_link_local
+        or addr.is_reserved
+        or addr.is_unspecified
+        or addr.is_multicast
+        or (isinstance(addr, ipaddress.IPv4Address) and addr in _CGN_SHARED_V4)
+    )
+
+
+def _resolve_addresses(host: str):
+    """
+    Resolve a host to its ipaddress.IPv4Address/IPv6Address objects.
+
+    Returns None if the host could not be resolved (including on
+    timeout) -- callers must treat that the same as "blocked", not
+    "allowed", since a destination that can't be classified can't be
+    proven safe.
+    """
+    # A literal IP (optionally bracketed, e.g. "[::1]") needs no lookup.
+    literal = host[1:-1] if host.startswith("[") and host.endswith("]") else host
+    try:
+        return [ipaddress.ip_address(literal)]
+
+    except ValueError:
+        # Not a literal address; fall through to DNS resolution below.
+        pass
+
+    # Use a thread pool to avoid blocking the main thread on DNS resolution. The
+    # pool is shared/long-lived so that it can be reused across multiple
+    # lookups and avoid the overhead of creating a new thread for each one.
+    try:
+        future = _RESOLVE_POOL.submit(socket.getaddrinfo, literal, None)
+        results = future.result(timeout=_RESOLVE_TIMEOUT_SEC)
+
+    except FutureTimeoutError:
+        # Don't wait for an abandoned (timed-out) lookup to finish; the
+        # pool is shared/long-lived so there's nothing to shut down here,
+        # just let this one future complete/die on its own.
+        return None
+
+    except Exception:
+        # DNS resolution failed.
+        return None
+
+    addresses = []
+    for _family, _type, _proto, _canonname, sockaddr in results:
+        try:
+            addresses.append(ipaddress.ip_address(sockaddr[0]))
+
+        except ValueError:
+            # Unexpected address shape; skip rather than fail closed on
+            # the whole lookup over one bad record.
+            continue
+
+    return addresses or None
 
 
 class AppriseURLFilter:
@@ -38,6 +119,7 @@ class AppriseURLFilter:
       - A full URL (with http:// or https://)
       - A URL without a scheme (e.g. "localhost/resources")
       - A plain hostname or IP
+      - The special token "internal" (see INTERNAL_TOKEN below)
 
     Wildcards:
       - '*' will match any sequence of characters.
@@ -48,8 +130,9 @@ class AppriseURLFilter:
 
     def __init__(self, allow_list: str, deny_list: str):
         # Pre-compile our rules.
-        # Each rule is stored as a tuple (compiled_regex, is_url_based)
-        # where `is_url_based` indicates if the token included "http://" or "https://"
+        # Each rule is stored as a tuple (compiled_regex, kind) where kind is
+        # one of "url", "host", or "internal". compiled_regex is None for
+        # "internal" rules since they resolve/classify instead of matching.
         self.allow_rules = self._parse_list(allow_list)
         self.deny_rules = self._parse_list(deny_list)
 
@@ -57,10 +140,11 @@ class AppriseURLFilter:
         """
         Split the list (tokens separated by whitespace or commas) and compile each token.
         Tokens are classified as follows:
+          - The reserved "internal" token (resolve + IP-class check).
           - URL-based tokens: if they start with “http://” or “https://” (explicit)
             or if they contain a “/” (implicit; no scheme given).
           - Host-based tokens: those that do not contain a “/”.
-        Returns a list of tuples (compiled_regex, is_url_based).
+        Returns a list of tuples (compiled_regex, kind).
         """
         tokens = re.split(r"[\s,]+", list_str.strip().lower())
         rules = []
@@ -68,22 +152,27 @@ class AppriseURLFilter:
             if not token:
                 continue
 
+            if token == INTERNAL_TOKEN:
+                # Resolved/classified at match time; nothing to compile.
+                rules.append((None, "internal"))
+                continue
+
             if token.startswith("http://") or token.startswith("https://"):
                 # Explicit URL token.
                 compiled = self._compile_url_token(token)
-                is_url_based = True
+                kind = "url"
 
             elif "/" in token:
                 # Implicit URL token: prepend a scheme pattern.
                 compiled = self._compile_implicit_token(token)
-                is_url_based = True
+                kind = "url"
 
             else:
                 # Host-based token.
                 compiled = self._compile_host_token(token)
-                is_url_based = False
+                kind = "host"
 
-            rules.append((compiled, is_url_based))
+            rules.append((compiled, kind))
         return rules
 
     def _compile_url_token(self, token: str):
@@ -201,34 +290,69 @@ class AppriseURLFilter:
 
         return regex
 
+    def _is_internal_target(self, host: str) -> bool:
+        """
+        Resolves the given host and returns True if any resulting address is
+        loopback, private, link-local, reserved, unspecified, multicast, or
+        CGN shared space. A host that can't be resolved (including on
+        timeout) is treated as internal/blocked because it can't be proven safe.
+        """
+        addresses = _resolve_addresses(host)
+        if not addresses:
+            return True
+
+        return any(_is_blocked_address(addr) for addr in addresses)
+
     def is_allowed(self, url: str) -> bool:
         """
         Checks a given URL against the deny list first, then the allow list.
-        For URL-based rules (explicit or implicit), the full URL is tested.
-        For host-based rules, the URL's netloc (which includes the port) is tested.
         """
-        parsed = parse_url(url, strict_port=True, simple=True)
+        try:
+            parsed = parse_url(url, strict_port=True, simple=True)
+
+        except ValueError:
+            # apprise's parse_url() can raise on certain malformed input
+            # (e.g. an unbalanced IPv6 bracket) rather than returning None
+            # like it does for other garbage; treat it the same way.
+            return False
+
         if not parsed:
+            return False
+
+        # A parsed result with no usable host can't be matched against
+        # anything meaningfully -- treat it as blocked rather than let an
+        # empty/None host reach string formatting or DNS resolution below.
+        host = parsed.get("host")
+        if not host:
             return False
 
         # includes port if present
         port = parsed.get("port")
-        netloc = f"{parsed['host']}:{port}" if port is not None else parsed["host"]
+        netloc = f"{host}:{port}" if port is not None else host
 
         # Check deny rules first.
-        for pattern, is_url_based in self.deny_rules:
-            if is_url_based:
+        for pattern, kind in self.deny_rules:
+            if kind == "internal":
+                if self._is_internal_target(host):
+                    return False
+
+            elif kind == "url":
                 if pattern.match(url):
                     return False
 
             elif pattern.match(netloc):
                 return False
 
-        # Then check allow rules.
-        for pattern, is_url_based in self.allow_rules:
-            if is_url_based:
+        # Then check allow rules. "internal" has no meaning as a positive
+        # match (there's nothing bounded to allow), so it's ignored here.
+        for pattern, kind in self.allow_rules:
+            if kind == "internal":
+                continue
+
+            if kind == "url":
                 if pattern.match(url):
                     return True
+
             elif pattern.match(netloc):
                 return True
 
