@@ -231,6 +231,51 @@ class AddByConfigForm(forms.Form):
         return data
 
 
+class MoveConfigForm(forms.Form):
+    """
+    Form field for moving an Apprise configuration from one location to another.
+    """
+
+    from_config_id = forms.RegexField(
+        regex=CONFIG_KEY_PATTERN,
+        label=_("From"),
+        widget=forms.TextInput(attrs={"placeholder": _("Current Configuration ID")}),
+        max_length=128,
+        required=True,
+    )
+
+    to_config_id = forms.RegexField(
+        regex=CONFIG_KEY_PATTERN,
+        label=_("To"),
+        widget=forms.TextInput(attrs={"placeholder": _("New Configuration ID")}),
+        max_length=128,
+        required=True,
+    )
+
+    def __init__(self, *args, restricted=False, current_from="", **kwargs):
+        """Configure the extra fields used when a key user changes access."""
+        super().__init__(*args, **kwargs)
+        self.restricted = restricted
+        self.current_from = current_from or ""
+        self.fields["from_config_id"].widget.attrs["readonly"] = restricted
+
+    def clean_from_config_id(self):
+        """Reject if enforced config_id was changed."""
+        from_config_id = self.cleaned_data["from_config_id"]
+        if self.restricted and from_config_id != self.current_from:
+            raise ValidationError(_("The configuration ID cannot be changed by a restricted user"))
+        return from_config_id
+
+    def clean(self):
+        """Reject a move that doesn't actually go anywhere."""
+        cleaned_data = super().clean()
+        from_config_id = cleaned_data.get("from_config_id")
+        to_config_id = cleaned_data.get("to_config_id")
+        if from_config_id and to_config_id and from_config_id == to_config_id:
+            raise ValidationError(_("The destination configuration ID must differ from the source"))
+        return cleaned_data
+
+
 class NotifyForm(forms.Form):
     """
     This is the reading in of a configuration file which contains

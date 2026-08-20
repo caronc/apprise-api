@@ -46,11 +46,13 @@ from django.utils.translation import gettext_lazy as _
 
 # Keyed routes defer authentication to the view, which accepts either global
 # credentials or credentials belonging to that key.
-_KEY_IN_URL = re.compile(r"^/(cfg|add|del|get|notify|json/urls|auth|status)/(?P<key>{})/?$".format(CONFIG_KEY_REGEX))
+_KEY_IN_URL = re.compile(
+    r"^/(cfg|add|del|get|move|notify|json/urls|auth|status)/(?P<key>{})/?$".format(CONFIG_KEY_REGEX)
+)
 
 # These bare routes may obtain their key from X-Apprise-Config-ID.
 # The bare /cfg admin listing has no per-key access and always uses global auth.
-_HEADER_ELIGIBLE_PATH = re.compile(r"^/(add|del|get|notify|json/urls|auth|status|details)/?$")
+_HEADER_ELIGIBLE_PATH = re.compile(r"^/(add|del|get|move|notify|json/urls|auth|status|details)/?$")
 
 # Login and logout remain reachable without a browser session.
 _LOGOUT_PATH = re.compile(r"^/logout/?$")

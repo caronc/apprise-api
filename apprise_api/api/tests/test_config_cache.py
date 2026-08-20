@@ -24,12 +24,13 @@
 import errno
 import gzip
 import os
+import shutil
 import time
 from unittest.mock import mock_open, patch
 
 from apprise import ConfigFormat
 
-from ..utils import AppriseConfigCache, AppriseStoreMode, SimpleFileExtension
+from ..utils import AppriseConfigCache, AppriseStoreMode, MoveResult, SimpleFileExtension
 
 
 def _backdate(path, seconds_ago):
@@ -179,6 +180,24 @@ def test_apprise_config_list_simple_mode(tmpdir):
     os.makedirs(subdir)
     keys = acc_obj.keys()
     assert len(keys) == 10
+
+
+def test_apprise_config_list_simple_mode_lock_only_key(tmpdir):
+    """
+    A key that has been assigned a login but was never given any
+    configuration content still occupies that key (move()'s conflict
+    check treats it as taken), so it must be visible via keys() too.
+    """
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+
+    # Lock-only key: no content was ever put(), only a login assigned
+    assert acc_obj.set_auth("lockonly", "user", "pass")
+
+    # A regular key with actual content for comparison
+    assert acc_obj.put("withcontent", "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+
+    keys = acc_obj.keys()
+    assert sorted(keys) == sorted(["lockonly", "withcontent"])
 
 
 def test_apprise_config_list_hash_mode(tmpdir):
@@ -351,6 +370,157 @@ def test_apprise_config_io_disabled_mode(tmpdir):
 
     # Content never exists
     assert acc_obj.clear(key) is None
+
+
+def test_move_simple_mode(tmpdir):
+    """A move relocates content correctly under SIMPLE mode's plain-filename layout."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    content = "mailto://test:pass@gmail.com"
+    assert acc_obj.put("move_simple_src", content, ConfigFormat.TEXT.value)
+
+    assert acc_obj.move("move_simple_src", "move_simple_dst") == MoveResult.MOVED
+    assert acc_obj.get("move_simple_dst") == (content, ConfigFormat.TEXT.value)
+    assert acc_obj.get("move_simple_src") == (None, "")
+
+
+def test_move_disabled_mode(tmpdir):
+    """A disabled store can never move anything, matching put()/get() being no-ops."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED)
+    assert acc_obj.move("move_disabled_src", "move_disabled_dst") == MoveResult.FAILED
+
+
+def test_move_yaml_source(tmpdir):
+    """A YAML-stored configuration is found and moved just as a TEXT one is."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    content = "urls:\n  - mailto://test:pass@gmail.com\n"
+    assert acc_obj.put("move_yaml_src", content, ConfigFormat.YAML.value)
+
+    assert acc_obj.move("move_yaml_src", "move_yaml_dst") == MoveResult.MOVED
+    assert acc_obj.get("move_yaml_dst") == (content, ConfigFormat.YAML.value)
+
+
+def test_move_reports_failure_when_the_destination_directory_cannot_be_created(tmpdir):
+    """A destination directory that can't be created fails the move cleanly; the source is untouched."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    content = "mailto://test:pass@gmail.com"
+    assert acc_obj.put("move_makedirs_src", content, ConfigFormat.TEXT.value)
+
+    with patch("os.makedirs", side_effect=OSError("permission denied")):
+        assert acc_obj.move("move_makedirs_src", "move_makedirs_dst") == MoveResult.FAILED
+
+    assert acc_obj.get("move_makedirs_src") == (content, ConfigFormat.TEXT.value)
+    assert acc_obj.get("move_makedirs_dst") == (None, "")
+
+
+def test_move_reports_a_stray_original_when_the_content_cannot_be_removed_after_a_locked_copy(tmpdir):
+    """A locked-copy fallback that succeeds, but can't remove the original afterward, still
+    reports a successful move -- the content is already safely at the destination, and a
+    stray original left behind is a cleanup nuisance, not a failed move."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    content = "mailto://test:pass@gmail.com"
+    assert acc_obj.put("move_strayorig_src", content, ConfigFormat.TEXT.value)
+
+    with (
+        patch("os.rename", side_effect=OSError("cross-device link")),
+        patch("os.remove", side_effect=OSError("permission denied")),
+    ):
+        assert acc_obj.move("move_strayorig_src", "move_strayorig_dst") == MoveResult.MOVED
+
+    assert acc_obj.get("move_strayorig_dst") == (content, ConfigFormat.TEXT.value)
+    assert acc_obj.get("move_strayorig_src") == (content, ConfigFormat.TEXT.value)
+
+
+def test_move_carries_the_authentication_lock_via_a_locked_copy_when_its_own_rename_fails(tmpdir):
+    """The lock's own rename-fails fallback still carries it forward via a locked copy,
+    independently of the configuration content's own (successful) rename."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert acc_obj.put("move_lockfallback_src", "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+    assert acc_obj.set_auth("move_lockfallback_src", "alice", "secret")
+
+    real_rename = os.rename
+    real_remove = os.remove
+
+    def rename_side_effect(src, dst):
+        if src.endswith(".lock"):
+            raise OSError("cross-device link")
+        return real_rename(src, dst)
+
+    def remove_side_effect(path):
+        if path.endswith(".lock"):
+            raise OSError("permission denied")
+        return real_remove(path)
+
+    with patch("os.rename", side_effect=rename_side_effect), patch("os.remove", side_effect=remove_side_effect):
+        assert acc_obj.move("move_lockfallback_src", "move_lockfallback_dst") == MoveResult.MOVED
+
+    assert acc_obj.verify_auth("move_lockfallback_dst", "alice", "secret") is True
+
+
+def test_move_reports_the_authentication_lock_failure_when_its_own_locked_copy_also_fails(tmpdir):
+    """If the lock's own rename AND its locked-copy fallback both fail, the content move
+    still succeeds and the lock failure is only logged -- the source key keeps its lock
+    rather than the move silently discarding it."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert acc_obj.put("move_lockcopyfail_src", "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
+    assert acc_obj.set_auth("move_lockcopyfail_src", "alice", "secret")
+
+    real_rename = os.rename
+    real_copy2 = shutil.copy2
+
+    def rename_side_effect(src, dst):
+        if src.endswith(".lock"):
+            raise OSError("cross-device link")
+        return real_rename(src, dst)
+
+    def copy2_side_effect(src, dst):
+        if src.endswith(".lock"):
+            raise OSError("disk full")
+        return real_copy2(src, dst)
+
+    with patch("os.rename", side_effect=rename_side_effect), patch("shutil.copy2", side_effect=copy2_side_effect):
+        assert acc_obj.move("move_lockcopyfail_src", "move_lockcopyfail_dst") == MoveResult.MOVED
+
+    assert acc_obj.get_auth("move_lockcopyfail_dst") is None
+    assert acc_obj.verify_auth("move_lockcopyfail_src", "alice", "secret") is True
+
+
+def test_move_reports_failure_when_the_locked_copy_guard_file_cannot_be_created(tmpdir):
+    """If the locked-copy fallback can't even create its own guard-lock file, the move fails cleanly."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    content = "mailto://test:pass@gmail.com"
+    assert acc_obj.put("move_openfail_src", content, ConfigFormat.TEXT.value)
+
+    real_open = os.open
+
+    def open_side_effect(path, flags, *args, **kwargs):
+        if path.endswith(".movelock"):
+            raise OSError("too many open files")
+        return real_open(path, flags, *args, **kwargs)
+
+    with (
+        patch("os.rename", side_effect=OSError("cross-device link")),
+        patch("os.open", side_effect=open_side_effect),
+    ):
+        assert acc_obj.move("move_openfail_src", "move_openfail_dst") == MoveResult.FAILED
+
+    assert acc_obj.get("move_openfail_src") == (content, ConfigFormat.TEXT.value)
+    assert acc_obj.get("move_openfail_dst") == (None, "")
+
+
+def test_move_reports_failure_when_the_locked_copy_cannot_acquire_its_guard_lock(tmpdir):
+    """If the locked-copy fallback can't acquire its own guard lock, the move fails cleanly."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    content = "mailto://test:pass@gmail.com"
+    assert acc_obj.put("move_flockfail_src", content, ConfigFormat.TEXT.value)
+
+    with (
+        patch("os.rename", side_effect=OSError("cross-device link")),
+        patch("fcntl.flock", side_effect=OSError("resource temporarily unavailable")),
+    ):
+        assert acc_obj.move("move_flockfail_src", "move_flockfail_dst") == MoveResult.FAILED
+
+    assert acc_obj.get("move_flockfail_src") == (content, ConfigFormat.TEXT.value)
+    assert acc_obj.get("move_flockfail_dst") == (None, "")
 
 
 def test_set_auth_rejects_colon_in_username(tmpdir):

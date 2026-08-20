@@ -58,34 +58,6 @@
               APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
             </li>
             <li class="api-status-nav">
-              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
-                {% if AUTH_USERNAME %}
-                  <a class="auth-account {% if AUTH_PERMISSION == 'master_lock' %}is-master{% endif %}"
-                     href="{% url 'auth' DEFAULT_CONFIG_ID %}"
-                     aria-label="{% trans "Open Authentication Settings" %}">
-                    <span class="auth-account-icon" aria-hidden="true">
-                      {% include 'icons/user.svg' %}
-                    </span>
-                    <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
-                  </a>
-                  <span class="nav-divider auth-divider" aria-hidden="true"></span>
-                {% endif %}
-                <a class="auth-logout-link tooltipped"
-                   href="{% url 'logout' %}"
-                   aria-label="{% trans "Logout" %}"
-                   data-position="bottom"
-                   data-tooltip="{% trans "Logout" %}">
-                  <span class="auth-logout-icon" aria-hidden="true">
-                    {% include 'icons/logout.svg' %}
-                  </span>
-                </a>
-                <template id="logout-confirm-icon-template">
-                  <span class="logout-confirm-icon" aria-hidden="true">
-                    {% include 'icons/logout.svg' %}
-                  </span>
-                </template>
-                <span class="nav-divider auth-divider" aria-hidden="true"></span>
-              {% endif %}
               <span>{% trans "API HEALTH" %}</span>
               <a href="{% url 'health' %}" target="_new" id="nav-api-status-link">
                 <span id="nav-api-status-icon"
@@ -138,6 +110,34 @@
                 </span>
               </a>
               <span class="nav-divider"></span>
+              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
+                {% if AUTH_USERNAME %}
+                  <a class="auth-account {% if AUTH_PERMISSION == 'master_lock' %}is-master{% endif %}"
+                     href="{% url 'auth' DEFAULT_CONFIG_ID %}"
+                     aria-label="{% trans "Open Authentication Settings" %}">
+                    <span class="auth-account-icon" aria-hidden="true">
+                      {% include 'icons/user.svg' %}
+                    </span>
+                    <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
+                  </a>
+                  <span class="nav-divider auth-divider" aria-hidden="true"></span>
+                {% endif %}
+                <a class="auth-logout-link tooltipped"
+                   href="{% url 'logout' %}"
+                   aria-label="{% trans "Logout" %}"
+                   data-position="bottom"
+                   data-tooltip="{% trans "Logout" %}">
+                  <span class="auth-logout-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
+                  </span>
+                </a>
+                <template id="logout-confirm-icon-template">
+                  <span class="logout-confirm-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
+                  </span>
+                </template>
+                <span class="nav-divider auth-divider" aria-hidden="true"></span>
+              {% endif %}
               <a id="theme-toggle"
                  href="{{ request.path }}?theme={{ request.next_theme }}"
                  data-theme="{{ request.theme|safe }}"
@@ -517,22 +517,26 @@
     return window.fetch(input, Object.assign({}, options, {headers: headers}));
   }
 
-  // Concealed fields share one accessible show/hide control throughout the GUI.
-  document.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
-    toggle.addEventListener('click', function() {
-      const input = document.getElementById(toggle.getAttribute('aria-controls'));
-      if (!input) {
-        return;
-      }
-      const showing = input.type === 'text';
-      const label = showing ? toggle.dataset.showLabel : toggle.dataset.hideLabel;
-      input.type = showing ? 'password' : 'text';
-      toggle.querySelector('i').textContent = showing ? 'visibility' : 'visibility_off';
-      toggle.setAttribute('aria-label', label);
-      toggle.title = label;
-      input.focus();
+  // Concealed fields share one accessible show/hide control throughout the
+  // GUI.
+  function appriseWireValueToggles(root) {
+    root.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        const input = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!input) {
+          return;
+        }
+        const showing = input.type === 'text';
+        const label = showing ? toggle.dataset.showLabel : toggle.dataset.hideLabel;
+        input.type = showing ? 'password' : 'text';
+        toggle.querySelector('i').textContent = showing ? 'visibility' : 'visibility_off';
+        toggle.setAttribute('aria-label', label);
+        toggle.title = label;
+        input.focus();
+      });
     });
-  });
+  }
+  appriseWireValueToggles(document);
 
   // Config IDs begin concealed and can be revealed without changing the page.
   document.querySelectorAll('[data-config-id-toggle]').forEach(function(toggle) {
@@ -817,6 +821,35 @@
   function appriseShowCopyToast(message) {
     if (window.M && M.toast) {
       M.toast({ html: message || '{% trans "Copied to clipboard" %}' });
+    }
+  }
+
+  // Non-blocking success/failure notice
+  function appriseShowStatusToast(message, isSuccess) {
+    if (window.Swal && Swal.fire) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: isSuccess ? 'success' : 'error',
+        title: message,
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true
+      });
+      return;
+    }
+    if (window.M && M.toast) {
+      M.toast({ html: message, classes: isSuccess ? 'green darken-1' : 'red darken-1' });
+    }
+  }
+
+  // Extracts a JSON error response's {error, field}
+  async function appriseResponseFailure(response, fallback) {
+    try {
+      const data = await response.json();
+      return {message: data.error || fallback, field: data.field || null};
+    } catch (e) {
+      return {message: fallback, field: null};
     }
   }
 

@@ -369,6 +369,7 @@ If both the URL and header contain a key, the header wins. An invalid header ret
 |------------- | ------ | ----------- |
 | `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the *config* parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are *text* and *yaml*. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. This path does not work if `APPRISE_CONFIG_LOCK` is set.
+| `/move/{KEY}` |  POST  | Moves the configuration stored at *{KEY}* to a new Config ID.<br/>*Payload Parameters*<br/>📌 **to_config_id**: The destination Config ID. It must not already have a configuration. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
@@ -673,6 +674,24 @@ The web interface includes **Logout**, which ends its signed browser login immed
 `APPRISE_CONFIG_LOCK` does not block setting, rotating, or removing per-key credentials.
 
 Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). Locks with configuration remain. See [Pruning](#pruning).
+
+#### Moving a Configuration
+`POST /move/{KEY}` renames a saved configuration to a new Config ID, carrying its per-key authentication (if any) along with it. The destination must not already have a configuration, and this path does not work if `APPRISE_CONFIG_LOCK` is set.
+
+A configuration user may only move their own key; a global administrator may move any key and, from the web interface's Move card, may also retarget the source (`from_config_id`) to move a different key entirely.
+```bash
+# Move 'my-config-id' to 'my-new-config-id' using that key's own credentials:
+curl -X POST -H "Content-Type: application/json" \
+   -u alice:s3cret \
+   -d '{"to_config_id": "my-new-config-id"}' \
+   http://localhost:8000/move/my-config-id
+
+# The same, performed by a global administrator:
+curl -X POST -H "Content-Type: application/json" \
+   -u foobar:your-password-here \
+   -d '{"to_config_id": "my-new-config-id"}' \
+   http://localhost:8000/move/my-config-id
+```
 
 #### Reverse-proxy (NginX) Basic Auth
 Under the hood, Apprise-API is running a small NginX instance.  It allows for you to inject your own configuration into it. One thing you may wish to add is basic authentication.

@@ -383,6 +383,77 @@ paths:
         '500':
           description: Internal Error (Could not delete from disk).
 
+  /move/{key}:
+    post:
+      operationId: Persistent_MoveConfiguration
+      summary: Moves the configuration stored at {key} to a new configuration ID.
+      description: >
+        API callers only supply to_config_id; the source is always {key}.
+        The browser form additionally accepts from_config_id, editable only
+        by a global administrator -- a restricted configuration user may
+        only move their own key. The destination must not already have a
+        configuration.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_config_id]
+              properties:
+                to_config_id:
+                  type: string
+                  maxLength: 128
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [from_config_id, to_config_id]
+              properties:
+                from_config_id:
+                  type: string
+                  maxLength: 128
+                to_config_id:
+                  type: string
+                  maxLength: 128
+      responses:
+        '200':
+          description: Configuration moved.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Successfully moved configuration"
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    nullable: true
+        '400':
+          description: >
+            Bad Request (missing/invalid to_config_id, a destination equal
+            to the source, or a restricted user attempted to change
+            from_config_id).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: Forbidden (Config Lock enabled).
+        '404':
+          description: Not Found (there was no configuration to move).
+        '409':
+          description: Conflict (a configuration already exists at the destination).
+        '424':
+          description: Failed Dependency (the configuration store is not currently writable).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (the configuration could not be moved).
+
   /get/{key}:
     post:
       operationId: Persistent_GetConfiguration
@@ -752,6 +823,62 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           description: Internal Error (Could not delete from disk).
+
+  /move/:
+    post:
+      operationId: Persistent_MoveConfigurationByHeader
+      summary: Header-based equivalent of POST /move/{key}.
+      description: >
+        Identical to POST /move/{key}, source key via X-Apprise-Config-ID
+        instead of the URL. 400 if that header is missing or invalid.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_config_id]
+              properties:
+                to_config_id:
+                  type: string
+                  maxLength: 128
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [from_config_id, to_config_id]
+              properties:
+                from_config_id:
+                  type: string
+                  maxLength: 128
+                to_config_id:
+                  type: string
+                  maxLength: 128
+      responses:
+        '200':
+          description: Configuration moved.
+        '400':
+          description: >
+            Bad Request (missing/invalid to_config_id, a destination equal
+            to the source, a restricted user attempted to change
+            from_config_id, or a missing/invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: Forbidden (Config Lock enabled).
+        '404':
+          description: Not Found (there was no configuration to move).
+        '409':
+          description: Conflict (a configuration already exists at the destination).
+        '424':
+          description: Failed Dependency (the configuration store is not currently writable).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (the configuration could not be moved).
 
   /get/:
     post:

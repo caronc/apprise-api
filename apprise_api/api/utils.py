@@ -27,6 +27,7 @@ from collections.abc import Mapping
 from contextlib import suppress
 from datetime import datetime
 import errno
+import fcntl
 import gzip
 import hashlib
 import hmac
@@ -64,6 +65,137 @@ MIME_IS_HTML = re.compile(r"(^|,)\s*text/html(?:\s*;|\s*,|$)", re.I)
 # */*
 # <blank>
 ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
+
+# This header keeps configuration keys out of URLs and access logs.
+# Validate it here because headers do not pass through Django's URL regex;
+# SIMPLE mode also uses the key in a filename.
+CONFIG_KEY_HEADER = "X-Apprise-Config-ID"
+
+# Shared configuration-key format for routes, middleware, and headers.
+# The unanchored form can be embedded in route patterns.
+# Use CONFIG_KEY_PATTERN when validating a complete value.
+CONFIG_KEY_REGEX = r"[\w_-]{1,128}"
+CONFIG_KEY_PATTERN = re.compile(r"^{}$".format(CONFIG_KEY_REGEX))
+
+# Access our Attachment Manager Singleton
+A_MGR = apprise.manager_attachment.AttachmentManager()
+
+# Access our Notification Manager Singleton
+N_MGR = apprise.manager_plugins.NotificationManager()
+
+# Let the API unload optional modules that no enabled service still needs.
+# Other applications embedding Apprise keep loaded modules by default.
+N_MGR.evict_on_disable = True
+
+# Prepare our Attachment URL Filter
+ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+
+# These values describe how a configuration key is protected.
+AUTH_MODE_DISABLED = "disabled"
+AUTH_MODE_MASTER = "master_lock"
+AUTH_MODE_SHARED = "shared_lock"
+
+# Browser pages use a signed cookie so their Logout button can end a session.
+# API clients continue to authenticate each request with Basic Auth.
+WEB_AUTH_COOKIE = "apprise_web_auth"
+WEB_AUTH_HEADER = "X-Apprise-Web-Auth"
+_WEB_AUTH_SIGNING_SALT = "apprise-api.web-auth"
+
+# New lock files retain the username for the GUI. Digest-only files from
+# earlier versions remain supported.
+_AUTH_RECORD_VERSION = 1
+
+# Limit failed authentication attempts for each client and key.
+# All keyed routes share this cache-backed limit.
+# The default local-memory cache applies the limit per worker.
+_AUTH_FAILURE_CACHE_PREFIX = "apprise-auth-fail"
+_AUTH_FAILURE_WINDOW_SECONDS = 60
+_AUTH_FAILURE_MAX_ATTEMPTS = 20
+
+# Briefly cache successful checks so repeated requests avoid re-hashing.
+_AUTH_SUCCESS_CACHE_PREFIX = "apprise-auth-ok"
+_AUTH_SUCCESS_CACHE_SECONDS = 30
+
+
+class AppriseStoreMode:
+    """
+    Defines the store modes of configuration
+    """
+
+    # This is the default option. Content is cached and written by
+    # it's key
+    HASH = "hash"
+
+    # Content is written straight to disk using it's key
+    # there is nothing further done
+    SIMPLE = "simple"
+
+    # When set to disabled; stateful functionality is disabled
+    DISABLED = "disabled"
+
+
+class AttachmentPayload:
+    """
+    Defines the supported Attachment Payload Types
+    """
+
+    # BASE64
+    BASE64 = "base64"
+
+    # URL request
+    URL = "url"
+
+
+STORE_MODES = (
+    AppriseStoreMode.HASH,
+    AppriseStoreMode.SIMPLE,
+    AppriseStoreMode.DISABLED,
+)
+
+
+class SimpleFileExtension:
+    """
+    Defines the simple file exension lookups
+    """
+
+    # Simple Configuration file
+    TEXT = "cfg"
+
+    # YAML Configuration file
+    YAML = "yml"
+
+
+SIMPLE_FILE_EXTENSION_MAPPING = {
+    apprise.ConfigFormat.TEXT.value: SimpleFileExtension.TEXT,
+    apprise.ConfigFormat.YAML.value: SimpleFileExtension.YAML,
+    SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
+    SimpleFileExtension.YAML: SimpleFileExtension.YAML,
+}
+
+SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+
+
+class AppriseAuthStorageError(Exception):
+    """Raised when an existing per-key authentication lock cannot be read."""
+
+
+class MoveResult:
+    """
+    Outcome of AppriseConfigCache.move()
+    """
+
+    # The source configuration (and its lock, if any) now lives at the
+    # destination.
+    MOVED = "moved"
+
+    # The source key has no configuration to move.
+    NOT_FOUND = "not_found"
+
+    # The destination key already has configuration or a lock in place.
+    CONFLICT = "conflict"
+
+    # An OS-level error prevented the move from completing.
+    FAILED = "failed"
 
 
 def is_json_response(request: HttpRequest) -> bool:
@@ -115,55 +247,6 @@ def global_credentials_ok(username: str, password: str) -> bool:
     except UnicodeEncodeError:
         return False
     return hmac.compare_digest(provided, settings.APPRISE_BASIC_AUTH_TOKEN)
-
-
-class AppriseStoreMode:
-    """
-    Defines the store modes of configuration
-    """
-
-    # This is the default option. Content is cached and written by
-    # it's key
-    HASH = "hash"
-
-    # Content is written straight to disk using it's key
-    # there is nothing further done
-    SIMPLE = "simple"
-
-    # When set to disabled; stateful functionality is disabled
-    DISABLED = "disabled"
-
-
-class AttachmentPayload:
-    """
-    Defines the supported Attachment Payload Types
-    """
-
-    # BASE64
-    BASE64 = "base64"
-
-    # URL request
-    URL = "url"
-
-
-STORE_MODES = (
-    AppriseStoreMode.HASH,
-    AppriseStoreMode.SIMPLE,
-    AppriseStoreMode.DISABLED,
-)
-
-# Access our Attachment Manager Singleton
-A_MGR = apprise.manager_attachment.AttachmentManager()
-
-# Access our Notification Manager Singleton
-N_MGR = apprise.manager_plugins.NotificationManager()
-
-# Let the API unload optional modules that no enabled service still needs.
-# Other applications embedding Apprise keep loaded modules by default.
-N_MGR.evict_on_disable = True
-
-# Prepare our Attachment URL Filter
-ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
 
 class Attachment(A_MGR["file"]):
@@ -543,48 +626,6 @@ def parse_attachments(attachment_payload, files_request):
     return attachments
 
 
-class SimpleFileExtension:
-    """
-    Defines the simple file exension lookups
-    """
-
-    # Simple Configuration file
-    TEXT = "cfg"
-
-    # YAML Configuration file
-    YAML = "yml"
-
-
-SIMPLE_FILE_EXTENSION_MAPPING = {
-    apprise.ConfigFormat.TEXT.value: SimpleFileExtension.TEXT,
-    apprise.ConfigFormat.YAML.value: SimpleFileExtension.YAML,
-    SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
-    SimpleFileExtension.YAML: SimpleFileExtension.YAML,
-}
-
-SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
-
-
-class AppriseAuthStorageError(Exception):
-    """Raised when an existing per-key authentication lock cannot be read."""
-
-
-# These values describe how a configuration key is protected.
-AUTH_MODE_DISABLED = "disabled"
-AUTH_MODE_MASTER = "master_lock"
-AUTH_MODE_SHARED = "shared_lock"
-
-# Browser pages use a signed cookie so their Logout button can end a session.
-# API clients continue to authenticate each request with Basic Auth.
-WEB_AUTH_COOKIE = "apprise_web_auth"
-WEB_AUTH_HEADER = "X-Apprise-Web-Auth"
-_WEB_AUTH_SIGNING_SALT = "apprise-api.web-auth"
-
-# New lock files retain the username for the GUI. Digest-only files from
-# earlier versions remain supported.
-_AUTH_RECORD_VERSION = 1
-
-
 class AppriseConfigCache:
     """
     Designed to make it easy to store/read contact back from disk in a cache
@@ -830,21 +871,36 @@ class AppriseConfigCache:
 
     def keys(self):
         """
-        Returns a list of keys that are currently stored
-        """
-        keys = []
-        if self.mode != AppriseStoreMode.SIMPLE:
-            return keys
+        Returns a list of keys that are currently stored.
 
-        for filename in sorted(os.listdir(self.root)):
+        A key locked but never given any configuration content still
+        occupies that key -- move()'s own conflict check treats a
+        lock-only destination as occupied, confirmed against its use of
+        auth_path() below. Leaving such a key out of this list would make
+        it invisible (and therefore unmanageable) here while it still
+        silently blocks other actions elsewhere, so lock-only keys are
+        included too, not just ones with actual configuration content.
+        """
+        keys = set()
+        if self.mode != AppriseStoreMode.SIMPLE:
+            return []
+
+        lock_suffix = ".lock"
+        for filename in os.listdir(self.root):
             if filename.startswith("."):
+                # auth_path() names a lock file ".{key}.lock" -- recover
+                # the key from that shape specifically; anything else
+                # starting with a dot (e.g. a stray hidden file) is left
+                # alone exactly as before.
+                if filename.endswith(lock_suffix) and len(filename) > len(lock_suffix) + 1:
+                    keys.add(filename[1 : -len(lock_suffix)])
                 continue
             path = os.path.join(self.root, filename)
             if os.path.isfile(path):
                 key_name = os.path.splitext(filename)[0]
-                keys.append(key_name)
+                keys.add(key_name)
 
-        return keys
+        return sorted(keys)
 
     def auth_path(self, key):
         """Return the directory and hidden lock filename for a key.
@@ -1115,6 +1171,161 @@ class AppriseConfigCache:
 
         return pruned
 
+    def _content_paths(self, key):
+        """Returns (text_path, yaml_path) for a key -- callers check ``os.path.isfile()``."""
+        path, filename = self.path(key)
+        if self.mode == AppriseStoreMode.HASH:
+            ext_text, ext_yaml = apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value
+        else:  # AppriseStoreMode.SIMPLE
+            ext_text, ext_yaml = SimpleFileExtension.TEXT, SimpleFileExtension.YAML
+        return (
+            os.path.join(path, "{}.{}".format(filename, ext_text)),
+            os.path.join(path, "{}.{}".format(filename, ext_yaml)),
+        )
+
+    def move(self, from_key, to_key):
+        """
+        Moves a configuration entry from one key to another.
+        The source key is removed if the move is successful.
+
+        Returns one of MoveResult.MOVED, .NOT_FOUND, .CONFLICT, or .FAILED.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return MoveResult.FAILED
+
+        src_text, src_yaml = self._content_paths(from_key)
+        if os.path.isfile(src_text):
+            src_file, dst_file = src_text, self._content_paths(to_key)[0]
+        elif os.path.isfile(src_yaml):
+            src_file, dst_file = src_yaml, self._content_paths(to_key)[1]
+        else:
+            return MoveResult.NOT_FOUND
+
+        dst_text, dst_yaml = self._content_paths(to_key)
+        dst_lock_path, dst_lock_filename = self.auth_path(to_key)
+        if (
+            os.path.isfile(dst_text)
+            or os.path.isfile(dst_yaml)
+            or os.path.isfile(os.path.join(dst_lock_path, dst_lock_filename))
+        ):
+            return MoveResult.CONFLICT
+
+        dst_dir = os.path.dirname(dst_file)
+        try:
+            os.makedirs(dst_dir, exist_ok=True)
+
+        except OSError as e:
+            logger.error("Could not create directory {} ({})".format(dst_dir, e))
+            return MoveResult.FAILED
+
+        try:
+            os.rename(src_file, dst_file)
+
+        except OSError as e:
+            logger.debug(
+                "Rename failed moving KEY {} to {} ({}); falling back to a locked copy".format(
+                    from_key,
+                    to_key,
+                    e,
+                ),
+            )
+            if not self._locked_copy(src_file, dst_file):
+                return MoveResult.FAILED
+
+            try:
+                os.remove(src_file)
+
+            except OSError as e2:
+                # The content is already safely at the new location -- a
+                # stray original left behind is a cleanup nuisance, not a
+                # failed move.
+                logger.error(
+                    "Copied KEY {} to {} but could not remove the original ({})".format(from_key, to_key, e2),
+                )
+
+        # Carry the lock forward on a best-effort basis; a lock-relocation
+        # failure does not undo the already-successful content move.
+        self._move_auth(from_key, to_key)
+
+        return MoveResult.MOVED
+
+    def _move_auth(self, from_key, to_key):
+        """Relocates a key's authentication lock alongside its configuration, if one exists."""
+        src_path, src_filename = self.auth_path(from_key)
+        src_file = os.path.join(src_path, src_filename)
+        if not os.path.isfile(src_file):
+            return
+
+        dst_path, dst_filename = self.auth_path(to_key)
+        dst_file = os.path.join(dst_path, dst_filename)
+        try:
+            os.makedirs(dst_path, exist_ok=True)
+            os.rename(src_file, dst_file)
+
+        except OSError as e:
+            logger.debug(
+                "Rename failed moving the authentication lock for KEY {} to {} ({}); "
+                "falling back to a locked copy".format(from_key, to_key, e),
+            )
+            if not self._locked_copy(src_file, dst_file):
+                logger.error(
+                    "Could not carry the authentication lock from KEY {} to {}".format(from_key, to_key),
+                )
+                return
+
+            try:
+                os.remove(src_file)
+
+            except OSError as e2:
+                logger.error(
+                    "Copied the authentication lock from KEY {} to {} but could not remove the original ({})".format(
+                        from_key,
+                        to_key,
+                        e2,
+                    ),
+                )
+
+    def _locked_copy(self, src_file, dst_file):
+        """
+        Copies src_file to dst_file while holding a lock on dst_file.
+        Returns True on success, False on failure.
+        """
+        lock_path = dst_file + ".movelock"
+        try:
+            lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
+
+        except OSError as e:
+            logger.error("Could not create lock file {} ({})".format(lock_path, e))
+            return False
+
+        try:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+            except OSError as e:
+                logger.error("Could not acquire a lock for {} ({})".format(dst_file, e))
+                return False
+
+            try:
+                shutil.copy2(src_file, dst_file)
+
+            except OSError as e:
+                logger.error("Could not copy {} to {} ({})".format(src_file, dst_file, e))
+                with suppress(OSError):
+                    os.remove(dst_file)
+                return False
+
+            return True
+
+        finally:
+            # Release the lock and remove the lock file, ignoring any errors.
+            with suppress(OSError):
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            with suppress(OSError):
+                os.close(lock_fd)
+            with suppress(OSError):
+                os.remove(lock_path)
+
 
 # Initialize our singleton
 ConfigCache = AppriseConfigCache(
@@ -1168,18 +1379,6 @@ def basic_auth_credentials(request: HttpRequest):
     return username.strip(), password
 
 
-# This header keeps configuration keys out of URLs and access logs.
-# Validate it here because headers do not pass through Django's URL regex;
-# SIMPLE mode also uses the key in a filename.
-CONFIG_KEY_HEADER = "X-Apprise-Config-ID"
-
-# Shared configuration-key format for routes, middleware, and headers.
-# The unanchored form can be embedded in route patterns.
-# Use CONFIG_KEY_PATTERN when validating a complete value.
-CONFIG_KEY_REGEX = r"[\w_-]{1,128}"
-CONFIG_KEY_PATTERN = re.compile(r"^{}$".format(CONFIG_KEY_REGEX))
-
-
 def resolve_config_key(request: HttpRequest, key: str) -> str:
     """Return the request's effective configuration key.
 
@@ -1196,18 +1395,6 @@ def config_key_header_present_but_invalid(request: HttpRequest) -> bool:
     """Return whether the request supplied an invalid config ID header."""
     header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
     return bool(header_key) and not CONFIG_KEY_PATTERN.match(header_key)
-
-
-# Limit failed authentication attempts for each client and key.
-# All keyed routes share this cache-backed limit.
-# The default local-memory cache applies the limit per worker.
-_AUTH_FAILURE_CACHE_PREFIX = "apprise-auth-fail"
-_AUTH_FAILURE_WINDOW_SECONDS = 60
-_AUTH_FAILURE_MAX_ATTEMPTS = 20
-
-# Briefly cache successful checks so repeated requests avoid re-hashing.
-_AUTH_SUCCESS_CACHE_PREFIX = "apprise-auth-ok"
-_AUTH_SUCCESS_CACHE_SECONDS = 30
 
 
 def _client_ip(request: HttpRequest) -> str:

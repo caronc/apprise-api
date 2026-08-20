@@ -53,6 +53,8 @@ urlpatterns = [
     re_path(r"^del/?$", views.DelView.as_view(), name="del_by_header"),
     re_path(r"^get/{}/?$".format(_KEY), views.GetView.as_view(), name="get"),
     re_path(r"^get/?$", views.GetView.as_view(), name="get_by_header"),
+    re_path(r"^move/{}/?$".format(_KEY), views.MoveView.as_view(), name="move"),
+    re_path(r"^move/?$", views.MoveView.as_view(), name="move_by_header"),
     re_path(
         r"^auth/{}/?$".format(_KEY),
         views.AuthView.as_view(),

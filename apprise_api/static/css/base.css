@@ -1570,6 +1570,8 @@ body .tabs .tab.disabled a:hover i {
 #url-list .copy-url-btn,
 .config-id-visibility.btn-flat,
 .config-id-copy.btn-flat,
+.config-list-move.btn-flat,
+.config-list-delete.btn-flat,
 .snippet-visibility-btn,
 .snippet-copy-btn {
   border-radius: 8px !important;
@@ -1586,6 +1588,8 @@ body .tabs .tab.disabled a:hover i {
 #url-list .copy-url-btn .material-icons,
 .config-id-visibility.btn-flat .material-icons,
 .config-id-copy.btn-flat .material-icons,
+.config-list-move.btn-flat .material-icons,
+.config-list-delete.btn-flat .material-icons,
 .snippet-visibility-btn .material-icons,
 .snippet-copy-btn .material-icons {
   font-size: 1.1rem;
@@ -1756,9 +1760,16 @@ Authentication Editor
   gap: 1.5rem;
 }
 
-.auth-card-grid.is-user {
-  grid-template-columns: minmax(0, 38rem);
-  justify-content: center;
+/*
+ * The Move card means there is always a secondary column now (Tools then
+ * Move for an admin; Move alone for a restricted user) -- unlike before,
+ * .is-user no longer collapses to a single centered column.
+ */
+.auth-secondary-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
 }
 
 .auth-editor-card {
@@ -1799,6 +1810,10 @@ Authentication Editor
 }
 
 .auth-tools-card-icon svg {
+  fill: currentColor;
+}
+
+.auth-move-card-icon svg {
   fill: currentColor;
 }
 
@@ -1975,7 +1990,10 @@ Authentication Editor
 .auth-randomize-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .auth-randomize-icon {
@@ -1995,6 +2013,7 @@ Authentication Editor
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  flex-shrink: 0;
   gap: 0.25rem;
   min-width: 6rem;
 }
@@ -2035,9 +2054,17 @@ Authentication Editor
   width: 100%;
 }
 
-.auth-tools-card>.auth-remove-button {
-  align-self: center;
-  min-width: min(100%, 12rem);
+.auth-remove-option>.auth-remove-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.auth-remove-option>.auth-remove-button i.material-icons.right {
+  float: none;
+  margin: 0;
 }
 
 .auth-remove-button[hidden] {
@@ -2057,12 +2084,12 @@ Authentication Editor
 }
 
 @media (max-width: 820px) {
-  .auth-card-grid.is-admin {
+  .auth-card-grid {
     grid-template-columns: minmax(0, 38rem);
     justify-content: center;
   }
 
-  .auth-card-grid.is-admin .auth-tools-card {
+  .auth-secondary-column {
     order: -1;
   }
 }

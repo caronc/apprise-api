@@ -55,6 +55,18 @@
                     title="{% trans "Copy Config ID to Clipboard" %}">
               <i class="material-icons" aria-hidden="true">content_copy</i>
             </button>
+            <button type="button"
+                    class="btn-flat btn-small config-list-move"
+                    data-config-id="{{ entry.key }}"
+                    title="{% trans "Move this Configuration ID" %}">
+              <i class="material-icons" aria-hidden="true">swap_horiz</i>
+            </button>
+            <button type="button"
+                    class="btn-flat btn-small config-list-delete"
+                    data-config-id="{{ entry.key }}"
+                    title="{% trans "Delete this Configuration ID" %}">
+              <i class="material-icons" aria-hidden="true">delete</i>
+            </button>
           </span>
         </li>
       {% endfor %}
@@ -63,3 +75,166 @@
     <p>{% blocktrans %}There is no configuration defined.{% endblocktrans %}</p>
   {% endif %}
 {% endblock body %}
+{# djlint:off #}
+{% block jsfooter %}
+  const configListDelUrlTemplate = '{% url "del" "PLACEHOLDER_KEY" %}';
+  const configListMoveUrlTemplate = '{% url "move" "PLACEHOLDER_KEY" %}';
+
+  document.querySelectorAll('.config-list-delete').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const key = button.dataset.configId;
+      const row = button.closest('.config-list-item');
+      Swal.fire({
+        title: '{% trans "Delete Configuration ID?" %}',
+        text: '{% trans "This permanently removes this configuration and any login assigned to it." %}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '{% trans "Delete" %}',
+        cancelButtonText: '{% trans "Cancel" %}'
+      }).then(async function (result) {
+        if (!result.isConfirmed) {
+          return;
+        }
+        button.disabled = true;
+        try {
+          const response = await appriseFetch(
+            configListDelUrlTemplate.replace('PLACEHOLDER_KEY', encodeURIComponent(key)),
+            {method: 'POST', headers: {'Accept': 'application/json'}}
+          );
+          if (!response.ok) {
+            const failure = await appriseResponseFailure(response, '{% trans "The configuration could not be removed." %}');
+            throw new Error(failure.message);
+          }
+          appriseShowStatusToast('{% trans "Configuration deleted." %}', true);
+          const list = row.parentElement;
+          row.remove();
+          // The empty-state message is only rendered server-side on page
+          // load -- a reload after the last row is the simplest way to
+          // pick it up rather than duplicating that markup here.
+          if (list && !list.querySelector('.config-list-item')) {
+            window.location.reload();
+          }
+        } catch (error) {
+          appriseShowStatusToast(error.message || '{% trans "The configuration could not be removed." %}', false);
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+  });
+
+  document.querySelectorAll('.config-list-move').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const oldKey = button.dataset.configId;
+      const row = button.closest('.config-list-item');
+      Swal.fire({
+        title: '{% trans "Move Configuration ID" %}',
+        html: `
+          <div class="input-field concealed-field auth-credential-field">
+            <input id="swal-move-from" type="password" readonly>
+            <label for="swal-move-from">{% trans "Current Configuration ID" %}</label>
+            <button type="button"
+                    class="btn-flat value-visibility-toggle"
+                    data-value-toggle
+                    tabindex="-1"
+                    aria-controls="swal-move-from"
+                    aria-label="{% trans "Show Password" %}"
+                    title="{% trans "Show Password" %}"
+                    data-show-label="{% trans "Show Password" %}"
+                    data-hide-label="{% trans "Hide Password" %}">
+              <i class="material-icons" aria-hidden="true">visibility</i>
+            </button>
+          </div>
+          <div class="input-field concealed-field auth-credential-field">
+            <input id="swal-move-to" type="password">
+            <label for="swal-move-to">{% trans "New Configuration ID" %}</label>
+            <button type="button"
+                    class="btn-flat value-visibility-toggle"
+                    data-value-toggle
+                    tabindex="-1"
+                    aria-controls="swal-move-to"
+                    aria-label="{% trans "Show Password" %}"
+                    title="{% trans "Show Password" %}"
+                    data-show-label="{% trans "Show Password" %}"
+                    data-hide-label="{% trans "Hide Password" %}">
+              <i class="material-icons" aria-hidden="true">visibility</i>
+            </button>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '{% trans "Move" %}',
+        cancelButtonText: '{% trans "Cancel" %}',
+        focusConfirm: false,
+        didOpen: function (popup) {
+          const fromField = popup.querySelector('#swal-move-from');
+          fromField.value = oldKey;
+          appriseWireValueToggles(popup);
+          if (window.M && M.updateTextFields) {
+            M.updateTextFields();
+          }
+          popup.querySelector('#swal-move-to').focus();
+        },
+        // A failed move (e.g. the destination already exists) must not close dialog.
+        // Allow user to pick a different destination and try again without starting
+        // over.
+        preConfirm: async function () {
+          const newKey = document.getElementById('swal-move-to').value.trim();
+          if (!newKey) {
+            Swal.showValidationMessage('{% trans "A destination configuration ID is required." %}');
+            return false;
+          }
+          try {
+            const response = await appriseFetch(
+              configListMoveUrlTemplate.replace('PLACEHOLDER_KEY', encodeURIComponent(oldKey)),
+              {
+                method: 'POST',
+                headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                body: JSON.stringify({to_config_id: newKey})
+              }
+            );
+            if (!response.ok) {
+              const failure = await appriseResponseFailure(response, '{% trans "The configuration could not be moved." %}');
+              Swal.showValidationMessage(failure.message);
+              return false;
+            }
+            return newKey;
+          } catch (error) {
+            Swal.showValidationMessage(error.message || '{% trans "The configuration could not be moved." %}');
+            return false;
+          }
+        }
+      }).then(function (result) {
+        if (!result.isConfirmed) {
+          return;
+        }
+        const newKey = result.value;
+        appriseShowStatusToast('{% trans "Configuration moved." %}', true);
+        // Reflect the new location in this row without a full reload.
+        const link = row.querySelector('.config-list-link');
+        const code = row.querySelector('.config-id');
+        const copyButton = row.querySelector('[data-config-id-copy]');
+        if (link) {
+          link.setAttribute(
+            'href',
+            link.getAttribute('href').replace(encodeURIComponent(oldKey), encodeURIComponent(newKey))
+          );
+        }
+        if (code) {
+          code.dataset.configIdValue = newKey;
+          if (!code.classList.contains('is-concealed')) {
+            code.textContent = newKey;
+          }
+        }
+        if (copyButton) {
+          copyButton.dataset.configIdCopy = newKey;
+        }
+        button.dataset.configId = newKey;
+        const deleteButton = row.querySelector('.config-list-delete');
+        if (deleteButton) {
+          deleteButton.dataset.configId = newKey;
+        }
+      });
+    });
+  });
+{% endblock jsfooter %}
+{# djlint:on #}

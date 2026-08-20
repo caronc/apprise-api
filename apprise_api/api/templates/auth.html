@@ -59,25 +59,25 @@
         {% endif %}
       </span>
     </div>
-    <form id="auth-form"
-          action="{% url 'auth' key %}"
-          method="post"
-          autocomplete="off"
-          novalidate>
-      <div class="auth-card-grid {% if shared_user %}is-user{% else %}is-admin{% endif %}">
-        <section class="auth-editor-card auth-credentials-card">
-          <div class="auth-card-heading">
-            <span class="auth-card-icon auth-lock-card-icon" aria-hidden="true">
-              {% include 'icons/lock.svg' %}
-            </span>
-            <h5>
-              {% if shared_user %}
-                {% trans "Update Credentials" %}
-              {% else %}
-                {% trans "Configuration Login" %}
-              {% endif %}
-            </h5>
-          </div>
+    <div class="auth-card-grid {% if shared_user %}is-user{% else %}is-admin{% endif %}">
+      <section class="auth-editor-card auth-credentials-card">
+        <div class="auth-card-heading">
+          <span class="auth-card-icon auth-lock-card-icon" aria-hidden="true">
+            {% include 'icons/lock.svg' %}
+          </span>
+          <h5>
+            {% if shared_user %}
+              {% trans "Update Credentials" %}
+            {% else %}
+              {% trans "Configuration Login" %}
+            {% endif %}
+          </h5>
+        </div>
+        <form id="auth-form"
+              action="{% url 'auth' key %}"
+              method="post"
+              autocomplete="off"
+              novalidate>
           <div id="auth-form-error"
                class="auth-login-error auth-form-error"
                role="alert"
@@ -117,7 +117,9 @@
               <i class="material-icons right">save</i>
             </button>
           </div>
-        </section>
+        </form>
+      </section>
+      <div class="auth-secondary-column">
         {% if not shared_user %}
           <section class="auth-editor-card auth-tools-card">
             <div class="auth-card-heading">
@@ -160,8 +162,47 @@
             </div>
           </section>
         {% endif %}
+        <section class="auth-editor-card auth-move-card">
+          <div class="auth-card-heading">
+            <span class="auth-card-icon auth-move-card-icon" aria-hidden="true">
+              {% include 'icons/move.svg' %}
+            </span>
+            <h5>{% trans "Move Configuration" %}</h5>
+          </div>
+          <div id="move-form-error"
+               class="auth-login-error auth-form-error"
+               role="alert"
+               hidden>
+            <i class="material-icons" aria-hidden="true">error_outline</i>
+            <div id="move-form-error-message"></div>
+          </div>
+          <form id="move-form"
+                action="{% url 'move' key %}"
+                method="post"
+                autocomplete="off"
+                novalidate>
+            <div class="auth-credential-fields">
+              <div class="input-field auth-credential-field">
+                {{ form_move.from_config_id }}
+                {{ form_move.from_config_id.label_tag }}
+                {{ form_move.from_config_id.errors }}
+              </div>
+              <div class="input-field auth-credential-field">
+                {{ form_move.to_config_id }}
+                {{ form_move.to_config_id.label_tag }}
+                {{ form_move.to_config_id.errors }}
+              </div>
+            </div>
+            <div class="auth-form-actions">
+              <button class="btn waves-effect waves-light" type="submit">
+                {% trans "Move" %}
+                <i class="material-icons right">arrow_forward</i>
+              </button>
+            </div>
+          </form>
+        </section>
       </div>
-    </form>
+    </div>
   </div>
 {% endblock body %}
 {# djlint:off #}
@@ -199,15 +240,6 @@
     if (field) {
       field.closest('.input-field').classList.add('has-errors');
       field.focus();
-    }
-  }
-
-  async function authResponseFailure(response, fallback) {
-    try {
-      const data = await response.json();
-      return {message: data.error || fallback, field: data.field || null};
-    } catch (e) {
-      return {message: fallback, field: null};
     }
   }
 
@@ -297,7 +329,7 @@
         })
       });
       if (!response.ok) {
-        const failure = await authResponseFailure(response, '{% trans "Authentication could not be saved." %}');
+        const failure = await appriseResponseFailure(response, '{% trans "Authentication could not be saved." %}');
         const error = new Error(failure.message);
         error.field = failure.field;
         throw error;
@@ -362,7 +394,7 @@
             headers: {'Accept': 'application/json'}
           });
           if (!response.ok) {
-            const failure = await authResponseFailure(response, '{% trans "Configuration access could not be reset." %}');
+            const failure = await appriseResponseFailure(response, '{% trans "Configuration access could not be reset." %}');
             throw new Error(failure.message);
           }
 
@@ -392,6 +424,83 @@
           );
         }
       });
+    });
+  }
+
+  const moveForm = document.querySelector('#move-form');
+  const moveFromConfigId = document.querySelector('#id_from_config_id');
+  const moveToConfigId = document.querySelector('#id_to_config_id');
+  const moveFormError = document.querySelector('#move-form-error');
+  const moveFormErrorMessage = document.querySelector('#move-form-error-message');
+  const pageConfigId = '{{ key|escapejs }}';
+  const authUrlTemplate = '{% url "auth" "PLACEHOLDER_KEY" %}';
+
+  function moveClearError() {
+    moveFormError.hidden = true;
+    moveFormErrorMessage.textContent = '';
+  }
+
+  function moveShowError(message, field) {
+    moveFormErrorMessage.textContent = message;
+    moveFormError.hidden = false;
+    if (field) {
+      field.closest('.input-field').classList.add('has-errors');
+      field.focus();
+    }
+  }
+
+  if (moveForm) {
+    moveForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      moveForm.querySelectorAll('.has-errors').forEach(function (field) {
+        field.classList.remove('has-errors');
+      });
+      moveClearError();
+      if (!moveToConfigId.value) {
+        moveShowError('{% trans "A destination configuration ID is required." %}', moveToConfigId);
+        return;
+      }
+
+      const moveButton = moveForm.querySelector('button[type="submit"]');
+      moveButton.disabled = true;
+      try {
+        // Form-encoded (not JSON): the server reads from_config_id/
+        // to_config_id from request.POST here.
+        const response = await appriseFetch(moveForm.action, {
+          method: 'POST',
+          headers: {'Accept': 'application/json'},
+          body: new URLSearchParams(new FormData(moveForm))
+        });
+        if (!response.ok) {
+          const failure = await appriseResponseFailure(response, '{% trans "The configuration could not be moved." %}');
+          const error = new Error(failure.message);
+          error.field = failure.field;
+          throw error;
+        }
+
+        const movedFrom = moveFromConfigId ? moveFromConfigId.value : pageConfigId;
+        const destination = moveToConfigId.value;
+        moveToConfigId.value = '';
+        M.updateTextFields();
+        Swal.fire({
+          title: '{% trans "Move Configuration" %}',
+          text: '{% trans "Configuration moved successfully." %}',
+          icon: 'success'
+        }).then(function () {
+          if (movedFrom === pageConfigId) {
+            // This page's own configuration no longer lives at this key.
+            window.location.href = authUrlTemplate.replace('PLACEHOLDER_KEY', encodeURIComponent(destination));
+          }
+        });
+      } catch (error) {
+        const errorField = error.field ? document.getElementById('id_' + error.field) : null;
+        moveShowError(
+          error.message || '{% trans "The configuration could not be moved." %}',
+          errorField || moveToConfigId
+        );
+      } finally {
+        moveButton.disabled = false;
+      }
     });
   }
 

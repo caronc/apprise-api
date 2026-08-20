@@ -55,6 +55,7 @@ from .forms import (
     AddByUrlForm,
     AuthForm,
     BrowserLoginForm,
+    MoveConfigForm,
     NotifyByUrlForm,
     NotifyForm,
 )
@@ -70,6 +71,7 @@ from .utils import (
     AppriseAuthStorageError,
     AppriseStoreMode,
     ConfigCache,
+    MoveResult,
     apply_global_filters,
     clear_web_auth_cookie,
     config_auth_mode,
@@ -980,8 +982,10 @@ class ResponseCode:
     bad_request = 400
     unauthorized = 401
     no_access = 403
+    not_found = 404
     method_not_allowed = 405
     method_not_accepted = 406
+    conflict = 409
     expectation_failed = 417
     misdirected_request = 421
     failed_dependency = 424
@@ -1751,7 +1755,7 @@ class AddView(View):
                 )
 
                 status = ResponseCode.fields_too_large
-                msg = _("JSON Payload provided is to large")
+                msg = _("JSON Payload provided is too large")
                 return (
                     HttpResponse(msg, status=status, content_type="text/plain")
                     if not json_response
@@ -2038,6 +2042,262 @@ class AddView(View):
 
 
 @method_decorator(never_cache, name="dispatch")
+class MoveView(View):
+    """
+    A Django view used to move an Apprise configuration to another location.
+    """
+
+    def post(self, request, key=None):
+        """Move a configuration from one configuration ID to another."""
+        # Resolve response format and payload format
+        json_payload = (
+            MIME_IS_JSON.match(
+                request.content_type if request.content_type else request.headers.get("content-type", "")
+            )
+            is not None
+        )
+        # Detect the format our response should be in
+        json_response = is_json_response(request)
+
+        # The header key takes precedence over the URL key.
+        key = resolve_config_key(request, key)
+        if not key:
+            if config_key_header_present_but_invalid(request):
+                return _invalid_key_response(request)
+            return _missing_key_response(request)
+
+        if not key_auth_ok(request, key):
+            return _key_access_denied_response(request, key)
+
+        if settings.APPRISE_CONFIG_LOCK:
+            # General Access Control
+            logger.warning(
+                "MOVE - %s - Config Lock Active - Request Denied",
+                request.META["REMOTE_ADDR"],
+            )
+            msg = _("The site has been configured to deny this request")
+            status = ResponseCode.no_access
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            )
+
+        shared_user = request.apprise_auth_permission == AUTH_MODE_SHARED
+
+        if json_payload:
+            from_config_id, to_config_id, error_response = self._parse_json_payload(
+                request,
+                key,
+                json_response,
+            )
+            if error_response is not None:
+                return error_response
+
+        else:
+            from_config_id, to_config_id, error_response = self._parse_form_payload(
+                request,
+                key,
+                shared_user,
+                json_response,
+            )
+            if error_response is not None:
+                return error_response
+
+        # The from_config_id must match the key or the caller must have access to it.
+        if from_config_id != key and not key_auth_ok(request, from_config_id):
+            return _key_access_denied_response(request, from_config_id)
+
+        # Check if the configuration store is writable before attempting to move
+        health = healthcheck(lazy=True)
+        if not health.get("can_write_config", False):
+            logger.warning(
+                "MOVE - %s - Configuration store is not writable; move aborted for KEY: %s",
+                request.META["REMOTE_ADDR"],
+                from_config_id,
+            )
+            status = ResponseCode.failed_dependency
+            msg = _("The configuration store is not currently writable")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            )
+
+        return self._perform_move(request, from_config_id, to_config_id, json_response)
+
+    def _parse_json_payload(self, request, key, json_response):
+        """Returns (from_config_id, to_config_id, error_response); error_response is None on success."""
+        try:
+            content = json.loads(request.body.decode("utf-8"))
+
+        except RequestDataTooBig:
+            # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
+            # the case when there is a very large file attachment that can't be pulled
+            # out of the payload without exceeding memory limitations (default is 3MB)
+            logger.warning(
+                "MOVE - %s - JSON Payload Exceeded %dMB; operation aborted using KEY: %s",
+                request.META["REMOTE_ADDR"],
+                (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
+                key,
+            )
+            status = ResponseCode.fields_too_large
+            msg = _("JSON Payload provided is too large")
+            return (
+                None,
+                None,
+                (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+                ),
+            )
+
+        except (AttributeError, ValueError):
+            logger.warning(
+                "MOVE - %s - Invalid JSON Payload provided using KEY: %s",
+                request.META["REMOTE_ADDR"],
+                key,
+            )
+            status = ResponseCode.bad_request
+            msg = _("Invalid JSON Payload provided")
+            return (
+                None,
+                None,
+                (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+                ),
+            )
+
+        if not isinstance(content, dict):
+            status = ResponseCode.bad_request
+            msg = _("The JSON payload must be an object")
+            return (
+                None,
+                None,
+                (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+                ),
+            )
+
+        to_config_id = content.get("to_config_id")
+        if not isinstance(to_config_id, str) or not CONFIG_KEY_PATTERN.match(to_config_id) or to_config_id == key:
+            status = ResponseCode.bad_request
+            msg = _("A valid to_config_id, different from the source, is required")
+            return (
+                None,
+                None,
+                (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse(
+                        {"error": msg, "field": "to_config_id"},
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status,
+                    )
+                ),
+            )
+
+        return key, to_config_id, None
+
+    def _parse_form_payload(self, request, key, shared_user, json_response):
+        """Returns (from_config_id, to_config_id, error_response); error_response is None on success."""
+        form = MoveConfigForm(request.POST, restricted=shared_user, current_from=key)
+        if not form.is_valid():
+            status = ResponseCode.bad_request
+            field, errors = next(iter(form.errors.items()))
+            msg = errors[0]
+            return (
+                None,
+                None,
+                (
+                    HttpResponse(msg, status=status, content_type="text/plain")
+                    if not json_response
+                    else JsonResponse(
+                        {"error": msg, "field": field},
+                        encoder=JSONEncoder,
+                        safe=False,
+                        status=status,
+                    )
+                ),
+            )
+
+        return form.cleaned_data["from_config_id"], form.cleaned_data["to_config_id"], None
+
+    def _perform_move(self, request, from_config_id, to_config_id, json_response):
+        """Runs the actual ConfigCache move and translates its outcome into a response."""
+        result = ConfigCache.move(from_config_id, to_config_id)
+
+        if result == MoveResult.NOT_FOUND:
+            logger.warning(
+                "MOVE - %s - No configuration to move using KEY: %s",
+                request.META["REMOTE_ADDR"],
+                from_config_id,
+            )
+            status = ResponseCode.not_found
+            msg = _("There was no configuration to move")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            )
+
+        if result == MoveResult.CONFLICT:
+            logger.warning(
+                "MOVE - %s - Destination KEY %s already in use (moving from %s)",
+                request.META["REMOTE_ADDR"],
+                to_config_id,
+                from_config_id,
+            )
+            status = ResponseCode.conflict
+            msg = _("A configuration already exists at the destination")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse(
+                    {"error": msg, "field": "to_config_id"},
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+            )
+
+        if result == MoveResult.FAILED:
+            logger.error(
+                "MOVE - %s - Configuration could not be moved from KEY %s to %s",
+                request.META["REMOTE_ADDR"],
+                from_config_id,
+                to_config_id,
+            )
+            status = ResponseCode.internal_server_error
+            msg = _("The configuration could not be moved")
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            )
+
+        logger.info(
+            "MOVE - %s - Moved configuration from KEY %s to %s",
+            request.META["REMOTE_ADDR"],
+            from_config_id,
+            to_config_id,
+        )
+        status = ResponseCode.okay
+        msg = _("Successfully moved configuration")
+        return (
+            HttpResponse(msg, status=status, content_type="text/plain")
+            if not json_response
+            else JsonResponse({"error": None}, encoder=JSONEncoder, safe=False, status=status)
+        )
+
+
+@method_decorator(never_cache, name="dispatch")
 class DelView(View):
     """
     A Django view for removing content associated with a key
@@ -2212,6 +2472,14 @@ class AuthView(View):
                     current_username=username,
                     require_current=shared_user,
                 ),
+                # Rendered alongside the credentials card (see auth.html's
+                # move card) -- restricted to this same key for a
+                # non-admin, freely editable for an admin.
+                "form_move": MoveConfigForm(
+                    initial={"from_config_id": key},
+                    restricted=shared_user,
+                    current_from=key,
+                ),
             },
         )
 
@@ -2252,7 +2520,7 @@ class AuthView(View):
 
         except RequestDataTooBig:
             status = ResponseCode.fields_too_large
-            msg = _("JSON Payload provided is to large")
+            msg = _("JSON Payload provided is too large")
             return (
                 HttpResponse(msg, status=status, content_type="text/plain")
                 if not json_response
@@ -2576,7 +2844,7 @@ class NotifyView(View):
                 )
 
                 status = ResponseCode.fields_too_large
-                msg = _("JSON Payload provided is to large")
+                msg = _("JSON Payload provided is too large")
                 return (
                     HttpResponse(msg, status=status, content_type="text/plain")
                     if not json_response
@@ -3218,7 +3486,7 @@ class StatelessNotifyView(View):
                 )
 
                 status = ResponseCode.fields_too_large
-                msg = _("JSON Payload provided is to large")
+                msg = _("JSON Payload provided is too large")
                 return (
                     HttpResponse(msg, status=status, content_type="text/plain")
                     if not json_response
