@@ -1188,18 +1188,27 @@ class AppriseConfigCache:
         Moves a configuration entry from one key to another.
         The source key is removed if the move is successful.
 
+        A key with an assigned login but no saved configuration (visible
+        via keys(), see its docstring) has nothing to rename in place,
+        so it is moved by relocating its lock alone.
+
         Returns one of MoveResult.MOVED, .NOT_FOUND, .CONFLICT, or .FAILED.
         """
         if self.mode == AppriseStoreMode.DISABLED:
             return MoveResult.FAILED
 
         src_text, src_yaml = self._content_paths(from_key)
+        src_lock_path, src_lock_filename = self.auth_path(from_key)
+        no_content = not os.path.isfile(src_text) and not os.path.isfile(src_yaml)
+        if no_content and not os.path.isfile(os.path.join(src_lock_path, src_lock_filename)):
+            return MoveResult.NOT_FOUND
+
         if os.path.isfile(src_text):
             src_file, dst_file = src_text, self._content_paths(to_key)[0]
         elif os.path.isfile(src_yaml):
             src_file, dst_file = src_yaml, self._content_paths(to_key)[1]
         else:
-            return MoveResult.NOT_FOUND
+            src_file = dst_file = None
 
         dst_text, dst_yaml = self._content_paths(to_key)
         dst_lock_path, dst_lock_filename = self.auth_path(to_key)
@@ -1210,57 +1219,66 @@ class AppriseConfigCache:
         ):
             return MoveResult.CONFLICT
 
-        dst_dir = os.path.dirname(dst_file)
-        try:
-            os.makedirs(dst_dir, exist_ok=True)
+        if src_file is not None:
+            dst_dir = os.path.dirname(dst_file)
+            try:
+                os.makedirs(dst_dir, exist_ok=True)
 
-        except OSError as e:
-            logger.error("Could not create directory {} ({})".format(dst_dir, e))
-            return MoveResult.FAILED
-
-        try:
-            os.rename(src_file, dst_file)
-
-        except OSError as e:
-            logger.debug(
-                "Rename failed moving KEY {} to {} ({}); falling back to a locked copy".format(
-                    from_key,
-                    to_key,
-                    e,
-                ),
-            )
-            if not self._locked_copy(src_file, dst_file):
+            except OSError as e:
+                logger.error("Could not create directory {} ({})".format(dst_dir, e))
                 return MoveResult.FAILED
 
             try:
-                os.remove(src_file)
+                os.rename(src_file, dst_file)
 
-            except OSError as e2:
-                # The content is already safely at the new location -- a
-                # stray original left behind is a cleanup nuisance, not a
-                # failed move.
-                logger.error(
-                    "Copied KEY {} to {} but could not remove the original ({})".format(from_key, to_key, e2),
+            except OSError as e:
+                logger.debug(
+                    "Rename failed moving KEY {} to {} ({}); falling back to a locked copy".format(
+                        from_key,
+                        to_key,
+                        e,
+                    ),
                 )
+                if not self._locked_copy(src_file, dst_file):
+                    return MoveResult.FAILED
+
+                try:
+                    os.remove(src_file)
+
+                except OSError as e2:
+                    # The content is already safely at the new location --
+                    # a stray original left behind is a cleanup nuisance,
+                    # not a failed move.
+                    logger.error(
+                        "Copied KEY {} to {} but could not remove the original ({})".format(from_key, to_key, e2),
+                    )
 
         # Carry the lock forward on a best-effort basis; a lock-relocation
-        # failure does not undo the already-successful content move.
-        self._move_auth(from_key, to_key)
+        # failure does not undo an already-successful content move. When
+        # there was no content at all, this is the entire move.
+        if not self._move_auth(from_key, to_key) and src_file is None:
+            return MoveResult.FAILED
 
         return MoveResult.MOVED
 
     def _move_auth(self, from_key, to_key):
-        """Relocates a key's authentication lock alongside its configuration, if one exists."""
+        """Relocates a key's authentication lock alongside its configuration, if one exists.
+
+        Returns True if there was nothing to move or the lock was carried
+        over successfully; False only if a lock existed but could not be
+        relocated by any means.
+        """
         src_path, src_filename = self.auth_path(from_key)
         src_file = os.path.join(src_path, src_filename)
         if not os.path.isfile(src_file):
-            return
+            return True
 
         dst_path, dst_filename = self.auth_path(to_key)
         dst_file = os.path.join(dst_path, dst_filename)
         try:
             os.makedirs(dst_path, exist_ok=True)
             os.rename(src_file, dst_file)
+            return True
 
         except OSError as e:
             logger.debug(
@@ -1271,7 +1289,7 @@ class AppriseConfigCache:
                 logger.error(
                     "Could not carry the authentication lock from KEY {} to {}".format(from_key, to_key),
                 )
-                return
+                return False
 
             try:
                 os.remove(src_file)
@@ -1284,6 +1302,8 @@ class AppriseConfigCache:
                         e2,
                     ),
                 )
+
+            return True
 
     def _locked_copy(self, src_file, dst_file):
         """

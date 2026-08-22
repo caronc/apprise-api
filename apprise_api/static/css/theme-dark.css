@@ -74,6 +74,11 @@ pre code {
   color: #c1c3c9;
 }
 
+.snippet-copy-btn,
+.snippet-visibility-btn {
+  background-color: #0d0f12 !important;
+}
+
 /* =========================================
 Navigation
 ========================================= */

@@ -111,7 +111,7 @@
                   <div class="code-snippet"
                        data-copy-label='{% trans "Apprise configuration ID copied to clipboard" %}'
                        data-copy-text='{{ key }}'>
-                    <pre><code>{{ key }}</code></pre>
+                    <pre><code class="nohighlight">{{ key }}</code></pre>
                   </div>
                   {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">click here</a>.
                 </p>
@@ -123,7 +123,7 @@
                 <div class="code-snippet"
                      data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
                      data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
-                  <pre><code>{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code></pre>
+                  <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code></pre>
                 </div>
               </li>
               <li>
@@ -297,10 +297,16 @@
                 {% endif %}
               {% endfor %}
               <div class="config-form-actions">
-                <button class="btn waves-effect waves-light" type="submit" name="action">
-                  {% trans "Save Configuration" %}
-                  <i class="material-icons right">save</i>
-                </button>
+                {% if auth_mode == 'shared_lock' %}
+                  <p class="config-form-restricted-note">
+                    {% blocktrans %}Global administrator credentials are required to save or delete this configuration. You can still move it to a different configuration ID.{% endblocktrans %}
+                  </p>
+                {% else %}
+                  <button class="btn waves-effect waves-light" type="submit" name="action">
+                    {% trans "Save Configuration" %}
+                    <i class="material-icons right">save</i>
+                  </button>
+                {% endif %}
               </div>
             </form>
           </div>
@@ -1985,8 +1991,47 @@
     }
   }
 
+  function restoreNotifyFormatPreference() {
+    // "Process As" defaults to TEXT on a fresh page load; once the user
+    // picks something else, remember it for next time via a cookie. The
+    // select is looked up by [name] rather than #id_format since the
+    // Configuration tab's own format field renders with that same id.
+    const COOKIE = 'apprise_notify_format';
+    const formatSelect = document.querySelector('#donotify select[name="format"]');
+    if (!formatSelect) {
+      return;
+    }
+
+    const saved = document.cookie.split('; ').find(function (row) {
+      return row.startsWith(COOKIE + '=');
+    });
+    if (saved) {
+      const value = decodeURIComponent(saved.split('=').slice(1).join('='));
+      const hasOption = Array.from(formatSelect.options).some(function (opt) {
+        return opt.value === value;
+      });
+      if (hasOption) {
+        formatSelect.value = value;
+        if (window.M && M.FormSelect) {
+          const instance = M.FormSelect.getInstance(formatSelect);
+          if (instance) {
+            instance.destroy();
+          }
+          M.FormSelect.init(formatSelect);
+        }
+      }
+    }
+
+    formatSelect.addEventListener('change', function () {
+      const expires = new Date();
+      expires.setFullYear(expires.getFullYear() + 1);
+      document.cookie = COOKIE + '=' + encodeURIComponent(formatSelect.value) + '; path=/; expires=' + expires.toUTCString();
+    });
+  }
+
   function notify_init() {
     decorateNotifyChips();
+    restoreNotifyFormatPreference();
     // over-ride manual submit for a nicer user experience
     document.querySelector('#donotify').onsubmit = function (event) {
       event.preventDefault();

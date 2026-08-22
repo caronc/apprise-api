@@ -97,6 +97,11 @@ pre code {
   color: #34383f;
 }
 
+.snippet-copy-btn,
+.snippet-visibility-btn {
+  background-color: #edeef3 !important;
+}
+
 /* =========================================
 Status & Indicators
 ========================================= */

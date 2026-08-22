@@ -91,7 +91,8 @@ class ManagerPageTests(SimpleTestCase):
         assert "const newConfigurationHref = cfgGenLink.href;" in content
         assert "window.location.href = newConfigurationHref;" in content
         assert "window.location.href = e.currentTarget.href;" not in content
-        assert "cfggen-id-copy" in content
+        assert 'id="cfggen-config-id"' in content
+        assert 'aria-controls="cfggen-config-id"' in content
         assert "content_copy" in content
         assert "appriseCopyToClipboard(" in content
         assert "Config ID copied to clipboard" in content

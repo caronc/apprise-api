@@ -215,6 +215,9 @@ class DelViewAuthOrderingTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_failed_delete_keeps_auth_lock(self):
+        # Deleting is a global-administrator-only action, so this exercises
+        # the ordering with master credentials -- see AddDelPrivilegeTests
+        # for coverage of the permission gate itself.
         key = "hardening_del_fail_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
         self.client.post(
@@ -228,7 +231,7 @@ class DelViewAuthOrderingTests(SimpleTestCase):
         with mock.patch("api.utils.ConfigCache.clear", return_value=False):
             response = self.client.post(
                 "/del/{}".format(key),
-                headers={"authorization": _basic("alice", "secret")},
+                headers=_GOOD_MASTER,
             )
         self.assertEqual(response.status_code, 500)
         # The configuration deletion failed, so its auth lock must survive.
@@ -247,7 +250,7 @@ class DelViewAuthOrderingTests(SimpleTestCase):
 
         response = self.client.post(
             "/del/{}".format(key),
-            headers={"authorization": _basic("alice", "secret")},
+            headers=_GOOD_MASTER,
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ConfigCache.has_auth(key))

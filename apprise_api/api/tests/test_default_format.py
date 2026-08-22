@@ -40,7 +40,7 @@ class NotifyWithDefaultFormatTests(SimpleTestCase):
     APPRISE_DEFAULT_FORMAT only ever applies when the `format` field is
     missing from the payload entirely. That can only happen through a
     JSON payload -- the web form always submits an explicit `format`
-    value (even the default "IGNORE" choice is an explicit selection),
+    value (even the default "TEXT" choice is an explicit selection),
     so the server default never applies there. A `format` field that is
     present but blank or null is also an explicit choice -- it forces
     pass-through, overriding any configured server default.

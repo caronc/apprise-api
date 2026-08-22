@@ -539,36 +539,44 @@
   appriseWireValueToggles(document);
 
   // Config IDs begin concealed and can be revealed without changing the page.
-  document.querySelectorAll('[data-config-id-toggle]').forEach(function(toggle) {
-    toggle.addEventListener('click', function() {
-      const value = document.getElementById(toggle.getAttribute('aria-controls'));
-      if (!value) {
-        return;
-      }
-      const show = toggle.getAttribute('aria-pressed') !== 'true';
-      const label = show ? toggle.dataset.hideLabel : toggle.dataset.showLabel;
-      value.textContent = show ? value.dataset.configIdValue : '••••••••';
-      value.classList.toggle('is-concealed', !show);
-      value.setAttribute(
-        'aria-label',
-        show ? value.dataset.configIdValue : '{% trans "Config ID hidden" %}'
-      );
-      toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
-      toggle.setAttribute('aria-label', label);
-      toggle.title = label;
-      toggle.querySelector('i').textContent = show ? 'visibility_off' : 'visibility';
+  // Scoped so it can also wire up controls injected later (e.g. into a
+  // SweetAlert2 modal), not just what's present at page load.
+  function appriseWireConfigIdToggles(root) {
+    root.querySelectorAll('[data-config-id-toggle]').forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        const value = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!value) {
+          return;
+        }
+        const show = toggle.getAttribute('aria-pressed') !== 'true';
+        const label = show ? toggle.dataset.hideLabel : toggle.dataset.showLabel;
+        value.textContent = show ? value.dataset.configIdValue : '••••••••';
+        value.classList.toggle('is-concealed', !show);
+        value.setAttribute(
+          'aria-label',
+          show ? value.dataset.configIdValue : '{% trans "Config ID hidden" %}'
+        );
+        toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+        toggle.setAttribute('aria-label', label);
+        toggle.title = label;
+        toggle.querySelector('i').textContent = show ? 'visibility_off' : 'visibility';
+      });
     });
-  });
+  }
+  appriseWireConfigIdToggles(document);
 
   // Copy the complete stored ID, never the concealed or shortened display text.
-  document.querySelectorAll('[data-config-id-copy]').forEach(function(button) {
-    button.addEventListener('click', function() {
-      appriseCopyToClipboard(
-        button.dataset.configIdCopy,
-        '{% trans "Config ID copied to clipboard" %}'
-      );
+  function appriseWireConfigIdCopy(root) {
+    root.querySelectorAll('[data-config-id-copy]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        appriseCopyToClipboard(
+          button.dataset.configIdCopy,
+          '{% trans "Config ID copied to clipboard" %}'
+        );
+      });
     });
-  });
+  }
+  appriseWireConfigIdCopy(document);
 
 {% block jsfooter %}
 {% endblock jsfooter %}
@@ -743,7 +751,6 @@
     cfgGenLink.addEventListener('click', function(e) {
       e.preventDefault();
       const newConfigurationHref = cfgGenLink.href;
-      const currentConfigurationId = '{{ DEFAULT_CONFIG_ID|escapejs }}';
 
       Swal.fire({
         title: '{% trans "New Configuration" %}',
@@ -753,9 +760,24 @@
             <div class="config-id-bar config-id-bar--modal">
               <span class="config-id-label">{% trans "Config ID" %}</span>
               <span class="config-id-wrapper">
-                <code class="config-id">{{ DEFAULT_CONFIG_ID }}</code>
+                <code id="cfggen-config-id"
+                      class="config-id is-concealed"
+                      data-config-id-value="{{ DEFAULT_CONFIG_ID }}"
+                      aria-label="{% trans "Config ID hidden" %}">••••••••</code>
                 <button type="button"
-                        class="btn-flat btn-small config-id-copy cfggen-id-copy"
+                        class="btn-flat btn-small config-id-visibility"
+                        data-config-id-toggle
+                        aria-controls="cfggen-config-id"
+                        aria-pressed="false"
+                        aria-label="{% trans "Show Config ID" %}"
+                        title="{% trans "Show Config ID" %}"
+                        data-show-label="{% trans "Show Config ID" %}"
+                        data-hide-label="{% trans "Hide Config ID" %}">
+                  <i class="material-icons">visibility</i>
+                </button>
+                <button type="button"
+                        class="btn-flat btn-small config-id-copy"
+                        data-config-id-copy="{{ DEFAULT_CONFIG_ID }}"
                         title="{% trans "Copy Config ID to Clipboard" %}">
                   <i class="material-icons">content_copy</i>
                 </button>
@@ -769,18 +791,8 @@
         confirmButtonText: '{% trans "Yes" %}',
         cancelButtonText: '{% trans "No" %}',
         didOpen: function (popup) {
-          const copyBtn = popup.querySelector('.cfggen-id-copy');
-          if (!copyBtn) {
-            return;
-          }
-          copyBtn.addEventListener('click', function (copyEvent) {
-            copyEvent.preventDefault();
-            copyEvent.stopPropagation();
-            appriseCopyToClipboard(
-              currentConfigurationId,
-              '{% trans "Config ID copied to clipboard" %}'
-            );
-          });
+          appriseWireConfigIdToggles(popup);
+          appriseWireConfigIdCopy(popup);
         }
       }).then((result) => {
         if (result.isConfirmed) {

@@ -484,6 +484,33 @@ def test_move_reports_the_authentication_lock_failure_when_its_own_locked_copy_a
     assert acc_obj.verify_auth("move_lockcopyfail_src", "alice", "secret") is True
 
 
+def test_move_lock_only_source_relocates_the_lock(tmpdir):
+    """A key with an assigned login but no saved configuration (visible via keys(), see its
+    docstring) has nothing to rename in place -- moving it still succeeds by relocating its
+    lock alone rather than reporting NOT_FOUND."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert acc_obj.set_auth("move_lockonly_src", "alice", "secret")
+
+    assert acc_obj.move("move_lockonly_src", "move_lockonly_dst") == MoveResult.MOVED
+    assert acc_obj.verify_auth("move_lockonly_dst", "alice", "secret") is True
+    assert acc_obj.get_auth("move_lockonly_src") is None
+
+
+def test_move_lock_only_source_reports_failure_when_the_lock_cannot_be_relocated(tmpdir):
+    """A lock-only source has nothing else to fall back on -- if its lock can be relocated by
+    neither rename nor a locked copy, the move genuinely failed."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert acc_obj.set_auth("move_lockonlyfail_src", "alice", "secret")
+
+    with (
+        patch("os.rename", side_effect=OSError("cross-device link")),
+        patch("shutil.copy2", side_effect=OSError("disk full")),
+    ):
+        assert acc_obj.move("move_lockonlyfail_src", "move_lockonlyfail_dst") == MoveResult.FAILED
+
+    assert acc_obj.verify_auth("move_lockonlyfail_src", "alice", "secret") is True
+
+
 def test_move_reports_failure_when_the_locked_copy_guard_file_cannot_be_created(tmpdir):
     """If the locked-copy fallback can't even create its own guard-lock file, the move fails cleanly."""
     acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)

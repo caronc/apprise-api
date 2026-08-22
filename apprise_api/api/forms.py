@@ -47,15 +47,15 @@ NOTIFICATION_TYPES = (
     (apprise.NotifyType.FAILURE.value, _("Failure")),
 )
 
-# Define our potential input text categories. IGNORE (pass-through, no
-# format specified) is listed first since it is the default: formatting
-# is entirely optional and is only applied if explicitly chosen.
+# Define our potential input text categories. TEXT is listed first since it
+# is the default: a novice who never touches this field still gets their
+# message interpreted as plain text rather than passed through untouched.
 INPUT_FORMATS = (
-    # As-is - do not interpret it
-    (None, _("IGNORE")),
     (apprise.NotifyFormat.TEXT.value, _("TEXT")),
     (apprise.NotifyFormat.MARKDOWN.value, _("MARKDOWN")),
     (apprise.NotifyFormat.HTML.value, _("HTML")),
+    # As-is - do not interpret it
+    (None, _("AS-IS")),
 )
 
 URLS_MAX_LEN = 1024

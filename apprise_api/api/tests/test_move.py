@@ -71,6 +71,8 @@ class MoveTests(SimpleTestCase):
             "move_reused_src",
             "move_reused_dst",
             "move_formsame_src",
+            "move_lockonly_src",
+            "move_lockonly_dst",
         ):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
@@ -213,6 +215,23 @@ class MoveTests(SimpleTestCase):
         assert response.status_code == 200
         assert ConfigCache.verify_auth("move_lock_dst", "alice", "secret") is True
         assert ConfigCache.get_auth("move_lock_src") is None
+
+    def test_move_lock_only_source_succeeds(self):
+        """A key with an assigned login but no saved configuration is listed via /cfg/ (a
+        lock-only entry, see AppriseConfigCache.keys()), so moving it must not report the
+        same 404 as a genuinely nonexistent key -- it relocates the lock alone."""
+        assert ConfigCache.set_auth("move_lockonly_src", "alice", "secret") is True
+
+        response = self.client.post(
+            "/move/move_lockonly_src",
+            data=dumps({"to_config_id": "move_lockonly_dst"}),
+            content_type="application/json",
+            headers={**_GOOD_MASTER, "accept": "application/json"},
+        )
+        assert response.status_code == 200
+        assert ConfigCache.verify_auth("move_lockonly_dst", "alice", "secret") is True
+        assert ConfigCache.get_auth("move_lockonly_src") is None
+        assert not self._exists("move_lockonly_dst")
 
     def test_move_falls_back_to_a_locked_copy_when_rename_fails(self):
         """A rename failure (e.g. a filesystem boundary) still completes the move via copy."""

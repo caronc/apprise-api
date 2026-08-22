@@ -1704,6 +1704,37 @@ class AddView(View):
         if not key_auth_ok(request, key):
             return _key_access_denied_response(request, key)
 
+        if request.apprise_auth_permission == AUTH_MODE_SHARED:
+            # Writing (creating or replacing) a configuration outright is an
+            # administrator action. A configuration user authenticated with
+            # that key's own lock may still move/migrate it via /move, but
+            # can't overwrite its content -- otherwise a lost or forgotten
+            # backup would be indistinguishable from having never had one.
+            logger.warning(
+                "ADD - %s - Restricted User Denied - KEY: %s",
+                request.META["REMOTE_ADDR"],
+                key,
+            )
+            msg = _("Global administrator credentials are required to add or replace a configuration")
+            status = ResponseCode.no_access
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse(
+                    {
+                        "error": msg,
+                        # A stable, never-translated marker so a client can
+                        # tell this apart from the (also 403) site-wide
+                        # APPRISE_CONFIG_LOCK denial below without having to
+                        # parse the (locale-dependent) message text.
+                        "reason": "admin_required",
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+            )
+
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control
             logger.warning(
@@ -2318,6 +2349,36 @@ class DelView(View):
 
         if not key_auth_ok(request, key):
             return _key_access_denied_response(request, key)
+
+        if request.apprise_auth_permission == AUTH_MODE_SHARED:
+            # Deleting a configuration outright is an administrator action.
+            # A configuration user authenticated with that key's own lock
+            # could otherwise delete their own only means of access -- they
+            # may still move/migrate it via /move, just never remove it.
+            logger.warning(
+                "DEL - %s - Restricted User Denied - KEY: %s",
+                request.META["REMOTE_ADDR"],
+                key,
+            )
+            msg = _("Global administrator credentials are required to delete a configuration")
+            status = ResponseCode.no_access
+            return (
+                HttpResponse(msg, status=status, content_type="text/plain")
+                if not json_response
+                else JsonResponse(
+                    {
+                        "error": msg,
+                        # A stable, never-translated marker so a client can
+                        # tell this apart from the (also 403) site-wide
+                        # APPRISE_CONFIG_LOCK denial below without having to
+                        # parse the (locale-dependent) message text.
+                        "reason": "admin_required",
+                    },
+                    encoder=JSONEncoder,
+                    safe=False,
+                    status=status,
+                )
+            )
 
         if settings.APPRISE_CONFIG_LOCK:
             # General Access Control

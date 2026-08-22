@@ -24,7 +24,11 @@
   font-size: 1rem;
   vertical-align: middle;
   margin-right: 0.25rem;
-  color: inherit;
+}
+
+/* Outweighs the theme's i.material-icons color rule */
+i.material-icons.support-banner-icon {
+  color: #e04c4c;
 }
 
 .support-banner-close {
@@ -1692,6 +1696,21 @@ code.config-id.is-concealed {
   vertical-align: middle;
 }
 
+.config-list-auth-link {
+  display: contents;
+}
+
+.config-list-auth-link:hover .config-auth-icon,
+.config-list-auth-link:focus-visible .config-auth-icon {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.config-list-auth-link:hover .config-list-user,
+.config-list-auth-link:focus-visible .config-list-user {
+  text-decoration: underline;
+}
+
 .config-list-item {
   display: flex;
   align-items: center;
@@ -1707,7 +1726,7 @@ code.config-id.is-concealed {
 }
 
 .config-list-user {
-  flex: 0 1 12rem;
+  flex: 0 0 12rem;
   width: clamp(4rem, 18vw, 12rem);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1723,6 +1742,29 @@ code.config-id.is-concealed {
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
+}
+
+.config-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.config-list-heading h4 {
+  margin: 0;
+}
+
+.config-list-toggle-all {
+  border-radius: 8px !important;
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
+  min-width: 0;
+  background-color: transparent;
+}
+
+.config-list-toggle-all .material-icons {
+  font-size: 1.75rem;
 }
 
 /* =========================================
@@ -1760,11 +1802,6 @@ Authentication Editor
   gap: 1.5rem;
 }
 
-/*
- * The Move card means there is always a secondary column now (Tools then
- * Move for an admin; Move alone for a restricted user) -- unlike before,
- * .is-user no longer collapses to a single centered column.
- */
 .auth-secondary-column {
   display: flex;
   flex-direction: column;
@@ -2147,13 +2184,13 @@ Authentication Editor
 
 .code-snippet pre {
   margin: 0;
-  padding-right: 5rem;
 }
 
 .snippet-copy-btn,
 .snippet-visibility-btn {
   position: absolute;
   top: 0.35rem;
+  border-radius: 6px;
 }
 
 .snippet-copy-btn {
@@ -2170,7 +2207,6 @@ Authentication Editor
   margin: -0.3em 0 0 0;
 }
 
-/* Prevent Config IDs from flashing before the concealment controls are ready. */
 #overview .code-snippet:not(.is-ready) pre {
   visibility: hidden;
 }

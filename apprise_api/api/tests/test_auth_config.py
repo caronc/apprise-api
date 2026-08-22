@@ -468,9 +468,10 @@ class AuthViewTests(SimpleTestCase):
         )
         self.assertTrue(ConfigCache.has_auth(key))
 
+        # Deleting is a global-administrator-only action.
         response = self.client.post(
             "/del/{}".format(key),
-            headers={"authorization": _basic("alice", "secret")},
+            headers=_GOOD_MASTER,
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ConfigCache.has_auth(key))
@@ -492,11 +493,12 @@ class AuthViewTests(SimpleTestCase):
         )
         self.assertTrue(ConfigCache.has_auth(key))
 
-        # Switch YAML<->TEXT using the existing credentials.
+        # Writing is a global-administrator-only action, even to switch
+        # this key's own format YAML<->TEXT.
         response = self.client.post(
             "/add/{}".format(key),
             {"urls": "json://localhost", "format": "yaml"},
-            headers={"authorization": _basic("alice", "secret")},
+            headers=_GOOD_MASTER,
         )
         self.assertEqual(response.status_code, 200)
 
@@ -532,9 +534,11 @@ class AuthViewTests(SimpleTestCase):
             self.client.post("/add/{}".format(key), {"urls": "json://localhost"}).status_code,
             401,
         )
+        # A valid per-key credential authenticates but still isn't enough to
+        # write -- that's a global-administrator-only action.
         self.assertEqual(
             self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=good).status_code,
-            200,
+            403,
         )
 
     def test_keyed_status_matches_status_shape(self):

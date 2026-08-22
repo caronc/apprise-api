@@ -3,34 +3,52 @@
 {% load i18n %}
 
 {% block body %}
-  <h4>{% trans "Configuration List" %}</h4>
+  <div class="config-list-heading">
+    <h4>{% trans "Configuration List" %}</h4>
+    {% if keys %}
+      <button type="button"
+              id="config-list-toggle-all"
+              class="btn-flat config-list-toggle-all"
+              aria-pressed="false"
+              aria-label="{% trans "Show All Config IDs" %}"
+              title="{% trans "Show All Config IDs" %}"
+              data-show-label="{% trans "Show All Config IDs" %}"
+              data-hide-label="{% trans "Hide All Config IDs" %}">
+        <i class="material-icons" aria-hidden="true">visibility</i>
+      </button>
+    {% endif %}
+  </div>
   {% if keys %}
     <ul class="collection z-depth-1">
       {% for entry in keys %}
         <li class="collection-item config-list-item">
-          {% if AUTH_ENABLED %}
-            <span class="config-auth-status {% if entry.assigned %}is-assigned{% else %}is-unassigned{% endif %}"
-                  title="{% if entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
-              <span class="config-auth-icon" aria-hidden="true">
-                {% include 'icons/lock.svg' %}
+          <a class="config-list-auth-link"
+             href="{% url 'auth' entry.key %}"
+             title="{% trans "Manage authentication for this Configuration ID" %}">
+            {% if AUTH_ENABLED %}
+              <span class="config-auth-status {% if entry.assigned %}is-assigned{% else %}is-unassigned{% endif %}"
+                    title="{% if entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+                <span class="config-auth-icon" aria-hidden="true">
+                  {% include 'icons/lock.svg' %}
+                </span>
               </span>
-            </span>
-          {% else %}
-            <span class="config-auth-status is-disabled"
-                  title="{% trans "Authentication is disabled" %}">
-              <span class="config-auth-icon" aria-hidden="true">
-                {% include 'icons/unlock.svg' %}
-              </span>
-            </span>
-          {% endif %}
-          <span class="config-list-user"
-                title="{% if entry.user %}{{ entry.user }}{% else %}{% trans "No Username" %}{% endif %}">
-            {% if entry.user %}
-              {{ entry.user }}
             {% else %}
-              -
+              <span class="config-auth-status is-disabled"
+                    title="{% trans "Authentication is disabled" %}">
+                <span class="config-auth-icon" aria-hidden="true">
+                  {% include 'icons/unlock.svg' %}
+                </span>
+              </span>
             {% endif %}
-          </span>
+            <span class="config-list-user"
+                  title="{% if entry.user %}{{ entry.user }}{% else %}{% trans "No Username" %}{% endif %}">
+              {% if entry.user %}
+                {{ entry.user }}
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </a>
           <a class="config-list-link" href="{% url 'config' entry.key %}">
             <code id="config-list-id-{{ forloop.counter }}"
                   class="config-id is-concealed"
@@ -172,6 +190,16 @@
           if (window.M && M.updateTextFields) {
             M.updateTextFields();
           }
+          // The custom html: markup isn't SweetAlert2's own input:, so
+          // Enter has to be wired up by hand to submit like it would there.
+          popup.querySelectorAll('#swal-move-from, #swal-move-to').forEach(function (field) {
+            field.addEventListener('keydown', function (event) {
+              if (event.key === 'Enter' && !event.isComposing) {
+                event.preventDefault();
+                Swal.clickConfirm();
+              }
+            });
+          });
           popup.querySelector('#swal-move-to').focus();
         },
         // A failed move (e.g. the destination already exists) must not close dialog.
@@ -236,5 +264,60 @@
       });
     });
   });
+
+  (function () {
+    const toggleAllBtn = document.querySelector('#config-list-toggle-all');
+    if (!toggleAllBtn) {
+      return;
+    }
+
+    function rowToggles() {
+      return document.querySelectorAll('.config-id-visibility[data-config-id-toggle]');
+    }
+
+    function applyToggleAllMode(hideMode) {
+      const label = hideMode ? toggleAllBtn.dataset.hideLabel : toggleAllBtn.dataset.showLabel;
+      toggleAllBtn.setAttribute('aria-pressed', hideMode ? 'true' : 'false');
+      toggleAllBtn.setAttribute('aria-label', label);
+      toggleAllBtn.title = label;
+      toggleAllBtn.querySelector('i').textContent = hideMode ? 'visibility_off' : 'visibility';
+    }
+
+    // Hide wins as soon as anything is visible, so the button is always
+    // ready to sweep the list back to fully concealed in one click. Only
+    // once every row is already hidden does it offer to show all instead.
+    function syncToggleAllState() {
+      const toggles = Array.from(rowToggles());
+      if (!toggles.length) {
+        return;
+      }
+      const anyShown = toggles.some(function (t) {
+        return t.getAttribute('aria-pressed') === 'true';
+      });
+      applyToggleAllMode(anyShown);
+    }
+
+    toggleAllBtn.addEventListener('click', function () {
+      const hideMode = toggleAllBtn.getAttribute('aria-pressed') === 'true';
+      const show = !hideMode;
+      rowToggles().forEach(function (t) {
+        if ((t.getAttribute('aria-pressed') === 'true') !== show) {
+          t.click();
+        }
+      });
+      syncToggleAllState();
+    });
+
+    // A row toggled on its own (not via the button above) still needs to
+    // keep the mode accurate for the next click.
+    const list = document.querySelector('.collection.z-depth-1');
+    if (list) {
+      list.addEventListener('click', function (event) {
+        if (event.target.closest('.config-id-visibility[data-config-id-toggle]')) {
+          syncToggleAllState();
+        }
+      });
+    }
+  })();
 {% endblock jsfooter %}
 {# djlint:on #}
