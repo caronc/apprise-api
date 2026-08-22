@@ -668,7 +668,8 @@
       // Update the large health panel (permissions etc.)
       if (hc && data && data.status) {
         const showCfg = (data.status.can_write_config === false &&
-          data.config_lock === false);
+          data.config_lock === false &&
+          data.stateful_enabled !== false);
         const showAttach = (data.status.can_write_attach === false &&
           data.attach_lock === false);
 
