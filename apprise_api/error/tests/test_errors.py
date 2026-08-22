@@ -22,13 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from pathlib import Path
+
 from django.test import SimpleTestCase
+from django.test.utils import override_settings
 
 
 class ErrorTests(SimpleTestCase):
     def test_accept_selects_response_format(self):
         """Error responses use Accept instead of request Content-Type."""
-        for url in ("/_/404", "/_/421", "/_/50x"):
+        for url in ("/_/401", "/_/404", "/_/421", "/_/429", "/_/50x"):
             with self.subTest(url=url):
                 response = self.client.get(
                     url,
@@ -53,6 +56,34 @@ class ErrorTests(SimpleTestCase):
                 )
                 assert response["Content-Type"].startswith("application/json")
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN="admin-token")
+    def test_auth_error_pages_bypass_authentication(self):
+        """Internal error pages remain reachable while authentication is on."""
+        response = self.client.get("/_/401", HTTP_ACCEPT="text/html")
+        assert response.status_code == 401
+        assert response["WWW-Authenticate"] == 'Basic realm="Apprise API"'
+        assert b"Authentication Required" in response.content
+
+        response = self.client.get("/_/429", HTTP_ACCEPT="text/html")
+        assert response.status_code == 429
+        assert response["Retry-After"] == "60"
+        assert b"Too Many Requests" in response.content
+
+    def test_nginx_maps_auth_error_pages(self):
+        """Both packaged nginx modes send authentication errors to Django."""
+        etc_dir = Path(__file__).resolve().parents[2] / "etc"
+        for filename in ("nginx.conf", "nginx-strict.conf"):
+            config = (etc_dir / filename).read_text(encoding="utf-8")
+            with self.subTest(filename=filename):
+                assert "error_page 401 = /_/401/;" in config
+                assert "error_page 429 = /_/429/;" in config
+
+    def test_get_401(self):
+        """The static authentication page includes its challenge header."""
+        response = self.client.get("/_/401")
+        assert response.status_code == 401
+        assert response["WWW-Authenticate"] == 'Basic realm="Apprise API"'
+
     def test_get_404(self):
         """
         Test 404
@@ -66,6 +97,12 @@ class ErrorTests(SimpleTestCase):
         """
         response = self.client.get("/_/421")
         assert response.status_code == 421
+
+    def test_get_429(self):
+        """The static rate-limit page tells clients when to retry."""
+        response = self.client.get("/_/429")
+        assert response.status_code == 429
+        assert response["Retry-After"] == "60"
 
     def test_get_50x(self):
         """

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Log Out" %} - {% trans "Apprise API" %}
+{% endblock title %}
+{% block sidebar %}
+{% endblock sidebar %}
+{% block head_js_optional %}
+{% endblock head_js_optional %}
+{% block scripts_optional %}
+{% endblock scripts_optional %}
+{% block onload %}
+{% endblock onload %}
+{% block body %}
+  <div class="section logout-page center">
+    <span class="logout-page-icon" aria-hidden="true">
+      {% include 'icons/logout.svg' %}
+    </span>
+    <h4>{% trans "Logged Out" %}</h4>
+    <p>{% trans "Your web-interface login has ended." %}</p>
+    <a class="btn waves-effect waves-light" href="{% url 'login' %}">{% trans "Log In Again" %}</a>
+  </div>
+{% endblock body %}

@@ -21,6 +21,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import base64
+from importlib import import_module
 import json
 from unittest.mock import patch
 
@@ -81,13 +83,24 @@ class ManagerPageTests(SimpleTestCase):
         assert response.status_code == 200
 
         content = response.content.decode("utf-8")
+        assert content.index("config-auth-status") < content.index("config-id-label")
+        assert 'class="config-id is-concealed"' in content
+        assert "data-config-id-toggle" in content
+        assert 'data-config-id-copy="valid-key"' in content
+        assert "button.dataset.configIdCopy" in content
         assert "const newConfigurationHref = cfgGenLink.href;" in content
         assert "window.location.href = newConfigurationHref;" in content
         assert "window.location.href = e.currentTarget.href;" not in content
-        assert "cfggen-id-copy" in content
+        assert 'id="cfggen-config-id"' in content
+        assert 'aria-controls="cfggen-config-id"' in content
         assert "content_copy" in content
         assert "appriseCopyToClipboard(" in content
         assert "Config ID copied to clipboard" in content
+        assert "snippet-config-id is-concealed" in content
+        assert "snippet-visibility-btn" in content
+        assert "NodeFilter.SHOW_TEXT" in content
+        assert "data-copy-text='valid-key'" in content
+        assert "const copyText = snippet.dataset.copyText" in content
 
     def test_configuration_fetch_requests_json(self):
         """The configuration editor explicitly requests a JSON response."""
@@ -95,9 +108,10 @@ class ManagerPageTests(SimpleTestCase):
         assert response.status_code == 200
 
         content = response.content.decode("utf-8")
-        request = content.split("let response = await fetch('/get/valid-key'", 1)[1].split("});", 1)[0]
+        request = content.split("let response = await appriseFetch('/get/valid-key'", 1)[1].split("});", 1)[0]
         assert "'Accept': 'application/json'" in request
         assert "'Content-Type'" not in request
+        assert "headers.set('X-Apprise-Web-Auth', '1')" in content
 
     def test_get_config(self):
         """
@@ -180,10 +194,50 @@ class ManagerPageTests(SimpleTestCase):
         """
         /cfg/ should render HTML by default when allowed.
         """
-        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+        mod = resolve("/cfg/").func.__module__
+        with (
+            override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"),
+            patch(f"{mod}.ConfigCache.keys", return_value=["open"]),
+        ):
             response = self.client.get("/cfg/")
             assert response.status_code == 200
             assert response["Content-Type"].startswith("text/html")
+            assert "config-auth-status is-disabled" in response.content.decode()
+
+    @override_settings(
+        APPRISE_ADMIN=True,
+        APPRISE_STATEFUL_MODE="simple",
+        APPRISE_USER="master",
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode(),
+    )
+    def test_manage_cfg_list_html_shows_user_state(self):
+        """The HTML list shows assigned and unassigned lock states."""
+        self.client.post(
+            "/login",
+            {"username": "master", "password": "pass"},
+            headers={"accept": "text/html"},
+        )
+        mod = resolve("/cfg/").func.__module__
+        with (
+            patch(f"{mod}.ConfigCache.keys", return_value=["open", "shared"]),
+            patch(f"{mod}.ConfigCache.get_auth_record", side_effect=[None, ("alice", "digest")]),
+        ):
+            response = self.client.get("/cfg/", headers={"accept": "text/html"})
+
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert "config-auth-status is-unassigned" in content
+        assert "config-auth-status is-assigned" in content
+        assert content.count("data-config-id-toggle") >= 2
+        assert 'data-config-id-copy="open"' in content
+        assert 'data-config-id-copy="shared"' in content
+        assert 'class="config-list-user"' in content
+        assert 'title="alice"' in content
+        assert "No Username" in content
+        open_item = content.split('class="collection-item config-list-item"', 1)[1]
+        assert open_item.index("config-auth-status") < open_item.index("config-list-user")
+        assert open_item.index("config-list-user") < open_item.index("config-list-link")
 
     def test_manage_cfg_list_json_when_requested(self):
         """
@@ -195,6 +249,7 @@ class ManagerPageTests(SimpleTestCase):
             assert response["Content-Type"].startswith("application/json")
             payload = json.loads(response.content.decode("utf-8"))
             assert isinstance(payload, list)
+            assert all(isinstance(entry, str) for entry in payload)
 
     def test_manage_cfg_list_denied_content_type_plain_text(self):
         """
@@ -225,6 +280,45 @@ class ManagerPageTests(SimpleTestCase):
                 payload = json.loads(response.content.decode("utf-8"))
                 assert payload == ["abc", "def"]
                 m.assert_called_once_with()
+
+    @override_settings(
+        APPRISE_ADMIN=True,
+        APPRISE_STATEFUL_MODE="simple",
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN="master-token",
+    )
+    def test_manage_cfg_list_reports_users(self):
+        """Each API entry reports its assigned configuration username."""
+        mod = resolve("/cfg/").func.__module__
+        storage_error = import_module(mod).AppriseAuthStorageError
+        with (
+            patch(
+                f"{mod}.ConfigCache.keys",
+                return_value=["open", "shared", "password-only", "damaged"],
+            ),
+            patch(
+                f"{mod}.ConfigCache.get_auth_record",
+                side_effect=[
+                    None,
+                    ("alice", "digest"),
+                    ("", "digest"),
+                    storage_error("bad lock"),
+                ],
+            ),
+        ):
+            response = self.client.get(
+                "/cfg/",
+                HTTP_ACCEPT="application/json",
+                headers={"authorization": "Basic master-token"},
+            )
+
+        assert response.status_code == 200
+        assert response.json() == [
+            {"key": "open", "user": None},
+            {"key": "shared", "user": "alice"},
+            {"key": "password-only", "user": ""},
+            {"key": "damaged", "user": None},
+        ]
 
     @override_settings(APPRISE_API_ONLY=True)
     def test_api_only_blocks_config_list_if_present(self) -> None:

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block sidebar %}
+{% endblock sidebar %}
+{% block head_js_optional %}
+{% endblock head_js_optional %}
+{% block scripts_optional %}
+{% endblock scripts_optional %}
+{% block onload %}
+{% endblock onload %}
+{% block main_page %}
+  <div class="col s12 error-content">
+    <div class="section error-page center">
+      <h1>401 - {% trans "Authentication Required" %}</h1>
+      <i class="material-icons spotlight">lock</i>
+      <p>{% trans "Enter valid credentials to access this resource." %}</p>
+    </div>
+  </div>
+{% endblock main_page %}

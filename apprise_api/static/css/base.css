@@ -24,7 +24,11 @@
   font-size: 1rem;
   vertical-align: middle;
   margin-right: 0.25rem;
-  color: inherit;
+}
+
+/* Outweighs the theme's i.material-icons color rule */
+i.material-icons.support-banner-icon {
+  color: #e04c4c;
 }
 
 .support-banner-close {
@@ -298,6 +302,108 @@ li.social-theme-nav .topbar-icon svg {
   display: block;
   fill: currentColor;
   stroke: none;
+}
+
+.auth-account,
+.auth-logout-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.auth-logout-link {
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.auth-account-icon,
+.auth-logout-icon {
+  display: inline-flex;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.auth-account-icon svg,
+.auth-logout-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-account-name {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-page {
+  max-width: 38rem;
+  margin: 3rem auto;
+}
+
+.logout-page-icon {
+  display: inline-flex;
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.logout-confirm-icon {
+  display: inline-flex;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0.25rem auto 0.5rem;
+}
+
+.logout-confirm-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.logout-page-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.logout-page-note {
+  margin: 0 auto 1.5rem;
+  max-width: 32rem;
+  opacity: 0.78;
+}
+
+.auth-disabled-page {
+  max-width: 40rem;
+  margin: 3rem auto;
+}
+
+.auth-disabled-card {
+  padding: 2.5rem 2rem;
+  border: 1px solid;
+  border-radius: 1.4rem;
+}
+
+.auth-disabled-icon {
+  display: inline-flex;
+  width: 8rem;
+  height: 8rem;
+}
+
+.auth-disabled-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-disabled-card h4 {
+  margin: 0.75rem 0 0.5rem;
+}
+
+.auth-disabled-card p {
+  margin: 0;
 }
 
 .nav-divider {
@@ -1466,7 +1572,11 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .copy-url-btn,
+.config-id-visibility.btn-flat,
 .config-id-copy.btn-flat,
+.config-list-move.btn-flat,
+.config-list-delete.btn-flat,
+.snippet-visibility-btn,
 .snippet-copy-btn {
   border-radius: 8px !important;
   flex: 0 0 auto;
@@ -1480,7 +1590,11 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .copy-url-btn .material-icons,
+.config-id-visibility.btn-flat .material-icons,
 .config-id-copy.btn-flat .material-icons,
+.config-list-move.btn-flat .material-icons,
+.config-list-delete.btn-flat .material-icons,
+.snippet-visibility-btn .material-icons,
 .snippet-copy-btn .material-icons {
   font-size: 1.1rem;
 }
@@ -1489,9 +1603,11 @@ body .tabs .tab.disabled a:hover i {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  min-width: 0;
   padding: 0.5rem 0.85rem;
   border-radius: 0.5rem;
   margin-bottom: 0.75rem;
+  overflow: hidden;
 }
 
 .config-id-label {
@@ -1506,16 +1622,536 @@ body .tabs .tab.disabled a:hover i {
 .config-id-wrapper {
   display: inline-flex;
   align-items: center;
+  flex: 1 1 auto;
   gap: 0.3rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
+.config-id-visibility.btn-flat,
 .config-id-copy.btn-flat {
   margin-left: 0.1rem;
 }
 
 code.config-id {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   font-size: 1em;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+code.config-id::-webkit-scrollbar {
+  display: none;
+}
+
+/* A soft edge hints that a revealed ID continues beyond the available room. */
+code.config-id:not(.is-concealed) {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
+}
+
+code.config-id.is-concealed {
+  letter-spacing: 0.08em;
+}
+
+.config-auth-link.btn-flat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0 0.35rem;
+}
+
+.config-auth-icon,
+.config-auth-icon svg {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.config-auth-icon svg {
+  fill: none;
+  stroke: currentColor;
+}
+
+.config-auth-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 2rem;
+}
+
+.config-auth-status.is-unassigned {
+  opacity: 0.55;
+}
+
+.collection-item .config-auth-status {
+  margin-right: 0.45rem;
+  vertical-align: middle;
+}
+
+.config-list-auth-link {
+  display: contents;
+}
+
+.config-list-auth-link:hover .config-auth-icon,
+.config-list-auth-link:focus-visible .config-auth-icon {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.config-list-auth-link:hover .config-list-user,
+.config-list-auth-link:focus-visible .config-list-user {
+  text-decoration: underline;
+}
+
+.config-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.config-list-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.config-list-user {
+  flex: 0 0 12rem;
+  width: clamp(4rem, 18vw, 12rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-list-link code.config-id {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.config-list-actions {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.config-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.config-list-heading h4 {
+  margin: 0;
+}
+
+.config-list-toggle-all {
+  border-radius: 8px !important;
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
+  min-width: 0;
+  background-color: transparent;
+}
+
+.config-list-toggle-all .material-icons {
+  font-size: 1.75rem;
+}
+
+/* =========================================
+Authentication Editor
+========================================= */
+.auth-page {
+  max-width: 64rem;
+}
+
+.auth-page-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.auth-page-heading p {
+  margin: 0.2rem 0 0;
+}
+
+.auth-mode-badge {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.auth-card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.auth-secondary-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.auth-editor-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.75rem 2rem 2rem;
+  border: 1px solid;
+  border-radius: 1.4rem;
+}
+
+.auth-card-heading {
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.auth-card-heading h5 {
+  margin: 0.5rem 0 0;
+}
+
+.auth-card-icon {
+  display: block;
+  width: 4.75rem;
+  height: 4.75rem;
+  margin: 0 auto;
+}
+
+.auth-card-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-lock-card-icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.auth-tools-card-icon svg {
+  fill: currentColor;
+}
+
+.auth-move-card-icon svg {
+  fill: currentColor;
+}
+
+.auth-credential-fields {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.auth-credential-field {
+  width: 100%;
+  min-width: 0;
+  margin: 1rem 0 1.5rem;
+}
+
+.auth-password-fields {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.concealed-field {
+  position: relative;
+}
+
+.concealed-field input {
+  padding-right: 2.5rem !important;
+  box-sizing: border-box !important;
+}
+
+.value-visibility-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.35rem;
+  min-width: 2rem;
+  padding: 0;
+}
+
+.value-visibility-toggle:focus {
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+.value-visibility-toggle:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+.input-field.has-errors input,
+.input-field.has-errors input:focus {
+  border-bottom-color: #f44336 !important;
+  box-shadow: 0 1px 0 0 #f44336 !important;
+}
+
+.input-field.has-errors label,
+.input-field.has-errors label.active,
+.input-field .errorlist {
+  color: #c62828;
+}
+
+.input-field .errorlist {
+  padding: 0;
+  margin: -0.75rem 0 0;
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+/* The login page is centered because it does not use the side menu. */
+.browser-login-layout {
+  display: flex;
+  justify-content: center;
+  float: none !important;
+}
+
+.browser-login-page {
+  width: min(100%, 34rem);
+  margin: 2.5rem 0 4rem;
+}
+
+.browser-login-card {
+  padding: 2.25rem 2.75rem 2.5rem;
+  border: 1px solid;
+  border-radius: 1.4rem;
+}
+
+.browser-login-icon {
+  display: block;
+  width: 6.75rem;
+  height: 6.75rem;
+  margin: 0 auto 0.75rem;
+}
+
+.browser-login-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.browser-login-heading {
+  text-align: center;
+}
+
+.browser-login-heading h4 {
+  margin: 0;
+}
+
+.browser-login-heading p {
+  margin: 0.5rem 0 2rem;
+}
+
+.browser-login-field {
+  margin: 1.5rem 0 2rem;
+}
+
+.browser-login-note {
+  margin: -0.6rem 0 1.5rem;
+  font-size: 0.8rem;
+  text-align: center;
+  opacity: 0.82;
+}
+
+.auth-login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 1.4rem;
+  border: 1px solid;
+  border-radius: 0.55rem;
+}
+
+.auth-login-error .material-icons {
+  color: inherit;
+}
+
+.auth-login-error .errorlist {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.auth-form-error[hidden] {
+  display: none;
+}
+
+.browser-login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  position: relative;
+}
+
+.browser-login-submit i.material-icons.right {
+  position: absolute;
+  right: 1rem;
+  float: none;
+  margin: 0;
+}
+
+.auth-randomize-column,
+.auth-remove-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-width: 0;
+  margin: 0 0 0.75rem;
+}
+
+.auth-randomize-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.auth-randomize-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.auth-randomize-icon svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.auth-randomize-options {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
+  gap: 0.25rem;
+  min-width: 6rem;
+}
+
+.auth-randomize-option {
+  min-height: 1.45rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  line-height: 1rem;
+  text-align: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.auth-randomize-option:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.auth-randomize-option:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.auth-form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.auth-form-actions .btn {
+  width: 100%;
+}
+
+.auth-remove-option>.auth-remove-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.auth-remove-option>.auth-remove-button i.material-icons.right {
+  float: none;
+  margin: 0;
+}
+
+.auth-remove-button[hidden] {
+  display: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 820px) {
+  .auth-card-grid {
+    grid-template-columns: minmax(0, 38rem);
+    justify-content: center;
+  }
+
+  .auth-secondary-column {
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-page-heading {
+    display: block;
+  }
+
+  .auth-mode-badge {
+    display: inline-block;
+    margin-top: 0.75rem;
+  }
+
+  .browser-login-page {
+    margin-top: 1rem;
+  }
+
+  .browser-login-card {
+    padding: 1.75rem 1.4rem 2rem;
+  }
+
+  .auth-editor-card {
+    padding: 1.5rem 1.25rem 1.75rem;
+  }
 }
 
 .swal2-popup .cfggen-modal-copy {
@@ -1550,15 +2186,33 @@ code.config-id {
   margin: 0;
 }
 
-.snippet-copy-btn {
+.snippet-copy-btn,
+.snippet-visibility-btn {
   position: absolute;
   top: 0.35rem;
+  border-radius: 6px;
+}
+
+.snippet-copy-btn {
   right: 0.5rem;
 }
 
-.snippet-copy-btn i {
+.snippet-visibility-btn {
+  right: 2.75rem;
+}
+
+.snippet-copy-btn i,
+.snippet-visibility-btn i {
   /* Better alignment */
   margin: -0.3em 0 0 0;
+}
+
+#overview .code-snippet:not(.is-ready) pre {
+  visibility: hidden;
+}
+
+.snippet-config-id.is-concealed {
+  letter-spacing: 0.08em;
 }
 
 /* File Input Hack */

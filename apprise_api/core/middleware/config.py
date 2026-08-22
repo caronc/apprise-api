@@ -25,6 +25,7 @@
 import datetime
 import re
 
+from api.utils import CONFIG_KEY_REGEX
 from django.conf import settings
 
 
@@ -35,7 +36,7 @@ class DetectConfigMiddleware:
 
     """
 
-    _is_cfg_path = re.compile(r"/cfg/(?P<key>[\w_-]{1,128})")
+    _is_cfg_path = re.compile(r"/(cfg|auth)/(?P<key>{})".format(CONFIG_KEY_REGEX))
 
     def __init__(self, get_response):
         """
@@ -48,7 +49,8 @@ class DetectConfigMiddleware:
         Define our middleware hook
         """
 
-        result = self._is_cfg_path.match(request.path)
+        # path_info excludes APPRISE_BASE_URL, leaving the route itself.
+        result = self._is_cfg_path.match(request.path_info)
         if not result:
             # Our current config
             config = request.COOKIES.get("key", settings.APPRISE_DEFAULT_CONFIG_ID)

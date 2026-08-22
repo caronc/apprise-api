@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Authentication" %} - {% trans "Apprise API" %}
+{% endblock title %}
+{% block body %}
+  <div class="config-id-bar">
+    <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'shared_lock' %}is-assigned{% else %}is-unassigned{% endif %}"
+       href="{% url 'config' key %}"
+       title="{% if auth_mode == 'shared_lock' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+      <span class="config-auth-icon" aria-hidden="true">
+        {% include 'icons/lock.svg' %}
+      </span>
+    </a>
+    <span class="config-id-label">{% trans "Config ID" %}</span>
+    <span class="config-id-wrapper">
+      <code id="page-config-id"
+            class="config-id is-concealed"
+            data-config-id-value="{{ key }}"
+            aria-label="{% trans "Config ID hidden" %}">••••••••</code>
+      <button type="button"
+              class="btn-flat btn-small config-id-visibility"
+              data-config-id-toggle
+              aria-controls="page-config-id"
+              aria-pressed="false"
+              aria-label="{% trans "Show Config ID" %}"
+              title="{% trans "Show Config ID" %}"
+              data-show-label="{% trans "Show Config ID" %}"
+              data-hide-label="{% trans "Hide Config ID" %}">
+        <i class="material-icons" aria-hidden="true">visibility</i>
+      </button>
+      <button type="button"
+              class="btn-flat btn-small config-id-copy"
+              data-config-id-copy="{{ key }}"
+              title="{% trans "Copy Config ID to Clipboard" %}">
+        <i class="material-icons" aria-hidden="true">content_copy</i>
+      </button>
+    </span>
+  </div>
+  <div class="section auth-page">
+    <div class="auth-page-heading">
+      <div>
+        {% if shared_user %}
+          <h4>{% trans "User Profile" %}</h4>
+          <p>{% trans "Updates to account information are made here." %}</p>
+        {% else %}
+          <h4>{% trans "Configuration Authentication" %}</h4>
+          <p>{% trans "Give this configuration its own username and password." %}</p>
+        {% endif %}
+      </div>
+      <span id="auth-mode-badge"
+            class="auth-mode-badge{% if shared_user %} is-shared{% endif %}">
+        {% if shared_user %}
+          {% trans "User" %}
+        {% else %}
+          {% trans "Admin" %}
+        {% endif %}
+      </span>
+    </div>
+    <div class="auth-card-grid {% if shared_user %}is-user{% else %}is-admin{% endif %}">
+      <section class="auth-editor-card auth-credentials-card">
+        <div class="auth-card-heading">
+          <span class="auth-card-icon auth-lock-card-icon" aria-hidden="true">
+            {% include 'icons/lock.svg' %}
+          </span>
+          <h5>
+            {% if shared_user %}
+              {% trans "Update Credentials" %}
+            {% else %}
+              {% trans "Configuration Login" %}
+            {% endif %}
+          </h5>
+        </div>
+        <form id="auth-form"
+              action="{% url 'auth' key %}"
+              method="post"
+              autocomplete="off"
+              novalidate>
+          <div id="auth-form-error"
+               class="auth-login-error auth-form-error"
+               role="alert"
+               hidden>
+            <i class="material-icons" aria-hidden="true">error_outline</i>
+            <div id="auth-form-error-message"></div>
+          </div>
+          <div class="auth-credential-fields">
+            {% if not shared_user or auth_username %}
+              <div class="input-field auth-credential-field">
+                {{ form_auth.username }}
+                {{ form_auth.username.label_tag }}
+                {{ form_auth.username.errors }}
+              </div>
+            {% endif %}
+            {% if shared_user %}
+              <div class="auth-password-fields">
+                <div class="input-field concealed-field auth-credential-field{% if form_auth.current_password.errors %} has-errors{% endif %}">
+                  {% include 'components/concealed_input.html' with field=form_auth.current_password %}
+                </div>
+                <div class="input-field concealed-field auth-credential-field{% if form_auth.password.errors %} has-errors{% endif %}">
+                  {% include 'components/concealed_input.html' with field=form_auth.password %}
+                </div>
+                <div class="input-field concealed-field auth-credential-field{% if form_auth.password_confirm.errors %} has-errors{% endif %}">
+                  {% include 'components/concealed_input.html' with field=form_auth.password_confirm %}
+                </div>
+              </div>
+            {% else %}
+              <div class="input-field concealed-field auth-credential-field{% if form_auth.password.errors %} has-errors{% endif %}">
+                {% include 'components/concealed_input.html' with field=form_auth.password %}
+              </div>
+            {% endif %}
+          </div>
+          <div class="auth-form-actions">
+            <button class="btn waves-effect waves-light" type="submit">
+              {% trans "Save" %}
+              <i class="material-icons right">save</i>
+            </button>
+          </div>
+        </form>
+      </section>
+      <div class="auth-secondary-column">
+        {% if not shared_user %}
+          <section class="auth-editor-card auth-tools-card">
+            <div class="auth-card-heading">
+              <span class="auth-card-icon auth-tools-card-icon" aria-hidden="true">
+                {% include 'icons/tools.svg' %}
+              </span>
+              <h5>{% trans "Tools" %}</h5>
+            </div>
+            <div class="auth-randomize-column">
+              <button type="button"
+                      id="auth-generate"
+                      class="btn waves-effect waves-light auth-randomize-button"
+                      title="{% trans "Randomize the Selected Fields" %}">
+                <span class="auth-randomize-icon" aria-hidden="true">
+                  {% include 'icons/dice.svg' %}
+                </span>
+                <span>{% trans "Randomize" %}</span>
+              </button>
+              <div class="auth-randomize-options"
+                   role="group"
+                   aria-label="{% trans "Fields to Randomize" %}">
+                <button id="auth-generate-user"
+                        class="auth-randomize-option is-selected"
+                        type="button"
+                        aria-pressed="true">{% trans "Username" %}</button>
+                <button id="auth-generate-password"
+                        class="auth-randomize-option is-selected"
+                        type="button"
+                        aria-pressed="true">{% trans "Password" %}</button>
+              </div>
+            </div>
+            <div class="auth-remove-option">
+              <button id="auth-remove"
+                      class="btn waves-effect waves-light auth-remove-button"
+                      type="button"
+                      {% if auth_mode != 'shared_lock' %}hidden{% endif %}>
+                {% trans "Reset Access" %}
+                <i class="material-icons right">delete</i>
+              </button>
+            </div>
+          </section>
+        {% endif %}
+        <section class="auth-editor-card auth-move-card">
+          <div class="auth-card-heading">
+            <span class="auth-card-icon auth-move-card-icon" aria-hidden="true">
+              {% include 'icons/move.svg' %}
+            </span>
+            <h5>{% trans "Move Configuration" %}</h5>
+          </div>
+          <div id="move-form-error"
+               class="auth-login-error auth-form-error"
+               role="alert"
+               hidden>
+            <i class="material-icons" aria-hidden="true">error_outline</i>
+            <div id="move-form-error-message"></div>
+          </div>
+          <form id="move-form"
+                action="{% url 'move' key %}"
+                method="post"
+                autocomplete="off"
+                novalidate>
+            <div class="auth-credential-fields">
+              <div class="input-field auth-credential-field">
+                {{ form_move.from_config_id }}
+                {{ form_move.from_config_id.label_tag }}
+                {{ form_move.from_config_id.errors }}
+              </div>
+              <div class="input-field auth-credential-field">
+                {{ form_move.to_config_id }}
+                {{ form_move.to_config_id.label_tag }}
+                {{ form_move.to_config_id.errors }}
+              </div>
+            </div>
+            <div class="auth-form-actions">
+              <button class="btn waves-effect waves-light" type="submit">
+                {% trans "Move" %}
+                <i class="material-icons right">arrow_forward</i>
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+{% endblock body %}
+{# djlint:off #}
+{% block jsfooter %}
+  const authForm = document.querySelector('#auth-form');
+  const authUsername = document.querySelector('#id_username');
+  const authCurrentPassword = document.querySelector('#id_current_password');
+  const authPassword = document.querySelector('#id_password');
+  const authPasswordConfirm = document.querySelector('#id_password_confirm');
+  const authFormError = document.querySelector('#auth-form-error');
+  const authFormErrorMessage = document.querySelector('#auth-form-error-message');
+  const authRemove = document.querySelector('#auth-remove');
+  const generateButton = document.querySelector('#auth-generate');
+  const generateUser = document.querySelector('#auth-generate-user');
+  const generatePassword = document.querySelector('#auth-generate-password');
+  const authIsAdmin = {% if shared_user %}false{% else %}true{% endif %};
+
+  // Start with the first credential field, including read-only usernames.
+  (authCurrentPassword || authUsername || authPassword).focus();
+
+  function authSetShared(enabled) {
+    if (authRemove) {
+      authRemove.hidden = !enabled;
+    }
+  }
+
+  function authClearError() {
+    authFormError.hidden = true;
+    authFormErrorMessage.textContent = '';
+  }
+
+  function authShowError(message, field) {
+    authFormErrorMessage.textContent = message;
+    authFormError.hidden = false;
+    if (field) {
+      field.closest('.input-field').classList.add('has-errors');
+      field.focus();
+    }
+  }
+
+  if (generateButton) {
+    const optionSelected = function (option) {
+      return option.getAttribute('aria-pressed') === 'true';
+    };
+    const setOptionSelected = function (option, selected) {
+      option.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      option.classList.toggle('is-selected', selected);
+    };
+
+    // At least one tag stays active. Toggling the last one switches fields.
+    [generateUser, generatePassword].forEach(function (option) {
+      option.addEventListener('pointerup', function () {
+        // Mouse and touch taps should not leave a persistent focus treatment.
+        option.blur();
+      });
+      option.addEventListener('click', function () {
+        const other = option === generateUser ? generatePassword : generateUser;
+        if (optionSelected(option) && !optionSelected(other)) {
+          setOptionSelected(option, false);
+          setOptionSelected(other, true);
+        } else {
+          setOptionSelected(option, !optionSelected(option));
+        }
+      });
+    });
+
+    generateButton.addEventListener('click', function () {
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+      const randomText = function (length) {
+        const bytes = new Uint32Array(length);
+        window.crypto.getRandomValues(bytes);
+        return Array.from(bytes, function (value) {
+          return alphabet[value % alphabet.length];
+        }).join('');
+      };
+      if (optionSelected(generateUser)) {
+        authUsername.value = 'user-' + randomText(8);
+        authUsername.dispatchEvent(new Event('change'));
+      }
+      if (optionSelected(generatePassword)) {
+        authPassword.value = randomText(24);
+        authPassword.dispatchEvent(new Event('change'));
+      }
+      // Materialize only moves labels automatically after direct typing.
+      M.updateTextFields();
+      (optionSelected(generatePassword) ? authPassword : authUsername).focus();
+    });
+  }
+
+  // A semantic form submit also routes Enter through the same validation.
+  authForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    authForm.querySelectorAll('.has-errors').forEach(function (field) {
+      field.classList.remove('has-errors');
+    });
+    authClearError();
+    const requiredFields = [authCurrentPassword, authPassword, authPasswordConfirm].filter(Boolean);
+    for (const field of requiredFields) {
+      if (!field.value) {
+        field.closest('.input-field').classList.add('has-errors');
+        field.focus();
+        return;
+      }
+    }
+    if (authPasswordConfirm && authPassword.value !== authPasswordConfirm.value) {
+      authShowError('{% trans "The passwords do not match." %}', authPasswordConfirm);
+      return;
+    }
+
+    const saveButton = authForm.querySelector('button[type="submit"]');
+    saveButton.disabled = true;
+    try {
+      const response = await appriseFetch(authForm.action, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: authUsername ? authUsername.value : null,
+          current_password: authCurrentPassword ? authCurrentPassword.value : null,
+          password: authPassword.value,
+          password_confirm: authPasswordConfirm ? authPasswordConfirm.value : null
+        })
+      });
+      if (!response.ok) {
+        const failure = await appriseResponseFailure(response, '{% trans "Authentication could not be saved." %}');
+        const error = new Error(failure.message);
+        error.field = failure.field;
+        throw error;
+      }
+
+      const savedUsername = authUsername ? authUsername.value : '';
+      const savedPassword = authPassword.value;
+      authPassword.value = '';
+      if (authCurrentPassword) {
+        authCurrentPassword.value = '';
+      }
+      if (authPasswordConfirm) {
+        authPasswordConfirm.value = '';
+      }
+      authSetShared(true);
+      Swal.fire({
+        title: '{% trans "Authentication" %}',
+        icon: 'success',
+        html: '{% trans "Configuration login saved." %}' + (authIsAdmin
+          ? ' <button type="button" id="auth-save-copy" class="btn-flat btn-large" title="{% trans "Copy Username and Password to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>'
+          : ''),
+        didOpen: function () {
+          const copyButton = document.getElementById('auth-save-copy');
+          if (copyButton) {
+            copyButton.addEventListener('click', function () {
+              appriseCopyToClipboard(
+                'USERNAME=' + savedUsername + '\nPASSWORD=' + savedPassword,
+                '{% trans "Username and password copied to clipboard" %}'
+              );
+            });
+          }
+        }
+      });
+    } catch (error) {
+      const errorField = error.field ? document.getElementById('id_' + error.field) : null;
+      authShowError(
+        error.message || '{% trans "Authentication could not be saved." %}',
+        errorField || authCurrentPassword || authUsername || authPassword
+      );
+    } finally {
+      saveButton.disabled = false;
+    }
+  });
+
+  if (authRemove) {
+    authRemove.addEventListener('click', function () {
+      authClearError();
+      Swal.fire({
+        title: '{% trans "Reset Configuration Access?" %}',
+        text: '{% trans "This removes the configuration login." %}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '{% trans "Reset Access" %}',
+        cancelButtonText: '{% trans "Cancel" %}'
+      }).then(async function (result) {
+        if (!result.isConfirmed) {
+          return;
+        }
+        try {
+          const response = await appriseFetch(authForm.action, {
+            method: 'DELETE',
+            headers: {'Accept': 'application/json'}
+          });
+          if (!response.ok) {
+            const failure = await appriseResponseFailure(response, '{% trans "Configuration access could not be reset." %}');
+            throw new Error(failure.message);
+          }
+
+          // The saved login is gone, so clear the editor as well.
+          if (authUsername) {
+            authUsername.value = '';
+            authUsername.dispatchEvent(new Event('change'));
+          }
+          authPassword.value = '';
+          if (authCurrentPassword) {
+            authCurrentPassword.value = '';
+          }
+          if (authPasswordConfirm) {
+            authPasswordConfirm.value = '';
+          }
+          M.updateTextFields();
+          authSetShared(false);
+          Swal.fire({
+            title: '{% trans "Authentication" %}',
+            text: '{% trans "Configuration access reset." %}',
+            icon: 'success'
+          });
+        } catch (error) {
+          authShowError(
+            error.message || '{% trans "Configuration access could not be reset." %}',
+            null
+          );
+        }
+      });
+    });
+  }
+
+  const moveForm = document.querySelector('#move-form');
+  const moveFromConfigId = document.querySelector('#id_from_config_id');
+  const moveToConfigId = document.querySelector('#id_to_config_id');
+  const moveFormError = document.querySelector('#move-form-error');
+  const moveFormErrorMessage = document.querySelector('#move-form-error-message');
+  const pageConfigId = '{{ key|escapejs }}';
+  const authUrlTemplate = '{% url "auth" "PLACEHOLDER_KEY" %}';
+
+  function moveClearError() {
+    moveFormError.hidden = true;
+    moveFormErrorMessage.textContent = '';
+  }
+
+  function moveShowError(message, field) {
+    moveFormErrorMessage.textContent = message;
+    moveFormError.hidden = false;
+    if (field) {
+      field.closest('.input-field').classList.add('has-errors');
+      field.focus();
+    }
+  }
+
+  if (moveForm) {
+    moveForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      moveForm.querySelectorAll('.has-errors').forEach(function (field) {
+        field.classList.remove('has-errors');
+      });
+      moveClearError();
+      if (!moveToConfigId.value) {
+        moveShowError('{% trans "A destination configuration ID is required." %}', moveToConfigId);
+        return;
+      }
+
+      const moveButton = moveForm.querySelector('button[type="submit"]');
+      moveButton.disabled = true;
+      try {
+        // Form-encoded (not JSON): the server reads from_config_id/
+        // to_config_id from request.POST here.
+        const response = await appriseFetch(moveForm.action, {
+          method: 'POST',
+          headers: {'Accept': 'application/json'},
+          body: new URLSearchParams(new FormData(moveForm))
+        });
+        if (!response.ok) {
+          const failure = await appriseResponseFailure(response, '{% trans "The configuration could not be moved." %}');
+          const error = new Error(failure.message);
+          error.field = failure.field;
+          throw error;
+        }
+
+        const movedFrom = moveFromConfigId ? moveFromConfigId.value : pageConfigId;
+        const destination = moveToConfigId.value;
+        moveToConfigId.value = '';
+        M.updateTextFields();
+        Swal.fire({
+          title: '{% trans "Move Configuration" %}',
+          text: '{% trans "Configuration moved successfully." %}',
+          icon: 'success'
+        }).then(function () {
+          if (movedFrom === pageConfigId) {
+            // This page's own configuration no longer lives at this key.
+            window.location.href = authUrlTemplate.replace('PLACEHOLDER_KEY', encodeURIComponent(destination));
+          }
+        });
+      } catch (error) {
+        const errorField = error.field ? document.getElementById('id_' + error.field) : null;
+        moveShowError(
+          error.message || '{% trans "The configuration could not be moved." %}',
+          errorField || moveToConfigId
+        );
+      } finally {
+        moveButton.disabled = false;
+      }
+    });
+  }
+
+{% endblock jsfooter %}
+{# djlint:on #}

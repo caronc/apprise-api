@@ -5,13 +5,44 @@
 {% block body %}
   {% if STATEFUL_MODE != 'disabled' %}
     <div class="config-id-bar">
+      {% if AUTH_ENABLED %}
+        <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'shared_lock' %}is-assigned{% else %}is-unassigned{% endif %}"
+           href="{% url 'auth' key %}"
+           title="{% if auth_mode == 'shared_lock' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+          <span class="config-auth-icon" aria-hidden="true">
+            {% include 'icons/lock.svg' %}
+          </span>
+        </a>
+      {% else %}
+        <span class="config-auth-status is-disabled"
+              title="{% trans "Authentication is disabled" %}">
+          <span class="config-auth-icon" aria-hidden="true">
+            {% include 'icons/unlock.svg' %}
+          </span>
+        </span>
+      {% endif %}
       <span class="config-id-label">{% trans "Config ID" %}</span>
       <span class="config-id-wrapper">
-        <code class="config-id">{{ key }}</code>
+        <code id="page-config-id"
+              class="config-id is-concealed"
+              data-config-id-value="{{ key }}"
+              aria-label="{% trans "Config ID hidden" %}">••••••••</code>
+        <button type="button"
+                class="btn-flat btn-small config-id-visibility"
+                data-config-id-toggle
+                aria-controls="page-config-id"
+                aria-pressed="false"
+                aria-label="{% trans "Show Config ID" %}"
+                title="{% trans "Show Config ID" %}"
+                data-show-label="{% trans "Show Config ID" %}"
+                data-hide-label="{% trans "Hide Config ID" %}">
+          <i class="material-icons" aria-hidden="true">visibility</i>
+        </button>
         <button type="button"
                 class="btn-flat btn-small config-id-copy"
+                data-config-id-copy="{{ key }}"
                 title="{% trans "Copy Config ID to Clipboard" %}">
-          <i class="material-icons">content_copy</i>
+          <i class="material-icons" aria-hidden="true">content_copy</i>
         </button>
       </span>
     </div>
@@ -80,7 +111,7 @@
                   <div class="code-snippet"
                        data-copy-label='{% trans "Apprise configuration ID copied to clipboard" %}'
                        data-copy-text='{{ key }}'>
-                    <pre><code>{{ key }}</code></pre>
+                    <pre><code class="nohighlight">{{ key }}</code></pre>
                   </div>
                   {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">click here</a>.
                 </p>
@@ -91,8 +122,8 @@
               {% endblocktrans %}
                 <div class="code-snippet"
                      data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
-                     data-copy-text='{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
-                  <pre><code>{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code></pre>
+                     data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+                  <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code></pre>
                 </div>
               </li>
               <li>
@@ -148,15 +179,15 @@
               {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
             </p>
             <div class="code-snippet"
-                 data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all'>
+                 data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all'>
               <pre><code class="bash">apprise --body="Test Message" \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
             </div>
             {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
             <div class="code-snippet"
-                 data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
+                 data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
               <pre><code class="bash">apprise --body=&quot;Test Message&quot; \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg<br />
                </code></pre>
@@ -167,19 +198,20 @@
           send a test notification to all of your added services:{% endblocktrans %}
               </p>
               <div class="code-snippet"
-                   data-copy-text='apprise --body="Test Message" --tag="all" --config="{{ request.scheme }}"://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+                   data-copy-text='apprise --body="Test Message" --tag="all" --config="{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}"'>
                 <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
               </div>
               {% blocktrans %}You may also create an <a href="https://appriseit.com/config/#cli" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
               <div class="code-snippet"
-                   data-copy-text='include {{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
-                   data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'></div>
-              <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+                   data-copy-text='include {{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
+                   data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'>
+                <pre><code class="bash">include {{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+              </div>
               {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
               <div class="code-snippet"
                    data-copy-text='apprise --body="Test Message" --tag=all'>
-                <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all</em></code></pre>
+                <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all</code></pre>
               </div>
             {% endif %}
             <h6>{% trans "Using CURL" %}</h6>
@@ -187,16 +219,18 @@
               {% blocktrans %}The following command would cause the Apprise API to notify all of your services:{% endblocktrans %}
             </p>
             <div class="code-snippet"
-                 data-copy-text='curl -X POST -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+                 data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
               <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+                   {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
                    &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
                    &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
                    &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
             </div>
             {% blocktrans %}When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:{% endblocktrans %}
             <div class="code-snippet"
-                 data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+                 data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "tags=all" -F "body=Test Message" -F attach=@Screenshot-1.png http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
               <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+              {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br />
@@ -204,8 +238,9 @@
             </div>
             {% blocktrans %}When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:{% endblocktrans %}
             <div class="code-snippet"
-                 data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
+                 data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
               <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+              {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br />
@@ -214,8 +249,9 @@
             </div>
             {% blocktrans %}Sends a notification to our endpoints with an attachment and no body specified:{% endblocktrans %}
             <div class="code-snippet"
-                 data-copy-text='curl -X POST -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+                 data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
               <pre><code class="bash">curl -X POST \<br />
+               {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
                &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tag=all&quot; \ <br />
                &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png&quot; \ <br />
                &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
@@ -261,10 +297,16 @@
                 {% endif %}
               {% endfor %}
               <div class="config-form-actions">
-                <button class="btn waves-effect waves-light" type="submit" name="action">
-                  {% trans "Save Configuration" %}
-                  <i class="material-icons right">save</i>
-                </button>
+                {% if auth_mode == 'shared_lock' %}
+                  <p class="config-form-restricted-note">
+                    {% blocktrans %}Global administrator credentials are required to save or delete this configuration. You can still move it to a different configuration ID.{% endblocktrans %}
+                  </p>
+                {% else %}
+                  <button class="btn waves-effect waves-light" type="submit" name="action">
+                    {% trans "Save Configuration" %}
+                    <i class="material-icons right">save</i>
+                  </button>
+                {% endif %}
               </div>
             </form>
           </div>
@@ -510,7 +552,7 @@
     });
     Swal.showLoading();
     try {
-      const response = await fetch('{% url "notify" key %}', {
+      const response = await appriseFetch('{% url "notify" key %}', {
         method: 'POST',
         headers: {
           'Accept': 'text/html',
@@ -1284,7 +1326,7 @@
     });
     // perform a tag retrieval; start with 'all'
     let tags = ['all'];
-    let jsonResponse = await fetch('{% url "json_urls" key %}/?privacy=1', {
+    let jsonResponse = await appriseFetch('{% url "json_urls" key %}/?privacy=1', {
       method: 'GET',
     })
     if (jsonResponse.status == 204) {
@@ -1687,7 +1729,7 @@
       //
       // Load our configuration now into the configuration tab
       //
-      let response = await fetch('{% url "get" key %}', {
+      let response = await appriseFetch('{% url "get" key %}', {
         method: 'POST',
         headers: {
           'Accept': 'application/json'
@@ -1743,7 +1785,7 @@
         .value.replace(/^\s+|\s+$/gm, '');
       if (content.length) {
         // perform our status check
-        let response = fetch('{% url "add" key %}', {
+        let response = appriseFetch('{% url "add" key %}', {
           method: 'POST',
           body: body,
         }).then(function (response) {
@@ -1775,7 +1817,7 @@
       } else {
         // Perform Delete
         // perform our status check
-        let response = fetch('{% url "del" key %}', {
+        let response = appriseFetch('{% url "del" key %}', {
           method: 'POST',
           body: body,
         }).then(function (response) {
@@ -1949,8 +1991,47 @@
     }
   }
 
+  function restoreNotifyFormatPreference() {
+    // "Process As" defaults to TEXT on a fresh page load; once the user
+    // picks something else, remember it for next time via a cookie. The
+    // select is looked up by [name] rather than #id_format since the
+    // Configuration tab's own format field renders with that same id.
+    const COOKIE = 'apprise_notify_format';
+    const formatSelect = document.querySelector('#donotify select[name="format"]');
+    if (!formatSelect) {
+      return;
+    }
+
+    const saved = document.cookie.split('; ').find(function (row) {
+      return row.startsWith(COOKIE + '=');
+    });
+    if (saved) {
+      const value = decodeURIComponent(saved.split('=').slice(1).join('='));
+      const hasOption = Array.from(formatSelect.options).some(function (opt) {
+        return opt.value === value;
+      });
+      if (hasOption) {
+        formatSelect.value = value;
+        if (window.M && M.FormSelect) {
+          const instance = M.FormSelect.getInstance(formatSelect);
+          if (instance) {
+            instance.destroy();
+          }
+          M.FormSelect.init(formatSelect);
+        }
+      }
+    }
+
+    formatSelect.addEventListener('change', function () {
+      const expires = new Date();
+      expires.setFullYear(expires.getFullYear() + 1);
+      document.cookie = COOKIE + '=' + encodeURIComponent(formatSelect.value) + '; path=/; expires=' + expires.toUTCString();
+    });
+  }
+
   function notify_init() {
     decorateNotifyChips();
+    restoreNotifyFormatPreference();
     // over-ride manual submit for a nicer user experience
     document.querySelector('#donotify').onsubmit = function (event) {
       event.preventDefault();
@@ -2051,7 +2132,7 @@
       });
       Swal.showLoading();
 
-      fetch('{% url "notify" key %}', {
+      appriseFetch('{% url "notify" key %}', {
         method: 'POST',
         body: form,
         headers: {
@@ -2127,25 +2208,14 @@
   }
   /* Initialize our page */
   main_init();
-  // Config ID copy-to-clipboard
-  const configIdEl = document.querySelector('code.config-id');
-  const configCopyBtn = document.querySelector('.config-id-copy');
-  if (configIdEl && configCopyBtn) {
-    configCopyBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      copyToClipboard(
-        configIdEl.textContent.trim(),
-        configCopyBtn,
-        '{% trans "Config ID copied to clipboard" %}'
-      );
-    }, false);
-  }
   // Attach copy buttons to code snippets in the overview
   document.querySelectorAll('.code-snippet').forEach(function (snippet) {
     // Avoid adding the button twice if main_init runs again
     if (snippet.querySelector('.snippet-copy-btn')) {
       return;
     }
+    // Keep an immutable copy value; later highlighting and concealment only
+    // change what is displayed.
     const copyText = snippet.dataset.copyText;
     if (!copyText) {
       return;
@@ -2169,6 +2239,73 @@
     // Insert the button into the snippet container
     snippet.appendChild(copyBtn);
   });
+
+  // Highlighting replaces template markup, so conceal IDs after it finishes.
+  window.setTimeout(function () {
+    const configId = '{{ key|escapejs }}';
+    document.querySelectorAll('#overview .code-snippet').forEach(function (snippet) {
+      const code = snippet.querySelector('pre code');
+      if (!code) {
+        snippet.classList.add('is-ready');
+        return;
+      }
+
+      const nodes = [];
+      const walker = document.createTreeWalker(code, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        if (walker.currentNode.nodeValue.includes(configId)) {
+          nodes.push(walker.currentNode);
+        }
+      }
+
+      nodes.forEach(function (node) {
+        const parts = node.nodeValue.split(configId);
+        const fragment = document.createDocumentFragment();
+        parts.forEach(function (part, index) {
+          fragment.appendChild(document.createTextNode(part));
+          if (index < parts.length - 1) {
+            const concealedId = document.createElement('span');
+            concealedId.className = 'snippet-config-id is-concealed';
+            concealedId.dataset.value = configId;
+            concealedId.setAttribute('aria-label', '{% trans "Config ID hidden" %}');
+            concealedId.textContent = '••••••••';
+            fragment.appendChild(concealedId);
+          }
+        });
+        node.parentNode.replaceChild(fragment, node);
+      });
+
+      if (nodes.length) {
+        const visibilityBtn = document.createElement('button');
+        visibilityBtn.type = 'button';
+        visibilityBtn.className = 'snippet-visibility-btn btn-flat btn-small';
+        visibilityBtn.setAttribute('aria-pressed', 'false');
+        visibilityBtn.setAttribute('aria-label', '{% trans "Show Config ID" %}');
+        visibilityBtn.setAttribute('title', '{% trans "Show Config ID" %}');
+        visibilityBtn.innerHTML = '<i class="material-icons" aria-hidden="true">visibility</i>';
+        visibilityBtn.addEventListener('click', function () {
+          const show = visibilityBtn.getAttribute('aria-pressed') !== 'true';
+          snippet.querySelectorAll('.snippet-config-id').forEach(function (concealedId) {
+            concealedId.textContent = show ? concealedId.dataset.value : '••••••••';
+            concealedId.classList.toggle('is-concealed', !show);
+            concealedId.setAttribute(
+              'aria-label',
+              show ? concealedId.dataset.value : '{% trans "Config ID hidden" %}'
+            );
+          });
+          visibilityBtn.setAttribute('aria-pressed', show ? 'true' : 'false');
+          visibilityBtn.setAttribute(
+            'aria-label',
+            show ? '{% trans "Hide Config ID" %}' : '{% trans "Show Config ID" %}'
+          );
+          visibilityBtn.title = visibilityBtn.getAttribute('aria-label');
+          visibilityBtn.querySelector('i').textContent = show ? 'visibility_off' : 'visibility';
+        });
+        snippet.appendChild(visibilityBtn);
+      }
+      snippet.classList.add('is-ready');
+    });
+  }, 0);
     {% if not CONFIG_LOCK %}
       /* Initialze our configuration */
       config_init();

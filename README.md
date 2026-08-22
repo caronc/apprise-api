@@ -251,6 +251,11 @@ The above output may look like this:
 {
   "attach_lock": false,
   "config_lock": false,
+  "stateful_enabled": true,
+  "stateless_enabled": true,
+  "degraded": false,
+  "max_attachments": 6,
+  "attach_size": 209715200,
   "status": {
     "persistent_storage": true,
     "can_write_config": true,
@@ -262,6 +267,11 @@ The above output may look like this:
 
 - The `attach_lock` always cross references if the `APPRISE_ATTACH_SIZE` on whether or not it is `0` (zero) or less.
 - The `config_lock` always cross references if the `APPRISE_CONFIG_LOCK` is enabled or not.
+- `stateful_enabled` shows whether `APPRISE_STATEFUL_MODE` is enabled.
+- `stateless_enabled` shows whether `APPRISE_STATELESS_MODE` is enabled.
+- `degraded` is `true` when both notification modes are disabled.
+- `max_attachments` is the active `APPRISE_MAX_ATTACHMENTS` value.
+- `attach_size` is the active `APPRISE_ATTACH_SIZE` value.
 - The `status.persistent_storage` defines if the persistent storage is enabled or not.  If the environment variable `APPRISE_STORAGE_PATH` is empty, this value will always read `false` and it will not impact the `status.details`
 - The `status.can_write_config` defines if the configuration directory is writable or not.  If the environment variable `APPRISE_STATEFUL_MODE` is set to `disabled`, this value will always read `false` and it will not impact the `status.details`
 - The `status.can_write_attach` defines if the attachment directory is writable or not.  If the environment variable `APPRISE_ATTACH_SIZE`. This value will always read `false` and it will not impact the `status.details`.
@@ -273,7 +283,7 @@ Some people may wish to only have a sidecar solution that does require use of an
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
+| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.<br/>This path does not work if `APPRISE_STATELESS_MODE` is set to `disabled`.
 
 Stateless `/notify` calls do not require `/config`, but they do leverage `/attach` for file uploads (assuming `APPRISE_ATTACH_SIZE` is not set to `0` (zero).  You can optionally use `/plugin` if you have custom Apprise plugins you wish to use.
 
@@ -351,14 +361,23 @@ curl -X POST \
 
 You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://appriseit.com/guides/) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
 
+Stateful endpoints also accept `X-Apprise-Config-ID`, such as `POST /get/` with `X-Apprise-Config-ID: mykey`. This keeps the key out of access logs. On `/notify` it selects a stateful send, and on `/status` it applies the key's authentication. The `/cfg` administrator listing does not accept it.
+
+If both the URL and header contain a key, the header wins. An invalid header returns `400` instead of falling back to the URL key. The web UI and Apprise Mobile continue to use keys in URLs.
+
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
 | `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the *config* parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are *text* and *yaml*. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. This path does not work if `APPRISE_CONFIG_LOCK` is set.
+| `/move/{KEY}` |  POST  | Moves the configuration stored at *{KEY}* to a new Config ID.<br/>*Payload Parameters*<br/>📌 **to_config_id**: The destination Config ID. It must not already have a configuration. This path does not work if `APPRISE_CONFIG_LOCK` is set.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
 | `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
+| `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials when configured.
+| `/auth/{KEY}` |  GET  | Opens the authentication editor in a browser, or returns the current mode and username when JSON is requested. Passwords are never returned.
+| `/auth/{KEY}` |  POST  | Sets or replaces Basic Auth for `{KEY}`. Administrators may change both fields. A configuration user repeats the saved username and supplies a new password.
+| `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
@@ -510,6 +529,7 @@ data: {"status": "SUCCESS"}
 | 405        | method not accepted   | Your API call identified an action that has been disabled due to the Server configuration (such as a `apprise://` `APPRISE_RECURSION_MAX` being exceeded).
 | 421        | misdirected request   | This is the value returned by any web requests made to the general website if `APPRISE_API_ONLY` is set to `yes`.  Otherwise this return value is not used.
 | 424        | failed dependency     | At least one notification could not be sent.  This can be due to<br/> - Not all notifications intended to be actioned could follow through (due to upstream failures).<br/>You didn't idenify a tag associated with what was defined in your configuration.<br/>The tag(s) you specified do not match with those defined in your configuration.
+| 429        | too many requests     | Too many recent Basic Auth failures for this client and key. Wait for the `Retry-After` value before retrying.
 | 431        | fields too large      | This can happen if you're payload is larger then 3MB (default value).  See `APPRISE_UPLOAD_MAX_MEMORY_SIZE` to adjust this.
 | 500        | internal server error | This can occur if there was an issue saving your configuration to disk (usually the cause of permission issues).
 
@@ -519,7 +539,7 @@ data: {"status": "SUCCESS"}
 - `{KEY}` must be 1-128 alphanumeric characters in length. In addition to this, the underscore (`_`) and dash (`-`) are also accepted.
   - Consider using keys like `sha1`, `sha512`, `uuid`, etc to secure shared namespaces if you wish to open your platform to others. Or keep it simple in a controlled environment and just use the default string `apprise` as your key (and as illustrated in the examples above). You can override this default value by setting the `APPRISE_DEFAULT_CONFIG_ID`(see below).
 - Specify the `Content-Type` of `application/json` to use the JSON support otherwise the default expected format is `application/x-www-form-urlencoded` (whether it is specified or not).
-- There is no authentication (or SSL encryption) required to use this API; this is by design. The intention here is to be a light-weight and fast micro-service.
+- Authentication is disabled by default. Set `APPRISE_AUTH_REQUIRED=yes` to enable it; see [Authentication](#authentication).
 - There are no additional dependencies (such as database requirements, etc) should you choose to use the optional persistent store (mounted as `/config`).
 
 ### Environment Variables
@@ -541,6 +561,12 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_STORAGE_MODE` | Defines the storage mode to use.  If no `APPRISE_STORAGE_DIR` is identified, then this is set to `memory` in all circumtances regardless what it might otherwise be set to. The possible options are:<br/>📌 **auto**: This is also the default. Writes cache files on demand only. <br/>📌 **memory**: Persistent storage is disabled; local memory is used for simple internal references. This is effectively the behavior of Apprise of versions 1.8.1 and earlier.<br/>📌 **flush**: A bit more i/o intensive then `auto`.  Content is written to disk constantly if changed in anyway. This mode is still experimental.
 | `APPRISE_STORAGE_UID_LENGTH` | Defines the unique key lengths used to identify an Apprise URL.  By default this is set to `8`.  Value can not be set to a smaller value then `2` or larger then `64`.
 | `APPRISE_STATELESS_STORAGE` | Allow stateless URLs (in addition to stateful) to also leverage persistent storage. This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
+| `APPRISE_STORAGE_PRUNE_DAYS` | Age in days before `storeprune` removes persistent notification state. Defaults to `30`.
+| `APPRISE_AUTH_PRUNE_SECONDS` | Age in seconds before `authprune` removes a lock that has no configuration. Defaults to `2592000` (30 days). Locks with configuration are retained.
+| `APPRISE_STORAGE_PRUNE_INTERVAL_SECONDS` | How often the container runs `storeprune`. Defaults to `86400` (daily).
+| `APPRISE_AUTH_PRUNE_INTERVAL_SECONDS` | How often the container runs `authprune`. Defaults to `86400` (daily), starting 12 hours after `storeprune`.
+| `APPRISE_PRUNE_TIMEOUT_SECONDS` | Maximum time allowed for each automatic prune run. Defaults to `28800` (8 hours).
+| `APPRISE_PRUNE_ENABLED` | Set to `no` to stop automatic pruning. Manual commands remain available. Defaults to `yes`.
 | `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
 | `APPRISE_ATTACH_SIZE` | Over-ride the attachment size (defined in MB). By default it is set to `200` (Megabytes). You can set this up to a maximum value of `500` which is the restriction in place for NginX (internal hosting ervice) at this time.  If you set this to zero (`0`) then attachments will not be passed along even if provided.
 | `APPRISE_UPLOAD_MAX_MEMORY_SIZE` | Over-ride the in-memory accepted payload size (defined in MB). By default it is set to `3` (Megabytes). There is no reason the HTTP payload (excluding attachments) should exceed this limit.  This value is only configurable for those who have edge cases where there are exceptions to this rule.
@@ -549,7 +575,13 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_STREAM_DISK_SIZE` | Temporary disk allowance for each live stream and, separately, each completed result, in MB. The default is `256`. Set it to `0` to disable temporary disk storage and keep result logs in memory. Live streams also remain in memory when the memory size is greater than `0`; when both sizes are `0`, live-stream backlog retention is disabled.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
 | `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
-| `APPRISE_CONFIG_LOCK` | Locks down your API hosting so that you can no longer delete/update/access stateful information. Your configuration is still referenced when stateful calls are made to `/notify`.  The idea of this switch is to allow someone to set their (Apprise) configuration up and then as an added security tactic, they may choose to lock their configuration down (in a read-only state). Those who use the Apprise CLI tool may still do it, however the `--config` (`-c`) switch will not successfully reference this access point anymore. You can however use the `apprise://` plugin without any problem ([see here for more details](https://appriseit.com/services/apprise_api/)). This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
+| `APPRISE_STATELESS_MODE` | Controls stateless `/notify` calls:<br/>📌 **enabled**: Accept stateless notifications. This is the default.<br/>📌 **disabled**: Reject stateless notifications. If stateful mode is also disabled, `/status` reports `degraded`.
+| `APPRISE_CONFIG_LOCK` | Blocks direct configuration adds, deletes, and retrieval. Saved configurations still work with `/notify` and the [`apprise://` plugin](https://appriseit.com/services/apprise_api/). Defaults to `no`.
+| `APPRISE_AUTH_REQUIRED` | Enables built-in authentication when set to `yes`. Defaults to `no`. When disabled, `APPRISE_USER`, `APPRISE_PASSWORD`, and saved configuration logins are ignored. See [Authentication](#authentication).
+| `APPRISE_USER` | Optional administrator username used only when `APPRISE_AUTH_REQUIRED=yes`. It requires `APPRISE_PASSWORD`; colons are not allowed.
+| `APPRISE_PASSWORD` | Optional administrator password used only when `APPRISE_AUTH_REQUIRED=yes`. It may be used without a username. Leave it unset to run authentication without an administrator account.
+| `APPRISE_BASIC_AUTH_REALM` | Label shown in Basic Auth prompts. Defaults to `Apprise API`; use a different label for each instance sharing a host.
+| `APPRISE_TRUSTED_ORIGINS` | Origins allowed to make browser writes, separated by commas. Use `scheme://host[:port]`, such as `https://apprise.example.com`. HTTPS deployments should set this because bundled nginx does not forward the original scheme ([issue #275](https://github.com/caronc/apprise-api/issues/275)).
 | `APPRISE_ADMIN` | Enables admin mode. This removes the distinction between users and admins and allows listing stored configuration keys (when `STATEFUL_MODE` is set to `simple`). This defaults to `no` and can be set to `yes`.
 | `APPRISE_INTERPRET_EMOJIS` | Override the Apprise `interpret-emojis` setting. This defaults to `none` (not set), but can be enforced to `no` or `yes`.
 | `APPRISE_HTTP_REDIRECTS` | By default, Apprise follows HTTP 3xx redirects, matching the behaviour of the underlying requests library. Set to `no` to disable redirect following globally across all plugins without having to add `redirect=no` to every individual URL. Individual URLs can always override this with `?redirect=yes` or `?redirect=no` regardless of this setting. This defaults to `yes`.
@@ -579,6 +611,89 @@ The 2 files you can override are:
 1. `/etc/nginx/server-override.conf` which is included within Apprise API `server` reference.
 
 ### Authentication
+
+#### Built-in Basic Auth
+Apprise API can protect every endpoint with HTTP Basic Auth. Enable it with `APPRISE_AUTH_REQUIRED=yes`. Unauthenticated requests receive `401`:
+```bash
+docker run --name apprise \
+   -p 8000:8000 \
+   -v /path/to/local/config:/config \
+   -e APPRISE_AUTH_REQUIRED=yes \
+   -e APPRISE_USER=foobar \
+   -e APPRISE_PASSWORD=your-password-here \
+   caronc/apprise:latest
+```
+
+| Mode | Settings | Result |
+| --- | --- | --- |
+| Disabled | `APPRISE_AUTH_REQUIRED=no` | Requests remain open. Administrator settings and saved configuration logins are ignored. |
+| Administrator enabled | `APPRISE_AUTH_REQUIRED=yes` with `APPRISE_PASSWORD` | The administrator can access every key and manage configuration logins. `APPRISE_USER` is optional. |
+| Administrator disabled | `APPRISE_AUTH_REQUIRED=yes` without `APPRISE_PASSWORD` | Only existing configuration logins can access their own keys. New logins cannot be created until an administrator password is configured. |
+
+`APPRISE_USER` without `APPRISE_PASSWORD` produces a warning and leaves the administrator account disabled. This is useful when each person should use only their assigned Config ID.
+
+Set `APPRISE_BASIC_AUTH_REALM` to give each instance a recognizable label in login prompts. It defaults to `Apprise API`.
+
+Basic Auth does not encrypt credentials. Use HTTPS whenever the server is reachable outside a trusted network.
+
+API clients continue to send Basic Auth with every request. Requests that explicitly accept `text/html` use the signed browser login, allowing **Logout** to end browser access without changing JSON or plain-text API behavior. Ordinary API calls cannot substitute this cookie for Basic Auth; only requests made by the web interface identify themselves as part of that browser login.
+
+#### Per-Configuration-ID Basic Auth
+Per-key auth lets users share one server without sharing administrator credentials. Each user receives a protected configuration key, while the administrator can recover any key.
+
+In the web interface, open a configuration and select its lock icon or **Authentication** in the menu. Enter a username and password, then select **Save**. Global administrators can also use **Randomize** to generate both values.
+
+The configuration ID, username, and password are three separate values. Use random values when practical and share all three with the person who needs access. The password is never displayed again after it is saved.
+
+API clients can protect a configuration with `POST /auth/{KEY}`. An administrator is required to create the first login or remove one. An existing configuration user can still change their password when the administrator account is disabled.
+
+The first lock requires administrator credentials. Administrators may later change or remove it. API users authenticate with their current login, repeat the saved username, and supply a new password. The browser form also asks them to enter the new password twice.
+```bash
+# Set (or replace) a password just for this one configuration ID.
+# The very first time requires the global credentials:
+curl -X POST -H "Content-Type: application/json" \
+   -u foobar:your-password-here \
+   -d '{"username": "alice", "password": "s3cret"}' \
+   http://localhost:8000/auth/my-config-id
+
+# Replace it with the key's current credentials:
+curl -X POST -H "Content-Type: application/json" \
+   -u alice:s3cret \
+   -d '{"username": "alice", "password": "new-password"}' \
+   http://localhost:8000/auth/my-config-id
+
+# Remove it as the global administrator (the configuration is untouched):
+curl -X DELETE -u foobar:your-password-here http://localhost:8000/auth/my-config-id
+```
+Once set, `/add`, `/del`, `/get`, `/cfg`, `/notify`, `/json/urls`, and `/status` for that key require its credentials or the global credentials. Other keys are unaffected. See the `/auth/{KEY}` endpoint above for setup details.
+
+Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring the original open behavior. Their saved files remain in place and take effect again when authentication is enabled.
+
+The web interface includes **Logout**, which ends its signed browser login immediately. Browsers may retain Basic Auth internally, but cached credentials cannot silently restore an HTML login.
+
+`APPRISE_CONFIG_LOCK` does not block setting, rotating, or removing per-key credentials.
+
+Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). Locks with configuration remain. See [Pruning](#pruning).
+
+#### Moving a Configuration
+`POST /move/{KEY}` renames a saved configuration to a new Config ID, carrying its per-key authentication (if any) along with it. The destination must not already have a configuration, and this path does not work if `APPRISE_CONFIG_LOCK` is set.
+
+A configuration user may only move their own key; a global administrator may move any key and, from the web interface's Move card, may also retarget the source (`from_config_id`) to move a different key entirely.
+```bash
+# Move 'my-config-id' to 'my-new-config-id' using that key's own credentials:
+curl -X POST -H "Content-Type: application/json" \
+   -u alice:s3cret \
+   -d '{"to_config_id": "my-new-config-id"}' \
+   http://localhost:8000/move/my-config-id
+
+# The same, performed by a global administrator:
+curl -X POST -H "Content-Type: application/json" \
+   -u foobar:your-password-here \
+   -d '{"to_config_id": "my-new-config-id"}' \
+   http://localhost:8000/move/my-config-id
+```
+
+#### Reverse-proxy (NginX) Basic Auth
 Under the hood, Apprise-API is running a small NginX instance.  It allows for you to inject your own configuration into it. One thing you may wish to add is basic authentication.
 
 Below we create ourselves some nginx directives we'd like to apply to our Apprise API:
@@ -625,6 +740,21 @@ You can add further accounts to the existing database by omitting the `-c` switc
 ```bash
 # Add another account
 htpasswd apprise_api.htpasswd user2
+```
+
+## Pruning
+The packaged container runs two cleanup commands daily. They start 12 hours apart, use low CPU and disk priority, and have a time limit:
+
+| Command | What it prunes | Retention setting | Schedule setting |
+| ------- | --------------- | ------------------ | ----------------- |
+| `storeprune` | Apprise's own persistent notification-state storage (`APPRISE_STORAGE_DIR`). | `APPRISE_STORAGE_PRUNE_DAYS` (default `30` days) | `APPRISE_STORAGE_PRUNE_INTERVAL_SECONDS` (default `86400`, once a day) |
+| `authprune` | Per-key Basic Auth locks without configuration. | `APPRISE_AUTH_PRUNE_SECONDS` (default `2592000`, or 30 days) | `APPRISE_AUTH_PRUNE_INTERVAL_SECONDS` (default `86400`, starting 12 hours later) |
+
+Set `APPRISE_PRUNE_ENABLED=no` to disable scheduled cleanup. `APPRISE_PRUNE_TIMEOUT_SECONDS` changes the 8-hour time limit. Either command may still run manually:
+```bash
+# From inside the running container:
+docker exec -it apprise python manage.py storeprune --days 30
+docker exec -it apprise python manage.py authprune --seconds 2592000
 ```
 
 ## Kubernetes

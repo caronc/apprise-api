@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block sidebar %}
+{% endblock sidebar %}
+{% block head_js_optional %}
+{% endblock head_js_optional %}
+{% block scripts_optional %}
+{% endblock scripts_optional %}
+{% block onload %}
+{% endblock onload %}
+{% block main_page %}
+  <div class="col s12 error-content">
+    <div class="section error-page center">
+      <h1>429 - {% trans "Too Many Requests" %}</h1>
+      <i class="material-icons spotlight">hourglass_empty</i>
+      <p>
+        {% blocktrans %}Too many login attempts were made. Wait {{ retry_after }} seconds before trying again.{% endblocktrans %}
+      </p>
+    </div>
+  </div>
+{% endblock main_page %}

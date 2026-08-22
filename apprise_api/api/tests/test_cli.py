@@ -25,6 +25,7 @@
 import io
 
 from django.core import management
+from django.core.management.base import CommandError
 from django.test import SimpleTestCase
 
 
@@ -32,3 +33,13 @@ class CommandTests(SimpleTestCase):
     def test_command_style(self):
         out = io.StringIO()
         management.call_command("storeprune", days=40, stdout=out)
+
+    def test_authprune_command_style(self):
+        out = io.StringIO()
+        management.call_command("authprune", seconds=2592000, stdout=out)
+        self.assertIn("pruned", out.getvalue())
+
+    def test_authprune_rejects_negative_seconds(self):
+        """Reject negative ages that would make every lock eligible."""
+        with self.assertRaises(CommandError):
+            management.call_command("authprune", seconds=-1, stdout=io.StringIO())

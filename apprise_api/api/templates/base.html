@@ -58,7 +58,7 @@
               APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
             </li>
             <li class="api-status-nav">
-              {% trans "API HEALTH" %}
+              <span>{% trans "API HEALTH" %}</span>
               <a href="{% url 'health' %}" target="_new" id="nav-api-status-link">
                 <span id="nav-api-status-icon"
                       class="api-status-icon status-icon-stack topbar-status-icon status-loading"
@@ -110,6 +110,34 @@
                 </span>
               </a>
               <span class="nav-divider"></span>
+              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
+                {% if AUTH_USERNAME %}
+                  <a class="auth-account {% if AUTH_PERMISSION == 'master_lock' %}is-master{% endif %}"
+                     href="{% url 'auth' DEFAULT_CONFIG_ID %}"
+                     aria-label="{% trans "Open Authentication Settings" %}">
+                    <span class="auth-account-icon" aria-hidden="true">
+                      {% include 'icons/user.svg' %}
+                    </span>
+                    <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
+                  </a>
+                  <span class="nav-divider auth-divider" aria-hidden="true"></span>
+                {% endif %}
+                <a class="auth-logout-link tooltipped"
+                   href="{% url 'logout' %}"
+                   aria-label="{% trans "Logout" %}"
+                   data-position="bottom"
+                   data-tooltip="{% trans "Logout" %}">
+                  <span class="auth-logout-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
+                  </span>
+                </a>
+                <template id="logout-confirm-icon-template">
+                  <span class="logout-confirm-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
+                  </span>
+                </template>
+                <span class="nav-divider auth-divider" aria-hidden="true"></span>
+              {% endif %}
               <a id="theme-toggle"
                  href="{{ request.path }}?theme={{ request.next_theme }}"
                  data-theme="{{ request.theme|safe }}"
@@ -169,7 +197,17 @@
                       <span class="side-nav-text">{% trans "New Configuration" %}</span>
                     </a>
                   {% endif %}
-                  {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN %}
+                  {% if AUTH_ENABLED %}
+                    <a class="side-nav-item"
+                       id="cfg-auth"
+                       href="{% url 'auth' DEFAULT_CONFIG_ID %}">
+                      <span class="menu-icon">
+                        {% include 'icons/lock.svg' %}
+                      </span>
+                      <span class="side-nav-text">{% trans "Authentication" %}</span>
+                    </a>
+                  {% endif %}
+                  {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN and CAN_LIST_CONFIGS %}
                     <a class="side-nav-item" id="cfg-list" href="{% url 'config_list' %}">
                       <span class="menu-icon">
                         {% include 'icons/list.svg' %}
@@ -330,18 +368,7 @@
               </div>
               {% block body %}
               {% endblock body %}
-              <footer class="page-footer-legal">
-                <small>
-                  <hr />
-                  <a href="{{ APPRISE_API_URL }}" target="_new">{% trans "Apprise API" %} v{{ APPRISE_API_VERSION }}</a>
-                  <br />
-                  {{ APPRISE_API_COPYRIGHT }}
-                  ·
-                  {% blocktrans with license=APPRISE_API_LICENSE %}
-              Licensed under the {{ license }} License.
-            {% endblocktrans %}
-                </small>
-              </footer>
+              {% include 'components/legal_footer.html' %}
             </div>
           {% endblock main_page %}
         {% endblock layout %}
@@ -417,6 +444,28 @@
             });
         })();
 
+        // Logout changes the browser session, so confirm an accidental click.
+        (function() {
+            const logout = document.querySelector('.auth-logout-link');
+            const icon = document.querySelector('#logout-confirm-icon-template');
+            if (!logout || !icon) return;
+
+            logout.addEventListener('click', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '{% trans "Log Out?" %}',
+                    html: icon.innerHTML + '<p>{% trans "Are you sure you wish to log out?" %}</p>',
+                    showCancelButton: true,
+                    confirmButtonText: '{% trans "Yes" %}',
+                    cancelButtonText: '{% trans "No" %}'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        window.location.href = logout.href;
+                    }
+                });
+            });
+        })();
+
         // Initial state
         const status = document.querySelector('#nav-api-status-icon');
         status.classList.remove('status-ok', 'status-error', 'status-loading');
@@ -460,6 +509,75 @@
 </script>
 {# Script Block 2 #}
 <script>
+  // GUI fetches use the signed browser login; external API calls still use Basic Auth.
+  function appriseFetch(input, init) {
+    const options = init || {};
+    const headers = new Headers(options.headers || {});
+    headers.set('X-Apprise-Web-Auth', '1');
+    return window.fetch(input, Object.assign({}, options, {headers: headers}));
+  }
+
+  // Concealed fields share one accessible show/hide control throughout the
+  // GUI.
+  function appriseWireValueToggles(root) {
+    root.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        const input = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!input) {
+          return;
+        }
+        const showing = input.type === 'text';
+        const label = showing ? toggle.dataset.showLabel : toggle.dataset.hideLabel;
+        input.type = showing ? 'password' : 'text';
+        toggle.querySelector('i').textContent = showing ? 'visibility' : 'visibility_off';
+        toggle.setAttribute('aria-label', label);
+        toggle.title = label;
+        input.focus();
+      });
+    });
+  }
+  appriseWireValueToggles(document);
+
+  // Config IDs begin concealed and can be revealed without changing the page.
+  // Scoped so it can also wire up controls injected later (e.g. into a
+  // SweetAlert2 modal), not just what's present at page load.
+  function appriseWireConfigIdToggles(root) {
+    root.querySelectorAll('[data-config-id-toggle]').forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        const value = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!value) {
+          return;
+        }
+        const show = toggle.getAttribute('aria-pressed') !== 'true';
+        const label = show ? toggle.dataset.hideLabel : toggle.dataset.showLabel;
+        value.textContent = show ? value.dataset.configIdValue : '••••••••';
+        value.classList.toggle('is-concealed', !show);
+        value.setAttribute(
+          'aria-label',
+          show ? value.dataset.configIdValue : '{% trans "Config ID hidden" %}'
+        );
+        toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+        toggle.setAttribute('aria-label', label);
+        toggle.title = label;
+        toggle.querySelector('i').textContent = show ? 'visibility_off' : 'visibility';
+      });
+    });
+  }
+  appriseWireConfigIdToggles(document);
+
+  // Copy the complete stored ID, never the concealed or shortened display text.
+  function appriseWireConfigIdCopy(root) {
+    root.querySelectorAll('[data-config-id-copy]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        appriseCopyToClipboard(
+          button.dataset.configIdCopy,
+          '{% trans "Config ID copied to clipboard" %}'
+        );
+      });
+    });
+  }
+  appriseWireConfigIdCopy(document);
+
 {% block jsfooter %}
 {% endblock jsfooter %}
 </script>
@@ -505,7 +623,7 @@
     }
 
     try {
-      const response = await fetch('{% url "health" %}', {
+      const response = await appriseFetch('{% url "health" %}', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -550,7 +668,8 @@
       // Update the large health panel (permissions etc.)
       if (hc && data && data.status) {
         const showCfg = (data.status.can_write_config === false &&
-          data.config_lock === false);
+          data.config_lock === false &&
+          data.stateful_enabled !== false);
         const showAttach = (data.status.can_write_attach === false &&
           data.attach_lock === false);
 
@@ -633,7 +752,6 @@
     cfgGenLink.addEventListener('click', function(e) {
       e.preventDefault();
       const newConfigurationHref = cfgGenLink.href;
-      const currentConfigurationId = '{{ DEFAULT_CONFIG_ID|escapejs }}';
 
       Swal.fire({
         title: '{% trans "New Configuration" %}',
@@ -643,9 +761,24 @@
             <div class="config-id-bar config-id-bar--modal">
               <span class="config-id-label">{% trans "Config ID" %}</span>
               <span class="config-id-wrapper">
-                <code class="config-id">{{ DEFAULT_CONFIG_ID }}</code>
+                <code id="cfggen-config-id"
+                      class="config-id is-concealed"
+                      data-config-id-value="{{ DEFAULT_CONFIG_ID }}"
+                      aria-label="{% trans "Config ID hidden" %}">••••••••</code>
                 <button type="button"
-                        class="btn-flat btn-small config-id-copy cfggen-id-copy"
+                        class="btn-flat btn-small config-id-visibility"
+                        data-config-id-toggle
+                        aria-controls="cfggen-config-id"
+                        aria-pressed="false"
+                        aria-label="{% trans "Show Config ID" %}"
+                        title="{% trans "Show Config ID" %}"
+                        data-show-label="{% trans "Show Config ID" %}"
+                        data-hide-label="{% trans "Hide Config ID" %}">
+                  <i class="material-icons">visibility</i>
+                </button>
+                <button type="button"
+                        class="btn-flat btn-small config-id-copy"
+                        data-config-id-copy="{{ DEFAULT_CONFIG_ID }}"
                         title="{% trans "Copy Config ID to Clipboard" %}">
                   <i class="material-icons">content_copy</i>
                 </button>
@@ -659,18 +792,8 @@
         confirmButtonText: '{% trans "Yes" %}',
         cancelButtonText: '{% trans "No" %}',
         didOpen: function (popup) {
-          const copyBtn = popup.querySelector('.cfggen-id-copy');
-          if (!copyBtn) {
-            return;
-          }
-          copyBtn.addEventListener('click', function (copyEvent) {
-            copyEvent.preventDefault();
-            copyEvent.stopPropagation();
-            appriseCopyToClipboard(
-              currentConfigurationId,
-              '{% trans "Config ID copied to clipboard" %}'
-            );
-          });
+          appriseWireConfigIdToggles(popup);
+          appriseWireConfigIdCopy(popup);
         }
       }).then((result) => {
         if (result.isConfirmed) {
@@ -711,6 +834,35 @@
   function appriseShowCopyToast(message) {
     if (window.M && M.toast) {
       M.toast({ html: message || '{% trans "Copied to clipboard" %}' });
+    }
+  }
+
+  // Non-blocking success/failure notice
+  function appriseShowStatusToast(message, isSuccess) {
+    if (window.Swal && Swal.fire) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: isSuccess ? 'success' : 'error',
+        title: message,
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true
+      });
+      return;
+    }
+    if (window.M && M.toast) {
+      M.toast({ html: message, classes: isSuccess ? 'green darken-1' : 'red darken-1' });
+    }
+  }
+
+  // Extracts a JSON error response's {error, field}
+  async function appriseResponseFailure(response, fallback) {
+    try {
+      const data = await response.json();
+      return {message: data.error || fallback, field: data.field || null};
+    } catch (e) {
+      return {message: fallback, field: null};
     }
   }
 

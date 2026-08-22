@@ -22,11 +22,28 @@
 # THE SOFTWARE.
 
 
-from api.utils import is_json_response
+from api.utils import _AUTH_FAILURE_WINDOW_SECONDS, is_json_response
+from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+
+
+class Error401View(View):
+    """Render the authentication-required response."""
+
+    template_name = "401.html"
+
+    def get(self, request):
+        """Return an HTML or JSON response with a Basic Auth challenge."""
+        response = (
+            render(request, self.template_name, status=401)
+            if not is_json_response(request)
+            else JsonResponse({"error": _("Access Denied")}, safe=False, status=401)
+        )
+        response["WWW-Authenticate"] = 'Basic realm="{}"'.format(settings.APPRISE_BASIC_AUTH_REALM)
+        return response
 
 
 class Error404View(View):
@@ -103,6 +120,27 @@ class Error421View(View):
                 status=421,
             )
         )
+
+
+class Error429View(View):
+    """Render the response used after too many authentication attempts."""
+
+    template_name = "429.html"
+
+    def get(self, request):
+        """Return an HTML or JSON response with the retry delay."""
+        response = (
+            render(
+                request,
+                self.template_name,
+                context={"retry_after": _AUTH_FAILURE_WINDOW_SECONDS},
+                status=429,
+            )
+            if not is_json_response(request)
+            else JsonResponse({"error": _("Too Many Requests")}, safe=False, status=429)
+        )
+        response["Retry-After"] = str(_AUTH_FAILURE_WINDOW_SECONDS)
+        return response
 
 
 class Error50xView(View):

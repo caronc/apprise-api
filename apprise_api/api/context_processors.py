@@ -48,6 +48,19 @@ def admin_enabled(request):
     return {"APPRISE_ADMIN": settings.APPRISE_ADMIN}
 
 
+def authentication(request):
+    """Expose the current browser login state to HTML templates."""
+    auth_enabled = settings.APPRISE_AUTH_REQUIRED
+    return {
+        "AUTH_ENABLED": auth_enabled,
+        "AUTH_ADMIN_ENABLED": settings.APPRISE_BASIC_AUTH_TOKEN is not None,
+        "AUTH_PERMISSION": getattr(request, "apprise_auth_permission", "disabled"),
+        "AUTH_USERNAME": getattr(request, "apprise_auth_username", None),
+        # With auth disabled, the site keeps its original open behavior.
+        "CAN_LIST_CONFIGS": not auth_enabled or getattr(request, "globally_authenticated", False),
+    }
+
+
 def apprise_metadata(request):
     """
     Returns the current details of the Apprise Library and API under the hood
@@ -68,7 +81,9 @@ def default_config_id(request):
     """
     Returns a unique config identifier
     """
-    return {"DEFAULT_CONFIG_ID": request.default_config_id}
+    # Authentication can reject a request before config detection runs.
+    config_id = getattr(request, "default_config_id", settings.APPRISE_DEFAULT_CONFIG_ID)
+    return {"DEFAULT_CONFIG_ID": config_id}
 
 
 def unique_config_id(request):
