@@ -307,21 +307,12 @@ class AppriseURLFilter:
         """
         Checks a given URL against the deny list first, then the allow list.
         """
-        try:
-            parsed = parse_url(url, strict_port=True, simple=True)
-
-        except ValueError:
-            # apprise's parse_url() can raise on certain malformed input
-            # (e.g. an unbalanced IPv6 bracket) rather than returning None
-            # like it does for other garbage; treat it the same way.
-            return False
-
+        parsed = parse_url(url, strict_port=True, simple=True)
         if not parsed:
             return False
 
         # A parsed result with no usable host can't be matched against
-        # anything meaningfully -- treat it as blocked rather than let an
-        # empty/None host reach string formatting or DNS resolution below.
+        # anything meaningfully
         host = parsed.get("host")
         if not host:
             return False
