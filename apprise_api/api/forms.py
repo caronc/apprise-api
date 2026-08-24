@@ -28,7 +28,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from .utils import CONFIG_KEY_PATTERN
+from .utils import CONFIG_KEY_MAX_LENGTH, CONFIG_KEY_PATTERN
 
 # Auto-Detect Keyword
 AUTO_DETECT_CONFIG_KEYWORD = "auto"
@@ -83,7 +83,7 @@ class BrowserLoginForm(forms.Form):
         regex=CONFIG_KEY_PATTERN,
         label=_("Config ID"),
         required=False,
-        max_length=128,
+        max_length=CONFIG_KEY_MAX_LENGTH,
         widget=forms.PasswordInput(
             render_value=True,
             attrs={"autocomplete": "off"},
@@ -96,6 +96,15 @@ class BrowserLoginForm(forms.Form):
         if ":" in username:
             raise ValidationError(_("Username cannot contain ':'"))
         return username
+
+
+class ConfigKeyForm(forms.Form):
+    """Validate a Config ID selected through the browser interface."""
+
+    key = forms.RegexField(
+        regex=CONFIG_KEY_PATTERN,
+        max_length=CONFIG_KEY_MAX_LENGTH,
+    )
 
 
 class AuthForm(forms.Form):
@@ -232,45 +241,49 @@ class AddByConfigForm(forms.Form):
 
 
 class MoveConfigForm(forms.Form):
-    """
-    Form field for moving an Apprise configuration from one location to another.
-    """
+    """Validate the source and destination IDs used by a configuration move."""
 
-    from_config_id = forms.RegexField(
+    source = forms.RegexField(
         regex=CONFIG_KEY_PATTERN,
         label=_("From"),
-        widget=forms.TextInput(attrs={"placeholder": _("Current Configuration ID")}),
-        max_length=128,
+        # Config IDs are secrets, so both fields begin concealed.
+        widget=forms.PasswordInput(
+            render_value=True,
+            attrs={"placeholder": _("Current Configuration ID"), "autocomplete": "off"},
+        ),
+        max_length=CONFIG_KEY_MAX_LENGTH,
         required=True,
     )
 
-    to_config_id = forms.RegexField(
+    to = forms.RegexField(
         regex=CONFIG_KEY_PATTERN,
         label=_("To"),
-        widget=forms.TextInput(attrs={"placeholder": _("New Configuration ID")}),
-        max_length=128,
+        widget=forms.PasswordInput(
+            render_value=True,
+            attrs={"placeholder": _("New Configuration ID"), "autocomplete": "off"},
+        ),
+        max_length=CONFIG_KEY_MAX_LENGTH,
         required=True,
     )
 
     def __init__(self, *args, restricted=False, current_from="", **kwargs):
-        """Configure the extra fields used when a key user changes access."""
+        """Configure whether the source Config ID can be edited."""
         super().__init__(*args, **kwargs)
         self.restricted = restricted
         self.current_from = current_from or ""
-        self.fields["from_config_id"].widget.attrs["readonly"] = restricted
-
-    def clean_from_config_id(self):
-        """Reject if enforced config_id was changed."""
-        from_config_id = self.cleaned_data["from_config_id"]
-        if self.restricted and from_config_id != self.current_from:
-            raise ValidationError(_("The configuration ID cannot be changed by a restricted user"))
-        return from_config_id
+        # ``from`` is a Python keyword, so the class uses an internal name and
+        # exposes the shorter public field name after initialization.
+        from_field = self.fields.pop("source")
+        from_field.widget.attrs["readonly"] = restricted
+        self.fields = {"from": from_field, **self.fields}
 
     def clean(self):
         """Reject a move that doesn't actually go anywhere."""
         cleaned_data = super().clean()
-        from_config_id = cleaned_data.get("from_config_id")
-        to_config_id = cleaned_data.get("to_config_id")
+        from_config_id = cleaned_data.get("from")
+        to_config_id = cleaned_data.get("to")
+        if self.restricted and from_config_id != self.current_from:
+            self.add_error("from", _("The configuration ID cannot be changed by a restricted user"))
         if from_config_id and to_config_id and from_config_id == to_config_id:
             raise ValidationError(_("The destination configuration ID must differ from the source"))
         return cleaned_data
@@ -342,16 +355,10 @@ class NotifyForm(forms.Form):
         return data
 
     def clean_format(self):
-        """
-        Format is entirely optional. An unset value passes through to
-        Apprise as None, which delivers the content untouched rather
-        than assuming TEXT.
+        """Return the selected format, or ``None`` for unchanged content.
 
-        This form always submits an explicit selection -- even the
-        default "IGNORE" choice is a real, visible option the user
-        picked (or left picked). APPRISE_DEFAULT_FORMAT is only meant
-        to help callers who omit the field entirely, which cannot
-        happen through this form, so it is not applied here.
+        The form always submits a choice, so the server-wide default used for
+        omitted API fields does not apply here.
         """
         return self.cleaned_data["format"] or None
 

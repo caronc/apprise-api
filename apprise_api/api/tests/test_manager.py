@@ -22,14 +22,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import base64
-from importlib import import_module
 import json
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
 from django.urls import Resolver404, resolve
 
-from ..utils import AppriseStoreMode
+from ..utils import (
+    CONFIG_AUTH_ASSIGNED,
+    CONFIG_AUTH_GLOBAL,
+    CONFIG_KEY_MAX_LENGTH,
+    AppriseStoreMode,
+    ConfigAuthState,
+    can_move_or_delete_configuration,
+)
 
 
 class ManagerPageTests(SimpleTestCase):
@@ -66,6 +73,16 @@ class ManagerPageTests(SimpleTestCase):
             response = self.client.get("/cfg/")
             assert response.status_code == 200
 
+        # A locked deployment without authentication does not expose IDs.
+        with override_settings(
+            APPRISE_ADMIN=True,
+            APPRISE_STATEFUL_MODE="simple",
+            APPRISE_CONFIG_LOCK=True,
+            APPRISE_AUTH_REQUIRED=False,
+        ):
+            response = self.client.get("/cfg/")
+            assert response.status_code == 403
+
         # An invalid key was specified
         response = self.client.get("/cfg/**invalid-key**")
         assert response.status_code == 404
@@ -74,33 +91,137 @@ class ManagerPageTests(SimpleTestCase):
         response = self.client.get("/cfg/valid-key")
         assert response.status_code == 200
 
-    def test_new_configuration_link_captures_href_before_confirmation(self):
-        """
-        The new configuration confirmation resolves asynchronously, so the
-        click event's currentTarget can no longer be used inside the callback.
-        """
+    @override_settings(
+        APPRISE_ADMIN=True,
+        APPRISE_STATEFUL_MODE="simple",
+        APPRISE_CONFIG_LOCK=True,
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode(),
+    )
+    def test_locked_admin_can_list_configurations(self):
+        """CONFIG_LOCK still permits the authenticated administrator's list."""
+        response = self.client.get(
+            "/cfg/",
+            headers={
+                "authorization": "Basic " + base64.b64encode(b"master:pass").decode(),
+                "accept": "application/json",
+            },
+        )
+        assert response.status_code == 200
+
+    @override_settings(APPRISE_STATEFUL_MODE="disabled")
+    def test_disabled_stateful_mode_rejects_persistent_api_routes(self):
+        """Every persistent API route stops before touching the store."""
+        json_headers = {"accept": "application/json"}
+        requests = (
+            ("post", "/add/state_off", {"data": {"urls": "json://localhost"}}),
+            ("post", "/get/state_off", {}),
+            ("post", "/del/state_off", {}),
+            (
+                "post",
+                "/move/state_off",
+                {"data": json.dumps({"to": "state_on"}), "content_type": "application/json"},
+            ),
+            (
+                "post",
+                "/auth/state_off",
+                {"data": json.dumps({"username": "alice", "password": "secret"}), "content_type": "application/json"},
+            ),
+            ("delete", "/auth/state_off", {}),
+            ("post", "/notify/state_off", {"data": {"body": "test", "tag": "all"}}),
+            ("get", "/json/urls/state_off", {}),
+            ("get", "/auth/state_off", {}),
+        )
+
+        for method, path, kwargs in requests:
+            response = getattr(self.client, method)(path, headers=json_headers, **kwargs)
+            assert response.status_code == 403, path
+            assert response.json()["error"] == "Persistent configuration storage is disabled"
+
+        # Stateless /notify remains separate and reaches its normal validation.
+        response = self.client.post("/notify", headers=json_headers)
+        assert response.status_code == 400
+
+        # The shared template policy also fails closed in stateless mode.
+        assert can_move_or_delete_configuration(SimpleNamespace()) is False
+
+    def test_stateful_mode_is_normalized_before_access_checks(self):
+        """Uppercase and unknown modes fail closed like the configured store."""
+        for mode in (" DISABLED ", "unknown"):
+            with override_settings(APPRISE_STATEFUL_MODE=mode):
+                response = self.client.post("/get/state_off", headers={"accept": "application/json"})
+            assert response.status_code == 403
+
+    def test_config_id_selection_and_generator_controls(self):
+        """Config IDs stay concealed and are submitted outside the URL."""
         response = self.client.get("/cfg/valid-key")
         assert response.status_code == 200
 
         content = response.content.decode("utf-8")
         assert content.index("config-auth-status") < content.index("config-id-label")
-        assert 'class="config-id is-concealed"' in content
-        assert "data-config-id-toggle" in content
+        assert 'id="config-id-select-form"' in content
+        assert 'action="/cfg/@"' in content
+        assert 'class="config-id-input"' in content
+        assert 'type="password"' in content
+        assert 'data-current-config-id="valid-key"' in content
+        assert 'maxlength="{}"'.format(CONFIG_KEY_MAX_LENGTH) in content
+        assert "return /^[-\\w]{{1,{}}}$/u.test(configId);".format(CONFIG_KEY_MAX_LENGTH) in content
+        assert 'class="btn-flat btn-small config-id-apply"' in content
+        assert "check_circle" in content
         assert 'data-config-id-copy="valid-key"' in content
         assert "button.dataset.configIdCopy" in content
-        assert "const newConfigurationHref = cfgGenLink.href;" in content
-        assert "window.location.href = newConfigurationHref;" in content
-        assert "window.location.href = e.currentTarget.href;" not in content
+        assert "apprisePostConfigId(configId)" in content
+        assert "appriseConfirmConfigSelection(configId)" in content
+        assert "Any unsaved changes on this page will be lost." in content
         assert 'id="cfggen-config-id"' in content
         assert 'aria-controls="cfggen-config-id"' in content
-        assert "content_copy" in content
+        assert 'id="cfggen-randomize"' in content
+        assert "window.crypto.getRandomValues(bytes)" in content
         assert "appriseCopyToClipboard(" in content
         assert "Config ID copied to clipboard" in content
         assert "snippet-config-id is-concealed" in content
         assert "snippet-visibility-btn" in content
+        assert "visibility_off</i>" in content
+        assert "show ? 'visibility' : 'visibility_off'" in content
         assert "NodeFilter.SHOW_TEXT" in content
+        assert "data-snippet-config-id" in content
+        assert "nodeValue.includes(markedConfigId)" in content
+        assert "node.nodeValue.split(markedConfigId)" in content
         assert "data-copy-text='valid-key'" in content
         assert "const copyText = snippet.dataset.copyText" in content
+
+    def test_config_id_matching_command_word_is_not_concealed(self):
+        """Only marked Config ID tokens are hidden when the ID is apprise."""
+        response = self.client.get("/cfg/apprise")
+        assert response.status_code == 200
+
+        content = response.content.decode()
+        assert 'data-copy-text=\'apprise --body="Test Message"' in content
+        assert "nodeValue.includes(markedConfigId)" in content
+        assert "nodeValue.includes(configId)" not in content
+
+    def test_open_config_switch_uses_private_cookie(self):
+        """An open deployment switches Config IDs without a keyed URL."""
+        response = self.client.post(
+            "/cfg/@",
+            {"key": "selected-key"},
+            headers={"accept": "text/html"},
+        )
+
+        assert response.status_code == 302
+        assert response.url == "/cfg/@"
+        assert response.cookies["key"].value == "selected-key"
+
+        page = self.client.get("/cfg/@", headers={"accept": "text/html"})
+        assert page.status_code == 200
+        assert 'value="selected-key"' in page.content.decode()
+
+        invalid = self.client.post(
+            "/cfg/@",
+            {"key": "invalid key"},
+            headers={"accept": "text/html"},
+        )
+        assert invalid.status_code == 400
 
     def test_configuration_fetch_requests_json(self):
         """The configuration editor explicitly requests a JSON response."""
@@ -290,19 +411,18 @@ class ManagerPageTests(SimpleTestCase):
     def test_manage_cfg_list_reports_users(self):
         """Each API entry reports its assigned configuration username."""
         mod = resolve("/cfg/").func.__module__
-        storage_error = import_module(mod).AppriseAuthStorageError
         with (
             patch(
                 f"{mod}.ConfigCache.keys",
                 return_value=["open", "shared", "password-only", "damaged"],
             ),
             patch(
-                f"{mod}.ConfigCache.get_auth_record",
+                f"{mod}.config_auth_state",
                 side_effect=[
-                    None,
-                    ("alice", "digest"),
-                    ("", "digest"),
-                    storage_error("bad lock"),
+                    ConfigAuthState(CONFIG_AUTH_GLOBAL),
+                    ConfigAuthState(CONFIG_AUTH_ASSIGNED, username="alice"),
+                    ConfigAuthState(CONFIG_AUTH_ASSIGNED, username=""),
+                    ConfigAuthState(CONFIG_AUTH_ASSIGNED, unreadable=True),
                 ],
             ),
         ):
@@ -337,13 +457,7 @@ class ManagerPageTests(SimpleTestCase):
 
     @override_settings(APPRISE_API_ONLY=True, APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE=AppriseStoreMode.SIMPLE)
     def test_api_only_still_serves_json_for_details_and_config_list(self) -> None:
-        """
-        APPRISE_API_ONLY disables the browsable HTML pages, not the JSON
-        API itself: a client explicitly asking for JSON is still "using
-        the API" (see the README's own description of this setting) and
-        must get its data back, even though the same paths remain blocked
-        for a browser-style request (no explicit JSON preference).
-        """
+        """API-only mode keeps JSON available while hiding HTML pages."""
         json_capable_paths = ("/cfg", "/details")
         for path in json_capable_paths:
             response = self.client.get(path, **{"HTTP_ACCEPT": "application/json"})

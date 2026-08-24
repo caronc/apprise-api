@@ -254,12 +254,12 @@ Side Nav (replaces legacy Materialize collection sidebar)
   margin-top: 0;
 }
 
-.nav ul li.api-status-nav,
+.nav ul .api-status-nav,
 .nav ul li .apprise-lib-ver {
   font-size: 0.75rem;
 }
 
-.nav ul li.api-status-nav {
+.nav ul .api-status-nav {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
@@ -268,12 +268,17 @@ Side Nav (replaces legacy Materialize collection sidebar)
 }
 
 /* Social + theme icon row in the nav */
+li.auth-health-nav,
 li.social-theme-nav {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 0.35rem;
   margin-top: 0.3rem;
+}
+
+li.auth-health-nav {
+  margin-top: 0.18rem;
 }
 
 li.social-theme-nav a {
@@ -1573,6 +1578,8 @@ body .tabs .tab.disabled a:hover i {
 
 #url-list .copy-url-btn,
 .config-id-visibility.btn-flat,
+.config-id-apply.btn-flat,
+.config-id-randomize.btn-flat,
 .config-id-copy.btn-flat,
 .config-list-move.btn-flat,
 .config-list-delete.btn-flat,
@@ -1591,6 +1598,7 @@ body .tabs .tab.disabled a:hover i {
 
 #url-list .copy-url-btn .material-icons,
 .config-id-visibility.btn-flat .material-icons,
+.config-id-apply.btn-flat .material-icons,
 .config-id-copy.btn-flat .material-icons,
 .config-list-move.btn-flat .material-icons,
 .config-list-delete.btn-flat .material-icons,
@@ -1619,6 +1627,14 @@ body .tabs .tab.disabled a:hover i {
   opacity: 0.65;
 }
 
+.config-id-select-form {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
 .config-id-wrapper {
   display: inline-flex;
   align-items: center;
@@ -1631,6 +1647,37 @@ body .tabs .tab.disabled a:hover i {
 .config-id-visibility.btn-flat,
 .config-id-copy.btn-flat {
   margin-left: 0.1rem;
+}
+
+.config-id-apply.btn-flat {
+  color: #f29f3d;
+}
+
+.config-id-apply.btn-flat[hidden] {
+  display: none;
+}
+
+.config-id-randomize.btn-flat span,
+.config-id-randomize.btn-flat svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.config-id-input {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0.15em 0.45em !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+  border-radius: 0.3rem !important;
+  box-shadow: none !important;
+  font-family: monospace;
+  font-size: 1em !important;
+  font-weight: 700;
 }
 
 code.config-id {
@@ -2175,6 +2222,10 @@ Authentication Editor
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.swal2-popup .cfggen-modal-copy .config-id-input {
+  width: auto;
 }
 
 .code-snippet {

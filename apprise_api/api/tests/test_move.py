@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 import base64
 from json import dumps
+import os
 from unittest import mock
 from unittest.mock import patch
 
@@ -96,7 +97,7 @@ class MoveTests(SimpleTestCase):
         self._seed("move_src")
         response = self.client.post(
             "/move/move_src",
-            data=dumps({"to_config_id": "move_dst"}),
+            data=dumps({"to": "move_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
@@ -108,7 +109,7 @@ class MoveTests(SimpleTestCase):
         """Moving a key with nothing stored reports 404, not a false success."""
         response = self.client.post(
             "/move/move_missing",
-            data=dumps({"to_config_id": "move_dst"}),
+            data=dumps({"to": "move_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
@@ -121,7 +122,7 @@ class MoveTests(SimpleTestCase):
         self._seed("move_conflict_dst", url="mailto://other@yahoo.ca")
         response = self.client.post(
             "/move/move_conflict_src",
-            data=dumps({"to_config_id": "move_conflict_dst"}),
+            data=dumps({"to": "move_conflict_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
@@ -148,19 +149,19 @@ class MoveTests(SimpleTestCase):
         self._seed("move_reused_src", url="mailto://other@yahoo.ca")
         response = self.client.post(
             "/move/move_reused_src",
-            data=dumps({"to_config_id": "move_reused_dst"}),
+            data=dumps({"to": "move_reused_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
         assert response.status_code == 200
         assert self._exists("move_reused_dst")
 
-    def test_move_to_config_id_must_differ_from_source(self):
+    def test_move_to_must_differ_from_source(self):
         """Moving a key onto itself is a no-op request, rejected up front."""
         self._seed("move_same")
         response = self.client.post(
             "/move/move_same",
-            data=dumps({"to_config_id": "move_same"}),
+            data=dumps({"to": "move_same"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
@@ -172,32 +173,76 @@ class MoveTests(SimpleTestCase):
         self._seed("move_formsame_src")
         response = self.client.post(
             "/move/move_formsame_src",
-            data={"from_config_id": "move_formsame_src", "to_config_id": "move_formsame_src"},
+            data={"from": "move_formsame_src", "to": "move_formsame_src"},
             headers=_GOOD_MASTER,
         )
         assert response.status_code == 400
         assert self._exists("move_formsame_src")
 
-    def test_move_invalid_to_config_id_rejected(self):
+    def test_move_invalid_to_rejected(self):
         """A destination key that doesn't match the accepted key format is rejected."""
         self._seed("move_src")
         response = self.client.post(
             "/move/move_src",
-            data=dumps({"to_config_id": "not a valid key!"}),
+            data=dumps({"to": "not a valid key!"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
         assert response.status_code == 400
         assert self._exists("move_src")
 
-    @override_settings(APPRISE_CONFIG_LOCK=True)
-    def test_move_with_lock(self):
-        """A locked site refuses every move, mirroring /add and /del."""
+    def test_move_requires_to(self):
+        """The JSON payload must name its destination with ``to``."""
+        self._seed("move_src")
         response = self.client.post(
             "/move/move_src",
-            data=dumps({"to_config_id": "move_dst"}),
+            data=dumps({}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
+        )
+        assert response.status_code == 400
+        assert response.json()["field"] == "to"
+        assert self._exists("move_src")
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_move_with_lock(self):
+        """An authenticated administrator may move entries under CONFIG_LOCK."""
+        with override_settings(APPRISE_CONFIG_LOCK=False):
+            self._seed("move_src")
+
+        response = self.client.post(
+            "/move/move_src",
+            data=dumps({"to": "move_dst"}),
+            content_type="application/json",
+            headers={**_GOOD_MASTER, "accept": "application/json"},
+        )
+        assert response.status_code == 200
+        with override_settings(APPRISE_CONFIG_LOCK=False):
+            assert self._exists("move_dst")
+
+    @override_settings(APPRISE_CONFIG_LOCK=True, APPRISE_AUTH_REQUIRED=False)
+    def test_open_locked_site_denies_move(self):
+        """CONFIG_LOCK remains private when authentication is disabled."""
+        response = self.client.post(
+            "/move/move_src",
+            data=dumps({"to": "move_dst"}),
+            content_type="application/json",
+            headers={"accept": "application/json"},
+        )
+        assert response.status_code == 403
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_locked_shared_user_cannot_move(self):
+        """A configuration login cannot reorganize locked storage."""
+        with override_settings(APPRISE_CONFIG_LOCK=False):
+            self._seed("move_user_src")
+        assert ConfigCache.set_auth("move_user_src", "alice", "secret") is True
+
+        response = self.client.post(
+            "/move/move_user_src",
+            data=dumps({"to": "move_user_dst"}),
+            content_type="application/json",
+            headers={"authorization": _basic("alice", "secret"), "accept": "application/json"},
         )
         assert response.status_code == 403
 
@@ -208,7 +253,7 @@ class MoveTests(SimpleTestCase):
 
         response = self.client.post(
             "/move/move_lock_src",
-            data=dumps({"to_config_id": "move_lock_dst"}),
+            data=dumps({"to": "move_lock_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
@@ -224,7 +269,7 @@ class MoveTests(SimpleTestCase):
 
         response = self.client.post(
             "/move/move_lockonly_src",
-            data=dumps({"to_config_id": "move_lockonly_dst"}),
+            data=dumps({"to": "move_lockonly_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
@@ -233,13 +278,23 @@ class MoveTests(SimpleTestCase):
         assert ConfigCache.get_auth("move_lockonly_src") is None
         assert not self._exists("move_lockonly_dst")
 
-    def test_move_falls_back_to_a_locked_copy_when_rename_fails(self):
-        """A rename failure (e.g. a filesystem boundary) still completes the move via copy."""
+    def test_move_falls_back_to_a_locked_copy_when_link_fails(self):
+        """A hard-link failure still completes the move through a guarded copy."""
         self._seed("move_copy_src")
-        with patch("os.rename", side_effect=OSError("cross-device link")):
+        real_link = os.link
+        calls = 0
+
+        def first_link_fails(src, dst):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise OSError("cross-device link")
+            return real_link(src, dst)
+
+        with patch("os.link", side_effect=first_link_fails):
             response = self.client.post(
                 "/move/move_copy_src",
-                data=dumps({"to_config_id": "move_copy_dst"}),
+                data=dumps({"to": "move_copy_dst"}),
                 content_type="application/json",
                 headers={**_GOOD_MASTER, "accept": "application/json"},
             )
@@ -247,16 +302,16 @@ class MoveTests(SimpleTestCase):
         assert self._exists("move_copy_dst")
         assert not self._exists("move_copy_src")
 
-    def test_move_reports_failure_and_leaves_the_source_untouched_when_copy_also_fails(self):
-        """When both rename and the copy fallback fail, nothing is lost and 500 is reported."""
+    def test_move_copy_failure_preserves_source(self):
+        """When both link and copy fail, nothing is lost and 500 is reported."""
         self._seed("move_copyfail_src")
         with (
-            patch("os.rename", side_effect=OSError("cross-device link")),
+            patch("os.link", side_effect=OSError("cross-device link")),
             patch("shutil.copy2", side_effect=OSError("disk full")),
         ):
             response = self.client.post(
                 "/move/move_copyfail_src",
-                data=dumps({"to_config_id": "move_copyfail_dst"}),
+                data=dumps({"to": "move_copyfail_dst"}),
                 content_type="application/json",
                 headers={**_GOOD_MASTER, "accept": "application/json"},
             )
@@ -270,7 +325,7 @@ class MoveTests(SimpleTestCase):
         with patch("api.views.healthcheck", return_value={"can_write_config": False, "details": []}):
             response = self.client.post(
                 "/move/move_hc_src",
-                data=dumps({"to_config_id": "move_hc_dst"}),
+                data=dumps({"to": "move_hc_dst"}),
                 content_type="application/json",
                 headers={**_GOOD_MASTER, "accept": "application/json"},
             )
@@ -284,31 +339,27 @@ class MoveTests(SimpleTestCase):
         assert ConfigCache.set_auth("move_user_src", "alice", "secret") is True
         user_creds = {"authorization": _basic("alice", "secret")}
 
-        # A JSON payload's source is always the URL/header key itself --
-        # there is no from_config_id field to smuggle a different key
-        # through.
+        # JSON always uses the URL or header key as its source.
         response = self.client.post(
             "/move/move_user_src",
-            data=dumps({"to_config_id": "move_user_dst"}),
+            data=dumps({"to": "move_user_dst"}),
             content_type="application/json",
             headers={**user_creds, "accept": "application/json"},
         )
         assert response.status_code == 200
         assert self._exists("move_user_dst")
 
-    def test_move_restricted_user_cannot_redirect_a_different_source_key_via_the_html_form(self):
-        """The HTML form's from_config_id is read-only for a restricted user, enforced server-side too."""
+    def test_shared_user_cannot_override_form_source(self):
+        """The HTML form's from is read-only for a restricted user, enforced server-side too."""
         self._seed("move_user_src")
         self._seed("move_user_other")
         assert ConfigCache.set_auth("move_user_src", "alice", "secret") is True
         user_creds = {"authorization": _basic("alice", "secret")}
 
-        # Authenticated against move_user_src (via the URL), but the form
-        # payload claims a different from_config_id -- must be rejected,
-        # not silently substituted or honored.
+        # The submitted source must match the key used to authenticate.
         response = self.client.post(
             "/move/move_user_src",
-            data={"from_config_id": "move_user_other", "to_config_id": "move_user_dst"},
+            data={"from": "move_user_other", "to": "move_user_dst"},
             headers=user_creds,
         )
         assert response.status_code in (400, 401, 403)
@@ -320,19 +371,19 @@ class MoveTests(SimpleTestCase):
         self._seed("move_admin_src")
         response = self.client.post(
             "/move/move_admin_src",
-            data=dumps({"to_config_id": "move_admin_dst"}),
+            data=dumps({"to": "move_admin_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
         assert response.status_code == 200
         assert self._exists("move_admin_dst")
 
-    def test_move_admin_can_redirect_a_different_from_config_id_via_the_html_form(self):
+    def test_admin_can_override_form_source(self):
         """An administrator's form may target any key, not just the one in the URL."""
         self._seed("move_admin_src")
         response = self.client.post(
             "/move/some_other_key_in_the_url",
-            data={"from_config_id": "move_admin_src", "to_config_id": "move_admin_dst"},
+            data={"from": "move_admin_src", "to": "move_admin_dst"},
             headers=_GOOD_MASTER,
         )
         assert response.status_code == 200
@@ -343,7 +394,7 @@ class MoveTests(SimpleTestCase):
         """No URL key and no X-Apprise-Config-ID header is a plain bad request."""
         response = self.client.post(
             "/move/",
-            data=dumps({"to_config_id": "move_dst"}),
+            data=dumps({"to": "move_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json"},
         )
@@ -353,7 +404,7 @@ class MoveTests(SimpleTestCase):
         """An X-Apprise-Config-ID header that fails the key pattern is rejected outright."""
         response = self.client.post(
             "/move/",
-            data=dumps({"to_config_id": "move_dst"}),
+            data=dumps({"to": "move_dst"}),
             content_type="application/json",
             headers={**_GOOD_MASTER, "accept": "application/json", "X-Apprise-Config-ID": "not a valid key!!"},
         )
@@ -368,7 +419,7 @@ class MoveTests(SimpleTestCase):
 
         response = self.client.post(
             "/move/move_user_other",
-            data=dumps({"to_config_id": "move_user_dst"}),
+            data=dumps({"to": "move_user_dst"}),
             content_type="application/json",
             headers={**user_creds, "accept": "application/json"},
         )
@@ -376,7 +427,7 @@ class MoveTests(SimpleTestCase):
         assert self._exists("move_user_other")
 
     def test_move_form_redirect_denied_when_key_auth_fails(self):
-        """A from_config_id override is still checked with key_auth_ok, even
+        """A from override is still checked with key_auth_ok, even
         after the caller already cleared the URL key's own check."""
         self._seed("move_admin_src")
         with mock.patch(
@@ -385,7 +436,7 @@ class MoveTests(SimpleTestCase):
         ):
             response = self.client.post(
                 "/move/some_other_key_in_the_url",
-                data={"from_config_id": "move_admin_src", "to_config_id": "move_admin_dst"},
+                data={"from": "move_admin_src", "to": "move_admin_dst"},
                 headers=_GOOD_MASTER,
             )
         assert response.status_code == 401
@@ -398,7 +449,7 @@ class MoveTests(SimpleTestCase):
         with mock.patch("json.loads", side_effect=RequestDataTooBig()):
             response = self.client.post(
                 "/move/move_src",
-                data=dumps({"to_config_id": "move_dst"}),
+                data=dumps({"to": "move_dst"}),
                 content_type="application/json",
                 headers={**_GOOD_MASTER, "accept": "application/json"},
             )

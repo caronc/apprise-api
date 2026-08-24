@@ -22,37 +22,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-# Runs one scheduled Django prune command under supervisord.
-# Both prune jobs share this script and cannot run at the same time.
-#
-# Usage: pruner-loop.sh <django-command> <interval-env-var> <default-interval-seconds> <initial-delay-seconds>
-#
-#   <django-command>            storeprune or authprune
-#   <interval-env-var>          environment variable that sets the interval
-#   <default-interval-seconds>  fallback interval
-#   <initial-delay-seconds>     delay before the first run
+# Runs the combined Django prune command under supervisord.
 set -u
 
-COMMAND="$1"
-INTERVAL_VAR="$2"
-DEFAULT_INTERVAL="$3"
-INITIAL_DELAY="$4"
-
-# One lock prevents the two prune jobs from overlapping.
+# The lock also prevents an accidental second loop from overlapping this one.
 LOCK_FILE="/tmp/apprise/pruner.lock"
 
-# Reject invalid values and zero, which would create a busy loop.
+# Keep values within a range Bash can compare safely. The interval must leave
+# at least one second for a shorter prune timeout.
 _positive_int() {
-   [[ "$1" =~ ^[1-9][0-9]*$ ]]
+   [[ "$1" =~ ^[1-9][0-9]{0,8}$ ]]
 }
 
-# Indirect expansion: reads the env var *named* by $INTERVAL_VAR.
-raw_interval="${!INTERVAL_VAR:-$DEFAULT_INTERVAL}"
-if _positive_int "$raw_interval"; then
+raw_interval="${APPRISE_PRUNE_INTERVAL_SECONDS:-86400}"
+if _positive_int "$raw_interval" && [ "$raw_interval" -ge 2 ]; then
    interval="$raw_interval"
 else
-   echo "pruner-loop: ${INTERVAL_VAR}='${raw_interval}' is not a positive integer, using default ${DEFAULT_INTERVAL}s"
-   interval="$DEFAULT_INTERVAL"
+   echo "pruner-loop: APPRISE_PRUNE_INTERVAL_SECONDS='${raw_interval}' must be an integer of at least 2, using default 86400s"
+   interval=86400
 fi
 
 raw_timeout="${APPRISE_PRUNE_TIMEOUT_SECONDS:-28800}"
@@ -63,24 +50,38 @@ else
    timeout_seconds=28800
 fi
 
-echo "pruner-loop: scheduling '${COMMAND}' every ${interval}s (first run in ${INITIAL_DELAY}s, timeout ${timeout_seconds}s)"
-sleep "$INITIAL_DELAY"
+# A prune must end before another cycle is due. Keep custom intervals safe
+# even when the administrator leaves the timeout at its longer default.
+if [ "$timeout_seconds" -ge "$interval" ]; then
+   timeout_seconds=$((interval - 1))
+   echo "pruner-loop: limiting prune timeout to ${timeout_seconds}s so it remains shorter than the interval"
+fi
+
+# Give Python a short chance to exit cleanly, then stop it unconditionally.
+kill_grace=30
+if [ "$timeout_seconds" -lt "$kill_grace" ]; then
+   kill_grace="$timeout_seconds"
+fi
+
+echo "pruner-loop: scheduling pruning every ${interval}s (timeout ${timeout_seconds}s)"
 
 while true; do
    # Match the common enabled values accepted by the application.
    case "${APPRISE_PRUNE_ENABLED:-yes}" in
       [Yy1Tt]* | [Ee][Nn]* | [Aa][Cc]* | +)
-         # Run at low I/O and CPU priority with a time limit.
-         # Skip this cycle if the other prune job holds the lock.
-         flock -n "$LOCK_FILE" ionice -c3 nice -n 19 timeout "$timeout_seconds" python3 manage.py "$COMMAND"
+         # Run at low I/O and CPU priority. A second signal forcibly ends a
+         # prune that does not respond when its time limit expires.
+         flock -n "$LOCK_FILE" ionice -c3 nice -n 19 \
+            timeout --signal=TERM --kill-after="${kill_grace}s" "${timeout_seconds}s" \
+            python3 manage.py prune
          rc=$?
          if [ "$rc" -ne 0 ]; then
-            echo "pruner-loop: '${COMMAND}' did not complete this cycle" \
+            echo "pruner-loop: pruning did not complete this cycle" \
                  "(exit ${rc} -- failed, timed out, or another prune was already running)"
          fi
          ;;
       *)
-         echo "pruner-loop: skipped '${COMMAND}' (APPRISE_PRUNE_ENABLED=${APPRISE_PRUNE_ENABLED:-yes})"
+         echo "pruner-loop: skipped pruning (APPRISE_PRUNE_ENABLED=${APPRISE_PRUNE_ENABLED:-yes})"
          ;;
    esac
    sleep "$interval"

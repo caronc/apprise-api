@@ -39,6 +39,9 @@ urlpatterns = [
         name="health_key",
     ),
     re_path(r"^details/?$", views.DetailsView.as_view(), name="details"),
+    # Browser sessions can keep their current ID out of the address bar. The
+    # '@' cannot collide with a valid configuration ID.
+    re_path(r"^cfg/@/?$", views.CurrentConfigView.as_view(), name="config_current"),
     re_path(
         r"^cfg/{}/?$".format(_KEY),
         views.ConfigView.as_view(),
@@ -55,6 +58,7 @@ urlpatterns = [
     re_path(r"^get/?$", views.GetView.as_view(), name="get_by_header"),
     re_path(r"^move/{}/?$".format(_KEY), views.MoveView.as_view(), name="move"),
     re_path(r"^move/?$", views.MoveView.as_view(), name="move_by_header"),
+    re_path(r"^auth/@/?$", views.CurrentAuthView.as_view(), name="auth_current"),
     re_path(
         r"^auth/{}/?$".format(_KEY),
         views.AuthView.as_view(),

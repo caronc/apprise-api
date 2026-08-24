@@ -21,13 +21,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-"""Provide a small CSRF safeguard without requiring CSRF tokens.
+"""Protect browser changes without requiring Django CSRF tokens.
 
-Django's CsrfViewMiddleware requires browser cookies and tokens for POST and
-DELETE requests. That would change the documented ability to call this API
-directly from curl or another application. This middleware instead rejects
-cross-site browser requests with a different Origin header. Calls without an
-Origin header continue normally.
+Django's token flow would also apply to curl, mobile apps, and other API
+clients. Instead, this middleware rejects browser requests from another site.
+Requests without an Origin header continue normally.
 """
 
 from urllib.parse import urlsplit
@@ -43,13 +41,16 @@ _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 def _same_origin(request, origin_header):
-    """True when `origin_header` names this same server.
+    """Return whether the Origin belongs to this server.
 
-    ``APPRISE_TRUSTED_ORIGINS`` compares scheme, host, and port. Without it,
-    only host and port are compared because bundled nginx does not forward
-    the browser's original scheme. HTTPS deployments should set the list.
+    Trusted origins include the scheme. Otherwise, only host and port are
+    checked because bundled nginx does not forward the original scheme.
     """
-    origin = urlsplit(origin_header)
+    try:
+        origin = urlsplit(origin_header)
+    except ValueError:
+        # Invalid hosts, such as an incomplete IPv6 address, are untrusted.
+        return False
 
     if settings.APPRISE_TRUSTED_ORIGINS:
         full_origin = "{}://{}".format(origin.scheme, origin.netloc).lower()

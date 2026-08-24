@@ -24,6 +24,7 @@
 
 from pathlib import Path
 
+from api.utils import CONFIG_KEY_MAX_LENGTH
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
@@ -70,13 +71,24 @@ class ErrorTests(SimpleTestCase):
         assert b"Too Many Requests" in response.content
 
     def test_nginx_maps_auth_error_pages(self):
-        """Both packaged nginx modes send authentication errors to Django."""
+        """Nginx keeps local pages while preserving Django auth responses."""
         etc_dir = Path(__file__).resolve().parents[2] / "etc"
         for filename in ("nginx.conf", "nginx-strict.conf"):
             config = (etc_dir / filename).read_text(encoding="utf-8")
             with self.subTest(filename=filename):
                 assert "error_page 401 = /_/401/;" in config
                 assert "error_page 429 = /_/429/;" in config
+                assert "proxy_intercept_errors off;" in config
+                assert 'location ~ "^/login/?$"' in config
+                assert "limit_req zone=auth burst=5 nodelay;" in config
+                assert "limit_req_status 429;" in config
+                assert "limit_req_zone $auth_limit_key zone=auth:10m rate=1r/s;" in config
+                assert 'location ~ "^/cfg/([\\w_-]{{1,{}}}|@)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
+
+        strict = (etc_dir / "nginx-strict.conf").read_text(encoding="utf-8")
+        assert 'location ~ "^/logout/?$"' in strict
+        assert 'location ~ "^/auth(/([\\w_-]{{1,{}}}|@))?/?$"'.format(CONFIG_KEY_MAX_LENGTH) in strict
+        assert "if ($request_method !~ ^(GET|POST|DELETE)$)" in strict
 
     def test_get_401(self):
         """The static authentication page includes its challenge header."""

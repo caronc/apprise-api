@@ -28,7 +28,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from ..utils import ConfigCache
+from ..utils import CONFIG_KEY_MAX_LENGTH, ConfigCache
 
 
 def _basic(user, password):
@@ -58,7 +58,7 @@ class DelTests(SimpleTestCase):
         key = h.hexdigest()
 
         # Our limit
-        assert len(key) == 128
+        assert len(key) == CONFIG_KEY_MAX_LENGTH
 
         # Add our URL
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
@@ -87,6 +87,25 @@ class DelTests(SimpleTestCase):
         # We simply do not have permission to do so
         response = self.client.post("/del/{}".format(key))
         assert response.status_code == 403
+
+    @override_settings(
+        APPRISE_CONFIG_LOCK=True,
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+    )
+    def test_locked_admin_can_delete(self):
+        """An authenticated administrator may delete a locked entry."""
+        key = "test_delete_locked_admin"
+        with override_settings(APPRISE_CONFIG_LOCK=False):
+            response = self.client.post(
+                "/add/{}".format(key),
+                {"urls": "mailto://user:pass@yahoo.ca"},
+                headers=_GOOD_MASTER,
+            )
+        assert response.status_code == 200
+
+        response = self.client.post("/del/{}".format(key), headers=_GOOD_MASTER)
+        assert response.status_code == 200
 
     def test_del_post(self):
         """
@@ -123,12 +142,7 @@ class DelTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_del_restricted_user_denied_for_own_key(self):
-        """A per-key (shared) credential can never delete outright, even for its own key.
-
-        Otherwise a user handed only their own key's login could delete it
-        and lock themselves out entirely -- they can still relocate it via
-        /move, just never remove it.
-        """
+        """A configuration user may move their key but cannot delete it."""
         key = "test_delete_restricted_user"
         response = self.client.post(
             "/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"}, headers=_GOOD_MASTER
@@ -139,9 +153,8 @@ class DelTests(SimpleTestCase):
 
         response = self.client.post("/del/{}".format(key), headers={**user_creds, "accept": "application/json"})
         assert response.status_code == 403
-        # A stable, non-localized marker so a client can tell this apart
-        # from the (also 403) site-wide APPRISE_CONFIG_LOCK denial.
-        assert response.json()["reason"] == "admin_required"
+        # Keep error responses consistent with the other API endpoints.
+        assert set(response.json()) == {"error"}
 
         # The configuration is still there afterward.
         response = self.client.post("/get/{}".format(key), headers=user_creds)

@@ -55,6 +55,26 @@ class UtilsTests(SimpleTestCase):
                 request = factory.get("/", **headers)
                 assert utils.is_json_response(request) is expected
 
+    def test_html_response_negotiation(self):
+        """HTML must be preferred, not merely listed as an API fallback."""
+        cases = (
+            ("text/html", True),
+            ("text/html,application/json", True),
+            ("application/json,text/html", False),
+            ("application/json,text/html;q=0", False),
+            ("text/html;q=0.5,application/json;q=0.9", False),
+            ("text/html;q=bogus,application/json", False),
+            ("text/html;level=1", True),
+            ("text/html;q=5,application/json;q=0.9", True),
+            ("*/*", False),
+            ("", False),
+        )
+        factory = RequestFactory()
+        for accept, expected in cases:
+            with self.subTest(accept=accept):
+                request = factory.get("/", HTTP_ACCEPT=accept)
+                assert utils.is_html_response(request) is expected
+
     def test_touchdir(self):
         """
         Test touchdir()

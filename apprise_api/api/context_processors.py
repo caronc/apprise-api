@@ -24,7 +24,14 @@
 import apprise
 from django.conf import settings
 
-from .utils import ConfigCache, gen_unique_config_id
+from .utils import (
+    CONFIG_KEY_MAX_LENGTH,
+    WEB_AUTH_COOKIE,
+    ConfigCache,
+    can_list_configurations,
+    can_move_or_delete_configuration,
+    gen_unique_config_id,
+)
 
 
 def stateful_mode(request):
@@ -56,8 +63,15 @@ def authentication(request):
         "AUTH_ADMIN_ENABLED": settings.APPRISE_BASIC_AUTH_TOKEN is not None,
         "AUTH_PERMISSION": getattr(request, "apprise_auth_permission", "disabled"),
         "AUTH_USERNAME": getattr(request, "apprise_auth_username", None),
-        # With auth disabled, the site keeps its original open behavior.
-        "CAN_LIST_CONFIGS": not auth_enabled or getattr(request, "globally_authenticated", False),
+        # Current-config aliases are offered only after the signed browser
+        # session was restored. Direct and cookie-free clients keep keyed URLs.
+        # Open deployments can use the ordinary Config ID cookie too. Keyed
+        # URLs remain available when cookies are disabled.
+        "COOKIE_CONFIG_URLS": bool(
+            request.COOKIES.get(WEB_AUTH_COOKIE) or (not auth_enabled and request.COOKIES.get("key"))
+        ),
+        "CAN_LIST_CONFIGS": can_list_configurations(request),
+        "CAN_MOVE_CONFIG": can_move_or_delete_configuration(request),
     }
 
 
@@ -83,7 +97,10 @@ def default_config_id(request):
     """
     # Authentication can reject a request before config detection runs.
     config_id = getattr(request, "default_config_id", settings.APPRISE_DEFAULT_CONFIG_ID)
-    return {"DEFAULT_CONFIG_ID": config_id}
+    return {
+        "CONFIG_KEY_MAX_LENGTH": CONFIG_KEY_MAX_LENGTH,
+        "DEFAULT_CONFIG_ID": config_id,
+    }
 
 
 def unique_config_id(request):

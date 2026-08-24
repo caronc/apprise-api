@@ -57,26 +57,56 @@
 
               APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
             </li>
-            <li class="api-status-nav">
-              <span>{% trans "API HEALTH" %}</span>
-              <a href="{% url 'health' %}" target="_new" id="nav-api-status-link">
-                <span id="nav-api-status-icon"
-                      class="api-status-icon status-icon-stack topbar-status-icon status-loading"
-                      aria-hidden="true">
-                  <span class="status-icon status-icon-loading">
-                    {% include 'icons/status-loading.svg' %}
+            <li class="auth-health-nav">
+              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
+                {% if AUTH_USERNAME %}
+                  <a class="auth-account {% if AUTH_PERMISSION == 'admin' %}is-master{% endif %}"
+                     href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
+                     aria-label="{% trans "Open Authentication Settings" %}">
+                    <span class="auth-account-icon" aria-hidden="true">
+                      {% include 'icons/user.svg' %}
+                    </span>
+                    <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
+                  </a>
+                  <span class="nav-divider auth-divider" aria-hidden="true"></span>
+                {% endif %}
+                <a class="auth-logout-link tooltipped"
+                   href="{% url 'logout' %}"
+                   aria-label="{% trans "Logout" %}"
+                   data-position="bottom"
+                   data-tooltip="{% trans "Logout" %}">
+                  <span class="auth-logout-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
                   </span>
-                  <span class="status-icon status-icon-ok">
-                    {% include 'icons/status-ok.svg' %}
+                </a>
+                <template id="logout-confirm-icon-template">
+                  <span class="logout-confirm-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
                   </span>
-                  <span class="status-icon status-icon-error">
-                    {% include 'icons/status-error.svg' %}
+                </template>
+                <span class="nav-divider auth-divider" aria-hidden="true"></span>
+              {% endif %}
+              <span class="api-status-nav">
+                <span>{% trans "API HEALTH" %}</span>
+                <a href="{% url 'health' %}" target="_new" id="nav-api-status-link">
+                  <span id="nav-api-status-icon"
+                        class="api-status-icon status-icon-stack topbar-status-icon status-loading"
+                        aria-hidden="true">
+                    <span class="status-icon status-icon-loading">
+                      {% include 'icons/status-loading.svg' %}
+                    </span>
+                    <span class="status-icon status-icon-ok">
+                      {% include 'icons/status-ok.svg' %}
+                    </span>
+                    <span class="status-icon status-icon-error">
+                      {% include 'icons/status-error.svg' %}
+                    </span>
+                    <span class="status-icon status-icon-disabled">
+                      {% include 'icons/status-disabled.svg' %}
+                    </span>
                   </span>
-                  <span class="status-icon status-icon-disabled">
-                    {% include 'icons/status-disabled.svg' %}
-                  </span>
-                </span>
-              </a>
+                </a>
+              </span>
             </li>
             <li class="social-theme-nav">
               <a href="https://github.com/caronc/apprise-api"
@@ -109,35 +139,6 @@
                   {% include 'icons/topbar-reddit.svg' %}
                 </span>
               </a>
-              <span class="nav-divider"></span>
-              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
-                {% if AUTH_USERNAME %}
-                  <a class="auth-account {% if AUTH_PERMISSION == 'master_lock' %}is-master{% endif %}"
-                     href="{% url 'auth' DEFAULT_CONFIG_ID %}"
-                     aria-label="{% trans "Open Authentication Settings" %}">
-                    <span class="auth-account-icon" aria-hidden="true">
-                      {% include 'icons/user.svg' %}
-                    </span>
-                    <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
-                  </a>
-                  <span class="nav-divider auth-divider" aria-hidden="true"></span>
-                {% endif %}
-                <a class="auth-logout-link tooltipped"
-                   href="{% url 'logout' %}"
-                   aria-label="{% trans "Logout" %}"
-                   data-position="bottom"
-                   data-tooltip="{% trans "Logout" %}">
-                  <span class="auth-logout-icon" aria-hidden="true">
-                    {% include 'icons/logout.svg' %}
-                  </span>
-                </a>
-                <template id="logout-confirm-icon-template">
-                  <span class="logout-confirm-icon" aria-hidden="true">
-                    {% include 'icons/logout.svg' %}
-                  </span>
-                </template>
-                <span class="nav-divider auth-divider" aria-hidden="true"></span>
-              {% endif %}
               <a id="theme-toggle"
                  href="{{ request.path }}?theme={{ request.next_theme }}"
                  data-theme="{{ request.theme|safe }}"
@@ -181,16 +182,15 @@
               {% if STATEFUL_MODE != 'disabled' %}
                 <div class="side-nav-label">{% trans "Site Controls" %}</div>
                 <nav class="side-nav-group">
-                  <a class="side-nav-item" href="{% url 'config' DEFAULT_CONFIG_ID %}">
+                  <a class="side-nav-item"
+                     href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' DEFAULT_CONFIG_ID %}{% endif %}">
                     <span class="menu-icon">
                       {% include 'icons/settings.svg' %}
                     </span>
                     <span class="side-nav-text">{% trans "Configuration Manager" %}</span>
                   </a>
-                  {% if not CONFIG_LOCK %}
-                    <a class="side-nav-item"
-                       id="cfg-gen"
-                       href="{% url 'config' UNIQUE_CONFIG_ID %}">
+                  {% if not CONFIG_LOCK and AUTH_PERMISSION != 'user' %}
+                    <a class="side-nav-item" id="cfg-gen" href="{% url 'config_current' %}">
                       <span class="menu-icon">
                         {% include 'icons/refresh.svg' %}
                       </span>
@@ -200,7 +200,7 @@
                   {% if AUTH_ENABLED %}
                     <a class="side-nav-item"
                        id="cfg-auth"
-                       href="{% url 'auth' DEFAULT_CONFIG_ID %}">
+                       href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}">
                       <span class="menu-icon">
                         {% include 'icons/lock.svg' %}
                       </span>
@@ -529,7 +529,9 @@
         const showing = input.type === 'text';
         const label = showing ? toggle.dataset.showLabel : toggle.dataset.hideLabel;
         input.type = showing ? 'password' : 'text';
-        toggle.querySelector('i').textContent = showing ? 'visibility' : 'visibility_off';
+        // The icon describes the resulting state: crossed out while hidden,
+        // and open while the value is visible.
+        toggle.querySelector('i').textContent = showing ? 'visibility_off' : 'visibility';
         toggle.setAttribute('aria-label', label);
         toggle.title = label;
         input.focus();
@@ -559,7 +561,7 @@
         toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
         toggle.setAttribute('aria-label', label);
         toggle.title = label;
-        toggle.querySelector('i').textContent = show ? 'visibility_off' : 'visibility';
+        toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';
       });
     });
   }
@@ -577,6 +579,65 @@
     });
   }
   appriseWireConfigIdCopy(document);
+
+  // Submit a Config ID as form data so it never appears in the address bar.
+  function apprisePostConfigId(configId) {
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = '{% url "config_current" %}';
+    form.hidden = true;
+    const field = document.createElement('input');
+    field.name = 'key';
+    field.value = configId;
+    form.appendChild(field);
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  function appriseValidConfigId(configId) {
+    return /^[-\w]{1,{{ CONFIG_KEY_MAX_LENGTH }}}$/u.test(configId);
+  }
+
+  function appriseConfirmConfigSelection(configId) {
+    if (!appriseValidConfigId(configId)) {
+      appriseShowStatusToast(
+        '{% trans "Enter a valid Config ID before continuing." %}',
+        false
+      );
+      return;
+    }
+
+    Swal.fire({
+      title: '{% trans "Open Configuration" %}',
+      text: '{% trans "This opens a different Config ID. Any unsaved changes on this page will be lost." %}',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '{% trans "Continue" %}',
+      cancelButtonText: '{% trans "Cancel" %}'
+    }).then(function(result) {
+      if (result.isConfirmed) {
+        apprisePostConfigId(configId);
+      }
+    });
+  }
+
+  const configIdSelectForm = document.querySelector('#config-id-select-form');
+  if (configIdSelectForm) {
+    const configIdInput = configIdSelectForm.querySelector('[name="key"]');
+    const configIdApply = configIdSelectForm.querySelector('.config-id-apply');
+    const originalConfigId = configIdInput.dataset.currentConfigId;
+    const updateConfigIdApply = function() {
+      configIdApply.hidden = configIdInput.value.trim() === originalConfigId;
+    };
+    configIdInput.addEventListener('input', updateConfigIdApply);
+    configIdSelectForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const configId = configIdInput.value.trim();
+      if (configId !== originalConfigId) {
+        appriseConfirmConfigSelection(configId);
+      }
+    });
+  }
 
 {% block jsfooter %}
 {% endblock jsfooter %}
@@ -627,6 +688,7 @@
         method: 'GET',
         headers: {
           'Accept': 'application/json',
+          {% if AUTH_PERMISSION == 'user' %}'X-Apprise-Config-ID': '{{ DEFAULT_CONFIG_ID|escapejs }}',{% endif %}
         },
       });
 
@@ -667,8 +729,10 @@
 
       // Update the large health panel (permissions etc.)
       if (hc && data && data.status) {
+        // CONFIG_LOCK intentionally makes configuration storage read-only.
+        // Keep that result in /status without presenting it as a GUI failure.
         const showCfg = (data.status.can_write_config === false &&
-          data.config_lock === false &&
+          data.config_lock !== true &&
           data.stateful_enabled !== false);
         const showAttach = (data.status.can_write_attach === false &&
           data.attach_lock === false);
@@ -751,53 +815,83 @@
   if (cfgGenLink) {
     cfgGenLink.addEventListener('click', function(e) {
       e.preventDefault();
-      const newConfigurationHref = cfgGenLink.href;
 
       Swal.fire({
         title: '{% trans "New Configuration" %}',
         html: `
           <div class="cfggen-modal-copy">
-            <p>{% trans "This will generate a new Apprise configuration ID and transition over to it. Please note your current ID before continuing." %}</p>
+            <p>{% trans "Choose a new Config ID. You can edit it or generate another before continuing." %}</p>
             <div class="config-id-bar config-id-bar--modal">
               <span class="config-id-label">{% trans "Config ID" %}</span>
               <span class="config-id-wrapper">
-                <code id="cfggen-config-id"
-                      class="config-id is-concealed"
-                      data-config-id-value="{{ DEFAULT_CONFIG_ID }}"
-                      aria-label="{% trans "Config ID hidden" %}">••••••••</code>
+                <input id="cfggen-config-id"
+                       class="config-id-input"
+                       type="password"
+                       value="{{ UNIQUE_CONFIG_ID }}"
+                       maxlength="{{ CONFIG_KEY_MAX_LENGTH }}"
+                       autocomplete="off"
+                       autocapitalize="none"
+                       spellcheck="false"
+                       aria-label="{% trans "New Config ID" %}" />
                 <button type="button"
                         class="btn-flat btn-small config-id-visibility"
-                        data-config-id-toggle
+                        data-value-toggle
                         aria-controls="cfggen-config-id"
-                        aria-pressed="false"
                         aria-label="{% trans "Show Config ID" %}"
                         title="{% trans "Show Config ID" %}"
                         data-show-label="{% trans "Show Config ID" %}"
                         data-hide-label="{% trans "Hide Config ID" %}">
-                  <i class="material-icons">visibility</i>
+                  <i class="material-icons">visibility_off</i>
                 </button>
                 <button type="button"
-                        class="btn-flat btn-small config-id-copy"
-                        data-config-id-copy="{{ DEFAULT_CONFIG_ID }}"
-                        title="{% trans "Copy Config ID to Clipboard" %}">
-                  <i class="material-icons">content_copy</i>
+                        id="cfggen-randomize"
+                        class="btn-flat btn-small config-id-randomize"
+                        aria-label="{% trans "Generate Another Config ID" %}"
+                        title="{% trans "Generate Another Config ID" %}">
+                  <span aria-hidden="true">{% include 'icons/dice.svg' %}</span>
                 </button>
               </span>
             </div>
-            <p>{% trans "Do you still wish to proceed?" %}</p>
+            <p>{% trans "Do you wish to open this configuration?" %}</p>
           </div>
         `,
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: '{% trans "Yes" %}',
         cancelButtonText: '{% trans "No" %}',
+        focusConfirm: false,
         didOpen: function (popup) {
-          appriseWireConfigIdToggles(popup);
-          appriseWireConfigIdCopy(popup);
+          const field = popup.querySelector('#cfggen-config-id');
+          const randomize = popup.querySelector('#cfggen-randomize');
+          appriseWireValueToggles(popup);
+          randomize.addEventListener('click', function() {
+            const bytes = new Uint8Array(32);
+            window.crypto.getRandomValues(bytes);
+            field.value = Array.from(bytes, function(byte) {
+              return byte.toString(16).padStart(2, '0');
+            }).join('');
+          });
+          field.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.isComposing) {
+              event.preventDefault();
+              Swal.clickConfirm();
+            }
+          });
+          field.focus();
+        },
+        preConfirm: function() {
+          const configId = document.querySelector('#cfggen-config-id').value.trim();
+          if (!appriseValidConfigId(configId)) {
+            Swal.showValidationMessage(
+              '{% trans "Enter a valid Config ID before continuing." %}'
+            );
+            return false;
+          }
+          return configId;
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location.href = newConfigurationHref;
+          apprisePostConfigId(result.value);
         }
       });
     });

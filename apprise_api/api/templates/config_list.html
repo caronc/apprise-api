@@ -14,7 +14,7 @@
               title="{% trans "Show All Config IDs" %}"
               data-show-label="{% trans "Show All Config IDs" %}"
               data-hide-label="{% trans "Hide All Config IDs" %}">
-        <i class="material-icons" aria-hidden="true">visibility</i>
+        <i class="material-icons" aria-hidden="true">visibility_off</i>
       </button>
     {% endif %}
   </div>
@@ -65,7 +65,7 @@
                     title="{% trans "Show Config ID" %}"
                     data-show-label="{% trans "Show Config ID" %}"
                     data-hide-label="{% trans "Hide Config ID" %}">
-              <i class="material-icons" aria-hidden="true">visibility</i>
+              <i class="material-icons" aria-hidden="true">visibility_off</i>
             </button>
             <button type="button"
                     class="btn-flat btn-small config-id-copy"
@@ -160,7 +160,7 @@
                     title="{% trans "Show Password" %}"
                     data-show-label="{% trans "Show Password" %}"
                     data-hide-label="{% trans "Hide Password" %}">
-              <i class="material-icons" aria-hidden="true">visibility</i>
+              <i class="material-icons" aria-hidden="true">visibility_off</i>
             </button>
           </div>
           <div class="input-field concealed-field auth-credential-field">
@@ -175,7 +175,7 @@
                     title="{% trans "Show Password" %}"
                     data-show-label="{% trans "Show Password" %}"
                     data-hide-label="{% trans "Hide Password" %}">
-              <i class="material-icons" aria-hidden="true">visibility</i>
+              <i class="material-icons" aria-hidden="true">visibility_off</i>
             </button>
           </div>
         `,
@@ -217,7 +217,7 @@
               {
                 method: 'POST',
                 headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-                body: JSON.stringify({to_config_id: newKey})
+                body: JSON.stringify({to: newKey})
               }
             );
             if (!response.ok) {
@@ -239,12 +239,20 @@
         appriseShowStatusToast('{% trans "Configuration moved." %}', true);
         // Reflect the new location in this row without a full reload.
         const link = row.querySelector('.config-list-link');
+        const authLink = row.querySelector('.config-list-auth-link');
         const code = row.querySelector('.config-id');
         const copyButton = row.querySelector('[data-config-id-copy]');
         if (link) {
           link.setAttribute(
             'href',
             link.getAttribute('href').replace(encodeURIComponent(oldKey), encodeURIComponent(newKey))
+          );
+        }
+        if (authLink) {
+          // Keep the lock shortcut aligned with the configuration's new ID.
+          authLink.setAttribute(
+            'href',
+            authLink.getAttribute('href').replace(encodeURIComponent(oldKey), encodeURIComponent(newKey))
           );
         }
         if (code) {
@@ -280,7 +288,8 @@
       toggleAllBtn.setAttribute('aria-pressed', hideMode ? 'true' : 'false');
       toggleAllBtn.setAttribute('aria-label', label);
       toggleAllBtn.title = label;
-      toggleAllBtn.querySelector('i').textContent = hideMode ? 'visibility_off' : 'visibility';
+      // Summarize the current list state, matching the individual controls.
+      toggleAllBtn.querySelector('i').textContent = hideMode ? 'visibility' : 'visibility_off';
     }
 
     // Hide wins as soon as anything is visible, so the button is always

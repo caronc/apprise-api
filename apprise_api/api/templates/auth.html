@@ -2,14 +2,16 @@
 
 {% load i18n %}
 
+{% trans "Show Config ID" as show_config_id %}
+{% trans "Hide Config ID" as hide_config_id %}
 {% block title %}
   {% trans "Authentication" %} - {% trans "Apprise API" %}
 {% endblock title %}
 {% block body %}
   <div class="config-id-bar">
-    <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'shared_lock' %}is-assigned{% else %}is-unassigned{% endif %}"
-       href="{% url 'config' key %}"
-       title="{% if auth_mode == 'shared_lock' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+    <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
+       href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' key %}{% endif %}"
+       title="{% if auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
       <span class="config-auth-icon" aria-hidden="true">
         {% include 'icons/lock.svg' %}
       </span>
@@ -29,7 +31,7 @@
               title="{% trans "Show Config ID" %}"
               data-show-label="{% trans "Show Config ID" %}"
               data-hide-label="{% trans "Hide Config ID" %}">
-        <i class="material-icons" aria-hidden="true">visibility</i>
+        <i class="material-icons" aria-hidden="true">visibility_off</i>
       </button>
       <button type="button"
               class="btn-flat btn-small config-id-copy"
@@ -74,7 +76,7 @@
           </h5>
         </div>
         <form id="auth-form"
-              action="{% url 'auth' key %}"
+              action="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' key %}{% endif %}"
               method="post"
               autocomplete="off"
               novalidate>
@@ -155,52 +157,51 @@
               <button id="auth-remove"
                       class="btn waves-effect waves-light auth-remove-button"
                       type="button"
-                      {% if auth_mode != 'shared_lock' %}hidden{% endif %}>
+                      {% if auth_mode != 'assigned' %}hidden{% endif %}>
                 {% trans "Reset Access" %}
                 <i class="material-icons right">delete</i>
               </button>
             </div>
           </section>
         {% endif %}
-        <section class="auth-editor-card auth-move-card">
-          <div class="auth-card-heading">
-            <span class="auth-card-icon auth-move-card-icon" aria-hidden="true">
-              {% include 'icons/move.svg' %}
-            </span>
-            <h5>{% trans "Move Configuration" %}</h5>
-          </div>
-          <div id="move-form-error"
-               class="auth-login-error auth-form-error"
-               role="alert"
-               hidden>
-            <i class="material-icons" aria-hidden="true">error_outline</i>
-            <div id="move-form-error-message"></div>
-          </div>
-          <form id="move-form"
-                action="{% url 'move' key %}"
-                method="post"
-                autocomplete="off"
-                novalidate>
-            <div class="auth-credential-fields">
-              <div class="input-field auth-credential-field">
-                {{ form_move.from_config_id }}
-                {{ form_move.from_config_id.label_tag }}
-                {{ form_move.from_config_id.errors }}
-              </div>
-              <div class="input-field auth-credential-field">
-                {{ form_move.to_config_id }}
-                {{ form_move.to_config_id.label_tag }}
-                {{ form_move.to_config_id.errors }}
-              </div>
+        {% if CAN_MOVE_CONFIG %}
+          <section class="auth-editor-card auth-move-card">
+            <div class="auth-card-heading">
+              <span class="auth-card-icon auth-move-card-icon" aria-hidden="true">
+                {% include 'icons/move.svg' %}
+              </span>
+              <h5>{% trans "Move Configuration" %}</h5>
             </div>
-            <div class="auth-form-actions">
-              <button class="btn waves-effect waves-light" type="submit">
-                {% trans "Move" %}
-                <i class="material-icons right">arrow_forward</i>
-              </button>
+            <div id="move-form-error"
+                 class="auth-login-error auth-form-error"
+                 role="alert"
+                 hidden>
+              <i class="material-icons" aria-hidden="true">error_outline</i>
+              <div id="move-form-error-message"></div>
             </div>
-          </form>
-        </section>
+            <form id="move-form"
+                  action="{% url 'move' key %}"
+                  method="post"
+                  autocomplete="off"
+                  novalidate>
+              <div class="auth-credential-fields">
+                <div class="input-field concealed-field auth-credential-field">
+                  {# Reuse the site's common concealed-input control for Config IDs. #}
+                  {% include 'components/concealed_input.html' with field=form_move.from show_label=show_config_id hide_label=hide_config_id %}
+                </div>
+                <div class="input-field concealed-field auth-credential-field">
+                  {% include 'components/concealed_input.html' with field=form_move.to show_label=show_config_id hide_label=hide_config_id %}
+                </div>
+              </div>
+              <div class="auth-form-actions">
+                <button class="btn waves-effect waves-light" type="submit">
+                  {% trans "Move" %}
+                  <i class="material-icons right">arrow_forward</i>
+                </button>
+              </div>
+            </form>
+          </section>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -427,13 +428,13 @@
     });
   }
 
+  {% if CAN_MOVE_CONFIG %}
   const moveForm = document.querySelector('#move-form');
-  const moveFromConfigId = document.querySelector('#id_from_config_id');
-  const moveToConfigId = document.querySelector('#id_to_config_id');
+  const moveFromConfigId = document.querySelector('#id_from');
+  const moveToConfigId = document.querySelector('#id_to');
   const moveFormError = document.querySelector('#move-form-error');
   const moveFormErrorMessage = document.querySelector('#move-form-error-message');
   const pageConfigId = '{{ key|escapejs }}';
-  const authUrlTemplate = '{% url "auth" "PLACEHOLDER_KEY" %}';
 
   function moveClearError() {
     moveFormError.hidden = true;
@@ -464,8 +465,7 @@
       const moveButton = moveForm.querySelector('button[type="submit"]');
       moveButton.disabled = true;
       try {
-        // Form-encoded (not JSON): the server reads from_config_id/
-        // to_config_id from request.POST here.
+        // The browser form names the source and destination directly.
         const response = await appriseFetch(moveForm.action, {
           method: 'POST',
           headers: {'Accept': 'application/json'},
@@ -489,7 +489,9 @@
         }).then(function () {
           if (movedFrom === pageConfigId) {
             // This page's own configuration no longer lives at this key.
-            window.location.href = authUrlTemplate.replace('PLACEHOLDER_KEY', encodeURIComponent(destination));
+            // The server refreshed the signed current-key cookie during the
+            // move, so the private alias keeps the destination out of the URL.
+            window.location.href = '{% url "auth_current" %}';
           }
         });
       } catch (error) {
@@ -503,6 +505,7 @@
       }
     });
   }
+  {% endif %}
 
 {% endblock jsfooter %}
 {# djlint:on #}

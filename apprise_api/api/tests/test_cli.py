@@ -23,6 +23,9 @@
 # THE SOFTWARE.
 
 import io
+from pathlib import Path
+import subprocess
+from unittest.mock import patch
 
 from django.core import management
 from django.core.management.base import CommandError
@@ -43,3 +46,30 @@ class CommandTests(SimpleTestCase):
         """Reject negative ages that would make every lock eligible."""
         with self.assertRaises(CommandError):
             management.call_command("authprune", seconds=-1, stdout=io.StringIO())
+
+    def test_combined_prune_runs_both_cleanups(self):
+        """The container command prunes state and unused locks together."""
+        out = io.StringIO()
+        with (
+            patch("api.management.commands.prune.apprise.PersistentStore.disk_prune") as disk_prune,
+            patch("api.management.commands.prune.ConfigCache.prune_unused_locks", return_value=2) as lock_prune,
+        ):
+            management.call_command("prune", stdout=out)
+
+        disk_prune.assert_called_once()
+        lock_prune.assert_called_once()
+        self.assertIn("2 unused lock(s)", out.getvalue())
+
+    def test_container_pruner_has_timeout_and_supervisor_watchdog(self):
+        """The scheduler is syntax checked, bounded, and restarted if it exits."""
+        package_dir = Path(__file__).resolve().parents[2]
+        loop = package_dir / "etc" / "pruner-loop.sh"
+        supervisor = (package_dir / "etc" / "supervisord.conf").read_text()
+        loop_content = loop.read_text()
+
+        subprocess.run(["bash", "-n", loop], check=True)
+        self.assertIn('if [ "$timeout_seconds" -ge "$interval" ]', loop_content)
+        self.assertIn("--kill-after=", loop_content)
+        self.assertIn("autorestart=true", supervisor)
+        self.assertIn("stopasgroup=true", supervisor)
+        self.assertIn("killasgroup=true", supervisor)

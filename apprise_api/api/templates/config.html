@@ -6,9 +6,9 @@
   {% if STATEFUL_MODE != 'disabled' %}
     <div class="config-id-bar">
       {% if AUTH_ENABLED %}
-        <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'shared_lock' %}is-assigned{% else %}is-unassigned{% endif %}"
-           href="{% url 'auth' key %}"
-           title="{% if auth_mode == 'shared_lock' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+        <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
+           href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' key %}{% endif %}"
+           title="{% if auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
           <span class="config-auth-icon" aria-hidden="true">
             {% include 'icons/lock.svg' %}
           </span>
@@ -21,30 +21,49 @@
           </span>
         </span>
       {% endif %}
-      <span class="config-id-label">{% trans "Config ID" %}</span>
-      <span class="config-id-wrapper">
-        <code id="page-config-id"
-              class="config-id is-concealed"
-              data-config-id-value="{{ key }}"
-              aria-label="{% trans "Config ID hidden" %}">••••••••</code>
-        <button type="button"
-                class="btn-flat btn-small config-id-visibility"
-                data-config-id-toggle
-                aria-controls="page-config-id"
-                aria-pressed="false"
-                aria-label="{% trans "Show Config ID" %}"
-                title="{% trans "Show Config ID" %}"
-                data-show-label="{% trans "Show Config ID" %}"
-                data-hide-label="{% trans "Hide Config ID" %}">
-          <i class="material-icons" aria-hidden="true">visibility</i>
-        </button>
-        <button type="button"
-                class="btn-flat btn-small config-id-copy"
-                data-config-id-copy="{{ key }}"
-                title="{% trans "Copy Config ID to Clipboard" %}">
-          <i class="material-icons" aria-hidden="true">content_copy</i>
-        </button>
-      </span>
+      <form id="config-id-select-form"
+            class="config-id-select-form"
+            action="{% url 'config_current' %}"
+            method="post"
+            novalidate>
+        <span class="config-id-label">{% trans "Config ID" %}</span>
+        <span class="config-id-wrapper">
+          <input id="page-config-id"
+                 class="config-id-input"
+                 type="password"
+                 name="key"
+                 value="{{ key }}"
+                 maxlength="{{ CONFIG_KEY_MAX_LENGTH }}"
+                 autocomplete="off"
+                 autocapitalize="none"
+                 spellcheck="false"
+                 data-current-config-id="{{ key }}"
+                 aria-label="{% trans "Config ID" %}" />
+          <button type="button"
+                  class="btn-flat btn-small config-id-visibility"
+                  data-value-toggle
+                  aria-controls="page-config-id"
+                  aria-label="{% trans "Show Config ID" %}"
+                  title="{% trans "Show Config ID" %}"
+                  data-show-label="{% trans "Show Config ID" %}"
+                  data-hide-label="{% trans "Hide Config ID" %}">
+            <i class="material-icons" aria-hidden="true">visibility_off</i>
+          </button>
+          <button type="submit"
+                  class="btn-flat btn-small config-id-apply"
+                  aria-label="{% trans "Open Config ID" %}"
+                  title="{% trans "Open Config ID" %}"
+                  hidden>
+            <i class="material-icons" aria-hidden="true">check_circle</i>
+          </button>
+          <button type="button"
+                  class="btn-flat btn-small config-id-copy"
+                  data-config-id-copy="{{ key }}"
+                  title="{% trans "Copy Config ID to Clipboard" %}">
+            <i class="material-icons" aria-hidden="true">content_copy</i>
+          </button>
+        </span>
+      </form>
     </div>
     <div class="row">
       <div class="col s12">
@@ -53,7 +72,8 @@
             <a class="active" href="#overview"><i class="material-icons">info</i>
             {% trans "Overview" %}</a>
           </li>
-          <li class="tab {% if CONFIG_LOCK %}disabled{% endif %}col s3">
+          {# Keep the grid class separate when the disabled class is rendered. #}
+          <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
             <a href="#config"><i class="material-icons">
               {% if not CONFIG_LOCK %}
                 settings
@@ -62,7 +82,7 @@
               {% endif %}
             </i> {% trans "Configuration" %}</a>
           </li>
-          <li class="tab {% if CONFIG_LOCK %}disabled{% endif %}col s3">
+          <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
             <a href="#review"><i class="material-icons">
               {% if not CONFIG_LOCK %}
                 web
@@ -111,7 +131,7 @@
                   <div class="code-snippet"
                        data-copy-label='{% trans "Apprise configuration ID copied to clipboard" %}'
                        data-copy-text='{{ key }}'>
-                    <pre><code class="nohighlight">{{ key }}</code></pre>
+                    <pre><code class="nohighlight"><span data-snippet-config-id>{{ key }}</span></code></pre>
                   </div>
                   {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">click here</a>.
                 </p>
@@ -123,7 +143,7 @@
                 <div class="code-snippet"
                      data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
                      data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
-                  <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code></pre>
+                  <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/<span data-snippet-config-id>{{ key }}</span></code></pre>
                 </div>
               </li>
               <li>
@@ -181,13 +201,13 @@
             <div class="code-snippet"
                  data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all'>
               <pre><code class="bash">apprise --body="Test Message" \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em data-snippet-config-id>{{key}}</em>/?tags=all</code></pre>
             </div>
             {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
             <div class="code-snippet"
                  data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
               <pre><code class="bash">apprise --body=&quot;Test Message&quot; \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em data-snippet-config-id>{{key}}</em>/?tags=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg<br />
                </code></pre>
@@ -200,13 +220,13 @@
               <div class="code-snippet"
                    data-copy-text='apprise --body="Test Message" --tag="all" --config="{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}"'>
                 <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
               </div>
               {% blocktrans %}You may also create an <a href="https://appriseit.com/config/#cli" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
               <div class="code-snippet"
                    data-copy-text='include {{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
                    data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'>
-                <pre><code class="bash">include {{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+                <pre><code class="bash">include {{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
               </div>
               {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
               <div class="code-snippet"
@@ -224,7 +244,7 @@
                    {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
                    &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
                    &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
-                   &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+                   &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
             </div>
             {% blocktrans %}When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:{% endblocktrans %}
             <div class="code-snippet"
@@ -234,7 +254,7 @@
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
             </div>
             {% blocktrans %}When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:{% endblocktrans %}
             <div class="code-snippet"
@@ -245,7 +265,7 @@
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
             </div>
             {% blocktrans %}Sends a notification to our endpoints with an attachment and no body specified:{% endblocktrans %}
             <div class="code-snippet"
@@ -254,7 +274,7 @@
                {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
                &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tag=all&quot; \ <br />
                &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png&quot; \ <br />
-               &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
             </div>
           </div>
         {% endif %}
@@ -297,7 +317,7 @@
                 {% endif %}
               {% endfor %}
               <div class="config-form-actions">
-                {% if auth_mode == 'shared_lock' %}
+                {% if AUTH_PERMISSION == 'user' %}
                   <p class="config-form-restricted-note">
                     {% blocktrans %}Global administrator credentials are required to save or delete this configuration. You can still move it to a different configuration ID.{% endblocktrans %}
                   </p>
@@ -385,9 +405,13 @@
               </span>
               <span>{% trans "No Notification Targets Selected" %}</span>
             </div>
-            {% blocktrans with review_chip='<a href="#review" class="tab-chip tab-chip-link"><i class="material-icons">web</i> Review</a>'|safe config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}
+            {% if CONFIG_LOCK %}
+              {% blocktrans %}Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled.{% endblocktrans %}
+            {% else %}
+              {% blocktrans with review_chip='<a href="#review" class="tab-chip tab-chip-link"><i class="material-icons">web</i> Review</a>'|safe config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}
         Choose one or more tags from the <strong class="notify-target-keyword">Tags dropdown</strong>, select target entries from the {{ review_chip }} section, or add more entries in the {{ config_chip }} section.
-        {% endblocktrans %}
+              {% endblocktrans %}
+            {% endif %}
           </div>
           <form id="donotify"
                 enctype="multipart/form-data"
@@ -1432,8 +1456,16 @@
     };
     const chipElement = document.querySelector('.chips');
     M.Chips.init(chipElement, {
-      placeholder: '{% trans "Optional Tag" %}',
-      secondaryPlaceholder: '{% trans "Another Tag" %}'
+      placeholder: '{% trans "Required Tag" %}',
+      secondaryPlaceholder: '{% trans "Another Tag" %}',
+      onChipAdd: function () {
+        decorateNotifyChips();
+        update_count();
+      },
+      onChipDelete: function () {
+        decorateNotifyChips();
+        update_count();
+      }
     });
     {% endif %}
     const chipInstance = M.Chips.getInstance(chipElement);
@@ -1870,7 +1902,41 @@
   }
 
   function getSelectedNotifyTargetCount() {
+    {% if CONFIG_LOCK %}
+    // Locked configurations hide their destinations, so tags select targets.
+    const chipElement = document.querySelector('#notify .chips');
+    const chipInstance = chipElement ? M.Chips.getInstance(chipElement) : null;
+    return chipInstance ? chipInstance.chipsData.length : 0;
+    {% else %}
     return document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
+    {% endif %}
+  }
+
+  function commitNotifyTags() {
+    const chipElement = document.querySelector('#notify .chips');
+    const chipInput = chipElement ? chipElement.querySelector('input') : null;
+    if (!chipElement || !chipInput) {
+      return 0;
+    }
+
+    if (chipInput.value.trim()) {
+      // Commit text still being typed before validating the form.
+      chipInput.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true
+      }));
+    }
+
+    const chipInstance = M.Chips.getInstance(chipElement);
+    const tags = chipInstance ? chipInstance.chipsData.map(function (item) {
+      return item.tag;
+    }) : [];
+    document.querySelector('#id_tag').value = tags.join(',');
+    return tags.length;
   }
 
   function renderAttachmentList(listEl) {
@@ -2035,11 +2101,12 @@
     // over-ride manual submit for a nicer user experience
     document.querySelector('#donotify').onsubmit = function (event) {
       event.preventDefault();
+      commitNotifyTags();
       const selectedTargets = getSelectedNotifyTargetCount();
       if (selectedTargets < 1) {
         Swal.fire({
           title: '{% trans "Notification" %}',
-          html: '{% trans "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending." %}',
+          html: '{% if CONFIG_LOCK %}{% trans "Choose at least one tag before sending." %}{% else %}{% trans "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending." %}{% endif %}',
           icon: 'warning'
         });
         return false;
@@ -2061,45 +2128,6 @@
       }
 
       clearNotifyMinimumMissing();
-      const chipElement = document.querySelector('.chips');
-      const chipInput = document.querySelector('.chips > input');
-      if (chipInput.value) {
-        // This code just handles text typed in the tag section that was
-        // not submitted. This forces any lingering un-committed text
-        // into a tag just prior to it's submission
-        const ev = new KeyboardEvent('keydown', {
-          altKey: false,
-          bubbles: true,
-          cancelBubble: false,
-          cancelable: true,
-          charCode: 0,
-          code: "Enter",
-          composed: true,
-          ctrlKey: false,
-          currentTarget: null,
-          defaultPrevented: true,
-          detail: 0,
-          eventPhase: 0,
-          isComposing: false,
-          isTrusted: true,
-          key: "Enter",
-          keyCode: 13,
-          location: 0,
-          metaKey: false,
-          repeat: false,
-          returnValue: false,
-          shiftKey: false,
-          type: "keydown",
-          which: 13
-        });
-        chipInput.dispatchEvent(ev);
-      }
-      // store tags (as comma separated string) from materialize chip type into form
-      document.querySelector('#id_tag').value = M.Chips.getInstance(chipElement).chipsData.reduce(
-        function (s, a) {
-          s.push(a.tag)
-          return s;
-        }, []).join(",")
 
       // our Form Handling
       const rawForm = this;
@@ -2185,6 +2213,15 @@
 {# djlint:on #}
 {# djlint:off #}
 {% block onload %}
+  // Mark only the Config ID tokens before syntax highlighting removes their
+  // template elements. This avoids concealing matching command words.
+  const snippetConfigMarkerStart = '\u2063';
+  const snippetConfigMarkerEnd = '\u2064';
+  document.querySelectorAll('#overview [data-snippet-config-id]').forEach(function (token) {
+    token.replaceWith(document.createTextNode(
+      snippetConfigMarkerStart + token.textContent + snippetConfigMarkerEnd
+    ));
+  });
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
   document.querySelector('label [for="id_tag"]')
@@ -2243,6 +2280,7 @@
   // Highlighting replaces template markup, so conceal IDs after it finishes.
   window.setTimeout(function () {
     const configId = '{{ key|escapejs }}';
+    const markedConfigId = snippetConfigMarkerStart + configId + snippetConfigMarkerEnd;
     document.querySelectorAll('#overview .code-snippet').forEach(function (snippet) {
       const code = snippet.querySelector('pre code');
       if (!code) {
@@ -2253,13 +2291,13 @@
       const nodes = [];
       const walker = document.createTreeWalker(code, NodeFilter.SHOW_TEXT);
       while (walker.nextNode()) {
-        if (walker.currentNode.nodeValue.includes(configId)) {
+        if (walker.currentNode.nodeValue.includes(markedConfigId)) {
           nodes.push(walker.currentNode);
         }
       }
 
       nodes.forEach(function (node) {
-        const parts = node.nodeValue.split(configId);
+        const parts = node.nodeValue.split(markedConfigId);
         const fragment = document.createDocumentFragment();
         parts.forEach(function (part, index) {
           fragment.appendChild(document.createTextNode(part));
@@ -2282,7 +2320,7 @@
         visibilityBtn.setAttribute('aria-pressed', 'false');
         visibilityBtn.setAttribute('aria-label', '{% trans "Show Config ID" %}');
         visibilityBtn.setAttribute('title', '{% trans "Show Config ID" %}');
-        visibilityBtn.innerHTML = '<i class="material-icons" aria-hidden="true">visibility</i>';
+        visibilityBtn.innerHTML = '<i class="material-icons" aria-hidden="true">visibility_off</i>';
         visibilityBtn.addEventListener('click', function () {
           const show = visibilityBtn.getAttribute('aria-pressed') !== 'true';
           snippet.querySelectorAll('.snippet-config-id').forEach(function (concealedId) {
@@ -2299,7 +2337,7 @@
             show ? '{% trans "Hide Config ID" %}' : '{% trans "Show Config ID" %}'
           );
           visibilityBtn.title = visibilityBtn.getAttribute('aria-label');
-          visibilityBtn.querySelector('i').textContent = show ? 'visibility_off' : 'visibility';
+          visibilityBtn.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';
         });
         snippet.appendChild(visibilityBtn);
       }

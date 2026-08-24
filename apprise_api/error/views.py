@@ -22,12 +22,13 @@
 # THE SOFTWARE.
 
 
-from api.utils import _AUTH_FAILURE_WINDOW_SECONDS, is_json_response
+from api.responses import error_response
 from django.conf import settings
-from django.http import JsonResponse
-from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+
+# Nginx uses this page for rejected request bursts.
+AUTH_RETRY_AFTER_SECONDS = 60
 
 
 class Error401View(View):
@@ -37,13 +38,13 @@ class Error401View(View):
 
     def get(self, request):
         """Return an HTML or JSON response with a Basic Auth challenge."""
-        response = (
-            render(request, self.template_name, status=401)
-            if not is_json_response(request)
-            else JsonResponse({"error": _("Access Denied")}, safe=False, status=401)
+        return error_response(
+            request,
+            _("Access Denied"),
+            401,
+            template=self.template_name,
+            headers={"WWW-Authenticate": 'Basic realm="{}"'.format(settings.APPRISE_BASIC_AUTH_REALM)},
         )
-        response["WWW-Authenticate"] = 'Basic realm="{}"'.format(settings.APPRISE_BASIC_AUTH_REALM)
-        return response
 
 
 class Error404View(View):
@@ -70,17 +71,12 @@ class Error404View(View):
             "remote_ip": remote_ip,
         }
 
-        # Detect the format our response should be in
-        json_response = is_json_response(request)
-
-        return (
-            render(request, self.template_name, context=context, status=404)
-            if not json_response
-            else JsonResponse(
-                {"error": _("Page not found")},
-                safe=False,
-                status=404,
-            )
+        return error_response(
+            request,
+            _("Page not found"),
+            404,
+            template=self.template_name,
+            context=context,
         )
 
 
@@ -108,17 +104,12 @@ class Error421View(View):
             "remote_ip": remote_ip,
         }
 
-        # Detect the format our response should be in
-        json_response = is_json_response(request)
-
-        return (
-            render(request, self.template_name, context=context, status=421)
-            if not json_response
-            else JsonResponse(
-                {"error": _("Page not found")},
-                safe=False,
-                status=421,
-            )
+        return error_response(
+            request,
+            _("Page not found"),
+            421,
+            template=self.template_name,
+            context=context,
         )
 
 
@@ -129,18 +120,14 @@ class Error429View(View):
 
     def get(self, request):
         """Return an HTML or JSON response with the retry delay."""
-        response = (
-            render(
-                request,
-                self.template_name,
-                context={"retry_after": _AUTH_FAILURE_WINDOW_SECONDS},
-                status=429,
-            )
-            if not is_json_response(request)
-            else JsonResponse({"error": _("Too Many Requests")}, safe=False, status=429)
+        return error_response(
+            request,
+            _("Too Many Requests"),
+            429,
+            template=self.template_name,
+            context={"retry_after": AUTH_RETRY_AFTER_SECONDS},
+            headers={"Retry-After": str(AUTH_RETRY_AFTER_SECONDS)},
         )
-        response["Retry-After"] = str(_AUTH_FAILURE_WINDOW_SECONDS)
-        return response
 
 
 class Error50xView(View):
@@ -167,15 +154,10 @@ class Error50xView(View):
             "remote_ip": remote_ip,
         }
 
-        # Detect the format our response should be in
-        json_response = is_json_response(request)
-
-        return (
-            render(request, self.template_name, context=context, status=500)
-            if not json_response
-            else JsonResponse(
-                {"error": _("System error")},
-                safe=False,
-                status=500,
-            )
+        return error_response(
+            request,
+            _("System error"),
+            500,
+            template=self.template_name,
+            context=context,
         )

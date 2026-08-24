@@ -37,5 +37,9 @@ ALLOWED_HOSTS = []
 # A temporary directory to work in for unit testing
 APPRISE_CONFIG_DIR = TemporaryDirectory().name
 
+# Tests enable browser authentication through override_settings. Give those
+# sessions a private, stable key without changing production defaults.
+APPRISE_WEB_AUTH_SECRET = "apprise-api-pytest-web-auth-secret"
+
 # Setup our runner
 TEST_RUNNER = "core.settings.pytest.runner.PytestTestRunner"

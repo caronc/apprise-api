@@ -635,10 +635,11 @@ Config ID Bar
   color: #888c96;
 }
 
-code.config-id {
-  color: #7de6da;
-  background-color: #17181c;
-  border: 1px solid #34383f;
+code.config-id,
+input.config-id-input {
+  color: #7de6da !important;
+  background-color: #17181c !important;
+  border: 1px solid #34383f !important;
   padding: 0.15em 0.45em;
   border-radius: 0.3rem;
 }

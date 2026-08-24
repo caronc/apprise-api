@@ -47,7 +47,7 @@ def _load_settings(extra_env=None):
     as they would be set for a given environment, independently of Django's
     already-cached settings object.
     """
-    env = extra_env or {}
+    env = dict(extra_env or {})
     spec = importlib.util.spec_from_file_location("_settings_under_test", _SETTINGS_PATH)
     assert spec is not None and spec.loader is not None, "Could not load spec from {}".format(_SETTINGS_PATH)
     mod = importlib.util.module_from_spec(spec)
@@ -263,6 +263,34 @@ class BasicAuthSettingsTests(SimpleTestCase):
         """The login prompt label can identify a specific instance."""
         mod = _load_settings({"APPRISE_BASIC_AUTH_REALM": "Home Alerts"})
         self.assertEqual(mod.APPRISE_BASIC_AUTH_REALM, "Home Alerts")
+
+    def test_web_secret_uses_its_own_default(self):
+        """Browser signing has a default independent of Django's key."""
+        mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes"})
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.DEFAULT_WEB_AUTH_SECRET)
+        self.assertNotEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.SECRET_KEY)
+
+    def test_django_key_does_not_change_web_secret(self):
+        """Changing Django's key does not change browser signing."""
+        mod = _load_settings(
+            {
+                "APPRISE_AUTH_REQUIRED": "yes",
+                "SECRET_KEY": "private-django-key",
+            }
+        )
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.DEFAULT_WEB_AUTH_SECRET)
+
+    def test_web_secret_is_independent(self):
+        """A separate web secret does not replace the configuration hash salt."""
+        mod = _load_settings(
+            {
+                "APPRISE_AUTH_REQUIRED": "yes",
+                "SECRET_KEY": "configuration-key",
+                "APPRISE_WEB_AUTH_SECRET": "browser-key",
+            }
+        )
+        self.assertEqual(mod.SECRET_KEY, "configuration-key")
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, "browser-key")
 
     def test_both_set(self):
         """Both set: the token is base64("user:pass")."""

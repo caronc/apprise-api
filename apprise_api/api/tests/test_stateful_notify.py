@@ -58,6 +58,23 @@ class StatefulNotifyTests(SimpleTestCase):
         response = self.client.post("/get/{}".format(key))
         assert response.status_code == 403
 
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_locked_browser_notification_requires_tag(self):
+        """The locked Web form cannot send without naming a tag."""
+        key = "test_stateful_locked_tag"
+        with override_settings(APPRISE_CONFIG_LOCK=False):
+            response = self.client.post("/add/{}".format(key), {"urls": "json://localhost"})
+        assert response.status_code == 200
+
+        response = self.client.post(
+            "/notify/{}".format(key),
+            {"body": "test"},
+            headers={"X-Apprise-Web-Auth": "1", "accept": "application/json"},
+        )
+        assert response.status_code == 400
+        assert "tag is required" in response.json()["error"]
+        ConfigCache.clear(key)
+
     @patch("requests.request")
     @patch("requests.post")
     def test_stateful_configuration_io(self, mock_post, mock_request):

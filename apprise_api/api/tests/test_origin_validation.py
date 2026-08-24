@@ -112,6 +112,15 @@ class OriginValidationTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    def test_malformed_origin_is_rejected(self):
+        """An invalid host is denied instead of raising an exception."""
+        response = self.client.post(
+            "/add/origin_add_key",
+            {"urls": "json://localhost"},
+            headers={"origin": "http://["},
+        )
+        self.assertEqual(response.status_code, 403)
+
 
 class TrustedOriginsSchemeTests(SimpleTestCase):
     """Match configured origins by scheme, host, and port."""

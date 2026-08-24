@@ -33,7 +33,7 @@ from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from ..forms import AUTO_DETECT_CONFIG_KEYWORD
-from ..utils import ConfigCache
+from ..utils import CONFIG_KEY_MAX_LENGTH, ConfigCache
 
 
 def _basic(user, password):
@@ -63,7 +63,7 @@ class AddTests(SimpleTestCase):
         key = h.hexdigest()
 
         # Our limit
-        assert len(key) == 128
+        assert len(key) == CONFIG_KEY_MAX_LENGTH
 
         # Add our URL
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
@@ -451,7 +451,7 @@ class AddTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_add_restricted_user_denied_for_own_key(self):
-        """A per-key (shared) credential can never create or overwrite a configuration, even its own."""
+        """A configuration user cannot create or replace configurations."""
         key = "test_add_restricted_user"
         response = self.client.post(
             "/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"}, headers=_GOOD_MASTER
@@ -466,9 +466,8 @@ class AddTests(SimpleTestCase):
             headers={**user_creds, "accept": "application/json"},
         )
         assert response.status_code == 403
-        # A stable, non-localized marker so a client can tell this apart
-        # from the (also 403) site-wide APPRISE_CONFIG_LOCK denial.
-        assert response.json()["reason"] == "admin_required"
+        # Keep error responses consistent with the other API endpoints.
+        assert set(response.json()) == {"error"}
 
         ConfigCache.clear(key)
         ConfigCache.clear_auth(key)

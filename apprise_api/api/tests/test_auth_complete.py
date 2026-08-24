@@ -8,17 +8,18 @@ import base64
 from json import dumps
 from unittest.mock import MagicMock, mock_open, patch
 
-from django.core.cache import cache
 from django.core.exceptions import RequestDataTooBig
 from django.core.signing import dumps as sign
+from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase
 from django.test.utils import override_settings
 
 from .. import utils, views
 from ..forms import AuthForm
 from ..utils import (
-    AUTH_MODE_MASTER,
-    AUTH_MODE_SHARED,
+    AUTH_ROLE_ADMIN,
+    AUTH_ROLE_USER,
+    CONFIG_AUTH_ASSIGNED,
     WEB_AUTH_COOKIE,
     WEB_AUTH_HEADER,
     AppriseAuthStorageError,
@@ -43,21 +44,23 @@ class AuthUtilityCoverageTests(SimpleTestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
-    def tearDown(self):
-        cache.clear()
-
     def test_basic_auth_disabled_and_malformed_values(self):
         request = self.factory.get("/")
         self.assertTrue(utils.is_authenticated(request))
         self.assertFalse(utils.global_credentials_ok("user", "pass"))
 
         with override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN):
+            self.assertFalse(utils.global_credentials_ok("user", "wrong"))
             self.assertFalse(utils.global_credentials_ok("bad\udcff", "pass"))
             missing_colon = base64.b64encode(b"username-only").decode()
             request = self.factory.get("/", HTTP_AUTHORIZATION="Basic " + missing_colon)
             self.assertEqual(utils.basic_auth_credentials(request), (None, None))
             binary = base64.b64encode(b"\xff:\xff").decode()
             request = self.factory.get("/", HTTP_AUTHORIZATION="Basic " + binary)
+            self.assertEqual(utils.basic_auth_credentials(request), (None, None))
+            request = self.factory.get("/", HTTP_AUTHORIZATION="Basic dXNlcjpwYXNz!")
+            self.assertEqual(utils.basic_auth_credentials(request), (None, None))
+            request = self.factory.get("/", HTTP_AUTHORIZATION="Basic \N{SNOWMAN}")
             self.assertEqual(utils.basic_auth_credentials(request), (None, None))
 
     def test_shared_auth_form_rejects_changed_username(self):
@@ -97,6 +100,13 @@ class AuthUtilityCoverageTests(SimpleTestCase):
 
         with patch("os.makedirs", side_effect=OSError):
             self.assertFalse(store.set_auth("mkdir", "user", "pass"))
+        with (
+            patch.object(store, "_acquire_auth_guard", return_value=10),
+            patch.object(store, "_release_auth_guard"),
+            patch("os.makedirs", side_effect=OSError),
+        ):
+            # The root guard can succeed while the hashed key directory fails.
+            self.assertFalse(store.set_auth("key-dir", "user", "pass"))
         with patch("tempfile.mkstemp", side_effect=OSError):
             self.assertFalse(store.set_auth("temp", "user", "pass"))
         with (
@@ -105,6 +115,20 @@ class AuthUtilityCoverageTests(SimpleTestCase):
             patch("os.remove"),
         ):
             self.assertFalse(store.set_auth("write", "user", "pass"))
+
+        with patch.object(store, "_acquire_auth_guard", side_effect=OSError):
+            self.assertFalse(store.clear_auth("guard-failure"))
+
+        with patch("tempfile.mkstemp", side_effect=OSError):
+            self.assertFalse(store._exclusive_copy("source", "/tmp/auth-coverage/destination"))
+        with (
+            patch("tempfile.mkstemp", return_value=(10, None)),
+            patch("os.close"),
+            patch("shutil.copy2"),
+            patch("os.link"),
+        ):
+            # Keep cleanup safe even if a platform returns no temporary path.
+            self.assertTrue(store._exclusive_copy("source", "/tmp/auth-coverage/destination"))
 
     def test_config_write_temp_and_move_failures(self):
         store = AppriseConfigCache("/tmp/auth-coverage", mode=AppriseStoreMode.SIMPLE)
@@ -135,33 +159,55 @@ class AuthUtilityCoverageTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_auth_helper_error_and_empty_paths(self):
-        with (
-            patch.object(ConfigCache, "has_auth", return_value=True),
-            patch.object(ConfigCache, "get_auth_username", side_effect=AppriseAuthStorageError("bad")),
-        ):
-            self.assertIsNone(utils.config_auth_username("key"))
+        with patch.object(ConfigCache, "get_auth_record", side_effect=AppriseAuthStorageError("bad")):
+            state = utils.config_auth_state("key")
+        self.assertEqual(state.mode, CONFIG_AUTH_ASSIGNED)
+        self.assertTrue(state.unreadable)
 
         request = self.factory.get("/")
         with patch.object(ConfigCache, "get_auth", return_value=None):
             self.assertFalse(utils.key_credentials_ok(request, "key", "user", "pass"))
         with patch.object(ConfigCache, "get_auth", side_effect=AppriseAuthStorageError("bad")):
-            self.assertIsNone(utils._web_auth_proof(AUTH_MODE_SHARED, "key"))
-        self.assertIsNone(utils._web_auth_proof(AUTH_MODE_SHARED))
+            self.assertIsNone(utils._web_auth_proof(AUTH_ROLE_USER, "key"))
+        self.assertIsNone(utils._web_auth_proof(AUTH_ROLE_USER))
         with override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=""):
-            self.assertIsNone(utils._web_auth_proof(AUTH_MODE_MASTER))
-
-    def test_auth_failure_cache_recovers_from_expiry(self):
-        with (
-            patch.object(cache, "add", side_effect=[False, True]) as add,
-            patch.object(cache, "incr", side_effect=ValueError),
-        ):
-            utils._record_auth_failure("127.0.0.1", "key")
-        self.assertEqual(add.call_count, 2)
+            self.assertIsNone(utils._web_auth_proof(AUTH_ROLE_ADMIN))
 
     def test_invalid_signed_payload_is_rejected(self):
         request = self.factory.get("/")
-        request.COOKIES[WEB_AUTH_COOKIE] = sign("not-a-dict", salt="apprise-api.web-auth")
+        request.COOKIES[WEB_AUTH_COOKIE] = sign(
+            "not-a-dict",
+            key="apprise-api-pytest-web-auth-secret",
+            salt="apprise-api.web-auth",
+        )
         self.assertFalse(utils.restore_web_auth(request))
+
+        request.COOKIES[WEB_AUTH_COOKIE] = sign(
+            {"mode": AUTH_ROLE_ADMIN},
+            key="apprise-api-pytest-web-auth-secret",
+            salt="apprise-api.web-auth",
+        )
+        self.assertFalse(utils.restore_web_auth(request))
+
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_WEB_AUTH_SECRET="browser-secret",
+    )
+    def test_web_cookie_uses_its_own_secret(self):
+        """Rotating the web secret invalidates only the browser login."""
+        request = self.factory.get("/")
+        response = HttpResponse()
+        utils.set_web_auth_cookie(response, request, AUTH_ROLE_ADMIN, "master")
+
+        restored = self.factory.get("/")
+        restored.COOKIES[WEB_AUTH_COOKIE] = response.cookies[WEB_AUTH_COOKIE].value
+        self.assertTrue(utils.restore_web_auth(restored))
+
+        rejected = self.factory.get("/")
+        rejected.COOKIES[WEB_AUTH_COOKIE] = response.cookies[WEB_AUTH_COOKIE].value
+        with override_settings(APPRISE_WEB_AUTH_SECRET="rotated-secret"):
+            self.assertFalse(utils.restore_web_auth(rejected))
 
 
 class AuthMiddlewareCoverageTests(SimpleTestCase):
@@ -201,7 +247,7 @@ class AuthViewCoverageTests(SimpleTestCase):
     def _request(self, method="get", path="/", data=None, **extra):
         request = getattr(self.factory, method)(path, data=data, **extra)
         request.globally_authenticated = True
-        request.apprise_auth_permission = AUTH_MODE_MASTER
+        request.apprise_auth_permission = AUTH_ROLE_ADMIN
         request.apprise_auth_username = "master"
         return request
 
@@ -247,11 +293,14 @@ class AuthViewCoverageTests(SimpleTestCase):
             self.assertEqual(response.status_code, 401)
 
         request = self._request(path="/auth/key")
-        request.apprise_auth_permission = AUTH_MODE_SHARED
+        request.apprise_auth_permission = AUTH_ROLE_USER
         request.apprise_auth_username = "legacy"
         with (
-            patch.object(views, "config_auth_mode", return_value=AUTH_MODE_SHARED),
-            patch.object(views, "config_auth_username", return_value=None),
+            patch.object(
+                views,
+                "config_auth_state",
+                return_value=utils.ConfigAuthState(CONFIG_AUTH_ASSIGNED),
+            ),
             patch.object(views, "key_auth_ok", return_value=True),
         ):
             response = views.AuthView.as_view()(request, key=self.key)
@@ -267,12 +316,15 @@ class AuthViewCoverageTests(SimpleTestCase):
         self.assertEqual(response.status_code, 401)
 
         request = self._request(path="/cfg/key")
-        request.apprise_auth_permission = AUTH_MODE_SHARED
+        request.apprise_auth_permission = AUTH_ROLE_USER
         request.apprise_auth_username = "legacy"
         with (
             patch.object(views, "key_auth_ok", return_value=True),
-            patch.object(views, "config_auth_mode", return_value=AUTH_MODE_SHARED),
-            patch.object(views, "config_auth_username", return_value=None),
+            patch.object(
+                views,
+                "config_auth_state",
+                return_value=utils.ConfigAuthState(CONFIG_AUTH_ASSIGNED),
+            ),
         ):
             response = views.ConfigView.as_view()(request, key=self.key)
         self.assertContains(response, "legacy")
@@ -292,12 +344,16 @@ class AuthViewCoverageTests(SimpleTestCase):
         self.assertEqual(views.AuthView.as_view()(request, key="").status_code, 400)
 
         request = self._request("post", "/auth/key", data=dumps({}), content_type="application/json")
-        request.apprise_auth_permission = AUTH_MODE_SHARED
+        request.apprise_auth_permission = AUTH_ROLE_USER
         request.apprise_auth_username = "legacy"
         with (
             patch.object(ConfigCache, "has_auth", return_value=True),
             patch.object(views, "key_auth_ok", return_value=True),
-            patch.object(views, "config_auth_username", return_value=None),
+            patch.object(
+                views,
+                "config_auth_state",
+                return_value=utils.ConfigAuthState(CONFIG_AUTH_ASSIGNED),
+            ),
         ):
             response = views.AuthView.as_view()(request, key=self.key)
         self.assertEqual(response.status_code, 400)

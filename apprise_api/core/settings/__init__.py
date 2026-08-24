@@ -56,7 +56,8 @@ USE_TZ = False
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "+reua88v8rs4j!bcfdtinb-f0edxazf!$x_q1g7jtgckxd7gi=")
+DEFAULT_SECRET_KEY = "+reua88v8rs4j!bcfdtinb-f0edxazf!$x_q1g7jtgckxd7gi="
+SECRET_KEY = os.environ.get("SECRET_KEY", DEFAULT_SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # If you want to run this app in DEBUG mode, run the following:
@@ -359,6 +360,11 @@ else:
     APPRISE_BASIC_AUTH_TOKEN = base64.b64encode(f"{APPRISE_USER or ''}:{APPRISE_PASSWORD}".encode()).decode()
     logging.info("Authentication Mode: Enabled - Administration Account Enabled")
 
+# Browser logins use their own setting and built-in default. This keeps browser
+# sessions independent from the SECRET_KEY used by HASH-mode configurations.
+DEFAULT_WEB_AUTH_SECRET = "Sw`rFTu3~4dq#hua:daY#T5^d;`#Z5:cE~mf.h`ZCKCP:AZMKZ"
+APPRISE_WEB_AUTH_SECRET = os.environ.get("APPRISE_WEB_AUTH_SECRET") or DEFAULT_WEB_AUTH_SECRET
+
 # Optional browser-origin allow-list using ``scheme://host[:port]``.
 # Without it, Origin validation compares host and port only because bundled
 # nginx does not forward the original scheme. HTTPS deployments should set it.
@@ -444,15 +450,8 @@ APPRISE_INTERPRET_EMOJIS = (
 # URLs.
 APPRISE_HTTP_REDIRECTS = parse_bool(os.environ.get("APPRISE_HTTP_REDIRECTS", "yes"))
 
-# Allow a server-wide default input body format to be configured.
-# Formatting is entirely optional and unset (None) by default: content is
-# passed straight through to each service untouched unless the caller
-# explicitly sets `format` on their request, or an operator opts every
-# request into a default by setting this variable. A blank or whitespace-
-# only value (including "" or " ") is treated the same as unset. The
-# value is matched case-insensitively against apprise.NotifyFormat, so any
-# format Apprise recognizes today -- or adds in the future -- is accepted
-# here automatically; anything else is ignored and treated as unset.
+# Optional default for requests that omit ``format``. Blank or unknown values
+# leave message content unchanged. Explicit request values always take priority.
 _apprise_default_format = os.environ.get("APPRISE_DEFAULT_FORMAT", "").strip().lower()
 APPRISE_DEFAULT_FORMAT = (
     _apprise_default_format if _apprise_default_format in {f.value for f in apprise.NotifyFormat} else None

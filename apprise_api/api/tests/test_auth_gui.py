@@ -7,21 +7,20 @@
 import base64
 from contextlib import suppress
 import os
+import shutil
 
 from django.contrib.auth.hashers import make_password
-from django.core.cache import cache
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from ..utils import (
-    AUTH_MODE_DISABLED,
-    AUTH_MODE_MASTER,
-    AUTH_MODE_SHARED,
+    CONFIG_AUTH_ASSIGNED,
+    CONFIG_AUTH_DISABLED,
+    CONFIG_AUTH_GLOBAL,
     WEB_AUTH_COOKIE,
     WEB_AUTH_HEADER,
     ConfigCache,
-    _auth_throttle_cache_key,
-    config_auth_mode,
+    config_auth_state,
 )
 
 
@@ -46,12 +45,11 @@ class AuthGuiTests(SimpleTestCase):
             os.chmod(os.path.join(path, filename), 0o600)
         ConfigCache.clear(self.key)
         ConfigCache.clear_auth(self.key)
-        cache.delete(_auth_throttle_cache_key("127.0.0.1", self.key))
 
     def test_disabled_mode_ignores_a_stale_lock(self):
         """Turning global auth off restores the original open GUI."""
         ConfigCache.set_auth(self.key, "alice", "secret")
-        self.assertEqual(config_auth_mode(self.key), AUTH_MODE_DISABLED)
+        self.assertEqual(config_auth_state(self.key).mode, CONFIG_AUTH_DISABLED)
 
         response = self.client.get("/cfg/{}".format(self.key))
         self.assertEqual(response.status_code, 200)
@@ -74,6 +72,20 @@ class AuthGuiTests(SimpleTestCase):
         )
         self.assertNotIn('id="cfg-auth"', auth_content)
 
+    def test_current_alias_requires_browser_state(self):
+        """The private aliases never guess a key when browser state is absent."""
+        self.assertEqual(self.client.get("/cfg/@", headers=_BROWSER).status_code, 400)
+        self.client.cookies.clear()
+        self.assertEqual(self.client.get("/cfg/@", headers={"accept": "application/json"}).status_code, 400)
+        self.client.cookies.clear()
+        self.assertEqual(self.client.post("/cfg/@", headers={"accept": "application/json"}).status_code, 400)
+        self.client.cookies.clear()
+        self.assertEqual(self.client.get("/auth/@", headers=_BROWSER).status_code, 400)
+        self.client.cookies.clear()
+        self.assertEqual(self.client.post("/auth/@").status_code, 400)
+        self.client.cookies.clear()
+        self.assertEqual(self.client.delete("/auth/@").status_code, 400)
+
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
         APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
@@ -81,7 +93,7 @@ class AuthGuiTests(SimpleTestCase):
     )
     def test_master_sees_auth_editor_and_generator(self):
         """The administrator can create the key's first shared login."""
-        self.assertEqual(config_auth_mode(self.key), AUTH_MODE_MASTER)
+        self.assertEqual(config_auth_state(self.key).mode, CONFIG_AUTH_GLOBAL)
         response = self.client.get("/auth/{}".format(self.key), headers=_MASTER)
 
         self.assertEqual(response.status_code, 200)
@@ -122,6 +134,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn('value="master"', content)
         self.assertIn("Open Authentication Settings", content)
         self.assertIn("auth-account is-master", content)
+        self.assertIn('id="cfg-gen"', content)
         self.assertIn("auth-divider", content)
         self.assertIn("abstract-user-cutout", content)
         self.assertLess(content.index("auth-account"), content.index("API HEALTH"))
@@ -133,7 +146,20 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Are you sure you wish to log out?", content)
         self.assertNotIn("Abstract user", content)
         self.assertIn("M.updateTextFields()", content)
-        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 1)
+        # Password and both move IDs use the same concealed-input component.
+        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 3)
+        self.assertIn(">visibility_off</i>", content)
+        self.assertIn(
+            "toggle.querySelector('i').textContent = showing ? 'visibility_off' : 'visibility';",
+            content,
+        )
+        self.assertIn(
+            "toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';",
+            content,
+        )
+        self.assertIn('type="password" name="from"', content)
+        self.assertIn('type="password" name="to"', content)
+        self.assertEqual(content.count('data-show-label="Show Config ID"'), 2)
         self.assertIn("optionSelected(generateUser)", content)
         self.assertIn("optionSelected(generatePassword)", content)
         self.assertIn("setOptionSelected(other, true)", content)
@@ -163,7 +189,52 @@ class AuthGuiTests(SimpleTestCase):
         content = response.content.decode()
         self.assertIn("auth-account is-master", content)
         self.assertIn('auth-account-name">master</span>', content)
+        self.assertIn("Save Configuration", content)
+        self.assertNotIn("Global administrator credentials are required to save", content)
         self.assertEqual(config_list.status_code, 200)
+        list_content = config_list.content.decode()
+        self.assertIn("hideMode ? 'visibility' : 'visibility_off'", list_content)
+
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_master_switches_to_locked_key_and_saves(self):
+        """Selecting a locked Config ID never reduces administrator access."""
+        ConfigCache.set_auth(self.key, "alice", "secret")
+        login = self.client.post(
+            "/login",
+            {"username": "master", "password": "pass"},
+            headers=_BROWSER,
+        )
+        self.assertEqual(login.status_code, 302)
+
+        switched = self.client.post(
+            "/cfg/@",
+            {"key": self.key},
+            headers=_BROWSER,
+        )
+        self.assertEqual(switched.status_code, 302)
+        self.assertEqual(switched.url, "/cfg/@")
+        self.assertIn(WEB_AUTH_COOKIE, self.client.cookies)
+        self.assertNotEqual(self.client.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+
+        page = self.client.get("/cfg/@", headers=_BROWSER)
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Save Configuration", page.content.decode())
+        self.assertNotIn(
+            "Global administrator credentials are required to save",
+            page.content.decode(),
+        )
+
+        saved = self.client.post(
+            "/add/{}".format(self.key),
+            {"urls": "json://localhost"},
+            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+        )
+        self.assertEqual(saved.status_code, 200)
+        self.assertTrue(ConfigCache.get(self.key)[0].startswith("json://localhost/"))
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -173,7 +244,7 @@ class AuthGuiTests(SimpleTestCase):
     def test_shared_user_sees_saved_username(self):
         """A key user sees their username but never the saved password."""
         ConfigCache.set_auth(self.key, "alice", "secret")
-        self.assertEqual(config_auth_mode(self.key), AUTH_MODE_SHARED)
+        self.assertEqual(config_auth_state(self.key).mode, CONFIG_AUTH_ASSIGNED)
 
         response = self.client.get("/auth/{}".format(self.key), headers=_SHARED)
         self.assertEqual(response.status_code, 200)
@@ -198,12 +269,13 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(content.count('data-1p-ignore="true"'), 4)
         self.assertEqual(content.count('data-bwignore="true"'), 4)
         self.assertEqual(content.count('data-lpignore="true"'), 4)
-        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 3)
+        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 5)
         self.assertNotIn('id="auth-generate"', content)
         self.assertNotIn('id="auth-remove"', content)
         self.assertNotIn("secret", content)
         self.assertIn("Open Authentication Settings", content)
         self.assertNotIn("auth-account is-master", content)
+        self.assertNotIn('id="cfg-gen"', content)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_password_only_user_does_not_see_username(self):
@@ -220,7 +292,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn('name="current_password"', content)
         self.assertIn('name="password"', content)
         self.assertIn('name="password_confirm"', content)
-        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 3)
+        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 5)
         self.assertNotIn("auth-account", content)
         self.assertIn("auth-logout-link", content)
 
@@ -238,7 +310,7 @@ class AuthGuiTests(SimpleTestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"mode": AUTH_MODE_SHARED, "username": "alice"})
+        self.assertEqual(response.json(), {"mode": CONFIG_AUTH_ASSIGNED, "username": "alice"})
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -306,29 +378,21 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(response.status_code, 421)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
-    def test_browser_denials_use_error_pages(self):
-        """Browser requests use the login form and keep shared throttling."""
+    def test_browser_denials_use_login_page(self):
+        """Browser requests use the login form without a Basic challenge."""
         response = self.client.get("/auth/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith("/login?"))
         self.assertNotIn("WWW-Authenticate", response)
-
-        ConfigCache.set_auth(self.key, "alice", "secret")
-        cache.set(_auth_throttle_cache_key("127.0.0.1", self.key), 20, timeout=60)
-        response = self.client.post(
-            "/login",
-            data={"username": "alice", "password": "secret", "key": self.key},
-            headers=_BROWSER,
-        )
-        self.assertEqual(response.status_code, 429)
-        self.assertIn("Too many login attempts", response.content.decode())
-        self.assertEqual(response["Retry-After"], "60")
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_login_form_validation(self):
         """The browser form rejects invalid fields without a Basic challenge."""
         page = self.client.get("/login", headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
+        self.assertEqual(page.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        self.assertEqual(page.cookies["key"]["max-age"], 0)
+        self.assertNotIn("apprise_support_dismissed", page.cookies)
         content = page.content.decode()
         self.assertIn('autocomplete="username" autofocus', content)
         self.assertIn('autocomplete="current-password"', content)
@@ -346,6 +410,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn('aria-controls="id_password"', content)
         self.assertIn('aria-controls="id_key"', content)
         self.assertIn("A Configuration ID is required for non-administrative accounts", content)
+        self.assertNotIn('name="key" value="apprise"', content)
         self.assertIn("loginError || document.querySelector('#id_username')", content)
         self.assertIn("novalidate", content)
 
@@ -371,7 +436,10 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(wrong.status_code, 401)
         self.assertIn('class="auth-login-error" role="alert"', wrong.content.decode())
         self.assertNotIn("WWW-Authenticate", wrong)
-        self.assertNotIn(WEB_AUTH_COOKIE, wrong.cookies)
+        self.assertEqual(wrong.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        self.assertEqual(wrong.cookies["key"]["max-age"], 0)
+        # Login cleanup intentionally leaves the support-banner cycle alone.
+        self.assertNotIn("apprise_support_dismissed", wrong.cookies)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_login_prefills_key_from_destination(self):
@@ -410,8 +478,33 @@ class AuthGuiTests(SimpleTestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/cfg/{}".format(self.key))
+        self.assertEqual(response.url, "/cfg/@")
         self.assertIn(WEB_AUTH_COOKIE, response.cookies)
+
+        auth_destination = self.client.post(
+            "/login",
+            {
+                "username": "alice",
+                "password": "secret",
+                "key": self.key,
+                "next": "/auth/{}".format(self.key),
+            },
+            headers=_BROWSER,
+        )
+        self.assertEqual(auth_destination.url, "/auth/@")
+
+        welcome_destination = self.client.post(
+            "/login",
+            {
+                "username": "alice",
+                "password": "secret",
+                "key": self.key,
+                "next": "/",
+            },
+            headers=_BROWSER,
+        )
+        # Only matching keyed destinations are shortened to cookie aliases.
+        self.assertEqual(welcome_destination.url, "/")
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_password_only_login_accepts_blank_username(self):
@@ -425,7 +518,7 @@ class AuthGuiTests(SimpleTestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/cfg/{}".format(self.key))
+        self.assertEqual(response.url, "/cfg/@")
         self.assertIn(WEB_AUTH_COOKIE, response.cookies)
 
     @override_settings(
@@ -476,6 +569,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Cache-Control"], "no-store")
         self.assertEqual(response.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        self.assertEqual(response.cookies["key"]["max-age"], 0)
         content = response.content.decode()
         self.assertIn("Logged Out", content)
         self.assertNotIn("auth-account", content)
@@ -494,6 +588,91 @@ class AuthGuiTests(SimpleTestCase):
             headers={"accept": "application/json", **_MASTER},
         )
         self.assertEqual(api.status_code, 200)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_master_login_replaces_a_previous_config_cookie(self):
+        """A new administrator does not inherit the prior user's selected ID."""
+        self.client.cookies["key"] = "previous_private_key"
+
+        response = self.client.post(
+            "/login",
+            data={"username": "master", "password": "pass"},
+            headers=_BROWSER,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.cookies["key"].value, "apprise")
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_config_lock_keeps_tabs_in_their_grid_columns(self):
+        """Locked tabs retain normal sizing while remaining disabled."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertEqual(content.count('class="tab disabled col s3"'), 2)
+        self.assertNotIn("disabledcol", content)
+        self.assertIn("Choose at least one tag", content)
+        self.assertIn("Required Tag", content)
+        self.assertIn("commitNotifyTags();", content)
+        self.assertNotIn('class="auth-editor-card auth-move-card"', content)
+
+    @override_settings(
+        APPRISE_CONFIG_LOCK=True,
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_locked_admin_browser_can_poll_health(self):
+        """CONFIG_LOCK does not interfere with an administrator health poll."""
+        login = self.client.post(
+            "/login",
+            data={"username": "master", "password": "pass"},
+            headers=_BROWSER,
+        )
+        self.assertEqual(login.status_code, 302)
+
+        response = self.client.get(
+            "/status",
+            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        status = response.json()
+        self.assertTrue(status["config_lock"])
+        self.assertFalse(status["status"]["can_write_config"])
+        self.assertEqual(status["status"]["details"], ["OK"])
+        self.assertEqual(status["privilege"], "admin")
+
+        auth_page = self.client.get("/auth/{}".format(self.key), headers=_BROWSER)
+        self.assertEqual(auth_page.status_code, 200)
+        content = auth_page.content.decode()
+        self.assertIn('class="auth-editor-card auth-move-card"', content)
+        # The browser suppresses only the expected CONFIG_LOCK write notice.
+        self.assertIn("data.config_lock !== true", content)
+        self.assertNotIn("data.config_lock === false", content)
+
+    @override_settings(
+        APPRISE_CONFIG_LOCK=True,
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_locked_shared_browser_does_not_load_move_tools(self):
+        """A configuration user does not receive unavailable move markup or JavaScript."""
+        ConfigCache.set_auth(self.key, "alice", "secret")
+        login = self.client.post(
+            "/login",
+            data={"username": "alice", "password": "secret", "key": self.key},
+            headers=_BROWSER,
+        )
+        self.assertEqual(login.status_code, 302)
+
+        response = self.client.get("/auth/{}".format(self.key), headers=_BROWSER)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn('class="auth-editor-card auth-move-card"', content)
+        self.assertNotIn("const moveForm", content)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_login_rejects_external_return_url(self):
@@ -661,8 +840,17 @@ class AuthGuiTests(SimpleTestCase):
 
         page = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
-        self.assertNotIn("auth-account is-master", page.content.decode())
-        self.assertNotIn('id="cfg-list"', page.content.decode())
+        page_content = page.content.decode()
+        self.assertNotIn("auth-account is-master", page_content)
+        self.assertNotIn('id="cfg-list"', page_content)
+        self.assertNotIn('id="cfg-gen"', page_content)
+        self.assertIn('id="config-id-select-form"', page_content)
+        self.assertNotIn("Save Configuration", page_content)
+        self.assertIn(
+            "Global administrator credentials are required to save",
+            page_content,
+        )
+        self.assertIn("'X-Apprise-Config-ID': '{}',".format(self.key), page_content)
 
         config_list = self.client.get("/cfg", headers=_BROWSER)
         self.assertEqual(config_list.status_code, 403)
@@ -671,7 +859,12 @@ class AuthGuiTests(SimpleTestCase):
 
         welcome = self.client.get("/?key=some_other_key", headers=_BROWSER)
         self.assertEqual(welcome.status_code, 200)
-        self.assertIn("alice:****@", welcome.content.decode())
+        welcome_content = welcome.content.decode()
+        self.assertIn("alice:****@", welcome_content)
+        self.assertIn('href="/cfg/@"', welcome_content)
+        self.assertIn('href="/auth/@"', welcome_content)
+        self.assertIn("'X-Apprise-Config-ID': '{}',".format(self.key), welcome_content)
+        self.assertEqual(welcome.cookies["key"].value, self.key)
 
         # Future unkeyed pages do not inherit shared access automatically.
         metrics = self.client.get("/metrics", headers=_BROWSER)
@@ -683,11 +876,212 @@ class AuthGuiTests(SimpleTestCase):
         )
         self.assertEqual(gui_fetch.status_code, 204)
 
+        # Shared health requests must name the configuration they authenticate.
+        health_without_key = self.client.get(
+            "/status",
+            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+        )
+        self.assertEqual(health_without_key.status_code, 401)
+        health_with_key = self.client.get(
+            "/status",
+            headers={
+                "accept": "application/json",
+                WEB_AUTH_HEADER: "1",
+                "X-Apprise-Config-ID": self.key,
+            },
+        )
+        self.assertEqual(health_with_key.status_code, 200)
+
         api = self.client.post(
             "/get/{}".format(self.key),
             headers={"accept": "application/json"},
         )
         self.assertEqual(api.status_code, 401)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_current_aliases_follow_signed_browser_state(self):
+        """Cookie-backed aliases hide the key while explicit URLs keep working."""
+        ConfigCache.set_auth(self.key, "alice", "secret")
+        login = self.client.post(
+            "/login",
+            {"username": "alice", "password": "secret", "key": self.key},
+            headers=_BROWSER,
+        )
+        self.assertEqual(login.url, "/cfg/@")
+
+        config_page = self.client.get("/cfg/@", headers=_BROWSER)
+        auth_page = self.client.get("/auth/@", headers=_BROWSER)
+        self.assertEqual(config_page.status_code, 200)
+        self.assertEqual(auth_page.status_code, 200)
+        self.assertContains(config_page, self.key)
+        self.assertContains(auth_page, self.key)
+
+        # The original address remains available for bookmarks and clients
+        # that do not use the convenience alias.
+        explicit = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+        self.assertEqual(explicit.status_code, 200)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_switching_users_requires_the_destination_login(self):
+        """A shared browser session cannot cross into another user's key."""
+        other_key = "auth_gui_other_key"
+        try:
+            ConfigCache.put(self.key, "json://first.example", "text")
+            ConfigCache.set_auth(self.key, "alice", "secret")
+            ConfigCache.put(other_key, "json://second.example", "text")
+            ConfigCache.set_auth(other_key, "bob", "other-secret")
+            self.client.post(
+                "/login",
+                {"username": "alice", "password": "secret", "key": self.key},
+                headers=_BROWSER,
+            )
+
+            # API and browser fetches both reject the first user's credentials
+            # before any content belonging to the second key is returned.
+            api = self.client.post(
+                "/get/{}".format(other_key),
+                headers={"accept": "application/json", **_SHARED},
+            )
+            browser_fetch = self.client.post(
+                "/get/{}".format(other_key),
+                headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            )
+            self.assertEqual(api.status_code, 401)
+            self.assertEqual(browser_fetch.status_code, 401)
+            self.assertNotIn("second.example", api.content.decode())
+            self.assertNotIn("second.example", browser_fetch.content.decode())
+
+            switched = self.client.post(
+                "/cfg/@",
+                {"key": other_key},
+                headers=_BROWSER,
+            )
+            self.assertEqual(switched.status_code, 302)
+            self.assertEqual(switched.url, "/login?next=%2Fcfg%2F%40")
+            self.assertNotIn(other_key, switched.url)
+            self.assertEqual(switched.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+            self.assertEqual(switched.cookies["key"].value, other_key)
+
+            login_page = self.client.get(switched.url, headers=_BROWSER)
+            self.assertEqual(login_page.status_code, 200)
+            self.assertIn(
+                'name="key" value="{}"'.format(other_key),
+                login_page.content.decode(),
+            )
+
+            rejected = self.client.post(
+                "/login",
+                {"username": "alice", "password": "secret", "key": other_key},
+                headers=_BROWSER,
+            )
+            self.assertEqual(rejected.status_code, 401)
+
+            accepted = self.client.post(
+                "/login",
+                {"username": "bob", "password": "other-secret", "key": other_key},
+                headers=_BROWSER,
+            )
+            self.assertEqual(accepted.status_code, 302)
+            self.assertEqual(accepted.url, "/cfg/@")
+            loaded = self.client.post(
+                "/get/{}".format(other_key),
+                headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            )
+            self.assertEqual(loaded.status_code, 200)
+            self.assertEqual(loaded.json()["config"], "json://second.example")
+        finally:
+            ConfigCache.clear(other_key)
+            ConfigCache.clear_auth(other_key)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_switching_identical_locks_requires_login(self):
+        """A copied lock never extends a browser session to another Config ID."""
+        other_key = "auth_gui_same_login"
+        try:
+            ConfigCache.set_auth(self.key, "alice", "secret")
+            source_path, source_name = ConfigCache.auth_path(self.key)
+            target_path, target_name = ConfigCache.auth_path(other_key)
+            os.makedirs(target_path, exist_ok=True)
+            shutil.copyfile(
+                os.path.join(source_path, source_name),
+                os.path.join(target_path, target_name),
+            )
+            self.client.post(
+                "/login",
+                {"username": "alice", "password": "secret", "key": self.key},
+                headers=_BROWSER,
+            )
+
+            switched = self.client.post(
+                "/cfg/@",
+                {"key": other_key},
+                headers=_BROWSER,
+            )
+
+            self.assertEqual(switched.status_code, 302)
+            self.assertTrue(switched.url.startswith("/login?"))
+            self.assertEqual(switched.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        finally:
+            ConfigCache.clear(other_key)
+            ConfigCache.clear_auth(other_key)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_current_auth_alias_supports_update_and_admin_delete(self):
+        """The private alias supports the same credential operations as a keyed URL."""
+        ConfigCache.set_auth(self.key, "alice", "secret")
+        self.client.post(
+            "/login",
+            {"username": "alice", "password": "secret", "key": self.key},
+            headers=_BROWSER,
+        )
+        changed = self.client.post(
+            "/auth/@",
+            data=(
+                '{"username":"alice","current_password":"secret",'
+                '"password":"new-secret","password_confirm":"new-secret"}'
+            ),
+            content_type="application/json",
+            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+        )
+        self.assertEqual(changed.status_code, 200)
+        self.assertTrue(ConfigCache.verify_auth(self.key, "alice", "new-secret"))
+
+        # An administrator can use the same alias after selecting this key.
+        self.client.cookies.clear()
+        self.client.post("/login", {"username": "master", "password": "pass"}, headers=_BROWSER)
+        self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+        removed = self.client.delete(
+            "/auth/@",
+            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+        )
+        self.assertEqual(removed.status_code, 200)
+        self.assertFalse(ConfigCache.has_auth(self.key))
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_shared_move_refreshes_current_browser_key(self):
+        """Moving a shared configuration keeps its browser session signed in."""
+        destination = "auth_gui_moved_key"
+        try:
+            ConfigCache.put(self.key, "json://localhost", "text")
+            ConfigCache.set_auth(self.key, "alice", "secret")
+            self.client.post(
+                "/login",
+                {"username": "alice", "password": "secret", "key": self.key},
+                headers=_BROWSER,
+            )
+
+            moved = self.client.post(
+                "/move/{}".format(self.key),
+                {"from": self.key, "to": destination},
+                headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            )
+            self.assertEqual(moved.status_code, 200)
+            self.assertIn(WEB_AUTH_COOKIE, moved.cookies)
+            self.assertEqual(moved.cookies["key"].value, destination)
+            self.assertEqual(self.client.get("/auth/@", headers=_BROWSER).status_code, 200)
+        finally:
+            ConfigCache.clear(destination)
+            ConfigCache.clear_auth(destination)
 
     def test_login_controls_hidden_when_auth_is_disabled(self):
         """Without Basic Auth, login controls return to the welcome page."""

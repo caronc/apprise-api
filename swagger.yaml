@@ -7,8 +7,9 @@ info:
     Library. See https://github.com/caronc/apprise-api for details.
 
     Authentication is optional. APPRISE_AUTH_REQUIRED enables it; basicAuth
-    can then use an administrator or a login assigned to one key. Repeated
-    failures for one client and key return 429 with a Retry-After header.
+    can then use an administrator or a login assigned to one key. The packaged
+    nginx configuration limits login changes and may return 429 with a
+    Retry-After header.
   version: 1.5.2
 
 servers:
@@ -60,6 +61,8 @@ paths:
           description: Credentials were not accepted.
         '403':
           description: The browser Origin is not allowed.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /logout:
     get:
@@ -107,8 +110,9 @@ paths:
             invalid.
         '401':
           description: >
-            Unauthorized -- only when X-Apprise-Config-ID supplies a key
-            whose own authentication requirements were not met.
+            Unauthorized -- authentication is enabled and the administrator
+            login was not accepted, or X-Apprise-Config-ID supplied a key
+            whose authentication requirements were not met.
         '417':
           description: Expectation Failed (Configuration or Permission issues).
           content:
@@ -279,6 +283,8 @@ paths:
         With authentication mode disabled, returns the original list of Config
         Key strings. When enabled, each item also includes its assigned
         configuration username. Administrator access and APPRISE_ADMIN are required.
+        The listing is available only in SIMPLE stateful mode. CONFIG_LOCK
+        additionally requires authentication to be enabled.
       tags:
         - Persistent
       responses:
@@ -314,7 +320,10 @@ paths:
         '401':
           description: Unauthorized (administrator credentials are required; this listing has no per-key fallback).
         '403':
-          description: Forbidden (APPRISE_ADMIN not enabled).
+          description: >
+            Forbidden (persistent storage or APPRISE_ADMIN is disabled,
+            authentication is insufficient, or CONFIG_LOCK is enabled without
+            authentication).
 
   /add/{key}:
     post:
@@ -353,7 +362,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, a configuration user
+            attempted a write, or CONFIG_LOCK is enabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '431':
@@ -377,7 +388,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, a configuration user
+            attempted deletion, or CONFIG_LOCK requires an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -388,11 +401,12 @@ paths:
       operationId: Persistent_MoveConfiguration
       summary: Moves the configuration stored at {key} to a new configuration ID.
       description: >
-        API callers only supply to_config_id; the source is always {key}.
-        The browser form additionally accepts from_config_id, editable only
+        API callers only supply `to`; the source is always {key}.
+        The browser form additionally accepts `from`, editable only
         by a global administrator -- a restricted configuration user may
         only move their own key. The destination must not already have a
-        configuration.
+        configuration. With CONFIG_LOCK enabled, only an authenticated
+        administrator may move an entry.
       tags:
         - Persistent
       parameters:
@@ -403,20 +417,20 @@ paths:
           application/json:
             schema:
               type: object
-              required: [to_config_id]
+              required: [to]
               properties:
-                to_config_id:
+                to:
                   type: string
                   maxLength: 128
           application/x-www-form-urlencoded:
             schema:
               type: object
-              required: [from_config_id, to_config_id]
+              required: [from, to]
               properties:
-                from_config_id:
+                from:
                   type: string
                   maxLength: 128
-                to_config_id:
+                to:
                   type: string
                   maxLength: 128
       responses:
@@ -436,13 +450,15 @@ paths:
                     nullable: true
         '400':
           description: >
-            Bad Request (missing/invalid to_config_id, a destination equal
+            Bad Request (missing/invalid `to`, a destination equal
             to the source, or a restricted user attempted to change
-            from_config_id).
+            `from`).
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
         '404':
           description: Not Found (there was no configuration to move).
         '409':
@@ -486,7 +502,7 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -516,7 +532,7 @@ paths:
                 properties:
                   mode:
                     type: string
-                    enum: [master_lock, shared_lock]
+                    enum: [global, assigned]
                   username:
                     type: string
                     nullable: true
@@ -526,7 +542,7 @@ paths:
         '401':
           description: Unauthorized.
         '403':
-          description: Forbidden because authentication mode is disabled.
+          description: Forbidden because persistent storage or authentication mode is disabled.
         '429':
           $ref: '#/components/responses/TooManyRequests'
     post:
@@ -594,8 +610,8 @@ paths:
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- authentication mode is disabled, or a configuration
-            user attempted to change the saved username.
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or a configuration user attempted to change the saved username.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -619,8 +635,8 @@ paths:
           description: Unauthorized -- the supplied credentials are invalid.
         '403':
           description: >
-            Forbidden -- authentication mode is disabled or configuration
-            credentials were used. An administrator account is required.
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or configuration credentials were used. An administrator account is required.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -653,7 +669,7 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -708,6 +724,8 @@ paths:
           description: No configuration found for this key.
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: Forbidden (persistent storage is disabled).
         '406':
           description: Method Not Accepted (Recursion limit reached).
         '424':
@@ -757,6 +775,8 @@ paths:
           description: No content.
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: Forbidden (persistent storage is disabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -789,7 +809,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, a configuration user
+            attempted a write, or CONFIG_LOCK is enabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '431':
@@ -818,7 +840,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, a configuration user
+            attempted deletion, or CONFIG_LOCK requires an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -841,20 +865,20 @@ paths:
           application/json:
             schema:
               type: object
-              required: [to_config_id]
+              required: [to]
               properties:
-                to_config_id:
+                to:
                   type: string
                   maxLength: 128
           application/x-www-form-urlencoded:
             schema:
               type: object
-              required: [from_config_id, to_config_id]
+              required: [from, to]
               properties:
-                from_config_id:
+                from:
                   type: string
                   maxLength: 128
-                to_config_id:
+                to:
                   type: string
                   maxLength: 128
       responses:
@@ -862,13 +886,15 @@ paths:
           description: Configuration moved.
         '400':
           description: >
-            Bad Request (missing/invalid to_config_id, a destination equal
+            Bad Request (missing/invalid `to`, a destination equal
             to the source, a restricted user attempted to change
-            from_config_id, or a missing/invalid X-Apprise-Config-ID).
+            `from`, or a missing/invalid X-Apprise-Config-ID).
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
         '404':
           description: Not Found (there was no configuration to move).
         '409':
@@ -911,7 +937,7 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -941,7 +967,7 @@ paths:
                 properties:
                   mode:
                     type: string
-                    enum: [master_lock, shared_lock]
+                    enum: [global, assigned]
                   username:
                     type: string
                     nullable: true
@@ -953,7 +979,7 @@ paths:
         '401':
           description: Unauthorized.
         '403':
-          description: Forbidden because authentication mode is disabled.
+          description: Forbidden because persistent storage or authentication mode is disabled.
         '429':
           $ref: '#/components/responses/TooManyRequests'
     post:
@@ -1006,8 +1032,8 @@ paths:
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- authentication mode is disabled, or a configuration
-            user attempted to change the saved username.
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or a configuration user attempted to change the saved username.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1033,8 +1059,8 @@ paths:
           description: Unauthorized -- the supplied credentials are invalid.
         '403':
           description: >
-            Forbidden -- authentication mode is disabled or configuration
-            credentials were used. An administrator account is required.
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or configuration credentials were used. An administrator account is required.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1082,6 +1108,8 @@ paths:
           description: Bad Request (missing or invalid X-Apprise-Config-ID).
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: Forbidden (persistent storage is disabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -1095,12 +1123,14 @@ components:
         optional APPRISE_USER create the administrator account. Without that
         account, saved per-key logins still protect and access their own keys.
         APPRISE_BASIC_AUTH_REALM changes the label shown in login prompts.
+        APPRISE_WEB_AUTH_SECRET optionally signs browser logins and has its own built-in default.
 
   responses:
     TooManyRequests:
       description: >
-        Too Many Requests -- this client has failed too many recent
-        authentication attempts against this key.
+        Too Many Requests -- the reverse proxy has temporarily limited this
+        request. The packaged nginx configuration applies this to login
+        changes and health checks.
       headers:
         Retry-After:
           schema:

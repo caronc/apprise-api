@@ -28,7 +28,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = f"Prune all persistent content older then {settings.APPRISE_STORAGE_PRUNE_DAYS} days()"
+    help = f"Prune persistent content older than {settings.APPRISE_STORAGE_PRUNE_DAYS} days"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -45,4 +45,4 @@ class Command(BaseCommand):
             expires=options["days"] * 86400,
             action=True,
         )
-        self.stdout.write(self.style.SUCCESS(f"Successfully pruned persistent storeage (days: {options['days']})"))
+        self.stdout.write(self.style.SUCCESS(f"Successfully pruned persistent storage (days: {options['days']})"))

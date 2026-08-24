@@ -33,17 +33,10 @@ N_MGR = apprise.manager_plugins.NotificationManager()
 
 
 class NotifyWithDefaultFormatTests(SimpleTestCase):
-    """
-    Test that APPRISE_DEFAULT_FORMAT is wired correctly to AppriseAsset,
-    same as APPRISE_HTTP_REDIRECTS (see test_redirects.py).
+    """Test the optional server-wide message format.
 
-    APPRISE_DEFAULT_FORMAT only ever applies when the `format` field is
-    missing from the payload entirely. That can only happen through a
-    JSON payload -- the web form always submits an explicit `format`
-    value (even the default "TEXT" choice is an explicit selection),
-    so the server default never applies there. A `format` field that is
-    present but blank or null is also an explicit choice -- it forces
-    pass-through, overriding any configured server default.
+    It applies only when an API payload omits ``format``. Blank, null, and web
+    form selections are explicit choices and override the default.
     """
 
     def _make_asset_spy(self):
