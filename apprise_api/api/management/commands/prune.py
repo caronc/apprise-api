@@ -7,7 +7,7 @@
 from api.utils import ConfigCache
 import apprise
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
@@ -16,6 +16,11 @@ class Command(BaseCommand):
     help = "Prune expired persistent state and unused authentication locks"
 
     def handle(self, *args, **options):
+        """Prune expired notification data and unused login locks."""
+        if settings.APPRISE_AUTH_PRUNE_SECONDS < 0:
+            # A negative age would make every unused lock eligible.
+            raise CommandError("APPRISE_AUTH_PRUNE_SECONDS must not be negative")
+
         # Remove expired notification state using Apprise's storage policy.
         apprise.PersistentStore.disk_prune(
             path=settings.APPRISE_STORAGE_DIR,

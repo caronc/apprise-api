@@ -403,8 +403,8 @@ class AuthViewTests(SimpleTestCase):
         self.assertTrue(ConfigCache.verify_auth(key, "", "new-secret"))
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
-    def test_password_only_lock_accepts_a_stray_whitespace_username(self):
-        """'', ' ', and no username at all must all authenticate the same password-only lock."""
+    def test_password_only_lock_accepts_whitespace_username(self):
+        """Treat missing, blank, and whitespace usernames alike."""
         key = "auth_password_only_whitespace_key"
         ConfigCache.set_auth(key, "", "secret")
 

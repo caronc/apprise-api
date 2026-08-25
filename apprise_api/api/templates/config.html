@@ -2058,10 +2058,8 @@
   }
 
   function restoreNotifyFormatPreference() {
-    // "Process As" defaults to TEXT on a fresh page load; once the user
-    // picks something else, remember it for next time via a cookie. The
-    // select is looked up by [name] rather than #id_format since the
-    // Configuration tab's own format field renders with that same id.
+    // Start with TEXT and remember later choices in a cookie. Select by name
+    // because the Configuration tab uses the same field ID.
     const COOKIE = 'apprise_notify_format';
     const formatSelect = document.querySelector('#donotify select[name="format"]');
     if (!formatSelect) {
@@ -2213,8 +2211,7 @@
 {# djlint:on #}
 {# djlint:off #}
 {% block onload %}
-  // Mark only the Config ID tokens before syntax highlighting removes their
-  // template elements. This avoids concealing matching command words.
+  // Mark only Config ID tokens so matching command words stay visible.
   const snippetConfigMarkerStart = '\u2063';
   const snippetConfigMarkerEnd = '\u2064';
   document.querySelectorAll('#overview [data-snippet-config-id]').forEach(function (token) {
@@ -2251,8 +2248,7 @@
     if (snippet.querySelector('.snippet-copy-btn')) {
       return;
     }
-    // Keep an immutable copy value; later highlighting and concealment only
-    // change what is displayed.
+    // Copy the original snippet even when its display is concealed.
     const copyText = snippet.dataset.copyText;
     if (!copyText) {
       return;

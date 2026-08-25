@@ -53,6 +53,12 @@ class NotifyWithDefaultFormatTests(SimpleTestCase):
 
         return SpyAsset, captured
 
+    def test_web_form_starts_with_text_but_keeps_as_is_available(self):
+        """The beginner-facing form defaults to TEXT by design."""
+        field = NotifyForm().fields["format"]
+        assert field.initial == apprise.NotifyFormat.TEXT.value
+        assert (None, "AS-IS") in [(value, str(label)) for value, label in field.choices]
+
     def test_stateful_form_submission_never_applies_default_format(self):
         """
         The web form always submits an explicit `format` value, so

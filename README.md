@@ -361,9 +361,9 @@ curl -X POST \
 
 You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://appriseit.com/guides/) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
 
-Stateful endpoints also accept `X-Apprise-Config-ID`, such as `POST /get/` with `X-Apprise-Config-ID: mykey`. This keeps the key out of access logs. On `/notify` it selects a stateful send, and on `/status` it applies the key's authentication. The `/cfg` administrator listing does not accept it.
+Stateful endpoints also accept `X-Apprise-Config-ID`. This keeps the Config ID out of the URL. On `/notify` it selects a saved configuration; on `/status` it selects that ID's login. The `/cfg` listing does not accept it.
 
-If both the URL and header contain a key, the header wins. An invalid header returns `400` instead of falling back to the URL key. The web UI and Apprise Mobile continue to use keys in URLs.
+If both the URL and header contain a key, the header wins. Invalid headers return `400`. Existing URL-based requests remain supported.
 
 The `/cfg` list requires `APPRISE_ADMIN=yes` and `APPRISE_STATEFUL_MODE=simple`. When `APPRISE_CONFIG_LOCK` is enabled, the list also requires an authenticated administrator.
 
@@ -587,7 +587,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_ADMIN` | Shows the configuration list when `APPRISE_STATEFUL_MODE=simple`. Authentication permissions still decide who may use it. Defaults to `no`.
 | `APPRISE_INTERPRET_EMOJIS` | Override the Apprise `interpret-emojis` setting. This defaults to `none` (not set), but can be enforced to `no` or `yes`.
 | `APPRISE_HTTP_REDIRECTS` | By default, Apprise follows HTTP 3xx redirects, matching the behaviour of the underlying requests library. Set to `no` to disable redirect following globally across all plugins without having to add `redirect=no` to every individual URL. Individual URLs can always override this with `?redirect=yes` or `?redirect=no` regardless of this setting. This defaults to `yes`.
-| `APPRISE_DEFAULT_FORMAT` | Optional `text`, `html`, or `markdown` default for API requests that omit `format`. Blank, `null`, and explicit request values take priority. The Web UI always submits a choice, so this setting applies only to direct API calls.
+| `APPRISE_DEFAULT_FORMAT` | Optional `text`, `html`, or `markdown` default for API requests that omit `format`. Blank, `null`, and explicit request values take priority. The Web UI starts with `TEXT` selected and always submits a choice, so this setting applies only to direct API calls.
 | `APPRISE_DENY_SERVICES` | A comma separated set of entries identifying what plugins to deny access to. You only need to identify one schema entry associated with a plugin to in turn disable all of it.  Hence, if you wanted to disable the `glib` plugin, you do not need to additionally include `qt` as well since it's included as part of the (`dbus`) package; consequently specifying `qt` would in turn disable the `glib` module as well (another way to accomplish the same task).  To exclude/disable more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified. By default, this is initialized to `windows, dbus, gnome, macosx, syslog` (blocking local actions from being issued inside of the docker container)
 | `APPRISE_ALLOW_SERVICES` | A comma separated set of entries identifying what plugins to allow access to. You may only use alpha-numeric characters as is the restriction of Apprise Schemas (schema://) anyway.  To exclusively include more the one upstream service, simply specify additional entries separated by a `,` (comma) or ` ` (space). The `APPRISE_DENY_SERVICES` entries are ignored if the `APPRISE_ALLOW_SERVICES` is identified.
 | `APPRISE_API_ONLY` | This option will disable the entire access to web administration interface and only the API will be available for use. By default, this option will be set to `no`, or you can omit this variable if you wish.
@@ -638,24 +638,24 @@ Set `APPRISE_BASIC_AUTH_REALM` to give each instance a recognizable label in log
 
 Basic Auth does not encrypt credentials. Use HTTPS whenever the server is reachable outside a trusted network.
 
-API clients continue to send Basic Auth with every request. Requests that explicitly accept `text/html` use the signed browser login, allowing **Logout** to end browser access without changing JSON or plain-text API behavior. Ordinary API calls cannot substitute this cookie for Basic Auth; only requests made by the web interface identify themselves as part of that browser login.
+API clients send Basic Auth with every request. Browser pages use a signed login so **Logout** can end the session. JSON and plain-text API calls cannot use this browser login.
 
-Browser logins use a separate built-in key by default. Changing `APPRISE_WEB_AUTH_SECRET` signs out every browser without changing the `SECRET_KEY` used by hash-mode configuration paths.
+Browser logins have their own built-in signing key. Changing `APPRISE_WEB_AUTH_SECRET` signs out every browser without changing hash-mode configuration paths.
 
-After browser login, **Configuration Manager** and **Authentication** can use `/cfg/@` and `/auth/@`. These addresses resolve the current Config ID from the browser cookie, keeping it out of the address bar. Existing `/cfg/{KEY}` and `/auth/{KEY}` addresses remain supported for bookmarks, cookie-free clients, and API compatibility. Logout clears the remembered Config ID.
+After browser login, `/cfg/@` and `/auth/@` use the Config ID saved in the browser session. Existing keyed addresses remain supported for bookmarks, cookie-free clients, and API compatibility. Logout clears the remembered ID.
 
-The Config ID field at the top of Configuration Manager can open another ID without placing it in the address bar. A configuration user must log in again when the new ID belongs to someone else. Administrators can also choose or generate an ID from **New Configuration**; this option is hidden from configuration users.
+The Config ID field can open another configuration without exposing its ID in the address bar. Users must log in when the new ID has different credentials. Administrators can also choose or generate an ID from **New Configuration**.
 
 #### Per-Configuration-ID Basic Auth
 Per-key auth lets users share one server without sharing administrator credentials. Each user receives a protected configuration key, while the administrator can recover any key.
 
-In the web interface, open a configuration and select its lock icon or **Authentication** in the menu. Enter a username and password, then select **Save**. Global administrators can also use **Randomize** to generate both values.
+Open a configuration and select its lock icon or **Authentication**. Enter a username and password, then select **Save**. Administrators can also use **Randomize**.
 
-The configuration ID, username, and password are three separate values. Use random values when practical and share all three with the person who needs access. The password is never displayed again after it is saved.
+The Config ID, username, and password are separate values. Share all three with the user. Saved passwords are not displayed again.
 
-API clients can protect a configuration with `POST /auth/{KEY}`. An administrator is required to create the first login or remove one. An existing configuration user can still change their password when the administrator account is disabled.
+API clients manage a saved login with `POST /auth/{KEY}`. An administrator creates the first login or removes it. Configuration users may change their own password.
 
-The first lock requires administrator credentials. Administrators may later change or remove it. API users authenticate with their current login, repeat the saved username, and supply a new password. The browser form also asks them to enter the new password twice.
+Administrators may change or remove any login. Configuration users authenticate with their current login, repeat the saved username, and provide a new password. The browser asks for the new password twice.
 ```bash
 # Set (or replace) a password just for this one configuration ID.
 # The very first time requires the global credentials:
@@ -673,20 +673,20 @@ curl -X POST -H "Content-Type: application/json" \
 # Remove it as the global administrator (the configuration is untouched):
 curl -X DELETE -u foobar:your-password-here http://localhost:8000/auth/my-config-id
 ```
-Once set, `/add`, `/del`, `/get`, `/cfg`, `/notify`, `/json/urls`, and `/status` for that key require its credentials or the global credentials. Other keys are unaffected. See the `/auth/{KEY}` endpoint above for setup details.
+Once set, keyed endpoints require that login or the administrator login. Other Config IDs are unaffected.
 
 Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring the original open behavior. Their saved files remain in place and take effect again when authentication is enabled.
 
-The web interface includes **Logout**, which ends its signed browser login immediately. Browsers may retain Basic Auth internally, but cached credentials cannot silently restore an HTML login.
+**Logout** ends the signed browser login. Credentials cached by a browser cannot silently restore it.
 
 `APPRISE_CONFIG_LOCK` does not block setting, rotating, or removing per-key credentials.
 
 Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). Locks with configuration remain. See [Pruning](#pruning).
 
 #### Moving a Configuration
-`POST /move/{KEY}` renames a saved configuration to a new Config ID, carrying its per-key authentication (if any) along with it. The destination must be free. Under `APPRISE_CONFIG_LOCK`, only an authenticated administrator may move or delete an entry.
+`POST /move/{KEY}` moves a configuration and its login to a free Config ID. With `APPRISE_CONFIG_LOCK`, only an administrator may move or delete entries.
 
-A configuration user may only move their own key; a global administrator may move any key and, from the web interface's Move card, may also retarget the source (`from`) to move a different key entirely.
+Configuration users may move only their own Config ID. Administrators may move any ID and may select a different source in the Web interface.
 ```bash
 # Move 'my-config-id' to 'my-new-config-id' using that key's own credentials:
 curl -X POST -H "Content-Type: application/json" \

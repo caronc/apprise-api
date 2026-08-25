@@ -71,7 +71,6 @@ from .utils import (
     MIME_IS_JSON,
     WEB_AUTH_COOKIE,
     WEB_AUTH_HEADER,
-    AppriseStoreMode,
     ConfigCache,
     MoveResult,
     apply_global_filters,
@@ -1392,6 +1391,10 @@ def _health_check_response(request):
     # Detect the format our response should be in
     json_response = is_json_response(request)
 
+    # Normalize modes once so status matches the endpoint guards.
+    stateful_enabled = stateful_store_enabled()
+    stateless_enabled = str(settings.APPRISE_STATELESS_MODE).strip().lower() != "disabled"
+
     # Run our healthcheck; allow ?force which will cause the check to run each time
     response = healthcheck(lazy="force" not in request.GET)
 
@@ -1407,12 +1410,9 @@ def _health_check_response(request):
             {
                 "config_lock": settings.APPRISE_CONFIG_LOCK,
                 "attach_lock": settings.APPRISE_ATTACH_SIZE <= 0,
-                "stateful_enabled": settings.APPRISE_STATEFUL_MODE != AppriseStoreMode.DISABLED,
-                "stateless_enabled": settings.APPRISE_STATELESS_MODE != "disabled",
-                "degraded": (
-                    settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED
-                    and settings.APPRISE_STATELESS_MODE == "disabled"
-                ),
+                "stateful_enabled": stateful_enabled,
+                "stateless_enabled": stateless_enabled,
+                "degraded": not stateful_enabled and not stateless_enabled,
                 "max_attachments": settings.APPRISE_MAX_ATTACHMENTS,
                 "attach_size": settings.APPRISE_ATTACH_SIZE,
                 "status": response,
@@ -1461,6 +1461,19 @@ class KeyedHealthCheckView(View):
             return _key_access_denied_response(request, key)
 
         return _health_check_response(request)
+
+
+@method_decorator((gzip_page, never_cache), name="dispatch")
+class CurrentHealthCheckView(View):
+    """Return status for the configuration in the signed browser login."""
+
+    def get(self, request):
+        """Use the browser's current key without exposing it in the URL."""
+        if not is_html_response(request):
+            return _missing_key_response(request)
+
+        key = _current_browser_config_key(request)
+        return KeyedHealthCheckView.as_view()(request, key=key) if key else _missing_key_response(request)
 
 
 @method_decorator((gzip_page, never_cache), name="dispatch")
@@ -2130,9 +2143,8 @@ class MoveView(View):
             return _key_access_denied_response(request, from_config_id)
 
         if not settings.APPRISE_CONFIG_LOCK:
-            # Ordinary moves keep the existing health preflight. CONFIG_LOCK
-            # reports writes as disabled, so its administrator move proceeds
-            # directly to the guarded store operation below.
+            # CONFIG_LOCK reports a read-only store, but administrators may
+            # still move entries through the guarded operation below.
             health = healthcheck(lazy=True)
             if not health.get("can_write_config", False):
                 logger.warning(
@@ -2147,14 +2159,12 @@ class MoveView(View):
         return self._perform_move(request, from_config_id, to_config_id, json_response)
 
     def _parse_json_payload(self, request, key):
-        """Returns (from_config_id, to_config_id, error_response); error_response is None on success."""
+        """Return the move IDs and any JSON validation error."""
         try:
             content = json.loads(request.body.decode("utf-8"))
 
         except RequestDataTooBig:
-            # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
-            # the case when there is a very large file attachment that can't be pulled
-            # out of the payload without exceeding memory limitations (default is 3MB)
+            # Reject JSON larger than the configured request memory limit.
             logger.warning(
                 "MOVE - %s - JSON Payload Exceeded %dMB; operation aborted using KEY: %s",
                 request.META["REMOTE_ADDR"],
@@ -2189,7 +2199,7 @@ class MoveView(View):
         return key, to_config_id, None
 
     def _parse_form_payload(self, request, key, shared_user):
-        """Returns (from_config_id, to_config_id, error_response); error_response is None on success."""
+        """Return the move IDs and any form validation error."""
         form = MoveConfigForm(request.POST, restricted=shared_user, current_from=key)
         if not form.is_valid():
             status = ResponseCode.bad_request
@@ -2200,7 +2210,7 @@ class MoveView(View):
         return form.cleaned_data["from"], form.cleaned_data["to"], None
 
     def _perform_move(self, request, from_config_id, to_config_id, json_response):
-        """Runs the actual ConfigCache move and translates its outcome into a response."""
+        """Move the configuration and return the matching response."""
         result = ConfigCache.move(from_config_id, to_config_id)
 
         if result == MoveResult.NOT_FOUND:
@@ -2258,8 +2268,7 @@ class MoveView(View):
             request.apprise_auth_permission == AUTH_ROLE_USER
             and getattr(request, "apprise_web_auth_key", None) == from_config_id
         ):
-            # The lock moved with the configuration, so refresh both pieces of
-            # browser state before the old signed proof becomes unusable.
+            # Refresh the browser login after its lock moves to the new ID.
             request.default_config_id = to_config_id
             set_web_auth_cookie(
                 response,

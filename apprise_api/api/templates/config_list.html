@@ -126,9 +126,7 @@
           appriseShowStatusToast('{% trans "Configuration deleted." %}', true);
           const list = row.parentElement;
           row.remove();
-          // The empty-state message is only rendered server-side on page
-          // load -- a reload after the last row is the simplest way to
-          // pick it up rather than duplicating that markup here.
+          // Reload after the last deletion to show the server's empty state.
           if (list && !list.querySelector('.config-list-item')) {
             window.location.reload();
           }
@@ -154,12 +152,11 @@
             <button type="button"
                     class="btn-flat value-visibility-toggle"
                     data-value-toggle
-                    tabindex="-1"
                     aria-controls="swal-move-from"
-                    aria-label="{% trans "Show Password" %}"
-                    title="{% trans "Show Password" %}"
-                    data-show-label="{% trans "Show Password" %}"
-                    data-hide-label="{% trans "Hide Password" %}">
+                    aria-label="{% trans "Show Config ID" %}"
+                    title="{% trans "Show Config ID" %}"
+                    data-show-label="{% trans "Show Config ID" %}"
+                    data-hide-label="{% trans "Hide Config ID" %}">
               <i class="material-icons" aria-hidden="true">visibility_off</i>
             </button>
           </div>
@@ -169,12 +166,11 @@
             <button type="button"
                     class="btn-flat value-visibility-toggle"
                     data-value-toggle
-                    tabindex="-1"
                     aria-controls="swal-move-to"
-                    aria-label="{% trans "Show Password" %}"
-                    title="{% trans "Show Password" %}"
-                    data-show-label="{% trans "Show Password" %}"
-                    data-hide-label="{% trans "Hide Password" %}">
+                    aria-label="{% trans "Show Config ID" %}"
+                    title="{% trans "Show Config ID" %}"
+                    data-show-label="{% trans "Show Config ID" %}"
+                    data-hide-label="{% trans "Hide Config ID" %}">
               <i class="material-icons" aria-hidden="true">visibility_off</i>
             </button>
           </div>
@@ -190,8 +186,7 @@
           if (window.M && M.updateTextFields) {
             M.updateTextFields();
           }
-          // The custom html: markup isn't SweetAlert2's own input:, so
-          // Enter has to be wired up by hand to submit like it would there.
+          // Submit the custom dialog fields when Enter is pressed.
           popup.querySelectorAll('#swal-move-from, #swal-move-to').forEach(function (field) {
             field.addEventListener('keydown', function (event) {
               if (event.key === 'Enter' && !event.isComposing) {
@@ -202,9 +197,7 @@
           });
           popup.querySelector('#swal-move-to').focus();
         },
-        // A failed move (e.g. the destination already exists) must not close dialog.
-        // Allow user to pick a different destination and try again without starting
-        // over.
+        // Keep a failed move open so the destination can be corrected.
         preConfirm: async function () {
           const newKey = document.getElementById('swal-move-to').value.trim();
           if (!newKey) {
@@ -288,7 +281,7 @@
       toggleAllBtn.setAttribute('aria-pressed', hideMode ? 'true' : 'false');
       toggleAllBtn.setAttribute('aria-label', label);
       toggleAllBtn.title = label;
-      // Summarize the current list state, matching the individual controls.
+      // Match the list-wide icon to the current row states.
       toggleAllBtn.querySelector('i').textContent = hideMode ? 'visibility' : 'visibility_off';
     }
 
@@ -317,8 +310,7 @@
       syncToggleAllState();
     });
 
-    // A row toggled on its own (not via the button above) still needs to
-    // keep the mode accurate for the next click.
+    // Individual row toggles also refresh the list-wide action.
     const list = document.querySelector('.collection.z-depth-1');
     if (list) {
       list.addEventListener('click', function (event) {

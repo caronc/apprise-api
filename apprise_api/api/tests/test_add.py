@@ -474,7 +474,7 @@ class AddTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_add_admin_can_overwrite_any_key(self):
-        """The global administrator may still create or overwrite any key, restricted-user lock or not."""
+        """An administrator may create or replace any Config ID."""
         key = "test_add_admin"
         response = self.client.post(
             "/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"}, headers=_GOOD_MASTER
@@ -491,7 +491,7 @@ class AddTests(SimpleTestCase):
         ConfigCache.clear_auth(key)
 
     def test_add_works_when_no_auth_is_configured(self):
-        """No authentication configured at all is treated the same as an administrator, not a restricted user."""
+        """Open mode keeps its original unrestricted behavior."""
         key = "test_add_no_auth"
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
         assert response.status_code == 200

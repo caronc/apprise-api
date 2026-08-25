@@ -287,7 +287,7 @@
         authPassword.value = randomText(24);
         authPassword.dispatchEvent(new Event('change'));
       }
-      // Materialize only moves labels automatically after direct typing.
+      // Move Materialize labels after generated values are inserted.
       M.updateTextFields();
       (optionSelected(generatePassword) ? authPassword : authUsername).focus();
     });
@@ -323,7 +323,8 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username: authUsername ? authUsername.value : null,
+          // Password-only accounts intentionally submit a blank username.
+          username: authUsername ? authUsername.value : '',
           current_password: authCurrentPassword ? authCurrentPassword.value : null,
           password: authPassword.value,
           password_confirm: authPasswordConfirm ? authPasswordConfirm.value : null
@@ -489,8 +490,7 @@
         }).then(function () {
           if (movedFrom === pageConfigId) {
             // This page's own configuration no longer lives at this key.
-            // The server refreshed the signed current-key cookie during the
-            // move, so the private alias keeps the destination out of the URL.
+            // Reload the private alias after the server updates its Config ID.
             window.location.href = '{% url "auth_current" %}';
           }
         });

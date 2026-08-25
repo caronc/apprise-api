@@ -251,9 +251,8 @@ def is_json_response(request: HttpRequest) -> bool:
 def is_html_response(request: HttpRequest) -> bool:
     """Return whether HTML is the client's preferred response type.
 
-    An API client may list HTML as a low-priority fallback. Respect quality
-    values and ordering so that fallback never changes API authentication into
-    a browser-cookie login.
+    Honor Accept priorities so an API's HTML fallback does not start a browser
+    login.
     """
     html_preference = None
     json_preference = None
@@ -968,12 +967,10 @@ class AppriseConfigCache:
     def _acquire_auth_guard(self, _key):
         """Lock rare credential writes and moves; login reads never use this."""
         os.makedirs(self.root, exist_ok=True)
-        # One stable guard avoids unbounded per-key files and prevents two
-        # processes from locking different inodes after an unlink/recreation.
+        # One shared guard avoids creating a lock file for every Config ID.
         descriptor = os.open(os.path.join(self.root, ".auth.guard"), os.O_CREAT | os.O_RDWR, 0o600)
         try:
-            # Never wait indefinitely on a stalled worker. Callers already
-            # fail safely when the guard is busy and may retry the operation.
+            # Fail immediately if another credential update is in progress.
             fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             os.close(descriptor)
@@ -991,9 +988,8 @@ class AppriseConfigCache:
     def set_auth(self, key, username, password):
         """Save hashed credentials for a key and report whether it worked.
 
-        Credentials are salted and written atomically through a private
-        temporary file. Usernames containing a colon are rejected because
-        the stored value uses ``username:password`` format.
+        Writes are atomic. Colons are rejected because Basic Auth uses one to
+        separate the username and password.
         """
         if self.mode == AppriseStoreMode.DISABLED:
             return False
@@ -1123,11 +1119,7 @@ class AppriseConfigCache:
         return None if record is None else record[0]
 
     def has_auth(self, key):
-        """Return whether this key has, or may have, an authentication lock.
-
-        Fails closed: a lock file that exists but can't be read is treated
-        as protected, not as unprotected.
-        """
+        """Return whether a key is protected, treating unreadable locks as protected."""
         try:
             return self.get_auth(key) is not None
 
@@ -1135,11 +1127,7 @@ class AppriseConfigCache:
             return True
 
     def verify_auth(self, key, username, password):
-        """Safely compare credentials with a key's stored digest.
-
-        A key without stored credentials, or one whose lock file could not
-        be read, never matches -- fails closed either way.
-        """
+        """Check credentials, rejecting missing or unreadable locks."""
         try:
             stored = self.get_auth(key)
 
@@ -1188,9 +1176,7 @@ class AppriseConfigCache:
             return 0
 
         try:
-            # Pruning is an infrequent maintenance write. Sharing the same
-            # guard as credential updates prevents deleting a freshly rotated
-            # lock between its age check and removal.
+            # Share the credential guard so pruning cannot delete a fresh lock.
             guard = self._acquire_auth_guard("prune")
         except OSError as e:
             logger.error("Could not lock authentication pruning (%s)", e)
@@ -1297,7 +1283,7 @@ class AppriseConfigCache:
         return pruned
 
     def _content_paths(self, key):
-        """Returns (text_path, yaml_path) for a key -- callers check ``os.path.isfile()``."""
+        """Return the text and YAML paths for a Config ID."""
         path, filename = self.path(key)
         if self.mode == AppriseStoreMode.HASH:
             ext_text, ext_yaml = apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value
@@ -1319,8 +1305,7 @@ class AppriseConfigCache:
 
         guard = None
         try:
-            # Credential updates are uncommon, so one short global guard keeps
-            # both the source and destination consistent without login overhead.
+            # Guard the source and destination without locking routine logins.
             guard = self._acquire_auth_guard(from_key)
             return self._move(from_key, to_key)
         except OSError as e:
@@ -1354,8 +1339,7 @@ class AppriseConfigCache:
         staged = []
         published = []
         try:
-            # Rename every source first. If a rename fails, nothing has been
-            # published and the files already staged can be restored.
+            # Stage every source before publishing any destination files.
             for source, destination in sources:
                 os.makedirs(os.path.dirname(destination), exist_ok=True)
                 descriptor, stage = tempfile.mkstemp(prefix=".move-source-", dir=os.path.dirname(source))
@@ -1395,8 +1379,7 @@ class AppriseConfigCache:
             destination_exists = any(os.path.isfile(path) for path in (dst_text, dst_yaml, dst_lock))
             return MoveResult.CONFLICT if destination_exists else MoveResult.FAILED
 
-        # The old Config ID is already gone. Cleanup failures leave only a
-        # hidden staging file, never another usable configuration.
+        # Cleanup failures leave only hidden staging files.
         for stage, _source, _destination in staged:
             try:
                 os.remove(stage)
@@ -1802,7 +1785,7 @@ def healthcheck(lazy=True):
         "details": [],
     }
 
-    if not (settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED or settings.APPRISE_CONFIG_LOCK):
+    if stateful_store_enabled() and not settings.APPRISE_CONFIG_LOCK:
         # Update our Configuration Check Block
         path = os.path.join(ConfigCache.root, ".tmp_hc")
         if lazy:

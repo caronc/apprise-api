@@ -32,6 +32,11 @@ from ..utils import healthcheck
 
 
 class HealthCheckTests(SimpleTestCase):
+    def test_current_health_alias_is_browser_only(self):
+        """API clients must continue to provide a key path or header."""
+        response = self.client.get("/status/@", HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 400)
+
     def test_post_not_supported(self):
         """
         Test POST requests
@@ -243,7 +248,7 @@ class HealthCheckTests(SimpleTestCase):
                 "privilege": "admin",
             }
 
-        with override_settings(APPRISE_STATEFUL_MODE="disabled", APPRISE_STATELESS_MODE="disabled"):
+        with override_settings(APPRISE_STATEFUL_MODE=" DISABLED ", APPRISE_STATELESS_MODE=" DISABLED "):
             # Both notification modes are disabled, so the service is degraded.
             response = self.client.get(
                 "/status",

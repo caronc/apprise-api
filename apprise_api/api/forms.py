@@ -47,9 +47,7 @@ NOTIFICATION_TYPES = (
     (apprise.NotifyType.FAILURE.value, _("Failure")),
 )
 
-# Define our potential input text categories. TEXT is listed first since it
-# is the default: a novice who never touches this field still gets their
-# message interpreted as plain text rather than passed through untouched.
+# TEXT comes first so new users get plain-text messages by default.
 INPUT_FORMATS = (
     (apprise.NotifyFormat.TEXT.value, _("TEXT")),
     (apprise.NotifyFormat.MARKDOWN.value, _("MARKDOWN")),
@@ -271,8 +269,7 @@ class MoveConfigForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.restricted = restricted
         self.current_from = current_from or ""
-        # ``from`` is a Python keyword, so the class uses an internal name and
-        # exposes the shorter public field name after initialization.
+        # Python reserves ``from``, so expose that form name after setup.
         from_field = self.fields.pop("source")
         from_field.widget.attrs["readonly"] = restricted
         self.fields = {"from": from_field, **self.fields}

@@ -67,9 +67,11 @@ class OriginValidationMiddleware:
     """
 
     def __init__(self, get_response):
+        """Store the next middleware or view in the request chain."""
         self.get_response = get_response
 
     def __call__(self, request):
+        """Allow safe requests and reject cross-site browser changes."""
         if request.method not in _SAFE_METHODS:
             origin = request.headers.get("origin", "")
             if origin and not _same_origin(request, origin):

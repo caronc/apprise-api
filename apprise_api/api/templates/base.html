@@ -88,7 +88,9 @@
               {% endif %}
               <span class="api-status-nav">
                 <span>{% trans "API HEALTH" %}</span>
-                <a href="{% url 'health' %}" target="_new" id="nav-api-status-link">
+                <a href="{% if AUTH_PERMISSION == 'user' %}{% url 'health_current' %}{% else %}{% url 'health' %}{% endif %}"
+                   target="_new"
+                   id="nav-api-status-link">
                   <span id="nav-api-status-icon"
                         class="api-status-icon status-icon-stack topbar-status-icon status-loading"
                         aria-hidden="true">
@@ -509,7 +511,7 @@
 </script>
 {# Script Block 2 #}
 <script>
-  // GUI fetches use the signed browser login; external API calls still use Basic Auth.
+  // Browser requests use the login cookie; API clients still use Basic Auth.
   function appriseFetch(input, init) {
     const options = init || {};
     const headers = new Headers(options.headers || {});
@@ -517,8 +519,7 @@
     return window.fetch(input, Object.assign({}, options, {headers: headers}));
   }
 
-  // Concealed fields share one accessible show/hide control throughout the
-  // GUI.
+  // Use one accessible show/hide control for all concealed fields.
   function appriseWireValueToggles(root) {
     root.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
       toggle.addEventListener('click', function() {
@@ -541,8 +542,7 @@
   appriseWireValueToggles(document);
 
   // Config IDs begin concealed and can be revealed without changing the page.
-  // Scoped so it can also wire up controls injected later (e.g. into a
-  // SweetAlert2 modal), not just what's present at page load.
+  // The optional root also supports controls added inside dialogs.
   function appriseWireConfigIdToggles(root) {
     root.querySelectorAll('[data-config-id-toggle]').forEach(function(toggle) {
       toggle.addEventListener('click', function() {

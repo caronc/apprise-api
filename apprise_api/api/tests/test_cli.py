@@ -29,7 +29,7 @@ from unittest.mock import patch
 
 from django.core import management
 from django.core.management.base import CommandError
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 
 class CommandTests(SimpleTestCase):
@@ -59,6 +59,12 @@ class CommandTests(SimpleTestCase):
         disk_prune.assert_called_once()
         lock_prune.assert_called_once()
         self.assertIn("2 unused lock(s)", out.getvalue())
+
+    @override_settings(APPRISE_AUTH_PRUNE_SECONDS=-1)
+    def test_combined_prune_rejects_negative_lock_age(self):
+        """The scheduled command never turns a negative age into prune-all."""
+        with self.assertRaises(CommandError):
+            management.call_command("prune", stdout=io.StringIO())
 
     def test_container_pruner_has_timeout_and_supervisor_watchdog(self):
         """The scheduler is syntax checked, bounded, and restarted if it exits."""

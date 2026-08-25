@@ -84,6 +84,9 @@ class ErrorTests(SimpleTestCase):
                 assert "limit_req_status 429;" in config
                 assert "limit_req_zone $auth_limit_key zone=auth:10m rate=1r/s;" in config
                 assert 'location ~ "^/cfg/([\\w_-]{{1,{}}}|@)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
+                assert (
+                    'location ~ "^/(status(/([\\w_-]{{1,{}}}|@))?|metrics)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
+                )
 
         strict = (etc_dir / "nginx-strict.conf").read_text(encoding="utf-8")
         assert 'location ~ "^/logout/?$"' in strict

@@ -63,10 +63,8 @@ def authentication(request):
         "AUTH_ADMIN_ENABLED": settings.APPRISE_BASIC_AUTH_TOKEN is not None,
         "AUTH_PERMISSION": getattr(request, "apprise_auth_permission", "disabled"),
         "AUTH_USERNAME": getattr(request, "apprise_auth_username", None),
-        # Current-config aliases are offered only after the signed browser
-        # session was restored. Direct and cookie-free clients keep keyed URLs.
-        # Open deployments can use the ordinary Config ID cookie too. Keyed
-        # URLs remain available when cookies are disabled.
+        # Cookies let browser pages omit the Config ID from the URL.
+        # Explicit keyed URLs still work for cookie-free clients.
         "COOKIE_CONFIG_URLS": bool(
             request.COOKIES.get(WEB_AUTH_COOKIE) or (not auth_enabled and request.COOKIES.get("key"))
         ),

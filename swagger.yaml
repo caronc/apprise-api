@@ -6,10 +6,9 @@ info:
     A lightweight REST framework that wraps the Apprise API Notification
     Library. See https://github.com/caronc/apprise-api for details.
 
-    Authentication is optional. APPRISE_AUTH_REQUIRED enables it; basicAuth
-    can then use an administrator or a login assigned to one key. The packaged
-    nginx configuration limits login changes and may return 429 with a
-    Retry-After header.
+    APPRISE_AUTH_REQUIRED enables optional Basic Auth. Use an administrator
+    login or credentials assigned to one Config ID. Repeated login changes may
+    return 429 with a Retry-After header.
   version: 1.5.2
 
 servers:
@@ -131,9 +130,8 @@ paths:
       operationId: Persistent_GetStatusForKey
       summary: Server Health Check, gated by {key}'s own authentication.
       description: >
-        Returns exactly the same payload as the keyless /status endpoint.
-        The only difference is the access gate: if {key} has its own
-        Basic Auth set (see /auth/{key}), it applies here too.
+        Returns the same payload as /status after checking the Config ID's
+        credentials, if assigned.
       tags:
         - Persistent
       parameters:
@@ -208,10 +206,8 @@ paths:
         Sends one or more notifications to the URLs identified as part
         of the payload or in APPRISE_STATELESS_URLS.
       description: >
-        Sending X-Apprise-Config-ID switches this to a *stateful* send
-        targeting that key instead -- equivalent to POST /notify/{key},
-        just without the key in the URL. Everything else on this page
-        describes the stateless (no header) behavior.
+        X-Apprise-Config-ID sends through that saved configuration without
+        placing its ID in the URL. Without the header, this call is stateless.
       tags:
         - Stateless
       parameters:
@@ -280,11 +276,9 @@ paths:
       operationId: Persistent_ListConfigurations
       summary: List all stored configuration keys.
       description: >
-        With authentication mode disabled, returns the original list of Config
-        Key strings. When enabled, each item also includes its assigned
-        configuration username. Administrator access and APPRISE_ADMIN are required.
-        The listing is available only in SIMPLE stateful mode. CONFIG_LOCK
-        additionally requires authentication to be enabled.
+        Returns Config ID strings when authentication is off. When it is on,
+        each item includes its assigned username. This requires APPRISE_ADMIN,
+        SIMPLE stateful mode, and administrator access.
       tags:
         - Persistent
       responses:
@@ -401,12 +395,9 @@ paths:
       operationId: Persistent_MoveConfiguration
       summary: Moves the configuration stored at {key} to a new configuration ID.
       description: >
-        API callers only supply `to`; the source is always {key}.
-        The browser form additionally accepts `from`, editable only
-        by a global administrator -- a restricted configuration user may
-        only move their own key. The destination must not already have a
-        configuration. With CONFIG_LOCK enabled, only an authenticated
-        administrator may move an entry.
+        API callers supply `to`; the source is {key}. The browser form also
+        accepts an administrator-only `from`. The destination must be free.
+        With CONFIG_LOCK, only an administrator may move an entry.
       tags:
         - Persistent
       parameters:
@@ -549,11 +540,9 @@ paths:
       operationId: Persistent_SetKeyAuth
       summary: Sets (or replaces) {key}'s own optional Basic Auth.
       description: >
-        Authentication mode must be enabled. The first login requires an
-        administrator account. Administrators may change both fields. A
-        configuration user authenticates with the current login, repeats the
-        saved username, and sends a new password.
-        Configuration content is unchanged.
+        The first login requires an administrator. Administrators may change
+        both credentials. Configuration users repeat their username and send
+        a new password. Configuration content is unchanged.
       tags:
         - Persistent
       security:
@@ -568,10 +557,8 @@ paths:
               type: object
               required: [username, password]
               description: >
-                Administrators include username, which may be blank.
-                Configuration users must repeat the saved username, including
-                an empty string for password-only access. password_confirm is
-                optional for API callers.
+                Administrators may use a blank username. Configuration users
+                must repeat the saved value. password_confirm is optional.
               properties:
                 username:
                   type: string
@@ -1119,11 +1106,9 @@ components:
       type: http
       scheme: basic
       description: >
-        Enable authentication with APPRISE_AUTH_REQUIRED. APPRISE_PASSWORD and
-        optional APPRISE_USER create the administrator account. Without that
-        account, saved per-key logins still protect and access their own keys.
-        APPRISE_BASIC_AUTH_REALM changes the label shown in login prompts.
-        APPRISE_WEB_AUTH_SECRET optionally signs browser logins and has its own built-in default.
+        APPRISE_AUTH_REQUIRED enables authentication. APPRISE_PASSWORD and the
+        optional APPRISE_USER create an administrator. Saved Config ID logins
+        still work without an administrator account.
 
   responses:
     TooManyRequests:
@@ -1241,9 +1226,8 @@ components:
         degraded:
           type: boolean
           description: >-
-            True only when both stateful_enabled and stateless_enabled are
-            false -- the server cannot accept a notification of any kind
-            and the admin needs to enable at least one storage mode.
+            True when both notification modes are disabled and the server
+            cannot accept notifications.
         max_attachments:
           type: integer
           description: The value of APPRISE_MAX_ATTACHMENTS currently in effect.

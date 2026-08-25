@@ -57,7 +57,7 @@ _HEADER_ROUTES = frozenset(
     }
 )
 _SHARED_WEB_ROUTES = frozenset({"welcome", "config_list", "details"})
-_CURRENT_CONFIG_ROUTES = frozenset({"config_current", "auth_current"})
+_CURRENT_CONFIG_ROUTES = frozenset({"config_current", "auth_current", "health_current"})
 
 
 def _request_route(request):
@@ -88,9 +88,11 @@ class GlobalAuthMiddleware:
     """
 
     def __init__(self, get_response):
+        """Store the next middleware or view in the request chain."""
         self.get_response = get_response
 
     def __call__(self, request):
+        """Authenticate the request or return the appropriate login response."""
         # Templates can safely read these values on every request.
         request.apprise_auth_permission = AUTH_ROLE_DISABLED
         request.apprise_auth_username = None

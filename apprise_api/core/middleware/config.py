@@ -49,8 +49,7 @@ class DetectConfigMiddleware:
         Define our middleware hook
         """
 
-        # A shared browser login is permanently tied to one configuration. Do
-        # not let an old cookie or a crafted query string change its menus.
+        # A shared login remains tied to its authenticated Config ID.
         shared_key = getattr(request, "apprise_web_auth_key", None)
         if (
             getattr(request, "apprise_auth_permission", None) == AUTH_ROLE_USER
@@ -89,8 +88,7 @@ class DetectConfigMiddleware:
             # middleware after the view deletes the browser state.
             response.delete_cookie("key", path="/", samesite="Lax")
         else:
-            # Remember the current key without exposing it to page scripts. The
-            # original keyed URLs still work when cookies are unavailable.
+            # Remember the Config ID without exposing it to page scripts.
             secure = (
                 request.is_secure()
                 or "https://{}".format(request.get_host()).lower() in settings.APPRISE_TRUSTED_ORIGINS

@@ -28,9 +28,12 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
+    """Remove old login locks that have no saved configuration."""
+
     help = f"Prune locked, never-configured keys older than {settings.APPRISE_AUTH_PRUNE_SECONDS} seconds"
 
     def add_arguments(self, parser):
+        """Allow the lock age to be selected on the command line."""
         parser.add_argument(
             "-s",
             "--seconds",
@@ -39,6 +42,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """Validate the age and prune eligible locks."""
         if options["seconds"] < 0:
             # A negative age would make every unused lock eligible.
             raise CommandError("--seconds must not be negative")

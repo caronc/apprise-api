@@ -194,6 +194,10 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(config_list.status_code, 200)
         list_content = config_list.content.decode()
         self.assertIn("hideMode ? 'visibility' : 'visibility_off'", list_content)
+        self.assertNotIn('tabindex="-1"', list_content)
+        # One list-wide toggle and both move fields use Config-ID labels.
+        self.assertEqual(list_content.count('data-show-label="Show Config ID"'), 3)
+        self.assertEqual(list_content.count('data-hide-label="Hide Config ID"'), 3)
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -292,6 +296,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn('name="current_password"', content)
         self.assertIn('name="password"', content)
         self.assertIn('name="password_confirm"', content)
+        self.assertIn("username: authUsername ? authUsername.value : ''", content)
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 5)
         self.assertNotIn("auth-account", content)
         self.assertIn("auth-logout-link", content)
@@ -406,7 +411,7 @@ class AuthGuiTests(SimpleTestCase):
             content,
         )
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 2)
-        self.assertEqual(content.count('tabindex="-1"'), 2)
+        self.assertNotIn('tabindex="-1"', content)
         self.assertIn('aria-controls="id_password"', content)
         self.assertIn('aria-controls="id_key"', content)
         self.assertIn("A Configuration ID is required for non-administrative accounts", content)
@@ -863,6 +868,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("alice:****@", welcome_content)
         self.assertIn('href="/cfg/@"', welcome_content)
         self.assertIn('href="/auth/@"', welcome_content)
+        self.assertIn('href="/status/@"', welcome_content)
         self.assertIn("'X-Apprise-Config-ID': '{}',".format(self.key), welcome_content)
         self.assertEqual(welcome.cookies["key"].value, self.key)
 
@@ -892,6 +898,10 @@ class AuthGuiTests(SimpleTestCase):
         )
         self.assertEqual(health_with_key.status_code, 200)
 
+        # Navigation uses the signed key without exposing it in the address.
+        browser_health = self.client.get("/status/@", headers=_BROWSER)
+        self.assertEqual(browser_health.status_code, 200)
+
         api = self.client.post(
             "/get/{}".format(self.key),
             headers={"accept": "application/json"},
@@ -911,10 +921,16 @@ class AuthGuiTests(SimpleTestCase):
 
         config_page = self.client.get("/cfg/@", headers=_BROWSER)
         auth_page = self.client.get("/auth/@", headers=_BROWSER)
+        health_page = self.client.get("/status/@", headers=_BROWSER)
         self.assertEqual(config_page.status_code, 200)
         self.assertEqual(auth_page.status_code, 200)
+        self.assertEqual(health_page.status_code, 200)
         self.assertContains(config_page, self.key)
         self.assertContains(auth_page, self.key)
+
+        # The current-key alias is only for a signed browser session.
+        api_health = self.client.get("/status/@", headers={"accept": "application/json"})
+        self.assertEqual(api_health.status_code, 401)
 
         # The original address remains available for bookmarks and clients
         # that do not use the convenience alias.
