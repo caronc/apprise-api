@@ -134,12 +134,10 @@ class JsonUrlsTests(SimpleTestCase):
         assert with_privacy.json()["urls"][0] != without_privacy.json()["urls"][0]
 
         with override_settings(APPRISE_CONFIG_LOCK=True):
-            # When our configuration lock is set, our result set enforces the
-            # privacy flag even if it was otherwise set:
-            with_privacy = self.client.get("/json/urls/{}?privacy=1".format(key))
-
-            # But now they're the same under this new condition
-            assert with_privacy.json()["urls"][0] == without_privacy.json()["urls"][0]
+            # Redaction is not enough when configuration content is locked.
+            # The URL listing is unavailable even without authentication.
+            response = self.client.get("/json/urls/{}?privacy=1".format(key))
+            assert response.status_code == 403
 
         # Add a YAML file
         response = self.client.post(

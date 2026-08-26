@@ -375,7 +375,7 @@ The `/cfg` list requires `APPRISE_ADMIN=yes` and `APPRISE_STATEFUL_MODE=simple`.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). This path does not work if `APPRISE_CONFIG_LOCK` is set. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
-| `/json/urls/{KEY}` |  GET  | Returns a JSON response object that contains all of the URLS and Tags associated with the key specified.
+| `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. This path does not work if `APPRISE_CONFIG_LOCK` is set, including for administrators.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials when configured.
 | `/auth/{KEY}` |  GET  | Opens the authentication editor in a browser, or returns the current mode and username when JSON is requested. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets or replaces Basic Auth for `{KEY}`. Administrators may change both fields. A configuration user repeats the saved username and supplies a new password.
@@ -407,7 +407,7 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 
 You can pass in attributes to the `/json/urls/{KEY}` such as `privacy=1` which hides the passwords and secret tokens when returning the response.  You can also set `tag=` and filter the returned results based on a comma separated set of tags. if no `tag=` is specified, then `tag=all` is used as the default.
 
-Note, if `APPRISE_CONFIG_LOCK` is set, then `privacy=1` is always enforced preventing credentials from being leaked.
+When `APPRISE_CONFIG_LOCK` is set, `/json/urls/{KEY}` returns `403` instead of revealing any saved URLs or tags. Stateful notifications continue to accept the optional `tag` field as usual.
 
 Here is an example using `curl` as to how someone might send a notification to everyone associated with the tag `abc123` (using `/notify/{key}`):
 
@@ -577,7 +577,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
 | `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
 | `APPRISE_STATELESS_MODE` | Controls stateless `/notify` calls:<br/>📌 **enabled**: Accept stateless notifications. This is the default.<br/>📌 **disabled**: Reject stateless notifications. If stateful mode is also disabled, `/status` reports `degraded`.
-| `APPRISE_CONFIG_LOCK` | Hides configuration content and blocks adds. An authenticated administrator may still list, move, or delete entries. Saved configurations continue to work with `/notify` and the [`apprise://` plugin](https://appriseit.com/services/apprise_api/). Defaults to `no`.
+| `APPRISE_CONFIG_LOCK` | Hides configuration content, blocks adds, and disables `/json/urls`. An authenticated administrator may still list, move, or delete entries. Without authentication, those operations are denied. Stateful and stateless notifications continue to work normally, including optional stateful tag selection. Defaults to `no`.
 | `APPRISE_AUTH_REQUIRED` | Enables built-in authentication when set to `yes`. Defaults to `no`. When disabled, `APPRISE_USER`, `APPRISE_PASSWORD`, and saved configuration logins are ignored. See [Authentication](#authentication).
 | `APPRISE_USER` | Optional administrator username used only when `APPRISE_AUTH_REQUIRED=yes`. It requires `APPRISE_PASSWORD`; colons are not allowed.
 | `APPRISE_PASSWORD` | Optional administrator password used only when `APPRISE_AUTH_REQUIRED=yes`. It may be used without a username. Leave it unset to run authentication without an administrator account.
@@ -684,7 +684,7 @@ Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring t
 Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). Locks with configuration remain. See [Pruning](#pruning).
 
 #### Moving a Configuration
-`POST /move/{KEY}` moves a configuration and its login to a free Config ID. With `APPRISE_CONFIG_LOCK`, only an administrator may move or delete entries.
+`POST /move/{KEY}` moves a configuration and its login to a free Config ID. With `APPRISE_CONFIG_LOCK`, only an authenticated administrator may move or delete entries.
 
 Configuration users may move only their own Config ID. Administrators may move any ID and may select a different source in the Web interface.
 ```bash

@@ -126,6 +126,11 @@ class ConfigIdHeaderTests(SimpleTestCase):
         response = self.client.get("/json/urls/", headers={"X-Apprise-Config-ID": key})
         self.assertEqual(response.status_code, 200)
 
+        # The header form follows the same configuration lock as the URL form.
+        with override_settings(APPRISE_CONFIG_LOCK=True):
+            response = self.client.get("/json/urls/", headers={"X-Apprise-Config-ID": key})
+            self.assertEqual(response.status_code, 403)
+
     def test_status_via_header_matches_status_via_url(self):
         key = "header_status_key"
         by_url = self.client.get("/status/{}".format(key), **{"HTTP_ACCEPT": "application/json"})

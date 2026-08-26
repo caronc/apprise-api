@@ -4019,6 +4019,19 @@ class JsonUrlView(View):
         if not key_auth_ok(request, key):
             return _key_access_denied_response(request, key)
 
+        # A configuration lock permits sending, but never exposes saved URLs
+        # or tags through this discovery endpoint.
+        if settings.APPRISE_CONFIG_LOCK:
+            logger.warning(
+                "JSON URLS - %s - Config Lock Active - Request Denied",
+                request.META["REMOTE_ADDR"],
+            )
+            return error_response(
+                request,
+                _("The site has been configured to deny this request"),
+                ResponseCode.no_access,
+            )
+
         # Now build our tag response that identifies all of the tags
         # and the URL's they're associated with
         #  {
@@ -4042,7 +4055,7 @@ class JsonUrlView(View):
 
         # Privacy flag
         # Support 'yes', '1', 'true', 'enable', 'active', and +
-        privacy = settings.APPRISE_CONFIG_LOCK or parse_bool(request.GET.get("privacy"), default=False)
+        privacy = parse_bool(request.GET.get("privacy"), default=False)
 
         # Optionally filter on tags. Use comma to identify more then one
         tag = request.GET.get("tag", "all")

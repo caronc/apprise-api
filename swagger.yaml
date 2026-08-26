@@ -316,8 +316,8 @@ paths:
         '403':
           description: >
             Forbidden (persistent storage or APPRISE_ADMIN is disabled,
-            authentication is insufficient, or CONFIG_LOCK is enabled without
-            authentication).
+            authentication is insufficient, or CONFIG_LOCK is enabled and the
+            caller is not an authenticated administrator).
 
   /add/{key}:
     post:
@@ -397,7 +397,7 @@ paths:
       description: >
         API callers supply `to`; the source is {key}. The browser form also
         accepts an administrator-only `from`. The destination must be free.
-        With CONFIG_LOCK, only an administrator may move an entry.
+        With CONFIG_LOCK, only an authenticated administrator may move an entry.
       tags:
         - Persistent
       parameters:
@@ -728,6 +728,9 @@ paths:
       summary: >
         Returns a JSON object describing the URLs and tags associated
         with {key}.
+      description: >
+        This listing is unavailable when CONFIG_LOCK is enabled, including
+        to administrators. Stateful notifications remain available.
       tags:
         - Persistent
       parameters:
@@ -763,7 +766,7 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled).
+          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -1059,7 +1062,8 @@ paths:
       summary: Header-based equivalent of GET /json/urls/{key}.
       description: >
         Identical to GET /json/urls/{key}, key via X-Apprise-Config-ID
-        instead of the URL. 400 if that header is missing or invalid.
+        instead of the URL. 400 if that header is missing or invalid. This
+        listing is unavailable when CONFIG_LOCK is enabled.
       tags:
         - Persistent
       parameters:
@@ -1096,7 +1100,7 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled).
+          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
