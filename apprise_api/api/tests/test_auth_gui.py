@@ -1,7 +1,26 @@
+#
 # Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files(the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions :
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 """Test the Basic Auth presentation shown in the web interface."""
 
 import base64
@@ -620,7 +639,45 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Choose at least one tag", content)
         self.assertIn("Required Tag", content)
         self.assertIn("commitNotifyTags();", content)
+        self.assertIn("chipInput.addEventListener('input'", content)
+        self.assertIn("chipInput.addEventListener('blur'", content)
+        self.assertIn("commitLockedNotifyTags(true)", content)
+        self.assertIn("rawValue.split(/[\\s,]+/)", content)
+        self.assertIn("getSelectedNotifyTargetCount() === 0", content)
         self.assertNotIn('class="auth-editor-card auth-move-card"', content)
+
+    @override_settings(
+        APPRISE_CONFIG_LOCK=True,
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_locked_admin_keeps_configuration_editor(self):
+        """The global administrator retains the complete configuration UI."""
+        login = self.client.post(
+            "/login",
+            data={"username": "master", "password": "pass"},
+            headers=_BROWSER,
+        )
+        self.assertEqual(login.status_code, 302)
+
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('id="addconfig"', content)
+        self.assertIn('id="url-list"', content)
+        self.assertNotIn("Your Configuration Is Locked", content)
+
+    def test_unlocked_tags_keep_saved_tag_autocomplete(self):
+        """Unlocked tags retain autocomplete without delimiter handling."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("notifyTagOptionMap", content)
+        self.assertIn("decorateNotifyAutocompleteOptions", content)
+        self.assertNotIn("commitLockedNotifyTags", content)
+        self.assertNotIn("rawValue.split(/[\\s,]+/)", content)
 
     @override_settings(
         APPRISE_CONFIG_LOCK=True,

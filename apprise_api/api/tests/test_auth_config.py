@@ -531,13 +531,13 @@ class AuthViewTests(SimpleTestCase):
         self.assertEqual(self.client.get("/json/urls/{}".format(key), headers=good).status_code, 200)
 
         with override_settings(APPRISE_CONFIG_LOCK=True):
-            # Authentication is checked first, then the lock hides the
-            # listing from both configuration users and administrators.
+            # Authentication is checked first. The lock hides the listing
+            # from configuration users but not the global administrator.
             self.assertEqual(self.client.get("/json/urls/{}".format(key)).status_code, 401)
             self.assertEqual(self.client.get("/json/urls/{}".format(key), headers=good).status_code, 403)
             self.assertEqual(
                 self.client.get("/json/urls/{}".format(key), headers=_GOOD_MASTER).status_code,
-                403,
+                200,
             )
 
         self.assertEqual(

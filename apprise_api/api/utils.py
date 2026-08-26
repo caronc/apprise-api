@@ -178,16 +178,23 @@ def can_list_configurations(request):
     return not settings.APPRISE_CONFIG_LOCK
 
 
+def config_lock_allows_request(request):
+    """Return whether CONFIG_LOCK allows this configuration request."""
+    if not settings.APPRISE_CONFIG_LOCK:
+        return True
+
+    # A locked deployment has no administrator unless auth mode verifies one.
+    return settings.APPRISE_AUTH_REQUIRED and getattr(request, "globally_authenticated", False)
+
+
 def can_move_or_delete_configuration(request):
     """Return whether CONFIG_LOCK permits a move or delete request."""
     if not stateful_store_enabled():
         return False
-    if not settings.APPRISE_CONFIG_LOCK:
-        return True
 
     # Under CONFIG_LOCK, only an authenticated administrator may reorganize
-    # stored entries. Their configuration content remains unreadable.
-    return settings.APPRISE_AUTH_REQUIRED and getattr(request, "globally_authenticated", False)
+    # stored entries.
+    return config_lock_allows_request(request)
 
 
 class SimpleFileExtension:

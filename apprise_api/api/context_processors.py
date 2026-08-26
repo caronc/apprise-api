@@ -30,6 +30,7 @@ from .utils import (
     ConfigCache,
     can_list_configurations,
     can_move_or_delete_configuration,
+    config_lock_allows_request,
     gen_unique_config_id,
 )
 
@@ -45,7 +46,9 @@ def config_lock(request):
     """
     Returns the state of our global configuration lock
     """
-    return {"CONFIG_LOCK": settings.APPRISE_CONFIG_LOCK}
+    # Administrators retain the editor while the lock hides it from everyone
+    # else. Health responses still report the server's configured lock value.
+    return {"CONFIG_LOCK": not config_lock_allows_request(request)}
 
 
 def admin_enabled(request):

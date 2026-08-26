@@ -79,6 +79,7 @@ from .utils import (
     clear_web_auth_cookie,
     config_auth_state,
     config_key_header_present_but_invalid,
+    config_lock_allows_request,
     global_credentials_ok,
     healthcheck,
     is_html_response,
@@ -1079,7 +1080,7 @@ def _get_config_response(request, key):
     if not key_auth_ok(request, key):
         return _key_access_denied_response(request, key)
 
-    if settings.APPRISE_CONFIG_LOCK:
+    if not config_lock_allows_request(request):
         # General Access Control
         logger.warning(
             "VIEW - %s - Config Lock Active - Request Denied",
@@ -1752,7 +1753,7 @@ class AddView(View):
             status = ResponseCode.no_access
             return error_response(request, msg, status)
 
-        if settings.APPRISE_CONFIG_LOCK:
+        if not config_lock_allows_request(request):
             # General Access Control
             logger.warning(
                 "ADD - %s - Config Lock Active - Request Denied",
@@ -4019,9 +4020,8 @@ class JsonUrlView(View):
         if not key_auth_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        # A configuration lock permits sending, but never exposes saved URLs
-        # or tags through this discovery endpoint.
-        if settings.APPRISE_CONFIG_LOCK:
+        # Only a verified global administrator may inspect a locked entry.
+        if not config_lock_allows_request(request):
             logger.warning(
                 "JSON URLS - %s - Config Lock Active - Request Denied",
                 request.META["REMOTE_ADDR"],

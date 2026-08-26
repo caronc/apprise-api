@@ -358,7 +358,7 @@ paths:
         '403':
           description: >
             Forbidden (persistent storage is disabled, a configuration user
-            attempted a write, or CONFIG_LOCK is enabled).
+            attempted a write, or CONFIG_LOCK requires an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '431':
@@ -468,7 +468,8 @@ paths:
         Returns the Apprise configuration for {key}.
       description: >
         Depending on the Accept header and how the config was stored,
-        returns TEXT, YAML, or JSON.
+        returns TEXT, YAML, or JSON. With CONFIG_LOCK, only an authenticated
+        administrator may retrieve it.
       tags:
         - Persistent
       parameters:
@@ -493,7 +494,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -656,7 +659,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -729,8 +734,8 @@ paths:
         Returns a JSON object describing the URLs and tags associated
         with {key}.
       description: >
-        This listing is unavailable when CONFIG_LOCK is enabled, including
-        to administrators. Stateful notifications remain available.
+        With CONFIG_LOCK, only an authenticated administrator may inspect this
+        listing. Stateful notifications remain available to configuration users.
       tags:
         - Persistent
       parameters:
@@ -766,7 +771,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -801,7 +808,7 @@ paths:
         '403':
           description: >
             Forbidden (persistent storage is disabled, a configuration user
-            attempted a write, or CONFIG_LOCK is enabled).
+            attempted a write, or CONFIG_LOCK requires an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '431':
@@ -927,7 +934,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1063,7 +1072,7 @@ paths:
       description: >
         Identical to GET /json/urls/{key}, key via X-Apprise-Config-ID
         instead of the URL. 400 if that header is missing or invalid. This
-        listing is unavailable when CONFIG_LOCK is enabled.
+        listing requires an authenticated administrator when CONFIG_LOCK is enabled.
       tags:
         - Persistent
       parameters:
@@ -1100,7 +1109,9 @@ paths:
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled or CONFIG_LOCK is enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
 

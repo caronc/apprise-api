@@ -872,7 +872,8 @@
     }
     const guidance = document.querySelector('#notify-target-guidance');
     if (guidance) {
-      guidance.style.display = p_count === 0 ? null : 'none';
+      // Tags are the available targets when saved configuration is locked.
+      guidance.style.display = getSelectedNotifyTargetCount() === 0 ? null : 'none';
     }
     updateReviewEscalationBadges();
   }
@@ -1467,6 +1468,44 @@
         update_count();
       }
     });
+    const chipInput = chipElement.querySelector('input');
+    if (chipInput) {
+      const commitLockedNotifyTags = function (commitPending) {
+        const rawValue = chipInput.value;
+        if (!commitPending && !/[\s,]/.test(rawValue)) {
+          return;
+        }
+
+        // In locked mode there is no saved tag list to autocomplete. Treat
+        // delimiters or leaving the field as completion of the current tag.
+        const endsWithSeparator = /[\s,]$/.test(rawValue);
+        const parts = rawValue.split(/[\s,]+/);
+        const pending = !commitPending && !endsWithSeparator ? (parts.pop() || '') : '';
+        const instance = M.Chips.getInstance(chipElement);
+        if (!instance) {
+          return;
+        }
+
+        parts.filter(function (tag) {
+          return tag.length > 0;
+        }).forEach(function (tag) {
+          const exists = instance.chipsData.some(function (chip) {
+            return String(chip.tag).toLowerCase() === tag.toLowerCase();
+          });
+          if (!exists) {
+            instance.addChip({ tag: tag, image: '' });
+          }
+        });
+        chipInput.value = pending;
+      };
+      chipInput.addEventListener('input', function () {
+        commitLockedNotifyTags(false);
+      });
+      chipInput.addEventListener('blur', function () {
+        // Tab, mouse, and touch navigation should not leave a tag unfinished.
+        commitLockedNotifyTags(true);
+      });
+    }
     {% endif %}
     const chipInstance = M.Chips.getInstance(chipElement);
     if (params.tag) {

@@ -276,6 +276,91 @@ class AuthViewConfigLockTests(SimpleTestCase):
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "secret"))
 
 
+class ConfigLockAccessTests(SimpleTestCase):
+    """Keep locked content private except for a verified administrator."""
+
+    keys = ("hardening_locked_key", "hardening_locked_header_key")
+
+    def tearDown(self):
+        for key in self.keys:
+            ConfigCache.clear(key)
+            ConfigCache.clear_auth(key)
+
+    @override_settings(
+        APPRISE_CONFIG_LOCK=True,
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+    )
+    def test_admin_can_manage_locked_content(self):
+        """Global credentials permit add, get, and URL discovery."""
+        key, header_key = self.keys
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"urls": "json://localhost"},
+            headers=_GOOD_MASTER,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.post("/get/{}".format(key), headers=_GOOD_MASTER).status_code, 200)
+        self.assertEqual(self.client.get("/json/urls/{}".format(key), headers=_GOOD_MASTER).status_code, 200)
+
+        keyed_headers = {"X-Apprise-Config-ID": header_key, **_GOOD_MASTER}
+        response = self.client.post(
+            "/add/",
+            {"urls": "json://localhost"},
+            headers=keyed_headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.post("/get/", headers=keyed_headers).status_code, 200)
+        self.assertEqual(self.client.get("/json/urls/", headers=keyed_headers).status_code, 200)
+
+    @override_settings(
+        APPRISE_CONFIG_LOCK=True,
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+    )
+    def test_shared_user_cannot_manage_locked_content(self):
+        """A valid per-key login cannot read or replace locked content."""
+        key = self.keys[0]
+        self.client.post(
+            "/add/{}".format(key),
+            {"urls": "json://localhost"},
+            headers=_GOOD_MASTER,
+        )
+        ConfigCache.set_auth(key, "alice", "secret")
+        shared = {"authorization": _basic("alice", "secret")}
+
+        self.assertEqual(
+            self.client.post("/add/{}".format(key), {"urls": "json://elsewhere"}, headers=shared).status_code,
+            403,
+        )
+        self.assertEqual(self.client.post("/get/{}".format(key), headers=shared).status_code, 403)
+        self.assertEqual(self.client.get("/json/urls/{}".format(key), headers=shared).status_code, 403)
+
+        keyed_shared = {"X-Apprise-Config-ID": key, **shared}
+        self.assertEqual(
+            self.client.post("/add/", {"urls": "json://elsewhere"}, headers=keyed_shared).status_code,
+            403,
+        )
+        self.assertEqual(self.client.post("/get/", headers=keyed_shared).status_code, 403)
+        self.assertEqual(self.client.get("/json/urls/", headers=keyed_shared).status_code, 403)
+
+        # Without credentials, auth mode rejects the request before the lock.
+        self.assertEqual(self.client.post("/get/{}".format(key)).status_code, 401)
+
+    @override_settings(APPRISE_CONFIG_LOCK=True, APPRISE_AUTH_REQUIRED=False)
+    def test_open_auth_mode_cannot_bypass_lock(self):
+        """Basic credentials are ignored when authentication is disabled."""
+        key = self.keys[0]
+        headers = {"authorization": _basic("master", "pass")}
+
+        self.assertEqual(
+            self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=headers).status_code,
+            403,
+        )
+        self.assertEqual(self.client.post("/get/{}".format(key), headers=headers).status_code, 403)
+        self.assertEqual(self.client.get("/json/urls/{}".format(key), headers=headers).status_code, 403)
+
+
 class RouteAuthConsistencyTests(SimpleTestCase):
     """Apply key authentication consistently across protected routes."""
 
