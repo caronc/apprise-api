@@ -26,8 +26,8 @@
              href="{% url 'auth' entry.key %}"
              title="{% trans "Manage authentication for this Configuration ID" %}">
             {% if AUTH_ENABLED %}
-              <span class="config-auth-status {% if entry.assigned %}is-assigned{% else %}is-unassigned{% endif %}"
-                    title="{% if entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+              <span class="config-auth-status {% if entry.configured %}is-assigned{% else %}is-unassigned{% endif %}"
+                    title="{% if entry.access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif entry.access == 'locked' %}{% trans "Configuration access is locked" %}{% elif entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
                 <span class="config-auth-icon" aria-hidden="true">
                   {% include 'icons/lock.svg' %}
                 </span>
@@ -48,6 +48,9 @@
                 -
               {% endif %}
             </span>
+            {% if AUTH_ENABLED %}
+              <span class="config-list-access">{{ entry.access }}</span>
+            {% endif %}
           </a>
           <a class="config-list-link" href="{% url 'config' entry.key %}">
             <code id="config-list-id-{{ forloop.counter }}"

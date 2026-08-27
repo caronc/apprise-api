@@ -375,7 +375,7 @@ class AuthViewTests(SimpleTestCase):
             content_type="application/json",
             headers={"authorization": _basic("alice", "new-secret")},
         )
-        self.assertEqual(missing_username.status_code, 400)
+        self.assertEqual(missing_username.status_code, 403)
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "new-secret"))
 
         changed_both = self.client.post(

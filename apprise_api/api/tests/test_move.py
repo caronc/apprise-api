@@ -132,12 +132,7 @@ class MoveTests(SimpleTestCase):
         assert self._exists("move_conflict_dst")
 
     def test_move_destination_reusable_after_full_delete(self):
-        """A destination cleared by a full DEL is available again, not a phantom conflict.
-
-        DelView removes both the configuration and its authentication lock,
-        so a key that was fully deleted must not trip the lock-file check in
-        AppriseConfigCache.move() for a later, unrelated move onto that ID.
-        """
+        """A deleted Config ID can be reused as a move destination."""
         self._seed("move_reused_dst")
         assert ConfigCache.set_auth("move_reused_dst", "alice", "secret") is True
 
@@ -319,7 +314,7 @@ class MoveTests(SimpleTestCase):
         assert self._exists("move_copyfail_src")
         assert not self._exists("move_copyfail_dst")
 
-    def test_move_fails_early_when_the_configuration_store_is_not_writable(self):
+    def test_move_fails_when_config_store_is_read_only(self):
         """A read-only filesystem is caught before any file operation is attempted."""
         self._seed("move_hc_src")
         with patch("api.views.healthcheck", return_value={"can_write_config": False, "details": []}):
@@ -427,11 +422,11 @@ class MoveTests(SimpleTestCase):
         assert self._exists("move_user_other")
 
     def test_move_form_redirect_denied_when_key_auth_fails(self):
-        """A from override is still checked with key_auth_ok, even
+        """A source override still requires access to that Config ID, even
         after the caller already cleared the URL key's own check."""
         self._seed("move_admin_src")
         with mock.patch(
-            "api.views.key_auth_ok",
+            "api.auth.Authentication.key_ok",
             side_effect=lambda request, key: key != "move_admin_src",
         ):
             response = self.client.post(

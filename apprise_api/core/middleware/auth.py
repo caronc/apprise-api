@@ -24,16 +24,12 @@
 #
 from urllib.parse import urlencode
 
+from api.auth import Authentication
 from api.responses import error_response
 from api.utils import (
-    AUTH_ROLE_ADMIN,
-    AUTH_ROLE_DISABLED,
     CONFIG_KEY_HEADER,
-    WEB_AUTH_HEADER,
-    basic_auth_credentials,
-    is_authenticated,
+    CONFIG_KEY_PATTERN,
     is_html_response,
-    restore_web_auth,
 )
 from django.conf import settings
 from django.shortcuts import redirect
@@ -61,12 +57,12 @@ _CURRENT_CONFIG_ROUTES = frozenset({"config_current", "auth_current", "health_cu
 
 
 def _request_route(request):
-    """Return ``(name, key)`` from Django's authoritative URL resolver."""
+    """Return the route name, Config ID, and view class Django resolved."""
     try:
         match = resolve(request.path_info)
     except Resolver404:
-        return None, None
-    return match.url_name, match.kwargs.get("key")
+        return None, None, None
+    return match.url_name, match.kwargs.get("key"), getattr(match.func, "view_class", None)
 
 
 def _authentication_response(request):
@@ -78,6 +74,34 @@ def _authentication_response(request):
         template="401.html",
         headers={"WWW-Authenticate": 'Basic realm="{}"'.format(settings.APPRISE_BASIC_AUTH_REALM)},
     )
+
+
+def _request_config_key(request, route_name, route_key):
+    """Return the valid Config ID this API request will use, if any."""
+    if route_name not in _KEYED_ROUTES and route_name not in _HEADER_ROUTES:
+        return None
+
+    # A header intentionally overrides a key in the URL. If that header is
+    # invalid, leave authentication to the view so it can return HTTP 400.
+    header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+    candidate = header_key if header_key else route_key
+    return candidate if isinstance(candidate, str) and CONFIG_KEY_PATTERN.match(candidate) else None
+
+
+def _view_authenticates_method(view_class, method):
+    """Return whether the resolved class implements this HTTP method."""
+    if view_class is None or not isinstance(method, str):
+        return False
+
+    method = method.lower()
+    # Django supplies OPTIONS itself. It reports allowed methods without
+    # calling the view's authentication code, so do not add work here.
+    if method == "options":
+        return False
+    # Django sends HEAD through get() when a view does not define head().
+    if method == "head" and not hasattr(view_class, "head"):
+        method = "get"
+    return hasattr(view_class, method)
 
 
 class GlobalAuthMiddleware:
@@ -94,14 +118,15 @@ class GlobalAuthMiddleware:
     def __call__(self, request):
         """Authenticate the request or return the appropriate login response."""
         # Templates can safely read these values on every request.
-        request.apprise_auth_permission = AUTH_ROLE_DISABLED
+        request.apprise_auth_permission = Authentication.ROLE_DISABLED
         request.apprise_auth_username = None
 
         if not settings.APPRISE_AUTH_REQUIRED:
             request.globally_authenticated = False
             return self.get_response(request)
 
-        route_name, route_key = _request_route(request)
+        # The login form and static assets are always reachable without a cookie.
+        route_name, route_key, route_view = _request_route(request)
         if route_name and route_name.startswith("http_"):
             return self.get_response(request)
 
@@ -114,7 +139,7 @@ class GlobalAuthMiddleware:
             return self.get_response(request)
 
         html_request = is_html_response(request)
-        web_request = html_request or request.headers.get(WEB_AUTH_HEADER) == "1"
+        web_request = html_request or request.headers.get(Authentication.WEB_HEADER) == "1"
         if web_request:
             # Logout must remain reachable without a valid cookie.
             if route_name == "logout":
@@ -125,12 +150,22 @@ class GlobalAuthMiddleware:
                 header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
                 requested_key = header_key or None
 
-            if restore_web_auth(
+            if Authentication.restore_web(
                 request,
                 requested_key,
                 allow_shared_without_key=bool(route_name in _SHARED_WEB_ROUTES or route_name in _CURRENT_CONFIG_ROUTES),
             ):
-                return self.get_response(request)
+                response = self.get_response(request)
+                # Renew active sessions unless the view changed or cleared it.
+                if Authentication.WEB_COOKIE not in response.cookies:
+                    Authentication.set_web_cookie(
+                        response,
+                        request,
+                        request.apprise_auth_permission,
+                        request.apprise_auth_username,
+                        getattr(request, "apprise_web_auth_key", None),
+                    )
+                return response
 
             if html_request:
                 query = urlencode({"next": request.get_full_path(), "key": requested_key or ""})
@@ -143,18 +178,27 @@ class GlobalAuthMiddleware:
         has_key_in_url = route_name in _KEYED_ROUTES
         has_key_in_header = bool(route_name in _HEADER_ROUTES and request.headers.get(CONFIG_KEY_HEADER, "").strip())
         keyed_request = has_key_in_url or has_key_in_header
-        request.globally_authenticated = is_authenticated(request)
+        request.globally_authenticated = Authentication.is_authenticated(request)
         if request.globally_authenticated:
-            request.apprise_auth_permission = AUTH_ROLE_ADMIN
-            request.apprise_auth_username = basic_auth_credentials(request)[0]
+            request.apprise_auth_permission = Authentication.ROLE_ADMIN
+            request.apprise_auth_username = Authentication.basic_credentials(request)[0]
             return self.get_response(request)
 
         # The logout response asks the browser to discard cached credentials.
         if route_name == "logout":
             return self.get_response(request)
 
-        # Keyed views perform their own per-key authentication.
+        # Keyed views still enforce access and build their own error response.
         if keyed_request:
+            config_key = _request_config_key(request, route_name, route_key)
+            if config_key is not None and _view_authenticates_method(route_view, request.method):
+                # Save the decision on the request. The view still owns its
+                # existing error response, but it will not verify twice.
+                Authentication.key_ok(
+                    request,
+                    config_key,
+                    allow_public=route_name in {"notify", "s_notify"},
+                )
             return self.get_response(request)
 
         # Nginx may throttle repeated failures before they reach Django.

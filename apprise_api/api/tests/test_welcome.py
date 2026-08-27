@@ -28,6 +28,24 @@ class WelcomePageTests(SimpleTestCase):
     def test_welcome_page_status_code(self):
         response = self.client.get("/")
         assert response.status_code == 200
+        self.assertContains(response, "document.querySelectorAll('.api-welcome pre')")
+
+    @override_settings(APPRISE_STATELESS_MODE="disabled")
+    def test_disabled_stateless_mode_hides_endpoint_help(self):
+        """The welcome page replaces unusable stateless examples with a notice."""
+        response = self.client.get("/")
+        self.assertContains(response, "The administrator of this system has disabled stateless URL support.")
+        self.assertNotContains(response, "Those who wish to treat this API as nothing but")
+
+    @override_settings(APPRISE_STATELESS_MODE="disabled", APPRISE_STATEFUL_MODE="disabled")
+    def test_health_panel_explains_when_both_modes_are_disabled(self):
+        """The shared health panel explains the fully disabled state."""
+        response = self.client.get("/")
+        self.assertContains(response, "Notification Delivery Disabled")
+        self.assertContains(response, "An administrator must enable at least one mode")
+        self.assertContains(response, "data.degraded === true")
+        self.assertContains(response, 'class="health-check-more" hidden')
+        self.assertContains(response, "moreDetails.hidden = !(showCfg || showAttach)")
 
     @override_settings(APPRISE_API_ONLY=True)
     def test_welcome_page_api_only_returns_421(self) -> None:

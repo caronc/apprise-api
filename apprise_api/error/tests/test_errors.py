@@ -80,15 +80,21 @@ class ErrorTests(SimpleTestCase):
                 assert "error_page 429 = /_/429/;" in config
                 assert "proxy_intercept_errors off;" in config
                 assert 'location ~ "^/login/?$"' in config
-                assert "limit_req zone=auth burst=5 nodelay;" in config
                 assert "limit_req_status 429;" in config
-                assert "limit_req_zone $auth_limit_key zone=auth:10m rate=1r/s;" in config
+                assert "proxy_set_header X-Real-IP $remote_addr;" in config
+                assert "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
                 assert 'location ~ "^/cfg/([\\w_-]{{1,{}}}|@)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
                 assert (
                     'location ~ "^/(status(/([\\w_-]{{1,{}}}|@))?|metrics)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
                 )
 
         strict = (etc_dir / "nginx-strict.conf").read_text(encoding="utf-8")
+        regular = (etc_dir / "nginx.conf").read_text(encoding="utf-8")
+        assert "limit_req_zone $auth_limit_key zone=auth:10m rate=1r/s;" in strict
+        assert "limit_req_zone $binary_remote_addr zone=key_auth:10m rate=10r/s;" in strict
+        assert "limit_req zone=key_auth burst=20 nodelay;" in strict
+        assert "zone=auth:10m" not in regular
+        assert "zone=key_auth:10m" not in regular
         assert 'location ~ "^/logout/?$"' in strict
         assert 'location ~ "^/auth(/([\\w_-]{{1,{}}}|@))?/?$"'.format(CONFIG_KEY_MAX_LENGTH) in strict
         assert "if ($request_method !~ ^(GET|POST|DELETE)$)" in strict

@@ -25,7 +25,8 @@
 import datetime
 import re
 
-from api.utils import AUTH_ROLE_USER, CONFIG_KEY_PATTERN, CONFIG_KEY_REGEX
+from api.auth import Authentication
+from api.utils import CONFIG_KEY_PATTERN, CONFIG_KEY_REGEX
 from django.conf import settings
 
 
@@ -52,7 +53,7 @@ class DetectConfigMiddleware:
         # A shared login remains tied to its authenticated Config ID.
         shared_key = getattr(request, "apprise_web_auth_key", None)
         if (
-            getattr(request, "apprise_auth_permission", None) == AUTH_ROLE_USER
+            getattr(request, "apprise_auth_permission", None) == Authentication.ROLE_USER
             and isinstance(shared_key, str)
             and CONFIG_KEY_PATTERN.match(shared_key)
         ):

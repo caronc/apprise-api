@@ -486,11 +486,7 @@ class AttachmentTests(SimpleTestCase):
                 self.assertFalse(af.is_allowed("http://whatever/x"))
 
     def test_parse_url_value_error_is_blocked_not_crashed(self):
-        """
-        apprise's parse_url() can raise ValueError on certain malformed
-        input; verify is_allowed() treats that the same as an
-        unparsable URL instead of letting the exception propagate.
-        """
+        """Malformed URLs are blocked when Apprise cannot parse them."""
         af = AppriseURLFilter("*", "internal")
 
         with mock.patch("apprise_api.api.urlfilter.parse_url", side_effect=ValueError):

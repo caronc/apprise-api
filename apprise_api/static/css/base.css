@@ -572,6 +572,19 @@ textarea {
   overflow-x: auto;
 }
 
+.api-welcome .table-wrapper>table {
+  table-layout: fixed;
+}
+
+.api-welcome .table-wrapper>table>thead>tr>th:first-child {
+  width: 18%;
+}
+
+.api-welcome .table-wrapper>table>tbody>tr>td {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .api-welcome pre {
   white-space: pre-wrap;
   word-break: break-word;
@@ -892,8 +905,21 @@ Welcome Page Collapsibles
   border-top: none;
 }
 
+.api-welcome .code-snippet {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .api-welcome .collapsible-body .code-snippet {
   margin-bottom: 0.85rem;
+}
+
+.api-welcome .code-snippet pre,
+.api-welcome .code-snippet pre code {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .api-welcome .collapsible-body .code-snippet:last-child {
@@ -1759,22 +1785,35 @@ code.config-id.is-concealed {
 }
 
 .config-list-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2rem minmax(4rem, 10rem) 4.5rem minmax(10rem, 1fr) auto;
+  grid-template-areas: "auth-status user access config-id actions";
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
   overflow: hidden;
 }
 
+.config-list-item .config-auth-status {
+  grid-area: auth-status;
+  margin-right: 0;
+}
+
 .config-list-link {
-  flex: 1 1 auto;
+  grid-area: config-id;
   min-width: 0;
   overflow: hidden;
 }
 
 .config-list-user {
-  flex: 0 0 12rem;
-  width: clamp(4rem, 18vw, 12rem);
+  grid-area: user;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-list-access {
+  grid-area: access;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1786,8 +1825,10 @@ code.config-id.is-concealed {
 }
 
 .config-list-actions {
+  grid-area: actions;
   display: inline-flex;
   align-items: center;
+  justify-self: end;
   flex: 0 0 auto;
 }
 
@@ -1812,6 +1853,22 @@ code.config-id.is-concealed {
 
 .config-list-toggle-all .material-icons {
   font-size: 1.75rem;
+}
+
+@media (max-width: 640px) {
+
+  /* Keep identity details readable while placing the ID beside its actions. */
+  .config-list-item {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      "auth-status user access"
+      "config-id config-id actions";
+    row-gap: 0.5rem;
+  }
+
+  .config-list-actions {
+    margin-left: 0.35rem;
+  }
 }
 
 /* =========================================

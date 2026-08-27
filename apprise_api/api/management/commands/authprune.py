@@ -28,7 +28,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
-    """Remove old login locks that have no saved configuration."""
+    """Remove old access records that have no saved configuration."""
 
     help = f"Prune locked, never-configured keys older than {settings.APPRISE_AUTH_PRUNE_SECONDS} seconds"
 

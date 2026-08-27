@@ -72,7 +72,7 @@ class StatefulNotifyTests(SimpleTestCase):
             headers={"X-Apprise-Web-Auth": "1", "accept": "application/json"},
         )
         assert response.status_code == 400
-        assert "tag is required" in response.json()["error"]
+        assert "specific tag" in response.json()["error"]
         ConfigCache.clear(key)
 
     @patch("requests.request")

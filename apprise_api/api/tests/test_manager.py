@@ -29,13 +29,10 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, override_settings
 from django.urls import Resolver404, resolve
 
+from ..auth import Authentication, ConfigAuthRecord, ConfigAuthState
 from ..utils import (
-    CONFIG_AUTH_ASSIGNED,
-    CONFIG_AUTH_GLOBAL,
     CONFIG_KEY_MAX_LENGTH,
     AppriseStoreMode,
-    ConfigAuthState,
-    can_move_or_delete_configuration,
 )
 
 
@@ -143,7 +140,7 @@ class ManagerPageTests(SimpleTestCase):
         assert response.status_code == 400
 
         # The shared template policy also fails closed in stateless mode.
-        assert can_move_or_delete_configuration(SimpleNamespace()) is False
+        assert Authentication.can_move_or_delete(SimpleNamespace()) is False
 
     def test_stateful_mode_is_normalized_before_access_checks(self):
         """Uppercase and unknown modes fail closed like the configured store."""
@@ -342,7 +339,10 @@ class ManagerPageTests(SimpleTestCase):
         mod = resolve("/cfg/").func.__module__
         with (
             patch(f"{mod}.ConfigCache.keys", return_value=["open", "shared"]),
-            patch(f"{mod}.ConfigCache.get_auth_record", side_effect=[None, ("alice", "digest")]),
+            patch(
+                f"{mod}.ConfigCache.get_auth_record",
+                side_effect=[None, ConfigAuthRecord("user", "alice", "digest")],
+            ),
         ):
             response = self.client.get("/cfg/", headers={"accept": "text/html"})
 
@@ -406,7 +406,7 @@ class ManagerPageTests(SimpleTestCase):
         APPRISE_ADMIN=True,
         APPRISE_STATEFUL_MODE="simple",
         APPRISE_AUTH_REQUIRED=True,
-        APPRISE_BASIC_AUTH_TOKEN="master-token",
+        APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode(),
     )
     def test_manage_cfg_list_reports_users(self):
         """Each API entry reports its assigned configuration username."""
@@ -417,27 +417,27 @@ class ManagerPageTests(SimpleTestCase):
                 return_value=["open", "shared", "password-only", "damaged"],
             ),
             patch(
-                f"{mod}.config_auth_state",
+                "api.auth.Authentication.config_state",
                 side_effect=[
-                    ConfigAuthState(CONFIG_AUTH_GLOBAL),
-                    ConfigAuthState(CONFIG_AUTH_ASSIGNED, username="alice"),
-                    ConfigAuthState(CONFIG_AUTH_ASSIGNED, username=""),
-                    ConfigAuthState(CONFIG_AUTH_ASSIGNED, unreadable=True),
+                    ConfigAuthState(Authentication.MODE_GLOBAL),
+                    ConfigAuthState(Authentication.MODE_ASSIGNED, username="alice", digest="digest"),
+                    ConfigAuthState(Authentication.MODE_ASSIGNED, username="", digest="digest"),
+                    ConfigAuthState(Authentication.MODE_ASSIGNED, unreadable=True),
                 ],
             ),
         ):
             response = self.client.get(
                 "/cfg/",
                 HTTP_ACCEPT="application/json",
-                headers={"authorization": "Basic master-token"},
+                headers={"authorization": "Basic " + base64.b64encode(b"master:pass").decode()},
             )
 
         assert response.status_code == 200
         assert response.json() == [
-            {"key": "open", "user": None},
-            {"key": "shared", "user": "alice"},
-            {"key": "password-only", "user": ""},
-            {"key": "damaged", "user": None},
+            {"key": "open", "user": None, "access": "user"},
+            {"key": "shared", "user": "alice", "access": "user"},
+            {"key": "password-only", "user": "", "access": "user"},
+            {"key": "damaged", "user": None, "access": "user"},
         ]
 
     @override_settings(APPRISE_API_ONLY=True)

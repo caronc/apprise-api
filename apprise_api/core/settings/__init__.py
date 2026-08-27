@@ -112,6 +112,7 @@ TEMPLATES = [
                 "api.context_processors.default_config_id",
                 "api.context_processors.unique_config_id",
                 "api.context_processors.stateful_mode",
+                "api.context_processors.stateless_mode",
                 "api.context_processors.config_lock",
                 "api.context_processors.admin_enabled",
                 "api.context_processors.authentication",
@@ -336,7 +337,8 @@ APPRISE_CONFIG_LOCK = parse_bool(os.environ.get("APPRISE_CONFIG_LOCK", "no"))
 # Authentication stays off unless it is explicitly requested. Credentials are
 # ignored while it is off, which preserves the behavior of older deployments.
 APPRISE_AUTH_REQUIRED = parse_bool(os.environ.get("APPRISE_AUTH_REQUIRED", "no"))
-APPRISE_USER = os.environ.get("APPRISE_USER") if APPRISE_AUTH_REQUIRED else None
+# Usernames ignore accidental surrounding whitespace. Passwords remain exact.
+APPRISE_USER = (os.environ.get("APPRISE_USER") or "").strip() if APPRISE_AUTH_REQUIRED else None
 APPRISE_PASSWORD = os.environ.get("APPRISE_PASSWORD") if APPRISE_AUTH_REQUIRED else None
 
 # Label shown when a client asks for Basic Auth credentials.
@@ -364,6 +366,9 @@ else:
 # sessions independent from the SECRET_KEY used by HASH-mode configurations.
 DEFAULT_WEB_AUTH_SECRET = "Sw`rFTu3~4dq#hua:daY#T5^d;`#Z5:cE~mf.h`ZCKCP:AZMKZ"
 APPRISE_WEB_AUTH_SECRET = os.environ.get("APPRISE_WEB_AUTH_SECRET") or DEFAULT_WEB_AUTH_SECRET
+
+# Active browser sessions renew this 24-hour login window on each request.
+APPRISE_WEB_AUTH_MAX_AGE = 24 * 60 * 60
 
 # Optional browser-origin allow-list using ``scheme://host[:port]``.
 # Without it, Origin validation compares host and port only because bundled

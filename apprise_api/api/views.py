@@ -34,7 +34,6 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 import apprise
 from core.utils import parse_bool, parse_log_level
 from django.conf import settings
-from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import redirect, render
@@ -48,6 +47,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
 from error.views import Error421View
 
+from .auth import Authentication
 from .forms import (
     AUTO_DETECT_CONFIG_KEYWORD,
     CONFIG_FORMATS,
@@ -61,35 +61,21 @@ from .forms import (
     NotifyForm,
 )
 from .payload_mapper import remap_fields
-from .responses import error_response
+from .responses import error_response, parse_json_body
 from .utils import (
-    AUTH_ROLE_ADMIN,
-    AUTH_ROLE_DISABLED,
-    AUTH_ROLE_USER,
     CONFIG_KEY_HEADER,
     CONFIG_KEY_PATTERN,
     MIME_IS_JSON,
-    WEB_AUTH_COOKIE,
-    WEB_AUTH_HEADER,
     ConfigCache,
     MoveResult,
     apply_global_filters,
-    can_list_configurations,
-    can_move_or_delete_configuration,
-    clear_web_auth_cookie,
-    config_auth_state,
     config_key_header_present_but_invalid,
-    config_lock_allows_request,
-    global_credentials_ok,
     healthcheck,
     is_html_response,
     is_json_response,
-    key_auth_ok,
-    key_credentials_ok,
     parse_attachments,
     resolve_config_key,
     send_webhook,
-    set_web_auth_cookie,
     stateful_store_enabled,
 )
 
@@ -473,6 +459,9 @@ TAG_TOKEN_RE = re.compile(
     re.IGNORECASE,
 )
 
+# A notification never needs an unbounded number of routing tags.
+TAG_SELECTION_MAX_ITEMS = 256
+
 
 def parse_tag_expression(tag):
     """
@@ -498,6 +487,41 @@ def parse_tag_expression(tag):
         tags.append(tuple(tokens) if len(tokens) > 1 else tokens[0])
 
     return tags
+
+
+def _tag_expression_items(tag):
+    """Flatten a bounded tag selection without recursive processing."""
+    pending = [tag]
+    seen = set()
+    items = []
+    while pending:
+        item = pending.pop()
+        if isinstance(item, list | set | tuple):
+            identity = id(item)
+            if identity in seen:
+                return None
+            seen.add(identity)
+            pending.extend(item)
+        elif isinstance(item, str):
+            items.append(item)
+        else:
+            return None
+
+        if len(pending) + len(items) > TAG_SELECTION_MAX_ITEMS:
+            return None
+    return items
+
+
+def tag_expression_uses_all(tag):
+    """Return whether a parsed tag selection contains the special ``all`` tag."""
+    items = _tag_expression_items(tag)
+    return bool(items and any(tag_detail(item)["name"].casefold() == "all" for item in items))
+
+
+def tag_expression_is_specific(tag):
+    """Return whether every supplied item is a valid tag other than ``all``."""
+    items = _tag_expression_items(tag)
+    return bool(items and all(TAG_TOKEN_RE.match(item) for item in items) and not tag_expression_uses_all(items))
 
 
 def tag_detail(tag):
@@ -1077,10 +1101,10 @@ def _get_config_response(request, key):
             return _invalid_key_response(request)
         return _missing_key_response(request)
 
-    if not key_auth_ok(request, key):
+    if not Authentication.key_ok(request, key):
         return _key_access_denied_response(request, key)
 
-    if not config_lock_allows_request(request):
+    if not Authentication.config_lock_allows(request, key):
         # General Access Control
         logger.warning(
             "VIEW - %s - Config Lock Active - Request Denied",
@@ -1194,7 +1218,7 @@ class WelcomeView(View):
             # API Mode only - Nothing further to parse
             return Error421View.as_view()(request)
 
-        if request.apprise_auth_permission == AUTH_ROLE_USER:
+        if request.apprise_auth_permission == Authentication.ROLE_USER:
             # A shared browser login cannot inspect another key through examples.
             key = request.apprise_web_auth_key
 
@@ -1202,7 +1226,7 @@ class WelcomeView(View):
         # always shown as a placeholder and is never read from storage.
         example_username = settings.APPRISE_USER
         if settings.APPRISE_AUTH_REQUIRED and CONFIG_KEY_PATTERN.match(key):
-            example_username = config_auth_state(key, request).username or example_username
+            example_username = Authentication.config_state(key, request).username or example_username
 
         return render(
             request,
@@ -1274,7 +1298,7 @@ class LoginView(View):
         # Opening Login starts a clean browser-authentication attempt. Theme
         # and support-banner preferences are separate and remain untouched.
         request.clear_config_cookie = True
-        clear_web_auth_cookie(response)
+        Authentication.clear_web_cookie(response)
         return response
 
     def post(self, request):
@@ -1298,18 +1322,17 @@ class LoginView(View):
             key = form.cleaned_data["key"]
 
             mode = None
-            # A supplied Config ID may belong to a shared user. Test it first
-            # so a successful shared login never consumes the administrator's
-            # failed-attempt allowance.
-            if CONFIG_KEY_PATTERN.match(key) and key_credentials_ok(request, key, username, password):
-                mode = AUTH_ROLE_USER
-            elif global_credentials_ok(username, password):
-                mode = AUTH_ROLE_ADMIN
+            # Administrator credentials always win, even when a configuration
+            # happens to use the same username and password.
+            if Authentication.global_credentials_ok(username, password):
+                mode = Authentication.ROLE_ADMIN
                 key = None
+            elif CONFIG_KEY_PATTERN.match(key) and Authentication.key_credentials_ok(request, key, username, password):
+                mode = Authentication.ROLE_USER
 
             if mode:
                 next_url = form.cleaned_data["next"] or (
-                    reverse("config", kwargs={"key": key}) if mode == AUTH_ROLE_USER else reverse("welcome")
+                    reverse("config", kwargs={"key": key}) if mode == Authentication.ROLE_USER else reverse("welcome")
                 )
                 if not url_has_allowed_host_and_scheme(
                     next_url,
@@ -1318,7 +1341,7 @@ class LoginView(View):
                 ):
                     next_url = reverse("config", kwargs={"key": key}) if key else reverse("welcome")
 
-                if mode == AUTH_ROLE_USER:
+                if mode == Authentication.ROLE_USER:
                     # Store the selected key and shorten matching browser URLs.
                     # Older keyed URLs remain valid when cookies are unavailable.
                     request.default_config_id = key
@@ -1334,7 +1357,7 @@ class LoginView(View):
                     request.default_config_id = settings.APPRISE_DEFAULT_CONFIG_ID
 
                 response = redirect(next_url)
-                set_web_auth_cookie(response, request, mode, username, key)
+                Authentication.set_web_cookie(response, request, mode, username, key)
                 response["Cache-Control"] = "no-store"
                 return response
 
@@ -1351,7 +1374,7 @@ class LoginView(View):
         # Failed credentials must not leave a previous user's signed session
         # active behind the visible login error.
         request.clear_config_cookie = True
-        clear_web_auth_cookie(response)
+        Authentication.clear_web_cookie(response)
         return response
 
 
@@ -1370,7 +1393,7 @@ class LogoutView(View):
         # DetectConfigMiddleware sees this marker while the response unwinds.
         request.clear_config_cookie = True
         response = render(request, self.template_name, {"AUTH_ENABLED": False})
-        clear_web_auth_cookie(response)
+        Authentication.clear_web_cookie(response)
         response["Cache-Control"] = "no-store"
         return response
 
@@ -1378,16 +1401,16 @@ class LogoutView(View):
 # Describe this caller's access: either one key ("user") or unrestricted
 # access ("admin"). Open deployments are also unrestricted.
 _PRIVILEGE_LABELS = {
-    AUTH_ROLE_ADMIN: "admin",
-    AUTH_ROLE_USER: "user",
-    AUTH_ROLE_DISABLED: "admin",
+    Authentication.ROLE_ADMIN: "admin",
+    Authentication.ROLE_USER: "user",
+    Authentication.ROLE_DISABLED: "admin",
 }
 
 
-def _health_check_response(request):
+def _health_check_response(request, key=None):
     """Return the shared status payload for keyed and keyless requests.
 
-    A key changes access control, not the response content.
+    Keyed responses include that configuration's effective lock state.
     """
     # Detect the format our response should be in
     json_response = is_json_response(request)
@@ -1409,7 +1432,7 @@ def _health_check_response(request):
         if not json_response
         else JsonResponse(
             {
-                "config_lock": settings.APPRISE_CONFIG_LOCK,
+                "config_lock": Authentication.configuration_is_locked(key, request),
                 "attach_lock": settings.APPRISE_ATTACH_SIZE <= 0,
                 "stateful_enabled": stateful_enabled,
                 "stateless_enabled": stateless_enabled,
@@ -1439,10 +1462,10 @@ class HealthCheckView(View):
             config_key = resolve_config_key(request, "")
             if not config_key:
                 return _invalid_key_response(request)
-            if not key_auth_ok(request, config_key):
+            if not Authentication.key_ok(request, config_key):
                 return _key_access_denied_response(request, config_key)
 
-        return _health_check_response(request)
+        return _health_check_response(request, config_key if raw_config_key else None)
 
 
 @method_decorator((gzip_page, never_cache), name="dispatch")
@@ -1458,10 +1481,10 @@ class KeyedHealthCheckView(View):
         if not key:
             return _invalid_key_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        return _health_check_response(request)
+        return _health_check_response(request, key)
 
 
 @method_decorator((gzip_page, never_cache), name="dispatch")
@@ -1495,7 +1518,7 @@ class DetailsView(View):
             config_key = resolve_config_key(request, "")
             if not config_key:
                 return _invalid_key_response(request)
-            if not key_auth_ok(request, config_key):
+            if not Authentication.key_ok(request, config_key):
                 return _key_access_denied_response(request, config_key)
 
         # Detect the format our response should be in.
@@ -1566,14 +1589,11 @@ class ConfigView(View):
             return _missing_key_response(request)
 
         # Protect the editor page even though configuration loads separately.
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        auth_state = config_auth_state(key, request)
+        auth_state = Authentication.config_state(key, request)
         auth_username = auth_state.username
-        if auth_username is None and request.apprise_auth_permission == AUTH_ROLE_USER:
-            # A legacy lock cannot reveal its username, but this request can.
-            auth_username = request.apprise_auth_username
 
         return render(
             request,
@@ -1584,6 +1604,7 @@ class ConfigView(View):
                 "form_cfg": AddByConfigForm(),
                 "form_notify": NotifyForm(),
                 "auth_mode": auth_state.mode,
+                "auth_access": auth_state.access,
                 "auth_username": auth_username or "",
             },
         )
@@ -1595,7 +1616,7 @@ class ConfigView(View):
 
 def _current_browser_config_key(request):
     """Return the configuration remembered by an authenticated browser."""
-    has_browser_login = bool(request.COOKIES.get(WEB_AUTH_COOKIE))
+    has_browser_login = bool(request.COOKIES.get(Authentication.WEB_COOKIE))
     has_open_key = not settings.APPRISE_AUTH_REQUIRED and bool(request.COOKIES.get("key"))
     if not has_browser_login and not has_open_key:
         return None
@@ -1603,7 +1624,7 @@ def _current_browser_config_key(request):
     # A shared session trusts only the key signed into its login cookie.
     key = (
         getattr(request, "apprise_web_auth_key", None)
-        if request.apprise_auth_permission == AUTH_ROLE_USER
+        if request.apprise_auth_permission == Authentication.ROLE_USER
         else getattr(request, "default_config_id", None)
     )
     return key if isinstance(key, str) and CONFIG_KEY_PATTERN.match(key) else None
@@ -1633,7 +1654,7 @@ class CurrentConfigView(View):
 
         key = form.cleaned_data["key"]
         request.default_config_id = key
-        if request.apprise_auth_permission == AUTH_ROLE_USER and request.apprise_web_auth_key != key:
+        if request.apprise_auth_permission == Authentication.ROLE_USER and request.apprise_web_auth_key != key:
             # A shared login proves access to one key only. Start a clean login
             # for the requested key before any configuration view is reached.
             login_url = "{}?{}".format(
@@ -1641,7 +1662,7 @@ class CurrentConfigView(View):
                 urlencode({"next": reverse("config_current")}),
             )
             response = redirect(login_url)
-            clear_web_auth_cookie(response)
+            Authentication.clear_web_cookie(response)
             response["Cache-Control"] = "no-store"
             return response
 
@@ -1671,7 +1692,7 @@ class ConfigListView(View):
 
         # The complete list is available only in SIMPLE mode. CONFIG_LOCK also
         # requires an authenticated administrator so an open site stays private.
-        if not can_list_configurations(request):
+        if not Authentication.can_list_configurations(request):
             msg = _("The site has been configured to deny this request")
             status = ResponseCode.no_access
             return error_response(request, msg, status)
@@ -1679,13 +1700,15 @@ class ConfigListView(View):
         stored_keys = ConfigCache.keys()
         entries = []
         for key in stored_keys:
-            auth_state = config_auth_state(key, request)
+            auth_state = Authentication.config_state(key, request)
 
             entries.append(
                 {
                     "key": key,
                     "user": auth_state.username,
                     "assigned": auth_state.assigned,
+                    "configured": auth_state.configured,
+                    "access": auth_state.access,
                 }
             )
         status = ResponseCode.okay
@@ -1702,7 +1725,14 @@ class ConfigListView(View):
             else JsonResponse(
                 stored_keys
                 if not settings.APPRISE_AUTH_REQUIRED
-                else [{"key": entry["key"], "user": entry["user"]} for entry in entries],
+                else [
+                    {
+                        "key": entry["key"],
+                        "user": entry["user"],
+                        "access": entry["access"],
+                    }
+                    for entry in entries
+                ],
                 encoder=JSONEncoder,
                 safe=False,
                 status=status,
@@ -1738,10 +1768,10 @@ class AddView(View):
                 return _invalid_key_response(request)
             return _missing_key_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        if request.apprise_auth_permission == AUTH_ROLE_USER:
+        if request.apprise_auth_permission == Authentication.ROLE_USER:
             # Only administrators may create or replace configurations. Key
             # users may move their own configuration but cannot overwrite it.
             logger.warning(
@@ -1753,7 +1783,7 @@ class AddView(View):
             status = ResponseCode.no_access
             return error_response(request, msg, status)
 
-        if not config_lock_allows_request(request):
+        if not Authentication.config_lock_allows(request, key):
             # General Access Control
             logger.warning(
                 "ADD - %s - Config Lock Active - Request Denied",
@@ -1776,59 +1806,9 @@ class AddView(View):
                 content.update(form.cleaned_data)
 
         else:  # JSON Payload
-            # Prepare our default response
-            try:
-                # load our JSON content
-                content = json.loads(request.body.decode("utf-8"))
-
-            except RequestDataTooBig:
-                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
-                # the case when there is a very large file attachment that can't be pulled
-                # out of the payload without exceeding memory limitations (default is 3MB)
-                logger.warning(
-                    "ADD - %s - JSON Payload Exceeded %dMB; operation aborted using KEY: %s",
-                    request.META["REMOTE_ADDR"],
-                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
-                    key,
-                )
-
-                status = ResponseCode.fields_too_large
-                msg = _("JSON Payload provided is too large")
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
-
-            except (AttributeError, ValueError):
-                # could not parse JSON response...
-                logger.warning(
-                    "ADD - %s - Invalid JSON Payload provided using KEY: %s",
-                    request.META["REMOTE_ADDR"],
-                    key,
-                )
-
-                status = ResponseCode.bad_request
-                msg = _("Invalid JSON Payload provided")
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
+            content, parse_error = parse_json_body(request, "ADD", key)
+            if parse_error is not None:
+                return parse_error
 
         if not content:
             # No information was posted
@@ -2107,10 +2087,10 @@ class MoveView(View):
                 return _invalid_key_response(request)
             return _missing_key_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        if not can_move_or_delete_configuration(request):
+        if not Authentication.can_move_or_delete(request):
             # A locked site permits this only for an authenticated administrator.
             logger.warning(
                 "MOVE - %s - Config Lock Active - Request Denied",
@@ -2120,7 +2100,7 @@ class MoveView(View):
             status = ResponseCode.no_access
             return error_response(request, msg, status)
 
-        shared_user = request.apprise_auth_permission == AUTH_ROLE_USER
+        shared_user = request.apprise_auth_permission == Authentication.ROLE_USER
 
         if json_payload:
             from_config_id, to_config_id, parse_error = self._parse_json_payload(
@@ -2140,7 +2120,7 @@ class MoveView(View):
                 return parse_error
 
         # The from_config_id must match the key or the caller must have access to it.
-        if from_config_id != key and not key_auth_ok(request, from_config_id):
+        if from_config_id != key and not Authentication.key_ok(request, from_config_id):
             return _key_access_denied_response(request, from_config_id)
 
         if not settings.APPRISE_CONFIG_LOCK:
@@ -2161,30 +2141,9 @@ class MoveView(View):
 
     def _parse_json_payload(self, request, key):
         """Return the move IDs and any JSON validation error."""
-        try:
-            content = json.loads(request.body.decode("utf-8"))
-
-        except RequestDataTooBig:
-            # Reject JSON larger than the configured request memory limit.
-            logger.warning(
-                "MOVE - %s - JSON Payload Exceeded %dMB; operation aborted using KEY: %s",
-                request.META["REMOTE_ADDR"],
-                (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
-                key,
-            )
-            status = ResponseCode.fields_too_large
-            msg = _("JSON Payload provided is too large")
-            return None, None, error_response(request, msg, status)
-
-        except (AttributeError, ValueError):
-            logger.warning(
-                "MOVE - %s - Invalid JSON Payload provided using KEY: %s",
-                request.META["REMOTE_ADDR"],
-                key,
-            )
-            status = ResponseCode.bad_request
-            msg = _("Invalid JSON Payload provided")
-            return None, None, error_response(request, msg, status)
+        content, parse_error = parse_json_body(request, "MOVE", key)
+        if parse_error is not None:
+            return None, None, parse_error
 
         if not isinstance(content, dict):
             status = ResponseCode.bad_request
@@ -2260,21 +2219,21 @@ class MoveView(View):
             else JsonResponse({"error": None}, encoder=JSONEncoder, safe=False, status=status)
         )
         if (
-            request.headers.get(WEB_AUTH_HEADER) == "1"
+            request.headers.get(Authentication.WEB_HEADER) == "1"
             and getattr(request, "default_config_id", None) == from_config_id
         ):
             # Keep an administrator's current-key alias aligned after a GUI move.
             request.default_config_id = to_config_id
         if (
-            request.apprise_auth_permission == AUTH_ROLE_USER
+            request.apprise_auth_permission == Authentication.ROLE_USER
             and getattr(request, "apprise_web_auth_key", None) == from_config_id
         ):
             # Refresh the browser login after its lock moves to the new ID.
             request.default_config_id = to_config_id
-            set_web_auth_cookie(
+            Authentication.set_web_cookie(
                 response,
                 request,
-                AUTH_ROLE_USER,
+                Authentication.ROLE_USER,
                 request.apprise_auth_username,
                 to_config_id,
             )
@@ -2303,10 +2262,10 @@ class DelView(View):
                 return _invalid_key_response(request)
             return _missing_key_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        if request.apprise_auth_permission == AUTH_ROLE_USER:
+        if request.apprise_auth_permission == Authentication.ROLE_USER:
             # Only administrators may delete configurations. Key users may
             # move their own configuration but cannot remove their login.
             logger.warning(
@@ -2318,7 +2277,7 @@ class DelView(View):
             status = ResponseCode.no_access
             return error_response(request, msg, status)
 
-        if not can_move_or_delete_configuration(request):
+        if not Authentication.can_move_or_delete(request):
             # A locked site permits this only for an authenticated administrator.
             logger.warning(
                 "DEL - %s - Config Lock Active - Request Denied",
@@ -2431,19 +2390,21 @@ class AuthView(View):
                 return _invalid_key_response(request)
             return _missing_key_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        auth_state = config_auth_state(key, request)
+        auth_state = Authentication.config_state(key, request)
         # Only a saved per-key username belongs in this editor. The global
         # username remains separate and is never copied into a new lock.
         username = auth_state.username if auth_state.assigned else ""
-        if username is None and request.apprise_auth_permission == AUTH_ROLE_USER:
-            username = request.apprise_auth_username
-        shared_user = request.apprise_auth_permission == AUTH_ROLE_USER
+        shared_user = request.apprise_auth_permission == Authentication.ROLE_USER
         if json_response:
             return JsonResponse(
-                {"mode": auth_state.mode, "username": username},
+                {
+                    "mode": auth_state.mode,
+                    "access": auth_state.access,
+                    "username": username,
+                },
                 encoder=JSONEncoder,
                 safe=False,
                 status=ResponseCode.okay,
@@ -2455,12 +2416,16 @@ class AuthView(View):
             {
                 "key": key,
                 "auth_mode": auth_state.mode,
+                "auth_access": auth_state.access,
+                "auth_has_credentials": auth_state.assigned,
                 "auth_username": username,
                 "shared_user": shared_user,
                 "form_auth": AuthForm(
-                    initial={"username": username},
+                    initial={"access": auth_state.access, "username": username},
                     shared=shared_user,
                     current_username=username,
+                    current_access=auth_state.access,
+                    has_credentials=auth_state.assigned,
                     require_current=shared_user,
                 ),
                 # Do not build a form for an action this request cannot use.
@@ -2470,7 +2435,7 @@ class AuthView(View):
                         restricted=shared_user,
                         current_from=key,
                     )
-                    if can_move_or_delete_configuration(request)
+                    if Authentication.can_move_or_delete(request)
                     else None
                 ),
             },
@@ -2486,12 +2451,10 @@ class AuthView(View):
         # Require JSON so a plain cross-site HTML form cannot alter access.
         # OriginValidationMiddleware provides the broader CSRF check.
         if request.content_type != "application/json":
-            status = ResponseCode.bad_request
-            msg = _("Content-Type must be application/json")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            return error_response(
+                request,
+                _("Content-Type must be application/json"),
+                ResponseCode.bad_request,
             )
 
         if not settings.APPRISE_AUTH_REQUIRED:
@@ -2503,90 +2466,73 @@ class AuthView(View):
                 return _invalid_key_response(request)
             return _missing_key_response(request)
 
-        # Only the global administrator may create a key's first lock.
-        # Existing locks accept either global or current per-key credentials.
-        if not ConfigCache.has_auth(key):
+        auth_state = Authentication.config_state(key, request)
+        # Only the global administrator may create a key's first access record.
+        # Existing credentials accept either the admin or their current user.
+        if not auth_state.configured:
             if not getattr(request, "globally_authenticated", False):
                 return _key_access_denied_response(request, key)
-        elif not key_auth_ok(request, key):
+        elif not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
-        try:
-            content = json.loads(request.body.decode("utf-8"))
-
-        except RequestDataTooBig:
-            status = ResponseCode.fields_too_large
-            msg = _("JSON Payload provided is too large")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
-            )
-
-        except (AttributeError, ValueError):
-            status = ResponseCode.bad_request
-            msg = _("Invalid JSON Payload provided")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
-            )
+        content, parse_error = parse_json_body(request, "AUTH", key)
+        if parse_error is not None:
+            return parse_error
 
         if not isinstance(content, dict):
-            status = ResponseCode.bad_request
-            msg = _("The JSON payload must be an object")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            return error_response(
+                request,
+                _("The JSON payload must be an object"),
+                ResponseCode.bad_request,
             )
 
-        shared_user = request.apprise_auth_permission == AUTH_ROLE_USER
+        shared_user = request.apprise_auth_permission == Authentication.ROLE_USER
         browser_shared_user = shared_user and getattr(request, "apprise_web_auth_key", None) == key
-        current_username = ""
-        if shared_user:
-            current_username = config_auth_state(key, request).username
-            if current_username is None:
-                # Legacy locks did not record their username. The successful
-                # login tells us which value must remain in use.
-                current_username = request.apprise_auth_username or ""
+        current_username = auth_state.username or ""
+        current_access = auth_state.access
 
-        username = content.get("username")
+        username = content.get("username", "" if shared_user else current_username)
+        access = content.get("access", current_access)
         current_password = content.get("current_password")
-        password = content.get("password")
+        password = content.get("password", "" if not shared_user else None)
         password_confirm = content.get("password_confirm")
+        if username is None:
+            username = ""
         if (
             not isinstance(password, str)
             or not isinstance(username, str)
+            or not isinstance(access, str)
             or (browser_shared_user and not isinstance(password_confirm, str))
             or (shared_user and password_confirm is not None and not isinstance(password_confirm, str))
             or (browser_shared_user and current_password is not None and not isinstance(current_password, str))
         ):
-            status = ResponseCode.bad_request
-            msg = _("Valid username and password fields are required")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            return error_response(
+                request,
+                _("Valid username and password fields are required"),
+                ResponseCode.bad_request,
             )
 
-        if shared_user and username is not None and username != current_username:
-            status = ResponseCode.no_access
-            msg = _("The username cannot be changed by a configuration user")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {"error": msg, "field": "username"},
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+        # Forms and Basic Auth both ignore surrounding username whitespace.
+        username = username.strip()
+        if shared_user and username != current_username:
+            return error_response(
+                request,
+                _("The username cannot be changed by a configuration user"),
+                ResponseCode.no_access,
+                field="username",
+            )
+        if shared_user and access != current_access:
+            return error_response(
+                request,
+                _("Only an administrator may change configuration access"),
+                ResponseCode.no_access,
+                field="access",
             )
 
         # API users repeat their saved username but do not need the browser's
         # confirmation field.
         form_data = content.copy()
+        form_data.update({"access": access, "username": username, "password": password})
         if shared_user and not browser_shared_user and password_confirm is None:
             form_data["password_confirm"] = password
 
@@ -2594,69 +2540,57 @@ class AuthView(View):
             form_data,
             shared=shared_user,
             current_username=current_username,
+            current_access=current_access,
+            has_credentials=auth_state.assigned,
             require_current=browser_shared_user,
         )
         if not form.is_valid():
-            status = ResponseCode.bad_request
             field, errors = next(iter(form.errors.items()))
-            msg = errors[0]
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {"error": msg, "field": field},
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+            return error_response(
+                request,
+                errors[0],
+                ResponseCode.bad_request,
+                field=field,
             )
 
         username = form.cleaned_data["username"]
         password = form.cleaned_data["password"]
+        access = form.cleaned_data["access"]
         if browser_shared_user and not ConfigCache.verify_auth(
             key,
             username,
             form.cleaned_data["current_password"],
         ):
-            status = ResponseCode.bad_request
-            msg = _("The current password was not accepted")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {"error": msg, "field": "current_password"},
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+            return error_response(
+                request,
+                _("The current password was not accepted"),
+                ResponseCode.bad_request,
+                field="current_password",
             )
 
         if shared_user and ConfigCache.verify_auth(key, username, password):
-            status = ResponseCode.bad_request
-            msg = _("The new password must differ from the current password")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {"error": msg, "field": "password"},
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+            return error_response(
+                request,
+                _("The new password must differ from the current password"),
+                ResponseCode.bad_request,
+                field="password",
             )
 
-        if not ConfigCache.set_auth(key, username, password):
+        saved = (
+            ConfigCache.set_auth(key, username, password, access=access)
+            if password
+            else ConfigCache.set_access(key, access)
+        )
+        if not saved:
             logger.error(
                 "AUTH - %s - Could not write authentication associated using KEY: %s",
                 request.META["REMOTE_ADDR"],
                 key,
             )
-            status = ResponseCode.internal_server_error
-            msg = _("The authentication could not be saved")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            return error_response(
+                request,
+                _("The authentication could not be saved"),
+                ResponseCode.internal_server_error,
             )
 
         logger.info(
@@ -2673,7 +2607,7 @@ class AuthView(View):
         )
         if shared_user and getattr(request, "apprise_web_auth_key", None) == key:
             # Keep the current browser signed in with the newly saved digest.
-            set_web_auth_cookie(response, request, AUTH_ROLE_USER, username, key)
+            Authentication.set_web_cookie(response, request, Authentication.ROLE_USER, username, key)
         return response
 
     def delete(self, request, key=None):
@@ -2692,18 +2626,16 @@ class AuthView(View):
                 return _invalid_key_response(request)
             return _missing_key_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
         # Configuration users may rotate their password, but only the global
         # administrator can remove their account.
         if not getattr(request, "globally_authenticated", False):
-            status = ResponseCode.no_access
-            msg = _("Global administrator credentials are required to remove authentication")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            return error_response(
+                request,
+                _("Global administrator credentials are required to remove authentication"),
+                ResponseCode.no_access,
             )
 
         result = ConfigCache.clear_auth(key)
@@ -2713,12 +2645,10 @@ class AuthView(View):
                 request.META["REMOTE_ADDR"],
                 key,
             )
-            status = ResponseCode.internal_server_error
-            msg = _("The authentication could not be removed")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
+            return error_response(
+                request,
+                _("The authentication could not be removed"),
+                ResponseCode.internal_server_error,
             )
 
         logger.info(
@@ -2796,8 +2726,15 @@ class NotifyView(View):
         # Detect the format our response should be in
         json_response = is_json_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key, allow_public=True):
             return _key_access_denied_response(request, key)
+
+        # Public and locked callers may send only to a tag they already know.
+        # Administrators keep unrestricted access to every destination.
+        tag_only_access = (
+            request.apprise_auth_permission != Authentication.ROLE_ADMIN
+            and Authentication.configuration_is_locked(key, request)
+        )
 
         # Event streams use their own format instead of JSON, HTML, or text.
         stream_response = _stream_requested(request)
@@ -2836,76 +2773,14 @@ class NotifyView(View):
                 content.update(form.cleaned_data)
 
         else:  # JSON Payload
-            # Prepare our default response
-            try:
-                # load our JSON content
-                content = json.loads(request.body.decode("utf-8"))
+            content, parse_error = parse_json_body(request, "NOTIFY", key)
+            if parse_error is not None:
+                return parse_error
 
-                # Apply content rules
-                if rules and not remap_fields(rules, content):
-                    status = ResponseCode.bad_request
-                    msg = _("Payload field mapping failed using KEY: {}").format(key)
-                    return (
-                        HttpResponse(msg, status=status, content_type="text/plain")
-                        if not json_response
-                        else JsonResponse(
-                            {
-                                "error": msg,
-                            },
-                            encoder=JSONEncoder,
-                            safe=False,
-                            status=status,
-                        )
-                    )
-
-            except RequestDataTooBig:
-                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
-                # the case when there is a very large file attachment that can't be pulled
-                # out of the payload without exceeding memory limitations (default is 3MB)
-                logger.warning(
-                    "NOTIFY - %s - JSON Payload Exceeded %dMB using KEY: %s",
-                    request.META["REMOTE_ADDR"],
-                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
-                    key,
-                )
-
-                status = ResponseCode.fields_too_large
-                msg = _("JSON Payload provided is too large")
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
-
-            except (AttributeError, ValueError):
-                # could not parse JSON response...
-                logger.warning(
-                    "NOTIFY - %s - Invalid JSON Payload provided using KEY: %s",
-                    request.META["REMOTE_ADDR"],
-                    key,
-                )
-
-                status = ResponseCode.bad_request
-                msg = _("Invalid JSON Payload provided")
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
+            # Apply content rules after the shared JSON validation.
+            if rules and not remap_fields(rules, content):
+                msg = _("Payload field mapping failed using KEY: {}").format(key)
+                return error_response(request, msg, ResponseCode.bad_request)
 
         if not content:
             # We could not handle the Content-Type
@@ -2929,6 +2804,24 @@ class NotifyView(View):
                     status=status,
                 )
             )
+
+        if tag_only_access:
+            # Check routing before attachments can trigger file or network IO.
+            required_tag = content.get("tag") or content.get("tags")
+            if not required_tag:
+                required_tag = request.GET.get("tag") or request.GET.get("tags")
+            try:
+                if isinstance(required_tag, str):
+                    required_tag = parse_tag_expression(required_tag)
+                elif not isinstance(required_tag, list | set | tuple):
+                    raise ValueError
+            except ValueError:
+                required_tag = None
+
+            if not tag_expression_is_specific(required_tag):
+                msg = _("A specific tag other than 'all' is required for this configuration")
+                return error_response(request, msg, ResponseCode.bad_request)
+            content["tag"] = required_tag
 
         # Handle Attachments
         # Normalize all three accepted attachment aliases — 'attach',
@@ -2996,17 +2889,6 @@ class NotifyView(View):
             elif "tags" in request.GET:
                 tag = request.GET["tags"]
 
-        if settings.APPRISE_CONFIG_LOCK and request.headers.get(WEB_AUTH_HEADER) == "1" and not tag:
-            # The locked GUI cannot show destinations for manual selection.
-            # Require a tag server-side in case browser validation is bypassed.
-            status = ResponseCode.bad_request
-            msg = _("At least one tag is required while configuration locking is enabled")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse({"error": msg}, encoder=JSONEncoder, safe=False, status=status)
-            )
-
         # Validation - Tag Logic:
         # "TagA"                        : TagA
         # "TagA, TagB"                  : TagA OR TagB
@@ -3072,6 +2954,7 @@ class NotifyView(View):
                         status=status,
                     )
                 )
+
         #
         # Allow 'format' value to be specified as part of the URL
         # parameters if not found otherwise defined.
@@ -3490,73 +3373,16 @@ class StatelessNotifyView(View):
                 content.update(form.cleaned_data)
 
         else:  # JSON Payload
-            # Prepare our default response
-            try:
-                # load our JSON content
-                content = json.loads(request.body.decode("utf-8"))
+            content, parse_error = parse_json_body(request, "NOTIFY")
+            if parse_error is not None:
+                return parse_error
 
-                # Apply content rules
-                if rules and not remap_fields(rules, content, form=NotifyByUrlForm()):
-                    status = ResponseCode.bad_request
-                    msg = _("Payload field mapping failed")
-                    return (
-                        HttpResponse(msg, status=status, content_type="text/plain")
-                        if not json_response
-                        else JsonResponse(
-                            {
-                                "error": msg,
-                            },
-                            encoder=JSONEncoder,
-                            safe=False,
-                            status=status,
-                        )
-                    )
-
-            except RequestDataTooBig:
-                # APPRISE_UPLOAD_MAX_MEMORY_SIZE exceeded its value; this is usually
-                # the case when there is a very large file attachment that can't be pulled
-                # out of the payload without exceeding memory limitations (default is 3MB)
-                logger.warning(
-                    "NOTIFY - %s - JSON Payload Exceeded %dMB; operation aborted",
-                    request.META["REMOTE_ADDR"],
-                    (settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576),
-                )
-
-                status = ResponseCode.fields_too_large
-                msg = _("JSON Payload provided is too large")
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
-
-            except (AttributeError, ValueError):
-                # could not parse JSON response...
-                logger.warning(
-                    "NOTIFY - %s - Invalid JSON Payload provided",
-                    request.META["REMOTE_ADDR"],
-                )
-
-                status = ResponseCode.bad_request
-                msg = _("Invalid JSON Payload provided")
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
+            # Apply content rules after the shared JSON validation.
+            if rules and not remap_fields(rules, content, form=NotifyByUrlForm()):
+                return error_response(
+                    request,
+                    _("Payload field mapping failed"),
+                    ResponseCode.bad_request,
                 )
 
         if not content:
@@ -4017,11 +3843,11 @@ class JsonUrlView(View):
                 return _invalid_key_response(request)
             return _missing_key_response(request)
 
-        if not key_auth_ok(request, key):
+        if not Authentication.key_ok(request, key):
             return _key_access_denied_response(request, key)
 
         # Only a verified global administrator may inspect a locked entry.
-        if not config_lock_allows_request(request):
+        if not Authentication.config_lock_allows(request, key):
             logger.warning(
                 "JSON URLS - %s - Config Lock Active - Request Denied",
                 request.META["REMOTE_ADDR"],

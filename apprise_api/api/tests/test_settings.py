@@ -268,6 +268,7 @@ class BasicAuthSettingsTests(SimpleTestCase):
         """Browser signing has a default independent of Django's key."""
         mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes"})
         self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.DEFAULT_WEB_AUTH_SECRET)
+        self.assertEqual(mod.APPRISE_WEB_AUTH_MAX_AGE, 24 * 60 * 60)
         self.assertNotEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.SECRET_KEY)
 
     def test_django_key_does_not_change_web_secret(self):

@@ -16,7 +16,7 @@ class Command(BaseCommand):
     help = "Prune expired persistent state and unused authentication locks"
 
     def handle(self, *args, **options):
-        """Prune expired notification data and unused login locks."""
+        """Prune expired notification data and unused access records."""
         if settings.APPRISE_AUTH_PRUNE_SECONDS < 0:
             # A negative age would make every unused lock eligible.
             raise CommandError("APPRISE_AUTH_PRUNE_SECONDS must not be negative")

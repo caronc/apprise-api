@@ -24,13 +24,10 @@
 import apprise
 from django.conf import settings
 
+from .auth import Authentication
 from .utils import (
     CONFIG_KEY_MAX_LENGTH,
-    WEB_AUTH_COOKIE,
     ConfigCache,
-    can_list_configurations,
-    can_move_or_delete_configuration,
-    config_lock_allows_request,
     gen_unique_config_id,
 )
 
@@ -42,13 +39,20 @@ def stateful_mode(request):
     return {"STATEFUL_MODE": ConfigCache.mode}
 
 
+def stateless_mode(request):
+    """Expose whether stateless notification requests are enabled."""
+    mode = str(settings.APPRISE_STATELESS_MODE).strip().lower()
+    return {"STATELESS_MODE": mode}
+
+
 def config_lock(request):
-    """
-    Returns the state of our global configuration lock
-    """
-    # Administrators retain the editor while the lock hides it from everyone
-    # else. Health responses still report the server's configured lock value.
-    return {"CONFIG_LOCK": not config_lock_allows_request(request)}
+    """Tell templates whether this caller receives the locked interface."""
+    key = getattr(request, "apprise_config_key", None) or getattr(
+        request,
+        "apprise_web_auth_key",
+        None,
+    )
+    return {"CONFIG_LOCK": not Authentication.config_lock_allows(request, key)}
 
 
 def admin_enabled(request):
@@ -69,10 +73,10 @@ def authentication(request):
         # Cookies let browser pages omit the Config ID from the URL.
         # Explicit keyed URLs still work for cookie-free clients.
         "COOKIE_CONFIG_URLS": bool(
-            request.COOKIES.get(WEB_AUTH_COOKIE) or (not auth_enabled and request.COOKIES.get("key"))
+            request.COOKIES.get(Authentication.WEB_COOKIE) or (not auth_enabled and request.COOKIES.get("key"))
         ),
-        "CAN_LIST_CONFIGS": can_list_configurations(request),
-        "CAN_MOVE_CONFIG": can_move_or_delete_configuration(request),
+        "CAN_LIST_CONFIGS": Authentication.can_list_configurations(request),
+        "CAN_MOVE_CONFIG": Authentication.can_move_or_delete(request),
     }
 
 

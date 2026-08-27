@@ -183,12 +183,8 @@ def test_apprise_config_list_simple_mode(tmpdir):
     assert len(keys) == 10
 
 
-def test_apprise_config_list_simple_mode_lock_only_key(tmpdir):
-    """
-    A key that has been assigned a login but was never given any
-    configuration content still occupies that key (move()'s conflict
-    check treats it as taken), so it must be visible via keys() too.
-    """
+def test_apprise_config_list_includes_lock_only_key(tmpdir):
+    """A login-only key is occupied and must appear in the key list."""
     acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
 
     # Lock-only key: no content was ever put(), only a login assigned

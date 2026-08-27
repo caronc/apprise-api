@@ -23,11 +23,19 @@
 # THE SOFTWARE.
 """Build consistent API, browser, and plain-text error responses."""
 
+import json
+import logging
+
+from django.conf import settings
+from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
 
 from .utils import is_html_response, is_json_response
+
+logger = logging.getLogger("django")
 
 
 def error_response(
@@ -59,3 +67,36 @@ def error_response(
     for name, value in (headers or {}).items():
         response[name] = value
     return response
+
+
+def parse_json_body(request, operation, key=None):
+    """Decode a JSON request body and return any client-safe error response."""
+    try:
+        return json.loads(request.body.decode("utf-8")), None
+
+    except RequestDataTooBig:
+        logger.warning(
+            "%s - %s - JSON payload exceeded %dMB%s",
+            operation,
+            request.META.get("REMOTE_ADDR", ""),
+            settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576,
+            " using KEY: {}".format(key) if key else "",
+        )
+        return None, error_response(
+            request,
+            _("JSON Payload provided is too large"),
+            431,
+        )
+
+    except (AttributeError, RecursionError, ValueError):
+        logger.warning(
+            "%s - %s - Invalid JSON payload%s",
+            operation,
+            request.META.get("REMOTE_ADDR", ""),
+            " using KEY: {}".format(key) if key else "",
+        )
+        return None, error_response(
+            request,
+            _("Invalid JSON Payload provided"),
+            400,
+        )

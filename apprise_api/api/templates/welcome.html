@@ -26,86 +26,87 @@
     </div>
     <div class="section">
       <h4>{% trans "Stateless Endpoints" %}</h4>
-      <p>
-        {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener noreferrer">sidecar</a> and/or
+      {% if STATELESS_MODE != 'disabled' %}
+        <p>
+          {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener noreferrer">sidecar</a> and/or
     microservice to their project only need to use the following URL.{% endblocktrans %}
-      </p>
-      <div class="table-wrapper">
-        <table class="highlighted">
-          <thead>
-            <tr>
-              <th style="min-width: 18%;">{% trans "URL" %}</th>
-              <th>{% trans "Description" %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <code>{{ BASE_URL }}/notify/</code>
-              </td>
-              <td>
-                {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer">Apprise URL Builder</a> if you need help
+        </p>
+        <div class="table-wrapper">
+          <table class="highlighted">
+            <thead>
+              <tr>
+                <th style="min-width: 18%;">{% trans "URL" %}</th>
+                <th>{% trans "Description" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <code>{{ BASE_URL }}/notify/</code>
+                </td>
+                <td>
+                  {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer">Apprise URL Builder</a> if you need help
           constructing your URL(s).{% endblocktrans %}
-                <div class="section">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{% trans "Parameter" %}</th>
-                        <th>{% trans "Description" %}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>urls</td>
-                        <td>
-                          {% blocktrans %}Used to define one or more Apprise URL(s). Use a comma and/or space to separate
+                  <div class="section">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{% trans "Parameter" %}</th>
+                          <th>{% trans "Description" %}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>urls</td>
+                          <td>
+                            {% blocktrans %}Used to define one or more Apprise URL(s). Use a comma and/or space to separate
                     one URL from the next.{% endblocktrans %}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>body</td>
-                        <td>{% blocktrans %}Defines the message body. This field is required!{% endblocktrans %}</td>
-                      </tr>
-                      <tr>
-                        <td>title</td>
-                        <td>
-                          {% blocktrans %}The title to include in the notification. This is an optional
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>body</td>
+                          <td>{% blocktrans %}Defines the message body. This field is required!{% endblocktrans %}</td>
+                        </tr>
+                        <tr>
+                          <td>title</td>
+                          <td>
+                            {% blocktrans %}The title to include in the notification. This is an optional
                     field.{% endblocktrans %}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>type</td>
-                        <td>
-                          {% blocktrans %}This optional field defines the notification type. The possible options
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>type</td>
+                          <td>
+                            {% blocktrans %}This optional field defines the notification type. The possible options
                     are:{% endblocktrans %}
-                          <ol>
-                            <li>
-                              <i class="tiny material-icons" style="color: blue">info</i><code>{% trans "info" %}</code> -
-                              <i>{% blocktrans %}this is the default option if a type
+                            <ol>
+                              <li>
+                                <i class="tiny material-icons" style="color: blue">info</i><code>{% trans "info" %}</code> -
+                                <i>{% blocktrans %}this is the default option if a type
                           isn't
                           specified.{% endblocktrans %}</i>
-                            </li>
-                            <li>
-                              <i class="tiny material-icons" style="color: green">check_circle</i><code>{% trans "success" %}</code>
-                            </li>
-                            <li>
-                              <i class="tiny material-icons" style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
-                            </li>
-                            <li>
-                              <i class="tiny material-icons" style="color: red">cancel</i><code>{% trans "failure" %}</code>
-                            </li>
-                          </ol>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <ul class="collapsible">
-                    <li>
-                      <div class="collapsible-header">
-                        <i class="material-icons">code</i>Curl Example
-                      </div>
-                      <div class="collapsible-body">
-                        {# djlint:off #}
+                              </li>
+                              <li>
+                                <i class="tiny material-icons" style="color: green">check_circle</i><code>{% trans "success" %}</code>
+                              </li>
+                              <li>
+                                <i class="tiny material-icons" style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
+                              </li>
+                              <li>
+                                <i class="tiny material-icons" style="color: red">cancel</i><code>{% trans "failure" %}</code>
+                              </li>
+                            </ol>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <ul class="collapsible">
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">code</i>Curl Example
+                        </div>
+                        <div class="collapsible-body">
+                          {# djlint:off #}
                         <pre><code class="bash"># {% blocktrans %}Notifies an email address{% endblocktrans %}<br />
                         curl -X POST -d '{"urls":"mailto://user:pass@gmail.com","body":"test body","title":"test title"}' \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br />
@@ -118,21 +119,21 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@/path/to/attachment.doc \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@Screenshot-2.png \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
-                        {# djlint:on #}
-                        {# djlint:off #}
+                          {# djlint:on #}
+                          {# djlint:off #}
                         <pre><code class="bash"># {% blocktrans %}Send an web based file attachment to a <a href="https://appriseit.com/services/discord/" target="_blank" rel="noopener noreferrer">Discord</a> server:{% endblocktrans %}<br />
                         curl -X POST -F 'urls=discord://credentials' \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
-                        {# djlint:on #}
-                      </div>
-                    </li>
-                    <li>
-                      <div class="collapsible-header">
-                        <i class="material-icons">code</i>Python Example
-                      </div>
-                      <div class="collapsible-body">
-                        {# djlint:off #}
+                          {# djlint:on #}
+                        </div>
+                      </li>
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">code</i>Python Example
+                        </div>
+                        <div class="collapsible-body">
+                          {# djlint:off #}
                         <pre><code class="python">import json<br />
                         from urllib.request import Request<br />
                         <br />
@@ -148,8 +149,8 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br />
                         )</code></pre>
-                        {# djlint:on #}
-                        {# djlint:off #}
+                          {# djlint:on #}
+                          {# djlint:off #}
                         <pre><code class="python"># {% blocktrans %}Notifies an email address with attachments{% endblocktrans %}<br />
                         import requests<br /><br />
                         payload = {<br />
@@ -162,15 +163,15 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data=payload,<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;files={'attach1':('attachment.png', fp)},<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;)</code></pre>
-                        {# djlint:on #}
-                      </div>
-                    </li>
-                    <li>
-                      <div class="collapsible-header">
-                        <i class="material-icons">code</i>PHP Example
-                      </div>
-                      <div class="collapsible-body">
-                        {# djlint:off #}
+                          {# djlint:on #}
+                        </div>
+                      </li>
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">code</i>PHP Example
+                        </div>
+                        <div class="collapsible-body">
+                          {# djlint:off #}
                         <pre><code class="php">&lt;?php<br />
                         <br />
                         // The URL<br />
@@ -204,8 +205,8 @@
                         // Close our handler<br />
                         curl_close($ch);<br />
                         ?&gt;</code></pre>
-                        {# djlint:on #}
-                        {# djlint:off #}
+                          {# djlint:on #}
+                          {# djlint:off #}
                         <pre><code class="php">&lt;?php<br />
                         // Sending an Attachment using PHP<br /><br />
                         // The URL<br />
@@ -243,16 +244,19 @@
                         // Close our handler<br />
                         curl_close($ch);<br />
                         ?&gt;</code></pre>
-                        {# djlint:on #}
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                          {# djlint:on #}
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p>{% trans "The administrator of this system has disabled stateless URL support." %}</p>
+      {% endif %}
       {% if STATEFUL_MODE != 'disabled' %}
         <div class="section">
           <h4>{% trans "Persistent Store Endpoints" %}</h4>
@@ -792,7 +796,7 @@
     finally { document.body.removeChild(ta); }
   }
   document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.api-welcome .collapsible-body pre').forEach(function(pre) {
+    document.querySelectorAll('.api-welcome pre').forEach(function(pre) {
       if (pre.parentNode.classList.contains('code-snippet')) { return; }
       var code = pre.querySelector('code');
       var copyText = (code ? code.innerText : pre.innerText).trim();

@@ -25,13 +25,11 @@ import base64
 import binascii
 from collections.abc import Mapping
 from contextlib import suppress
-from dataclasses import dataclass
 from datetime import datetime
 import errno
 import fcntl
 import gzip
 import hashlib
-import hmac
 from json import dumps, loads
 
 # import the logging library
@@ -43,11 +41,11 @@ import tempfile
 
 import apprise
 from django.conf import settings
-from django.contrib.auth.hashers import check_password, make_password
-from django.core import signing
+from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 import requests
 
+from .auth import Authentication, AuthStorageError, ConfigAuthRecord
 from .urlfilter import AppriseURLFilter
 
 # Get an instance of a logger
@@ -85,41 +83,6 @@ N_MGR.evict_on_disable = True
 
 # Prepare our Attachment URL Filter
 ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
-
-# These values describe the person making a request.
-AUTH_ROLE_DISABLED = "disabled"
-AUTH_ROLE_ADMIN = "admin"
-AUTH_ROLE_USER = "user"
-
-# These values separately describe how a Config ID is protected.
-CONFIG_AUTH_DISABLED = "disabled"
-CONFIG_AUTH_GLOBAL = "global"
-CONFIG_AUTH_ASSIGNED = "assigned"
-
-# Browser pages use a signed cookie so their Logout button can end a session.
-# API clients continue to authenticate each request with Basic Auth.
-WEB_AUTH_COOKIE = "apprise_web_auth"
-WEB_AUTH_HEADER = "X-Apprise-Web-Auth"
-_WEB_AUTH_SIGNING_SALT = "apprise-api.web-auth"
-
-# New lock files retain the username for the GUI. Digest-only files from
-# earlier versions remain supported.
-_AUTH_RECORD_VERSION = 1
-
-
-@dataclass(frozen=True)
-class ConfigAuthState:
-    """Describe one Config ID's saved login without describing the caller."""
-
-    mode: str
-    username: str | None = None
-    digest: str | None = None
-    unreadable: bool = False
-
-    @property
-    def assigned(self):
-        """Return whether a saved login exists or must be treated as present."""
-        return self.mode == CONFIG_AUTH_ASSIGNED
 
 
 class AppriseStoreMode:
@@ -164,39 +127,6 @@ def stateful_store_enabled():
     return mode in {AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE}
 
 
-def can_list_configurations(request):
-    """Return whether this request may list every saved configuration."""
-    mode = str(settings.APPRISE_STATEFUL_MODE).strip().lower()
-    if not settings.APPRISE_ADMIN or mode != AppriseStoreMode.SIMPLE:
-        return False
-
-    if settings.APPRISE_AUTH_REQUIRED:
-        # Authentication mode reserves the complete list for administrators.
-        return getattr(request, "globally_authenticated", False)
-
-    # A locked, open deployment keeps its configuration IDs private.
-    return not settings.APPRISE_CONFIG_LOCK
-
-
-def config_lock_allows_request(request):
-    """Return whether CONFIG_LOCK allows this configuration request."""
-    if not settings.APPRISE_CONFIG_LOCK:
-        return True
-
-    # A locked deployment has no administrator unless auth mode verifies one.
-    return settings.APPRISE_AUTH_REQUIRED and getattr(request, "globally_authenticated", False)
-
-
-def can_move_or_delete_configuration(request):
-    """Return whether CONFIG_LOCK permits a move or delete request."""
-    if not stateful_store_enabled():
-        return False
-
-    # Under CONFIG_LOCK, only an authenticated administrator may reorganize
-    # stored entries.
-    return config_lock_allows_request(request)
-
-
 class SimpleFileExtension:
     """
     Defines the simple file exension lookups
@@ -217,10 +147,6 @@ SIMPLE_FILE_EXTENSION_MAPPING = {
 }
 
 SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
-
-
-class AppriseAuthStorageError(Exception):
-    """Raised when an existing per-key authentication lock cannot be read."""
 
 
 class MoveResult:
@@ -288,40 +214,6 @@ def is_html_response(request: HttpRequest) -> bool:
             json_preference = max(json_preference or preference, preference)
 
     return html_preference is not None and (json_preference is None or html_preference > json_preference)
-
-
-def is_authenticated(request: HttpRequest) -> bool:
-    """Return whether the request satisfies the global Basic Auth gate.
-
-    Authentication is optional. When enabled, the supplied token is compared
-    safely with the token prepared at startup.
-    """
-    if not settings.APPRISE_AUTH_REQUIRED:
-        return True
-
-    # Authentication may be enabled without an administrator account.
-    if settings.APPRISE_BASIC_AUTH_TOKEN is None:
-        return False
-
-    provided = request.headers.get("authorization", "")
-    # RFC 7235: the auth-scheme token ("Basic") is case-insensitive.
-    if provided[:6].lower() != "basic ":
-        return False
-
-    return hmac.compare_digest(provided[6:], settings.APPRISE_BASIC_AUTH_TOKEN)
-
-
-def global_credentials_ok(username: str, password: str) -> bool:
-    """Return whether a username and password match the global login."""
-    if settings.APPRISE_BASIC_AUTH_TOKEN is None:
-        return False
-
-    try:
-        provided = base64.b64encode("{}:{}".format(username, password).encode()).decode()
-    except UnicodeEncodeError:
-        return False
-
-    return hmac.compare_digest(provided, settings.APPRISE_BASIC_AUTH_TOKEN)
 
 
 class Attachment(A_MGR["file"]):
@@ -938,9 +830,9 @@ class AppriseConfigCache:
             return (self.root, key)
 
     def keys(self):
-        """Return stored keys, including keys that contain only a login lock.
+        """Return stored keys, including keys with only an access record.
 
-        Lock-only keys are listed because they are still occupied and must
+        Access-only keys are listed because they are still occupied and must
         remain visible to administrators.
         """
         keys = set()
@@ -992,8 +884,8 @@ class AppriseConfigCache:
         with suppress(OSError):
             os.close(descriptor)
 
-    def set_auth(self, key, username, password):
-        """Save hashed credentials for a key and report whether it worked.
+    def set_auth(self, key, username, password, access=Authentication.ACCESS_USER):
+        """Save credentials and an access policy for a Config ID.
 
         Writes are atomic. Colons are rejected because Basic Auth uses one to
         separate the username and password.
@@ -1008,16 +900,25 @@ class AppriseConfigCache:
             return False
 
         try:
-            return self._set_auth(key, username, password)
+            return self._set_auth(key, username, password, access)
         finally:
             self._release_auth_guard(guard)
 
-    def _set_auth(self, key, username, password):
+    def _set_auth(self, key, username, password, access):
         """Write credentials while the caller holds this key's guard."""
 
-        # Normalize the username before it is stored and compared.
-        username = (username or "").strip()
+        if access not in Authentication.ACCESS_CHOICES:
+            logger.error("Unsupported configuration access for KEY: %s", key)
+            return False
 
+        if username is None:
+            username = ""
+        if not isinstance(username, str) or not isinstance(password, str):
+            logger.error("Credentials must be text for KEY: %s", key)
+            return False
+
+        # Normalize usernames while leaving passwords exactly as supplied.
+        username = username.strip()
         if ":" in username:
             logger.error("Username cannot contain ':' for KEY: {}".format(key))
             return False
@@ -1029,6 +930,51 @@ class AppriseConfigCache:
         except (TypeError, UnicodeError):
             logger.error("Could not hash authentication credentials for KEY: {}".format(key))
             return False
+
+        return self._write_auth_record(
+            key,
+            ConfigAuthRecord(access=access, username=username, digest=digest),
+        )
+
+    def set_access(self, key, access):
+        """Change access without replacing credentials.
+
+        A new public record may omit credentials. The other modes require an
+        existing login so they can never become unintentionally accessible.
+        """
+        if self.mode == AppriseStoreMode.DISABLED or access not in Authentication.ACCESS_CHOICES:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock access policy for KEY: %s", key)
+            return False
+
+        try:
+            try:
+                record = self.get_auth_record(key)
+            except AuthStorageError:
+                return False
+
+            if record is None:
+                if access != Authentication.ACCESS_PUBLIC:
+                    return False
+                record = ConfigAuthRecord(access=access)
+            else:
+                if record.digest is None and access != Authentication.ACCESS_PUBLIC:
+                    return False
+                record = ConfigAuthRecord(
+                    access=access,
+                    username=record.username,
+                    digest=record.digest,
+                )
+            return self._write_auth_record(key, record)
+        finally:
+            self._release_auth_guard(guard)
+
+    def _write_auth_record(self, key, record):
+        """Atomically replace one access record."""
 
         # Replace the lock atomically so readers never see a partial record.
         path, filename = self.auth_path(key)
@@ -1053,9 +999,9 @@ class AppriseConfigCache:
                     f.write(
                         dumps(
                             {
-                                "version": _AUTH_RECORD_VERSION,
-                                "username": username,
-                                "digest": digest,
+                                "access": record.access,
+                                "username": record.username,
+                                "digest": record.digest,
                             },
                             separators=(",", ":"),
                         )
@@ -1076,11 +1022,7 @@ class AppriseConfigCache:
         return True
 
     def get_auth_record(self, key):
-        """Return ``(username, digest)`` for a key, or ``None``.
-
-        Raises ``AppriseAuthStorageError`` when an existing lock cannot be
-        read. Older digest-only locks return ``(None, digest)``.
-        """
+        """Return a key's saved access record, or ``None`` when absent."""
         path, filename = self.auth_path(key)
         full_path = os.path.join(path, filename)
         try:
@@ -1092,59 +1034,67 @@ class AppriseConfigCache:
 
         except (OSError, UnicodeDecodeError) as e:
             logger.error("Could not read authentication for KEY: {} ({})".format(key, e))
-            raise AppriseAuthStorageError(str(e)) from e
-
-        # JSON is the current format. Anything else is a legacy digest.
-        if not stored.startswith("{"):
-            return None, stored
+            raise AuthStorageError(str(e)) from e
 
         try:
             record = loads(stored)
+            access = record["access"]
             username = record["username"]
             digest = record["digest"]
             if (
-                record.get("version") != _AUTH_RECORD_VERSION
-                or not isinstance(username, str)
-                or not isinstance(digest, str)
+                access not in Authentication.ACCESS_CHOICES
+                or (username is None) != (digest is None)
+                or (username is not None and not isinstance(username, str))
+                or (digest is not None and not isinstance(digest, str))
+                or (digest is None and access != Authentication.ACCESS_PUBLIC)
             ):
                 raise ValueError
 
         except (KeyError, TypeError, ValueError):
             logger.error("Could not decode authentication for KEY: {}".format(key))
-            raise AppriseAuthStorageError("Invalid authentication record") from None
+            raise AuthStorageError("Invalid authentication record") from None
 
-        return username, digest
+        return ConfigAuthRecord(access=access, username=username, digest=digest)
 
     def get_auth(self, key):
         """Return a key's credential digest, or ``None`` when unlocked."""
         record = self.get_auth_record(key)
-        return None if record is None else record[1]
+        return None if record is None else record.digest
 
     def get_auth_username(self, key):
         """Return the saved username when the lock format provides it."""
         record = self.get_auth_record(key)
-        return None if record is None else record[0]
+        return None if record is None else record.username
 
     def has_auth(self, key):
         """Return whether a key is protected, treating unreadable locks as protected."""
         try:
             return self.get_auth(key) is not None
 
-        except AppriseAuthStorageError:
+        except AuthStorageError:
             return True
 
     def verify_auth(self, key, username, password):
         """Check credentials, rejecting missing or unreadable locks."""
         try:
-            stored = self.get_auth(key)
+            record = self.get_auth_record(key)
 
-        except AppriseAuthStorageError:
+        except AuthStorageError:
             return False
 
-        if stored is None:
+        if record is None:
             return False
 
-        return check_password("{}:{}".format(username, password), stored)
+        if record.digest is None:
+            return False
+
+        return Authentication.credential_verifier.verify(
+            key,
+            username,
+            password,
+            record.username,
+            record.digest,
+        )
 
     def clear_auth(self, key):
         """Remove a key's lock file.
@@ -1174,7 +1124,7 @@ class AppriseConfigCache:
             return None
 
     def prune_unused_locks(self, older_than_seconds):
-        """Remove old login locks that have no matching configuration.
+        """Remove old access records that have no matching configuration.
 
         HASH mode is scanned directly because its original keys are hidden.
         Empty hash directories are removed after their stale locks are gone.
@@ -1302,9 +1252,9 @@ class AppriseConfigCache:
         )
 
     def move(self, from_key, to_key):
-        """Move a configuration and its login lock to another key.
+        """Move a configuration and its access record to another key.
 
-        A lock-only key moves without configuration content. The result is a
+        An access-only key moves without configuration content. The result is a
         ``MoveResult`` value describing success, absence, conflict, or failure.
         """
         if self.mode == AppriseStoreMode.DISABLED:
@@ -1426,63 +1376,6 @@ ConfigCache = AppriseConfigCache(
 )
 
 
-def config_auth_state(key: str, request=None) -> ConfigAuthState:
-    """Read one Config ID's login, caching it for the current request."""
-    request_cache = getattr(request, "_apprise_config_auth_states", None)
-    if request_cache is not None and key in request_cache:
-        return request_cache[key]
-
-    if not settings.APPRISE_AUTH_REQUIRED:
-        state = ConfigAuthState(CONFIG_AUTH_DISABLED)
-
-    else:
-        try:
-            record = ConfigCache.get_auth_record(key)
-        except AppriseAuthStorageError:
-            # Damaged lock files remain protected and can be replaced by an admin.
-            state = ConfigAuthState(CONFIG_AUTH_ASSIGNED, unreadable=True)
-        else:
-            state = (
-                ConfigAuthState(CONFIG_AUTH_GLOBAL)
-                if record is None
-                else ConfigAuthState(CONFIG_AUTH_ASSIGNED, username=record[0], digest=record[1])
-            )
-
-    if request is not None:
-        if request_cache is None:
-            request_cache = {}
-            request._apprise_config_auth_states = request_cache
-        request_cache[key] = state
-
-    return state
-
-
-def basic_auth_credentials(request: HttpRequest):
-    """Decode Basic Auth into ``(username, password)``.
-
-    Missing or malformed credentials return ``(None, None)``.
-    """
-    header = request.headers.get("authorization", "")
-    # RFC 7235: the auth-scheme token ("Basic") is case-insensitive.
-    if header[:6].lower() != "basic ":
-        return None, None
-
-    try:
-        # Decode the RFC 7617 base64 credentials as UTF-8.
-        decoded = base64.b64decode(header[6:], validate=True).decode()
-
-    except (binascii.Error, UnicodeDecodeError, ValueError):
-        return None, None
-
-    if ":" not in decoded:
-        return None, None
-
-    # Split once because passwords may contain colons.
-    username, _, password = decoded.partition(":")
-    # Stored usernames are normalized the same way.
-    return username.strip(), password
-
-
 def resolve_config_key(request: HttpRequest, key: str) -> str:
     """Return the request's effective configuration key.
 
@@ -1499,146 +1392,6 @@ def config_key_header_present_but_invalid(request: HttpRequest) -> bool:
     """Return whether the request supplied an invalid config ID header."""
     header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
     return bool(header_key) and not CONFIG_KEY_PATTERN.match(header_key)
-
-
-def key_credentials_ok(request: HttpRequest, key: str, username: str, password: str) -> bool:
-    """Check supplied credentials against one configuration lock."""
-    state = config_auth_state(key, request)
-    if not state.assigned or state.digest is None:
-        return False
-
-    if check_password("{}:{}".format(username, password), state.digest):
-        request.apprise_auth_permission = AUTH_ROLE_USER
-        request.apprise_auth_username = username
-        return True
-
-    return False
-
-
-def key_auth_ok(request: HttpRequest, key: str) -> bool:
-    """Return whether a request may use a protected configuration key.
-
-    Global credentials can access every key. A browser session is limited to
-    its saved key. API requests check Basic credentials on every request.
-    """
-    if getattr(request, "globally_authenticated", False):
-        request.apprise_auth_permission = AUTH_ROLE_ADMIN
-        return True
-
-    # The signed browser cookie never grants access to a different key.
-    if (
-        getattr(request, "apprise_auth_permission", AUTH_ROLE_DISABLED) == AUTH_ROLE_USER
-        and getattr(request, "apprise_web_auth_key", None) == key
-    ):
-        return True
-
-    # Turning authentication off restores the original open behavior.
-    if not settings.APPRISE_AUTH_REQUIRED:
-        request.apprise_auth_permission = AUTH_ROLE_DISABLED
-        return True
-
-    username, password = basic_auth_credentials(request)
-    if username is None:
-        return False
-    return key_credentials_ok(request, key, username, password)
-
-
-def _web_auth_proof(mode: str, key=None):
-    """Return a private fingerprint of the credential backing a web login."""
-    if mode == AUTH_ROLE_ADMIN:
-        credential = settings.APPRISE_BASIC_AUTH_TOKEN
-    elif mode == AUTH_ROLE_USER and key:
-        try:
-            credential = ConfigCache.get_auth(key)
-        except AppriseAuthStorageError:
-            return None
-    else:
-        return None
-
-    if not credential:
-        return None
-    return hmac.new(
-        settings.APPRISE_WEB_AUTH_SECRET.encode("utf-8"),
-        credential.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-
-
-def set_web_auth_cookie(response, request, mode: str, username: str, key=None) -> None:
-    """Store a signed, browser-session login without saving a password."""
-    payload = {
-        "mode": mode,
-        "username": username,
-        "key": key if mode == AUTH_ROLE_USER else None,
-        "proof": _web_auth_proof(mode, key),
-    }
-    # A trusted HTTPS origin also covers TLS terminated by a reverse proxy.
-    secure = request.is_secure() or "https://{}".format(request.get_host()).lower() in settings.APPRISE_TRUSTED_ORIGINS
-    response.set_cookie(
-        WEB_AUTH_COOKIE,
-        signing.dumps(
-            payload,
-            key=settings.APPRISE_WEB_AUTH_SECRET,
-            salt=_WEB_AUTH_SIGNING_SALT,
-            compress=True,
-        ),
-        httponly=True,
-        secure=secure,
-        samesite="Lax",
-        path=settings.BASE_URL or "/",
-    )
-
-
-def clear_web_auth_cookie(response) -> None:
-    """Remove the browser login and its remembered configuration."""
-    response.delete_cookie(
-        WEB_AUTH_COOKIE,
-        path=settings.BASE_URL or "/",
-        samesite="Lax",
-    )
-    # The ordinary key cookie is not authentication, but clearing it prevents
-    # the next browser user from inheriting the previous user's selection.
-    response.delete_cookie("key", path="/", samesite="Lax")
-
-
-def restore_web_auth(request: HttpRequest, requested_key=None, allow_shared_without_key=False) -> bool:
-    """Restore a valid signed browser login onto the current request."""
-    value = request.COOKIES.get(WEB_AUTH_COOKIE)
-    if not value:
-        return False
-
-    try:
-        payload = signing.loads(
-            value,
-            key=settings.APPRISE_WEB_AUTH_SECRET,
-            salt=_WEB_AUTH_SIGNING_SALT,
-        )
-    except (signing.BadSignature, TypeError):
-        return False
-
-    mode = payload.get("mode") if isinstance(payload, dict) else None
-    username = payload.get("username") if isinstance(payload, dict) else None
-    key = payload.get("key") if isinstance(payload, dict) else None
-    proof = payload.get("proof") if isinstance(payload, dict) else None
-    if not isinstance(username, str) or not isinstance(proof, str):
-        return False
-
-    if mode == AUTH_ROLE_USER:
-        # A shared login may use its key or a small set of general GUI pages.
-        if requested_key and key != requested_key:
-            return False
-        if not requested_key and not allow_shared_without_key:
-            return False
-
-    expected = _web_auth_proof(mode, key)
-    if expected is None or not hmac.compare_digest(proof, expected):
-        return False
-
-    request.apprise_auth_permission = mode
-    request.apprise_auth_username = username
-    request.apprise_web_auth_key = key
-    request.globally_authenticated = mode == AUTH_ROLE_ADMIN
-    return True
 
 
 def apply_global_filters():

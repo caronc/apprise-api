@@ -8,7 +8,7 @@
       {% if AUTH_ENABLED %}
         <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
            href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' key %}{% endif %}"
-           title="{% if auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+           title="{% if auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
           <span class="config-auth-icon" aria-hidden="true">
             {% include 'icons/lock.svg' %}
           </span>

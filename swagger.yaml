@@ -7,8 +7,9 @@ info:
     Library. See https://github.com/caronc/apprise-api for details.
 
     APPRISE_AUTH_REQUIRED enables optional Basic Auth. Use an administrator
-    login or credentials assigned to one Config ID. Repeated login changes may
-    return 429 with a Retry-After header.
+    login or credentials assigned to one Config ID. A public Config ID may
+    send tagged stateful notifications without credentials. Repeated login
+    changes may return 429 with a Retry-After header.
   version: 1.5.2
 
 servers:
@@ -36,7 +37,7 @@ paths:
     get:
       operationId: Meta_LoginForm
       summary: Shows the web-interface login form.
-      description: Requests accepting text/html use a signed browser login; other API clients continue using Basic Auth.
+      description: Browser logins expire after 24 hours without activity and renew when used; API clients continue using Basic Auth.
       security: []
       tags:
         - Meta
@@ -207,7 +208,8 @@ paths:
         of the payload or in APPRISE_STATELESS_URLS.
       description: >
         X-Apprise-Config-ID sends through that saved configuration without
-        placing its ID in the URL. Without the header, this call is stateless.
+        placing its ID in the URL. Public configurations require a specific
+        tag other than `all`. Without the header, this call is stateless.
       tags:
         - Stateless
       parameters:
@@ -254,7 +256,8 @@ paths:
         '400':
           description: >
             Bad Request (invalid payload or format, or an invalid
-            X-Apprise-Config-ID).
+            X-Apprise-Config-ID; public and locked configurations also reject
+            a missing tag or the special `all` tag).
         '401':
           description: >
             Unauthorized -- only when X-Apprise-Config-ID switches this to
@@ -299,6 +302,7 @@ paths:
                       required:
                         - key
                         - user
+                        - access
                       properties:
                         key:
                           type: string
@@ -308,6 +312,9 @@ paths:
                           description: >
                             The assigned username, an empty string for password-only
                             access, or null when no username is available.
+                        access:
+                          type: string
+                          enum: [user, locked, public]
             text/html:
               schema:
                 type: string
@@ -522,11 +529,14 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [mode, username]
+                required: [mode, access, username]
                 properties:
                   mode:
                     type: string
                     enum: [global, assigned]
+                  access:
+                    type: string
+                    enum: [user, locked, public]
                   username:
                     type: string
                     nullable: true
@@ -544,8 +554,9 @@ paths:
       summary: Sets (or replaces) {key}'s own optional Basic Auth.
       description: >
         The first login requires an administrator. Administrators may change
-        both credentials. Configuration users repeat their username and send
-        a new password. Configuration content is unchanged.
+        credentials and access. Configuration users repeat their username and
+        send a new password; they cannot change access. Configuration content
+        is unchanged.
       tags:
         - Persistent
       security:
@@ -558,17 +569,20 @@ paths:
           application/json:
             schema:
               type: object
-              required: [username, password]
               description: >
-                Administrators may use a blank username. Configuration users
-                must repeat the saved value. password_confirm is optional.
+                Access defaults to the saved mode, or `user` for a new record.
+                Administrators may select `public` without credentials. Other
+                new modes require a password. Configuration users repeat the
+                saved username and send a new password.
               properties:
+                access:
+                  type: string
+                  enum: [user, locked, public]
                 username:
                   type: string
                   maxLength: 255
                 password:
                   type: string
-                  minLength: 1
                   maxLength: 255
                 password_confirm:
                   type: string
@@ -596,12 +610,12 @@ paths:
             match).
         '401':
           description: >
-            Unauthorized -- use global credentials for a first lock, or
+            Unauthorized -- use global credentials for a first access record, or
             global/current key credentials for later changes.
         '403':
           description: >
             Forbidden -- persistent storage or authentication mode is disabled,
-            or a configuration user attempted to change the saved username.
+            or a configuration user attempted to change the username or access.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -673,6 +687,11 @@ paths:
       summary: >
         Sends notification(s) to all of the endpoints previously
         configured under {key}, optionally filtered by tag.
+      description: >
+        `user` access follows normal key authentication. `locked` users
+        must authenticate and provide a specific tag other than `all`.
+        `public` permits the same tagged notification without authentication.
+        Public access never applies to another endpoint.
       tags:
         - Persistent
       parameters:
@@ -714,8 +733,12 @@ paths:
                 $ref: '#/components/schemas/StreamEvent'
         '204':
           description: No configuration found for this key.
+        '400':
+          description: >
+            Bad Request (invalid payload or format; public and locked callers
+            must provide a specific tag other than `all`).
         '401':
-          description: Unauthorized (this key's authentication requirements were not met).
+          description: Unauthorized (this non-public key's authentication requirements were not met).
         '403':
           description: Forbidden (persistent storage is disabled).
         '406':
@@ -962,11 +985,14 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [mode, username]
+                required: [mode, access, username]
                 properties:
                   mode:
                     type: string
                     enum: [global, assigned]
+                  access:
+                    type: string
+                    enum: [user, locked, public]
                   username:
                     type: string
                     nullable: true
@@ -999,19 +1025,20 @@ paths:
           application/json:
             schema:
               type: object
-              required: [username, password]
               description: >
-                Administrators include username, which may be blank.
-                Configuration users must repeat the saved username, including
-                an empty string for password-only access. password_confirm is
-                optional for API callers.
+                Access defaults to the saved mode, or `user` for a new record.
+                Administrators may select `public` without credentials.
+                Configuration users repeat the saved username and provide a
+                new password. password_confirm is optional for API callers.
               properties:
+                access:
+                  type: string
+                  enum: [user, locked, public]
                 username:
                   type: string
                   maxLength: 255
                 password:
                   type: string
-                  minLength: 1
                   maxLength: 255
                 password_confirm:
                   type: string
@@ -1027,12 +1054,12 @@ paths:
             containing ':', or confirmation passwords that do not match).
         '401':
           description: >
-            Unauthorized -- use global credentials for a first lock, or
+            Unauthorized -- use global credentials for a first access record, or
             global/current key credentials for later changes.
         '403':
           description: >
             Forbidden -- persistent storage or authentication mode is disabled,
-            or a configuration user attempted to change the saved username.
+            or a configuration user attempted to change the username or access.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1129,8 +1156,8 @@ components:
     TooManyRequests:
       description: >
         Too Many Requests -- the reverse proxy has temporarily limited this
-        request. The packaged nginx configuration applies this to login
-        changes and health checks.
+        request. Both packaged configurations limit health checks; strict mode
+        also limits login changes and protected routes.
       headers:
         Retry-After:
           schema:
@@ -1228,6 +1255,9 @@ components:
           type: boolean
         config_lock:
           type: boolean
+          description: >-
+            The global lock for a keyless response, or the effective global
+            and per-configuration lock for a keyed response.
         stateful_enabled:
           type: boolean
           description: >-

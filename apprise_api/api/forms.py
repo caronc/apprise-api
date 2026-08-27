@@ -28,7 +28,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from .utils import CONFIG_KEY_MAX_LENGTH, CONFIG_KEY_PATTERN
+from .auth import Authentication
+from .utils import (
+    CONFIG_KEY_MAX_LENGTH,
+    CONFIG_KEY_PATTERN,
+)
 
 # Auto-Detect Keyword
 AUTO_DETECT_CONFIG_KEYWORD = "auto"
@@ -60,6 +64,12 @@ URLS_MAX_LEN = 1024
 URLS_PLACEHOLDER = "mailto://user:pass@domain.com, slack://tokena/tokenb/tokenc, ..."
 AUTH_USERNAME_MAX_LEN = 255
 AUTH_PASSWORD_MAX_LEN = 255
+
+CONFIG_ACCESS_MODES = (
+    (Authentication.ACCESS_USER, _("User-Managed")),
+    (Authentication.ACCESS_LOCK, _("Configuration Locked")),
+    (Authentication.ACCESS_PUBLIC, _("Public Notifications")),
+)
 
 
 class BrowserLoginForm(forms.Form):
@@ -108,6 +118,13 @@ class ConfigKeyForm(forms.Form):
 class AuthForm(forms.Form):
     """Validate credentials for one protected configuration."""
 
+    access = forms.ChoiceField(
+        label=_("Access"),
+        choices=CONFIG_ACCESS_MODES,
+        initial=Authentication.ACCESS_USER,
+        required=False,
+    )
+
     username = forms.CharField(
         label=_("Username"),
         required=False,
@@ -125,6 +142,7 @@ class AuthForm(forms.Form):
     )
     password = forms.CharField(
         label=_("Password"),
+        required=False,
         max_length=AUTH_PASSWORD_MAX_LEN,
         widget=forms.PasswordInput(
             attrs={
@@ -162,12 +180,26 @@ class AuthForm(forms.Form):
         ),
     )
 
-    def __init__(self, *args, shared=False, current_username="", require_current=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        shared=False,
+        current_username="",
+        current_access=Authentication.ACCESS_USER,
+        has_credentials=False,
+        require_current=False,
+        **kwargs,
+    ):
         """Configure the extra fields used when a key user changes access."""
         super().__init__(*args, **kwargs)
         self.shared = shared
         self.current_username = current_username or ""
+        self.current_access = current_access
+        self.has_credentials = has_credentials
         if shared:
+            # Configuration users may rotate credentials but only an admin may
+            # change what those credentials are allowed to do.
+            self.fields["access"].widget = forms.HiddenInput()
             self.fields["username"].widget.attrs["readonly"] = True
             self.fields["password"].label = _("New Password")
             self.fields["password_confirm"].label = _("Confirm New Password")
@@ -183,11 +215,31 @@ class AuthForm(forms.Form):
             raise ValidationError(_("The username cannot be changed by a configuration user"))
         return username
 
+    def clean_access(self):
+        """Keep the saved mode when older clients omit the access field."""
+        return self.cleaned_data["access"] or self.current_access
+
     def clean(self):
-        """Require key users to enter the same new password twice."""
+        """Validate access changes and optional credential preservation."""
         cleaned = super().clean()
+        access = cleaned.get("access")
+        password = cleaned.get("password")
+        username = cleaned.get("username", "")
+
+        if self.shared and access != self.current_access:
+            self.add_error("access", _("Only an administrator may change configuration access"))
+
+        if self.shared and not password:
+            self.add_error("password", _("A new password is required"))
+
         if self.shared and cleaned.get("password") != cleaned.get("password_confirm"):
             self.add_error("password_confirm", _("The passwords do not match"))
+
+        if not self.shared and not password:
+            if not self.has_credentials and access != Authentication.ACCESS_PUBLIC:
+                self.add_error("password", _("A password is required for this access mode"))
+            elif username != self.current_username:
+                self.add_error("username", _("Set a password when changing the username"))
         return cleaned
 
 

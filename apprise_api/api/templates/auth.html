@@ -11,7 +11,7 @@
   <div class="config-id-bar">
     <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
        href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' key %}{% endif %}"
-       title="{% if auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+       title="{% if auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
       <span class="config-auth-icon" aria-hidden="true">
         {% include 'icons/lock.svg' %}
       </span>
@@ -88,6 +88,16 @@
             <div id="auth-form-error-message"></div>
           </div>
           <div class="auth-credential-fields">
+            {% if shared_user %}
+              {{ form_auth.access }}
+            {% else %}
+              <div class="input-field auth-credential-field">
+                {{ form_auth.access }}
+                {{ form_auth.access.label_tag }}
+                {{ form_auth.access.errors }}
+                <span class="helper-text">{% trans "User allows normal access. Configuration locked permits tagged notifications and password changes. Public permits tagged notifications without a login." %}</span>
+              </div>
+            {% endif %}
             {% if not shared_user or auth_username %}
               <div class="input-field auth-credential-field">
                 {{ form_auth.username }}
@@ -210,6 +220,7 @@
 {% block jsfooter %}
   const authForm = document.querySelector('#auth-form');
   const authUsername = document.querySelector('#id_username');
+  const authAccess = document.querySelector('#id_access');
   const authCurrentPassword = document.querySelector('#id_current_password');
   const authPassword = document.querySelector('#id_password');
   const authPasswordConfirm = document.querySelector('#id_password_confirm');
@@ -220,6 +231,11 @@
   const generateUser = document.querySelector('#auth-generate-user');
   const generatePassword = document.querySelector('#auth-generate-password');
   const authIsAdmin = {% if shared_user %}false{% else %}true{% endif %};
+  let authHasCredentials = {% if auth_has_credentials %}true{% else %}false{% endif %};
+
+  if (authIsAdmin && authAccess && window.M && M.FormSelect) {
+    M.FormSelect.init(authAccess);
+  }
 
   // Start with the first credential field, including read-only usernames.
   (authCurrentPassword || authUsername || authPassword).focus();
@@ -300,7 +316,12 @@
       field.classList.remove('has-errors');
     });
     authClearError();
-    const requiredFields = [authCurrentPassword, authPassword, authPasswordConfirm].filter(Boolean);
+    const passwordRequired = !authIsAdmin
+      || (!authHasCredentials && authAccess && authAccess.value !== 'public');
+    const requiredFields = [authCurrentPassword, authPasswordConfirm].filter(Boolean);
+    if (passwordRequired) {
+      requiredFields.push(authPassword);
+    }
     for (const field of requiredFields) {
       if (!field.value) {
         field.closest('.input-field').classList.add('has-errors');
@@ -324,6 +345,7 @@
         },
         body: JSON.stringify({
           // Password-only accounts intentionally submit a blank username.
+          access: authAccess ? authAccess.value : '{{ auth_access|escapejs }}',
           username: authUsername ? authUsername.value : '',
           current_password: authCurrentPassword ? authCurrentPassword.value : null,
           password: authPassword.value,
@@ -339,6 +361,7 @@
 
       const savedUsername = authUsername ? authUsername.value : '';
       const savedPassword = authPassword.value;
+      authHasCredentials = authHasCredentials || Boolean(savedPassword);
       authPassword.value = '';
       if (authCurrentPassword) {
         authCurrentPassword.value = '';
@@ -350,7 +373,7 @@
       Swal.fire({
         title: '{% trans "Authentication" %}',
         icon: 'success',
-        html: '{% trans "Configuration login saved." %}' + (authIsAdmin
+        html: '{% trans "Configuration access saved." %}' + (authIsAdmin && savedPassword
           ? ' <button type="button" id="auth-save-copy" class="btn-flat btn-large" title="{% trans "Copy Username and Password to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>'
           : ''),
         didOpen: function () {

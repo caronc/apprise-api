@@ -294,10 +294,19 @@
             <div class="col s12 m9 l9 main-content">
               <div id="health-check" class="section" style="display: none">
                 <h4 class="health-check-title">{% trans "Apprise Health Check Failed" %}</h4>
-                <p class="health-check-intro">
-                  {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
-                </p>
+                <p class="health-check-intro">{% trans "The following issues have been detected with your Apprise instance:" %}</p>
                 <ul class="health-check-list">
+                  <li class="notification_modes" style="display: none">
+                    <strong>
+                      <span class="health-check-icon health-check-icon--error">
+                        {% include 'icons/status-error.svg' %}
+                      </span>
+                      {% trans "Notification Delivery Disabled" %}
+                    </strong>
+                    <p>
+                      {% trans "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications." %}
+                    </p>
+                  </li>
                   <li class="can_write_config" style="display: none">
                     <strong>
                       <span class="health-check-icon health-check-icon--error">
@@ -345,7 +354,7 @@
                     </div>
                   </li>
                 </ul>
-                <details class="health-check-more">
+                <details class="health-check-more" hidden>
                   <summary>{% trans "More Details" %}</summary>
                   <div class="health-check-more-content">
                     <p>
@@ -653,8 +662,10 @@
     const iconNav = document.querySelector('#nav-api-status-icon');
 
     const hc = document.querySelector('#health-check');
+    const liModes = hc ? hc.querySelector('li.notification_modes') : null;
     const liCfg = hc ? hc.querySelector('li.can_write_config') : null;
     const liAttach = hc ? hc.querySelector('li.can_write_attach') : null;
+    const moreDetails = hc ? hc.querySelector('.health-check-more') : null;
 
     // Helper to reset icons to loading
     function usesInlineStatusSvg(icon) {
@@ -679,6 +690,7 @@
     }
     if (hc) {
       hc.style.display = 'none';
+      if (liModes) liModes.style.display = 'none';
       if (liCfg) liCfg.style.display = 'none';
       if (liAttach) liAttach.style.display = 'none';
     }
@@ -729,6 +741,8 @@
 
       // Update the large health panel (permissions etc.)
       if (hc && data && data.status) {
+        const showModes = (data.degraded === true ||
+          (data.stateful_enabled === false && data.stateless_enabled === false));
         // CONFIG_LOCK intentionally makes configuration storage read-only.
         // Keep that result in /status without presenting it as a GUI failure.
         const showCfg = (data.status.can_write_config === false &&
@@ -737,10 +751,13 @@
         const showAttach = (data.status.can_write_attach === false &&
           data.attach_lock === false);
 
+        if (liModes) liModes.style.display = showModes ? '' : 'none';
         if (liCfg) liCfg.style.display = showCfg ? '' : 'none';
         if (liAttach) liAttach.style.display = showAttach ? '' : 'none';
+        // Permission and SELinux tips only apply to directory write failures.
+        if (moreDetails) moreDetails.hidden = !(showCfg || showAttach);
 
-        if (showCfg || showAttach) {
+        if (showModes || showCfg || showAttach) {
           hc.style.display = '';
         } else {
           hc.style.display = 'none';
@@ -764,6 +781,11 @@
           isOk = false;
           message = '{% trans "Unable to reach the Apprise API status endpoint." %}';
         }
+      }
+
+      if (data && data.degraded === true) {
+        isOk = false;
+        message = '{% trans "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service." %}';
       }
 
       // Apply status to icons and overview details

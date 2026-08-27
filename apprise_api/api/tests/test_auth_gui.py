@@ -27,20 +27,13 @@ import base64
 from contextlib import suppress
 import os
 import shutil
+from unittest.mock import patch
 
-from django.contrib.auth.hashers import make_password
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from ..utils import (
-    CONFIG_AUTH_ASSIGNED,
-    CONFIG_AUTH_DISABLED,
-    CONFIG_AUTH_GLOBAL,
-    WEB_AUTH_COOKIE,
-    WEB_AUTH_HEADER,
-    ConfigCache,
-    config_auth_state,
-)
+from ..auth import Authentication
+from ..utils import ConfigCache
 
 
 def _basic(user, password):
@@ -68,7 +61,7 @@ class AuthGuiTests(SimpleTestCase):
     def test_disabled_mode_ignores_a_stale_lock(self):
         """Turning global auth off restores the original open GUI."""
         ConfigCache.set_auth(self.key, "alice", "secret")
-        self.assertEqual(config_auth_state(self.key).mode, CONFIG_AUTH_DISABLED)
+        self.assertEqual(Authentication.config_state(self.key).mode, Authentication.MODE_DISABLED)
 
         response = self.client.get("/cfg/{}".format(self.key))
         self.assertEqual(response.status_code, 200)
@@ -112,7 +105,7 @@ class AuthGuiTests(SimpleTestCase):
     )
     def test_master_sees_auth_editor_and_generator(self):
         """The administrator can create the key's first shared login."""
-        self.assertEqual(config_auth_state(self.key).mode, CONFIG_AUTH_GLOBAL)
+        self.assertEqual(Authentication.config_state(self.key).mode, Authentication.MODE_GLOBAL)
         response = self.client.get("/auth/{}".format(self.key), headers=_MASTER)
 
         self.assertEqual(response.status_code, 200)
@@ -181,9 +174,12 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(content.count('data-show-label="Show Config ID"'), 2)
         self.assertIn("optionSelected(generateUser)", content)
         self.assertIn("optionSelected(generatePassword)", content)
+        self.assertIn('name="access"', content)
+        self.assertIn('value="locked"', content)
+        self.assertIn('value="public"', content)
         self.assertIn("setOptionSelected(other, true)", content)
         self.assertIn("(authCurrentPassword || authUsername || authPassword).focus()", content)
-        self.assertIn("const requiredFields = [authCurrentPassword, authPassword, authPasswordConfirm]", content)
+        self.assertIn("const requiredFields = [authCurrentPassword, authPasswordConfirm]", content)
         self.assertNotIn("Enter a password before saving.", content)
         self.assertIn("novalidate", content)
         self.assertIn("authUsername.value = '';", content)
@@ -240,8 +236,8 @@ class AuthGuiTests(SimpleTestCase):
         )
         self.assertEqual(switched.status_code, 302)
         self.assertEqual(switched.url, "/cfg/@")
-        self.assertIn(WEB_AUTH_COOKIE, self.client.cookies)
-        self.assertNotEqual(self.client.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        self.assertIn(Authentication.WEB_COOKIE, self.client.cookies)
+        self.assertNotEqual(self.client.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
 
         page = self.client.get("/cfg/@", headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
@@ -254,7 +250,7 @@ class AuthGuiTests(SimpleTestCase):
         saved = self.client.post(
             "/add/{}".format(self.key),
             {"urls": "json://localhost"},
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(saved.status_code, 200)
         self.assertTrue(ConfigCache.get(self.key)[0].startswith("json://localhost/"))
@@ -267,7 +263,7 @@ class AuthGuiTests(SimpleTestCase):
     def test_shared_user_sees_saved_username(self):
         """A key user sees their username but never the saved password."""
         ConfigCache.set_auth(self.key, "alice", "secret")
-        self.assertEqual(config_auth_state(self.key).mode, CONFIG_AUTH_ASSIGNED)
+        self.assertEqual(Authentication.config_state(self.key).mode, Authentication.MODE_ASSIGNED)
 
         response = self.client.get("/auth/{}".format(self.key), headers=_SHARED)
         self.assertEqual(response.status_code, 200)
@@ -334,7 +330,14 @@ class AuthGuiTests(SimpleTestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"mode": CONFIG_AUTH_ASSIGNED, "username": "alice"})
+        self.assertEqual(
+            response.json(),
+            {
+                "mode": Authentication.MODE_ASSIGNED,
+                "access": Authentication.ACCESS_USER,
+                "username": "alice",
+            },
+        )
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -377,18 +380,13 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn(self.key, api.content.decode())
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
-    def test_lock_file_retains_username_and_supports_legacy_digest(self):
-        """New locks support prefill while old digest-only locks still work."""
+    def test_lock_file_retains_username_and_access(self):
+        """Saved records retain the username and debut access mode."""
         self.assertTrue(ConfigCache.set_auth(self.key, "alice", "secret"))
         self.assertEqual(ConfigCache.get_auth_username(self.key), "alice")
         self.assertTrue(ConfigCache.verify_auth(self.key, "alice", "secret"))
-
-        path, filename = ConfigCache.auth_path(self.key)
-        with open(os.path.join(path, filename), "w") as lock_file:
-            lock_file.write(make_password("legacy:password"))
-
-        self.assertIsNone(ConfigCache.get_auth_username(self.key))
-        self.assertTrue(ConfigCache.verify_auth(self.key, "legacy", "password"))
+        record = ConfigCache.get_auth_record(self.key)
+        self.assertEqual(record.access, Authentication.ACCESS_USER)
 
     @override_settings(
         APPRISE_API_ONLY=True,
@@ -414,7 +412,7 @@ class AuthGuiTests(SimpleTestCase):
         """The browser form rejects invalid fields without a Basic challenge."""
         page = self.client.get("/login", headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
-        self.assertEqual(page.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        self.assertEqual(page.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
         self.assertEqual(page.cookies["key"]["max-age"], 0)
         self.assertNotIn("apprise_support_dismissed", page.cookies)
         content = page.content.decode()
@@ -460,7 +458,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(wrong.status_code, 401)
         self.assertIn('class="auth-login-error" role="alert"', wrong.content.decode())
         self.assertNotIn("WWW-Authenticate", wrong)
-        self.assertEqual(wrong.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        self.assertEqual(wrong.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
         self.assertEqual(wrong.cookies["key"]["max-age"], 0)
         # Login cleanup intentionally leaves the support-banner cycle alone.
         self.assertNotIn("apprise_support_dismissed", wrong.cookies)
@@ -503,7 +501,7 @@ class AuthGuiTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/cfg/@")
-        self.assertIn(WEB_AUTH_COOKIE, response.cookies)
+        self.assertIn(Authentication.WEB_COOKIE, response.cookies)
 
         auth_destination = self.client.post(
             "/login",
@@ -543,7 +541,7 @@ class AuthGuiTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/cfg/@")
-        self.assertIn(WEB_AUTH_COOKIE, response.cookies)
+        self.assertIn(Authentication.WEB_COOKIE, response.cookies)
 
     @override_settings(
         APPRISE_API_ONLY=True,
@@ -579,10 +577,11 @@ class AuthGuiTests(SimpleTestCase):
             headers=_BROWSER,
         )
         self.assertEqual(login.status_code, 302)
-        self.assertIn(WEB_AUTH_COOKIE, login.cookies)
-        self.assertTrue(login.cookies[WEB_AUTH_COOKIE]["httponly"])
-        self.assertEqual(login.cookies[WEB_AUTH_COOKIE]["samesite"], "Lax")
-        self.assertFalse(login.cookies[WEB_AUTH_COOKIE]["expires"])
+        self.assertIn(Authentication.WEB_COOKIE, login.cookies)
+        self.assertTrue(login.cookies[Authentication.WEB_COOKIE]["httponly"])
+        self.assertEqual(login.cookies[Authentication.WEB_COOKIE]["samesite"], "Lax")
+        self.assertEqual(login.cookies[Authentication.WEB_COOKIE]["max-age"], 24 * 60 * 60)
+        self.assertTrue(login.cookies[Authentication.WEB_COOKIE]["expires"])
 
         page = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
@@ -592,7 +591,7 @@ class AuthGuiTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Cache-Control"], "no-store")
-        self.assertEqual(response.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+        self.assertEqual(response.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
         self.assertEqual(response.cookies["key"]["max-age"], 0)
         content = response.content.decode()
         self.assertIn("Logged Out", content)
@@ -612,6 +611,38 @@ class AuthGuiTests(SimpleTestCase):
             headers={"accept": "application/json", **_MASTER},
         )
         self.assertEqual(api.status_code, 200)
+
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+        APPRISE_WEB_AUTH_MAX_AGE=24 * 60 * 60,
+    )
+    def test_active_browser_login_renews_before_expiry(self):
+        """Each authenticated request renews the 24-hour login window."""
+        with patch("django.core.signing.time.time", return_value=1000):
+            login = self.client.post(
+                "/login",
+                data={"username": "master", "password": "pass"},
+                headers=_BROWSER,
+            )
+        self.assertEqual(login.status_code, 302)
+
+        with patch("django.core.signing.time.time", return_value=80000):
+            active = self.client.get("/", headers=_BROWSER)
+        self.assertEqual(active.status_code, 200)
+        self.assertIn(Authentication.WEB_COOKIE, active.cookies)
+
+        # This is past the original expiry but within 24 hours of activity.
+        with patch("django.core.signing.time.time", return_value=160000):
+            renewed = self.client.get("/", headers=_BROWSER)
+        self.assertEqual(renewed.status_code, 200)
+
+        # Inactivity beyond the renewed window requires another login.
+        with patch("django.core.signing.time.time", return_value=250000):
+            expired = self.client.get("/", headers=_BROWSER)
+        self.assertEqual(expired.status_code, 302)
+        self.assertTrue(expired.url.startswith("/login?"))
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_master_login_replaces_a_previous_config_cookie(self):
@@ -696,7 +727,7 @@ class AuthGuiTests(SimpleTestCase):
 
         response = self.client.get(
             "/status",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
 
         self.assertEqual(response.status_code, 200)
@@ -773,7 +804,7 @@ class AuthGuiTests(SimpleTestCase):
 
         gui_fetch = self.client.get(
             "/status",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(gui_fetch.status_code, 200)
 
@@ -785,8 +816,8 @@ class AuthGuiTests(SimpleTestCase):
             data={"username": "master", "password": "pass"},
             headers=_BROWSER,
         )
-        value = login.cookies[WEB_AUTH_COOKIE].value
-        self.client.cookies[WEB_AUTH_COOKIE] = value[:-1] + ("a" if value[-1] != "a" else "b")
+        value = login.cookies[Authentication.WEB_COOKIE].value
+        self.client.cookies[Authentication.WEB_COOKIE] = value[:-1] + ("a" if value[-1] != "a" else "b")
 
         response = self.client.get("/", headers=_BROWSER)
 
@@ -802,13 +833,13 @@ class AuthGuiTests(SimpleTestCase):
             data={"username": "alice", "password": "secret", "key": self.key},
             headers=_BROWSER,
         )
-        old_cookie = login.cookies[WEB_AUTH_COOKIE].value
+        old_cookie = login.cookies[Authentication.WEB_COOKIE].value
 
         missing_current = self.client.post(
             "/auth/{}".format(self.key),
             data='{"username":"alice","password":"new-secret","password_confirm":"new-secret"}',
             content_type="application/json",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(missing_current.status_code, 400)
         self.assertEqual(missing_current.json()["field"], "current_password")
@@ -817,7 +848,7 @@ class AuthGuiTests(SimpleTestCase):
             "/auth/{}".format(self.key),
             data='{"username":"alice","current_password":1,"password":"new-secret","password_confirm":"new-secret"}',
             content_type="application/json",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(invalid_current.status_code, 400)
 
@@ -828,7 +859,7 @@ class AuthGuiTests(SimpleTestCase):
                 '"password":"new-secret","password_confirm":"new-secret"}'
             ),
             content_type="application/json",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(wrong_current.status_code, 400)
         self.assertEqual(wrong_current.json()["field"], "current_password")
@@ -841,7 +872,7 @@ class AuthGuiTests(SimpleTestCase):
                 '"password":"new-secret","password_confirm":"new-secret"}'
             ),
             content_type="application/json",
-            headers={"accept": "text/plain", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "text/plain", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(text_error.status_code, 400)
         self.assertEqual(text_error.content, b"The current password was not accepted")
@@ -850,7 +881,7 @@ class AuthGuiTests(SimpleTestCase):
             "/auth/{}".format(self.key),
             data=('{"username":"alice","current_password":"secret","password":"secret","password_confirm":"secret"}'),
             content_type="application/json",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(unchanged.status_code, 400)
         self.assertEqual(unchanged.json()["field"], "password")
@@ -862,19 +893,19 @@ class AuthGuiTests(SimpleTestCase):
                 '"password":"new-secret","password_confirm":"new-secret"}'
             ),
             content_type="application/json",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
 
         self.assertEqual(changed.status_code, 200)
-        self.assertIn(WEB_AUTH_COOKIE, changed.cookies)
-        self.assertNotEqual(changed.cookies[WEB_AUTH_COOKIE].value, old_cookie)
+        self.assertIn(Authentication.WEB_COOKIE, changed.cookies)
+        self.assertNotEqual(changed.cookies[Authentication.WEB_COOKIE].value, old_cookie)
         self.assertEqual(
             self.client.get("/cfg/{}".format(self.key), headers=_BROWSER).status_code,
             200,
         )
 
         # Replaying the cookie from before the password change must fail.
-        self.client.cookies[WEB_AUTH_COOKIE] = old_cookie
+        self.client.cookies[Authentication.WEB_COOKIE] = old_cookie
         rejected = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(rejected.status_code, 302)
 
@@ -935,21 +966,21 @@ class AuthGuiTests(SimpleTestCase):
 
         gui_fetch = self.client.post(
             "/get/{}".format(self.key),
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(gui_fetch.status_code, 204)
 
         # Shared health requests must name the configuration they authenticate.
         health_without_key = self.client.get(
             "/status",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(health_without_key.status_code, 401)
         health_with_key = self.client.get(
             "/status",
             headers={
                 "accept": "application/json",
-                WEB_AUTH_HEADER: "1",
+                Authentication.WEB_HEADER: "1",
                 "X-Apprise-Config-ID": self.key,
             },
         )
@@ -1017,7 +1048,7 @@ class AuthGuiTests(SimpleTestCase):
             )
             browser_fetch = self.client.post(
                 "/get/{}".format(other_key),
-                headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+                headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
             )
             self.assertEqual(api.status_code, 401)
             self.assertEqual(browser_fetch.status_code, 401)
@@ -1032,7 +1063,7 @@ class AuthGuiTests(SimpleTestCase):
             self.assertEqual(switched.status_code, 302)
             self.assertEqual(switched.url, "/login?next=%2Fcfg%2F%40")
             self.assertNotIn(other_key, switched.url)
-            self.assertEqual(switched.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+            self.assertEqual(switched.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
             self.assertEqual(switched.cookies["key"].value, other_key)
 
             login_page = self.client.get(switched.url, headers=_BROWSER)
@@ -1058,7 +1089,7 @@ class AuthGuiTests(SimpleTestCase):
             self.assertEqual(accepted.url, "/cfg/@")
             loaded = self.client.post(
                 "/get/{}".format(other_key),
-                headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+                headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
             )
             self.assertEqual(loaded.status_code, 200)
             self.assertEqual(loaded.json()["config"], "json://second.example")
@@ -1093,7 +1124,7 @@ class AuthGuiTests(SimpleTestCase):
 
             self.assertEqual(switched.status_code, 302)
             self.assertTrue(switched.url.startswith("/login?"))
-            self.assertEqual(switched.cookies[WEB_AUTH_COOKIE]["max-age"], 0)
+            self.assertEqual(switched.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
         finally:
             ConfigCache.clear(other_key)
             ConfigCache.clear_auth(other_key)
@@ -1114,7 +1145,7 @@ class AuthGuiTests(SimpleTestCase):
                 '"password":"new-secret","password_confirm":"new-secret"}'
             ),
             content_type="application/json",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(changed.status_code, 200)
         self.assertTrue(ConfigCache.verify_auth(self.key, "alice", "new-secret"))
@@ -1125,7 +1156,7 @@ class AuthGuiTests(SimpleTestCase):
         self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         removed = self.client.delete(
             "/auth/@",
-            headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(removed.status_code, 200)
         self.assertFalse(ConfigCache.has_auth(self.key))
@@ -1146,10 +1177,10 @@ class AuthGuiTests(SimpleTestCase):
             moved = self.client.post(
                 "/move/{}".format(self.key),
                 {"from": self.key, "to": destination},
-                headers={"accept": "application/json", WEB_AUTH_HEADER: "1"},
+                headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
             )
             self.assertEqual(moved.status_code, 200)
-            self.assertIn(WEB_AUTH_COOKIE, moved.cookies)
+            self.assertIn(Authentication.WEB_COOKIE, moved.cookies)
             self.assertEqual(moved.cookies["key"].value, destination)
             self.assertEqual(self.client.get("/auth/@", headers=_BROWSER).status_code, 200)
         finally:

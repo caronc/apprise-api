@@ -374,11 +374,11 @@ The `/cfg` list requires `APPRISE_ADMIN=yes` and `APPRISE_STATEFUL_MODE=simple`.
 | `/move/{KEY}` |  POST  | Moves the configuration stored at *{KEY}* to a new Config ID.<br/>*Payload Parameters*<br/>📌 **to**: The destination Config ID. It must not already have a configuration. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
-| `/notify/{KEY}` |  POST  | Sends notification(s) to all of the end points you've previously configured associated with a *{KEY}*.<br/>*Payload Parameters*<br/>📌 **body**: Your message body. This is the *only* required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **tag**: Optionally notify only those tagged accordingly. Use a comma (`,`) to `OR` your tags and a space (` `) to `AND` them. More details on this can be seen documented below.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.
+| `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).
 | `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
-| `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials when configured.
-| `/auth/{KEY}` |  GET  | Opens the authentication editor in a browser, or returns the current mode and username when JSON is requested. Passwords are never returned.
-| `/auth/{KEY}` |  POST  | Sets or replaces Basic Auth for `{KEY}`. Administrators may change both fields. A configuration user repeats the saved username and supplies a new password.
+| `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode.
+| `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, access, and username as JSON. Passwords are never returned.
+| `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
@@ -407,7 +407,7 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 
 You can pass in attributes to the `/json/urls/{KEY}` such as `privacy=1` which hides the passwords and secret tokens when returning the response.  You can also set `tag=` and filter the returned results based on a comma separated set of tags. if no `tag=` is specified, then `tag=all` is used as the default.
 
-When `APPRISE_CONFIG_LOCK` is set, only an authenticated administrator may use `/json/urls/{KEY}`. Other callers receive `403` without revealing saved URLs or tags. Stateful notifications continue to accept the optional `tag` field as usual.
+When `APPRISE_CONFIG_LOCK` is set, only an authenticated administrator may use `/json/urls/{KEY}`. Other callers receive `403` without revealing saved URLs or tags. Non-admin notification callers must provide a specific tag; `all` is rejected.
 
 Here is an example using `curl` as to how someone might send a notification to everyone associated with the tag `abc123` (using `/notify/{key}`):
 
@@ -615,7 +615,7 @@ The 2 files you can override are:
 ### Authentication
 
 #### Built-in Basic Auth
-Apprise API can protect every endpoint with HTTP Basic Auth. Enable it with `APPRISE_AUTH_REQUIRED=yes`. Unauthenticated requests receive `401`:
+Apprise API can protect its endpoints with HTTP Basic Auth. Enable it with `APPRISE_AUTH_REQUIRED=yes`. Unauthenticated requests receive `401` unless an administrator explicitly marks a Config ID as public for tagged notifications:
 ```bash
 docker run --name apprise \
    -p 8000:8000 \
@@ -638,22 +638,32 @@ Set `APPRISE_BASIC_AUTH_REALM` to give each instance a recognizable label in log
 
 Basic Auth does not encrypt credentials. Use HTTPS whenever the server is reachable outside a trusted network.
 
-API clients send Basic Auth with every request. Browser pages use a signed login so **Logout** can end the session. JSON and plain-text API calls cannot use this browser login.
+API clients send Basic Auth with every request. Recent successful per-configuration checks use a bounded five-minute memory cache, avoiding repeated password hashing without creating an API session or retaining credentials. Failed checks are remembered only within their current request.
 
-Browser logins have their own built-in signing key. Changing `APPRISE_WEB_AUTH_SECRET` signs out every browser without changing hash-mode configuration paths.
+Browser pages use a signed login so **Logout** can end the session. JSON and plain-text API calls cannot use this browser login.
+
+Browser logins expire after 24 hours without activity, and each authenticated request renews that window. Changing `APPRISE_WEB_AUTH_SECRET` signs out every browser without changing hash-mode configuration paths.
 
 After browser login, `/cfg/@` and `/auth/@` use the Config ID saved in the browser session. Existing keyed addresses remain supported for bookmarks, cookie-free clients, and API compatibility. Logout clears the remembered ID.
 
 The Config ID field can open another configuration without exposing its ID in the address bar. Users must log in when the new ID has different credentials. Administrators can also choose or generate an ID from **New Configuration**.
 
-#### Per-Configuration-ID Basic Auth
-Per-key auth lets users share one server without sharing administrator credentials. Each user receives a protected configuration key, while the administrator can recover any key.
+#### Per-Configuration Access
+Each Config ID has one access mode. The administrator can recover and manage every configuration.
 
-Open a configuration and select its lock icon or **Authentication**. Enter a username and password, then select **Save**. Administrators can also use **Randomize**.
+| Access | Notification use | Configuration use |
+| --- | --- | --- |
+| `user` | Requires its username and password. Tags are optional. | Keeps the existing user access. |
+| `locked` | Requires its username and password plus a specific tag other than `all`. | Content is hidden, but the user may change their password and move the Config ID. |
+| `public` | Requires only the Config ID and a specific tag other than `all`. | Content stays hidden. Saved credentials, if present, retain the `locked` user abilities. |
+
+Public access applies only to `POST /notify/{KEY}` and header-based `POST /notify`. Health, configuration, listing, and management endpoints still require valid credentials. Attachments remain available to public notification callers.
+
+Open a configuration and select its lock icon or **Authentication**. Choose access, enter credentials when required, and select **Save**. Administrators can also use **Randomize**.
 
 The Config ID, username, and password are separate values. Share all three with the user. Saved passwords are not displayed again.
 
-API clients manage a saved login with `POST /auth/{KEY}`. An administrator creates the first login or removes it. Configuration users may change their own password.
+API clients manage access with `POST /auth/{KEY}`. Access defaults to `user` when omitted. An administrator may create `public` access without a username or password. Configuration users may change their own password but cannot change access.
 
 Administrators may change or remove any login. Configuration users authenticate with their current login, repeat the saved username, and provide a new password. The browser asks for the new password twice.
 ```bash
@@ -661,8 +671,18 @@ Administrators may change or remove any login. Configuration users authenticate 
 # The very first time requires the global credentials:
 curl -X POST -H "Content-Type: application/json" \
    -u foobar:your-password-here \
-   -d '{"username": "alice", "password": "s3cret"}' \
+   -d '{"access": "locked", "username": "alice", "password": "s3cret"}' \
    http://localhost:8000/auth/my-config-id
+
+# Make tagged notifications public. Credentials are optional in this mode.
+curl -X POST -H "Content-Type: application/json" \
+   -u foobar:your-password-here \
+   -d '{"access": "public"}' \
+   http://localhost:8000/auth/my-public-config
+
+# Public callers need the Config ID and a specific tag.
+curl -X POST -d 'body=test message' -d 'tag=customers' \
+   http://localhost:8000/notify/my-public-config
 
 # Replace it with the key's current credentials:
 curl -X POST -H "Content-Type: application/json" \
@@ -673,7 +693,7 @@ curl -X POST -H "Content-Type: application/json" \
 # Remove it as the global administrator (the configuration is untouched):
 curl -X DELETE -u foobar:your-password-here http://localhost:8000/auth/my-config-id
 ```
-Once set, keyed endpoints require that login or the administrator login. Other Config IDs are unaffected.
+Other Config IDs are unaffected. Administrator credentials always take priority and bypass per-configuration tag restrictions.
 
 Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring the original open behavior. Their saved files remain in place and take effect again when authentication is enabled.
 
@@ -684,7 +704,7 @@ Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring t
 Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). Locks with configuration remain. See [Pruning](#pruning).
 
 #### Moving a Configuration
-`POST /move/{KEY}` moves a configuration and its login to a free Config ID. With `APPRISE_CONFIG_LOCK`, only an authenticated administrator may move or delete entries.
+`POST /move/{KEY}` moves a configuration, credentials, and access to a free Config ID. With the global `APPRISE_CONFIG_LOCK`, only an authenticated administrator may move or delete entries.
 
 Configuration users may move only their own Config ID. Administrators may move any ID and may select a different source in the Web interface.
 ```bash
