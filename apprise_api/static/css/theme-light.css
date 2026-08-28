@@ -454,6 +454,43 @@ input.config-id-input {
   box-shadow: 0 12px 32px rgba(35, 38, 47, 0.1);
 }
 
+/* Match the dark theme's explicit form-copy treatment instead of inheriting
+   Materialize's translucent default, while retaining strong light contrast. */
+.auth-editor-card .input-field>label:not(.active),
+.auth-editor-card .select-wrapper+label:not(.active),
+.auth-editor-card .helper-text {
+  color: #555a62;
+}
+
+.auth-editor-card .input-field>label.active,
+.auth-editor-card .select-wrapper+label.active {
+  color: #0f5f57;
+}
+
+.auth-editor-card .btn i.material-icons {
+  color: inherit;
+}
+
+.auth-access-warning,
+.auth-access-warning i.material-icons {
+  color: #8a4b00;
+}
+
+.auth-editor-card .auth-access-help,
+.swal2-popup .auth-save-copy {
+  color: #0f5f57;
+  background-color: #eef8f6;
+  border-color: #9fd5ce;
+}
+
+.auth-editor-card .auth-access-help:hover,
+.auth-editor-card .auth-access-help:focus,
+.swal2-popup .auth-save-copy:hover,
+.swal2-popup .auth-save-copy:focus {
+  color: #ffffff;
+  background-color: #148c80;
+}
+
 .browser-login-icon,
 .auth-card-icon {
   color: #0f5f57;

@@ -44,6 +44,66 @@ class StatefulNotifyTests(SimpleTestCase):
     Test stateless notifications
     """
 
+    def test_stateful_notify_rejects_non_object_json(self):
+        """A valid JSON value must still be an object payload."""
+        response = self.client.post(
+            "/notify/test_non_object_json",
+            data=dumps(["not", "an", "object"]),
+            content_type="application/json",
+            headers={"accept": "application/json"},
+        )
+
+        assert response.status_code == 400
+        assert response.json() == {"error": "The JSON payload must be an object"}
+
+    @override_settings(APPRISE_STATELESS_MODE="disabled")
+    @patch("apprise.Apprise.notify")
+    def test_stateful_tag_notify_remains_available_when_stateless_is_disabled(self, mock_notify):
+        """The stateless switch must govern /notify only, never /notify/<key>."""
+        key = "stateful_with_stateless_disabled"
+
+        class SuccessfulResult:
+            def __bool__(self):
+                return True
+
+            @staticmethod
+            def logs():
+                return iter(())
+
+            @staticmethod
+            def close():
+                return None
+
+        mock_notify.return_value = SuccessfulResult()
+        N_MGR["json"].enabled = True
+
+        try:
+            response = self.client.post(
+                f"/add/{key}",
+                {"config": "urls:\n  - json://localhost:\n      tag: home\n"},
+            )
+            assert response.status_code == 200
+
+            real_asset_cls = apprise.AppriseAsset
+
+            class CompatibleAsset(real_asset_cls):
+                """Ignore settings added by newer Apprise releases in older test environments."""
+
+                def __init__(self, **kwargs):
+                    safe_kwargs = {name: value for name, value in kwargs.items() if hasattr(real_asset_cls, name)}
+                    super().__init__(**safe_kwargs)
+
+            with patch("apprise.AppriseAsset", CompatibleAsset):
+                response = self.client.post(
+                    f"/notify/{key}?tag=home",
+                    {"body": "stateful delivery"},
+                )
+
+            assert response.status_code == 200
+            mock_notify.assert_called_once()
+        finally:
+            ConfigCache.clear(key)
+
     @override_settings(APPRISE_CONFIG_LOCK=True)
     def test_stateful_configuration_with_lock(self):
         """

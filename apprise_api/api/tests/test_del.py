@@ -23,11 +23,13 @@
 # THE SOFTWARE.
 import base64
 import hashlib
+import os
 from unittest.mock import patch
 
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
+from ..auth import Authentication
 from ..utils import CONFIG_KEY_MAX_LENGTH, ConfigCache
 
 
@@ -141,9 +143,9 @@ class DelTests(SimpleTestCase):
         assert response.status_code == 204
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
-    def test_del_restricted_user_denied_for_own_key(self):
-        """A configuration user may move their key but cannot delete it."""
-        key = "test_delete_restricted_user"
+    def test_del_user_clears_own_key_but_preserves_login(self):
+        """A user may clear their content and recreate it during the prune grace period."""
+        key = "test_delete_user_owned"
         response = self.client.post(
             "/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"}, headers=_GOOD_MASTER
         )
@@ -151,15 +153,54 @@ class DelTests(SimpleTestCase):
         assert ConfigCache.set_auth(key, "alice", "secret") is True
         user_creds = {"authorization": _basic("alice", "secret")}
 
+        auth_path, auth_filename = ConfigCache.auth_path(key)
+        auth_file = os.path.join(auth_path, auth_filename)
+        old_time = 1_000_000
+        os.utime(auth_file, (old_time, old_time))
+
         response = self.client.post("/del/{}".format(key), headers={**user_creds, "accept": "application/json"})
-        assert response.status_code == 403
-        # Keep error responses consistent with the other API endpoints.
-        assert set(response.json()) == {"error"}
-
-        # The configuration is still there afterward.
-        response = self.client.post("/get/{}".format(key), headers=user_creds)
         assert response.status_code == 200
+        assert response.json() == {"error": None}
+        assert os.path.getmtime(auth_file) > old_time
+        assert ConfigCache.verify_auth(key, "alice", "secret") is True
 
+        # The account remains usable even though its configuration is empty.
+        response = self.client.post("/get/{}".format(key), headers=user_creds)
+        assert response.status_code == 204
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"urls": "mailto://replacement:pass@yahoo.ca"},
+            headers=user_creds,
+        )
+        assert response.status_code == 200
+        assert ConfigCache.verify_auth(key, "alice", "secret") is True
+
+        ConfigCache.clear(key)
+        ConfigCache.clear_auth(key)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_del_locked_user_cannot_clear_own_key(self):
+        """An effective configuration lock remains stronger than key ownership."""
+        key = "test_delete_locked_user"
+        assert ConfigCache.put(key, "json://localhost", "text") is True
+        assert ConfigCache.set_auth(
+            key,
+            "alice",
+            "secret",
+            access=Authentication.ACCESS_LOCK,
+        )
+
+        response = self.client.post(
+            "/del/{}".format(key),
+            headers={
+                "authorization": _basic("alice", "secret"),
+                "accept": "application/json",
+            },
+        )
+
+        assert response.status_code == 403
+        assert ConfigCache.get(key)[0] == "json://localhost"
+        assert ConfigCache.verify_auth(key, "alice", "secret") is True
         ConfigCache.clear(key)
         ConfigCache.clear_auth(key)
 

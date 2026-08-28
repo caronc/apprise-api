@@ -8,7 +8,7 @@
       {% if AUTH_ENABLED %}
         <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
            href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' key %}{% endif %}"
-           title="{% if auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+           title="{% if auth_access == 'disabled' %}{% trans "Configuration access is disabled" %}{% elif auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
           <span class="config-auth-icon" aria-hidden="true">
             {% include 'icons/lock.svg' %}
           </span>
@@ -41,6 +41,7 @@
                  aria-label="{% trans "Config ID" %}" />
           <button type="button"
                   class="btn-flat btn-small config-id-visibility"
+                  tabindex="-1"
                   data-value-toggle
                   aria-controls="page-config-id"
                   aria-label="{% trans "Show Config ID" %}"
@@ -58,6 +59,7 @@
           </button>
           <button type="button"
                   class="btn-flat btn-small config-id-copy"
+                  tabindex="-1"
                   data-config-id-copy="{{ key }}"
                   title="{% trans "Copy Config ID to Clipboard" %}">
             <i class="material-icons" aria-hidden="true">content_copy</i>
@@ -302,6 +304,7 @@
                     </div>
                     <a href="https://appriseit.com/url-builder/"
                        target="_blank"
+                       tabindex="-1"
                        rel="noopener noreferrer"
                        class="btn waves-effect waves-light config-url-builder-btn">
                       {% trans "Apprise URL Builder" %}
@@ -317,16 +320,11 @@
                 {% endif %}
               {% endfor %}
               <div class="config-form-actions">
-                {% if AUTH_PERMISSION == 'user' %}
-                  <p class="config-form-restricted-note">
-                    {% blocktrans %}Global administrator credentials are required to save or delete this configuration. You can still move it to a different configuration ID.{% endblocktrans %}
-                  </p>
-                {% else %}
-                  <button class="btn waves-effect waves-light" type="submit" name="action">
-                    {% trans "Save Configuration" %}
-                    <i class="material-icons right">save</i>
-                  </button>
-                {% endif %}
+                {# Reaching this editor means the effective access policy permits writes. #}
+                <button class="btn waves-effect waves-light" type="submit" name="action">
+                  {% trans "Save Configuration" %}
+                  <i class="material-icons right">save</i>
+                </button>
               </div>
             </form>
           </div>

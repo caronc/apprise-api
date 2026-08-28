@@ -86,6 +86,15 @@ class OriginValidationTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_cross_origin_logout_is_rejected(self):
+        """Session deletion uses POST and is covered by origin validation."""
+        response = self.client.post(
+            "/logout",
+            headers={**_BROWSER, "origin": "https://evil.example.com"},
+        )
+        self.assertEqual(response.status_code, 403)
+
     def test_get_requests_are_never_affected(self):
         """GET is a safe method: never gated, regardless of Origin."""
         response = self.client.get(

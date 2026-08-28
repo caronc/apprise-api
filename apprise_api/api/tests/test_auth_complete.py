@@ -31,7 +31,7 @@ from api.auth import Authentication as MiddlewareAuthentication
 from api.utils import ConfigCache as MiddlewareConfigCache
 from core.middleware import auth as auth_middleware
 from django.core.exceptions import RequestDataTooBig
-from django.core.signing import dumps as sign
+from django.core.signing import TimestampSigner, dumps as sign
 from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase
 from django.test.utils import override_settings
@@ -203,6 +203,17 @@ class AuthUtilityCoverageTests(SimpleTestCase):
         )
         self.assertFalse(Authentication.restore_web(request))
 
+        # Compressed and oversized values are rejected before deserialization,
+        # even when an old public fallback can produce a valid signature.
+        signer = TimestampSigner(
+            key="apprise-api-pytest-web-auth-secret",
+            salt="apprise-api.web-auth",
+        )
+        request.COOKIES[Authentication.WEB_COOKIE] = signer.sign(".eA")
+        self.assertFalse(Authentication.restore_web(request))
+        request.COOKIES[Authentication.WEB_COOKIE] = "x" * 4097
+        self.assertFalse(Authentication.restore_web(request))
+
         request.COOKIES[Authentication.WEB_COOKIE] = sign(
             {"mode": Authentication.ROLE_ADMIN},
             key="apprise-api-pytest-web-auth-secret",
@@ -237,7 +248,8 @@ class AuthMiddlewareCoverageTests(SimpleTestCase):
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_asset_and_api_logout_reach_the_view(self):
         self.assertEqual(self.client.get("/s/missing.css").status_code, 404)
-        self.assertEqual(self.client.get("/logout").status_code, 200)
+        self.assertEqual(self.client.get("/logout").status_code, 302)
+        self.assertEqual(self.client.post("/logout").status_code, 200)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_unsigned_web_fetch_denials_match_format(self):
@@ -360,8 +372,10 @@ class AuthViewCoverageTests(SimpleTestCase):
         with override_settings(APPRISE_API_ONLY=True):
             self.assertEqual(views.LoginView.as_view()(self._request("post", "/login")).status_code, 405)
             self.assertEqual(views.LogoutView.as_view()(request).status_code, 421)
+            self.assertEqual(views.LogoutView.as_view()(self._request("post", "/logout")).status_code, 405)
         with override_settings(APPRISE_AUTH_REQUIRED=False, APPRISE_BASIC_AUTH_TOKEN=None):
             self.assertEqual(views.LoginView.as_view()(self._request("post", "/login")).status_code, 302)
+            self.assertEqual(views.LogoutView.as_view()(self._request("post", "/logout")).status_code, 302)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_invalid_header_reaches_each_keyed_view(self):
@@ -373,7 +387,7 @@ class AuthViewCoverageTests(SimpleTestCase):
             (views.DelView.as_view(), self._request("post", "/del/key", **bad), {"key": self.key}),
             (views.AuthView.as_view(), self._request(path="/auth/key", **bad), {"key": self.key}),
             (views.AuthView.as_view(), self._request("delete", "/auth/key", **bad), {"key": self.key}),
-            (views.NotifyView.as_view(), self._request("post", "/notify/key", **bad), {"key": self.key}),
+            (views.StatefulNotifyView.as_view(), self._request("post", "/notify/key", **bad), {"key": self.key}),
             (views.JsonUrlView.as_view(), self._request(path="/json/urls/key", **bad), {"key": self.key}),
         )
         for view, request, kwargs in calls:

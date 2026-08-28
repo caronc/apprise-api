@@ -544,11 +544,11 @@ class AuthViewTests(SimpleTestCase):
             self.client.post("/add/{}".format(key), {"urls": "json://localhost"}).status_code,
             401,
         )
-        # A valid per-key credential authenticates but still isn't enough to
-        # write -- that's a global-administrator-only action.
+        # A valid per-key user credential owns this Config ID's content and
+        # may replace it without gaining access to any other key.
         self.assertEqual(
             self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=good).status_code,
-            403,
+            200,
         )
 
     def test_keyed_status_matches_status_shape(self):

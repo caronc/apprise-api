@@ -3,6 +3,7 @@
 {% load i18n %}
 
 {% block body %}
+  {# The list-wide button reveals or conceals every otherwise secret Config ID. #}
   <div class="config-list-heading">
     <h4>{% trans "Configuration List" %}</h4>
     {% if keys %}
@@ -19,6 +20,7 @@
     {% endif %}
   </div>
   {% if keys %}
+    {# Each row groups authentication state, the Config ID, and its actions. #}
     <ul class="collection z-depth-1">
       {% for entry in keys %}
         <li class="collection-item config-list-item">
@@ -27,7 +29,7 @@
              title="{% trans "Manage authentication for this Configuration ID" %}">
             {% if AUTH_ENABLED %}
               <span class="config-auth-status {% if entry.configured %}is-assigned{% else %}is-unassigned{% endif %}"
-                    title="{% if entry.access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif entry.access == 'locked' %}{% trans "Configuration access is locked" %}{% elif entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+                    title="{% if entry.access == 'disabled' %}{% trans "Configuration access is disabled" %}{% elif entry.access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif entry.access == 'locked' %}{% trans "Configuration access is locked" %}{% elif entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
                 <span class="config-auth-icon" aria-hidden="true">
                   {% include 'icons/lock.svg' %}
                 </span>
@@ -154,6 +156,7 @@
             <label for="swal-move-from">{% trans "Current Configuration ID" %}</label>
             <button type="button"
                     class="btn-flat value-visibility-toggle"
+                    tabindex="-1"
                     data-value-toggle
                     aria-controls="swal-move-from"
                     aria-label="{% trans "Show Config ID" %}"
@@ -168,6 +171,7 @@
             <label for="swal-move-to">{% trans "New Configuration ID" %}</label>
             <button type="button"
                     class="btn-flat value-visibility-toggle"
+                    tabindex="-1"
                     data-value-toggle
                     aria-controls="swal-move-to"
                     aria-label="{% trans "Show Config ID" %}"

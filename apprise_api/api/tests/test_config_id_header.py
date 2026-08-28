@@ -261,17 +261,34 @@ class ConfigIdHeaderTests(SimpleTestCase):
         return SpyAsset
 
     @mock.patch("apprise.Apprise.notify")
-    def test_notify_header_uses_stateful_route(self, mock_notify):
+    def test_notify_header_with_explicit_urls_remains_stateless(self, mock_notify):
         key = "header_notify_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"})
 
-        # A successful request without payload URLs confirms it used storage.
+        # Without authentication, the optional header does not replace the
+        # stateless payload with the saved configuration.
+        with mock.patch("apprise.AppriseAsset", self._asset_spy_class()):
+            response = self.client.post(
+                "/notify",
+                {"urls": "json://remote-target", "body": "hello"},
+                headers={"X-Apprise-Config-ID": key},
+            )
+        self.assertEqual(response.status_code, 200)
+        mock_notify.assert_called_once()
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_notify_header_without_urls_preserves_v2_stateful_route(self, mock_notify):
+        """The v2 client header still selects its saved configuration."""
+        key = "header_notify_key"
+        self.client.post("/add/{}".format(key), {"urls": "json://localhost"})
+
         with mock.patch("apprise.AppriseAsset", self._asset_spy_class()):
             response = self.client.post(
                 "/notify",
                 {"body": "hello"},
                 headers={"X-Apprise-Config-ID": key},
             )
+
         self.assertEqual(response.status_code, 200)
         mock_notify.assert_called_once()
 
@@ -294,7 +311,7 @@ class ConfigIdHeaderTests(SimpleTestCase):
 
     @mock.patch("apprise.Apprise.notify")
     def test_invalid_notify_header_is_rejected(self, mock_notify):
-        """An invalid key must not turn a requested stateful send into stateless."""
+        """An invalid authorization scope must not be silently ignored."""
         response = self.client.post(
             "/notify",
             {"body": "hello"},
@@ -367,6 +384,21 @@ class ConfigIdHeaderTests(SimpleTestCase):
         )
         self.assertEqual(allowed.status_code, 200)
         self.assertIn(header_key, allowed.content.decode())
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_html_auth_failure_does_not_copy_header_key_into_a_url(self):
+        """The confidential header contract survives browser-style failures."""
+        key = "header_cfg_key"
+        response = self.client.get(
+            "/auth",
+            headers={
+                "accept": "text/html",
+                "X-Apprise-Config-ID": key,
+            },
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertNotIn("Location", response)
+        self.assertNotIn(key, response.content.decode())
 
     def test_cfg_rejects_invalid_header(self):
         """An invalid header is rejected even when the URL key is valid."""

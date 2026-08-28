@@ -8,17 +8,22 @@ info:
 
     APPRISE_AUTH_REQUIRED enables optional Basic Auth. Use an administrator
     login or credentials assigned to one Config ID. A public Config ID may
-    send tagged stateful notifications without credentials. Repeated login
-    changes may return 429 with a Retry-After header.
+    send tagged stateful notifications without credentials. Disabled access
+    freezes configuration-user access without removing saved data. An
+    administrator bypasses per-configuration policy, but never a globally
+    disabled stateful or stateless mode. Repeated login changes may return 429
+    with a Retry-After header.
   version: 1.5.2
 
 servers:
+  # The relative entry lets Swagger UI use whichever host served this document.
   - url: http://localhost:8000
     description: Local hosting of Apprise API
   - url: /
     description: Relative path (Current Host of Apprise API instance)
 
 tags:
+  # Tags keep the generated endpoint list approachable for first-time users.
   - name: Stateless
     description: Stateless notification endpoints that do not use a stored key.
   - name: Persistent
@@ -33,6 +38,7 @@ security:
   - basicAuth: []
 
 paths:
+  # Browser sessions are separate from Basic Auth used by API clients.
   /login:
     get:
       operationId: Meta_LoginForm
@@ -66,6 +72,15 @@ paths:
 
   /logout:
     get:
+      operationId: Meta_GetLogout
+      summary: Safely returns to the welcome page.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '302':
+          description: Return to the welcome page without changing browser state.
+    post:
       operationId: Meta_Logout
       summary: Ends the web-interface login.
       description: Deletes the signed browser login without changing API credentials.
@@ -77,6 +92,8 @@ paths:
           description: Browser login ended.
         '302':
           description: Authentication is disabled; return to the welcome page.
+        '403':
+          description: The browser Origin is not allowed.
         '421':
           description: The HTML interface is disabled.
 
@@ -207,9 +224,13 @@ paths:
         Sends one or more notifications to the URLs identified as part
         of the payload or in APPRISE_STATELESS_URLS.
       description: >
-        X-Apprise-Config-ID sends through that saved configuration without
-        placing its ID in the URL. Public configurations require a specific
-        tag other than `all`. Without the header, this call is stateless.
+        When explicit `urls` are supplied, destinations come from the payload.
+        With authentication enabled, administrators may call it directly. A
+        configuration user must also send matching X-Apprise-Config-ID, and
+        that configuration must use `user` access. `locked`, `public`, and
+        `disabled` cannot authorize stateless destinations. For compatibility
+        with Apprise API v2 clients, X-Apprise-Config-ID without `urls` sends
+        through the saved configuration instead.
       tags:
         - Stateless
       parameters:
@@ -256,15 +277,16 @@ paths:
         '400':
           description: >
             Bad Request (invalid payload or format, or an invalid
-            X-Apprise-Config-ID; public and locked configurations also reject
-            a missing tag or the special `all` tag).
+            X-Apprise-Config-ID).
         '401':
           description: >
-            Unauthorized -- only when X-Apprise-Config-ID switches this to
-            a stateful send and that key's authentication requirements
-            were not met.
+            Unauthorized -- administrator credentials were not supplied and
+            the request did not include valid credentials for the configuration
+            named by X-Apprise-Config-ID.
         '403':
-          description: Access Denied (APPRISE_STATELESS_MODE set to "disabled").
+          description: >
+            Access Denied -- APPRISE_STATELESS_MODE is disabled, or the
+            supplied configuration uses locked, public, or disabled access.
         '406':
           description: Method Not Accepted (Recursion limit reached).
         '424':
@@ -314,7 +336,7 @@ paths:
                             access, or null when no username is available.
                         access:
                           type: string
-                          enum: [user, locked, public]
+                          enum: [user, locked, public, disabled]
             text/html:
               schema:
                 type: string
@@ -364,8 +386,8 @@ paths:
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
           description: >
-            Forbidden (persistent storage is disabled, a configuration user
-            attempted a write, or CONFIG_LOCK requires an authenticated administrator).
+            Forbidden (persistent storage is disabled, the configuration is
+            locked or disabled, or CONFIG_LOCK requires an authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '431':
@@ -377,6 +399,11 @@ paths:
     post:
       operationId: Persistent_RemoveConfiguration
       summary: Removes Apprise configuration from the persistent store.
+      description: >
+        A configuration account with effective `user` access may clear its own
+        content. Its credentials remain and their pruning grace period restarts,
+        allowing replacement content to be saved later. Administrator deletion
+        also removes the configuration's credentials.
       tags:
         - Persistent
       parameters:
@@ -390,8 +417,9 @@ paths:
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
           description: >
-            Forbidden (persistent storage is disabled, a configuration user
-            attempted deletion, or CONFIG_LOCK requires an authenticated administrator).
+            Forbidden (persistent storage is disabled, the configuration's
+            effective access is not `user`, or CONFIG_LOCK requires an
+            authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -529,14 +557,19 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [mode, access, username]
+                required: [mode, access, effective_access, username]
                 properties:
                   mode:
                     type: string
                     enum: [global, assigned]
                   access:
                     type: string
-                    enum: [user, locked, public]
+                    enum: [user, locked, public, disabled]
+                    description: Saved access selection.
+                  effective_access:
+                    type: string
+                    enum: [user, locked, public, disabled]
+                    description: Access currently enforced after global policy is applied.
                   username:
                     type: string
                     nullable: true
@@ -556,7 +589,9 @@ paths:
         The first login requires an administrator. Administrators may change
         credentials and access. Configuration users repeat their username and
         send a new password; they cannot change access. Configuration content
-        is unchanged.
+        is unchanged. While APPRISE_CONFIG_LOCK is enabled, new records default
+        to `locked`; an administrator may preserve `user` or `public`, but
+        either behaves as `locked` until the global lock is removed.
       tags:
         - Persistent
       security:
@@ -570,14 +605,16 @@ paths:
             schema:
               type: object
               description: >
-                Access defaults to the saved mode, or `user` for a new record.
-                Administrators may select `public` without credentials. Other
-                new modes require a password. Configuration users repeat the
-                saved username and send a new password.
+                Access defaults to the saved mode, `user` for a new unlocked
+                record, or `locked` while APPRISE_CONFIG_LOCK is enabled.
+                Administrators may select `public` or `disabled` without
+                credentials. Other new modes require a password. Configuration
+                users repeat the saved username and send a new password.
               properties:
                 access:
                   type: string
-                  enum: [user, locked, public]
+                  enum: [user, locked, public, disabled]
+                  description: Administrator-only. Configuration users must omit this field.
                 username:
                   type: string
                   maxLength: 255
@@ -691,7 +728,9 @@ paths:
         `user` access follows normal key authentication. `locked` users
         must authenticate and provide a specific tag other than `all`.
         `public` permits the same tagged notification without authentication.
-        Public access never applies to another endpoint.
+        `disabled` rejects configuration users even when their saved credentials
+        are correct. An administrator may use every mode. Public access never
+        applies to another endpoint.
       tags:
         - Persistent
       parameters:
@@ -740,7 +779,9 @@ paths:
         '401':
           description: Unauthorized (this non-public key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled).
+          description: >
+            Forbidden (persistent storage is disabled, or this configuration
+            has disabled access for configuration users).
         '406':
           description: Method Not Accepted (Recursion limit reached).
         '424':
@@ -861,8 +902,9 @@ paths:
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
           description: >
-            Forbidden (persistent storage is disabled, a configuration user
-            attempted deletion, or CONFIG_LOCK requires an authenticated administrator).
+            Forbidden (persistent storage is disabled, the configuration's
+            effective access is not `user`, or CONFIG_LOCK requires an
+            authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -985,14 +1027,19 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [mode, access, username]
+                required: [mode, access, effective_access, username]
                 properties:
                   mode:
                     type: string
                     enum: [global, assigned]
                   access:
                     type: string
-                    enum: [user, locked, public]
+                    enum: [user, locked, public, disabled]
+                    description: Saved access selection.
+                  effective_access:
+                    type: string
+                    enum: [user, locked, public, disabled]
+                    description: Access currently enforced after global policy is applied.
                   username:
                     type: string
                     nullable: true
@@ -1012,7 +1059,10 @@ paths:
       summary: Header-based equivalent of POST /auth/{key}.
       description: >
         Identical to POST /auth/{key}, key via X-Apprise-Config-ID instead
-        of the URL. The header is required and the body must be JSON.
+        of the URL. The header is required and the body must be JSON. While
+        APPRISE_CONFIG_LOCK is enabled, new records default to `locked`; an
+        administrator may preserve `user` or `public`, but either behaves as
+        `locked` until the global lock is removed.
       tags:
         - Persistent
       security:
@@ -1026,14 +1076,17 @@ paths:
             schema:
               type: object
               description: >
-                Access defaults to the saved mode, or `user` for a new record.
-                Administrators may select `public` without credentials.
-                Configuration users repeat the saved username and provide a
-                new password. password_confirm is optional for API callers.
+                Access defaults to the saved mode, `user` for a new unlocked
+                record, or `locked` while APPRISE_CONFIG_LOCK is enabled.
+                Administrators may select `public` or `disabled` without
+                credentials. Configuration users repeat the saved username and
+                provide a new password. password_confirm is optional for API
+                callers.
               properties:
                 access:
                   type: string
-                  enum: [user, locked, public]
+                  enum: [user, locked, public, disabled]
+                  description: Administrator-only. Configuration users must omit this field.
                 username:
                   type: string
                   maxLength: 255
@@ -1197,6 +1250,8 @@ components:
         maxLength: 128
       description: >
         Supplies the key outside the URL. It takes precedence over a URL key.
+        On /notify it selects the saved configuration when `urls` are absent;
+        with explicit `urls`, it only scopes configuration-user authentication.
         Invalid values return 400. /cfg does not accept this header.
     ConfigIdHeaderRequired:
       in: header
@@ -1256,8 +1311,11 @@ components:
         config_lock:
           type: boolean
           description: >-
-            The global lock for a keyless response, or the effective global
-            and per-configuration lock for a keyed response.
+            Whether configuration content is locked for this authenticated
+            caller. For a keyed response this applies both global and
+            per-configuration policy, while a globally authenticated
+            administrator receives false because that credential bypasses
+            either lock.
         stateful_enabled:
           type: boolean
           description: >-

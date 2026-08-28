@@ -32,6 +32,7 @@ from django.core.exceptions import RequestDataTooBig
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
+from ..auth import Authentication
 from ..forms import AUTO_DETECT_CONFIG_KEYWORD
 from ..utils import CONFIG_KEY_MAX_LENGTH, ConfigCache
 
@@ -194,6 +195,32 @@ class AddTests(SimpleTestCase):
             content_type="application/json",
         )
         assert response.status_code == 400
+
+        # JSON endpoints require an object at the root and reject malformed
+        # field types without passing them into Apprise.
+        for payload in ([], "urls", 42, True, None):
+            response = self.client.post(
+                "/add/{}".format(key),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+            assert response.status_code == 400
+            assert response.json()["error"] == "The JSON payload must be an object"
+
+        malformed_fields = (
+            ({"urls": {}}, "urls"),
+            ({"urls": ["json://localhost", 42]}, "urls"),
+            ({"config": []}, "config"),
+            ({"format": None, "config": "json://localhost"}, "format"),
+        )
+        for payload, field in malformed_fields:
+            response = self.client.post(
+                "/add/{}".format(key),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+            assert response.status_code == 400
+            assert response.json()["field"] == field
 
         # Test the handling of underlining disk/write exceptions
         with patch("os.makedirs") as mock_mkdirs:
@@ -450,25 +477,100 @@ class AddTests(SimpleTestCase):
         assert response.status_code == 400
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
-    def test_add_restricted_user_denied_for_own_key(self):
-        """A configuration user cannot create or replace configurations."""
-        key = "test_add_restricted_user"
-        response = self.client.post(
-            "/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"}, headers=_GOOD_MASTER
+    def test_add_user_can_replace_own_key_by_url_or_header(self):
+        """A configuration user controls the content assigned to their Config ID."""
+        key = "test_add_user_owned"
+        assert (
+            self.client.post(
+                "/add/{}".format(key),
+                {"urls": "mailto://user:pass@yahoo.ca"},
+                headers=_GOOD_MASTER,
+            ).status_code
+            == 200
         )
-        assert response.status_code == 200
-        assert ConfigCache.set_auth(key, "alice", "secret") is True
+        assert ConfigCache.set_auth(key, "alice", "secret", access=Authentication.ACCESS_USER) is True
         user_creds = {"authorization": _basic("alice", "secret")}
 
-        response = self.client.post(
+        by_url = self.client.post(
             "/add/{}".format(key),
             {"urls": "mailto://other:pass@yahoo.ca"},
             headers={**user_creds, "accept": "application/json"},
         )
-        assert response.status_code == 403
-        # Keep error responses consistent with the other API endpoints.
-        assert set(response.json()) == {"error"}
+        assert by_url.status_code == 200
+        assert by_url.json() == {"error": None}
+        assert "other:pass@yahoo.ca" in ConfigCache.get(key)[0]
 
+        by_header = self.client.post(
+            "/add/",
+            {"urls": "mailto://header:pass@yahoo.ca"},
+            headers={**user_creds, "X-Apprise-Config-ID": key, "accept": "application/json"},
+        )
+        assert by_header.status_code == 200
+        assert by_header.json() == {"error": None}
+        assert "header:pass@yahoo.ca" in ConfigCache.get(key)[0]
+        assert ConfigCache.verify_auth(key, "alice", "secret") is True
+
+        ConfigCache.clear(key)
+        ConfigCache.clear_auth(key)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_add_user_cannot_write_another_locked_public_or_disabled_key(self):
+        """Successful authentication never broadens one user's Config ID scope."""
+        owned = "test_add_user_scope"
+        other = "test_add_other_scope"
+        locked = "test_add_locked_scope"
+        public = "test_add_public_scope"
+        disabled = "test_add_disabled_scope"
+        keys = (owned, other, locked, public, disabled)
+        for key in keys:
+            assert ConfigCache.put(key, "json://localhost", ConfigFormat.TEXT.value) is True
+
+        assert ConfigCache.set_auth(owned, "alice", "secret", access=Authentication.ACCESS_USER) is True
+        assert ConfigCache.set_auth(other, "bob", "different", access=Authentication.ACCESS_USER) is True
+        assert ConfigCache.set_auth(locked, "alice", "secret", access=Authentication.ACCESS_LOCK) is True
+        assert ConfigCache.set_access(public, Authentication.ACCESS_PUBLIC) is True
+        assert ConfigCache.set_auth(disabled, "alice", "secret", access=Authentication.ACCESS_DISABLED) is True
+        user_headers = {"authorization": _basic("alice", "secret"), "accept": "application/json"}
+        payload = {"urls": "mailto://changed:pass@yahoo.ca"}
+
+        mismatched = self.client.post("/add/{}".format(other), payload, headers=user_headers)
+        locked_response = self.client.post("/add/{}".format(locked), payload, headers=user_headers)
+        public_response = self.client.post(
+            "/add/{}".format(public),
+            payload,
+            headers={"accept": "application/json"},
+        )
+        disabled_response = self.client.post("/add/{}".format(disabled), payload, headers=user_headers)
+
+        assert mismatched.status_code == 401
+        assert locked_response.status_code == 403
+        assert public_response.status_code == 401
+        assert disabled_response.status_code == 403
+        assert all(ConfigCache.get(key)[0] == "json://localhost" for key in (other, locked, public, disabled))
+
+        for key in keys:
+            ConfigCache.clear(key)
+            ConfigCache.clear_auth(key)
+
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_CONFIG_LOCK=True,
+    )
+    def test_add_global_lock_still_denies_an_assigned_user(self):
+        """The site-wide lock remains stronger than a saved user policy."""
+        key = "test_add_globally_locked_user"
+        assert ConfigCache.put(key, "json://localhost", ConfigFormat.TEXT.value) is True
+        assert ConfigCache.set_auth(key, "alice", "secret", access=Authentication.ACCESS_USER) is True
+
+        response = self.client.post(
+            "/add/{}".format(key),
+            {"urls": "mailto://changed:pass@yahoo.ca"},
+            headers={"authorization": _basic("alice", "secret"), "accept": "application/json"},
+        )
+
+        assert response.status_code == 403
+        assert ConfigCache.get(key)[0] == "json://localhost"
         ConfigCache.clear(key)
         ConfigCache.clear_auth(key)
 

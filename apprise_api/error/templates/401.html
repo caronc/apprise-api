@@ -11,6 +11,7 @@
 {% block onload %}
 {% endblock onload %}
 {% block main_page %}
+  {# The Basic Auth challenge header is added by the view, not this template. #}
   <div class="col s12 error-content">
     <div class="section error-page center">
       <h1>401 - {% trans "Authentication Required" %}</h1>

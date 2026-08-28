@@ -31,13 +31,35 @@ from unittest.mock import mock_open, patch
 from apprise import ConfigFormat
 import pytest
 
-from ..utils import AppriseConfigCache, AppriseStoreMode, MoveResult, SimpleFileExtension
+from ..utils import AppriseConfigCache, AppriseStoreMode, AuthStorageError, MoveResult, SimpleFileExtension
 
 
 def _backdate(path, seconds_ago):
     """Sets a file's mtime (and atime) `seconds_ago` seconds in the past."""
     backdated = time.time() - seconds_ago
     os.utime(path, (backdated, backdated))
+
+
+def test_clear_preserving_auth_failure_paths(tmpdir):
+    """Authenticated deletion fails closed if content or auth cannot be maintained."""
+    disabled = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED)
+    assert disabled.clear_preserving_auth("key") is False
+
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    with patch.object(store, "_acquire_auth_guard", side_effect=OSError):
+        assert store.clear_preserving_auth("key") is False
+
+    assert store.clear_preserving_auth("key") is False
+    assert store.set_auth("key", "alice", "secret") is True
+
+    with patch.object(store, "get_auth_record", side_effect=AuthStorageError("damaged")):
+        assert store.clear_preserving_auth("key") is False
+
+    with patch.object(store, "clear", return_value=False):
+        assert store.clear_preserving_auth("key") is False
+
+    with patch("os.utime", side_effect=OSError):
+        assert store.clear_preserving_auth("key") is False
 
 
 def test_apprise_config_io_hash_mode(tmpdir):

@@ -684,6 +684,46 @@ input.config-id-input {
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
 }
 
+/* Materialize defaults helper copy to translucent black, which disappears
+   against this card. Keep inactive labels and explanatory text readable. */
+.auth-editor-card .input-field>label:not(.active),
+.auth-editor-card .select-wrapper+label:not(.active),
+.auth-editor-card .helper-text {
+  color: #aeb2bd;
+}
+
+.auth-editor-card .value-visibility-toggle i.material-icons {
+  color: #aeb2bd;
+}
+
+.auth-editor-card .value-visibility-toggle:hover i.material-icons {
+  color: #edeef3;
+}
+
+.auth-editor-card .btn i.material-icons {
+  color: inherit;
+}
+
+.auth-access-warning,
+.auth-access-warning i.material-icons {
+  color: #f6b45f;
+}
+
+.auth-editor-card .auth-access-help,
+.swal2-popup .auth-save-copy {
+  color: #7de6da;
+  background-color: #263a3a;
+  border-color: #3ab5aa;
+}
+
+.auth-editor-card .auth-access-help:hover,
+.auth-editor-card .auth-access-help:focus,
+.swal2-popup .auth-save-copy:hover,
+.swal2-popup .auth-save-copy:focus {
+  color: #0f1e1c;
+  background-color: #7de6da;
+}
+
 .browser-login-icon,
 .auth-card-icon {
   color: #7de6da;

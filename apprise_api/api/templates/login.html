@@ -11,12 +11,22 @@
 {% endblock head_js_optional %}
 {% block scripts_optional %}
 {% endblock scripts_optional %}
+{# djlint:off #}
 {% block onload %}
   // Keep labels clear of values retained after an unsuccessful login.
   M.updateTextFields();
   const loginError = document.querySelector('.browser-login-field.has-errors input');
-  (loginError || document.querySelector('#id_username')).focus();
+  const loginUsername = document.querySelector('#id_username');
+  const loginInitialField = loginError || loginUsername || document.querySelector('#id_password');
+  if (loginInitialField) {
+    // Run after the first paint so browser autofill cannot leave an auxiliary
+    // password control focused instead of the intended form field.
+    window.requestAnimationFrame(function () {
+      loginInitialField.focus({preventScroll: true});
+    });
+  }
 {% endblock onload %}
+{# djlint:on #}
 {% block main_page %}
   <main class="col s12 browser-login-layout">
     <div class="section browser-login-page">
@@ -28,6 +38,7 @@
           <h4>{% trans "Log In" %}</h4>
           <p>{% trans "Provide the login credentials required to access the Apprise API." %}</p>
         </div>
+        {# The server validates every field; novalidate keeps its messages consistent. #}
         <form method="post" action="{% url 'login' %}" novalidate>
           {{ form_login.next }}
           {% if form_login.non_field_errors %}

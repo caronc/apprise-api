@@ -1,4 +1,5 @@
 services:
+  # The development override builds this checkout instead of pulling an image.
   apprise:
     build:
       context: .
@@ -7,11 +8,13 @@ services:
     container_name: apprise-dev
     user: "${PUID:-1000}:${PGID:-1000}"
     environment:
+      # A single worker makes local logs and debugging easier to follow.
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
       APPRISE_DEFAULT_FORMAT: "text"
     volumes:
+      # Mount source read-only so edits remain on the host and are easy to review.
       - ./apprise_api/static:/usr/share/nginx/html/s:ro
       - ./apprise_api:/opt/apprise/webapp:ro
       - ./config:/config

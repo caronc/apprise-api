@@ -8,10 +8,11 @@
   {% trans "Authentication" %} - {% trans "Apprise API" %}
 {% endblock title %}
 {% block body %}
+  {# Keep the Config ID concealed until the person explicitly reveals it. #}
   <div class="config-id-bar">
     <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
        href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' key %}{% endif %}"
-       title="{% if auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+       title="{% if auth_access == 'disabled' %}{% trans "Configuration access is disabled" %}{% elif auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
       <span class="config-auth-icon" aria-hidden="true">
         {% include 'icons/lock.svg' %}
       </span>
@@ -49,7 +50,7 @@
           <p>{% trans "Updates to account information are made here." %}</p>
         {% else %}
           <h4>{% trans "Configuration Authentication" %}</h4>
-          <p>{% trans "Give this configuration its own username and password." %}</p>
+          <p>{% trans "Give this configuration its own credentials." %}</p>
         {% endif %}
       </div>
       <span id="auth-mode-badge"
@@ -61,6 +62,7 @@
         {% endif %}
       </span>
     </div>
+    {# Users edit credentials; administrators also control the access policy. #}
     <div class="auth-card-grid {% if shared_user %}is-user{% else %}is-admin{% endif %}">
       <section class="auth-editor-card auth-credentials-card">
         <div class="auth-card-heading">
@@ -88,14 +90,27 @@
             <div id="auth-form-error-message"></div>
           </div>
           <div class="auth-credential-fields">
-            {% if shared_user %}
-              {{ form_auth.access }}
-            {% else %}
+            {% if not shared_user %}
               <div class="input-field auth-credential-field">
-                {{ form_auth.access }}
-                {{ form_auth.access.label_tag }}
+                <label class="auth-access-label" for="{{ form_auth.access.id_for_label }}">{{ form_auth.access.label }}:</label>
+                <div class="auth-access-control-row">
+                  {{ form_auth.access }}
+                  <button type="button"
+                          id="auth-access-help"
+                          class="btn-flat auth-access-help"
+                          tabindex="-1"
+                          aria-label="{% trans "Explain Configuration Access Modes" %}"
+                          title="{% trans "Explain Configuration Access Modes" %}">
+                    <i class="material-icons" aria-hidden="true">info_outline</i>
+                  </button>
+                </div>
                 {{ form_auth.access.errors }}
-                <span class="helper-text">{% trans "User allows normal access. Configuration locked permits tagged notifications and password changes. Public permits tagged notifications without a login." %}</span>
+                {% if auth_access_downgraded %}
+                  <span class="auth-access-warning" role="status">
+                    <i class="material-icons" aria-hidden="true">warning_amber</i>
+                    {% blocktrans with saved=auth_selected_access %}Saved {{ saved }} access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed.{% endblocktrans %}
+                  </span>
+                {% endif %}
               </div>
             {% endif %}
             {% if not shared_user or auth_username %}
@@ -221,6 +236,7 @@
   const authForm = document.querySelector('#auth-form');
   const authUsername = document.querySelector('#id_username');
   const authAccess = document.querySelector('#id_access');
+  const authAccessHelp = document.querySelector('#auth-access-help');
   const authCurrentPassword = document.querySelector('#id_current_password');
   const authPassword = document.querySelector('#id_password');
   const authPasswordConfirm = document.querySelector('#id_password_confirm');
@@ -235,6 +251,22 @@
 
   if (authIsAdmin && authAccess && window.M && M.FormSelect) {
     M.FormSelect.init(authAccess);
+  }
+
+  if (authAccessHelp) {
+    authAccessHelp.addEventListener('click', function () {
+      Swal.fire({
+        title: '{% trans "Configuration Access Modes" %}',
+        icon: 'info',
+        html: '<table class="auth-access-table"><thead><tr><th>{% trans "Mode" %}</th><th>{% trans "Description" %}</th></tr></thead><tbody>'
+          + '<tr><th>{% trans "User" %}</th><td>{% trans "Uses its own login for normal stateful and stateless notifications and configuration access." %}</td></tr>'
+          + '<tr><th>{% trans "Locked" %}</th><td>{% trans "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden." %}</td></tr>'
+          + '<tr><th>{% trans "Public" %}</th><td>{% trans "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected." %}</td></tr>'
+          + '<tr><th>{% trans "Disabled" %}</th><td>{% trans "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it." %}</td></tr>'
+          + '</tbody></table>',
+        confirmButtonText: '{% trans "Close" %}'
+      });
+    });
   }
 
   // Start with the first credential field, including read-only usernames.
@@ -337,20 +369,24 @@
     const saveButton = authForm.querySelector('button[type="submit"]');
     saveButton.disabled = true;
     try {
+      const authPayload = {
+        // Password-only accounts intentionally submit a blank username.
+        username: authUsername ? authUsername.value : '',
+        current_password: authCurrentPassword ? authCurrentPassword.value : null,
+        password: authPassword.value,
+        password_confirm: authPasswordConfirm ? authPasswordConfirm.value : null
+      };
+      if (authIsAdmin && authAccess) {
+        // Access is administrator-owned and never leaves a user profile form.
+        authPayload.access = authAccess.value;
+      }
       const response = await appriseFetch(authForm.action, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          // Password-only accounts intentionally submit a blank username.
-          access: authAccess ? authAccess.value : '{{ auth_access|escapejs }}',
-          username: authUsername ? authUsername.value : '',
-          current_password: authCurrentPassword ? authCurrentPassword.value : null,
-          password: authPassword.value,
-          password_confirm: authPasswordConfirm ? authPasswordConfirm.value : null
-        })
+        body: JSON.stringify(authPayload)
       });
       if (!response.ok) {
         const failure = await appriseResponseFailure(response, '{% trans "Authentication could not be saved." %}');
@@ -373,9 +409,11 @@
       Swal.fire({
         title: '{% trans "Authentication" %}',
         icon: 'success',
-        html: '{% trans "Configuration access saved." %}' + (authIsAdmin && savedPassword
-          ? ' <button type="button" id="auth-save-copy" class="btn-flat btn-large" title="{% trans "Copy Username and Password to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>'
-          : ''),
+        html: '<div class="auth-save-result"><span>{% trans "Configuration access saved." %}</span>'
+          + (authIsAdmin && savedPassword
+            ? '<button type="button" id="auth-save-copy" class="btn-flat auth-save-copy" aria-label="{% trans "Copy Username and Password to Clipboard" %}" title="{% trans "Copy Username and Password to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>'
+            : '')
+          + '</div>',
         didOpen: function () {
           const copyButton = document.getElementById('auth-save-copy');
           if (copyButton) {

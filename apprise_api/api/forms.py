@@ -62,13 +62,16 @@ INPUT_FORMATS = (
 
 URLS_MAX_LEN = 1024
 URLS_PLACEHOLDER = "mailto://user:pass@domain.com, slack://tokena/tokenb/tokenc, ..."
+# Browser credentials stay small enough for normal headers and form posts.
 AUTH_USERNAME_MAX_LEN = 255
 AUTH_PASSWORD_MAX_LEN = 255
 
+# Access choices are shared by the rendered selector and server validation.
 CONFIG_ACCESS_MODES = (
-    (Authentication.ACCESS_USER, _("User-Managed")),
-    (Authentication.ACCESS_LOCK, _("Configuration Locked")),
-    (Authentication.ACCESS_PUBLIC, _("Public Notifications")),
+    (Authentication.ACCESS_USER, _("User")),
+    (Authentication.ACCESS_LOCK, _("Locked")),
+    (Authentication.ACCESS_PUBLIC, _("Public")),
+    (Authentication.ACCESS_DISABLED, _("Disabled")),
 )
 
 
@@ -197,9 +200,8 @@ class AuthForm(forms.Form):
         self.current_access = current_access
         self.has_credentials = has_credentials
         if shared:
-            # Configuration users may rotate credentials but only an admin may
-            # change what those credentials are allowed to do.
-            self.fields["access"].widget = forms.HiddenInput()
+            # Access remains an internal validation value and is never rendered
+            # as a control for configuration users.
             self.fields["username"].widget.attrs["readonly"] = True
             self.fields["password"].label = _("New Password")
             self.fields["password_confirm"].label = _("Confirm New Password")
@@ -236,7 +238,10 @@ class AuthForm(forms.Form):
             self.add_error("password_confirm", _("The passwords do not match"))
 
         if not self.shared and not password:
-            if not self.has_credentials and access != Authentication.ACCESS_PUBLIC:
+            if not self.has_credentials and access not in {
+                Authentication.ACCESS_PUBLIC,
+                Authentication.ACCESS_DISABLED,
+            }:
                 self.add_error("password", _("A password is required for this access mode"))
             elif username != self.current_username:
                 self.add_error("username", _("Set a password when changing the username"))

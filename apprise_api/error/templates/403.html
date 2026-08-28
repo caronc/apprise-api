@@ -11,14 +11,11 @@
 {% block onload %}
 {% endblock onload %}
 {% block main_page %}
-  {# Show the same retry delay that the view places in Retry-After. #}
   <div class="col s12 error-content">
     <div class="section error-page center">
-      <h1>429 - {% trans "Too Many Requests" %}</h1>
-      <i class="material-icons spotlight">hourglass_empty</i>
-      <p>
-        {% blocktrans %}Too many login attempts were made. Wait {{ retry_after }} seconds before trying again.{% endblocktrans %}
-      </p>
+      <h1>403 - {% trans "Permission Denied" %}</h1>
+      <i class="material-icons spotlight">block</i>
+      <p>{% trans "Your account does not have permission to access this resource." %}</p>
     </div>
   </div>
 {% endblock main_page %}

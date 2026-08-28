@@ -6,11 +6,13 @@
 {% if not hide_label %}
   {% trans "Hide Password" as hide_label %}
 {% endif %}
+{# Keep the field, its validation errors, and its visibility control together. #}
 {{ field }}
 {{ field.label_tag }}
 {{ field.errors }}
 <button type="button"
         class="btn-flat value-visibility-toggle"
+        tabindex="-1"
         data-value-toggle
         aria-controls="{{ field.id_for_label }}"
         aria-label="{{ show_label }}"

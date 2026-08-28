@@ -151,7 +151,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("abstract-user-cutout", content)
         self.assertLess(content.index("auth-account"), content.index("API HEALTH"))
         self.assertIn('href="/auth/auth_gui_key"', content)
-        self.assertIn('href="/logout"', content)
+        self.assertIn('action="/logout"', content)
         self.assertIn('data-tooltip="Logout"', content)
         self.assertIn("auth-logout-icon", content)
         self.assertIn("logout-confirm-icon", content)
@@ -160,6 +160,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("M.updateTextFields()", content)
         # Password and both move IDs use the same concealed-input component.
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 3)
+        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"\n        tabindex="-1"'), 3)
         self.assertIn(">visibility_off</i>", content)
         self.assertIn(
             "toggle.querySelector('i').textContent = showing ? 'visibility_off' : 'visibility';",
@@ -175,6 +176,17 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("optionSelected(generateUser)", content)
         self.assertIn("optionSelected(generatePassword)", content)
         self.assertIn('name="access"', content)
+        self.assertIn('class="auth-access-label"', content)
+        self.assertIn('class="auth-access-control-row"', content)
+        self.assertIn('class="btn-flat auth-access-help"', content)
+        self.assertIn('class="btn-flat auth-access-help"\n                          tabindex="-1"', content)
+        self.assertIn('class="auth-save-result"', content)
+        self.assertIn('class="btn-flat auth-save-copy"', content)
+        self.assertIn(">User</option>", content)
+        self.assertIn(">Locked</option>", content)
+        self.assertIn(">Public</option>", content)
+        self.assertIn(">Disabled</option>", content)
+        self.assertNotIn("Administrator Only", content)
         self.assertIn('value="locked"', content)
         self.assertIn('value="public"', content)
         self.assertIn("setOptionSelected(other, true)", content)
@@ -209,7 +221,10 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(config_list.status_code, 200)
         list_content = config_list.content.decode()
         self.assertIn("hideMode ? 'visibility' : 'visibility_off'", list_content)
-        self.assertNotIn('tabindex="-1"', list_content)
+        self.assertEqual(
+            list_content.count('class="btn-flat value-visibility-toggle"\n                    tabindex="-1"'),
+            2,
+        )
         # One list-wide toggle and both move fields use Config-ID labels.
         self.assertEqual(list_content.count('data-show-label="Show Config ID"'), 3)
         self.assertEqual(list_content.count('data-hide-label="Hide Config ID"'), 3)
@@ -278,6 +293,9 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Update Credentials", content)
         self.assertIn("config-auth-status is-assigned", content)
         self.assertIn("User", content)
+        self.assertNotIn('name="access"', content)
+        self.assertNotIn('id="auth-access-help"', content)
+        self.assertIn("if (authIsAdmin && authAccess)", content)
         self.assertIn("readonly", content)
         self.assertIn('name="current_password"', content)
         self.assertIn("auth-password-fields", content)
@@ -335,6 +353,7 @@ class AuthGuiTests(SimpleTestCase):
             {
                 "mode": Authentication.MODE_ASSIGNED,
                 "access": Authentication.ACCESS_USER,
+                "effective_access": Authentication.ACCESS_USER,
                 "username": "alice",
             },
         )
@@ -358,6 +377,28 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("config-auth-link", content)
         self.assertIn("-u &quot;alice:****&quot;", content)
         self.assertNotIn("secret", content)
+
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_locked_shared_gui_hides_configuration_save(self):
+        """Only effective user access presents the configuration editor."""
+        ConfigCache.set_auth(
+            self.key,
+            "alice",
+            "secret",
+            access=Authentication.ACCESS_LOCK,
+        )
+
+        response = self.client.get("/cfg/{}".format(self.key), headers=_SHARED)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("Your Configuration Is Locked", content)
+        self.assertNotIn('id="addconfig"', content)
+        self.assertNotIn("Save Configuration", content)
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -428,12 +469,14 @@ class AuthGuiTests(SimpleTestCase):
             content,
         )
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 2)
-        self.assertNotIn('tabindex="-1"', content)
+        self.assertEqual(content.count('class="btn-flat value-visibility-toggle"\n        tabindex="-1"'), 2)
         self.assertIn('aria-controls="id_password"', content)
         self.assertIn('aria-controls="id_key"', content)
         self.assertIn("A Configuration ID is required for non-administrative accounts", content)
         self.assertNotIn('name="key" value="apprise"', content)
-        self.assertIn("loginError || document.querySelector('#id_username')", content)
+        self.assertIn("loginError || loginUsername", content)
+        self.assertIn("window.requestAnimationFrame", content)
+        self.assertIn("loginInitialField.focus({preventScroll: true})", content)
         self.assertIn("novalidate", content)
 
         not_browser = self.client.post("/login", {"username": "master", "password": "pass"})
@@ -587,7 +630,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(page.status_code, 200)
         self.assertIn("auth-account is-master", page.content.decode())
 
-        response = self.client.get("/logout", headers=_BROWSER)
+        response = self.client.post("/logout", headers=_BROWSER)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Cache-Control"], "no-store")
@@ -676,6 +719,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("rawValue.split(/[\\s,]+/)", content)
         self.assertIn("getSelectedNotifyTargetCount() === 0", content)
         self.assertNotIn('class="auth-editor-card auth-move-card"', content)
+        self.assertNotIn("Save Configuration", content)
 
     @override_settings(
         APPRISE_CONFIG_LOCK=True,
@@ -697,6 +741,7 @@ class AuthGuiTests(SimpleTestCase):
         content = response.content.decode()
         self.assertIn('id="addconfig"', content)
         self.assertIn('id="url-list"', content)
+        self.assertIn("Save Configuration", content)
         self.assertNotIn("Your Configuration Is Locked", content)
 
     def test_unlocked_tags_keep_saved_tag_autocomplete(self):
@@ -732,7 +777,9 @@ class AuthGuiTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         status = response.json()
-        self.assertTrue(status["config_lock"])
+        # The global policy remains enabled, but this administrator is not
+        # personally locked out of configuration content.
+        self.assertFalse(status["config_lock"])
         self.assertFalse(status["status"]["can_write_config"])
         self.assertEqual(status["status"]["details"], ["OK"])
         self.assertEqual(status["privilege"], "admin")
@@ -938,11 +985,8 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn('id="cfg-list"', page_content)
         self.assertNotIn('id="cfg-gen"', page_content)
         self.assertIn('id="config-id-select-form"', page_content)
-        self.assertNotIn("Save Configuration", page_content)
-        self.assertIn(
-            "Global administrator credentials are required to save",
-            page_content,
-        )
+        self.assertIn("Save Configuration", page_content)
+        self.assertNotIn("Global administrator credentials are required to save", page_content)
         self.assertIn("'X-Apprise-Config-ID': '{}',".format(self.key), page_content)
 
         config_list = self.client.get("/cfg", headers=_BROWSER)
@@ -969,6 +1013,14 @@ class AuthGuiTests(SimpleTestCase):
             headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(gui_fetch.status_code, 204)
+
+        saved = self.client.post(
+            "/add/{}".format(self.key),
+            {"urls": "json://localhost"},
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
+        )
+        self.assertEqual(saved.status_code, 200)
+        self.assertTrue(ConfigCache.get(self.key)[0].startswith("json://localhost/"))
 
         # Shared health requests must name the configuration they authenticate.
         health_without_key = self.client.get(

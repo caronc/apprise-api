@@ -14,6 +14,7 @@
 {% block onload %}
 {% endblock onload %}
 {% block body %}
+  {# Logout uses a separate, minimal page so no authenticated controls remain. #}
   <div class="section logout-page center">
     <span class="logout-page-icon" aria-hidden="true">
       {% include 'icons/logout.svg' %}

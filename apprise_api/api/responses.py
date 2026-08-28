@@ -49,6 +49,7 @@ def error_response(
     headers=None,
 ):
     """Return one error in the response format requested by the client."""
+    # JSON clients always receive a predictable object with an ``error`` key.
     if is_json_response(request):
         payload = {"error": message}
         if field is not None:
@@ -59,11 +60,13 @@ def error_response(
             safe=False,
             status=status,
         )
+    # Browser pages may opt into a friendly error template.
     elif template and is_html_response(request):
         response = render(request, template, context=context, status=status)
     else:
         response = HttpResponse(message, status=status, content_type="text/plain")
 
+    # Authentication challenges and retry hints are attached after rendering.
     for name, value in (headers or {}).items():
         response[name] = value
     return response
@@ -100,3 +103,20 @@ def parse_json_body(request, operation, key=None):
             _("Invalid JSON Payload provided"),
             400,
         )
+
+
+def parse_json_object_body(request, operation, key=None):
+    """Decode a JSON request body and require an object at its root."""
+    content, parse_error = parse_json_body(request, operation, key)
+    if parse_error is not None:
+        return None, parse_error
+
+    # Endpoint payloads use named fields, so arrays and scalar roots are invalid.
+    if not isinstance(content, dict):
+        return None, error_response(
+            request,
+            _("The JSON payload must be an object"),
+            400,
+        )
+
+    return content, None

@@ -68,10 +68,11 @@ urlpatterns = [
     re_path(r"^auth/?$", views.AuthView.as_view(), name="auth_by_header"),
     re_path(
         r"^notify/{}/?$".format(_KEY),
-        views.NotifyView.as_view(),
+        views.StatefulNotifyView.as_view(),
         name="notify",
     ),
-    # X-Apprise-Config-ID changes this from a stateless to a stateful send.
+    # Without explicit URLs the header selects a saved configuration. With
+    # explicit URLs it scopes configuration-user authentication instead.
     re_path(r"^notify/?$", views.StatelessNotifyView.as_view(), name="s_notify"),
     re_path(
         r"^json/urls/{}/?$".format(_KEY),

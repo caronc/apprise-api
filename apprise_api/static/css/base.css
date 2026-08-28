@@ -322,6 +322,16 @@ li.social-theme-nav .topbar-icon svg {
   justify-content: center;
   width: 1.6rem;
   height: 1.6rem;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-logout-form {
+  display: inline-flex;
+  margin: 0;
 }
 
 .auth-account-icon,
@@ -1969,6 +1979,105 @@ Authentication Editor
   width: 100%;
   min-width: 0;
   margin: 1rem 0 1.5rem;
+}
+
+.auth-access-label {
+  display: block;
+  position: static;
+  margin-bottom: 0.1rem;
+  font-size: 0.8rem;
+  transform: none;
+}
+
+.auth-access-control-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.auth-access-control-row .select-wrapper,
+.auth-access-control-row>select {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.auth-access-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  line-height: 1.8rem;
+  border: 1px solid;
+  border-radius: 50%;
+  flex: 0 0 1.8rem;
+}
+
+.auth-access-help i.material-icons {
+  color: inherit;
+  font-size: 1.05rem;
+  line-height: 1.8rem;
+}
+
+.auth-access-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.auth-access-warning i.material-icons {
+  flex: 0 0 auto;
+  font-size: 1rem;
+  line-height: 1.1rem;
+}
+
+.swal2-popup .auth-access-table {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+.swal2-popup .auth-access-table th,
+.swal2-popup .auth-access-table td {
+  padding: 0.65rem 0.5rem;
+  vertical-align: top;
+}
+
+.swal2-popup .auth-access-table th:first-child {
+  width: 6rem;
+  white-space: nowrap;
+}
+
+.swal2-popup .auth-save-result {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.swal2-popup .auth-save-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  min-width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: 1px solid;
+  border-radius: 50%;
+}
+
+.swal2-popup .auth-save-copy i.material-icons {
+  color: inherit;
+  font-size: 1.25rem;
 }
 
 .auth-password-fields {

@@ -70,15 +70,17 @@
                   </a>
                   <span class="nav-divider auth-divider" aria-hidden="true"></span>
                 {% endif %}
-                <a class="auth-logout-link tooltipped"
-                   href="{% url 'logout' %}"
-                   aria-label="{% trans "Logout" %}"
-                   data-position="bottom"
-                   data-tooltip="{% trans "Logout" %}">
-                  <span class="auth-logout-icon" aria-hidden="true">
-                    {% include 'icons/logout.svg' %}
-                  </span>
-                </a>
+                <form class="auth-logout-form" method="post" action="{% url 'logout' %}">
+                  <button class="auth-logout-link tooltipped"
+                          type="submit"
+                          aria-label="{% trans "Logout" %}"
+                          data-position="bottom"
+                          data-tooltip="{% trans "Logout" %}">
+                    <span class="auth-logout-icon" aria-hidden="true">
+                      {% include 'icons/logout.svg' %}
+                    </span>
+                  </button>
+                </form>
                 <template id="logout-confirm-icon-template">
                   <span class="logout-confirm-icon" aria-hidden="true">
                     {% include 'icons/logout.svg' %}
@@ -471,7 +473,7 @@
                     cancelButtonText: '{% trans "No" %}'
                 }).then(function(result) {
                     if (result.isConfirmed) {
-                        window.location.href = logout.href;
+                        logout.form.submit();
                     }
                 });
             });
@@ -857,6 +859,7 @@
                        aria-label="{% trans "New Config ID" %}" />
                 <button type="button"
                         class="btn-flat btn-small config-id-visibility"
+                        tabindex="-1"
                         data-value-toggle
                         aria-controls="cfggen-config-id"
                         aria-label="{% trans "Show Config ID" %}"
@@ -868,6 +871,7 @@
                 <button type="button"
                         id="cfggen-randomize"
                         class="btn-flat btn-small config-id-randomize"
+                        tabindex="-1"
                         aria-label="{% trans "Generate Another Config ID" %}"
                         title="{% trans "Generate Another Config ID" %}">
                   <span aria-hidden="true">{% include 'icons/dice.svg' %}</span>

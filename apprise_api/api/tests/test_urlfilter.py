@@ -408,6 +408,51 @@ class AttachmentTests(SimpleTestCase):
         ):
             self.assertFalse(af.is_allowed("http://slow-dns.example/x"))
 
+    def test_dns_resolution_admission_is_bounded_and_fail_closed(self):
+        """Busy DNS admission and executor failures cannot queue more work."""
+        from ..urlfilter import _resolve_addresses
+
+        slots = mock.Mock()
+        slots.acquire.return_value = False
+        with (
+            mock.patch("apprise_api.api.urlfilter._RESOLVE_SLOTS", slots),
+            mock.patch("apprise_api.api.urlfilter._RESOLVE_POOL") as pool,
+        ):
+            self.assertIsNone(_resolve_addresses("busy.example"))
+            pool.submit.assert_not_called()
+
+        slots.acquire.return_value = True
+        with (
+            mock.patch("apprise_api.api.urlfilter._RESOLVE_SLOTS", slots),
+            mock.patch("apprise_api.api.urlfilter._RESOLVE_POOL") as pool,
+        ):
+            pool.submit.side_effect = RuntimeError("executor unavailable")
+            self.assertIsNone(_resolve_addresses("failed.example"))
+            slots.release.assert_called_once()
+
+    def test_dns_timeout_cancels_queued_work_and_releases_on_completion(self):
+        """Timed-out DNS work is cancelled and retains its slot until done."""
+        from concurrent.futures import TimeoutError as FutureTimeoutError
+
+        from ..urlfilter import _release_resolve_slot, _resolve_addresses
+
+        slots = mock.Mock()
+        slots.acquire.return_value = True
+        future = mock.Mock()
+        future.result.side_effect = FutureTimeoutError
+        with (
+            mock.patch("apprise_api.api.urlfilter._RESOLVE_SLOTS", slots),
+            mock.patch("apprise_api.api.urlfilter._RESOLVE_POOL") as pool,
+        ):
+            pool.submit.return_value = future
+            self.assertIsNone(_resolve_addresses("slow.example"))
+            future.add_done_callback.assert_called_once_with(_release_resolve_slot)
+            future.cancel.assert_called_once_with()
+            slots.release.assert_not_called()
+
+            _release_resolve_slot(future)
+            slots.release.assert_called_once_with()
+
     def test_internal_token_skips_unparseable_resolved_records(self):
         """
         A malformed/unexpected address record from the resolver is

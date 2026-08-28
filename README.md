@@ -287,6 +287,8 @@ Some people may wish to only have a sidecar solution that does require use of an
 
 Stateless `/notify` calls do not require `/config`, but they do leverage `/attach` for file uploads (assuming `APPRISE_ATTACH_SIZE` is not set to `0` (zero).  You can optionally use `/plugin` if you have custom Apprise plugins you wish to use.
 
+When authentication is enabled, an administrator may call `/notify` directly. A configuration user must send explicit `urls`, their matching `X-Apprise-Config-ID` header, and credentials for a configuration with `user` access. The header authorizes the caller but does not replace those URLs. The `locked`, `public`, and `disabled` access modes cannot send stateless notifications. For compatibility with Apprise API v2 clients, a header-bearing `/notify` request without `urls` remains a stateful send through the saved configuration.
+
 Here is a *stateless* example of how one might send a notification (using `/notify/`):
 
 ```bash
@@ -361,7 +363,7 @@ curl -X POST \
 
 You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://appriseit.com/guides/) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
 
-Stateful endpoints also accept `X-Apprise-Config-ID`. This keeps the Config ID out of the URL. On `/notify` it selects a saved configuration; on `/status` it selects that ID's login. The `/cfg` listing does not accept it.
+Stateful endpoints also accept `X-Apprise-Config-ID`. This keeps the Config ID out of the URL. On `/status` it selects that ID's login. On `/notify`, a request without `urls` selects the saved configuration; explicit `urls` make it stateless and use the ID only for authentication. The `/cfg` listing does not accept it.
 
 If both the URL and header contain a key, the header wins. Invalid headers return `400`. Existing URL-based requests remain supported.
 
@@ -374,9 +376,9 @@ The `/cfg` list requires `APPRISE_ADMIN=yes` and `APPRISE_STATEFUL_MODE=simple`.
 | `/move/{KEY}` |  POST  | Moves the configuration stored at *{KEY}* to a new Config ID.<br/>*Payload Parameters*<br/>📌 **to**: The destination Config ID. It must not already have a configuration. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
-| `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).
+| `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).
 | `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
-| `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode.
+| `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
 | `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, access, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
@@ -556,11 +558,11 @@ The use of environment variables allow you to provide overrides to default setti
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6). If `IPV4_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
 | `HTTP_PORT` | Force the default listening port to be something other than `8000` within the Docker container.
 | `STRICT_MODE` | Applicable only to container deployments; if this is set to `yes`, the NginX instance will not return content on any invalid or unsupported request.  This is incredibly useful for those hosting Apprise publicly and pairs nicely with fail2ban.  By default, the system does not operate in this strict mode.
-| `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided.  The theme can be toggled from within the website as well.
+| `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided. The values are case-insensitive, and `l` or `d` may be used as shorthand. The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
 | `APPRISE_STORAGE_DIR` | Defines an (optional) persistent store location of all cache files saved. By default persistent storage is written into the `<APPRISE_CONFIG_DIR>/store`.
-| `APPRISE_STORAGE_MODE` | Defines the storage mode to use.  If no `APPRISE_STORAGE_DIR` is identified, then this is set to `memory` in all circumtances regardless what it might otherwise be set to. The possible options are:<br/>📌 **auto**: This is also the default. Writes cache files on demand only. <br/>📌 **memory**: Persistent storage is disabled; local memory is used for simple internal references. This is effectively the behavior of Apprise of versions 1.8.1 and earlier.<br/>📌 **flush**: A bit more i/o intensive then `auto`.  Content is written to disk constantly if changed in anyway. This mode is still experimental.
+| `APPRISE_STORAGE_MODE` | Defines the storage mode to use.  If no `APPRISE_STORAGE_DIR` is identified, then this is set to `memory` in all circumtances regardless what it might otherwise be set to. The possible options are:<br/>📌 **auto**: This is also the default. Writes cache files on demand only. <br/>📌 **memory**: Persistent storage is disabled; local memory is used for simple internal references. This is effectively the behavior of Apprise of versions 1.8.1 and earlier.<br/>📌 **flush**: A bit more i/o intensive then `auto`.  Content is written to disk constantly if changed in anyway. This mode is still experimental.<br/>Values are case-insensitive; `a`, `m`, and `f` may be used as shorthand.
 | `APPRISE_STORAGE_UID_LENGTH` | Defines the unique key lengths used to identify an Apprise URL.  By default this is set to `8`.  Value can not be set to a smaller value then `2` or larger then `64`.
 | `APPRISE_STATELESS_STORAGE` | Allow stateless URLs (in addition to stateful) to also leverage persistent storage. This defaults to `no` and can however be set to `yes` by simply defining the global variable as such.
 | `APPRISE_STORAGE_PRUNE_DAYS` | Age in days before `storeprune` removes persistent notification state. Defaults to `30`.
@@ -574,8 +576,9 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_CONFIG_MAX_LENGTH` | Over-ride the maximum accepted configuration payload length (defined in KB). The value provided (in KB) is internally converted to bytes and can never exceed `APPRISE_UPLOAD_MAX_MEMORY_SIZE` (defined in MB). The default is `512` (KB).
 | `APPRISE_STREAM_MEMORY_SIZE` | Memory used by each live stream before waiting logs move to disk, in MB. The same value limits memory used by completed result logs. The default is `2`. Set it to `0` to use disk immediately when disk storage is enabled.
 | `APPRISE_STREAM_DISK_SIZE` | Temporary disk allowance for each live stream and, separately, each completed result, in MB. The default is `256`. Set it to `0` to disable temporary disk storage and keep result logs in memory. Live streams also remain in memory when the memory size is greater than `0`; when both sizes are `0`, live-stream backlog retention is disabled.
+| `APPRISE_STREAM_WORKER_COUNT` | Active live notification workers per Gunicorn worker process, including work continuing after a client disconnects. Additional streams remain connected and queue until a worker becomes available. Defaults to `4`, making the effective server-wide default `APPRISE_WORKER_COUNT * 4`.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
-| `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.
+| `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.<br/>Values are case-insensitive. Since each mode has a unique first letter, `h`, `s`, and `d` are accepted as shorthand; a longer value with the correct first letter is normalized to the matching mode.
 | `APPRISE_STATELESS_MODE` | Controls stateless `/notify` calls:<br/>📌 **enabled**: Accept stateless notifications. This is the default.<br/>📌 **disabled**: Reject stateless notifications. If stateful mode is also disabled, `/status` reports `degraded`.
 | `APPRISE_CONFIG_LOCK` | Hides configuration content and management from regular users. An authenticated administrator retains full access. Without authentication, management operations are denied. Stateful and stateless notifications continue to work normally, including optional stateful tag selection. Defaults to `no`.
 | `APPRISE_AUTH_REQUIRED` | Enables built-in authentication when set to `yes`. Defaults to `no`. When disabled, `APPRISE_USER`, `APPRISE_PASSWORD`, and saved configuration logins are ignored. See [Authentication](#authentication).
@@ -632,6 +635,8 @@ docker run --name apprise \
 | Administrator enabled | `APPRISE_AUTH_REQUIRED=yes` with `APPRISE_PASSWORD` | The administrator can access every key and manage configuration logins. `APPRISE_USER` is optional. |
 | Administrator disabled | `APPRISE_AUTH_REQUIRED=yes` without `APPRISE_PASSWORD` | Only existing configuration logins can access their own keys. New logins cannot be created until an administrator password is configured. |
 
+Global mode switches always win: no caller, including the administrator, can use stateful or stateless notifications when that mode is disabled. Administrator credentials bypass per-configuration access and `APPRISE_CONFIG_LOCK`, but never a disabled global mode.
+
 `APPRISE_USER` without `APPRISE_PASSWORD` produces a warning and leaves the administrator account disabled. This is useful when each person should use only their assigned Config ID.
 
 Set `APPRISE_BASIC_AUTH_REALM` to give each instance a recognizable label in login prompts. It defaults to `Apprise API`.
@@ -651,19 +656,24 @@ The Config ID field can open another configuration without exposing its ID in th
 #### Per-Configuration Access
 Each Config ID has one access mode. The administrator can recover and manage every configuration.
 
-| Access | Notification use | Configuration use |
+| Access | Description |
 | --- | --- | --- |
-| `user` | Requires its username and password. Tags are optional. | Keeps the existing user access. |
-| `locked` | Requires its username and password plus a specific tag other than `all`. | Content is hidden, but the user may change their password and move the Config ID. |
-| `public` | Requires only the Config ID and a specific tag other than `all`. | Content stays hidden. Saved credentials, if present, retain the `locked` user abilities. |
+| `user` | Requires its credentials. Tags are optional. The user may edit or clear their configuration. |
+| `locked` | Requires its credentials plus a specific tag other than `all`. Content is hidden, but the user may change their password and move the Config ID. |
+| `public` | Requires only the Config ID and a specific tag other than `all`.Content stays hidden. Saved credentials, if present, retain the `locked` user abilities. |
+| `disabled` | Freezes configuration from use by others.  The administrator account can however still send notifications using this if they choose. |
 
-Public access applies only to `POST /notify/{KEY}` and header-based `POST /notify`. Health, configuration, listing, and management endpoints still require valid credentials. Attachments remain available to public notification callers.
+Public access applies only to `POST /notify/{KEY}`. Health, configuration, listing, management, and stateless endpoints still require suitable credentials. Attachments remain available to public notification callers.
+
+For stateless `POST /notify`, administrator credentials work without a Config ID. A configuration user must provide explicit `urls`, valid credentials, and the matching `X-Apprise-Config-ID`; the access mode must be `user`. Without `urls`, the v2 header form remains a stateful saved-configuration call. The other access modes are rejected for stateless destinations.
+
+Configuration users use their credentials with their Config ID in the URL or `X-Apprise-Config-ID`. The header is required for their stateless calls. `user` and `locked` accounts may retrieve `/status` and `/details` this way; a disabled account cannot. Administrators may include a valid Config ID header for client convenience, but do not need one.
 
 Open a configuration and select its lock icon or **Authentication**. Choose access, enter credentials when required, and select **Save**. Administrators can also use **Randomize**.
 
-The Config ID, username, and password are separate values. Share all three with the user. Saved passwords are not displayed again.
+The Config ID and credentials are separate values. Share the Config ID and configured credentials with the user. A username is optional; saved passwords are not displayed again.
 
-API clients manage access with `POST /auth/{KEY}`. Access defaults to `user` when omitted. An administrator may create `public` access without a username or password. Configuration users may change their own password but cannot change access.
+API clients manage access with `POST /auth/{KEY}`. Access defaults to `user` when omitted, or `locked` while `APPRISE_CONFIG_LOCK=yes`. An administrator may create `public` or `disabled` access without a username or password. Configuration users may change their own password, but must omit the administrator-only `access` field entirely.
 
 Administrators may change or remove any login. Configuration users authenticate with their current login, repeat the saved username, and provide a new password. The browser asks for the new password twice.
 ```bash
@@ -684,6 +694,12 @@ curl -X POST -H "Content-Type: application/json" \
 curl -X POST -d 'body=test message' -d 'tag=customers' \
    http://localhost:8000/notify/my-public-config
 
+# Freeze this account while preserving its configuration and credentials.
+curl -X POST -H "Content-Type: application/json" \
+   -u foobar:your-password-here \
+   -d '{"access": "disabled"}' \
+   http://localhost:8000/auth/my-config-id
+
 # Replace it with the key's current credentials:
 curl -X POST -H "Content-Type: application/json" \
    -u alice:s3cret \
@@ -701,7 +717,9 @@ Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring t
 
 `APPRISE_CONFIG_LOCK` does not block setting, rotating, or removing per-key credentials.
 
-Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). Locks with configuration remain. See [Pruning](#pruning).
+While `APPRISE_CONFIG_LOCK=yes`, it also acts as the minimum per-configuration access policy. New records default to `locked`. An administrator may still save `user` or `public`; the editor warns that either behaves as `locked` until the global lock is removed. Saved access is not rewritten, and the stricter `disabled` mode remains available.
+
+Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). When a `user` clears their configuration, their credentials remain and this grace period restarts so they can save a replacement. Locks with configuration remain. See [Pruning](#pruning).
 
 #### Moving a Configuration
 `POST /move/{KEY}` moves a configuration, credentials, and access to a free Config ID. With the global `APPRISE_CONFIG_LOCK`, only an authenticated administrator may move or delete entries.

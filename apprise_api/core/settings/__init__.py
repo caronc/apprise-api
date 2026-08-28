@@ -26,8 +26,9 @@ import logging
 import os
 
 import apprise
+from core.settings.env import env_bool, env_choice, env_int, env_optional_bool
 from core.themes import SiteTheme
-from core.utils import parse_bool, parse_log_level
+from core.utils import parse_log_level
 from django.core.exceptions import ImproperlyConfigured
 
 # Register apprise's custom log levels before Django's dictConfig() runs.
@@ -70,7 +71,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", DEFAULT_SECRET_KEY)
 #    ./manage.py runserver
 #
 # Support 'yes', '1', 'true', 'enable', 'active', and +
-DEBUG = parse_bool(os.environ.get("DEBUG", "No"))
+DEBUG = env_bool("DEBUG")
 
 # allow all hosts by default otherwise read from the
 # ALLOWED_HOSTS environment variable
@@ -202,8 +203,15 @@ FORCE_SCRIPT_NAME = BASE_URL or None
 # Static files relative path (CSS, JavaScript, Images)
 STATIC_URL = f"{BASE_URL}/s/"
 
-# Default theme can be either 'light' or 'dark'
-APPRISE_DEFAULT_THEME = os.environ.get("APPRISE_DEFAULT_THEME", SiteTheme.LIGHT)
+# Default theme can be either 'light' or 'dark'. Values are not case
+# sensitive, and the first letter is enough because each option starts with a
+# different letter. For example, 'd', 'dark', and 'dakr' all select dark mode.
+APPRISE_DEFAULT_THEME = env_choice(
+    "APPRISE_DEFAULT_THEME",
+    SiteTheme.LIGHT,
+    (SiteTheme.LIGHT, SiteTheme.DARK),
+    first_character=True,
+)
 
 # Webhook that is posted to upon executed results
 # Set it to something like https://myserver.com/path/
@@ -217,14 +225,19 @@ APPRISE_CONFIG_DIR = os.environ.get("APPRISE_CONFIG_DIR", os.path.join(BASE_DIR,
 APPRISE_STORAGE_DIR = os.environ.get("APPRISE_STORAGE_DIR", os.path.join(APPRISE_CONFIG_DIR, "store"))
 
 # Default number of days to prune persistent storage
-APPRISE_STORAGE_PRUNE_DAYS = int(os.environ.get("APPRISE_STORAGE_PRUNE_DAYS", 30))
+APPRISE_STORAGE_PRUNE_DAYS = env_int("APPRISE_STORAGE_PRUNE_DAYS", 30, minimum=0)
 
 # Prune unused authentication locks after this age in seconds.
 # The default is 30 days; locks with configuration are always retained.
-APPRISE_AUTH_PRUNE_SECONDS = int(os.environ.get("APPRISE_AUTH_PRUNE_SECONDS", 30 * 86400))
+APPRISE_AUTH_PRUNE_SECONDS = env_int("APPRISE_AUTH_PRUNE_SECONDS", 30 * 86400, minimum=0)
 
 # The default URL ID Length
-APPRISE_STORAGE_UID_LENGTH = int(os.environ.get("APPRISE_STORAGE_UID_LENGTH", 8))
+APPRISE_STORAGE_UID_LENGTH = env_int(
+    "APPRISE_STORAGE_UID_LENGTH",
+    8,
+    minimum=2,
+    maximum=64,
+)
 
 # The default storage mode; options are:
 # - memory  : Disables persistent storage (this is also automatically set
@@ -234,13 +247,21 @@ APPRISE_STORAGE_UID_LENGTH = int(os.environ.get("APPRISE_STORAGE_UID_LENGTH", 8)
 # - flush   : Writes to storage constantly (as much as possible).  This
 #             produces more i/o but can allow multiple calls to the same
 #             notification to be in sync more
-APPRISE_STORAGE_MODE = os.environ.get("APPRISE_STORAGE_MODE", "auto").lower()
+# Values are not case sensitive. Since each mode begins with a different
+# letter, 'a', 'f', or 'm' is enough to select the intended mode. This also
+# makes a small spelling mistake harmless when the first letter is correct.
+APPRISE_STORAGE_MODE = env_choice(
+    "APPRISE_STORAGE_MODE",
+    "auto",
+    ("auto", "flush", "memory"),
+    first_character=True,
+)
 
 # The location to place file attachments
 APPRISE_ATTACH_DIR = os.environ.get("APPRISE_ATTACH_DIR", os.path.join(BASE_DIR, "var", "attach"))
 
 # The maximum file attachment size allowed by the API (defined in MB)
-APPRISE_ATTACH_SIZE = int(os.environ.get("APPRISE_ATTACH_SIZE", 200)) * 1048576
+APPRISE_ATTACH_SIZE = env_int("APPRISE_ATTACH_SIZE", 200) * 1048576
 
 # A provided list that identify all of the URLs/Hosts/IPs that Apprise can
 # retrieve remote attachments from.
@@ -283,36 +304,26 @@ APPRISE_ATTACH_ALLOW_URLS = os.environ.get("APPRISE_ATTACH_ALLOW_URL", "*").lowe
 
 # The maximum size in bytes that a request body may be before raising an error
 # (defined in MB)
-APPRISE_UPLOAD_MAX_MEMORY_SIZE = abs(int(os.environ.get("APPRISE_UPLOAD_MAX_MEMORY_SIZE", 3))) * 1048576
-
-
-def _stream_size_setting(name, default):
-    """Return a non-negative whole-MB stream setting in bytes."""
-    try:
-        # Environment values arrive as text, while defaults are whole MB.
-        value = int(os.environ.get(name, default))
-    except (TypeError, ValueError):
-        raise ValueError(f"{name} must be a non-negative whole number of MB.") from None
-
-    if value < 0:
-        raise ValueError(f"{name} must be a non-negative whole number of MB.")
-
-    # Django and the buffering code work with bytes.
-    return value * 1048576
+APPRISE_UPLOAD_MAX_MEMORY_SIZE = env_int("APPRISE_UPLOAD_MAX_MEMORY_SIZE", 3, absolute=True) * 1048576
 
 
 # Live logs use memory first, then one temporary file for a slow client.
 # These same limits are placed on AppriseAsset for completed result logs.
-APPRISE_STREAM_MEMORY_SIZE = _stream_size_setting("APPRISE_STREAM_MEMORY_SIZE", 2)
+# Environment values arrive as text, while defaults are whole MB. Django and
+# the buffering code work with bytes, so convert the validated value here.
+APPRISE_STREAM_MEMORY_SIZE = env_int("APPRISE_STREAM_MEMORY_SIZE", 2, minimum=0) * 1048576
 
 # This allowance bounds the temporary file shared by captured logs.
-APPRISE_STREAM_DISK_SIZE = _stream_size_setting("APPRISE_STREAM_DISK_SIZE", 256)
+APPRISE_STREAM_DISK_SIZE = env_int("APPRISE_STREAM_DISK_SIZE", 256, minimum=0) * 1048576
+
+# Bound active notification work that may outlive disconnected clients.
+APPRISE_STREAM_WORKER_COUNT = env_int("APPRISE_STREAM_WORKER_COUNT", 4, minimum=1)
 
 # The maximum configuration payload size (in bytes) accepted by form/API
 # configuration updates. This value is configured in KB and converted to bytes
 # (KB * 1024). It is capped by APPRISE_UPLOAD_MAX_MEMORY_SIZE (bytes).
 APPRISE_CONFIG_MAX_LENGTH = min(
-    abs(int(os.environ.get("APPRISE_CONFIG_MAX_LENGTH", 512))) * 1024,
+    env_int("APPRISE_CONFIG_MAX_LENGTH", 512, absolute=True) * 1024,
     APPRISE_UPLOAD_MAX_MEMORY_SIZE,
 )
 
@@ -332,11 +343,12 @@ APPRISE_CONFIG_MAX_LENGTH = min(
 # The idea here is that someone has set up the configuration they way they want
 # and do not want this information exposed any more then it needs to be.
 # it's a lock down mode if you will.
-APPRISE_CONFIG_LOCK = parse_bool(os.environ.get("APPRISE_CONFIG_LOCK", "no"))
+APPRISE_CONFIG_LOCK = env_bool("APPRISE_CONFIG_LOCK")
 
 # Authentication stays off unless it is explicitly requested. Credentials are
 # ignored while it is off, which preserves the behavior of older deployments.
-APPRISE_AUTH_REQUIRED = parse_bool(os.environ.get("APPRISE_AUTH_REQUIRED", "no"))
+APPRISE_AUTH_REQUIRED = env_bool("APPRISE_AUTH_REQUIRED")
+
 # Usernames ignore accidental surrounding whitespace. Passwords remain exact.
 APPRISE_USER = (os.environ.get("APPRISE_USER") or "").strip() if APPRISE_AUTH_REQUIRED else None
 APPRISE_PASSWORD = os.environ.get("APPRISE_PASSWORD") if APPRISE_AUTH_REQUIRED else None
@@ -383,20 +395,29 @@ APPRISE_STATELESS_URLS = os.environ.get("APPRISE_STATELESS_URLS", "")
 
 # Allow stateless URLS to generate and/or work with persistent storage
 # By default this is set to no
-APPRISE_STATELESS_STORAGE = parse_bool(os.environ.get("APPRISE_STATELESS_STORAGE", "no"))
+APPRISE_STATELESS_STORAGE = env_bool("APPRISE_STATELESS_STORAGE")
 
 # Defines the stateful mode; possible values are:
 # - hash (default): content is hashed and zipped
 # - simple: content is just written straight to disk 'as-is'
 # - disabled: disable all stateful functionality
-APPRISE_STATEFUL_MODE = os.environ.get("APPRISE_STATEFUL_MODE", "hash")
+# Values are not case sensitive. The unique first letters 'h', 's', and 'd'
+# are accepted too, so a small spelling mistake after the first letter still
+# selects the intended mode. Any other first letter stops startup with a clear
+# configuration error instead of silently choosing a different mode.
+APPRISE_STATEFUL_MODE = env_choice(
+    "APPRISE_STATEFUL_MODE",
+    "hash",
+    ("hash", "simple", "disabled"),
+    first_character=True,
+)
 
 # Defines the stateless mode; possible values are:
 # - enabled (default): stateless /notify/ calls are accepted
 # - disabled: stateless /notify/ calls are rejected
 # Keep this as a mode string so more choices can be added later.
 # parse_bool() accepts common values such as yes/no, true/false, and 1/0.
-APPRISE_STATELESS_MODE = "enabled" if parse_bool(os.environ.get("APPRISE_STATELESS_MODE", "enabled")) else "disabled"
+APPRISE_STATELESS_MODE = "enabled" if env_bool("APPRISE_STATELESS_MODE", default=True) else "disabled"
 
 # Our Apprise Deny List
 # - By default we disable all non-remote calling services
@@ -417,43 +438,41 @@ APPRISE_ALLOW_SERVICES = os.environ.get("APPRISE_ALLOW_SERVICES", "")
 # The idea here is to prevent people from defining apprise:// URL's triggering
 # a call to the same server again, and again and again. By default we allow
 # 1 level of recursion
-APPRISE_RECURSION_MAX = int(os.environ.get("APPRISE_RECURSION_MAX", 1))
+APPRISE_RECURSION_MAX = env_int("APPRISE_RECURSION_MAX", 1, minimum=0)
 
 # Provided optional plugin paths to scan for custom schema definitions
 APPRISE_PLUGIN_PATHS = os.environ.get("APPRISE_PLUGIN_PATHS", os.path.join(BASE_DIR, "var", "plugin")).split(",")
 
 # Define the number of attachments that can exist as part of a payload
 # Setting this to zero disables the limit
-APPRISE_MAX_ATTACHMENTS = int(os.environ.get("APPRISE_MAX_ATTACHMENTS", 6))
+APPRISE_MAX_ATTACHMENTS = env_int("APPRISE_MAX_ATTACHMENTS", 6, minimum=0)
 
 # The maximum depth allowed when traversing nested (dot-notation) subfields in
 # third-party webhook payload mapping rules.  For example, `:event.title=title`
 # has a depth of 2.  Raising this value too high could permit deeply recursive
 # traversal; keep it low to avoid abuse.
-APPRISE_WEBHOOK_MAPPING_MAX_DEPTH = abs(int(os.environ.get("APPRISE_WEBHOOK_MAPPING_MAX_DEPTH", 5)))
+APPRISE_WEBHOOK_MAPPING_MAX_DEPTH = env_int("APPRISE_WEBHOOK_MAPPING_MAX_DEPTH", 5, absolute=True)
 
 # Apprise API Only mode:
 # - Disable entire Web Page and only allow the API interface to work
 # - Website requests returns 421 (Misdirected Request) for what would otherwise
 #   have been part of the Apprise Website host if this is set to 'no'.
 # - The default value of this is 'no'
-APPRISE_API_ONLY = parse_bool(os.environ.get("APPRISE_API_ONLY", "no"))
+APPRISE_API_ONLY = env_bool("APPRISE_API_ONLY")
 
 # Allow Admin mode:
 # - showing a list of configuration keys (when STATEFUL_MODE is set to simple)
-APPRISE_ADMIN = parse_bool(os.environ.get("APPRISE_ADMIN", "no"))
+APPRISE_ADMIN = env_bool("APPRISE_ADMIN")
 
 # Allow Interpret Emojis override
-APPRISE_INTERPRET_EMOJIS = (
-    None if "APPRISE_INTERPRET_EMOJIS" not in os.environ else parse_bool(os.environ.get("APPRISE_INTERPRET_EMOJIS"))
-)
+APPRISE_INTERPRET_EMOJIS = env_optional_bool("APPRISE_INTERPRET_EMOJIS")
 
 # Allow HTTP Redirects override
 # By default Apprise follows HTTP 3xx redirects, matching the behaviour of
 # the underlying requests library.  Set APPRISE_HTTP_REDIRECTS=no to disable
 # redirect following globally across all plugins without touching individual
 # URLs.
-APPRISE_HTTP_REDIRECTS = parse_bool(os.environ.get("APPRISE_HTTP_REDIRECTS", "yes"))
+APPRISE_HTTP_REDIRECTS = env_bool("APPRISE_HTTP_REDIRECTS", default=True)
 
 # Optional default for requests that omit ``format``. Blank or unknown values
 # leave message content unchanged. Explicit request values always take priority.

@@ -47,12 +47,26 @@ class Error401View(View):
         )
 
 
+class Error403View(View):
+    """Render the permission-denied response."""
+
+    template_name = "403.html"
+
+    def get(self, request):
+        """Return a friendly response without issuing an auth challenge."""
+        return error_response(
+            request,
+            _("Permission Denied"),
+            403,
+            template=self.template_name,
+        )
+
+
 class Error404View(View):
     """
     Render a 404 page for errors
 
     Proxy must pass:
-      - HTTP_X_ERROR_CODE
       - HTTP_X_ORIGINAL_URI
       - HTTP_X_ORIGINAL_METHOD
     """
@@ -85,7 +99,6 @@ class Error421View(View):
     Render a 421 page for errors
 
     Proxy must pass:
-      - HTTP_X_ERROR_CODE
       - HTTP_X_ORIGINAL_URI
       - HTTP_X_ORIGINAL_METHOD
     """
@@ -135,7 +148,6 @@ class Error50xView(View):
     50x Error Code Response
 
     Proxy must pass:
-      - HTTP_X_ERROR_CODE
       - HTTP_X_ORIGINAL_URI
       - HTTP_X_ORIGINAL_METHOD
     """

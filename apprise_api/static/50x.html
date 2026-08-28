@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Apprise API - Service Unavailable</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: sans-serif;
+      }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+        background: #f5f6fa;
+        color: #303038;
+      }
+
+      main {
+        max-width: 38rem;
+        padding: 2rem;
+        text-align: center;
+      }
+
+      h1 {
+        color: #0a7168;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #111513;
+          color: #e6ebe9;
+        }
+
+        h1 {
+          color: #58c7bb;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- This page remains available when the Django upstream is offline. -->
+    <main>
+      <h1>Service Temporarily Unavailable</h1>
+      <p>The Apprise API cannot process this request right now. Please try again shortly.</p>
+    </main>
+  </body>
+</html>

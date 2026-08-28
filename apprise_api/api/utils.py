@@ -816,6 +816,45 @@ class AppriseConfigCache:
 
         return response
 
+    def clear_preserving_auth(self, key):
+        """Clear configuration content and restart its auth-prune grace period.
+
+        Configuration users use this path so deleting their content does not
+        immediately delete the account they need to save replacement content.
+        The authentication guard keeps pruning from racing the delete/touch
+        sequence.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock authenticated configuration deletion for KEY: %s", key)
+            return False
+
+        try:
+            try:
+                record = self.get_auth_record(key)
+            except AuthStorageError:
+                return False
+            if record is None:
+                return False
+
+            result = self.clear(key)
+            if result is False:
+                return False
+
+            path, filename = self.auth_path(key)
+            try:
+                os.utime(os.path.join(path, filename), follow_symlinks=False)
+            except OSError:
+                logger.error("Could not refresh authentication age for KEY: %s", key)
+                return False
+            return result
+        finally:
+            self._release_auth_guard(guard)
+
     def path(self, key):
         """
         returns the path and filename content should be written to based on the
@@ -939,8 +978,9 @@ class AppriseConfigCache:
     def set_access(self, key, access):
         """Change access without replacing credentials.
 
-        A new public record may omit credentials. The other modes require an
-        existing login so they can never become unintentionally accessible.
+        New public and disabled records may omit credentials. The other modes
+        require an existing login so they never become unintentionally
+        accessible.
         """
         if self.mode == AppriseStoreMode.DISABLED or access not in Authentication.ACCESS_CHOICES:
             return False
@@ -958,11 +998,17 @@ class AppriseConfigCache:
                 return False
 
             if record is None:
-                if access != Authentication.ACCESS_PUBLIC:
+                if access not in {
+                    Authentication.ACCESS_PUBLIC,
+                    Authentication.ACCESS_DISABLED,
+                }:
                     return False
                 record = ConfigAuthRecord(access=access)
             else:
-                if record.digest is None and access != Authentication.ACCESS_PUBLIC:
+                if record.digest is None and access not in {
+                    Authentication.ACCESS_PUBLIC,
+                    Authentication.ACCESS_DISABLED,
+                }:
                     return False
                 record = ConfigAuthRecord(
                     access=access,
@@ -1046,7 +1092,14 @@ class AppriseConfigCache:
                 or (username is None) != (digest is None)
                 or (username is not None and not isinstance(username, str))
                 or (digest is not None and not isinstance(digest, str))
-                or (digest is None and access != Authentication.ACCESS_PUBLIC)
+                or (
+                    digest is None
+                    and access
+                    not in {
+                        Authentication.ACCESS_PUBLIC,
+                        Authentication.ACCESS_DISABLED,
+                    }
+                )
             ):
                 raise ValueError
 

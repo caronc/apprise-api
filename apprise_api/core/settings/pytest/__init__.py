@@ -34,8 +34,11 @@ DEBUG = True
 # Allowed hosts is not required in debug mode
 ALLOWED_HOSTS = []
 
-# A temporary directory to work in for unit testing
-APPRISE_CONFIG_DIR = TemporaryDirectory().name
+# A temporary directory to work in for unit testing. Keep the owner alive for
+# the lifetime of the settings module; otherwise Python may garbage-collect the
+# temporary directory while tests are still using its path.
+_APPRISE_CONFIG_TEMP_DIR = TemporaryDirectory()
+APPRISE_CONFIG_DIR = _APPRISE_CONFIG_TEMP_DIR.name
 
 # Tests enable browser authentication through override_settings. Give those
 # sessions a private, stable key without changing production defaults.

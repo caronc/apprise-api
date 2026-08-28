@@ -169,10 +169,9 @@ class ConfigCredentialVerifier:
         if stored_username is not None and not isinstance(stored_username, str):
             return False
 
-        # Usernames are stored as plain account labels, so comparing them first
-        # cheaply rejects requests aimed at the wrong configuration account.
-        if stored_username is not None and username != stored_username:
-            return False
+        # Always perform the password check below. Returning early for a wrong
+        # username exposes the saved account label through a large timing gap.
+        username_matches = stored_username is None or username == stored_username
 
         try:
             fingerprint = self._fingerprint(key, username, password, digest)
@@ -180,7 +179,7 @@ class ConfigCredentialVerifier:
             # Fingerprinting is an optimization. If it is unavailable, use
             # Django's password check directly and do not cache the result.
             logger.warning("Could not fingerprint configuration credentials: %s", e)
-            return self._check_password(username, password, digest)
+            return self._check_password(username, password, digest) and username_matches
 
         request_cache = self._request_cache(request)
         if request_cache is not None:
@@ -203,6 +202,7 @@ class ConfigCredentialVerifier:
 
         if not result:
             result = self._check_password(username, password, digest)
+            result = username_matches and result
             if result:
                 try:
                     self._remember_success(fingerprint)
@@ -246,12 +246,13 @@ class ConfigAuthRecord:
 
 @dataclass(frozen=True)
 class ConfigAuthState:
-    """Describe one Config ID's saved access without describing the caller."""
+    """Describe one Config ID's saved and effective access policy."""
 
     mode: str
     username: str | None = None
     digest: str | None = None
     access: str = "user"
+    saved_access: str | None = None
     unreadable: bool = False
 
     @property
@@ -266,16 +267,22 @@ class ConfigAuthState:
 
     @property
     def config_locked(self):
-        """Return whether non-admin callers receive tag-only access."""
+        """Return whether non-admin callers cannot view configuration content."""
         return self.access in {
             Authentication.ACCESS_LOCK,
             Authentication.ACCESS_PUBLIC,
+            Authentication.ACCESS_DISABLED,
         }
 
     @property
     def public(self):
         """Return whether stateful notifications may omit authentication."""
         return self.access == Authentication.ACCESS_PUBLIC
+
+    @property
+    def disabled(self):
+        """Return whether only an administrator may use this configuration."""
+        return self.access == Authentication.ACCESS_DISABLED
 
 
 class Authentication:
@@ -295,7 +302,20 @@ class Authentication:
     ACCESS_USER = "user"
     ACCESS_LOCK = "locked"
     ACCESS_PUBLIC = "public"
-    ACCESS_CHOICES = frozenset({ACCESS_USER, ACCESS_LOCK, ACCESS_PUBLIC})
+    ACCESS_DISABLED = "disabled"
+    ACCESS_CHOICES = frozenset({ACCESS_USER, ACCESS_LOCK, ACCESS_PUBLIC, ACCESS_DISABLED})
+
+    @staticmethod
+    def effective_config_access(access: str) -> str:
+        """Apply the global lock without rewriting a saved per-key choice."""
+        if settings.APPRISE_CONFIG_LOCK and access in {
+            Authentication.ACCESS_USER,
+            Authentication.ACCESS_PUBLIC,
+        }:
+            # The site-wide policy is a minimum: only the stricter disabled
+            # mode may remain different while configuration locking is active.
+            return Authentication.ACCESS_LOCK
+        return access
 
     # Browser pages use a signed cookie while API clients use Basic Auth.
     WEB_COOKIE = "apprise_web_auth"
@@ -364,7 +384,10 @@ class Authentication:
             return request_cache[key]
 
         if not settings.APPRISE_AUTH_REQUIRED:
-            state = ConfigAuthState(Authentication.MODE_DISABLED)
+            state = ConfigAuthState(
+                Authentication.MODE_DISABLED,
+                access=Authentication.effective_config_access(Authentication.ACCESS_USER),
+            )
         else:
             try:
                 record = ConfigCache.get_auth_record(key)
@@ -377,13 +400,19 @@ class Authentication:
                 )
             else:
                 state = (
-                    ConfigAuthState(Authentication.MODE_GLOBAL)
+                    ConfigAuthState(
+                        Authentication.MODE_GLOBAL,
+                        access=Authentication.effective_config_access(Authentication.ACCESS_USER),
+                    )
                     if record is None
                     else ConfigAuthState(
                         Authentication.MODE_ASSIGNED,
                         username=record.username,
                         digest=record.digest,
-                        access=record.access,
+                        saved_access=record.access,
+                        # Keep the record unchanged so its original access
+                        # returns if the administrator removes the global lock.
+                        access=Authentication.effective_config_access(record.access),
                     )
                 )
 
@@ -422,28 +451,37 @@ class Authentication:
             request.apprise_auth_permission = Authentication.ROLE_ADMIN
             return True
 
+        state = Authentication.config_state(key, request)
         if (
             getattr(request, "apprise_auth_permission", Authentication.ROLE_DISABLED) == Authentication.ROLE_USER
             and getattr(request, "apprise_web_auth_key", None) == key
         ):
+            if state.disabled:
+                request.apprise_disabled_config_key = key
+                return False
             return True
 
         if not settings.APPRISE_AUTH_REQUIRED:
             request.apprise_auth_permission = Authentication.ROLE_DISABLED
             return True
 
-        state = Authentication.config_state(key, request)
         if allow_public and state.public:
             # Views still require a specific tag before sending anything.
             return True
 
         username, password = Authentication.basic_credentials(request)
-        return username is not None and Authentication.key_credentials_ok(
+        credentials_ok = username is not None and Authentication.key_credentials_ok(
             request,
             key,
             username,
             password,
         )
+        if credentials_ok and state.disabled:
+            # Only reveal the disabled policy after these credentials have
+            # successfully proven ownership of this exact configuration.
+            request.apprise_disabled_config_key = key
+            return False
+        return credentials_ok
 
     @staticmethod
     def configuration_is_locked(key=None, request=None):
@@ -523,7 +561,7 @@ class Authentication:
                 payload,
                 key=settings.APPRISE_WEB_AUTH_SECRET,
                 salt=Authentication._WEB_SIGNING_SALT,
-                compress=True,
+                compress=False,
             ),
             httponly=True,
             secure=secure,
@@ -546,7 +584,7 @@ class Authentication:
     def restore_web(request: HttpRequest, requested_key=None, allow_shared_without_key=False) -> bool:
         """Restore a valid signed browser login onto the request."""
         value = request.COOKIES.get(Authentication.WEB_COOKIE)
-        if not value:
+        if not value or len(value) > 4096 or value.startswith("."):
             return False
 
         try:
@@ -556,7 +594,7 @@ class Authentication:
                 salt=Authentication._WEB_SIGNING_SALT,
                 max_age=settings.APPRISE_WEB_AUTH_MAX_AGE,
             )
-        except (signing.BadSignature, TypeError):
+        except (signing.BadSignature, TypeError, ValueError):
             return False
 
         mode = payload.get("mode") if isinstance(payload, dict) else None
@@ -574,6 +612,11 @@ class Authentication:
 
         expected = Authentication._web_proof(mode, key)
         if expected is None or not hmac.compare_digest(proof, expected):
+            return False
+
+        if mode == Authentication.ROLE_USER and Authentication.config_state(key, request).disabled:
+            # Disabling a configuration immediately freezes browser access too.
+            request.apprise_disabled_config_key = key
             return False
 
         request.apprise_auth_permission = mode

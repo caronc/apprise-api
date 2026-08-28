@@ -108,12 +108,13 @@ class ConfigCredentialVerifierTests(SimpleTestCase):
         self.assertEqual(self.checker.call_count, 2)
         self.assertEqual(len(self.verifier), 0)
 
-    def test_username_and_malformed_values_fail_before_hashing(self):
-        """Invalid account data is rejected cheaply and without exceptions."""
+    def test_username_mismatch_hashes_but_malformed_values_do_not(self):
+        """A wrong username has no timing shortcut; malformed data stays cheap."""
         self.assertFalse(self.verify(username="bob"))
+        self.checker.assert_called_once_with("bob:secret", "digest-a")
         self.assertFalse(self.verify(key=None))
         self.assertFalse(self.verify(stored_username=object()))
-        self.checker.assert_not_called()
+        self.checker.assert_called_once()
 
         # The low-level verifier also supports callers without a username label.
         self.assertTrue(self.verify(stored_username=None))

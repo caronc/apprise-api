@@ -146,9 +146,11 @@ class GlobalAuthMiddleware:
                 return self.get_response(request)
 
             requested_key = route_key if route_name in _KEYED_ROUTES else None
+            key_from_header = False
             if requested_key is None and route_name in _HEADER_ROUTES:
                 header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
                 requested_key = header_key or None
+                key_from_header = requested_key is not None
 
             if Authentication.restore_web(
                 request,
@@ -168,6 +170,10 @@ class GlobalAuthMiddleware:
                 return response
 
             if html_request:
+                # A header was chosen specifically to keep this ID out of URLs
+                # and access logs, so never copy it into the login redirect.
+                if key_from_header:
+                    return _authentication_response(request)
                 query = urlencode({"next": request.get_full_path(), "key": requested_key or ""})
                 return redirect("{}?{}".format(reverse("login"), query))
 
@@ -197,7 +203,7 @@ class GlobalAuthMiddleware:
                 Authentication.key_ok(
                     request,
                     config_key,
-                    allow_public=route_name in {"notify", "s_notify"},
+                    allow_public=route_name == "notify",
                 )
             return self.get_response(request)
 

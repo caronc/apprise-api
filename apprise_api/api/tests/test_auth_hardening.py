@@ -35,6 +35,7 @@ import apprise
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
+from ..auth import Authentication
 from ..utils import ConfigCache
 
 
@@ -274,6 +275,10 @@ class AuthViewConfigLockTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(ConfigCache.verify_auth(key, "alice", "secret"))
+        self.assertEqual(
+            ConfigCache.get_auth_record(key).access,
+            Authentication.ACCESS_LOCK,
+        )
 
 
 class ConfigLockAccessTests(SimpleTestCase):

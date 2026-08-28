@@ -1,18 +1,19 @@
 # Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>
 # All rights reserved.
 
-"""Test per-configuration user, locked, and public access."""
+"""Test per-configuration user, locked, public, and disabled access."""
 
 import base64
 from json import dumps, loads
 import os
+from types import SimpleNamespace
 from unittest.mock import mock_open, patch
 
 import apprise
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from ..auth import Authentication, AuthStorageError
+from ..auth import Authentication, AuthStorageError, ConfigAuthState
 from ..forms import AuthForm
 from ..utils import (
     AppriseConfigCache,
@@ -47,6 +48,7 @@ class ConfigAccessViewTests(SimpleTestCase):
         "access_locked",
         "access_locked_moved",
         "access_user",
+        "access_disabled",
     )
 
     def tearDown(self):
@@ -87,6 +89,21 @@ class ConfigAccessViewTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
+    def test_admin_can_create_disabled_access_without_credentials(self):
+        """A frozen access record does not need an unusable dummy password."""
+        response = self.client.post(
+            "/auth/access_disabled",
+            data=dumps({"access": Authentication.ACCESS_DISABLED}),
+            content_type="application/json",
+            headers=_MASTER,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        record = ConfigCache.get_auth_record("access_disabled")
+        self.assertEqual(record.access, Authentication.ACCESS_DISABLED)
+        self.assertIsNone(record.username)
+        self.assertIsNone(record.digest)
+
     def test_browser_admin_credentials_win_a_configuration_collision(self):
         """The browser grants admin scope when both credential sets match."""
         self.assertTrue(ConfigCache.set_auth("access_user", "master", "pass"))
@@ -110,6 +127,14 @@ class ConfigAccessViewTests(SimpleTestCase):
         ):
             response = method(path, headers={"accept": "application/json"})
             self.assertEqual(response.status_code, 401)
+
+        with patch.object(apprise.Apprise, "notify", return_value=True):
+            stateful_v2 = self.client.post(
+                "/notify",
+                {"body": "hello", "tag": "known"},
+                headers={"X-Apprise-Config-ID": "access_public"},
+            )
+        self.assertEqual(stateful_v2.status_code, 200)
 
     def test_public_notify_requires_a_specific_tag_before_attachments(self):
         """Missing and broad tags fail before attachment handling begins."""
@@ -139,10 +164,9 @@ class ConfigAccessViewTests(SimpleTestCase):
         self.assertEqual(malformed.status_code, 400)
         parse_attachments.assert_not_called()
 
-    def test_public_notify_supports_url_header_and_attachments(self):
-        """Both Config ID forms retain normal public attachment support."""
+    def test_public_notify_supports_url_and_attachments(self):
+        """Public stateful notifications retain normal attachment support."""
         self._seed("access_public", Authentication.ACCESS_PUBLIC, credentials=False)
-        self._seed("access_public_header", Authentication.ACCESS_PUBLIC, credentials=False)
         attachment = object()
         with (
             patch("api.views.parse_attachments", return_value=attachment) as parse_attachments,
@@ -154,14 +178,6 @@ class ConfigAccessViewTests(SimpleTestCase):
                 content_type="application/json",
                 headers={"accept": "application/json"},
             )
-            by_header = self.client.post(
-                "/notify/",
-                {"body": "hello", "tag": "known"},
-                headers={
-                    "X-Apprise-Config-ID": "access_public_header",
-                    "accept": "application/json",
-                },
-            )
             by_list = self.client.post(
                 "/notify/access_public",
                 data=dumps({"body": "hello", "tag": ["known"]}),
@@ -170,12 +186,401 @@ class ConfigAccessViewTests(SimpleTestCase):
             )
 
         self.assertEqual(by_url.status_code, 200)
-        self.assertEqual(by_header.status_code, 200)
         self.assertEqual(by_list.status_code, 200)
-        self.assertEqual(parse_attachments.call_count, 2)
+        self.assertEqual(parse_attachments.call_count, 1)
         self.assertEqual(parse_attachments.call_args_list[0].args[0], "https://example.com/a")
-        self.assertEqual(notify.call_count, 3)
+        self.assertEqual(notify.call_count, 2)
         self.assertIs(notify.call_args_list[0].kwargs["attach"], attachment)
+
+    def test_stateless_access_requires_admin_or_user_mode_scope(self):
+        """Only admin or matching user-mode credentials may send arbitrary URLs."""
+        self._seed("access_user", Authentication.ACCESS_USER)
+        self._seed("access_locked", Authentication.ACCESS_LOCK)
+        self._seed("access_public", Authentication.ACCESS_PUBLIC)
+        self._seed("access_disabled", Authentication.ACCESS_DISABLED)
+
+        payload = {"urls": "json://remote-target", "body": "hello"}
+        json_headers = {"accept": "application/json"}
+        with patch.object(apprise.Apprise, "notify", return_value=True) as notify:
+            user = self.client.post(
+                "/notify",
+                payload,
+                headers={**_USER, **json_headers, "X-Apprise-Config-ID": "access_user"},
+            )
+            locked = self.client.post(
+                "/notify",
+                payload,
+                headers={**_USER, **json_headers, "X-Apprise-Config-ID": "access_locked"},
+            )
+            public = self.client.post(
+                "/notify",
+                payload,
+                headers={**_USER, **json_headers, "X-Apprise-Config-ID": "access_public"},
+            )
+            public_without_credentials = self.client.post(
+                "/notify",
+                payload,
+                headers={**json_headers, "X-Apprise-Config-ID": "access_public"},
+            )
+            disabled = self.client.post(
+                "/notify",
+                payload,
+                headers={**_USER, **json_headers, "X-Apprise-Config-ID": "access_disabled"},
+            )
+            unscoped_user = self.client.post("/notify", payload, headers={**_USER, **json_headers})
+            mismatched_user = self.client.post(
+                "/notify",
+                payload,
+                headers={**_USER, **json_headers, "X-Apprise-Config-ID": "unknown_config"},
+            )
+            malformed_header = self.client.post(
+                "/notify",
+                payload,
+                headers={**_USER, **json_headers, "X-Apprise-Config-ID": "not valid!"},
+            )
+            admin = self.client.post("/notify", payload, headers=_MASTER)
+            admin_with_header = self.client.post(
+                "/notify",
+                payload,
+                headers={**_MASTER, "X-Apprise-Config-ID": "access_disabled"},
+            )
+            admin_with_unknown_header = self.client.post(
+                "/notify",
+                payload,
+                headers={**_MASTER, "X-Apprise-Config-ID": "mobile_config"},
+            )
+            admin_with_malformed_header = self.client.post(
+                "/notify",
+                payload,
+                headers={**_MASTER, "X-Apprise-Config-ID": "not valid!"},
+            )
+
+        self.assertEqual(user.status_code, 200)
+        self.assertEqual(locked.status_code, 403)
+        self.assertEqual(public.status_code, 403)
+        self.assertEqual(public_without_credentials.status_code, 401)
+        self.assertEqual(disabled.status_code, 403)
+        self.assertEqual(unscoped_user.status_code, 401)
+        self.assertEqual(mismatched_user.status_code, 401)
+        self.assertEqual(malformed_header.status_code, 400)
+        self.assertEqual(admin.status_code, 200)
+        self.assertEqual(admin_with_header.status_code, 200)
+        self.assertEqual(admin_with_unknown_header.status_code, 200)
+        self.assertEqual(admin_with_malformed_header.status_code, 400)
+        self.assertIn("WWW-Authenticate", unscoped_user)
+        self.assertIn("WWW-Authenticate", mismatched_user)
+        self.assertIn("WWW-Authenticate", public_without_credentials)
+        self.assertNotIn("WWW-Authenticate", locked)
+        self.assertNotIn("WWW-Authenticate", public)
+        self.assertNotIn("WWW-Authenticate", disabled)
+        self.assertEqual(
+            disabled.json()["error"],
+            "This configuration has been disabled by an administrator",
+        )
+        self.assertEqual(notify.call_count, 4)
+
+    def test_global_notification_modes_apply_to_admin_and_users(self):
+        """Neither administrator nor configuration credentials bypass a disabled mode."""
+        self._seed("access_user", Authentication.ACCESS_USER)
+        stateless = {"urls": "json://remote-target", "body": "hello"}
+        stateful = {"body": "hello"}
+
+        with (
+            patch.object(apprise.Apprise, "notify", return_value=True) as notify,
+            override_settings(APPRISE_STATELESS_MODE="disabled"),
+        ):
+            admin_stateless = self.client.post("/notify", stateless, headers=_MASTER)
+            user_stateless = self.client.post(
+                "/notify",
+                stateless,
+                headers={**_USER, "X-Apprise-Config-ID": "access_user"},
+            )
+            admin_stateful = self.client.post(
+                "/notify",
+                stateful,
+                headers={**_MASTER, "X-Apprise-Config-ID": "access_user"},
+            )
+
+        self.assertEqual(admin_stateless.status_code, 403)
+        self.assertEqual(user_stateless.status_code, 403)
+        self.assertEqual(admin_stateful.status_code, 200)
+        notify.assert_called_once()
+
+        with (
+            patch.object(apprise.Apprise, "notify", return_value=True) as notify,
+            override_settings(APPRISE_STATEFUL_MODE="disabled"),
+        ):
+            admin_stateful = self.client.post(
+                "/notify",
+                stateful,
+                headers={**_MASTER, "X-Apprise-Config-ID": "access_user"},
+            )
+            user_stateful = self.client.post(
+                "/notify",
+                stateful,
+                headers={**_USER, "X-Apprise-Config-ID": "access_user"},
+            )
+            admin_stateless = self.client.post("/notify", stateless, headers=_MASTER)
+
+        self.assertEqual(admin_stateful.status_code, 403)
+        self.assertEqual(user_stateful.status_code, 403)
+        self.assertEqual(admin_stateless.status_code, 200)
+        notify.assert_called_once()
+
+    def test_admin_bypasses_config_lock_but_user_does_not(self):
+        """The administrator bypass is limited to configuration policy."""
+        self._seed("access_user", Authentication.ACCESS_USER)
+        with override_settings(APPRISE_CONFIG_LOCK=True):
+            admin = self.client.post("/get/access_user", headers=_MASTER)
+            user = self.client.post("/get/access_user", headers=_USER)
+
+        self.assertEqual(admin.status_code, 200)
+        self.assertEqual(user.status_code, 403)
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_global_config_lock_is_the_minimum_access_policy(self):
+        """Weaker saved modes cannot bypass the site-wide configuration lock."""
+        self._seed("access_user", Authentication.ACCESS_USER)
+        self._seed("access_public", Authentication.ACCESS_PUBLIC, credentials=False)
+        self._seed("access_disabled", Authentication.ACCESS_DISABLED, credentials=False)
+
+        # Directly seeded records model files created before the global lock or
+        # edited by hand. Their stored choice is preserved for a later unlock.
+        self.assertEqual(
+            ConfigCache.get_auth_record("access_user").access,
+            Authentication.ACCESS_USER,
+        )
+        self.assertEqual(
+            ConfigCache.get_auth_record("access_public").access,
+            Authentication.ACCESS_PUBLIC,
+        )
+        self.assertEqual(
+            Authentication.config_state("access_user").access,
+            Authentication.ACCESS_LOCK,
+        )
+        self.assertEqual(
+            Authentication.config_state("access_public").access,
+            Authentication.ACCESS_LOCK,
+        )
+        self.assertEqual(
+            Authentication.config_state("access_disabled").access,
+            Authentication.ACCESS_DISABLED,
+        )
+        self.assertEqual(
+            Authentication.config_state("unused_config").access,
+            Authentication.ACCESS_LOCK,
+        )
+
+        api_state = self.client.get(
+            "/auth/access_user",
+            headers={**_MASTER, "accept": "application/json"},
+        )
+        login = self.client.post(
+            "/login",
+            {"username": "master", "password": "pass"},
+            headers={"accept": "text/html"},
+        )
+        self.assertEqual(login.status_code, 302)
+        editor = self.client.get(
+            "/auth/access_user",
+            headers={"accept": "text/html"},
+        )
+        self.assertEqual(api_state.json()["access"], Authentication.ACCESS_USER)
+        self.assertEqual(api_state.json()["effective_access"], Authentication.ACCESS_LOCK)
+        editor_content = editor.content.decode()
+        self.assertIn('<option value="user" selected', editor_content)
+        self.assertIn('<option value="public"', editor_content)
+        self.assertIn('<option value="locked"', editor_content)
+        self.assertIn('<option value="disabled"', editor_content)
+        self.assertIn('id="auth-access-help"', editor_content)
+        self.assertIn('class="auth-access-table"', editor_content)
+        self.assertIn("Saved user access is currently enforced as locked", editor_content)
+
+        preserved_user = self.client.post(
+            "/auth/access_user",
+            data=dumps({"access": Authentication.ACCESS_USER}),
+            content_type="application/json",
+            headers=_MASTER,
+        )
+        self.assertEqual(preserved_user.status_code, 200)
+        self.assertEqual(
+            ConfigCache.get_auth_record("access_user").access,
+            Authentication.ACCESS_USER,
+        )
+
+        preserved_public = self.client.post(
+            "/auth/access_public",
+            data=dumps({"access": Authentication.ACCESS_PUBLIC}),
+            content_type="application/json",
+            headers=_MASTER,
+        )
+        self.assertEqual(preserved_public.status_code, 200)
+        self.assertEqual(
+            ConfigCache.get_auth_record("access_public").access,
+            Authentication.ACCESS_PUBLIC,
+        )
+
+        # Disabled is stricter than the global lock and remains selectable.
+        disabled = self.client.post(
+            "/auth/access_disabled",
+            data=dumps({"access": Authentication.ACCESS_DISABLED}),
+            content_type="application/json",
+            headers=_MASTER,
+        )
+        self.assertEqual(disabled.status_code, 200)
+
+        with patch.object(apprise.Apprise, "notify", return_value=True) as notify:
+            user_stateful = self.client.post(
+                "/notify/access_user",
+                {"body": "hello", "tag": "known"},
+                headers=_USER,
+            )
+            user_stateless = self.client.post(
+                "/notify",
+                {"urls": "json://remote-target", "body": "hello"},
+                headers={**_USER, "X-Apprise-Config-ID": "access_user"},
+            )
+            public_stateful = self.client.post(
+                "/notify/access_public",
+                {"body": "hello", "tag": "known"},
+            )
+            admin_stateless = self.client.post(
+                "/notify",
+                {"urls": "json://remote-target", "body": "hello"},
+                headers={**_MASTER, "X-Apprise-Config-ID": "access_user"},
+            )
+
+        self.assertEqual(user_stateful.status_code, 200)
+        self.assertEqual(user_stateless.status_code, 403)
+        self.assertEqual(public_stateful.status_code, 401)
+        self.assertEqual(admin_stateless.status_code, 200)
+        self.assertEqual(notify.call_count, 2)
+
+        rotated = self.client.post(
+            "/auth/access_user",
+            data=dumps({"username": "alice", "password": "new-secret"}),
+            content_type="application/json",
+            headers=_USER,
+        )
+        self.assertEqual(rotated.status_code, 200)
+        self.assertEqual(
+            ConfigCache.get_auth_record("access_user").access,
+            Authentication.ACCESS_USER,
+        )
+
+        # The effective policy remains visible even when per-key authentication
+        # is globally disabled and its saved records are otherwise ignored.
+        with override_settings(APPRISE_AUTH_REQUIRED=False):
+            self.assertEqual(
+                Authentication.config_state("access_user").access,
+                Authentication.ACCESS_LOCK,
+            )
+
+        # Removing only the global setting restores each untouched file's mode.
+        with override_settings(APPRISE_CONFIG_LOCK=False):
+            self.assertEqual(
+                Authentication.config_state("access_user").access,
+                Authentication.ACCESS_USER,
+            )
+            self.assertEqual(
+                Authentication.config_state("access_public").access,
+                Authentication.ACCESS_PUBLIC,
+            )
+
+    def test_disabled_access_freezes_user_but_preserves_credentials(self):
+        """An administrator can freeze and later restore an existing account."""
+        self._seed("access_disabled", Authentication.ACCESS_USER)
+        frozen = self.client.post(
+            "/auth/access_disabled",
+            data=dumps({"access": Authentication.ACCESS_DISABLED}),
+            content_type="application/json",
+            headers=_MASTER,
+        )
+        self.assertEqual(frozen.status_code, 200)
+        self.assertTrue(ConfigCache.verify_auth("access_disabled", "alice", "secret"))
+
+        payload = {"urls": "json://remote-target", "body": "hello"}
+        with patch.object(apprise.Apprise, "notify", return_value=True) as notify:
+            stateful_user = self.client.post(
+                "/notify/access_disabled",
+                {"body": "hello", "tag": "known"},
+                headers=_USER,
+            )
+            stateless_user = self.client.post(
+                "/notify",
+                payload,
+                headers={**_USER, "X-Apprise-Config-ID": "access_disabled"},
+            )
+            admin_stateful = self.client.post(
+                "/notify/access_disabled",
+                {"body": "hello"},
+                headers=_MASTER,
+            )
+
+        self.assertEqual(stateful_user.status_code, 403)
+        self.assertEqual(stateless_user.status_code, 403)
+        self.assertEqual(
+            stateless_user.content.decode(),
+            "This configuration has been disabled by an administrator",
+        )
+        self.assertEqual(admin_stateful.status_code, 200)
+        notify.assert_called_once()
+
+        restored = self.client.post(
+            "/auth/access_disabled",
+            data=dumps({"access": Authentication.ACCESS_USER}),
+            content_type="application/json",
+            headers=_MASTER,
+        )
+        self.assertEqual(restored.status_code, 200)
+        self.assertTrue(ConfigCache.verify_auth("access_disabled", "alice", "secret"))
+
+    def test_disabled_access_ends_an_existing_browser_session(self):
+        """Disabled access rejects fresh logins and an existing browser cookie."""
+        self._seed("access_disabled", Authentication.ACCESS_USER)
+        login = self.client.post(
+            "/login",
+            {"username": "alice", "password": "secret", "key": "access_disabled"},
+            headers={"accept": "text/html"},
+        )
+        self.assertEqual(login.status_code, 302)
+
+        frozen = self.client.post(
+            "/auth/access_disabled",
+            data=dumps({"access": Authentication.ACCESS_DISABLED}),
+            content_type="application/json",
+            headers=_MASTER,
+        )
+        self.assertEqual(frozen.status_code, 200)
+
+        existing_session = self.client.get("/details", headers={"accept": "text/html"})
+        self.assertEqual(existing_session.status_code, 302)
+        self.assertTrue(existing_session.url.startswith("/login?"))
+
+        self.client.cookies.clear()
+        rejected_login = self.client.post(
+            "/login",
+            {"username": "alice", "password": "secret", "key": "access_disabled"},
+            headers={"accept": "text/html"},
+        )
+        self.assertEqual(rejected_login.status_code, 401)
+        self.assertEqual(rejected_login.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
+
+        # The lower-level keyed policy remains fail-closed too.
+        request = SimpleNamespace(
+            globally_authenticated=False,
+            apprise_auth_permission=Authentication.ROLE_USER,
+            apprise_web_auth_key="access_disabled",
+        )
+        state = ConfigAuthState(
+            mode=Authentication.MODE_ASSIGNED,
+            access=Authentication.ACCESS_DISABLED,
+        )
+
+        with patch.object(Authentication, "config_state", return_value=state):
+            self.assertFalse(Authentication.key_ok(request, "access_disabled"))
+
+        self.assertEqual(request.apprise_disabled_config_key, "access_disabled")
 
     def test_admin_may_use_all_on_a_public_configuration(self):
         """The administrator remains unrestricted in every access mode."""
@@ -192,6 +597,12 @@ class ConfigAccessViewTests(SimpleTestCase):
         """A locked user keeps account tools while configuration stays hidden."""
         self._seed("access_locked", Authentication.ACCESS_LOCK)
 
+        with patch.object(apprise.Apprise, "notify", return_value=True):
+            stateful = self.client.post(
+                "/notify",
+                {"body": "hello", "tag": "known"},
+                headers={**_USER, "X-Apprise-Config-ID": "access_locked"},
+            )
         health = self.client.get(
             "/status/access_locked",
             headers={**_USER, "accept": "application/json"},
@@ -207,6 +618,7 @@ class ConfigAccessViewTests(SimpleTestCase):
             headers=_USER,
         )
 
+        self.assertEqual(stateful.status_code, 200)
         self.assertEqual(health.status_code, 200)
         self.assertTrue(health.json()["config_lock"])
         self.assertEqual(hidden.status_code, 403)
@@ -230,23 +642,108 @@ class ConfigAccessViewTests(SimpleTestCase):
             Authentication.ACCESS_LOCK,
         )
 
-    def test_locked_user_cannot_change_access(self):
-        """Only an administrator may change the saved access field."""
+    def test_locked_configuration_status_is_relative_to_the_authenticated_caller(self):
+        """Admin status mirrors its real access while a config user stays locked."""
         self._seed("access_locked", Authentication.ACCESS_LOCK)
-        response = self.client.post(
-            "/auth/access_locked",
-            data=dumps(
-                {
-                    "access": Authentication.ACCESS_PUBLIC,
-                    "username": "alice",
-                    "password": "new-secret",
-                }
-            ),
-            content_type="application/json",
-            headers=_USER,
+
+        admin = self.client.get(
+            "/status/access_locked",
+            headers={**_MASTER, "accept": "application/json"},
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.json()["field"], "access")
+        user = self.client.get(
+            "/status/access_locked",
+            headers={**_USER, "accept": "application/json"},
+        )
+
+        self.assertEqual(admin.status_code, 200)
+        self.assertEqual(admin.json()["privilege"], Authentication.ROLE_ADMIN)
+        self.assertFalse(admin.json()["config_lock"])
+        self.assertEqual(
+            self.client.get("/json/urls/access_locked", headers=_MASTER).status_code,
+            200,
+        )
+
+        self.assertEqual(user.status_code, 200)
+        self.assertEqual(user.json()["privilege"], Authentication.ROLE_USER)
+        self.assertTrue(user.json()["config_lock"])
+        self.assertEqual(
+            self.client.get("/json/urls/access_locked", headers=_USER).status_code,
+            403,
+        )
+
+    def test_header_scoped_information_access_matrix(self):
+        """User and locked accounts may inspect service health; disabled accounts may not."""
+        self._seed("access_user", Authentication.ACCESS_USER)
+        self._seed("access_locked", Authentication.ACCESS_LOCK)
+        self._seed("access_disabled", Authentication.ACCESS_DISABLED)
+        json_header = {"accept": "application/json"}
+
+        user = self.client.get(
+            "/status",
+            headers={**_USER, **json_header, "X-Apprise-Config-ID": "access_user"},
+        )
+        locked = self.client.get(
+            "/status",
+            headers={**_USER, **json_header, "X-Apprise-Config-ID": "access_locked"},
+        )
+        locked_details = self.client.get(
+            "/details",
+            headers={**_USER, **json_header, "X-Apprise-Config-ID": "access_locked"},
+        )
+        disabled = self.client.get(
+            "/status",
+            headers={**_USER, **json_header, "X-Apprise-Config-ID": "access_disabled"},
+        )
+        missing_scope = self.client.get("/status", headers={**_USER, **json_header})
+        wrong_scope = self.client.get(
+            "/status",
+            headers={**_USER, **json_header, "X-Apprise-Config-ID": "unknown_config"},
+        )
+        malformed_scope = self.client.get(
+            "/status",
+            headers={**_USER, **json_header, "X-Apprise-Config-ID": "not valid!"},
+        )
+        admin = self.client.get("/status", headers={**_MASTER, **json_header})
+        admin_with_scope = self.client.get(
+            "/status",
+            headers={**_MASTER, **json_header, "X-Apprise-Config-ID": "access_disabled"},
+        )
+
+        self.assertEqual(user.status_code, 200)
+        self.assertEqual(user.json()["privilege"], Authentication.ROLE_USER)
+        self.assertFalse(user.json()["config_lock"])
+        self.assertEqual(locked.status_code, 200)
+        self.assertEqual(locked.json()["privilege"], Authentication.ROLE_USER)
+        self.assertTrue(locked.json()["config_lock"])
+        self.assertEqual(locked_details.status_code, 200)
+        self.assertEqual(disabled.status_code, 403)
+        self.assertEqual(missing_scope.status_code, 401)
+        self.assertEqual(wrong_scope.status_code, 401)
+        self.assertEqual(malformed_scope.status_code, 400)
+        self.assertEqual(admin.status_code, 200)
+        self.assertEqual(admin.json()["privilege"], Authentication.ROLE_ADMIN)
+        self.assertEqual(admin_with_scope.status_code, 200)
+        self.assertEqual(admin_with_scope.json()["privilege"], Authentication.ROLE_ADMIN)
+
+    def test_locked_user_cannot_change_access(self):
+        """Only an administrator may submit the saved access field."""
+        self._seed("access_locked", Authentication.ACCESS_LOCK)
+        for access in (Authentication.ACCESS_LOCK, Authentication.ACCESS_PUBLIC):
+            with self.subTest(access=access):
+                response = self.client.post(
+                    "/auth/access_locked",
+                    data=dumps(
+                        {
+                            "access": access,
+                            "username": "alice",
+                            "password": "new-secret",
+                        }
+                    ),
+                    content_type="application/json",
+                    headers=_USER,
+                )
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.json()["field"], "access")
         self.assertEqual(ConfigCache.get_auth_record("access_locked").access, Authentication.ACCESS_LOCK)
 
     def test_user_health_reports_unlocked_configuration(self):
@@ -290,8 +787,8 @@ class ConfigAccessStorageTests(SimpleTestCase):
         self.assertTrue(store.verify_auth("record", "", " secret "))
         self.assertFalse(store.verify_auth("record", "", "secret"))
 
-    def test_public_policy_may_exist_without_credentials(self):
-        """Only public access can be stored without a login."""
+    def test_public_and_disabled_policy_may_exist_without_credentials(self):
+        """Only public and disabled access can be stored without a login."""
         store = AppriseConfigCache("/tmp/apprise-public-record", mode=AppriseStoreMode.SIMPLE)
         self.addCleanup(store.clear_auth, "record")
 
@@ -301,6 +798,9 @@ class ConfigAccessStorageTests(SimpleTestCase):
         self.assertTrue(store.set_access("record", Authentication.ACCESS_PUBLIC))
         self.assertFalse(store.set_access("record", Authentication.ACCESS_LOCK))
         self.assertFalse(store.verify_auth("record", "", "secret"))
+
+        self.assertTrue(store.set_access("record", Authentication.ACCESS_DISABLED))
+        self.assertEqual(store.get_auth_record("record").access, Authentication.ACCESS_DISABLED)
 
         # Credentials allow safe transitions between all three modes.
         self.assertTrue(store.set_auth("record", "alice", "secret"))

@@ -32,7 +32,7 @@ from django.test.utils import override_settings
 class ErrorTests(SimpleTestCase):
     def test_accept_selects_response_format(self):
         """Error responses use Accept instead of request Content-Type."""
-        for url in ("/_/401", "/_/404", "/_/421", "/_/429", "/_/50x"):
+        for url in ("/_/401", "/_/403", "/_/404", "/_/421", "/_/429", "/_/50x"):
             with self.subTest(url=url):
                 response = self.client.get(
                     url,
@@ -65,6 +65,10 @@ class ErrorTests(SimpleTestCase):
         assert response["WWW-Authenticate"] == 'Basic realm="Apprise API"'
         assert b"Authentication Required" in response.content
 
+        response = self.client.get("/_/403", HTTP_ACCEPT="text/html")
+        assert response.status_code == 403
+        assert b"Permission Denied" in response.content
+
         response = self.client.get("/_/429", HTTP_ACCEPT="text/html")
         assert response.status_code == 429
         assert response["Retry-After"] == "60"
@@ -73,20 +77,39 @@ class ErrorTests(SimpleTestCase):
     def test_nginx_maps_auth_error_pages(self):
         """Nginx keeps local pages while preserving Django auth responses."""
         etc_dir = Path(__file__).resolve().parents[2] / "etc"
+        error_pages = (
+            "error_page 401 = /_/401/;",
+            "error_page 403 = /_/403/;",
+            "error_page 404 = /_/404/;",
+            "error_page 421 = /_/421/;",
+            "error_page 429 = /_/429/;",
+            "error_page 500 = /_/50x/;",
+            "error_page 502 503 504 /50x.html;",
+        )
         for filename in ("nginx.conf", "nginx-strict.conf"):
             config = (etc_dir / filename).read_text(encoding="utf-8")
             with self.subTest(filename=filename):
-                assert "error_page 401 = /_/401/;" in config
-                assert "error_page 429 = /_/429/;" in config
+                for error_page in error_pages:
+                    assert error_page in config
                 assert "proxy_intercept_errors off;" in config
+                assert "proxy_set_header X-Original-URI $request_uri;" in config
+                assert "proxy_set_header X-Original-Method $request_method;" in config
+                assert "location = /50x.html {" in config
+                assert "root /usr/share/nginx/html/s;" in config
                 assert 'location ~ "^/login/?$"' in config
                 assert "limit_req_status 429;" in config
                 assert "proxy_set_header X-Real-IP $remote_addr;" in config
                 assert "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
+                assert 'location ~ "^/notify/?$"' in config
+                assert 'location ~ "^/cfg/?$"' in config
                 assert 'location ~ "^/cfg/([\\w_-]{{1,{}}}|@)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
                 assert (
                     'location ~ "^/(status(/([\\w_-]{{1,{}}}|@))?|metrics)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
                 )
+
+        fallback = Path(__file__).resolve().parents[2] / "static" / "50x.html"
+        assert fallback.is_file()
+        assert "Service Temporarily Unavailable" in fallback.read_text(encoding="utf-8")
 
         strict = (etc_dir / "nginx-strict.conf").read_text(encoding="utf-8")
         regular = (etc_dir / "nginx.conf").read_text(encoding="utf-8")
@@ -111,6 +134,11 @@ class ErrorTests(SimpleTestCase):
         """
         response = self.client.get("/_/404")
         assert response.status_code == 404
+
+    def test_get_403(self):
+        """The permission page returns the forbidden status."""
+        response = self.client.get("/_/403")
+        assert response.status_code == 403
 
     def test_get_421(self):
         """

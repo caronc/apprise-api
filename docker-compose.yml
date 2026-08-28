@@ -1,10 +1,12 @@
 services:
+  # This example runs the published image with one easy-to-inspect worker.
   apprise:
     image: caronc/apprise:latest
     container_name: apprise
     ports:
       - "8000:8000"
     environment:
+      # Environment values are strings even when they resemble booleans.
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
       APPRISE_ADMIN: "y"
@@ -12,6 +14,7 @@ services:
       TZ: America/Toronto
 
     volumes:
+      # Keep user configuration and attachments outside the container layer.
       - ./config:/config
       - ./plugin:/plugin
       - ./attach:/attach
