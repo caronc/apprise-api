@@ -17,31 +17,10 @@
         {% include 'icons/lock.svg' %}
       </span>
     </a>
-    <span class="config-id-label">{% trans "Config ID" %}</span>
-    <span class="config-id-wrapper">
-      <code id="page-config-id"
-            class="config-id is-concealed"
-            data-config-id-value="{{ key }}"
-            aria-label="{% trans "Config ID hidden" %}">••••••••</code>
-      <button type="button"
-              class="btn-flat btn-small config-id-visibility"
-              data-config-id-toggle
-              aria-controls="page-config-id"
-              aria-pressed="false"
-              aria-label="{% trans "Show Config ID" %}"
-              title="{% trans "Show Config ID" %}"
-              data-show-label="{% trans "Show Config ID" %}"
-              data-hide-label="{% trans "Hide Config ID" %}">
-        <i class="material-icons" aria-hidden="true">visibility_off</i>
-      </button>
-      <button type="button"
-              class="btn-flat btn-small config-id-copy"
-              data-config-id-copy="{{ key }}"
-              title="{% trans "Copy Config ID to Clipboard" %}">
-        <i class="material-icons" aria-hidden="true">content_copy</i>
-      </button>
-    </span>
+    {% include 'components/config_id_selector.html' with config_id_next='auth_current' %}
   </div>
+  {% include 'components/config_id_mismatch_notice.html' %}
+
   <div class="section auth-page">
     <div class="auth-page-heading">
       <div>

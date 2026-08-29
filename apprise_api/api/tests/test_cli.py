@@ -79,3 +79,17 @@ class CommandTests(SimpleTestCase):
         self.assertIn("autorestart=true", supervisor)
         self.assertIn("stopasgroup=true", supervisor)
         self.assertIn("killasgroup=true", supervisor)
+
+    def test_container_selects_nginx_without_rewriting_packaged_files(self):
+        """Normal and strict mode render Supervisor configuration in /tmp."""
+        package_dir = Path(__file__).resolve().parents[2]
+        startup = package_dir / "supervisord-startup"
+        content = startup.read_text()
+
+        subprocess.run(["bash", "-n", startup], check=True)
+        self.assertIn('RUNTIME_SUPERVISORD_CONF="/tmp/apprise/supervisord.conf"', content)
+        self.assertIn("nginx-strict\\.conf|${NGINX_CONF}|g", content)
+        self.assertIn("nginx\\.conf|${NGINX_CONF}|g", content)
+        self.assertIn('"$SUPERVISORD_CONF" > "$RUNTIME_SUPERVISORD_CONF"', content)
+        self.assertIn('SUPERVISORD_CONF="$RUNTIME_SUPERVISORD_CONF"', content)
+        self.assertNotIn('sed -i -e "s/nginx\\.conf/nginx-strict.conf/g"', content)

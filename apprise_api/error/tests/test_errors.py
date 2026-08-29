@@ -32,7 +32,7 @@ from django.test.utils import override_settings
 class ErrorTests(SimpleTestCase):
     def test_accept_selects_response_format(self):
         """Error responses use Accept instead of request Content-Type."""
-        for url in ("/_/401", "/_/403", "/_/404", "/_/421", "/_/429", "/_/50x"):
+        for url in ("/_/401", "/_/403", "/_/404", "/_/405", "/_/421", "/_/429", "/_/50x"):
             with self.subTest(url=url):
                 response = self.client.get(
                     url,
@@ -69,6 +69,11 @@ class ErrorTests(SimpleTestCase):
         assert response.status_code == 403
         assert b"Permission Denied" in response.content
 
+        response = self.client.get("/_/405", HTTP_ACCEPT="text/html")
+        assert response.status_code == 405
+        assert response["Allow"] == "GET, HEAD"
+        assert b"Method Not Allowed" in response.content
+
         response = self.client.get("/_/429", HTTP_ACCEPT="text/html")
         assert response.status_code == 429
         assert response["Retry-After"] == "60"
@@ -81,6 +86,7 @@ class ErrorTests(SimpleTestCase):
             "error_page 401 = /_/401/;",
             "error_page 403 = /_/403/;",
             "error_page 404 = /_/404/;",
+            "error_page 405 = /_/405/;",
             "error_page 421 = /_/421/;",
             "error_page 429 = /_/429/;",
             "error_page 500 = /_/50x/;",
@@ -98,6 +104,14 @@ class ErrorTests(SimpleTestCase):
                 assert "root /usr/share/nginx/html/s;" in config
                 assert 'location ~ "^/login/?$"' in config
                 assert "limit_req_status 429;" in config
+                assert 'map "$uri:$status" $apprise_access_loggable {' in config
+                assert "access_log /dev/stdout combined if=$apprise_access_loggable;" in config
+                assert "map $status $apprise_retry_after {" in config
+                assert "proxy_hide_header Retry-After;" in config
+                assert "add_header Retry-After $apprise_retry_after always;" in config
+                assert config.count("access_log off;") == 1
+                assert config.count('add_header Allow "GET, HEAD" always;') == 3
+                assert "if ($request_method !~ ^(GET|HEAD)$)" in config
                 assert "proxy_set_header X-Real-IP $remote_addr;" in config
                 assert "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
                 assert 'location ~ "^/notify/?$"' in config
@@ -120,7 +134,19 @@ class ErrorTests(SimpleTestCase):
         assert "zone=key_auth:10m" not in regular
         assert 'location ~ "^/logout/?$"' in strict
         assert 'location ~ "^/auth(/([\\w_-]{{1,{}}}|@))?/?$"'.format(CONFIG_KEY_MAX_LENGTH) in strict
-        assert "if ($request_method !~ ^(GET|POST|DELETE)$)" in strict
+        assert "return 444;" not in strict
+        assert "return 404;" in strict
+
+        for config in (strict, regular):
+            assert "status(?:/.*)?|metrics|favicon\\.ico|robots\\.txt" in config
+
+    def test_method_rejections_include_allowed_methods(self):
+        """Django supplies standards-based 405 responses for known routes."""
+        for path, allowed in (("/notify", "POST"), ("/status", "GET"), ("/add/test", "POST")):
+            with self.subTest(path=path):
+                response = self.client.put(path)
+                assert response.status_code == 405
+                assert allowed in response["Allow"].split(", ")
 
     def test_get_401(self):
         """The static authentication page includes its challenge header."""
@@ -140,6 +166,21 @@ class ErrorTests(SimpleTestCase):
         response = self.client.get("/_/403")
         assert response.status_code == 403
 
+    def test_get_405(self):
+        """The method page preserves request details and allowed methods."""
+        response = self.client.get(
+            "/_/405",
+            HTTP_ACCEPT="text/html",
+            HTTP_X_ORIGINAL_URI="/robots.txt",
+            HTTP_X_ORIGINAL_METHOD="POST",
+            HTTP_X_REAL_IP="192.0.2.1",
+        )
+        assert response.status_code == 405
+        assert response["Allow"] == "GET, HEAD"
+        assert b"POST" in response.content
+        assert b"/robots.txt" in response.content
+        assert b"192.0.2.1" in response.content
+
     def test_get_421(self):
         """
         Test 421
@@ -152,6 +193,7 @@ class ErrorTests(SimpleTestCase):
         response = self.client.get("/_/429")
         assert response.status_code == 429
         assert response["Retry-After"] == "60"
+        assert response["Cache-Control"] == "no-store"
 
     def test_get_50x(self):
         """

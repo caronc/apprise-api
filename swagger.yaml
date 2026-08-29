@@ -11,8 +11,8 @@ info:
     send tagged stateful notifications without credentials. Disabled access
     freezes configuration-user access without removing saved data. An
     administrator bypasses per-configuration policy, but never a globally
-    disabled stateful or stateless mode. Repeated login changes may return 429
-    with a Retry-After header.
+    disabled stateful or stateless mode. Packaged nginx deployments may return
+    429 with Retry-After when a route is rate-limited.
   version: 1.5.2
 
 servers:
@@ -172,6 +172,25 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
+  /metrics:
+    get:
+      operationId: Meta_GetMetrics
+      summary: Returns Prometheus metrics.
+      description: Packaged nginx deployments rate-limit frequent metric probes.
+      tags:
+        - Meta
+      responses:
+        '200':
+          description: Prometheus metrics retrieved.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized when global authentication is enabled.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
   /details:
     get:
       operationId: Meta_GetDetails
@@ -216,6 +235,10 @@ paths:
             text/html:
               schema:
                 type: string
+        '401':
+          description: Unauthorized when authentication requirements were not met.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /notify:
     post:
@@ -1209,13 +1232,20 @@ components:
     TooManyRequests:
       description: >
         Too Many Requests -- the reverse proxy has temporarily limited this
-        request. Both packaged configurations limit health checks; strict mode
-        also limits login changes and protected routes.
+        request. Both packaged configurations limit health and metrics checks;
+        strict mode also limits login changes and protected routes. Packaged
+        responses use a 60-second delay and are not cacheable.
       headers:
         Retry-After:
           schema:
             type: integer
-          description: Seconds to wait before retrying.
+            example: 60
+          description: Suggested seconds to wait before retrying.
+        Cache-Control:
+          schema:
+            type: string
+            example: no-store
+          description: Prevents a rate-limit response from being cached.
 
   parameters:
     key:

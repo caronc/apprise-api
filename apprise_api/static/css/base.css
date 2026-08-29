@@ -1622,6 +1622,7 @@ body .tabs .tab.disabled a:hover i {
 #url-list .copy-url-btn,
 .config-id-visibility.btn-flat,
 .config-id-apply.btn-flat,
+.config-id-revert.btn-flat,
 .config-id-randomize.btn-flat,
 .config-id-copy.btn-flat,
 .config-list-move.btn-flat,
@@ -1642,6 +1643,7 @@ body .tabs .tab.disabled a:hover i {
 #url-list .copy-url-btn .material-icons,
 .config-id-visibility.btn-flat .material-icons,
 .config-id-apply.btn-flat .material-icons,
+.config-id-revert.btn-flat .material-icons,
 .config-id-copy.btn-flat .material-icons,
 .config-list-move.btn-flat .material-icons,
 .config-list-delete.btn-flat .material-icons,
@@ -1696,8 +1698,70 @@ body .tabs .tab.disabled a:hover i {
   color: #f29f3d;
 }
 
-.config-id-apply.btn-flat[hidden] {
+.config-id-revert.btn-flat {
+  color: #d9822b;
+}
+
+.config-id-apply.btn-flat[hidden],
+.config-id-revert.btn-flat[hidden] {
   display: none;
+}
+
+.config-id-mismatch-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.35rem 0 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid;
+  border-radius: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.config-id-mismatch-notice[hidden] {
+  display: none;
+}
+
+.config-id-mismatch-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.config-id-mismatch-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  stroke: currentColor;
+  fill: none;
+}
+
+.config-id-mismatch-title {
+  font-weight: 700;
+}
+
+.config-id-mismatch-action.btn-flat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin: 0 0.12rem;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: inherit;
+  line-height: 1.35rem;
+  vertical-align: middle;
+}
+
+.config-id-mismatch-action.btn-flat i.material-icons {
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 .config-id-randomize.btn-flat span,

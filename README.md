@@ -525,17 +525,29 @@ data: {"status": "SUCCESS"}
 
 ### API Response Codes
 
-|  HTTP Code | Name                  | Effect                         |
-| ---------- | --------------------- | ------------------------------ |
-| 200        | ok                    | Notification was sent
-| 204        | no content            | There was no configuration (or it was empty) found by the specified `{KEY}`
-| 400        | bad request           | Your API call did not conform to what was documented here
-| 405        | method not accepted   | Your API call identified an action that has been disabled due to the Server configuration (such as a `apprise://` `APPRISE_RECURSION_MAX` being exceeded).
-| 421        | misdirected request   | This is the value returned by any web requests made to the general website if `APPRISE_API_ONLY` is set to `yes`.  Otherwise this return value is not used.
-| 424        | failed dependency     | At least one notification could not be sent.  This can be due to<br/> - Not all notifications intended to be actioned could follow through (due to upstream failures).<br/>You didn't idenify a tag associated with what was defined in your configuration.<br/>The tag(s) you specified do not match with those defined in your configuration.
-| 429        | too many requests     | The reverse proxy temporarily limited the request. Wait for the `Retry-After` value before retrying.
-| 431        | fields too large      | This can happen if you're payload is larger then 3MB (default value).  See `APPRISE_UPLOAD_MAX_MEMORY_SIZE` to adjust this.
-| 500        | internal server error | This can occur if there was an issue saving your configuration to disk (usually the cause of permission issues).
+| HTTP Code | Name                            | Effect |
+| --------- | ------------------------------- | ------ |
+| 200       | OK                              | The request succeeded. |
+| 204       | No Content                      | The requested configuration was absent or empty, or a stateless request had no valid URLs. |
+| 302       | Found                           | The Web interface redirected the browser after a login, logout, or configuration selection. |
+| 400       | Bad Request                     | The request contained an invalid key, payload, field, format, tag, or recursion header. |
+| 401       | Unauthorized                    | Required Basic Auth credentials were missing or invalid. |
+| 403       | Forbidden                       | The server mode or caller's access level denied the operation. |
+| 404       | Not Found                       | The route or requested configuration does not exist. Strict mode returns this for unknown routes. |
+| 405       | Method Not Allowed              | The route does not support the request method. See the response's `Allow` header. |
+| 406       | Not Acceptable                  | A recursion limit or another server rule rejected the operation. |
+| 409       | Conflict                        | A configuration move targeted an existing Config ID. |
+| 413       | Content Too Large               | Nginx rejected a body larger than the route or server upload limit. |
+| 414       | URI Too Long                    | Nginx rejected a request target that was too long. |
+| 417       | Expectation Failed              | The health check found a blocking configuration or permission problem. |
+| 421       | Misdirected Request             | A Web interface page was requested while `APPRISE_API_ONLY=yes`. |
+| 424       | Failed Dependency               | At least one notification failed, no requested tag matched, or the configuration store could not complete a dependent operation. |
+| 429       | Too Many Requests               | Nginx temporarily rate-limited the request. Packaged deployments return `Retry-After: 60`. |
+| 431       | Request Header Fields Too Large | Django rejected a JSON payload above `APPRISE_UPLOAD_MAX_MEMORY_SIZE`. |
+| 500       | Internal Server Error           | The server could not save or load data, or encountered an unexpected I/O error. |
+| 502       | Bad Gateway                     | Nginx could not obtain a valid response from the application worker. |
+| 503       | Service Unavailable             | The application worker is temporarily unavailable. |
+| 504       | Gateway Timeout                 | The application worker did not respond before the proxy timeout. |
 
 
 ### API Notes
@@ -557,7 +569,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6). If `IPV6_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6). If `IPV4_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
 | `HTTP_PORT` | Force the default listening port to be something other than `8000` within the Docker container.
-| `STRICT_MODE` | Applicable only to container deployments; if this is set to `yes`, the NginX instance will not return content on any invalid or unsupported request.  This is incredibly useful for those hosting Apprise publicly and pairs nicely with fail2ban.  By default, the system does not operate in this strict mode.
+| `STRICT_MODE` | Applicable only to container deployments. Set this to `yes` to allow only known Apprise routes and add tighter authentication rate limits. Unknown routes return `404`, unsupported methods return `405`, and rate-limited requests return `429`, allowing reverse proxies and other security tooling to handle them reliably. The default is `no`.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided. The values are case-insensitive, and `l` or `d` may be used as shorthand. The theme can be toggled from within the website as well.
 | `APPRISE_DEFAULT_CONFIG_ID` | Defaults to `apprise`.   This is the presumed configuration ID you always default to when accessing the configuration manager via the website.
 | `APPRISE_CONFIG_DIR` | Defines an (optional) persistent store location of all configuration files saved. By default:<br/> - Configuration is written to the `apprise_api/var/config` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/config`.
@@ -578,7 +590,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_STREAM_DISK_SIZE` | Temporary disk allowance for each live stream and, separately, each completed result, in MB. The default is `256`. Set it to `0` to disable temporary disk storage and keep result logs in memory. Live streams also remain in memory when the memory size is greater than `0`; when both sizes are `0`, live-stream backlog retention is disabled.
 | `APPRISE_STREAM_WORKER_COUNT` | Active live notification workers per Gunicorn worker process, including work continuing after a client disconnects. Additional streams remain connected and queue until a worker becomes available. Defaults to `4`, making the effective server-wide default `APPRISE_WORKER_COUNT * 4`.
 | `APPRISE_STATELESS_URLS` | For a non-persistent solution, you can take advantage of this global variable. Use this to define a default set of Apprise URLs to notify when using API calls to `/notify`.  If no `{KEY}` is defined when calling `/notify` then the URLs defined here are used instead. By default, nothing is defined for this variable.
-| `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.<br/>Values are case-insensitive. Since each mode has a unique first letter, `h`, `s`, and `d` are accepted as shorthand; a longer value with the correct first letter is normalized to the matching mode.
+| `APPRISE_STATEFUL_MODE` | This can be set to the following possible modes:<br/>📌 **hash**: This is also the default.  It stores the server configuration in a hash formatted that can be easily indexed and compressed.<br/>📌 **simple**: Configuration is written straight to disk using the `{KEY}.cfg` (if `TEXT` based) and `{KEY}.yml` (if `YAML` based).<br/>📌 **disabled**: Straight up deny any read/write queries to the servers stateful store.  Effectively turn off the Apprise Stateful feature completely.<br/>Values are case-insensitive.
 | `APPRISE_STATELESS_MODE` | Controls stateless `/notify` calls:<br/>📌 **enabled**: Accept stateless notifications. This is the default.<br/>📌 **disabled**: Reject stateless notifications. If stateful mode is also disabled, `/status` reports `degraded`.
 | `APPRISE_CONFIG_LOCK` | Hides configuration content and management from regular users. An authenticated administrator retains full access. Without authentication, management operations are denied. Stateful and stateless notifications continue to work normally, including optional stateful tag selection. Defaults to `no`.
 | `APPRISE_AUTH_REQUIRED` | Enables built-in authentication when set to `yes`. Defaults to `no`. When disabled, `APPRISE_USER`, `APPRISE_PASSWORD`, and saved configuration logins are ignored. See [Authentication](#authentication).
@@ -629,7 +641,7 @@ docker run --name apprise \
    caronc/apprise:latest
 ```
 
-| Mode | Settings | Result |
+| Mode | Settings | Description |
 | --- | --- | --- |
 | Disabled | `APPRISE_AUTH_REQUIRED=no` | Requests remain open. Administrator settings and saved configuration logins are ignored. |
 | Administrator enabled | `APPRISE_AUTH_REQUIRED=yes` with `APPRISE_PASSWORD` | The administrator can access every key and manage configuration logins. `APPRISE_USER` is optional. |

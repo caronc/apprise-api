@@ -21,52 +21,10 @@
           </span>
         </span>
       {% endif %}
-      <form id="config-id-select-form"
-            class="config-id-select-form"
-            action="{% url 'config_current' %}"
-            method="post"
-            novalidate>
-        <span class="config-id-label">{% trans "Config ID" %}</span>
-        <span class="config-id-wrapper">
-          <input id="page-config-id"
-                 class="config-id-input"
-                 type="password"
-                 name="key"
-                 value="{{ key }}"
-                 maxlength="{{ CONFIG_KEY_MAX_LENGTH }}"
-                 autocomplete="off"
-                 autocapitalize="none"
-                 spellcheck="false"
-                 data-current-config-id="{{ key }}"
-                 aria-label="{% trans "Config ID" %}" />
-          <button type="button"
-                  class="btn-flat btn-small config-id-visibility"
-                  tabindex="-1"
-                  data-value-toggle
-                  aria-controls="page-config-id"
-                  aria-label="{% trans "Show Config ID" %}"
-                  title="{% trans "Show Config ID" %}"
-                  data-show-label="{% trans "Show Config ID" %}"
-                  data-hide-label="{% trans "Hide Config ID" %}">
-            <i class="material-icons" aria-hidden="true">visibility_off</i>
-          </button>
-          <button type="submit"
-                  class="btn-flat btn-small config-id-apply"
-                  aria-label="{% trans "Open Config ID" %}"
-                  title="{% trans "Open Config ID" %}"
-                  hidden>
-            <i class="material-icons" aria-hidden="true">check_circle</i>
-          </button>
-          <button type="button"
-                  class="btn-flat btn-small config-id-copy"
-                  tabindex="-1"
-                  data-config-id-copy="{{ key }}"
-                  title="{% trans "Copy Config ID to Clipboard" %}">
-            <i class="material-icons" aria-hidden="true">content_copy</i>
-          </button>
-        </span>
-      </form>
+      {% include 'components/config_id_selector.html' with config_id_next='config_current' %}
     </div>
+    {% include 'components/config_id_mismatch_notice.html' %}
+
     <div class="row">
       <div class="col s12">
         <ul class="tabs config-overview">

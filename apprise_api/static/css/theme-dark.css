@@ -644,6 +644,23 @@ input.config-id-input {
   border-radius: 0.3rem;
 }
 
+input.config-id-input.is-mismatched {
+  color: #ffe6ad !important;
+  background-color: #3b3018 !important;
+  border-color: #f2b84b !important;
+}
+
+.config-id-mismatch-notice {
+  color: #ffbf6b;
+  background-color: #3b3018;
+  border-color: #c88d2a;
+}
+
+.config-id-mismatch-icon,
+.config-id-mismatch-title {
+  color: inherit;
+}
+
 .config-auth-link,
 .auth-account,
 .auth-logout-link {

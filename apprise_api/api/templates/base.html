@@ -532,23 +532,43 @@
     return window.fetch(input, Object.assign({}, options, {headers: headers}));
   }
 
+  // Keep every concealed input and its accessibility labels synchronized.
+  function appriseSetValueVisibility(input, toggle, show, focusInput) {
+    const label = show ? toggle.dataset.hideLabel : toggle.dataset.showLabel;
+    input.type = show ? 'text' : 'password';
+    // The icon describes the current state: crossed out while hidden and open
+    // while the value is visible.
+    toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';
+    toggle.setAttribute('aria-label', label);
+    toggle.title = label;
+    if (focusInput) {
+      input.focus();
+    }
+  }
+
   // Use one accessible show/hide control for all concealed fields.
   function appriseWireValueToggles(root) {
     root.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
+      // Record an intentional visibility choice before clicking the button
+      // causes a focused Config ID field to blur.
+      toggle.addEventListener('pointerdown', function() {
+        const input = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (input && input.classList.contains('config-id-input')) {
+          input.dataset.visibilityExplicit = 'true';
+        }
+      });
       toggle.addEventListener('click', function() {
         const input = document.getElementById(toggle.getAttribute('aria-controls'));
         if (!input) {
           return;
         }
-        const showing = input.type === 'text';
-        const label = showing ? toggle.dataset.showLabel : toggle.dataset.hideLabel;
-        input.type = showing ? 'password' : 'text';
-        // The icon describes the resulting state: crossed out while hidden,
-        // and open while the value is visible.
-        toggle.querySelector('i').textContent = showing ? 'visibility_off' : 'visibility';
-        toggle.setAttribute('aria-label', label);
-        toggle.title = label;
-        input.focus();
+        const show = input.type !== 'text';
+        appriseSetValueVisibility(
+          input,
+          toggle,
+          show,
+          !input.classList.contains('config-id-input')
+        );
       });
     });
   }
@@ -594,7 +614,7 @@
   appriseWireConfigIdCopy(document);
 
   // Submit a Config ID as form data so it never appears in the address bar.
-  function apprisePostConfigId(configId) {
+  function apprisePostConfigId(configId, nextName) {
     const form = document.createElement('form');
     form.method = 'post';
     form.action = '{% url "config_current" %}';
@@ -603,6 +623,10 @@
     field.name = 'key';
     field.value = configId;
     form.appendChild(field);
+    const nextField = document.createElement('input');
+    nextField.name = 'next';
+    nextField.value = nextName;
+    form.appendChild(nextField);
     document.body.appendChild(form);
     form.submit();
   }
@@ -611,7 +635,7 @@
     return /^[-\w]{1,{{ CONFIG_KEY_MAX_LENGTH }}}$/u.test(configId);
   }
 
-  function appriseConfirmConfigSelection(configId) {
+  function appriseConfirmConfigSelection(configId, nextName, explicitBase, useCookieAlias) {
     if (!appriseValidConfigId(configId)) {
       appriseShowStatusToast(
         '{% trans "Enter a valid Config ID before continuing." %}',
@@ -629,7 +653,12 @@
       cancelButtonText: '{% trans "Cancel" %}'
     }).then(function(result) {
       if (result.isConfirmed) {
-        apprisePostConfigId(configId);
+        if (useCookieAlias) {
+          apprisePostConfigId(configId, nextName);
+        } else {
+          // Cookie-free Basic Auth sessions continue with an explicit keyed URL.
+          window.location.assign(explicitBase + encodeURIComponent(configId));
+        }
       }
     });
   }
@@ -638,18 +667,66 @@
   if (configIdSelectForm) {
     const configIdInput = configIdSelectForm.querySelector('[name="key"]');
     const configIdApply = configIdSelectForm.querySelector('.config-id-apply');
+    const configIdRevert = configIdSelectForm.querySelector('.config-id-revert');
+    const configIdVisibility = configIdSelectForm.querySelector('.config-id-visibility');
+    const mismatchNotice = document.querySelector('#config-id-mismatch-notice');
+    const mismatchApply = mismatchNotice.querySelector('[data-config-id-notice-apply]');
+    const mismatchRevert = mismatchNotice.querySelector('[data-config-id-notice-revert]');
+    const nextName = configIdSelectForm.querySelector('[name="next"]').value;
+    const explicitBase = configIdSelectForm.dataset.explicitConfigBase;
+    const useCookieAlias = configIdSelectForm.dataset.cookieConfigUrls === 'true';
     const originalConfigId = configIdInput.dataset.currentConfigId;
-    const updateConfigIdApply = function() {
-      configIdApply.hidden = configIdInput.value.trim() === originalConfigId;
+    let restoreConcealment = false;
+    let mismatchShown = false;
+
+    const updateConfigIdState = function() {
+      const changed = configIdInput.value.trim() !== originalConfigId;
+      configIdApply.hidden = !changed;
+      configIdRevert.hidden = !changed;
+      configIdInput.classList.toggle('is-mismatched', changed && mismatchShown);
+      mismatchNotice.hidden = !(changed && mismatchShown);
+      if (!changed) {
+        mismatchShown = false;
+      }
     };
-    configIdInput.addEventListener('input', updateConfigIdApply);
+
+    configIdInput.addEventListener('focus', function() {
+      restoreConcealment = configIdInput.type === 'password';
+      configIdInput.dataset.visibilityExplicit = 'false';
+      if (restoreConcealment) {
+        appriseSetValueVisibility(configIdInput, configIdVisibility, true, false);
+      }
+    });
+    configIdInput.addEventListener('input', updateConfigIdState);
+    configIdInput.addEventListener('blur', function() {
+      if (restoreConcealment && configIdInput.dataset.visibilityExplicit !== 'true') {
+        appriseSetValueVisibility(configIdInput, configIdVisibility, false, false);
+      }
+      if (configIdInput.value.trim() !== originalConfigId) {
+        mismatchShown = true;
+      }
+      updateConfigIdState();
+    });
+    configIdRevert.addEventListener('click', function() {
+      configIdInput.value = originalConfigId;
+      mismatchShown = false;
+      updateConfigIdState();
+    });
+    // The compact warning actions delegate to the primary controls above.
+    mismatchApply.addEventListener('click', function() {
+      configIdApply.click();
+    });
+    mismatchRevert.addEventListener('click', function() {
+      configIdRevert.click();
+    });
     configIdSelectForm.addEventListener('submit', function(event) {
       event.preventDefault();
       const configId = configIdInput.value.trim();
       if (configId !== originalConfigId) {
-        appriseConfirmConfigSelection(configId);
+        appriseConfirmConfigSelection(configId, nextName, explicitBase, useCookieAlias);
       }
     });
+    updateConfigIdState();
   }
 
 {% block jsfooter %}

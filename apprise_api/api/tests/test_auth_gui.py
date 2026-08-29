@@ -117,8 +117,19 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Configuration Login", content)
         self.assertIn("config-auth-status is-unassigned", content)
         self.assertLess(content.index("config-auth-status"), content.index("config-id-label"))
-        self.assertIn('class="config-id is-concealed"', content)
-        self.assertIn("data-config-id-toggle", content)
+        self.assertIn('class="config-id-input"', content)
+        self.assertIn('data-current-config-id="auth_gui_key"', content)
+        self.assertIn('value="auth_current"', content)
+        self.assertIn('data-explicit-config-base="/auth/"', content)
+        self.assertIn('class="btn-flat btn-small config-id-apply"', content)
+        self.assertIn('class="btn-flat btn-small config-id-revert"', content)
+        self.assertIn('id="config-id-mismatch-notice"', content)
+        self.assertIn('class="config-id-mismatch-icon"', content)
+        self.assertIn("Changed Config ID Not Applied", content)
+        self.assertIn("not the configuration currently being managed", content)
+        self.assertIn("data-config-id-notice-apply", content)
+        self.assertIn("data-config-id-notice-revert", content)
+        self.assertIn("data-value-toggle", content)
         self.assertIn('data-config-id-copy="auth_gui_key"', content)
         self.assertIn("auth-tools-card", content)
         self.assertIn("auth-tools-card-icon", content)
@@ -166,7 +177,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"\n        tabindex="-1"'), 3)
         self.assertIn(">visibility_off</i>", content)
         self.assertIn(
-            "toggle.querySelector('i').textContent = showing ? 'visibility_off' : 'visibility';",
+            "toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';",
             content,
         )
         self.assertIn(

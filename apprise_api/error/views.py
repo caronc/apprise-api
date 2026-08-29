@@ -28,7 +28,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 
 # Nginx uses this page for rejected request bursts.
-AUTH_RETRY_AFTER_SECONDS = 60
+RATE_LIMIT_RETRY_AFTER_SECONDS = 60
 
 
 class Error401View(View):
@@ -94,6 +94,35 @@ class Error404View(View):
         )
 
 
+class Error405View(View):
+    """Render nginx's method-not-allowed response."""
+
+    template_name = "405.html"
+
+    def get(self, request):
+        """Return the original request details and its allowed methods."""
+        original_uri = request.META.get("HTTP_X_ORIGINAL_URI", request.path)
+        original_method = request.META.get("HTTP_X_ORIGINAL_METHOD", request.method)
+        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR")
+        allowed_methods = "GET, HEAD"
+
+        context = {
+            "original_uri": original_uri,
+            "original_method": original_method,
+            "remote_ip": remote_ip,
+            "allowed_methods": allowed_methods,
+        }
+
+        return error_response(
+            request,
+            _("Method Not Allowed"),
+            405,
+            template=self.template_name,
+            context=context,
+            headers={"Allow": allowed_methods},
+        )
+
+
 class Error421View(View):
     """
     Render a 421 page for errors
@@ -127,7 +156,7 @@ class Error421View(View):
 
 
 class Error429View(View):
-    """Render the response used after too many authentication attempts."""
+    """Render nginx's rate-limit response."""
 
     template_name = "429.html"
 
@@ -138,8 +167,11 @@ class Error429View(View):
             _("Too Many Requests"),
             429,
             template=self.template_name,
-            context={"retry_after": AUTH_RETRY_AFTER_SECONDS},
-            headers={"Retry-After": str(AUTH_RETRY_AFTER_SECONDS)},
+            context={"retry_after": RATE_LIMIT_RETRY_AFTER_SECONDS},
+            headers={
+                "Retry-After": str(RATE_LIMIT_RETRY_AFTER_SECONDS),
+                "Cache-Control": "no-store",
+            },
         )
 
 

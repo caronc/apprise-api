@@ -1691,20 +1691,24 @@ class CurrentConfigView(View):
             return _invalid_key_response(request)
 
         key = form.cleaned_data["key"]
+        # The selector is shared by the configuration and authentication pages.
+        next_name = request.POST.get("next")
+        if next_name not in {"auth_current", "config_current"}:
+            next_name = "config_current"
         request.default_config_id = key
         if request.apprise_auth_permission == Authentication.ROLE_USER and request.apprise_web_auth_key != key:
             # A shared login proves access to one key only. Start a clean login
             # for the requested key before any configuration view is reached.
             login_url = "{}?{}".format(
                 reverse("login"),
-                urlencode({"next": reverse("config_current")}),
+                urlencode({"next": reverse(next_name)}),
             )
             response = redirect(login_url)
             Authentication.clear_web_cookie(response)
             response["Cache-Control"] = "no-store"
             return response
 
-        return redirect("config_current")
+        return redirect(next_name)
 
 
 @method_decorator(never_cache, name="dispatch")

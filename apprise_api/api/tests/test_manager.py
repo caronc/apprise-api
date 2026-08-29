@@ -33,6 +33,7 @@ from ..auth import Authentication, ConfigAuthRecord, ConfigAuthState
 from ..utils import (
     CONFIG_KEY_MAX_LENGTH,
     AppriseStoreMode,
+    ConfigCache,
 )
 
 
@@ -161,14 +162,32 @@ class ManagerPageTests(SimpleTestCase):
         assert 'class="config-id-input"' in content
         assert 'type="password"' in content
         assert 'data-current-config-id="valid-key"' in content
+        assert 'name="next"' in content
+        assert 'value="config_current"' in content
+        assert 'data-explicit-config-base="/cfg/"' in content
         assert 'maxlength="{}"'.format(CONFIG_KEY_MAX_LENGTH) in content
         assert "return /^[-\\w]{{1,{}}}$/u.test(configId);".format(CONFIG_KEY_MAX_LENGTH) in content
         assert 'class="btn-flat btn-small config-id-apply"' in content
+        assert 'class="btn-flat btn-small config-id-revert"' in content
         assert "check_circle" in content
+        assert "undo" in content
+        assert 'id="config-id-mismatch-notice"' in content
+        assert 'class="config-id-mismatch-icon"' in content
+        assert "Changed Config ID Not Applied" in content
+        assert "not the configuration currently being managed" in content
+        assert "data-config-id-notice-apply" in content
+        assert "data-config-id-notice-revert" in content
+        assert "configIdApply.click()" in content
+        assert "configIdRevert.click()" in content
+        assert "restoreConcealment" in content
+        assert "visibilityExplicit" in content
+        assert "mismatchShown" in content
+        assert "configIdInput.addEventListener('blur'" in content
         assert 'data-config-id-copy="valid-key"' in content
         assert "button.dataset.configIdCopy" in content
-        assert "apprisePostConfigId(configId)" in content
-        assert "appriseConfirmConfigSelection(configId)" in content
+        assert "apprisePostConfigId(configId, nextName)" in content
+        assert "appriseConfirmConfigSelection(configId, nextName, explicitBase, useCookieAlias)" in content
+        assert "window.location.assign(explicitBase + encodeURIComponent(configId))" in content
         assert "Any unsaved changes on this page will be lost." in content
         assert 'id="cfggen-config-id"' in content
         assert 'aria-controls="cfggen-config-id"' in content
@@ -219,6 +238,38 @@ class ManagerPageTests(SimpleTestCase):
             headers={"accept": "text/html"},
         )
         assert invalid.status_code == 400
+
+        auth_destination = self.client.post(
+            "/cfg/@",
+            {"key": "auth-key", "next": "auth_current"},
+            headers={"accept": "text/html"},
+        )
+        assert auth_destination.status_code == 302
+        assert auth_destination.url == "/auth/@"
+
+    def test_unapplied_config_id_cannot_retarget_save(self):
+        """An extra selector value cannot change the URL-bound save target."""
+        managed_key = "managed-config"
+        unapplied_key = "unapplied-config"
+        try:
+            page = self.client.get("/cfg/{}".format(managed_key))
+            content = page.content.decode()
+            assert 'id="config-id-select-form"' in content
+            assert 'id="addconfig" action="/add/{}"'.format(managed_key) in content
+
+            response = self.client.post(
+                "/add/{}".format(managed_key),
+                {
+                    "key": unapplied_key,
+                    "urls": "json://localhost",
+                },
+            )
+            assert response.status_code == 200
+            assert ConfigCache.get(managed_key)[0].startswith("json://localhost/")
+            assert ConfigCache.get(unapplied_key)[0] is None
+        finally:
+            ConfigCache.clear(managed_key)
+            ConfigCache.clear(unapplied_key)
 
     def test_configuration_fetch_requests_json(self):
         """The configuration editor explicitly requests a JSON response."""
