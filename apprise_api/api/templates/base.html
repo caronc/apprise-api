@@ -58,36 +58,6 @@
               APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
             </li>
             <li class="auth-health-nav">
-              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
-                {% if AUTH_USERNAME %}
-                  <a class="auth-account {% if AUTH_PERMISSION == 'admin' %}is-master{% endif %}"
-                     href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
-                     aria-label="{% trans "Open Authentication Settings" %}">
-                    <span class="auth-account-icon" aria-hidden="true">
-                      {% include 'icons/user.svg' %}
-                    </span>
-                    <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
-                  </a>
-                  <span class="nav-divider auth-divider" aria-hidden="true"></span>
-                {% endif %}
-                <form class="auth-logout-form" method="post" action="{% url 'logout' %}">
-                  <button class="auth-logout-link tooltipped"
-                          type="submit"
-                          aria-label="{% trans "Logout" %}"
-                          data-position="bottom"
-                          data-tooltip="{% trans "Logout" %}">
-                    <span class="auth-logout-icon" aria-hidden="true">
-                      {% include 'icons/logout.svg' %}
-                    </span>
-                  </button>
-                </form>
-                <template id="logout-confirm-icon-template">
-                  <span class="logout-confirm-icon" aria-hidden="true">
-                    {% include 'icons/logout.svg' %}
-                  </span>
-                </template>
-                <span class="nav-divider auth-divider" aria-hidden="true"></span>
-              {% endif %}
               <span class="api-status-nav">
                 <span>{% trans "API HEALTH" %}</span>
                 <a href="{% if AUTH_PERMISSION == 'user' %}{% url 'health_current' %}{% else %}{% url 'health' %}{% endif %}"
@@ -153,6 +123,38 @@
                   {% include 'icons/topbar-theme.svg' %}
                 </span>
               </a>
+              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
+                {# Keep session controls together after the theme toggle. #}
+                <span class="nav-divider auth-divider" aria-hidden="true"></span>
+                <span class="auth-session-nav">
+                  {% if AUTH_USERNAME %}
+                    <a class="auth-account {% if AUTH_PERMISSION == 'admin' %}is-master{% endif %}"
+                       href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
+                       aria-label="{% trans "Open Authentication Settings" %}">
+                      <span class="auth-account-icon" aria-hidden="true">
+                        {% include 'icons/user.svg' %}
+                      </span>
+                      <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
+                    </a>
+                  {% endif %}
+                  <form class="auth-logout-form" method="post" action="{% url 'logout' %}">
+                    <button class="auth-logout-link tooltipped"
+                            type="submit"
+                            aria-label="{% trans "Logout" %}"
+                            data-position="bottom"
+                            data-tooltip="{% trans "Logout" %}">
+                      <span class="auth-logout-icon" aria-hidden="true">
+                        {% include 'icons/logout.svg' %}
+                      </span>
+                    </button>
+                  </form>
+                </span>
+                <template id="logout-confirm-icon-template">
+                  <span class="logout-confirm-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
+                  </span>
+                </template>
+              {% endif %}
             </li>
           </ul>
         </div>

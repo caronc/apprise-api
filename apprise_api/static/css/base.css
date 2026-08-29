@@ -281,7 +281,7 @@ li.auth-health-nav {
   margin-top: 0.18rem;
 }
 
-li.social-theme-nav a {
+li.social-theme-nav>a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -292,7 +292,7 @@ li.social-theme-nav a {
   transition: opacity 0.15s ease;
 }
 
-li.social-theme-nav a:hover {
+li.social-theme-nav>a:hover {
   opacity: 1;
 }
 
@@ -334,6 +334,13 @@ li.social-theme-nav .topbar-icon svg {
   margin: 0;
 }
 
+.auth-session-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .auth-account-icon,
 .auth-logout-icon {
   display: inline-flex;
@@ -349,7 +356,7 @@ li.social-theme-nav .topbar-icon svg {
 }
 
 .auth-account-name {
-  max-width: 12rem;
+  max-width: min(12rem, 36vw);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1981,11 +1988,14 @@ Authentication Editor
   margin: 1rem 0 1.5rem;
 }
 
-.auth-access-label {
+/* This label sits above a custom select/help row instead of floating over an
+   input. Match Materialize's selector specificity so it is correct on first paint. */
+.auth-editor-card .input-field>label.auth-access-label {
   display: block;
   position: static;
   margin-bottom: 0.1rem;
   font-size: 0.8rem;
+  cursor: default;
   transform: none;
 }
 
