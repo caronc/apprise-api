@@ -198,6 +198,8 @@ class NotifyTests(SimpleTestCase):
         ]
         with self.assertRaises(ValueError):
             parse_tag_expression("family:")
+        with self.assertRaises(ValueError):
+            parse_tag_expression("9" * 5000 + ":family")
 
     def test_stream_queue_preserves_spooled_order(self):
         """Slow-reader overflow moves to disk and keeps every event."""
@@ -600,6 +602,57 @@ class NotifyTests(SimpleTestCase):
         assert finished.wait(1)
         assert any("before notification processing finished" in message for message in logs.output)
         assert any("pending event" in message for message in logs.output)
+
+    def test_stream_worker_count_is_bounded_after_disconnect(self):
+        """A detached notification retains one slot while new streams queue."""
+        started = threading.Event()
+        queued_started = threading.Event()
+        release = threading.Event()
+
+        class BlockingApprise:
+            def notify(self, *args, **kwargs):
+                started.set()
+                release.wait(2)
+                return notify_result(True)
+
+        class QueuedApprise:
+            def notify(self, *args, **kwargs):
+                queued_started.set()
+                return notify_result(True)
+
+        limiter = threading.BoundedSemaphore(1)
+        with mock.patch.dict(stream_notify_response.__globals__, {"_STREAM_WORKERS": limiter}):
+            first = stream_notify_response(
+                BlockingApprise(),
+                body="test",
+                title="",
+                notify_type=apprise.NotifyType.INFO,
+                tag=None,
+                attach=None,
+                log_level=logging.INFO,
+            )
+            assert started.wait(1)
+
+            queued = stream_notify_response(
+                QueuedApprise(),
+                body="test",
+                title="",
+                notify_type=apprise.NotifyType.INFO,
+                tag=None,
+                attach=None,
+                log_level=logging.INFO,
+            )
+            assert queued.status_code == 200
+            queued_iterator = iter(queued.streaming_content)
+            assert next(queued_iterator) == b": connected\n\n"
+            assert not queued_started.wait(0.05)
+
+            first.close()
+            release.set()
+            assert queued_started.wait(1)
+            # Consume the completed response so its queue-owned result closes.
+            b"".join(first.streaming_content)
+            b"".join(queued_iterator)
 
     def test_stream_handles_disk_read_failure(self):
         """A disk read failure alerts the client and still returns a result."""
@@ -1239,10 +1292,8 @@ class NotifyTests(SimpleTestCase):
             data=form_data,
         )
 
-        # Our notification makes it through the list check and into the
-        # Apprise library. It will be at that level that the tags will fail
-        # validation so there will be no match
-        assert response.status_code == 424
+        # Malformed JSON tag members are rejected before reaching Apprise.
+        assert response.status_code == 400
         assert mock_post.call_count == 0
 
         # Reset our mock object

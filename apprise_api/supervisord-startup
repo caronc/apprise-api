@@ -231,15 +231,17 @@ apply_base_url_to_nginx
 # Setup Internal Port hosting (if one was provided)
 apply_port_to_nginx
 
-if [ $STRICT_MODE -eq 0 ]; then
-  echo -n "Enforcing nginx strict mode ... "
-  if [ -w "$SUPERVISORD_CONF" ]; then
-    sed -i -e "s/nginx\.conf/nginx-strict.conf/g" \
-       "$SUPERVISORD_CONF" &>/dev/null && echo "Done." || echo "Failed!"
-  else
-    echo "Skipped ($NGINX_FILENAME not writable)."
-  fi
+# Supervisor's packaged configuration is root-owned. Render a runtime copy so
+# strict mode also works when the container runs as an unprivileged user or
+# with a read-only root filesystem.
+RUNTIME_SUPERVISORD_CONF="/tmp/apprise/supervisord.conf"
+if ! sed -e "s|/opt/apprise/webapp/etc/nginx-strict\.conf|${NGINX_CONF}|g" \
+   -e "s|/opt/apprise/webapp/etc/nginx\.conf|${NGINX_CONF}|g" \
+   "$SUPERVISORD_CONF" > "$RUNTIME_SUPERVISORD_CONF"; then
+   echo "ERROR: Could not prepare Supervisor for ${NGINX_FILENAME}."
+   exit 1
 fi
+SUPERVISORD_CONF="$RUNTIME_SUPERVISORD_CONF"
 
 # The following entry will help identify how internal network configurations
 # may be set up on the host that could cause problems.  This is used for debugging

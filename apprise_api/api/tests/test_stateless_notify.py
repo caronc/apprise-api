@@ -43,6 +43,47 @@ class StatelessNotifyTests(SimpleTestCase):
     Test stateless notifications
     """
 
+    def test_stateless_notify_rejects_non_object_json(self):
+        """A valid JSON value must still be an object payload."""
+        response = self.client.post(
+            "/notify",
+            data=json.dumps(True),
+            content_type="application/json",
+            headers={"accept": "application/json"},
+        )
+
+        assert response.status_code == 400
+        assert response.json() == {"error": "The JSON payload must be an object"}
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_stateless_notify_rejects_malformed_json_fields(self, mock_notify):
+        """JSON field types are validated before they reach Apprise."""
+        valid = {
+            "urls": "mailto://user:pass@hotmail.com",
+            "body": "test notification",
+        }
+        malformed_fields = (
+            ("body", []),
+            ("title", {}),
+            ("type", 42),
+            ("format", False),
+            ("urls", {}),
+            ("urls", ["json://localhost", 42]),
+        )
+
+        for field, value in malformed_fields:
+            payload = valid | {field: value}
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(payload),
+                content_type="application/json",
+                headers={"accept": "application/json"},
+            )
+            assert response.status_code == 400
+            assert response.json()["field"] == field
+
+        mock_notify.assert_not_called()
+
     @mock.patch("apprise.Apprise.notify")
     def test_notify_accepts_advanced_tag_expression(self, mock_notify):
         """
@@ -1220,3 +1261,25 @@ class StatelessNotifyTests(SimpleTestCase):
         body = b"".join(response.streaming_content).decode("utf-8")
         assert "event: log" in body
         assert "event: result" in body
+
+    @mock.patch("apprise.Apprise.notify")
+    def test_disabled_mode_denies_notify(self, mock_notify):
+        """Disabled stateless mode rejects /notify requests."""
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            response = self.client.post(
+                "/notify",
+                {"urls": "mailto://user:pass@hotmail.com", "body": "test notification"},
+            )
+            assert response.status_code == 403
+            mock_notify.assert_not_called()
+
+            # JSON response shape matches every other access-control denial
+            response = self.client.post(
+                "/notify",
+                data=json.dumps({"urls": "mailto://user:pass@hotmail.com", "body": "test notification"}),
+                content_type="application/json",
+            )
+            assert response.status_code == 403
+            content = json.loads(response.content)
+            assert "error" in content
+            mock_notify.assert_not_called()

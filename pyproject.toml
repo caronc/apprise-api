@@ -86,7 +86,9 @@ include = ["apprise_api"]
 omit = [
   "*apps.py",
   "*/migrations/*",
-  "*/core/settings/*",
+  "*/core/settings/__init__.py",
+  "*/core/settings/debug/*",
+  "*/core/settings/pytest/*",
   "*/*/tests/*",
   "lib/*",
   "lib64/*",

@@ -24,7 +24,11 @@
   font-size: 1rem;
   vertical-align: middle;
   margin-right: 0.25rem;
-  color: inherit;
+}
+
+/* Outweighs the theme's i.material-icons color rule */
+i.material-icons.support-banner-icon {
+  color: #e04c4c;
 }
 
 .support-banner-close {
@@ -258,12 +262,12 @@ Side Nav (replaces legacy Materialize collection sidebar)
   margin-top: 0;
 }
 
-.nav ul li.api-status-nav,
+.nav ul .api-status-nav,
 .nav ul li .apprise-lib-ver {
   font-size: 0.75rem;
 }
 
-.nav ul li.api-status-nav {
+.nav ul .api-status-nav {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
@@ -272,6 +276,7 @@ Side Nav (replaces legacy Materialize collection sidebar)
 }
 
 /* Social + theme icon row in the nav */
+li.auth-health-nav,
 li.social-theme-nav {
   display: flex;
   flex-direction: row;
@@ -280,7 +285,11 @@ li.social-theme-nav {
   margin-top: 0.3rem;
 }
 
-li.social-theme-nav a {
+li.auth-health-nav {
+  margin-top: 0.18rem;
+}
+
+li.social-theme-nav>a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -291,7 +300,7 @@ li.social-theme-nav a {
   transition: opacity 0.15s ease;
 }
 
-li.social-theme-nav a:hover {
+li.social-theme-nav>a:hover {
   opacity: 1;
 }
 
@@ -306,6 +315,125 @@ li.social-theme-nav .topbar-icon svg {
   display: block;
   fill: currentColor;
   stroke: none;
+}
+
+.auth-account,
+.auth-logout-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.auth-logout-link {
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-logout-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.auth-session-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.auth-account-icon,
+.auth-logout-icon {
+  display: inline-flex;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.auth-account-icon svg,
+.auth-logout-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-account-name {
+  max-width: min(12rem, 36vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-page {
+  max-width: 38rem;
+  margin: 3rem auto;
+}
+
+.logout-page-icon {
+  display: inline-flex;
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.logout-confirm-icon {
+  display: inline-flex;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0.25rem auto 0.5rem;
+}
+
+.logout-confirm-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.logout-page-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.logout-page-note {
+  margin: 0 auto 1.5rem;
+  max-width: 32rem;
+  opacity: 0.78;
+}
+
+.auth-disabled-page {
+  max-width: 40rem;
+  margin: 3rem auto;
+}
+
+.auth-disabled-card {
+  padding: 2.5rem 2rem;
+  border: 1px solid;
+  border-radius: 1.4rem;
+}
+
+.auth-disabled-icon {
+  display: inline-flex;
+  width: 8rem;
+  height: 8rem;
+}
+
+.auth-disabled-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-disabled-card h4 {
+  margin: 0.75rem 0 0.5rem;
+}
+
+.auth-disabled-card p {
+  margin: 0;
 }
 
 .nav-divider {
@@ -467,6 +595,19 @@ textarea {
 .api-welcome .table-wrapper {
   width: 100%;
   overflow-x: auto;
+}
+
+.api-welcome .table-wrapper>table {
+  table-layout: fixed;
+}
+
+.api-welcome .table-wrapper>table>thead>tr>th:first-child {
+  width: 18%;
+}
+
+.api-welcome .table-wrapper>table>tbody>tr>td {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .api-welcome pre {
@@ -1035,8 +1176,21 @@ Welcome Page Collapsibles
   border-top: none;
 }
 
+.api-welcome .code-snippet {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .api-welcome .collapsible-body .code-snippet {
   margin-bottom: 0.85rem;
+}
+
+.api-welcome .code-snippet pre,
+.api-welcome .code-snippet pre code {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .api-welcome .collapsible-body .code-snippet:last-child {
@@ -1720,7 +1874,14 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .copy-url-btn,
+.config-id-visibility.btn-flat,
+.config-id-apply.btn-flat,
+.config-id-revert.btn-flat,
+.config-id-randomize.btn-flat,
 .config-id-copy.btn-flat,
+.config-list-move.btn-flat,
+.config-list-delete.btn-flat,
+.snippet-visibility-btn,
 .snippet-copy-btn {
   border-radius: 8px !important;
   flex: 0 0 auto;
@@ -1734,7 +1895,13 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .copy-url-btn .material-icons,
+.config-id-visibility.btn-flat .material-icons,
+.config-id-apply.btn-flat .material-icons,
+.config-id-revert.btn-flat .material-icons,
 .config-id-copy.btn-flat .material-icons,
+.config-list-move.btn-flat .material-icons,
+.config-list-delete.btn-flat .material-icons,
+.snippet-visibility-btn .material-icons,
 .snippet-copy-btn .material-icons {
   font-size: 1.1rem;
 }
@@ -1743,9 +1910,11 @@ body .tabs .tab.disabled a:hover i {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  min-width: 0;
   padding: 0.5rem 0.85rem;
   border-radius: 0.5rem;
   margin-bottom: 0.75rem;
+  overflow: hidden;
 }
 
 .config-id-label {
@@ -1757,19 +1926,773 @@ body .tabs .tab.disabled a:hover i {
   opacity: 0.65;
 }
 
+.config-id-select-form {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
 .config-id-wrapper {
   display: inline-flex;
   align-items: center;
+  flex: 1 1 auto;
   gap: 0.3rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
+.config-id-visibility.btn-flat,
 .config-id-copy.btn-flat {
   margin-left: 0.1rem;
 }
 
+.config-id-apply.btn-flat {
+  color: #f29f3d;
+}
+
+.config-id-revert.btn-flat {
+  color: #d9822b;
+}
+
+.config-id-apply.btn-flat[hidden],
+.config-id-revert.btn-flat[hidden] {
+  display: none;
+}
+
+.config-id-mismatch-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.35rem 0 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid;
+  border-radius: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.config-id-mismatch-notice[hidden] {
+  display: none;
+}
+
+.config-id-mismatch-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.config-id-mismatch-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  stroke: currentColor;
+  fill: none;
+}
+
+.config-id-mismatch-title {
+  font-weight: 700;
+}
+
+.config-id-mismatch-action.btn-flat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin: 0 0.12rem;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: inherit;
+  line-height: 1.35rem;
+  vertical-align: middle;
+}
+
+.config-id-mismatch-action.btn-flat i.material-icons {
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.config-id-randomize.btn-flat span,
+.config-id-randomize.btn-flat svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.config-id-input {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0.15em 0.45em !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+  border-radius: 0.3rem !important;
+  box-shadow: none !important;
+  font-family: monospace;
+  font-size: 1em !important;
+  font-weight: 700;
+}
+
 code.config-id {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   font-size: 1em;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+code.config-id::-webkit-scrollbar {
+  display: none;
+}
+
+/* A soft edge hints that a revealed ID continues beyond the available room. */
+code.config-id:not(.is-concealed) {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
+}
+
+code.config-id.is-concealed {
+  letter-spacing: 0.08em;
+}
+
+.config-auth-link.btn-flat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0 0.35rem;
+}
+
+.config-auth-icon,
+.config-auth-icon svg {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.config-auth-icon svg {
+  fill: none;
+  stroke: currentColor;
+}
+
+.config-auth-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 2rem;
+}
+
+.config-auth-status.is-unassigned {
+  opacity: 0.55;
+}
+
+.collection-item .config-auth-status {
+  margin-right: 0.45rem;
+  vertical-align: middle;
+}
+
+.config-list-auth-link {
+  display: contents;
+}
+
+.config-list-auth-link:hover .config-auth-icon,
+.config-list-auth-link:focus-visible .config-auth-icon {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.config-list-auth-link:hover .config-list-user,
+.config-list-auth-link:focus-visible .config-list-user {
+  text-decoration: underline;
+}
+
+.config-list-item {
+  display: grid;
+  grid-template-columns: 2rem minmax(4rem, 10rem) 4.5rem minmax(10rem, 1fr) auto;
+  grid-template-areas: "auth-status user access config-id actions";
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.config-list-item .config-auth-status {
+  grid-area: auth-status;
+  margin-right: 0;
+}
+
+.config-list-link {
+  grid-area: config-id;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.config-list-user {
+  grid-area: user;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-list-access {
+  grid-area: access;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-list-link code.config-id {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.config-list-actions {
+  grid-area: actions;
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  flex: 0 0 auto;
+}
+
+.config-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.config-list-heading h4 {
+  margin: 0;
+}
+
+.config-list-toggle-all {
+  border-radius: 8px !important;
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
+  min-width: 0;
+  background-color: transparent;
+}
+
+.config-list-toggle-all .material-icons {
+  font-size: 1.75rem;
+}
+
+@media (max-width: 640px) {
+
+  /* Keep identity details readable while placing the ID beside its actions. */
+  .config-list-item {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      "auth-status user access"
+      "config-id config-id actions";
+    row-gap: 0.5rem;
+  }
+
+  .config-list-actions {
+    margin-left: 0.35rem;
+  }
+}
+
+/* =========================================
+Authentication Editor
+========================================= */
+.auth-page {
+  max-width: 64rem;
+}
+
+.auth-page-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.auth-page-heading p {
+  margin: 0.2rem 0 0;
+}
+
+.auth-mode-badge {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.auth-card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.auth-secondary-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.auth-editor-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.75rem 2rem 2rem;
+  border: 1px solid;
+  border-radius: 1.4rem;
+}
+
+.auth-card-heading {
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.auth-card-heading h5 {
+  margin: 0.5rem 0 0;
+}
+
+.auth-card-icon {
+  display: block;
+  width: 4.75rem;
+  height: 4.75rem;
+  margin: 0 auto;
+}
+
+.auth-card-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-lock-card-icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.auth-tools-card-icon svg {
+  fill: currentColor;
+}
+
+.auth-move-card-icon svg {
+  fill: currentColor;
+}
+
+.auth-credential-fields {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.auth-credential-field {
+  width: 100%;
+  min-width: 0;
+  margin: 1rem 0 1.5rem;
+}
+
+/* This label sits above a custom select/help row instead of floating over an
+   input. Match Materialize's selector specificity so it is correct on first paint. */
+.auth-editor-card .input-field>label.auth-access-label {
+  display: block;
+  position: static;
+  margin-bottom: 0.1rem;
+  font-size: 0.8rem;
+  cursor: default;
+  transform: none;
+}
+
+.auth-access-control-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.auth-access-control-row .select-wrapper,
+.auth-access-control-row>select {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.auth-access-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  line-height: 1.8rem;
+  border: 1px solid;
+  border-radius: 50%;
+  flex: 0 0 1.8rem;
+}
+
+.auth-access-help i.material-icons {
+  color: inherit;
+  font-size: 1.05rem;
+  line-height: 1.8rem;
+}
+
+.auth-access-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.auth-access-warning i.material-icons {
+  flex: 0 0 auto;
+  font-size: 1rem;
+  line-height: 1.1rem;
+}
+
+.swal2-popup .auth-access-table {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+.swal2-popup .auth-access-table th,
+.swal2-popup .auth-access-table td {
+  padding: 0.65rem 0.5rem;
+  vertical-align: top;
+}
+
+.swal2-popup .auth-access-table th:first-child {
+  width: 6rem;
+  white-space: nowrap;
+}
+
+.swal2-popup .auth-save-result {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.swal2-popup .auth-save-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  min-width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: 1px solid;
+  border-radius: 50%;
+}
+
+.swal2-popup .auth-save-copy i.material-icons {
+  color: inherit;
+  font-size: 1.25rem;
+}
+
+.auth-password-fields {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.concealed-field {
+  position: relative;
+}
+
+.concealed-field input {
+  padding-right: 2.5rem !important;
+  box-sizing: border-box !important;
+}
+
+.value-visibility-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.35rem;
+  min-width: 2rem;
+  padding: 0;
+}
+
+.value-visibility-toggle:focus {
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+.value-visibility-toggle:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+.input-field.has-errors input,
+.input-field.has-errors input:focus {
+  border-bottom-color: #f44336 !important;
+  box-shadow: 0 1px 0 0 #f44336 !important;
+}
+
+.input-field.has-errors label,
+.input-field.has-errors label.active,
+.input-field .errorlist {
+  color: #c62828;
+}
+
+.input-field .errorlist {
+  padding: 0;
+  margin: -0.75rem 0 0;
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+/* The login page is centered because it does not use the side menu. */
+.browser-login-layout {
+  display: flex;
+  justify-content: center;
+  float: none !important;
+}
+
+.browser-login-page {
+  width: min(100%, 34rem);
+  margin: 2.5rem 0 4rem;
+}
+
+.browser-login-card {
+  padding: 2.25rem 2.75rem 2.5rem;
+  border: 1px solid;
+  border-radius: 1.4rem;
+}
+
+.browser-login-icon {
+  display: block;
+  width: 6.75rem;
+  height: 6.75rem;
+  margin: 0 auto 0.75rem;
+}
+
+.browser-login-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.browser-login-heading {
+  text-align: center;
+}
+
+.browser-login-heading h4 {
+  margin: 0;
+}
+
+.browser-login-heading p {
+  margin: 0.5rem 0 2rem;
+}
+
+.browser-login-field {
+  margin: 1.5rem 0 2rem;
+}
+
+.browser-login-note {
+  margin: -0.6rem 0 1.5rem;
+  font-size: 0.8rem;
+  text-align: center;
+  opacity: 0.82;
+}
+
+.auth-login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 1.4rem;
+  border: 1px solid;
+  border-radius: 0.55rem;
+}
+
+.auth-login-error .material-icons {
+  color: inherit;
+}
+
+.auth-login-error .errorlist {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.auth-form-error[hidden] {
+  display: none;
+}
+
+.browser-login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  position: relative;
+}
+
+.browser-login-submit i.material-icons.right {
+  position: absolute;
+  right: 1rem;
+  float: none;
+  margin: 0;
+}
+
+.auth-randomize-column,
+.auth-remove-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-width: 0;
+  margin: 0 0 0.75rem;
+}
+
+.auth-randomize-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.auth-randomize-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.auth-randomize-icon svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.auth-randomize-options {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
+  gap: 0.25rem;
+  min-width: 6rem;
+}
+
+.auth-randomize-option {
+  min-height: 1.45rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  line-height: 1rem;
+  text-align: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.auth-randomize-option:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.auth-randomize-option:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.auth-form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.auth-form-actions .btn {
+  width: 100%;
+}
+
+.auth-remove-option>.auth-remove-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.auth-remove-option>.auth-remove-button i.material-icons.right {
+  float: none;
+  margin: 0;
+}
+
+.auth-remove-button[hidden] {
+  display: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 820px) {
+  .auth-card-grid {
+    grid-template-columns: minmax(0, 38rem);
+    justify-content: center;
+  }
+
+  .auth-secondary-column {
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-page-heading {
+    display: block;
+  }
+
+  .auth-mode-badge {
+    display: inline-block;
+    margin-top: 0.75rem;
+  }
+
+  .browser-login-page {
+    margin-top: 1rem;
+  }
+
+  .browser-login-card {
+    padding: 1.75rem 1.4rem 2rem;
+  }
+
+  .auth-editor-card {
+    padding: 1.5rem 1.25rem 1.75rem;
+  }
 }
 
 .swal2-popup .cfggen-modal-copy {
@@ -1795,6 +2718,10 @@ code.config-id {
   word-break: break-word;
 }
 
+.swal2-popup .cfggen-modal-copy .config-id-input {
+  width: auto;
+}
+
 .code-snippet {
   position: relative;
   margin-bottom: 1rem;
@@ -1804,15 +2731,33 @@ code.config-id {
   margin: 0;
 }
 
-.snippet-copy-btn {
+.snippet-copy-btn,
+.snippet-visibility-btn {
   position: absolute;
   top: 0.35rem;
+  border-radius: 6px;
+}
+
+.snippet-copy-btn {
   right: 0.5rem;
 }
 
-.snippet-copy-btn i {
+.snippet-visibility-btn {
+  right: 2.75rem;
+}
+
+.snippet-copy-btn i,
+.snippet-visibility-btn i {
   /* Better alignment */
   margin: -0.3em 0 0 0;
+}
+
+#overview .code-snippet:not(.is-ready) pre {
+  visibility: hidden;
+}
+
+.snippet-config-id.is-concealed {
+  letter-spacing: 0.08em;
 }
 
 /* File Input Hack */

@@ -57,26 +57,30 @@
 
               APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
             </li>
-            <li class="api-status-nav">
-              {% trans "API HEALTH" %}
-              <a href="{% url 'health' %}" target="_new" id="nav-api-status-link">
-                <span id="nav-api-status-icon"
-                      class="api-status-icon status-icon-stack topbar-status-icon status-loading"
-                      aria-hidden="true">
-                  <span class="status-icon status-icon-loading">
-                    {% include 'icons/status-loading.svg' %}
+            <li class="auth-health-nav">
+              <span class="api-status-nav">
+                <span>{% trans "API HEALTH" %}</span>
+                <a href="{% if AUTH_PERMISSION == 'user' %}{% url 'health_current' %}{% else %}{% url 'health' %}{% endif %}"
+                   target="_new"
+                   id="nav-api-status-link">
+                  <span id="nav-api-status-icon"
+                        class="api-status-icon status-icon-stack topbar-status-icon status-loading"
+                        aria-hidden="true">
+                    <span class="status-icon status-icon-loading">
+                      {% include 'icons/status-loading.svg' %}
+                    </span>
+                    <span class="status-icon status-icon-ok">
+                      {% include 'icons/status-ok.svg' %}
+                    </span>
+                    <span class="status-icon status-icon-error">
+                      {% include 'icons/status-error.svg' %}
+                    </span>
+                    <span class="status-icon status-icon-disabled">
+                      {% include 'icons/status-disabled.svg' %}
+                    </span>
                   </span>
-                  <span class="status-icon status-icon-ok">
-                    {% include 'icons/status-ok.svg' %}
-                  </span>
-                  <span class="status-icon status-icon-error">
-                    {% include 'icons/status-error.svg' %}
-                  </span>
-                  <span class="status-icon status-icon-disabled">
-                    {% include 'icons/status-disabled.svg' %}
-                  </span>
-                </span>
-              </a>
+                </a>
+              </span>
             </li>
             <li class="social-theme-nav">
               <a href="https://github.com/caronc/apprise-api"
@@ -131,6 +135,38 @@
                   {% include 'icons/topbar-theme.svg' %}
                 </span>
               </a>
+              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
+                {# Keep session controls together after the theme toggle. #}
+                <span class="nav-divider auth-divider" aria-hidden="true"></span>
+                <span class="auth-session-nav">
+                  {% if AUTH_USERNAME %}
+                    <a class="auth-account {% if AUTH_PERMISSION == 'admin' %}is-master{% endif %}"
+                       href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
+                       aria-label="{% trans "Open Authentication Settings" %}">
+                      <span class="auth-account-icon" aria-hidden="true">
+                        {% include 'icons/user.svg' %}
+                      </span>
+                      <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
+                    </a>
+                  {% endif %}
+                  <form class="auth-logout-form" method="post" action="{% url 'logout' %}">
+                    <button class="auth-logout-link tooltipped"
+                            type="submit"
+                            aria-label="{% trans "Logout" %}"
+                            data-position="bottom"
+                            data-tooltip="{% trans "Logout" %}">
+                      <span class="auth-logout-icon" aria-hidden="true">
+                        {% include 'icons/logout.svg' %}
+                      </span>
+                    </button>
+                  </form>
+                </span>
+                <template id="logout-confirm-icon-template">
+                  <span class="logout-confirm-icon" aria-hidden="true">
+                    {% include 'icons/logout.svg' %}
+                  </span>
+                </template>
+              {% endif %}
             </li>
           </ul>
         </div>
@@ -164,23 +200,32 @@
               {% if STATEFUL_MODE != 'disabled' %}
                 <div class="side-nav-label">{% trans "Site Controls" %}</div>
                 <nav class="side-nav-group">
-                  <a class="side-nav-item" href="{% url 'config' DEFAULT_CONFIG_ID %}">
+                  <a class="side-nav-item"
+                     href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' DEFAULT_CONFIG_ID %}{% endif %}">
                     <span class="menu-icon">
                       {% include 'icons/settings.svg' %}
                     </span>
                     <span class="side-nav-text">{% trans "Configuration Manager" %}</span>
                   </a>
-                  {% if not CONFIG_LOCK %}
-                    <a class="side-nav-item"
-                       id="cfg-gen"
-                       href="{% url 'config' UNIQUE_CONFIG_ID %}">
+                  {% if not CONFIG_LOCK and AUTH_PERMISSION != 'user' %}
+                    <a class="side-nav-item" id="cfg-gen" href="{% url 'config_current' %}">
                       <span class="menu-icon">
                         {% include 'icons/refresh.svg' %}
                       </span>
                       <span class="side-nav-text">{% trans "New Configuration" %}</span>
                     </a>
                   {% endif %}
-                  {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN %}
+                  {% if AUTH_ENABLED %}
+                    <a class="side-nav-item"
+                       id="cfg-auth"
+                       href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}">
+                      <span class="menu-icon">
+                        {% include 'icons/lock.svg' %}
+                      </span>
+                      <span class="side-nav-text">{% trans "Authentication" %}</span>
+                    </a>
+                  {% endif %}
+                  {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN and CAN_LIST_CONFIGS %}
                     <a class="side-nav-item" id="cfg-list" href="{% url 'config_list' %}">
                       <span class="menu-icon">
                         {% include 'icons/list.svg' %}
@@ -273,10 +318,19 @@
             <div class="col s12 m9 l9 main-content">
               <div id="health-check" class="section" style="display: none">
                 <h4 class="health-check-title">{% trans "Apprise Health Check Failed" %}</h4>
-                <p class="health-check-intro">
-                  {% blocktrans %}The following disk access errors have been detected with your Apprise instance{% endblocktrans %}:
-                </p>
+                <p class="health-check-intro">{% trans "The following issues have been detected with your Apprise instance:" %}</p>
                 <ul class="health-check-list">
+                  <li class="notification_modes" style="display: none">
+                    <strong>
+                      <span class="health-check-icon health-check-icon--error">
+                        {% include 'icons/status-error.svg' %}
+                      </span>
+                      {% trans "Notification Delivery Disabled" %}
+                    </strong>
+                    <p>
+                      {% trans "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications." %}
+                    </p>
+                  </li>
                   <li class="can_write_config" style="display: none">
                     <strong>
                       <span class="health-check-icon health-check-icon--error">
@@ -324,7 +378,7 @@
                     </div>
                   </li>
                 </ul>
-                <details class="health-check-more">
+                <details class="health-check-more" hidden>
                   <summary>{% trans "More Details" %}</summary>
                   <div class="health-check-more-content">
                     <p>
@@ -349,18 +403,7 @@
               </div>
               {% block body %}
               {% endblock body %}
-              <footer class="page-footer-legal">
-                <small>
-                  <hr />
-                  <a href="{{ APPRISE_API_URL }}" target="_new">{% trans "Apprise API" %} v{{ APPRISE_API_VERSION }}</a>
-                  <br />
-                  {{ APPRISE_API_COPYRIGHT }}
-                  ·
-                  {% blocktrans with license=APPRISE_API_LICENSE %}
-              Licensed under the {{ license }} License.
-            {% endblocktrans %}
-                </small>
-              </footer>
+              {% include 'components/legal_footer.html' %}
             </div>
           {% endblock main_page %}
         {% endblock layout %}
@@ -461,6 +504,28 @@
             });
         })();
 
+        // Logout changes the browser session, so confirm an accidental click.
+        (function() {
+            const logout = document.querySelector('.auth-logout-link');
+            const icon = document.querySelector('#logout-confirm-icon-template');
+            if (!logout || !icon) return;
+
+            logout.addEventListener('click', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '{% trans "Log Out?" %}',
+                    html: icon.innerHTML + '<p>{% trans "Are you sure you wish to log out?" %}</p>',
+                    showCancelButton: true,
+                    confirmButtonText: '{% trans "Yes" %}',
+                    cancelButtonText: '{% trans "No" %}'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        logout.form.submit();
+                    }
+                });
+            });
+        })();
+
         // Initial state
         const status = document.querySelector('#nav-api-status-icon');
         status.classList.remove('status-ok', 'status-error', 'status-loading');
@@ -504,6 +569,211 @@
 </script>
 {# Script Block 2 #}
 <script>
+  // Browser requests use the login cookie; API clients still use Basic Auth.
+  function appriseFetch(input, init) {
+    const options = init || {};
+    const headers = new Headers(options.headers || {});
+    headers.set('X-Apprise-Web-Auth', '1');
+    return window.fetch(input, Object.assign({}, options, {headers: headers}));
+  }
+
+  // Keep every concealed input and its accessibility labels synchronized.
+  function appriseSetValueVisibility(input, toggle, show, focusInput) {
+    const label = show ? toggle.dataset.hideLabel : toggle.dataset.showLabel;
+    input.type = show ? 'text' : 'password';
+    // The icon describes the current state: crossed out while hidden and open
+    // while the value is visible.
+    toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';
+    toggle.setAttribute('aria-label', label);
+    toggle.title = label;
+    if (focusInput) {
+      input.focus();
+    }
+  }
+
+  // Use one accessible show/hide control for all concealed fields.
+  function appriseWireValueToggles(root) {
+    root.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
+      // Record an intentional visibility choice before clicking the button
+      // causes a focused Config ID field to blur.
+      toggle.addEventListener('pointerdown', function() {
+        const input = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (input && input.classList.contains('config-id-input')) {
+          input.dataset.visibilityExplicit = 'true';
+        }
+      });
+      toggle.addEventListener('click', function() {
+        const input = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!input) {
+          return;
+        }
+        const show = input.type !== 'text';
+        appriseSetValueVisibility(
+          input,
+          toggle,
+          show,
+          !input.classList.contains('config-id-input')
+        );
+      });
+    });
+  }
+  appriseWireValueToggles(document);
+
+  // Config IDs begin concealed and can be revealed without changing the page.
+  // The optional root also supports controls added inside dialogs.
+  function appriseWireConfigIdToggles(root) {
+    root.querySelectorAll('[data-config-id-toggle]').forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        const value = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!value) {
+          return;
+        }
+        const show = toggle.getAttribute('aria-pressed') !== 'true';
+        const label = show ? toggle.dataset.hideLabel : toggle.dataset.showLabel;
+        value.textContent = show ? value.dataset.configIdValue : '••••••••';
+        value.classList.toggle('is-concealed', !show);
+        value.setAttribute(
+          'aria-label',
+          show ? value.dataset.configIdValue : '{% trans "Config ID hidden" %}'
+        );
+        toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+        toggle.setAttribute('aria-label', label);
+        toggle.title = label;
+        toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';
+      });
+    });
+  }
+  appriseWireConfigIdToggles(document);
+
+  // Copy the complete stored ID, never the concealed or shortened display text.
+  function appriseWireConfigIdCopy(root) {
+    root.querySelectorAll('[data-config-id-copy]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        appriseCopyToClipboard(
+          button.dataset.configIdCopy,
+          '{% trans "Config ID copied to clipboard" %}'
+        );
+      });
+    });
+  }
+  appriseWireConfigIdCopy(document);
+
+  // Submit a Config ID as form data so it never appears in the address bar.
+  function apprisePostConfigId(configId, nextName) {
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = '{% url "config_current" %}';
+    form.hidden = true;
+    const field = document.createElement('input');
+    field.name = 'key';
+    field.value = configId;
+    form.appendChild(field);
+    const nextField = document.createElement('input');
+    nextField.name = 'next';
+    nextField.value = nextName;
+    form.appendChild(nextField);
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  function appriseValidConfigId(configId) {
+    return /^[-\w]{1,{{ CONFIG_KEY_MAX_LENGTH }}}$/u.test(configId);
+  }
+
+  function appriseConfirmConfigSelection(configId, nextName, explicitBase, useCookieAlias) {
+    if (!appriseValidConfigId(configId)) {
+      appriseShowStatusToast(
+        '{% trans "Enter a valid Config ID before continuing." %}',
+        false
+      );
+      return;
+    }
+
+    Swal.fire({
+      title: '{% trans "Open Configuration" %}',
+      text: '{% trans "This opens a different Config ID. Any unsaved changes on this page will be lost." %}',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '{% trans "Continue" %}',
+      cancelButtonText: '{% trans "Cancel" %}'
+    }).then(function(result) {
+      if (result.isConfirmed) {
+        if (useCookieAlias) {
+          apprisePostConfigId(configId, nextName);
+        } else {
+          // Cookie-free Basic Auth sessions continue with an explicit keyed URL.
+          window.location.assign(explicitBase + encodeURIComponent(configId));
+        }
+      }
+    });
+  }
+
+  const configIdSelectForm = document.querySelector('#config-id-select-form');
+  if (configIdSelectForm) {
+    const configIdInput = configIdSelectForm.querySelector('[name="key"]');
+    const configIdApply = configIdSelectForm.querySelector('.config-id-apply');
+    const configIdRevert = configIdSelectForm.querySelector('.config-id-revert');
+    const configIdVisibility = configIdSelectForm.querySelector('.config-id-visibility');
+    const mismatchNotice = document.querySelector('#config-id-mismatch-notice');
+    const mismatchApply = mismatchNotice.querySelector('[data-config-id-notice-apply]');
+    const mismatchRevert = mismatchNotice.querySelector('[data-config-id-notice-revert]');
+    const nextName = configIdSelectForm.querySelector('[name="next"]').value;
+    const explicitBase = configIdSelectForm.dataset.explicitConfigBase;
+    const useCookieAlias = configIdSelectForm.dataset.cookieConfigUrls === 'true';
+    const originalConfigId = configIdInput.dataset.currentConfigId;
+    let restoreConcealment = false;
+    let mismatchShown = false;
+
+    const updateConfigIdState = function() {
+      const changed = configIdInput.value.trim() !== originalConfigId;
+      configIdApply.hidden = !changed;
+      configIdRevert.hidden = !changed;
+      configIdInput.classList.toggle('is-mismatched', changed && mismatchShown);
+      mismatchNotice.hidden = !(changed && mismatchShown);
+      if (!changed) {
+        mismatchShown = false;
+      }
+    };
+
+    configIdInput.addEventListener('focus', function() {
+      restoreConcealment = configIdInput.type === 'password';
+      configIdInput.dataset.visibilityExplicit = 'false';
+      if (restoreConcealment) {
+        appriseSetValueVisibility(configIdInput, configIdVisibility, true, false);
+      }
+    });
+    configIdInput.addEventListener('input', updateConfigIdState);
+    configIdInput.addEventListener('blur', function() {
+      if (restoreConcealment && configIdInput.dataset.visibilityExplicit !== 'true') {
+        appriseSetValueVisibility(configIdInput, configIdVisibility, false, false);
+      }
+      if (configIdInput.value.trim() !== originalConfigId) {
+        mismatchShown = true;
+      }
+      updateConfigIdState();
+    });
+    configIdRevert.addEventListener('click', function() {
+      configIdInput.value = originalConfigId;
+      mismatchShown = false;
+      updateConfigIdState();
+    });
+    // The compact warning actions delegate to the primary controls above.
+    mismatchApply.addEventListener('click', function() {
+      configIdApply.click();
+    });
+    mismatchRevert.addEventListener('click', function() {
+      configIdRevert.click();
+    });
+    configIdSelectForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const configId = configIdInput.value.trim();
+      if (configId !== originalConfigId) {
+        appriseConfirmConfigSelection(configId, nextName, explicitBase, useCookieAlias);
+      }
+    });
+    updateConfigIdState();
+  }
+
 {% block jsfooter %}
 {% endblock jsfooter %}
 </script>
@@ -518,8 +788,10 @@
     const iconNav = document.querySelector('#nav-api-status-icon');
 
     const hc = document.querySelector('#health-check');
+    const liModes = hc ? hc.querySelector('li.notification_modes') : null;
     const liCfg = hc ? hc.querySelector('li.can_write_config') : null;
     const liAttach = hc ? hc.querySelector('li.can_write_attach') : null;
+    const moreDetails = hc ? hc.querySelector('.health-check-more') : null;
 
     // Helper to reset icons to loading
     function usesInlineStatusSvg(icon) {
@@ -544,15 +816,17 @@
     }
     if (hc) {
       hc.style.display = 'none';
+      if (liModes) liModes.style.display = 'none';
       if (liCfg) liCfg.style.display = 'none';
       if (liAttach) liAttach.style.display = 'none';
     }
 
     try {
-      const response = await fetch('{% url "health" %}', {
+      const response = await appriseFetch('{% url "health" %}', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
+          {% if AUTH_PERMISSION == 'user' %}'X-Apprise-Config-ID': '{{ DEFAULT_CONFIG_ID|escapejs }}',{% endif %}
         },
       });
 
@@ -593,15 +867,23 @@
 
       // Update the large health panel (permissions etc.)
       if (hc && data && data.status) {
+        const showModes = (data.degraded === true ||
+          (data.stateful_enabled === false && data.stateless_enabled === false));
+        // CONFIG_LOCK intentionally makes configuration storage read-only.
+        // Keep that result in /status without presenting it as a GUI failure.
         const showCfg = (data.status.can_write_config === false &&
-          data.config_lock === false);
+          data.config_lock !== true &&
+          data.stateful_enabled !== false);
         const showAttach = (data.status.can_write_attach === false &&
           data.attach_lock === false);
 
+        if (liModes) liModes.style.display = showModes ? '' : 'none';
         if (liCfg) liCfg.style.display = showCfg ? '' : 'none';
         if (liAttach) liAttach.style.display = showAttach ? '' : 'none';
+        // Permission and SELinux tips only apply to directory write failures.
+        if (moreDetails) moreDetails.hidden = !(showCfg || showAttach);
 
-        if (showCfg || showAttach) {
+        if (showModes || showCfg || showAttach) {
           hc.style.display = '';
         } else {
           hc.style.display = 'none';
@@ -625,6 +907,11 @@
           isOk = false;
           message = '{% trans "Unable to reach the Apprise API status endpoint." %}';
         }
+      }
+
+      if (data && data.degraded === true) {
+        isOk = false;
+        message = '{% trans "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service." %}';
       }
 
       // Apply status to icons and overview details
@@ -676,49 +963,85 @@
   if (cfgGenLink) {
     cfgGenLink.addEventListener('click', function(e) {
       e.preventDefault();
-      const newConfigurationHref = cfgGenLink.href;
-      const currentConfigurationId = '{{ DEFAULT_CONFIG_ID|escapejs }}';
 
       Swal.fire({
         title: '{% trans "New Configuration" %}',
         html: `
           <div class="cfggen-modal-copy">
-            <p>{% trans "This will generate a new Apprise configuration ID and transition over to it. Please note your current ID before continuing." %}</p>
+            <p>{% trans "Choose a new Config ID. You can edit it or generate another before continuing." %}</p>
             <div class="config-id-bar config-id-bar--modal">
               <span class="config-id-label">{% trans "Config ID" %}</span>
               <span class="config-id-wrapper">
-                <code class="config-id">{{ DEFAULT_CONFIG_ID }}</code>
+                <input id="cfggen-config-id"
+                       class="config-id-input"
+                       type="password"
+                       value="{{ UNIQUE_CONFIG_ID }}"
+                       maxlength="{{ CONFIG_KEY_MAX_LENGTH }}"
+                       autocomplete="off"
+                       autocapitalize="none"
+                       spellcheck="false"
+                       aria-label="{% trans "New Config ID" %}" />
                 <button type="button"
-                        class="btn-flat btn-small config-id-copy cfggen-id-copy"
-                        title="{% trans "Copy Config ID to Clipboard" %}">
-                  <i class="material-icons">content_copy</i>
+                        class="btn-flat btn-small config-id-visibility"
+                        tabindex="-1"
+                        data-value-toggle
+                        aria-controls="cfggen-config-id"
+                        aria-label="{% trans "Show Config ID" %}"
+                        title="{% trans "Show Config ID" %}"
+                        data-show-label="{% trans "Show Config ID" %}"
+                        data-hide-label="{% trans "Hide Config ID" %}">
+                  <i class="material-icons">visibility_off</i>
+                </button>
+                <button type="button"
+                        id="cfggen-randomize"
+                        class="btn-flat btn-small config-id-randomize"
+                        tabindex="-1"
+                        aria-label="{% trans "Generate Another Config ID" %}"
+                        title="{% trans "Generate Another Config ID" %}">
+                  <span aria-hidden="true">{% include 'icons/dice.svg' %}</span>
                 </button>
               </span>
             </div>
-            <p>{% trans "Do you still wish to proceed?" %}</p>
+            <p>{% trans "Do you wish to open this configuration?" %}</p>
           </div>
         `,
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: '{% trans "Yes" %}',
         cancelButtonText: '{% trans "No" %}',
+        focusConfirm: false,
         didOpen: function (popup) {
-          const copyBtn = popup.querySelector('.cfggen-id-copy');
-          if (!copyBtn) {
-            return;
-          }
-          copyBtn.addEventListener('click', function (copyEvent) {
-            copyEvent.preventDefault();
-            copyEvent.stopPropagation();
-            appriseCopyToClipboard(
-              currentConfigurationId,
-              '{% trans "Config ID copied to clipboard" %}'
-            );
+          const field = popup.querySelector('#cfggen-config-id');
+          const randomize = popup.querySelector('#cfggen-randomize');
+          appriseWireValueToggles(popup);
+          randomize.addEventListener('click', function() {
+            const bytes = new Uint8Array(32);
+            window.crypto.getRandomValues(bytes);
+            field.value = Array.from(bytes, function(byte) {
+              return byte.toString(16).padStart(2, '0');
+            }).join('');
           });
+          field.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.isComposing) {
+              event.preventDefault();
+              Swal.clickConfirm();
+            }
+          });
+          field.focus();
+        },
+        preConfirm: function() {
+          const configId = document.querySelector('#cfggen-config-id').value.trim();
+          if (!appriseValidConfigId(configId)) {
+            Swal.showValidationMessage(
+              '{% trans "Enter a valid Config ID before continuing." %}'
+            );
+            return false;
+          }
+          return configId;
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location.href = newConfigurationHref;
+          apprisePostConfigId(result.value);
         }
       });
     });
@@ -755,6 +1078,35 @@
   function appriseShowCopyToast(message) {
     if (window.M && M.toast) {
       M.toast({ html: message || '{% trans "Copied to clipboard" %}' });
+    }
+  }
+
+  // Non-blocking success/failure notice
+  function appriseShowStatusToast(message, isSuccess) {
+    if (window.Swal && Swal.fire) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: isSuccess ? 'success' : 'error',
+        title: message,
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true
+      });
+      return;
+    }
+    if (window.M && M.toast) {
+      M.toast({ html: message, classes: isSuccess ? 'green darken-1' : 'red darken-1' });
+    }
+  }
+
+  // Extracts a JSON error response's {error, field}
+  async function appriseResponseFailure(response, fallback) {
+    try {
+      const data = await response.json();
+      return {message: data.error || fallback, field: data.field || null};
+    } catch (e) {
+      return {message: fallback, field: null};
     }
   }
 

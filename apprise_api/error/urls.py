@@ -26,7 +26,11 @@ from django.urls import re_path
 from . import views
 
 urlpatterns = [
+    re_path(r"^_/401/?$", views.Error401View.as_view(), name="http_401"),
+    re_path(r"^_/403/?$", views.Error403View.as_view(), name="http_403"),
     re_path(r"^_/404/?$", views.Error404View.as_view(), name="http_404"),
+    re_path(r"^_/405/?$", views.Error405View.as_view(), name="http_405"),
     re_path(r"^_/421/?$", views.Error421View.as_view(), name="http_421"),
+    re_path(r"^_/429/?$", views.Error429View.as_view(), name="http_429"),
     re_path(r"^_/50x/?$", views.Error50xView.as_view(), name="http_50x"),
 ]

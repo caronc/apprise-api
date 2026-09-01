@@ -116,6 +116,11 @@ pre code {
   color: #34383f;
 }
 
+.snippet-copy-btn,
+.snippet-visibility-btn {
+  background-color: #edeef3 !important;
+}
+
 /* =========================================
 Status & Indicators
 ========================================= */
@@ -419,12 +424,156 @@ Config ID Bar
   color: #555a62;
 }
 
-code.config-id {
-  color: #0f5f57;
-  background-color: #ffffff;
-  border: 1px solid #c1c3c9;
+code.config-id,
+input.config-id-input {
+  color: #0f5f57 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #c1c3c9 !important;
   padding: 0.15em 0.45em;
   border-radius: 0.3rem;
+}
+
+input.config-id-input.is-mismatched {
+  color: #664000 !important;
+  background-color: #fff4cc !important;
+  border-color: #b66a00 !important;
+}
+
+.config-id-mismatch-notice {
+  color: #8a4b00;
+  background-color: #fff4cc;
+  border-color: #d79724;
+}
+
+.config-id-mismatch-icon,
+.config-id-mismatch-title {
+  color: inherit;
+}
+
+.config-auth-link,
+.auth-account,
+.auth-logout-link {
+  color: #0f5f57;
+}
+
+.config-auth-status.is-disabled {
+  color: #d46328;
+}
+
+.config-auth-status.is-unassigned {
+  color: #737780;
+}
+
+.config-auth-status.is-assigned {
+  color: #0f5f57;
+}
+
+.auth-account.is-master {
+  /* The master account stays red even though top-bar links set their theme color. */
+  color: #a83232 !important;
+}
+
+.logout-page-icon {
+  color: #0f5f57;
+}
+
+.logout-confirm-icon {
+  color: #0f5f57;
+}
+
+.browser-login-card,
+.auth-editor-card,
+.auth-disabled-card {
+  color: #34383f;
+  background-color: #f6f7fa;
+  border-color: #148c80;
+  box-shadow: 0 12px 32px rgba(35, 38, 47, 0.1);
+}
+
+/* Match the dark theme's explicit form-copy treatment instead of inheriting
+   Materialize's translucent default, while retaining strong light contrast. */
+.auth-editor-card .input-field>label:not(.active),
+.auth-editor-card .select-wrapper+label:not(.active),
+.auth-editor-card .helper-text {
+  color: #555a62;
+}
+
+.auth-editor-card .input-field>label.active,
+.auth-editor-card .select-wrapper+label.active {
+  color: #0f5f57;
+}
+
+.auth-editor-card .btn i.material-icons {
+  color: inherit;
+}
+
+.auth-access-warning,
+.auth-access-warning i.material-icons {
+  color: #8a4b00;
+}
+
+.auth-editor-card .auth-access-help,
+.swal2-popup .auth-save-copy {
+  color: #0f5f57;
+  background-color: #eef8f6;
+  border-color: #9fd5ce;
+}
+
+.auth-editor-card .auth-access-help:hover,
+.auth-editor-card .auth-access-help:focus,
+.swal2-popup .auth-save-copy:hover,
+.swal2-popup .auth-save-copy:focus {
+  color: #ffffff;
+  background-color: #148c80;
+}
+
+.browser-login-icon,
+.auth-card-icon {
+  color: #0f5f57;
+}
+
+.auth-disabled-icon {
+  color: #d46328;
+}
+
+.auth-login-error {
+  color: #8b0000;
+  background-color: #fff0f0;
+  border-color: #c62828;
+}
+
+.input-field.has-errors label,
+.input-field.has-errors label.active,
+.input-field .errorlist {
+  color: #8b0000;
+}
+
+.auth-randomize-option {
+  color: #555a62;
+  border-color: #888c96;
+}
+
+.auth-randomize-option:hover {
+  color: #0f5f57;
+  border-color: #148c80;
+}
+
+.auth-randomize-option.is-selected {
+  color: #0f5f57;
+  background-color: #c8f0ea;
+  border-color: #148c80;
+}
+
+.auth-mode-badge {
+  background-color: #edeef3;
+  border-color: #c1c3c9;
+  color: #555a62;
+}
+
+.auth-mode-badge.is-shared {
+  background-color: #c8f0ea;
+  border-color: #148c80;
+  color: #0f5f57;
 }
 
 /* =========================================
@@ -972,6 +1121,11 @@ Notifications — SweetAlert2
 ========================================= */
 .swal2-popup {
   background-color: #ffffff;
+  color: #34383f;
+}
+
+.swal2-popup .swal2-title,
+.swal2-popup .swal2-html-container {
   color: #34383f;
 }
 

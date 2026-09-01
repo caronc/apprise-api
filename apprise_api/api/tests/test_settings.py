@@ -22,13 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import base64
 import importlib.util
 import logging
 import os
 from unittest import mock
 
+from core.settings.env import env_bool, env_choice, env_int, env_optional_bool
 from core.utils import parse_bool, parse_log_level
 from django.conf import global_settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
 # Path to the settings module under test, resolved relative to this file:
@@ -45,7 +48,7 @@ def _load_settings(extra_env=None):
     as they would be set for a given environment, independently of Django's
     already-cached settings object.
     """
-    env = extra_env or {}
+    env = dict(extra_env or {})
     spec = importlib.util.spec_from_file_location("_settings_under_test", _SETTINGS_PATH)
     assert spec is not None and spec.loader is not None, "Could not load spec from {}".format(_SETTINGS_PATH)
     mod = importlib.util.module_from_spec(spec)
@@ -71,6 +74,76 @@ class BooleanParsingTests(SimpleTestCase):
 
         # Empty input can also preserve a caller-supplied true default.
         self.assertTrue(parse_bool("", default=True))
+
+
+class EnvironmentSettingHelperTests(SimpleTestCase):
+    """Test the small environment readers used by Django settings."""
+
+    def test_boolean_helpers_preserve_loose_parsing(self):
+        """Required and optional booleans keep the existing conventions."""
+        with mock.patch.dict(
+            os.environ,
+            {
+                "ENABLED_SETTING": " yes please ",
+                "DISABLED_SETTING": "disabled",
+                "OPTIONAL_SETTING": "1",
+            },
+            clear=True,
+        ):
+            self.assertTrue(env_bool("ENABLED_SETTING"))
+            self.assertFalse(env_bool("DISABLED_SETTING", default=True))
+            self.assertTrue(env_bool("MISSING_SETTING", default=True))
+            self.assertTrue(env_optional_bool("OPTIONAL_SETTING"))
+            self.assertIsNone(env_optional_bool("MISSING_SETTING"))
+
+    def test_integer_conversion_and_bounds(self):
+        """Whole numbers support defaults, legacy absolute values, and bounds."""
+        with mock.patch.dict(
+            os.environ,
+            {
+                "COUNT": " 4 ",
+                "SIGNED": "-3",
+                "TOO_SMALL": "0",
+                "TOO_LARGE": "11",
+                "INVALID": "many",
+            },
+            clear=True,
+        ):
+            self.assertEqual(env_int("COUNT", 1, minimum=1, maximum=10), 4)
+            self.assertEqual(env_int("SIGNED", 1, absolute=True), 3)
+            self.assertEqual(env_int("MISSING", 7), 7)
+            with self.assertRaisesRegex(ImproperlyConfigured, "TOO_SMALL must be at least 1"):
+                env_int("TOO_SMALL", 1, minimum=1)
+            with self.assertRaisesRegex(ImproperlyConfigured, "TOO_LARGE must not exceed 10"):
+                env_int("TOO_LARGE", 1, maximum=10)
+            with self.assertRaisesRegex(ImproperlyConfigured, "INVALID must be a whole number"):
+                env_int("INVALID", 1)
+
+    def test_choice_matching_and_errors(self):
+        """Choices normalize exact values and documented first-letter forms."""
+        with mock.patch.dict(
+            os.environ,
+            {
+                "EXACT": " SIMPLE ",
+                "SHORT": "s",
+                "TYPO": "simpple",
+                "INVALID": "unknown",
+                "AMBIGUOUS": "a-value",
+            },
+            clear=True,
+        ):
+            choices = ("hash", "simple", "disabled")
+            self.assertEqual(env_choice("EXACT", "hash", choices), "simple")
+            self.assertEqual(env_choice("SHORT", "hash", choices, first_character=True), "simple")
+            self.assertEqual(env_choice("TYPO", "hash", choices, first_character=True), "simple")
+            self.assertEqual(env_choice("MISSING", "hash", choices), "hash")
+
+            with self.assertRaisesRegex(ImproperlyConfigured, "INVALID must be one of"):
+                env_choice("INVALID", "hash", choices)
+            with self.assertRaisesRegex(ImproperlyConfigured, "INVALID must be one of"):
+                env_choice("INVALID", "hash", choices, first_character=True)
+            with self.assertRaisesRegex(ImproperlyConfigured, "AMBIGUOUS must be one of"):
+                env_choice("AMBIGUOUS", "auto", ("auto", "active"), first_character=True)
 
 
 class LogLevelParsingTests(SimpleTestCase):
@@ -122,16 +195,19 @@ class StreamSizeSettingsTests(SimpleTestCase):
         defaults = _load_settings()
         self.assertEqual(defaults.APPRISE_STREAM_MEMORY_SIZE, 2 * 1048576)
         self.assertEqual(defaults.APPRISE_STREAM_DISK_SIZE, 256 * 1048576)
+        self.assertEqual(defaults.APPRISE_STREAM_WORKER_COUNT, 4)
 
         # Environment values are whole megabytes and become bytes at startup.
         configured = _load_settings(
             {
                 "APPRISE_STREAM_MEMORY_SIZE": "4",
                 "APPRISE_STREAM_DISK_SIZE": "8",
+                "APPRISE_STREAM_WORKER_COUNT": "6",
             }
         )
         self.assertEqual(configured.APPRISE_STREAM_MEMORY_SIZE, 4 * 1048576)
         self.assertEqual(configured.APPRISE_STREAM_DISK_SIZE, 8 * 1048576)
+        self.assertEqual(configured.APPRISE_STREAM_WORKER_COUNT, 6)
 
     def test_zero_is_allowed(self):
         """Zero remains available for each documented fallback mode."""
@@ -150,8 +226,79 @@ class StreamSizeSettingsTests(SimpleTestCase):
         # Apply every invalid shape to both supported size settings.
         for name in ("APPRISE_STREAM_MEMORY_SIZE", "APPRISE_STREAM_DISK_SIZE"):
             for value in ("-1", "1.5", "many"):
-                with self.subTest(name=name, value=value), self.assertRaisesRegex(ValueError, name):
+                with self.subTest(name=name, value=value), self.assertRaisesRegex(ImproperlyConfigured, name):
                     _load_settings({name: value})
+
+        for value in ("0", "-1", "1.5", "many"):
+            with (
+                self.subTest(value=value),
+                self.assertRaisesRegex(
+                    ImproperlyConfigured,
+                    "APPRISE_STREAM_WORKER_COUNT",
+                ),
+            ):
+                _load_settings({"APPRISE_STREAM_WORKER_COUNT": value})
+
+
+class ChoiceSettingsTests(SimpleTestCase):
+    """Validate canonical and first-character mode settings."""
+
+    def test_mode_defaults_and_first_character_forms(self):
+        """Short forms and harmless spelling mistakes become canonical modes."""
+        defaults = _load_settings()
+        self.assertEqual(defaults.APPRISE_DEFAULT_THEME, "light")
+        self.assertEqual(defaults.APPRISE_STORAGE_MODE, "auto")
+        self.assertEqual(defaults.APPRISE_STATEFUL_MODE, "hash")
+
+        configured = _load_settings(
+            {
+                "APPRISE_DEFAULT_THEME": "dakr",
+                "APPRISE_STORAGE_MODE": "f",
+                "APPRISE_STATEFUL_MODE": "simpple",
+            }
+        )
+        self.assertEqual(configured.APPRISE_DEFAULT_THEME, "dark")
+        self.assertEqual(configured.APPRISE_STORAGE_MODE, "flush")
+        self.assertEqual(configured.APPRISE_STATEFUL_MODE, "simple")
+
+    def test_invalid_modes_fail_with_a_clear_configuration_error(self):
+        """Unknown first letters never silently select an operating mode."""
+        for name in (
+            "APPRISE_DEFAULT_THEME",
+            "APPRISE_STORAGE_MODE",
+            "APPRISE_STATEFUL_MODE",
+        ):
+            with self.subTest(name=name), self.assertRaisesRegex(ImproperlyConfigured, name):
+                _load_settings({name: "unknown"})
+
+    def test_stateless_mode_keeps_boolean_compatibility(self):
+        """The boolean-style stateless mode still accepts legacy spellings."""
+        for value in ("yes", "1", "true", "enable", "active", "+"):
+            with self.subTest(value=value):
+                self.assertEqual(_load_settings({"APPRISE_STATELESS_MODE": value}).APPRISE_STATELESS_MODE, "enabled")
+
+        for value in ("no", "0", "false", "disabled"):
+            with self.subTest(value=value):
+                self.assertEqual(_load_settings({"APPRISE_STATELESS_MODE": value}).APPRISE_STATELESS_MODE, "disabled")
+
+
+class NumericSettingsTests(SimpleTestCase):
+    """Validate documented bounds on general numeric settings."""
+
+    def test_storage_uid_length_uses_documented_bounds(self):
+        """Storage identifiers accept lengths from 2 through 64."""
+        self.assertEqual(_load_settings({"APPRISE_STORAGE_UID_LENGTH": "2"}).APPRISE_STORAGE_UID_LENGTH, 2)
+        self.assertEqual(_load_settings({"APPRISE_STORAGE_UID_LENGTH": "64"}).APPRISE_STORAGE_UID_LENGTH, 64)
+
+        for value in ("1", "65", "invalid"):
+            with (
+                self.subTest(value=value),
+                self.assertRaisesRegex(
+                    ImproperlyConfigured,
+                    "APPRISE_STORAGE_UID_LENGTH",
+                ),
+            ):
+                _load_settings({"APPRISE_STORAGE_UID_LENGTH": value})
 
 
 class BaseUrlParsingTests(SimpleTestCase):
@@ -233,3 +380,129 @@ class TimezoneSettingsTests(SimpleTestCase):
             "({!r}). Define TIME_ZONE = os.environ.get('TZ', 'Etc/UTC') "
             "in core/settings/__init__.py.".format(global_settings.TIME_ZONE),
         )
+
+
+class BasicAuthSettingsTests(SimpleTestCase):
+    """Test the global Basic Auth environment settings."""
+
+    def test_unset_by_default(self):
+        """Authentication is off unless explicitly enabled."""
+        with self.assertLogs(level="INFO") as cm:
+            mod = _load_settings()
+        self.assertFalse(mod.APPRISE_AUTH_REQUIRED)
+        self.assertIsNone(mod.APPRISE_USER)
+        self.assertIsNone(mod.APPRISE_PASSWORD)
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_REALM, "Apprise API")
+        self.assertTrue(any("Authentication Mode: Disabled" in message for message in cm.output))
+
+    def test_credentials_are_ignored_while_disabled(self):
+        """Credentials alone do not turn authentication on."""
+        mod = _load_settings({"APPRISE_USER": "alice", "APPRISE_PASSWORD": "secret"})
+        self.assertFalse(mod.APPRISE_AUTH_REQUIRED)
+        self.assertIsNone(mod.APPRISE_USER)
+        self.assertIsNone(mod.APPRISE_PASSWORD)
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+
+    def test_custom_realm(self):
+        """The login prompt label can identify a specific instance."""
+        mod = _load_settings({"APPRISE_BASIC_AUTH_REALM": "Home Alerts"})
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_REALM, "Home Alerts")
+
+    def test_web_secret_uses_its_own_default(self):
+        """Browser signing has a default independent of Django's key."""
+        mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes"})
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.DEFAULT_WEB_AUTH_SECRET)
+        self.assertEqual(mod.APPRISE_WEB_AUTH_MAX_AGE, 24 * 60 * 60)
+        self.assertNotEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.SECRET_KEY)
+
+    def test_django_key_does_not_change_web_secret(self):
+        """Changing Django's key does not change browser signing."""
+        mod = _load_settings(
+            {
+                "APPRISE_AUTH_REQUIRED": "yes",
+                "SECRET_KEY": "private-django-key",
+            }
+        )
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.DEFAULT_WEB_AUTH_SECRET)
+
+    def test_web_secret_is_independent(self):
+        """A separate web secret does not replace the configuration hash salt."""
+        mod = _load_settings(
+            {
+                "APPRISE_AUTH_REQUIRED": "yes",
+                "SECRET_KEY": "configuration-key",
+                "APPRISE_WEB_AUTH_SECRET": "browser-key",
+            }
+        )
+        self.assertEqual(mod.SECRET_KEY, "configuration-key")
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, "browser-key")
+
+    def test_both_set(self):
+        """Both set: the token is base64("user:pass")."""
+        with self.assertLogs(level="INFO") as cm:
+            mod = _load_settings(
+                {
+                    "APPRISE_AUTH_REQUIRED": "yes",
+                    "APPRISE_USER": "alice",
+                    "APPRISE_PASSWORD": "secret",
+                }
+            )
+        self.assertTrue(mod.APPRISE_AUTH_REQUIRED)
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b"alice:secret").decode())
+        self.assertTrue(any("Administration Account Enabled" in message for message in cm.output))
+
+    def test_username_only_disables_auth(self):
+        """A username without a password disables auth and logs a warning."""
+        with self.assertLogs(level="WARNING") as cm:
+            mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_USER": "alice"})
+        self.assertTrue(mod.APPRISE_AUTH_REQUIRED)
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+        self.assertIsNone(mod.APPRISE_USER)
+        self.assertTrue(any("APPRISE_PASSWORD" in message for message in cm.output))
+
+    def test_password_only(self):
+        """A password without a username is valid."""
+        mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_PASSWORD": "secret"})
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b":secret").decode())
+
+    def test_colon_in_username_stops_startup(self):
+        """A colon in the global username stops startup."""
+        with self.assertRaises(ImproperlyConfigured):
+            _load_settings(
+                {
+                    "APPRISE_AUTH_REQUIRED": "yes",
+                    "APPRISE_USER": "ali:ce",
+                    "APPRISE_PASSWORD": "secret",
+                }
+            )
+
+    def test_blank_credentials_enable_users_only_mode(self):
+        """Blank credentials leave the administrator account disabled."""
+        with self.assertLogs(level="INFO") as cm:
+            mod = _load_settings(
+                {
+                    "APPRISE_AUTH_REQUIRED": "yes",
+                    "APPRISE_USER": "",
+                    "APPRISE_PASSWORD": "",
+                }
+            )
+        self.assertTrue(mod.APPRISE_AUTH_REQUIRED)
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+        self.assertTrue(any("Administration Account Disabled" in message for message in cm.output))
+
+    def test_empty_username_without_password_uses_users_only_mode(self):
+        """An empty username does not create a blank administrator."""
+        mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_USER": ""})
+        self.assertIsNone(mod.APPRISE_BASIC_AUTH_TOKEN)
+
+    def test_password_only_with_empty_username_is_valid(self):
+        """An empty username is valid when a password is supplied."""
+        mod = _load_settings(
+            {
+                "APPRISE_AUTH_REQUIRED": "yes",
+                "APPRISE_USER": "",
+                "APPRISE_PASSWORD": "secret",
+            }
+        )
+        self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b":secret").decode())

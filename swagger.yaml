@@ -5,15 +5,25 @@ info:
   description: >
     A lightweight REST framework that wraps the Apprise API Notification
     Library. See https://github.com/caronc/apprise-api for details.
+
+    APPRISE_AUTH_REQUIRED enables optional Basic Auth. Use an administrator
+    login or credentials assigned to one Config ID. A public Config ID may
+    send tagged stateful notifications without credentials. Disabled access
+    freezes configuration-user access without removing saved data. An
+    administrator bypasses per-configuration policy, but never a globally
+    disabled stateful or stateless mode. Packaged nginx deployments may return
+    429 with Retry-After when a route is rate-limited.
   version: 1.5.4
 
 servers:
+  # The relative entry lets Swagger UI use whichever host served this document.
   - url: http://localhost:8000
     description: Local hosting of Apprise API
   - url: /
     description: Relative path (Current Host of Apprise API instance)
 
 tags:
+  # Tags keep the generated endpoint list approachable for first-time users.
   - name: Stateless
     description: Stateless notification endpoints that do not use a stored key.
   - name: Persistent
@@ -21,7 +31,72 @@ tags:
   - name: Meta
     description: Introspection and system endpoints.
 
+# Basic Auth is optional, so requests may omit credentials when authentication
+# mode is disabled. Administrator credentials satisfy every keyed login.
+security:
+  - {}
+  - basicAuth: []
+
 paths:
+  # Browser sessions are separate from Basic Auth used by API clients.
+  /login:
+    get:
+      operationId: Meta_LoginForm
+      summary: Shows the web-interface login form.
+      description: Browser logins expire after 24 hours without activity and renew when used; API clients continue using Basic Auth.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '200':
+          description: Login form displayed.
+        '421':
+          description: The HTML interface is disabled.
+    post:
+      operationId: Meta_Login
+      summary: Starts a web-interface login.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '302':
+          description: Credentials accepted and browser login created.
+        '400':
+          description: Login fields are invalid.
+        '401':
+          description: Credentials were not accepted.
+        '403':
+          description: The browser Origin is not allowed.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /logout:
+    get:
+      operationId: Meta_GetLogout
+      summary: Safely returns to the welcome page.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '302':
+          description: Return to the welcome page without changing browser state.
+    post:
+      operationId: Meta_Logout
+      summary: Ends the web-interface login.
+      description: Deletes the signed browser login without changing API credentials.
+      security: []
+      tags:
+        - Meta
+      responses:
+        '200':
+          description: Browser login ended.
+        '302':
+          description: Authentication is disabled; return to the welcome page.
+        '403':
+          description: The browser Origin is not allowed.
+        '421':
+          description: The HTML interface is disabled.
+
   /status:
     get:
       operationId: Meta_GetStatus
@@ -29,8 +104,12 @@ paths:
       description: >
         Performs a health check on the server configuration.
         Returns 200 if OK, 417 if there is a configuration/permission issue.
+        Sending X-Apprise-Config-ID applies that key's own authentication
+        gate (if any) to this same response -- see /status/{key}.
       tags:
         - Meta
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeader'
       responses:
         '200':
           description: Server is healthy.
@@ -42,6 +121,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
+        '400':
+          description: >
+            Bad Request -- only when X-Apprise-Config-ID is supplied and
+            invalid.
+        '401':
+          description: >
+            Unauthorized -- authentication is enabled and the administrator
+            login was not accepted, or X-Apprise-Config-ID supplied a key
+            whose authentication requirements were not met.
         '417':
           description: Expectation Failed (Configuration or Permission issues).
           content:
@@ -52,6 +140,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /status/{key}:
+    get:
+      operationId: Persistent_GetStatusForKey
+      summary: Server Health Check, gated by {key}'s own authentication.
+      description: >
+        Returns the same payload as /status after checking the Config ID's
+        credentials, if assigned.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Server is healthy.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '417':
+          description: Expectation Failed (Configuration or Permission issues).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /metrics:
+    get:
+      operationId: Meta_GetMetrics
+      summary: Returns Prometheus metrics.
+      description: Packaged nginx deployments rate-limit frequent metric probes.
+      tags:
+        - Meta
+      responses:
+        '200':
+          description: Prometheus metrics retrieved.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized when global authentication is enabled.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /details:
     get:
@@ -97,6 +235,10 @@ paths:
             text/html:
               schema:
                 type: string
+        '401':
+          description: Unauthorized when authentication requirements were not met.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /notify:
     post:
@@ -104,12 +246,21 @@ paths:
       summary: >
         Sends one or more notifications to the URLs identified as part
         of the payload or in APPRISE_STATELESS_URLS.
+      description: >
+        When explicit `urls` are supplied, destinations come from the payload.
+        With authentication enabled, administrators may call it directly. A
+        configuration user must also send matching X-Apprise-Config-ID, and
+        that configuration must use `user` access. `locked`, `public`, and
+        `disabled` cannot authorize stateless destinations. For compatibility
+        with Apprise API v2 clients, X-Apprise-Config-ID without `urls` sends
+        through the saved configuration instead.
       tags:
         - Stateless
       parameters:
         - $ref: '#/components/parameters/RecursionHeader'
         - $ref: '#/components/parameters/IdHeader'
         - $ref: '#/components/parameters/StreamQueryParam'
+        - $ref: '#/components/parameters/ConfigIdHeader'
       requestBody:
         required: true
         content:
@@ -147,11 +298,24 @@ paths:
         '204':
           description: No Content (No valid URLs provided).
         '400':
-          description: Bad Request (Invalid payload or format).
+          description: >
+            Bad Request (invalid payload or format, or an invalid
+            X-Apprise-Config-ID).
+        '401':
+          description: >
+            Unauthorized -- administrator credentials were not supplied and
+            the request did not include valid credentials for the configuration
+            named by X-Apprise-Config-ID.
+        '403':
+          description: >
+            Access Denied -- APPRISE_STATELESS_MODE is disabled, or the
+            supplied configuration uses locked, public, or disabled access.
         '406':
           description: Method Not Accepted (Recursion limit reached).
         '424':
           description: One or more notifications could not be sent.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '431':
           description: Request Header Fields Too Large (JSON Payload too big).
 
@@ -160,8 +324,9 @@ paths:
       operationId: Persistent_ListConfigurations
       summary: List all stored configuration keys.
       description: >
-        Returns a list of all Config Keys currently stored.
-        Requires APPRISE_ADMIN to be enabled in server settings.
+        Returns Config ID strings when authentication is off. When it is on,
+        each item includes its assigned username. This requires APPRISE_ADMIN,
+        SIMPLE stateful mode, and administrator access.
       tags:
         - Persistent
       responses:
@@ -170,14 +335,41 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                oneOf:
+                  - type: array
+                    description: Original response used when authentication is disabled.
+                    items:
+                      type: string
+                  - type: array
+                    description: Detailed response used when authentication is enabled.
+                    items:
+                      type: object
+                      required:
+                        - key
+                        - user
+                        - access
+                      properties:
+                        key:
+                          type: string
+                        user:
+                          type: string
+                          nullable: true
+                          description: >
+                            The assigned username, an empty string for password-only
+                            access, or null when no username is available.
+                        access:
+                          type: string
+                          enum: [user, locked, public, disabled]
             text/html:
               schema:
                 type: string
+        '401':
+          description: Unauthorized (administrator credentials are required; this listing has no per-key fallback).
         '403':
-          description: Access Denied (APPRISE_ADMIN not enabled).
+          description: >
+            Forbidden (persistent storage or APPRISE_ADMIN is disabled,
+            authentication is insufficient, or CONFIG_LOCK is enabled and the
+            caller is not an authenticated administrator).
 
   /add/{key}:
     post:
@@ -213,8 +405,14 @@ paths:
                     nullable: true
         '400':
           description: Bad Request (Invalid format or payload).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, the configuration is
+            locked or disabled, or CONFIG_LOCK requires an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '431':
           description: Payload Too Large.
         '500':
@@ -224,6 +422,11 @@ paths:
     post:
       operationId: Persistent_RemoveConfiguration
       summary: Removes Apprise configuration from the persistent store.
+      description: >
+        A configuration account with effective `user` access may clear its own
+        content. Its credentials remain and their pruning grace period restarts,
+        allowing replacement content to be saved later. Administrator deletion
+        also removes the configuration's credentials.
       tags:
         - Persistent
       parameters:
@@ -233,10 +436,88 @@ paths:
           description: Configuration removed.
         '204':
           description: No content (Configuration did not exist).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, the configuration's
+            effective access is not `user`, or CONFIG_LOCK requires an
+            authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           description: Internal Error (Could not delete from disk).
+
+  /move/{key}:
+    post:
+      operationId: Persistent_MoveConfiguration
+      summary: Moves the configuration stored at {key} to a new configuration ID.
+      description: >
+        API callers supply `to`; the source is {key}. The browser form also
+        accepts an administrator-only `from`. The destination must be free.
+        With CONFIG_LOCK, only an authenticated administrator may move an entry.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to:
+                  type: string
+                  maxLength: 128
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                  maxLength: 128
+                to:
+                  type: string
+                  maxLength: 128
+      responses:
+        '200':
+          description: Configuration moved.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Successfully moved configuration"
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    nullable: true
+        '400':
+          description: >
+            Bad Request (missing/invalid `to`, a destination equal
+            to the source, or a restricted user attempted to change
+            `from`).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
+        '404':
+          description: Not Found (there was no configuration to move).
+        '409':
+          description: Conflict (a configuration already exists at the destination).
+        '424':
+          description: Failed Dependency (the configuration store is not currently writable).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (the configuration could not be moved).
 
   /get/{key}:
     post:
@@ -245,7 +526,8 @@ paths:
         Returns the Apprise configuration for {key}.
       description: >
         Depending on the Accept header and how the config was stored,
-        returns TEXT, YAML, or JSON.
+        returns TEXT, YAML, or JSON. With CONFIG_LOCK, only an authenticated
+        administrator may retrieve it.
       tags:
         - Persistent
       parameters:
@@ -267,10 +549,162 @@ paths:
                 $ref: '#/components/schemas/ConfigResponse'
         '204':
           description: No content (Key found but empty).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (Config Lock enabled).
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           description: Internal Server Error.
+
+  /auth/{key}:
+    get:
+      operationId: Persistent_GetKeyAuth
+      summary: Shows the Basic Auth state for {key}.
+      description: >
+        Returns JSON for API clients or the authentication editor for browsers.
+        The saved password is never returned.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Current authentication state.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mode, access, effective_access, username]
+                properties:
+                  mode:
+                    type: string
+                    enum: [global, assigned]
+                  access:
+                    type: string
+                    enum: [user, locked, public, disabled]
+                    description: Saved access selection.
+                  effective_access:
+                    type: string
+                    enum: [user, locked, public, disabled]
+                    description: Access currently enforced after global policy is applied.
+                  username:
+                    type: string
+                    nullable: true
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden because persistent storage or authentication mode is disabled.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: Persistent_SetKeyAuth
+      summary: Sets (or replaces) {key}'s own optional Basic Auth.
+      description: >
+        The first login requires an administrator. Administrators may change
+        credentials and access. Configuration users repeat their username and
+        send a new password; they cannot change access. Configuration content
+        is unchanged. While APPRISE_CONFIG_LOCK is enabled, new records default
+        to `locked`; an administrator may preserve `user` or `public`, but
+        either behaves as `locked` until the global lock is removed.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >
+                Access defaults to the saved mode, `user` for a new unlocked
+                record, or `locked` while APPRISE_CONFIG_LOCK is enabled.
+                Administrators may select `public` or `disabled` without
+                credentials. Other new modes require a password. Configuration
+                users repeat the saved username and send a new password.
+              properties:
+                access:
+                  type: string
+                  enum: [user, locked, public, disabled]
+                  description: Administrator-only. Configuration users must omit this field.
+                username:
+                  type: string
+                  maxLength: 255
+                password:
+                  type: string
+                  maxLength: 255
+                password_confirm:
+                  type: string
+                  maxLength: 255
+      responses:
+        '200':
+          description: Authentication set (or replaced).
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Successfully set authentication"
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    nullable: true
+        '400':
+          description: >
+            Bad Request (missing/invalid JSON payload, a Content-Type
+            other than application/json, invalid credential lengths, a
+            username containing ':', or confirmation passwords that do not
+            match).
+        '401':
+          description: >
+            Unauthorized -- use global credentials for a first access record, or
+            global/current key credentials for later changes.
+        '403':
+          description: >
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or a configuration user attempted to change the username or access.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (Could not write to disk).
+    delete:
+      operationId: Persistent_DeleteKeyAuth
+      summary: Removes {key}'s own Basic Auth.
+      description: >
+        Removes only the authentication requirement. Global administrator
+        credentials are required.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Authentication removed.
+        '401':
+          description: Unauthorized -- the supplied credentials are invalid.
+        '403':
+          description: >
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or configuration credentials were used. An administrator account is required.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (Could not remove from disk).
 
   /cfg/{key}:
     post:
@@ -296,8 +730,14 @@ paths:
                 $ref: '#/components/schemas/ConfigResponse'
         '204':
           description: No content.
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden.
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           description: Internal Server Error.
 
@@ -307,6 +747,13 @@ paths:
       summary: >
         Sends notification(s) to all of the endpoints previously
         configured under {key}, optionally filtered by tag.
+      description: >
+        `user` access follows normal key authentication. `locked` users
+        must authenticate and provide a specific tag other than `all`.
+        `public` permits the same tagged notification without authentication.
+        `disabled` rejects configuration users even when their saved credentials
+        are correct. An administrator may use every mode. Public access never
+        applies to another endpoint.
       tags:
         - Persistent
       parameters:
@@ -348,10 +795,22 @@ paths:
                 $ref: '#/components/schemas/StreamEvent'
         '204':
           description: No configuration found for this key.
+        '400':
+          description: >
+            Bad Request (invalid payload or format; public and locked callers
+            must provide a specific tag other than `all`).
+        '401':
+          description: Unauthorized (this non-public key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, or this configuration
+            has disabled access for configuration users).
         '406':
           description: Method Not Accepted (Recursion limit reached).
         '424':
           description: One or more notifications could not be sent.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '431':
           description: Payload Too Large.
 
@@ -361,6 +820,9 @@ paths:
       summary: >
         Returns a JSON object describing the URLs and tags associated
         with {key}.
+      description: >
+        With CONFIG_LOCK, only an authenticated administrator may inspect this
+        listing. Stateful notifications remain available to configuration users.
       tags:
         - Persistent
       parameters:
@@ -393,8 +855,398 @@ paths:
                 $ref: '#/components/schemas/JsonUrlsResponse'
         '204':
           description: No content.
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /add/:
+    post:
+      operationId: Persistent_AddConfigurationByHeader
+      summary: Header-based equivalent of POST /add/{key}.
+      description: >
+        Identical to POST /add/{key} in every respect (payload, auth,
+        responses) except the key comes from X-Apprise-Config-ID instead
+        of the URL. 400 if that header is missing or invalid.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AddConfigurationForm'
+      responses:
+        '200':
+          description: Configuration stored (or updated).
+        '400':
+          description: Bad Request (invalid format/payload, or a missing/invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, a configuration user
+            attempted a write, or CONFIG_LOCK requires an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '431':
+          description: Payload Too Large.
+        '500':
+          description: Internal Error (Could not write to disk).
+
+  /del/:
+    post:
+      operationId: Persistent_RemoveConfigurationByHeader
+      summary: Header-based equivalent of POST /del/{key}.
+      description: >
+        Identical to POST /del/{key}, key via X-Apprise-Config-ID instead
+        of the URL. 400 if that header is missing or invalid.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      responses:
+        '200':
+          description: Configuration removed.
+        '204':
+          description: No content (Configuration did not exist).
+        '400':
+          description: Bad Request (missing or invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, the configuration's
+            effective access is not `user`, or CONFIG_LOCK requires an
+            authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (Could not delete from disk).
+
+  /move/:
+    post:
+      operationId: Persistent_MoveConfigurationByHeader
+      summary: Header-based equivalent of POST /move/{key}.
+      description: >
+        Identical to POST /move/{key}, source key via X-Apprise-Config-ID
+        instead of the URL. 400 if that header is missing or invalid.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to:
+                  type: string
+                  maxLength: 128
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                  maxLength: 128
+                to:
+                  type: string
+                  maxLength: 128
+      responses:
+        '200':
+          description: Configuration moved.
+        '400':
+          description: >
+            Bad Request (missing/invalid `to`, a destination equal
+            to the source, a restricted user attempted to change
+            `from`, or a missing/invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
+        '404':
+          description: Not Found (there was no configuration to move).
+        '409':
+          description: Conflict (a configuration already exists at the destination).
+        '424':
+          description: Failed Dependency (the configuration store is not currently writable).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (the configuration could not be moved).
+
+  /get/:
+    post:
+      operationId: Persistent_GetConfigurationByHeader
+      summary: Header-based equivalent of POST /get/{key}.
+      description: >
+        Identical to POST /get/{key}, key via X-Apprise-Config-ID instead
+        of the URL. 400 if that header is missing or invalid.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      responses:
+        '200':
+          description: Configuration returned.
+          content:
+            text/plain:
+              schema:
+                type: string
+            text/yaml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigResponse'
+        '204':
+          description: No content (Key found but empty).
+        '400':
+          description: Bad Request (missing or invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Server Error.
+
+  /auth/:
+    get:
+      operationId: Persistent_GetKeyAuthByHeader
+      summary: Header-based equivalent of GET /auth/{key}.
+      description: >
+        Identical to GET /auth/{key}, with the key supplied through
+        X-Apprise-Config-ID. The saved password is never returned.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      responses:
+        '200':
+          description: Current authentication state.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mode, access, effective_access, username]
+                properties:
+                  mode:
+                    type: string
+                    enum: [global, assigned]
+                  access:
+                    type: string
+                    enum: [user, locked, public, disabled]
+                    description: Saved access selection.
+                  effective_access:
+                    type: string
+                    enum: [user, locked, public, disabled]
+                    description: Access currently enforced after global policy is applied.
+                  username:
+                    type: string
+                    nullable: true
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad Request (missing or invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden because persistent storage or authentication mode is disabled.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: Persistent_SetKeyAuthByHeader
+      summary: Header-based equivalent of POST /auth/{key}.
+      description: >
+        Identical to POST /auth/{key}, key via X-Apprise-Config-ID instead
+        of the URL. The header is required and the body must be JSON. While
+        APPRISE_CONFIG_LOCK is enabled, new records default to `locked`; an
+        administrator may preserve `user` or `public`, but either behaves as
+        `locked` until the global lock is removed.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: >
+                Access defaults to the saved mode, `user` for a new unlocked
+                record, or `locked` while APPRISE_CONFIG_LOCK is enabled.
+                Administrators may select `public` or `disabled` without
+                credentials. Configuration users repeat the saved username and
+                provide a new password. password_confirm is optional for API
+                callers.
+              properties:
+                access:
+                  type: string
+                  enum: [user, locked, public, disabled]
+                  description: Administrator-only. Configuration users must omit this field.
+                username:
+                  type: string
+                  maxLength: 255
+                password:
+                  type: string
+                  maxLength: 255
+                password_confirm:
+                  type: string
+                  maxLength: 255
+      responses:
+        '200':
+          description: Authentication set (or replaced).
+        '400':
+          description: >
+            Bad Request (missing/invalid JSON payload, a missing/invalid
+            X-Apprise-Config-ID, a Content-Type other than
+            application/json, invalid credential lengths, a username
+            containing ':', or confirmation passwords that do not match).
+        '401':
+          description: >
+            Unauthorized -- use global credentials for a first access record, or
+            global/current key credentials for later changes.
+        '403':
+          description: >
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or a configuration user attempted to change the username or access.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (Could not write to disk).
+    delete:
+      operationId: Persistent_DeleteKeyAuthByHeader
+      summary: Header-based equivalent of DELETE /auth/{key}.
+      description: >
+        Identical to DELETE /auth/{key}, key via X-Apprise-Config-ID
+        instead of the URL. Global administrator credentials are required.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      responses:
+        '200':
+          description: Authentication removed.
+        '400':
+          description: Bad Request (missing or invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized -- the supplied credentials are invalid.
+        '403':
+          description: >
+            Forbidden -- persistent storage or authentication mode is disabled,
+            or configuration credentials were used. An administrator account is required.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal Error (Could not remove from disk).
+
+  /json/urls/:
+    get:
+      operationId: Persistent_GetUrlsByHeader
+      summary: Header-based equivalent of GET /json/urls/{key}.
+      description: >
+        Identical to GET /json/urls/{key}, key via X-Apprise-Config-ID
+        instead of the URL. 400 if that header is missing or invalid. This
+        listing requires an authenticated administrator when CONFIG_LOCK is enabled.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+        - in: query
+          name: privacy
+          schema:
+            type: integer
+            enum: [0, 1]
+            x-enumNames: ["ShowSecrets", "HideSecrets"]
+          required: false
+          description: When set to 1, secrets within URLs are redacted.
+        - in: query
+          name: tag
+          schema:
+            type: string
+            default: all
+          required: false
+          description: >
+            Filter URLs by tag expression.
+              Comma (",") or Pipe ("|") for OR, space (" ") for AND.
+              Use "all" to select everything.
+      responses:
+        '200':
+          description: URL listing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonUrlsResponse'
+        '204':
+          description: No content.
+        '400':
+          description: Bad Request (missing or invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
+            an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: >
+        APPRISE_AUTH_REQUIRED enables authentication. APPRISE_PASSWORD and the
+        optional APPRISE_USER create an administrator. Saved Config ID logins
+        still work without an administrator account.
+
+  responses:
+    TooManyRequests:
+      description: >
+        Too Many Requests -- the reverse proxy has temporarily limited this
+        request. Both packaged configurations limit health and metrics checks;
+        strict mode also limits login changes and protected routes. Packaged
+        responses use a 60-second delay and are not cacheable.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+          description: Suggested seconds to wait before retrying.
+        Cache-Control:
+          schema:
+            type: string
+            example: no-store
+          description: Prevents a rate-limit response from being cached.
+
   parameters:
     key:
       in: path
@@ -418,6 +1270,30 @@ components:
       schema:
         type: string
       description: Optional Unique ID to associate with the notification.
+    ConfigIdHeader:
+      in: header
+      name: X-Apprise-Config-ID
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+      description: >
+        Supplies the key outside the URL. It takes precedence over a URL key.
+        On /notify it selects the saved configuration when `urls` are absent;
+        with explicit `urls`, it only scopes configuration-user authentication.
+        Invalid values return 400. /cfg does not accept this header.
+    ConfigIdHeaderRequired:
+      in: header
+      name: X-Apprise-Config-ID
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+      description: >
+        Supplies the key for a route without a {key} path segment. Invalid
+        values return 400.
     StreamQueryParam:
       in: query
       name: stream
@@ -464,6 +1340,33 @@ components:
           type: boolean
         config_lock:
           type: boolean
+          description: >-
+            Whether configuration content is locked for this authenticated
+            caller. For a keyed response this applies both global and
+            per-configuration policy, while a globally authenticated
+            administrator receives false because that credential bypasses
+            either lock.
+        stateful_enabled:
+          type: boolean
+          description: >-
+            Whether persistent (stateful) storage is enabled, i.e.
+            APPRISE_STATEFUL_MODE is not set to "disabled".
+        stateless_enabled:
+          type: boolean
+          description: >-
+            Whether stateless /notify calls are accepted, i.e.
+            APPRISE_STATELESS_MODE is not set to "disabled".
+        degraded:
+          type: boolean
+          description: >-
+            True when both notification modes are disabled and the server
+            cannot accept notifications.
+        max_attachments:
+          type: integer
+          description: The value of APPRISE_MAX_ATTACHMENTS currently in effect.
+        attach_size:
+          type: integer
+          description: The value of APPRISE_ATTACH_SIZE (in bytes) currently in effect.
         status:
           type: object
           properties:

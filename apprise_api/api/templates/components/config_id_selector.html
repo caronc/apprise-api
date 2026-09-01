@@ -1,0 +1,62 @@
+{% load i18n %}
+
+{# Keep selection separate from page forms so editing this value cannot retarget a save. #}
+<form id="config-id-select-form"
+      class="config-id-select-form"
+      action="{% url 'config_current' %}"
+      method="post"
+      data-cookie-config-urls="{{ COOKIE_CONFIG_URLS|yesno:'true,false' }}"
+      data-explicit-config-base="{% if config_id_next == 'auth_current' %}{{ BASE_URL }}/auth/{% else %}{{ BASE_URL }}/cfg/{% endif %}"
+      novalidate>
+  <input type="hidden"
+         name="next"
+         value="{{ config_id_next|default:'config_current' }}" />
+  <span class="config-id-label">{% trans "Config ID" %}</span>
+  <span class="config-id-wrapper">
+    <input id="page-config-id"
+           class="config-id-input"
+           type="password"
+           name="key"
+           value="{{ key }}"
+           maxlength="{{ CONFIG_KEY_MAX_LENGTH }}"
+           autocomplete="off"
+           autocapitalize="none"
+           spellcheck="false"
+           data-current-config-id="{{ key }}"
+           aria-describedby="config-id-mismatch-notice"
+           aria-label="{% trans "Config ID" %}" />
+    <button type="button"
+            class="btn-flat btn-small config-id-visibility"
+            tabindex="-1"
+            data-value-toggle
+            aria-controls="page-config-id"
+            aria-label="{% trans "Show Config ID" %}"
+            title="{% trans "Show Config ID" %}"
+            data-show-label="{% trans "Show Config ID" %}"
+            data-hide-label="{% trans "Hide Config ID" %}">
+      <i class="material-icons" aria-hidden="true">visibility_off</i>
+    </button>
+    <button type="submit"
+            class="btn-flat btn-small config-id-apply"
+            aria-label="{% trans "Open Config ID" %}"
+            title="{% trans "Open Config ID" %}"
+            hidden>
+      <i class="material-icons" aria-hidden="true">check_circle</i>
+    </button>
+    <button type="button"
+            class="btn-flat btn-small config-id-revert"
+            tabindex="-1"
+            aria-label="{% trans "Revert Config ID" %}"
+            title="{% trans "Revert Config ID" %}"
+            hidden>
+      <i class="material-icons" aria-hidden="true">undo</i>
+    </button>
+    <button type="button"
+            class="btn-flat btn-small config-id-copy"
+            tabindex="-1"
+            data-config-id-copy="{{ key }}"
+            title="{% trans "Copy Config ID to Clipboard" %}">
+      <i class="material-icons" aria-hidden="true">content_copy</i>
+    </button>
+  </span>
+</form>
