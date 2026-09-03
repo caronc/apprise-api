@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 from inspect import cleandoc
 import io
+import itertools
 import json
 import logging
 import queue
@@ -35,12 +36,14 @@ from django.test import SimpleTestCase, override_settings
 import requests
 
 from ..forms import NotifyForm
+from ..stream_manager import StreamManager
 from ..views import (
     _EVENT_SIZE,
     _STREAM_PUT_FAILED,
     _STREAM_PUT_SPOOLED,
     _safe_stream_log,
     _SpooledEventQueue,
+    _sse_event,
     parse_tag_expression,
     render_notify_logs,
     render_notify_response,
@@ -51,6 +54,29 @@ from .helpers import notify_result
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
+
+# Maximum wait for threaded tests; completed events return immediately.
+_WAIT_TIMEOUT = 10
+
+
+class _InstantEmptyEventQueue:
+    """Provide a nonblocking empty queue for deterministic heartbeat tests."""
+
+    def storage_failed(self):
+        """Report that the fake storage remains healthy."""
+        return False
+
+    def qsize(self):
+        """Keep the fake queue on the idle path."""
+        return 0
+
+    def get(self, timeout=None):
+        """End each simulated wait immediately."""
+        raise queue.Empty
+
+    def close(self):
+        """Return empty queue statistics during response cleanup."""
+        return (0, 0, 0, 0)
 
 
 class NotifyTests(SimpleTestCase):
@@ -544,6 +570,33 @@ class NotifyTests(SimpleTestCase):
 
     def test_stream_handles_worker_start_failure(self):
         """A worker startup failure returns a safe error event."""
+        manager = StreamManager(capacity=1, queue_size=0)
+        assert manager.try_admit()
+
+        with (
+            mock.patch.object(threading.Thread, "start", side_effect=RuntimeError("no threads")),
+            self.assertLogs("django", level="ERROR") as logs,
+        ):
+            response = stream_notify_response(
+                mock.Mock(),
+                body="test",
+                title="",
+                notify_type=apprise.NotifyType.INFO,
+                tag=None,
+                attach=None,
+                log_level=logging.INFO,
+                stream_manager=manager,
+            )
+            body = b"".join(response.streaming_content).decode("utf-8")
+
+        assert "event: error" in body
+        assert "Notification processing failed" in body
+        assert any("could not start" in message for message in logs.output)
+        # Admission was released.
+        assert manager.try_admit()
+
+    def test_start_failure_without_admission(self):
+        """A direct call with no admission slot still fails safely."""
         with (
             mock.patch.object(threading.Thread, "start", side_effect=RuntimeError("no threads")),
             self.assertLogs("django", level="ERROR") as logs,
@@ -560,7 +613,6 @@ class NotifyTests(SimpleTestCase):
             body = b"".join(response.streaming_content).decode("utf-8")
 
         assert "event: error" in body
-        assert "Notification processing failed" in body
         assert any("could not start" in message for message in logs.output)
 
     def test_stream_disconnect_does_not_stop_notification(self):
@@ -568,6 +620,16 @@ class NotifyTests(SimpleTestCase):
         started = threading.Event()
         release = threading.Event()
         finished = threading.Event()
+        admission_released = threading.Event()
+        manager = StreamManager(capacity=1, queue_size=0)
+        assert manager.try_admit()
+        release_admission = manager.release_admission
+
+        def mark_admission_released():
+            release_admission()
+            admission_released.set()
+
+        manager.release_admission = mark_admission_released
 
         class FakeApprise:
             """Wait for the test while simulating active notification work."""
@@ -590,6 +652,7 @@ class NotifyTests(SimpleTestCase):
             tag=None,
             attach=None,
             log_level=logging.INFO,
+            stream_manager=manager,
         )
         iterator = iter(response.streaming_content)
         assert next(iterator) == b": connected\n\n"
@@ -598,13 +661,17 @@ class NotifyTests(SimpleTestCase):
         with self.assertLogs("django", level="WARNING") as logs:
             response.close()
 
+        # Disconnected notification work remains admitted until it finishes.
+        assert manager.try_admit() is False
         release.set()
         assert finished.wait(1)
+        assert admission_released.wait(1)
+        assert manager.try_admit() is True
         assert any("before notification processing finished" in message for message in logs.output)
         assert any("pending event" in message for message in logs.output)
 
-    def test_stream_worker_count_is_bounded_after_disconnect(self):
-        """A detached notification retains one slot while new streams queue."""
+    def test_stream_waits_for_active_slot(self):
+        """A second admitted stream waits for an active slot instead of failing."""
         started = threading.Event()
         queued_started = threading.Event()
         release = threading.Event()
@@ -612,7 +679,7 @@ class NotifyTests(SimpleTestCase):
         class BlockingApprise:
             def notify(self, *args, **kwargs):
                 started.set()
-                release.wait(2)
+                release.wait(_WAIT_TIMEOUT)
                 return notify_result(True)
 
         class QueuedApprise:
@@ -620,39 +687,81 @@ class NotifyTests(SimpleTestCase):
                 queued_started.set()
                 return notify_result(True)
 
-        limiter = threading.BoundedSemaphore(1)
-        with mock.patch.dict(stream_notify_response.__globals__, {"_STREAM_WORKERS": limiter}):
-            first = stream_notify_response(
-                BlockingApprise(),
-                body="test",
-                title="",
-                notify_type=apprise.NotifyType.INFO,
-                tag=None,
-                attach=None,
-                log_level=logging.INFO,
-            )
-            assert started.wait(1)
+        manager = StreamManager(capacity=1, queue_size=1)
+        assert manager.try_admit()
+        assert manager.try_admit()
 
-            queued = stream_notify_response(
-                QueuedApprise(),
-                body="test",
-                title="",
-                notify_type=apprise.NotifyType.INFO,
-                tag=None,
-                attach=None,
-                log_level=logging.INFO,
-            )
-            assert queued.status_code == 200
-            queued_iterator = iter(queued.streaming_content)
-            assert next(queued_iterator) == b": connected\n\n"
-            assert not queued_started.wait(0.05)
+        first = stream_notify_response(
+            BlockingApprise(),
+            body="test",
+            title="",
+            notify_type=apprise.NotifyType.INFO,
+            tag=None,
+            attach=None,
+            log_level=logging.INFO,
+            stream_manager=manager,
+        )
+        assert started.wait(_WAIT_TIMEOUT)
 
-            first.close()
-            release.set()
-            assert queued_started.wait(1)
-            # Consume the completed response so its queue-owned result closes.
-            b"".join(first.streaming_content)
-            b"".join(queued_iterator)
+        queued = stream_notify_response(
+            QueuedApprise(),
+            body="test",
+            title="",
+            notify_type=apprise.NotifyType.INFO,
+            tag=None,
+            attach=None,
+            log_level=logging.INFO,
+            stream_manager=manager,
+        )
+        assert queued.status_code == 200
+        queued_iterator = iter(queued.streaming_content)
+        assert next(queued_iterator) == b": connected\n\n"
+        # Confirm the queued stream has not started.
+        assert not queued_started.wait(0.05)
+
+        first.close()
+        release.set()
+        assert queued_started.wait(_WAIT_TIMEOUT)
+        # Consume the completed response so its queue-owned result closes.
+        b"".join(first.streaming_content)
+        b"".join(queued_iterator)
+
+        # Both admission slots were released.
+        assert manager.try_admit()
+        assert manager.try_admit()
+
+    def test_admission_waits_for_stream_close(self):
+        """Finished notification work remains admitted until its stream closes."""
+        finished = threading.Event()
+        manager = StreamManager(capacity=1, queue_size=0)
+        assert manager.try_admit()
+
+        class FakeApprise:
+            def notify(self, *args, **kwargs):
+                finished.set()
+                return notify_result(True)
+
+        response = stream_notify_response(
+            FakeApprise(),
+            body="test",
+            title="",
+            notify_type=apprise.NotifyType.INFO,
+            tag=None,
+            attach=None,
+            log_level=logging.INFO,
+            stream_manager=manager,
+        )
+        iterator = iter(response.streaming_content)
+        assert next(iterator) == b": connected\n\n"
+        assert finished.wait(_WAIT_TIMEOUT)
+
+        # Completed work still occupies admission while its response is open.
+        assert manager.try_admit() is False
+
+        # Closing the partially consumed response releases admission.
+        response.close()
+        response.close()
+        assert manager.try_admit() is True
 
     def test_stream_handles_disk_read_failure(self):
         """A disk read failure alerts the client and still returns a result."""
@@ -695,6 +804,192 @@ class NotifyTests(SimpleTestCase):
 
         assert "event: result" in body
         assert "server storage limit or error" in body
+
+    @override_settings(APPRISE_STREAM_HEARTBEAT_SECONDS=5)
+    def test_stream_sends_heartbeat_while_idle(self):
+        """An idle stream sends heartbeats to keep its connection open."""
+        release = threading.Event()
+
+        class SlowApprise:
+            def notify(self, *args, **kwargs):
+                release.wait(_WAIT_TIMEOUT)
+                return notify_result(True)
+
+        events = _InstantEmptyEventQueue()
+        with (
+            mock.patch.dict(
+                stream_notify_response.__globals__,
+                {"_SpooledEventQueue": mock.Mock(return_value=events)},
+            ),
+            # Advance one heartbeat interval on each clock read.
+            mock.patch("api.views.time.monotonic", side_effect=itertools.count(0, 5)),
+        ):
+            response = stream_notify_response(
+                SlowApprise(),
+                body="test",
+                title="",
+                notify_type=apprise.NotifyType.INFO,
+                tag=None,
+                attach=None,
+                log_level=logging.INFO,
+            )
+            iterator = iter(response.streaming_content)
+            assert next(iterator) == b": connected\n\n"
+
+            for _ in range(2):
+                assert next(iterator) == b": heartbeat\n\n"
+
+            release.set()
+            body = b"".join(iterator).decode("utf-8")
+        assert "event: result" in body
+
+    @override_settings(APPRISE_STREAM_HEARTBEAT_SECONDS=5)
+    def test_heartbeat_does_not_stop_notify(self):
+        """Repeated heartbeats never cut a long-running notify() call short."""
+        release = threading.Event()
+        notify_returned = threading.Event()
+
+        class SlowApprise:
+            def notify(self, *args, **kwargs):
+                # Blocks across several heartbeat intervals before finishing.
+                release.wait(_WAIT_TIMEOUT)
+                notify_returned.set()
+                return notify_result(True)
+
+        events = _InstantEmptyEventQueue()
+        with (
+            mock.patch.dict(
+                stream_notify_response.__globals__,
+                {"_SpooledEventQueue": mock.Mock(return_value=events)},
+            ),
+            mock.patch("api.views.time.monotonic", side_effect=itertools.count(0, 5)),
+        ):
+            response = stream_notify_response(
+                SlowApprise(),
+                body="test",
+                title="",
+                notify_type=apprise.NotifyType.INFO,
+                tag=None,
+                attach=None,
+                log_level=logging.INFO,
+            )
+            iterator = iter(response.streaming_content)
+            assert next(iterator) == b": connected\n\n"
+
+            for _ in range(4):
+                assert next(iterator) == b": heartbeat\n\n"
+                # The background notify() call has not been allowed to finish yet.
+                assert not notify_returned.is_set()
+
+            release.set()
+            body = b"".join(iterator).decode("utf-8")
+        assert notify_returned.is_set()
+        assert "event: result" in body
+
+    def test_late_event_resets_heartbeat(self):
+        """A late event resets the heartbeat clock."""
+        release = threading.Event()
+
+        class SlowApprise:
+            def notify(self, *args, **kwargs):
+                release.wait(_WAIT_TIMEOUT)
+                return notify_result(True)
+
+        events = _SpooledEventQueue()
+        # Force the path used when an event arrives after qsize().
+        events.qsize = lambda: 0
+
+        with mock.patch.dict(
+            stream_notify_response.__globals__,
+            {"_SpooledEventQueue": mock.Mock(return_value=events)},
+        ):
+            response = stream_notify_response(
+                SlowApprise(),
+                body="test",
+                title="",
+                notify_type=apprise.NotifyType.INFO,
+                tag=None,
+                attach=None,
+                log_level=logging.INFO,
+            )
+            iterator = iter(response.streaming_content)
+            assert next(iterator) == b": connected\n\n"
+
+            # Queue an event that get() receives immediately.
+            events.put(_sse_event("log", {"level": "INFO", "asctime": "", "message": "late", "service": None}))
+            assert b"late" in next(iterator)
+
+            release.set()
+            body = b"".join(iterator).decode("utf-8")
+        assert "event: result" in body
+
+    def test_close_failure_releases_admission(self):
+        """A close failure completes the stream and releases admission."""
+        manager = StreamManager(capacity=1, queue_size=0)
+        assert manager.try_admit()
+
+        result = notify_result(True)
+        result.close = mock.Mock(side_effect=OSError("disk full"))
+
+        class FakeApprise:
+            def notify(self, *args, **kwargs):
+                return result
+
+        with self.assertLogs("django", level="ERROR") as logs:
+            response = stream_notify_response(
+                FakeApprise(),
+                body="test",
+                title="",
+                notify_type=apprise.NotifyType.INFO,
+                tag=None,
+                attach=None,
+                log_level=logging.INFO,
+                stream_manager=manager,
+            )
+            body = b"".join(response.streaming_content).decode("utf-8")
+
+        assert "event: result" in body
+        assert any("failed to close" in message for message in logs.output)
+        # Admission was released despite the close failure.
+        assert manager.try_admit()
+
+    def test_stream_capacity_returns_503(self):
+        """A live stream request is rejected with 503 once capacity is full."""
+        full_manager = StreamManager(capacity=1, queue_size=0)
+        assert full_manager.try_admit()
+
+        with (
+            mock.patch("api.views._STREAM_MANAGER", full_manager),
+            self.assertLogs("django", level="WARNING"),
+        ):
+            response = self.client.post(
+                "/notify",
+                {"urls": "mailto://user:pass@yahoo.ca", "body": "hello"},
+                HTTP_ACCEPT="text/event-stream",
+            )
+
+        assert response.status_code == 503
+        assert response["Retry-After"] == "15"
+        assert not hasattr(response, "streaming_content")
+
+    def test_stream_503_uses_requested_format(self):
+        """The 503 admission response honors the client's requested format."""
+        full_manager = StreamManager(capacity=1, queue_size=0)
+        assert full_manager.try_admit()
+
+        with (
+            mock.patch("api.views._STREAM_MANAGER", full_manager),
+            self.assertLogs("django", level="WARNING"),
+        ):
+            response = self.client.post(
+                "/notify?stream=1",
+                {"urls": "mailto://user:pass@yahoo.ca", "body": "hello"},
+                HTTP_ACCEPT="application/json",
+            )
+
+        assert response.status_code == 503
+        payload = json.loads(response.content)
+        assert "error" in payload
 
     @mock.patch("apprise.Apprise.notify")
     def test_notify_accepts_advanced_tag_expression(self, mock_notify):

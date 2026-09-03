@@ -316,8 +316,18 @@ APPRISE_STREAM_MEMORY_SIZE = env_int("APPRISE_STREAM_MEMORY_SIZE", 2, minimum=0)
 # This allowance bounds the temporary file shared by captured logs.
 APPRISE_STREAM_DISK_SIZE = env_int("APPRISE_STREAM_DISK_SIZE", 256, minimum=0) * 1048576
 
-# Bound active notification work that may outlive disconnected clients.
+# Set how many streamed notifications may actively send per process.
 APPRISE_STREAM_WORKER_COUNT = env_int("APPRISE_STREAM_WORKER_COUNT", 4, minimum=1)
+
+# Extra live streams allowed to remain open per process while waiting or
+# finishing their responses. Requests beyond the total limit receive HTTP 503.
+APPRISE_STREAM_QUEUE_SIZE = env_int("APPRISE_STREAM_QUEUE_SIZE", 8, minimum=0)
+
+# Retry delay advertised when live-stream capacity is full.
+APPRISE_STREAM_RETRY_AFTER_SECONDS = 15
+
+# SSE comments keep idle connections alive without limiting notification time.
+APPRISE_STREAM_HEARTBEAT_SECONDS = 15
 
 # The maximum configuration payload size (in bytes) accepted by form/API
 # configuration updates. This value is configured in KB and converted to bytes

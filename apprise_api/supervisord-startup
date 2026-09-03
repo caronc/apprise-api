@@ -212,6 +212,35 @@ EOF
    fi
 }
 
+apply_connection_timeout_to_nginx() {
+   # Set how long nginx waits for an admitted live notification stream.
+   # Heartbeats keep healthy streams active. APPRISE_WORKER_TIMEOUT separately
+   # checks whether the Gunicorn worker process is responsive.
+   local timeout="${APPRISE_CONNECTION_TIMEOUT:-600}"
+   local timeout_conf="/tmp/apprise/nginx-connection-timeout.conf"
+
+   # Accept only whole numbers because this value is written into nginx config.
+   case "$timeout" in
+      ''|*[!0-9]*)
+         echo "ERROR: APPRISE_CONNECTION_TIMEOUT must be a whole number of seconds. Aborting."
+         exit 1
+         ;;
+   esac
+
+   # Keep the timeout useful for slow notifications without allowing
+   # connections to remain open indefinitely.
+   if [ "$timeout" -lt 30 ] || [ "$timeout" -gt 3600 ]; then
+      echo "ERROR: APPRISE_CONNECTION_TIMEOUT must be between 30 and 3600 seconds. Aborting."
+      exit 1
+   fi
+
+   echo "Live notification stream connection timeout: ${timeout}s"
+   cat <<EOF > "$timeout_conf"
+        proxy_read_timeout ${timeout}s;
+        proxy_send_timeout ${timeout}s;
+EOF
+}
+
 # Ensure runtime directories exist; in non-root mode we just best-effort mkdir
 [ ! -d /attach ] && mkdir -p /attach 2>/dev/null || true
 [ ! -d /config ] && mkdir -p /config 2>/dev/null || true
@@ -230,6 +259,9 @@ apply_base_url_to_nginx
 
 # Setup Internal Port hosting (if one was provided)
 apply_port_to_nginx
+
+# Setup the live notification stream connection timeout (defaults to 600s)
+apply_connection_timeout_to_nginx
 
 # Supervisor's packaged configuration is root-owned. Render a runtime copy so
 # strict mode also works when the container runs as an unprivileged user or

@@ -318,6 +318,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '431':
           description: Request Header Fields Too Large (JSON Payload too big).
+        '503':
+          $ref: '#/components/responses/StreamCapacityUnavailable'
 
   /cfg:
     get:
@@ -813,6 +815,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '431':
           description: Payload Too Large.
+        '503':
+          $ref: '#/components/responses/StreamCapacityUnavailable'
 
   /json/urls/{key}:
     get:
@@ -1246,6 +1250,17 @@ components:
             type: string
             example: no-store
           description: Prevents a rate-limit response from being cached.
+
+    StreamCapacityUnavailable:
+      description: >
+        No live-stream slot is available. Only streaming requests receive
+        this response. Retry after the given delay.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 15
+          description: Suggested seconds to wait before retrying.
 
   parameters:
     key:

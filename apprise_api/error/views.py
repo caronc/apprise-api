@@ -123,6 +123,36 @@ class Error405View(View):
         )
 
 
+class Error413View(View):
+    """Render nginx's request-too-large response."""
+
+    template_name = "413.html"
+
+    def get(self, request):
+        """Tell the caller to reduce the request body or attachments."""
+        return error_response(
+            request,
+            _("Content Too Large"),
+            413,
+            template=self.template_name,
+        )
+
+
+class Error414View(View):
+    """Render nginx's request-target-too-long response."""
+
+    template_name = "414.html"
+
+    def get(self, request):
+        """Tell the caller to shorten the URL and use the request body."""
+        return error_response(
+            request,
+            _("URI Too Long"),
+            414,
+            template=self.template_name,
+        )
+
+
 class Error421View(View):
     """
     Render a 421 page for errors

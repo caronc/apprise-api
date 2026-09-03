@@ -62,6 +62,7 @@ from .forms import (
 )
 from .payload_mapper import remap_fields
 from .responses import error_response, parse_json_object_body
+from .stream_manager import StreamManager
 from .utils import (
     CONFIG_KEY_HEADER,
     CONFIG_KEY_PATTERN,
@@ -102,9 +103,12 @@ _STREAM_PUT_SPOOLED = "spooled"
 # Report an event that could not be retained.
 _STREAM_PUT_FAILED = "failed"
 
-# Bound active notification work, including delivery that continues after a
-# streaming client disconnects.
-_STREAM_WORKERS = threading.BoundedSemaphore(settings.APPRISE_STREAM_WORKER_COUNT)
+# Bound active and queued notification streams, including delivery that
+# continues after a streaming client disconnects.
+_STREAM_MANAGER = StreamManager(
+    capacity=settings.APPRISE_STREAM_WORKER_COUNT,
+    queue_size=settings.APPRISE_STREAM_QUEUE_SIZE,
+)
 
 # This safe message is shown to a client after temporary storage is lost.
 _STREAM_STORAGE_WARNING = (
@@ -822,6 +826,35 @@ def _sse_event(event, data):
     return "event: {}\ndata: {}\n\n".format(event, json.dumps(data, cls=JSONEncoder))
 
 
+class _ClosingStreamIterator:
+    """Run stream cleanup once when iteration ends or the response closes."""
+
+    def __init__(self, iterator, close_callback):
+        self._iterator = iterator
+        self._close_callback = close_callback
+        self._close_lock = threading.Lock()
+        self._closed = False
+
+    def __iter__(self):
+        """Yield every response chunk and always finish stream cleanup."""
+        try:
+            yield from self._iterator
+        finally:
+            self.close()
+
+    def close(self):
+        """Close the iterator and release its resources once."""
+        with self._close_lock:
+            if self._closed:
+                return
+            self._closed = True
+
+        try:
+            self._iterator.close()
+        finally:
+            self._close_callback()
+
+
 def stream_notify_response(
     a_obj,
     *,
@@ -833,17 +866,35 @@ def stream_notify_response(
     log_level,
     webhook_source=None,
     match_always=True,
+    stream_manager=None,
 ):
     """
     Stream notification progress while ``notify()`` runs in the background.
 
-    Log entries are sent as they occur. The stream ends with a ``result``
-    event, or an ``error`` event if notification processing raises.
+    Send logs as they occur, followed by a ``result`` or ``error`` event.
+    Release the active slot when work stops and admission when the stream closes.
     """
     events = _SpooledEventQueue()
     finished = threading.Event()
+    stream_closed = threading.Event()
+    admission_lock = threading.Lock()
+    admission_released = [False]
     final_event = [_sse_event("error", {"message": "Notification processing failed."})]
-    stream_workers = _STREAM_WORKERS
+    # The caller reserves this slot before building the streaming response.
+    # Heartbeats prevent proxies from closing a healthy but quiet stream.
+    heartbeat_seconds = settings.APPRISE_STREAM_HEARTBEAT_SECONDS
+
+    def release_admission_if_done():
+        """Release admission after both notification work and streaming end."""
+        if stream_manager is None or not finished.is_set() or not stream_closed.is_set():
+            return
+
+        with admission_lock:
+            if admission_released[0]:  # pragma: no cover - concurrent duplicate guard
+                return
+            admission_released[0] = True
+
+        stream_manager.release_admission()
 
     def log_callback(entry, service):
         # Apprise requires a synchronous callback; the queue safely passes
@@ -867,9 +918,9 @@ def stream_notify_response(
             )
 
     def run():
-        # Queue behind active notification workers instead of rejecting the
-        # request. The SSE response is already available while this waits.
-        stream_workers.acquire()
+        # Admitted streams wait here when every active slot is busy.
+        if stream_manager is not None:
+            stream_manager.acquire_worker()
 
         # The worker owns notification processing and prepares one final event.
         result = None
@@ -904,13 +955,23 @@ def stream_notify_response(
 
         finally:
             if result is not None:
-                # Live events are already queued, so retained result storage
-                # can be released after optional webhook delivery finishes.
-                result.close()
+                # Events are already queued, so release result storage after
+                # the optional webhook. Cleanup must not strand the stream.
+                try:
+                    result.close()
+                except Exception:
+                    _safe_stream_log(
+                        logging.ERROR,
+                        "Notification result storage failed to close.",
+                        exc_info=True,
+                    )
 
             # Wake the response loop even when notification work failed.
             finished.set()
-            stream_workers.release()
+            if stream_manager is not None:
+                # Notification work no longer needs an active slot.
+                stream_manager.release_worker()
+            release_admission_if_done()
 
     try:
         threading.Thread(target=run, daemon=True).start()
@@ -921,76 +982,95 @@ def stream_notify_response(
             exc_info=True,
         )
         finished.set()
+        release_admission_if_done()
+
+    def close_stream():
+        """Close stream storage and release admission after the response ends."""
+        # This also runs when the client disconnects mid-stream.
+        pending, max_backlog, spooled, unavailable = events.close()
+        if not finished.is_set():
+            # The client is gone, but notification work may still finish.
+            _safe_stream_log(
+                logging.WARNING,
+                "Notification stream closed before notification processing finished.",
+            )
+        if pending:
+            # The client is gone, so only normal server logging remains.
+            _safe_stream_log(
+                logging.WARNING,
+                "Notification stream closed with %d pending event(s).",
+                pending,
+            )
+        if spooled:
+            _safe_stream_log(
+                logging.INFO,
+                "Notification stream spooled %d event(s); peak backlog was %d.",
+                spooled,
+                max_backlog,
+            )
+        if unavailable:
+            _safe_stream_log(
+                logging.WARNING,
+                "Notification stream could not retain %d log event(s).",
+                unavailable,
+            )
+        # Disconnected work remains admitted until its background task ends.
+        stream_closed.set()
+        release_admission_if_done()
 
     def generator():
         storage_warning_sent = False
-        try:
-            # Send an ignored SSE comment so headers arrive immediately.
-            yield ": connected\n\n"
-            while True:
-                if events.storage_failed() and not storage_warning_sent:
-                    # This alert bypasses the failed temporary storage.
-                    storage_warning_sent = True
-                    entry = apprise.NotifyLogEntry(level="ERROR", message=_STREAM_STORAGE_WARNING)
-                    yield _sse_event(
-                        "log",
-                        {
-                            "level": entry.level,
-                            "asctime": _notify_log_asctime(entry),
-                            "message": entry.message,
-                            "service": None,
-                        },
-                    )
-                    continue
+        # Send an ignored SSE comment so headers arrive immediately.
+        yield ": connected\n\n"
+        # Record activity so heartbeats are sent only while idle.
+        last_sent = time.monotonic()
+        while True:
+            if events.storage_failed() and not storage_warning_sent:
+                # This alert bypasses the failed temporary storage.
+                storage_warning_sent = True
+                entry = apprise.NotifyLogEntry(level="ERROR", message=_STREAM_STORAGE_WARNING)
+                yield _sse_event(
+                    "log",
+                    {
+                        "level": entry.level,
+                        "asctime": _notify_log_asctime(entry),
+                        "message": entry.message,
+                        "service": None,
+                    },
+                )
+                # The warning counts as activity for the idle timer.
+                last_sent = time.monotonic()
+                continue
 
-                if events.qsize():
-                    try:
-                        yield events.get(timeout=0.25)
-                    except queue.Empty:
-                        continue
-                    continue
-
-                if finished.is_set():
-                    # All queued logs were sent, so the final event can follow.
-                    break
-
+            if events.qsize():
                 try:
                     yield events.get(timeout=0.25)
                 except queue.Empty:
                     continue
+                # Delay the next heartbeat after sending a queued event.
+                last_sent = time.monotonic()
+                continue
 
-            yield final_event[0]
-        finally:
-            # This also runs when the client disconnects mid-stream.
-            pending, max_backlog, spooled, unavailable = events.close()
-            if not finished.is_set():
-                # The client is gone, but notification work may still finish.
-                _safe_stream_log(
-                    logging.WARNING,
-                    "Notification stream closed before notification processing finished.",
-                )
-            if pending:
-                # The client is gone, so only normal server logging remains.
-                _safe_stream_log(
-                    logging.WARNING,
-                    "Notification stream closed with %d pending event(s).",
-                    pending,
-                )
-            if spooled:
-                _safe_stream_log(
-                    logging.INFO,
-                    "Notification stream spooled %d event(s); peak backlog was %d.",
-                    spooled,
-                    max_backlog,
-                )
-            if unavailable:
-                _safe_stream_log(
-                    logging.WARNING,
-                    "Notification stream could not retain %d log event(s).",
-                    unavailable,
-                )
+            if finished.is_set():
+                # All queued logs were sent, so the final event can follow.
+                break
 
-    response = StreamingHttpResponse(generator(), content_type="text/event-stream")
+            try:
+                yield events.get(timeout=0.25)
+            except queue.Empty:
+                # Heartbeats keep an idle connection open without timing
+                # out queued or slow notification work.
+                if time.monotonic() - last_sent >= heartbeat_seconds:
+                    yield ": heartbeat\n\n"
+                    last_sent = time.monotonic()
+                continue
+            # An event that arrived while waiting also resets the timer.
+            last_sent = time.monotonic()
+
+        yield final_event[0]
+
+    content = _ClosingStreamIterator(generator(), close_stream)
+    response = StreamingHttpResponse(content, content_type="text/event-stream")
     response["Cache-Control"] = "no-cache"
     # Prevent proxies such as nginx from batching streamed events.
     response["X-Accel-Buffering"] = "no"
@@ -1035,6 +1115,8 @@ class ResponseCode:
     fields_too_large = 431
     too_many_requests = 429
     internal_server_error = 500
+    # A new live stream cannot start until server capacity becomes available.
+    service_unavailable = 503
 
 
 def _key_access_denied_response(request, key):
@@ -2763,10 +2845,26 @@ def _deliver_notification(request, a_obj, content, attach, json_response, stream
     }
 
     if stream_response:
+        # Reserve capacity before creating another background stream thread.
+        if not _STREAM_MANAGER.try_admit():
+            # Record the rejection without including notification content.
+            logger.warning(
+                "NOTIFY - %s - Live notification stream rejected; capacity reached",
+                request.META["REMOTE_ADDR"],
+            )
+            # Tell the caller when it is reasonable to try again.
+            return error_response(
+                request,
+                _("The server is temporarily unable to start a new live notification stream"),
+                ResponseCode.service_unavailable,
+                headers={"Retry-After": str(settings.APPRISE_STREAM_RETRY_AFTER_SECONDS)},
+            )
+
         return stream_notify_response(
             a_obj,
             body=content.get("body"),
             webhook_source=request.META.get("REMOTE_ADDR", ""),
+            stream_manager=_STREAM_MANAGER,
             **notify_kwargs,
         )
 

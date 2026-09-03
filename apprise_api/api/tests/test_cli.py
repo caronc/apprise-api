@@ -23,8 +23,10 @@
 # THE SOFTWARE.
 
 import io
+import os
 from pathlib import Path
 import subprocess
+import tempfile
 from unittest.mock import patch
 
 from django.core import management
@@ -93,3 +95,60 @@ class CommandTests(SimpleTestCase):
         self.assertIn('"$SUPERVISORD_CONF" > "$RUNTIME_SUPERVISORD_CONF"', content)
         self.assertIn('SUPERVISORD_CONF="$RUNTIME_SUPERVISORD_CONF"', content)
         self.assertNotIn('sed -i -e "s/nginx\\.conf/nginx-strict.conf/g"', content)
+
+    def test_container_stream_timeout(self):
+        """The container accepts safe stream timeouts and rejects invalid ones."""
+        package_dir = Path(__file__).resolve().parents[2]
+        startup = package_dir / "supervisord-startup"
+        content = startup.read_text()
+
+        # Run only the timeout function so the full container startup is not invoked.
+        function_start = content.index("apply_connection_timeout_to_nginx() {")
+        function_end = content.index("\n}\n", function_start) + 3
+        function = content[function_start:function_end]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            timeout_conf = Path(temp_dir) / "nginx-timeout.conf"
+            function = function.replace(
+                'local timeout_conf="/tmp/apprise/nginx-connection-timeout.conf"',
+                f'local timeout_conf="{timeout_conf}"',
+            )
+            script = f"{function}\napply_connection_timeout_to_nginx"
+
+            # Check the documented boundaries and the default value.
+            for value in ("30", "600", "3600"):
+                with self.subTest(value=value):
+                    result = subprocess.run(
+                        ["bash", "-c", script],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        env={**os.environ, "APPRISE_CONNECTION_TIMEOUT": value},
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertIn(f"proxy_read_timeout {value}s", timeout_conf.read_text())
+                    self.assertIn(f"proxy_send_timeout {value}s", timeout_conf.read_text())
+
+            # Reject malformed values and values outside the supported range.
+            for value in ("many", "29", "3601"):
+                with self.subTest(value=value):
+                    result = subprocess.run(
+                        ["bash", "-c", script],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        env={**os.environ, "APPRISE_CONNECTION_TIMEOUT": value},
+                    )
+                    self.assertNotEqual(result.returncode, 0)
+
+        # Both nginx modes apply the generated timeout to notification routes.
+        for nginx_name in ("nginx.conf", "nginx-strict.conf"):
+            nginx = (package_dir / "etc" / nginx_name).read_text()
+            self.assertEqual(
+                nginx.count("include /tmp/apprise/nginx-connection-timeout.conf;"),
+                2,
+            )
+            self.assertEqual(
+                nginx.count("proxy_next_upstream error timeout http_502 http_504;"),
+                2,
+            )

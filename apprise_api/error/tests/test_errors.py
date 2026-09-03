@@ -32,7 +32,17 @@ from django.test.utils import override_settings
 class ErrorTests(SimpleTestCase):
     def test_accept_selects_response_format(self):
         """Error responses use Accept instead of request Content-Type."""
-        for url in ("/_/401", "/_/403", "/_/404", "/_/405", "/_/421", "/_/429", "/_/50x"):
+        for url in (
+            "/_/401",
+            "/_/403",
+            "/_/404",
+            "/_/405",
+            "/_/413",
+            "/_/414",
+            "/_/421",
+            "/_/429",
+            "/_/50x",
+        ):
             with self.subTest(url=url):
                 response = self.client.get(
                     url,
@@ -74,6 +84,14 @@ class ErrorTests(SimpleTestCase):
         assert response["Allow"] == "GET, HEAD"
         assert b"Method Not Allowed" in response.content
 
+        response = self.client.get("/_/413", HTTP_ACCEPT="text/html")
+        assert response.status_code == 413
+        assert b"Content Too Large" in response.content
+
+        response = self.client.get("/_/414", HTTP_ACCEPT="text/html")
+        assert response.status_code == 414
+        assert b"URI Too Long" in response.content
+
         response = self.client.get("/_/429", HTTP_ACCEPT="text/html")
         assert response.status_code == 429
         assert response["Retry-After"] == "60"
@@ -87,6 +105,8 @@ class ErrorTests(SimpleTestCase):
             "error_page 403 = /_/403/;",
             "error_page 404 = /_/404/;",
             "error_page 405 = /_/405/;",
+            "error_page 413 = /_/413/;",
+            "error_page 414 = /_/414/;",
             "error_page 421 = /_/421/;",
             "error_page 429 = /_/429/;",
             "error_page 500 = /_/50x/;",
@@ -187,6 +207,16 @@ class ErrorTests(SimpleTestCase):
         """
         response = self.client.get("/_/421")
         assert response.status_code == 421
+
+    def test_get_request_size_errors(self):
+        """Oversized bodies and URLs return their branded error responses."""
+        response = self.client.get("/_/413", HTTP_ACCEPT="application/json")
+        assert response.status_code == 413
+        assert response.json() == {"error": "Content Too Large"}
+
+        response = self.client.get("/_/414", HTTP_ACCEPT="application/json")
+        assert response.status_code == 414
+        assert response.json() == {"error": "URI Too Long"}
 
     def test_get_429(self):
         """The static rate-limit page tells clients when to retry."""

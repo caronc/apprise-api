@@ -187,7 +187,7 @@ class LogLevelSettingsTests(SimpleTestCase):
 
 
 class StreamSizeSettingsTests(SimpleTestCase):
-    """Validate live-stream memory and disk size settings."""
+    """Validate live-stream resource settings."""
 
     def test_defaults_and_overrides(self):
         """Stream sizes use MB environment values and documented defaults."""
@@ -196,6 +196,9 @@ class StreamSizeSettingsTests(SimpleTestCase):
         self.assertEqual(defaults.APPRISE_STREAM_MEMORY_SIZE, 2 * 1048576)
         self.assertEqual(defaults.APPRISE_STREAM_DISK_SIZE, 256 * 1048576)
         self.assertEqual(defaults.APPRISE_STREAM_WORKER_COUNT, 4)
+        self.assertEqual(defaults.APPRISE_STREAM_QUEUE_SIZE, 8)
+        self.assertEqual(defaults.APPRISE_STREAM_RETRY_AFTER_SECONDS, 15)
+        self.assertEqual(defaults.APPRISE_STREAM_HEARTBEAT_SECONDS, 15)
 
         # Environment values are whole megabytes and become bytes at startup.
         configured = _load_settings(
@@ -203,23 +206,27 @@ class StreamSizeSettingsTests(SimpleTestCase):
                 "APPRISE_STREAM_MEMORY_SIZE": "4",
                 "APPRISE_STREAM_DISK_SIZE": "8",
                 "APPRISE_STREAM_WORKER_COUNT": "6",
+                "APPRISE_STREAM_QUEUE_SIZE": "12",
             }
         )
         self.assertEqual(configured.APPRISE_STREAM_MEMORY_SIZE, 4 * 1048576)
         self.assertEqual(configured.APPRISE_STREAM_DISK_SIZE, 8 * 1048576)
         self.assertEqual(configured.APPRISE_STREAM_WORKER_COUNT, 6)
+        self.assertEqual(configured.APPRISE_STREAM_QUEUE_SIZE, 12)
 
     def test_zero_is_allowed(self):
         """Zero remains available for each documented fallback mode."""
-        # Operators can explicitly disable either buffering layer.
+        # Buffering and admission waiting can be disabled independently.
         configured = _load_settings(
             {
                 "APPRISE_STREAM_MEMORY_SIZE": "0",
                 "APPRISE_STREAM_DISK_SIZE": "0",
+                "APPRISE_STREAM_QUEUE_SIZE": "0",
             }
         )
         self.assertEqual(configured.APPRISE_STREAM_MEMORY_SIZE, 0)
         self.assertEqual(configured.APPRISE_STREAM_DISK_SIZE, 0)
+        self.assertEqual(configured.APPRISE_STREAM_QUEUE_SIZE, 0)
 
     def test_invalid_values_fail_at_startup(self):
         """Negative, fractional, and non-numeric sizes are rejected."""
@@ -238,6 +245,16 @@ class StreamSizeSettingsTests(SimpleTestCase):
                 ),
             ):
                 _load_settings({"APPRISE_STREAM_WORKER_COUNT": value})
+
+        for value in ("-1", "1.5", "many"):
+            with (
+                self.subTest(value=value),
+                self.assertRaisesRegex(
+                    ImproperlyConfigured,
+                    "APPRISE_STREAM_QUEUE_SIZE",
+                ),
+            ):
+                _load_settings({"APPRISE_STREAM_QUEUE_SIZE": value})
 
 
 class ChoiceSettingsTests(SimpleTestCase):
