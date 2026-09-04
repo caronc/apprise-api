@@ -418,6 +418,19 @@
         // Materialize Init
         M.AutoInit();
 
+        // Pointer-activated controls should return to their resting appearance
+        // after the click. Keyboard focus remains intact and uses :focus-visible.
+        document.addEventListener('click', function(event) {
+            if (event.detail === 0 || !(event.target instanceof Element)) return;
+            const control = event.target.closest(
+                'a[href], button, [role="button"], summary, input[type="button"], input[type="submit"]'
+            );
+            if (!control) return;
+            window.requestAnimationFrame(function() {
+                if (document.activeElement === control) control.blur();
+            });
+        });
+
         // The same beta information can be opened from any API page.
         (function() {
             const dialog = document.querySelector('#mobile-beta-dialog');
@@ -512,7 +525,7 @@
 
             logout.addEventListener('click', function(e) {
                 e.preventDefault();
-                Swal.fire({
+                appriseFire({
                     title: '{% trans "Log Out?" %}',
                     html: icon.innerHTML + '<p>{% trans "Are you sure you wish to log out?" %}</p>',
                     showCancelButton: true,
@@ -569,6 +582,107 @@
 </script>
 {# Script Block 2 #}
 <script>
+  // Shared modal defaults keep every popup consistent while leaving brief
+  // toasts intentionally free of modal-only controls.
+  function appriseFire(options) {
+    const requested = options || {};
+    const isToast = requested.toast === true;
+    const popupClasses = [];
+    if (!isToast) {
+      popupClasses.push('apprise-popup');
+      if (requested.icon) {
+        popupClasses.push('apprise-popup--status');
+      }
+      if (requested.width) {
+        popupClasses.push('apprise-popup--wide');
+      }
+    }
+    if (requested.appriseTask === true) {
+      popupClasses.push('apprise-popup--task');
+    }
+
+    const customClass = Object.assign({}, requested.customClass || {});
+    if (popupClasses.length) {
+      customClass.popup = [customClass.popup || '', popupClasses.join(' ')]
+        .join(' ').trim();
+    }
+
+    const settings = Object.assign({
+      showCloseButton: !isToast,
+      closeButtonHtml: '&times;'
+    }, requested, {customClass: customClass});
+    if (requested.icon === 'error' && !requested.iconHtml) {
+      settings.iconHtml = '<span class="apprise-error-mark" aria-hidden="true"></span>';
+    }
+    delete settings.appriseTask;
+    return Swal.fire(settings);
+  }
+
+  // Display cancellable work without letting an accidental close silently
+  // abandon it. If cancellation is declined, the progress popup is restored.
+  function appriseBeginTask(options) {
+    const controller = new AbortController();
+    let finished = false;
+    let confirmingAbort = false;
+
+    function openProgress() {
+      if (finished) return;
+      appriseFire({
+        title: options.title,
+        html: options.html,
+        width: options.width,
+        appriseTask: true,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: function () {
+          if (options.showLoader !== false) {
+            Swal.showLoading();
+          }
+          if (typeof options.didOpen === 'function') {
+            options.didOpen();
+          }
+          const closeButton = Swal.getCloseButton();
+          if (!closeButton) return;
+          closeButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (confirmingAbort || finished) return;
+            confirmingAbort = true;
+            appriseFire({
+              title: options.abortTitle || '{% trans "Abort Current Task?" %}',
+              text: options.abortText || '{% trans "Are you sure you wish to abort the current task?" %}',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonText: options.abortConfirmText || '{% trans "Abort Task" %}',
+              cancelButtonText: '{% trans "Keep Running" %}',
+              focusCancel: true
+            }).then(function (result) {
+              confirmingAbort = false;
+              if (result.isConfirmed) {
+                controller.abort();
+              } else {
+                openProgress();
+              }
+            });
+          }, true);
+        }
+      });
+    }
+
+    openProgress();
+    return {
+      signal: controller.signal,
+      finish: function () {
+        finished = true;
+        Swal.close();
+      },
+      wasAborted: function () {
+        return controller.signal.aborted;
+      }
+    };
+  }
+
   // Browser requests use the login cookie; API clients still use Basic Auth.
   function appriseFetch(input, init) {
     const options = init || {};
@@ -689,7 +803,7 @@
       return;
     }
 
-    Swal.fire({
+    appriseFire({
       title: '{% trans "Open Configuration" %}',
       text: '{% trans "This opens a different Config ID. Any unsaved changes on this page will be lost." %}',
       icon: 'warning',
@@ -964,7 +1078,7 @@
     cfgGenLink.addEventListener('click', function(e) {
       e.preventDefault();
 
-      Swal.fire({
+      appriseFire({
         title: '{% trans "New Configuration" %}',
         html: `
           <div class="cfggen-modal-copy">
@@ -1084,7 +1198,7 @@
   // Non-blocking success/failure notice
   function appriseShowStatusToast(message, isSuccess) {
     if (window.Swal && Swal.fire) {
-      Swal.fire({
+      appriseFire({
         toast: true,
         position: 'top-end',
         icon: isSuccess ? 'success' : 'error',

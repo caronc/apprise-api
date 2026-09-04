@@ -34,6 +34,7 @@ class WelcomePageTests(SimpleTestCase):
         """The shared beta dialog presents the required steps and safe links."""
         response = self.client.get("/")
         self.assertContains(response, 'id="mobile-beta-dialog"')
+        self.assertContains(response, 'class="apprise-dialog mobile-beta-dialog"')
         self.assertContains(response, 'class="apprise-dialog-close mobile-beta-dialog__close"')
         self.assertContains(response, 'class="nav-divider mobile-nav-divider"', count=2)
         self.assertContains(response, "https://groups.google.com/g/apprise-testers/")
@@ -41,6 +42,24 @@ class WelcomePageTests(SimpleTestCase):
         self.assertContains(response, "https://play.google.com/store/apps/details?id=com.appriseit.mobile")
         self.assertContains(response, 'target="_blank"')
         self.assertContains(response, 'rel="noopener noreferrer"')
+
+    def test_shared_popup_shell_and_task_abort_are_rendered(self):
+        """Modal defaults distinguish dismissible dialogs from task aborts."""
+        response = self.client.get("/cfg/popup_test")
+        self.assertContains(response, "function appriseFire(options)")
+        self.assertContains(response, "popupClasses.push('apprise-popup--status')")
+        self.assertContains(response, 'class="apprise-error-mark"')
+        self.assertContains(response, "showCloseButton: !isToast")
+        self.assertContains(response, "function appriseBeginTask(options)")
+        self.assertContains(response, "Are you sure you wish to abort the current task?")
+        self.assertContains(response, "signal: task.signal")
+        self.assertContains(response, "streamUrl.searchParams.set('stream', '1')")
+        self.assertContains(response, "'Accept': 'text/event-stream'")
+        self.assertContains(response, "response.body.getReader")
+        self.assertContains(response, "event.name === 'log'")
+        self.assertContains(response, "responseTitle: 'Delivery Response'", count=2)
+        self.assertContains(response, "event.detail === 0")
+        self.assertContains(response, "document.activeElement === control")
 
     @override_settings(APPRISE_STATELESS_MODE="disabled")
     def test_disabled_stateless_mode_hides_endpoint_help(self):

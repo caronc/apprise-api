@@ -646,13 +646,25 @@ class AuthGuiTests(SimpleTestCase):
 
         response = self.client.post("/logout", headers=_BROWSER)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/login")
         self.assertEqual(response["Cache-Control"], "no-store")
         self.assertEqual(response.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
         self.assertEqual(response.cookies["key"]["max-age"], 0)
-        content = response.content.decode()
-        self.assertIn("Logged Out", content)
+        self.assertEqual(response.cookies["apprise_logout_notice"].value, "1")
+        self.assertTrue(response.cookies["apprise_logout_notice"]["httponly"])
+
+        login_page = self.client.get(response.url, headers=_BROWSER)
+        self.assertEqual(login_page.status_code, 200)
+        content = login_page.content.decode()
+        self.assertIn("Successfully logged out.", content)
+        self.assertIn('class="auth-logout-success"', content)
         self.assertNotIn("auth-account", content)
+        self.assertEqual(login_page.cookies["apprise_logout_notice"]["max-age"], 0)
+
+        # The banner is a one-time notice and disappears on refresh.
+        refreshed_login = self.client.get("/login", headers=_BROWSER)
+        self.assertNotIn("Successfully logged out.", refreshed_login.content.decode())
 
         # Chrome may still send this header, but HTML now requires the cookie.
         refresh = self.client.get(
@@ -724,6 +736,11 @@ class AuthGuiTests(SimpleTestCase):
         content = response.content.decode()
         self.assertEqual(content.count('class="tab disabled col s3"'), 2)
         self.assertNotIn("disabledcol", content)
+        self.assertEqual(content.count('class="config-tab-label"'), 4)
+        self.assertIn('aria-label="Overview"', content)
+        self.assertIn('aria-label="Configuration"', content)
+        self.assertIn('aria-label="Review"', content)
+        self.assertIn('aria-label="Notifications"', content)
         self.assertIn("Choose at least one tag", content)
         self.assertIn("Required Tag", content)
         self.assertIn("commitNotifyTags();", content)

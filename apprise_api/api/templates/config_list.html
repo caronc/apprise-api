@@ -107,7 +107,7 @@
     button.addEventListener('click', function () {
       const key = button.dataset.configId;
       const row = button.closest('.config-list-item');
-      Swal.fire({
+      appriseFire({
         title: '{% trans "Delete Configuration ID?" %}',
         text: '{% trans "This permanently removes this configuration and any login assigned to it." %}',
         icon: 'warning',
@@ -148,7 +148,7 @@
     button.addEventListener('click', function () {
       const oldKey = button.dataset.configId;
       const row = button.closest('.config-list-item');
-      Swal.fire({
+      appriseFire({
         title: '{% trans "Move Configuration ID" %}',
         html: `
           <div class="input-field concealed-field auth-credential-field">

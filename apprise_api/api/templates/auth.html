@@ -234,7 +234,7 @@
 
   if (authAccessHelp) {
     authAccessHelp.addEventListener('click', function () {
-      Swal.fire({
+      appriseFire({
         title: '{% trans "Configuration Access Modes" %}',
         icon: 'info',
         html: '<table class="auth-access-table"><thead><tr><th>{% trans "Mode" %}</th><th>{% trans "Description" %}</th></tr></thead><tbody>'
@@ -385,7 +385,7 @@
         authPasswordConfirm.value = '';
       }
       authSetShared(true);
-      Swal.fire({
+      appriseFire({
         title: '{% trans "Authentication" %}',
         icon: 'success',
         html: '<div class="auth-save-result"><span>{% trans "Configuration access saved." %}</span>'
@@ -419,7 +419,7 @@
   if (authRemove) {
     authRemove.addEventListener('click', function () {
       authClearError();
-      Swal.fire({
+      appriseFire({
         title: '{% trans "Reset Configuration Access?" %}',
         text: '{% trans "This removes the configuration login." %}',
         icon: 'warning',
@@ -454,7 +454,7 @@
           }
           M.updateTextFields();
           authSetShared(false);
-          Swal.fire({
+          appriseFire({
             title: '{% trans "Authentication" %}',
             text: '{% trans "Configuration access reset." %}',
             icon: 'success'
@@ -523,7 +523,7 @@
         const destination = moveToConfigId.value;
         moveToConfigId.value = '';
         M.updateTextFields();
-        Swal.fire({
+        appriseFire({
           title: '{% trans "Move Configuration" %}',
           text: '{% trans "Configuration moved successfully." %}',
           icon: 'success'

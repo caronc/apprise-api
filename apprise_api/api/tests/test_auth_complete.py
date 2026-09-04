@@ -249,7 +249,9 @@ class AuthMiddlewareCoverageTests(SimpleTestCase):
     def test_asset_and_api_logout_reach_the_view(self):
         self.assertEqual(self.client.get("/s/missing.css").status_code, 404)
         self.assertEqual(self.client.get("/logout").status_code, 302)
-        self.assertEqual(self.client.post("/logout").status_code, 200)
+        response = self.client.post("/logout")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/login")
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_unsigned_web_fetch_denials_match_format(self):

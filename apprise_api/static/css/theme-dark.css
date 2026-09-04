@@ -37,6 +37,31 @@ Support Banner
   --dialog-close-hover-bg: #6f7582;
   --dialog-close-hover-border: #888c96;
   --dialog-close-hover-icon: #0d0f12;
+  --dialog-surface: #23262f;
+  --dialog-surface-raised: #2b2f38;
+  --dialog-border: #454a55;
+  --dialog-text: #d4d6dc;
+  --dialog-heading: #f4f5f8;
+  --dialog-header-start: #163d3a;
+  --dialog-header-end: #202b35;
+  --dialog-shadow: rgba(0, 0, 0, 0.58);
+  --notify-log-bg: #111318;
+  --notify-log-row-bg: #1b1e25;
+  --notify-log-row-alt-bg: #20242c;
+  --notify-log-border: #3b414c;
+  --notify-log-text: #d7dae0;
+  --notify-log-muted: #9299a5;
+  --notify-log-status-bg: #123431;
+  --notify-log-status-border: #286c65;
+  --notify-log-success-bg: #183522;
+  --notify-log-success-border: #39734a;
+  --notify-log-warning-bg: #3b3018;
+  --notify-log-warning-border: #8a6828;
+  --notify-log-error-bg: #3a2024;
+  --notify-log-error-border: #81454e;
+  --auth-logout-success-bg: #173326;
+  --auth-logout-success-border: #397454;
+  --auth-logout-success-text: #9ce0b8;
 }
 
 .support-banner {
@@ -703,10 +728,6 @@ input.config-id-input.is-mismatched {
   color: #ff8b8b !important;
 }
 
-.logout-page-icon {
-  color: #7de6da;
-}
-
 .logout-confirm-icon {
   color: #7de6da;
 }
@@ -753,9 +774,9 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-editor-card .auth-access-help:hover,
-.auth-editor-card .auth-access-help:focus,
+.auth-editor-card .auth-access-help:focus-visible,
 .swal2-popup .auth-save-copy:hover,
-.swal2-popup .auth-save-copy:focus {
+.swal2-popup .auth-save-copy:focus-visible {
   color: #0f1e1c;
   background-color: #7de6da;
 }
@@ -902,15 +923,25 @@ Buttons & Chips
   background-color: #34383f;
 }
 
-.btn:focus,
-.btn-large:focus,
-.btn-small:focus,
-.btn-floating:focus,
+.btn:focus-visible,
+.btn-large:focus-visible,
+.btn-small:focus-visible,
+.btn-floating:focus-visible,
 .btn-large:hover,
 .btn-small:hover,
 .btn:hover {
   background-color: #23262f;
   color: #edeef3;
+}
+
+.btn:focus:not(:focus-visible),
+.btn-large:focus:not(:focus-visible),
+.btn-small:focus:not(:focus-visible),
+.btn-floating:focus:not(:focus-visible) {
+  outline: none;
+  color: #edeef3;
+  background-color: #34383f;
+  box-shadow: none;
 }
 
 .btn-flat {
@@ -921,7 +952,7 @@ Buttons & Chips
 #config .config-toolbar .config-url-builder-btn,
 #config .config-toolbar .config-url-builder-btn:visited,
 #config .config-toolbar .config-url-builder-btn:hover,
-#config .config-toolbar .config-url-builder-btn:focus {
+#config .config-toolbar .config-url-builder-btn:focus-visible {
   color: #edeef3 !important;
 }
 
@@ -932,7 +963,7 @@ Buttons & Chips
 }
 
 #notify .notify-form-actions .btn-clear-form:hover,
-#notify .notify-form-actions .btn-clear-form:focus {
+#notify .notify-form-actions .btn-clear-form:focus-visible {
   background-color: #323845;
   border-color: #616a7c;
   color: #d1d6de !important;
@@ -952,13 +983,13 @@ Buttons & Chips
 }
 
 #url-list .review-test-btn:hover,
-#url-list .review-test-btn:focus {
+#url-list .review-test-btn:focus-visible {
   color: #eef4ff;
 }
 
 #url-list .review-test-btn[disabled],
 #url-list .review-test-btn[disabled]:hover,
-#url-list .review-test-btn[disabled]:focus {
+#url-list .review-test-btn[disabled]:focus-visible {
   color: #6d7380;
   background-color: rgba(255, 255, 255, 0.03);
   border-color: #3f4552;
@@ -1266,7 +1297,7 @@ Notifications — SweetAlert2
 
 /* SweetAlert2 — log colouring */
 .swal2-popup .notify-log-panel {
-  background-color: #17181c;
+  background-color: var(--notify-log-bg);
 }
 
 .swal2-popup .logs .log_DEBUG {
@@ -1295,4 +1326,26 @@ Notifications — SweetAlert2
 .swal2-popup .logs .log_TRACE {
   color: #6a9fb5;
   font-style: italic;
+}
+
+.swal2-popup .logs .log_DEBUG .log_level {
+  color: #8ba9c2;
+}
+
+.swal2-popup .logs .log_INFO .log_level {
+  color: #b5e07a;
+}
+
+.swal2-popup .logs .log_WARNING .log_level {
+  color: #ffc861;
+}
+
+.swal2-popup .logs .log_ERROR .log_level,
+.swal2-popup .logs .log_CRITICAL .log_level,
+.swal2-popup .logs .log_FATAL .log_level {
+  color: #ff8080;
+}
+
+.swal2-popup .logs .log_TRACE .log_level {
+  color: #7faec2;
 }

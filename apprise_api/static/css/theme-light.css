@@ -36,6 +36,31 @@ Support Banner
   --dialog-close-hover-bg: #dfe1e7;
   --dialog-close-hover-border: #888c96;
   --dialog-close-hover-icon: #17181c;
+  --dialog-surface: #ffffff;
+  --dialog-surface-raised: #f6f7fa;
+  --dialog-border: #c7cdd7;
+  --dialog-text: #34383f;
+  --dialog-heading: #23262f;
+  --dialog-header-start: #eef8f6;
+  --dialog-header-end: #dcefeb;
+  --dialog-shadow: rgba(28, 39, 49, 0.28);
+  --notify-log-bg: #f4f6f9;
+  --notify-log-row-bg: #ffffff;
+  --notify-log-row-alt-bg: #eef2f6;
+  --notify-log-border: #cfd6df;
+  --notify-log-text: #34383f;
+  --notify-log-muted: #697382;
+  --notify-log-status-bg: #e8f5f2;
+  --notify-log-status-border: #a9d9d2;
+  --notify-log-success-bg: #edf8ef;
+  --notify-log-success-border: #a9d5b0;
+  --notify-log-warning-bg: #fff7e5;
+  --notify-log-warning-border: #e8c775;
+  --notify-log-error-bg: #fff0f0;
+  --notify-log-error-border: #e3aaaa;
+  --auth-logout-success-bg: #edf8f2;
+  --auth-logout-success-border: #9dcfb1;
+  --auth-logout-success-text: #17623b;
 }
 
 .support-banner {
@@ -473,10 +498,6 @@ input.config-id-input.is-mismatched {
   color: #a83232 !important;
 }
 
-.logout-page-icon {
-  color: #0f5f57;
-}
-
 .logout-confirm-icon {
   color: #0f5f57;
 }
@@ -520,9 +541,9 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-editor-card .auth-access-help:hover,
-.auth-editor-card .auth-access-help:focus,
+.auth-editor-card .auth-access-help:focus-visible,
 .swal2-popup .auth-save-copy:hover,
-.swal2-popup .auth-save-copy:focus {
+.swal2-popup .auth-save-copy:focus-visible {
   color: #ffffff;
   background-color: #148c80;
 }
@@ -824,15 +845,25 @@ Buttons & Chips
   background-color: #edeef3;
 }
 
-.btn:focus,
-.btn-large:focus,
-.btn-small:focus,
-.btn-floating:focus,
+.btn:focus-visible,
+.btn-large:focus-visible,
+.btn-small:focus-visible,
+.btn-floating:focus-visible,
 .btn-large:hover,
 .btn-small:hover,
 .btn:hover {
   color: #0f5f57 !important;
   background-color: #c8f0ea;
+}
+
+.btn:focus:not(:focus-visible),
+.btn-large:focus:not(:focus-visible),
+.btn-small:focus:not(:focus-visible),
+.btn-floating:focus:not(:focus-visible) {
+  outline: none;
+  color: #0f5f57 !important;
+  background-color: #edeef3;
+  box-shadow: none;
 }
 
 .btn-flat {
@@ -843,7 +874,7 @@ Buttons & Chips
 #config .config-toolbar .config-url-builder-btn,
 #config .config-toolbar .config-url-builder-btn:visited,
 #config .config-toolbar .config-url-builder-btn:hover,
-#config .config-toolbar .config-url-builder-btn:focus {
+#config .config-toolbar .config-url-builder-btn:focus-visible {
   color: #0f5f57 !important;
 }
 
@@ -854,7 +885,7 @@ Buttons & Chips
 }
 
 #notify .notify-form-actions .btn-clear-form:hover,
-#notify .notify-form-actions .btn-clear-form:focus {
+#notify .notify-form-actions .btn-clear-form:focus-visible {
   background-color: #e9edf3;
   border-color: #b7c0cc;
   color: #3f4856 !important;
@@ -952,13 +983,13 @@ Buttons & Chips
 }
 
 #url-list .review-test-btn:hover,
-#url-list .review-test-btn:focus {
+#url-list .review-test-btn:focus-visible {
   color: #0f5f57;
 }
 
 #url-list .review-test-btn[disabled],
 #url-list .review-test-btn[disabled]:hover,
-#url-list .review-test-btn[disabled]:focus {
+#url-list .review-test-btn[disabled]:focus-visible {
   color: #8b93a0;
   background-color: #eff2f6;
   border-color: #d7dde6;
@@ -1195,7 +1226,7 @@ Notifications — SweetAlert2
 
 /* SweetAlert2 — log colouring */
 .swal2-popup .notify-log-panel {
-  background-color: #edeef3;
+  background-color: var(--notify-log-bg);
 }
 
 .swal2-popup .logs .log_DEBUG {
@@ -1224,4 +1255,26 @@ Notifications — SweetAlert2
 .swal2-popup .logs .log_TRACE {
   color: #1976d2;
   font-style: italic;
+}
+
+.swal2-popup .logs .log_DEBUG .log_level {
+  color: #607d8b;
+}
+
+.swal2-popup .logs .log_INFO .log_level {
+  color: #2e7d32;
+}
+
+.swal2-popup .logs .log_WARNING .log_level {
+  color: #a86600;
+}
+
+.swal2-popup .logs .log_ERROR .log_level,
+.swal2-popup .logs .log_CRITICAL .log_level,
+.swal2-popup .logs .log_FATAL .log_level {
+  color: #c62828;
+}
+
+.swal2-popup .logs .log_TRACE .log_level {
+  color: #1976d2;
 }

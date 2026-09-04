@@ -29,12 +29,16 @@
       <div class="col s12">
         <ul class="tabs config-overview">
           <li class="tab col s3">
-            <a class="active" href="#overview"><i class="material-icons">info</i>
-            {% trans "Overview" %}</a>
+            <a class="active"
+               href="#overview"
+               aria-label="{% trans "Overview" %}"
+               title="{% trans "Overview" %}"><i class="material-icons">info</i>
+              <span class="config-tab-label">{% trans "Overview" %}</span></a>
           </li>
           {# Keep the grid class separate when the disabled class is rendered. #}
           <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
             <a href="#config"
+               aria-label="{% trans "Configuration" %}"
                title="{% if not CONFIG_LOCK %}{% trans "Configuration is unlocked" %}{% else %}{% trans "Configuration is locked by the administrator" %}{% endif %}">
               <i class="material-icons">
                 {% if not CONFIG_LOCK %}
@@ -42,10 +46,11 @@
                 {% else %}
                   lock
                 {% endif %}
-              </i> {% trans "Configuration" %}</a>
+              </i><span class="config-tab-label">{% trans "Configuration" %}</span></a>
             </li>
             <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
               <a href="#review"
+                 aria-label="{% trans "Review" %}"
                  title="{% if not CONFIG_LOCK %}{% trans "Configuration is unlocked" %}{% else %}{% trans "Configuration is locked by the administrator" %}{% endif %}">
                 <i class="material-icons">
                   {% if not CONFIG_LOCK %}
@@ -53,10 +58,13 @@
                   {% else %}
                     lock
                   {% endif %}
-                </i> {% trans "Review" %}</a>
+                </i><span class="config-tab-label">{% trans "Review" %}</span></a>
               </li>
               <li class="tab col s3">
-                <a href="#notify"><i class="material-icons">announcement</i> {% trans "Notifications" %}
+                <a href="#notify"
+                   aria-label="{% trans "Notifications" %}"
+                   title="{% trans "Notifications" %}"><i class="material-icons">announcement</i>
+                  <span class="config-tab-label">{% trans "Notifications" %}</span>
                   {% if not CONFIG_LOCK %}<span class="card-count"></span>{% endif %}
                 </a>
               </li>
@@ -504,9 +512,225 @@
     codeEl.dataset.rawUrl = normalized;
   }
 
+  function notifyStreamUrl(url) {
+    const streamUrl = new URL(url, window.location.href);
+    streamUrl.searchParams.set('stream', '1');
+    return streamUrl.pathname + streamUrl.search;
+  }
+
+  function parseNotifyStreamEvent(block) {
+    let eventName = 'message';
+    const data = [];
+    block.split('\n').forEach(function (line) {
+      if (!line || line.startsWith(':')) return;
+      const separator = line.indexOf(':');
+      const field = separator < 0 ? line : line.slice(0, separator);
+      let value = separator < 0 ? '' : line.slice(separator + 1);
+      if (value.startsWith(' ')) value = value.slice(1);
+      if (field === 'event') eventName = value;
+      if (field === 'data') data.push(value);
+    });
+    if (!data.length) return null;
+    return {name: eventName, data: JSON.parse(data.join('\n'))};
+  }
+
+  async function readNotifyEventStream(response, onEvent) {
+    const contentType = response.headers.get('Content-Type') || '';
+    if (!response.ok || !contentType.toLowerCase().startsWith('text/event-stream')) {
+      throw new Error('{% trans "The server could not start a live notification stream." %}');
+    }
+    if (!response.body || !response.body.getReader) {
+      throw new Error('{% trans "This browser cannot display the live notification stream." %}');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let finalEvent = null;
+
+    function consume(finalChunk) {
+      buffer += finalChunk;
+      let boundary = buffer.search(/\r?\n\r?\n/);
+      while (boundary >= 0) {
+        const delimiter = buffer.slice(boundary).match(/^\r?\n\r?\n/)[0];
+        const block = buffer.slice(0, boundary).replace(/\r\n/g, '\n');
+        buffer = buffer.slice(boundary + delimiter.length);
+        const event = parseNotifyStreamEvent(block);
+        if (event) {
+          onEvent(event);
+          if (event.name === 'result' || event.name === 'error') {
+            finalEvent = event;
+          }
+        }
+        boundary = buffer.search(/\r?\n\r?\n/);
+      }
+    }
+
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      consume(decoder.decode(chunk.value, {stream: true}));
+    }
+    consume(decoder.decode());
+    if (buffer.trim()) {
+      const event = parseNotifyStreamEvent(buffer.replace(/\r\n/g, '\n'));
+      if (event) {
+        onEvent(event);
+        if (event.name === 'result' || event.name === 'error') finalEvent = event;
+      }
+    }
+    if (!finalEvent) {
+      throw new Error('{% trans "The live notification stream ended unexpectedly." %}');
+    }
+    return finalEvent;
+  }
+
+  function createNotifyLiveFeed(title, sendingText) {
+    const entries = [];
+    const logMarkup =
+      '<div class="notify-log-panel" role="log" aria-live="polite" aria-relevant="additions">' +
+        '<ul class="logs notify-live-logs" data-notify-live-logs></ul>' +
+        '<p class="notify-live-empty" data-notify-live-empty>{% trans "Waiting for log activity…" %}</p>' +
+      '</div>';
+    const markup =
+      '<div class="notify-live-feed">' +
+        '<div class="notify-live-status">' +
+          '<span class="notify-live-pulse" aria-hidden="true"></span>' +
+          '<span>' + sendingText + '</span>' +
+          '<span class="notify-live-count" data-notify-live-count></span>' +
+        '</div>' +
+        logMarkup +
+      '</div>';
+
+    function createLogRow(entry) {
+      const row = document.createElement('li');
+      const level = String(entry.level || 'INFO').toUpperCase();
+      row.className = 'notify-log-row log_' + level.replace(/[^A-Z]/g, '');
+
+      const time = document.createElement('time');
+      time.className = 'log_time';
+      time.textContent = entry.asctime || '';
+      row.appendChild(time);
+
+      const badge = document.createElement('span');
+      badge.className = 'log_level';
+      badge.textContent = level;
+      row.appendChild(badge);
+
+      const message = document.createElement('span');
+      message.className = 'log_message';
+      message.textContent = entry.message || '';
+      row.appendChild(message);
+
+      if (entry.service) {
+        const service = document.createElement('span');
+        service.className = 'log_service';
+        service.textContent = entry.service;
+        service.title = '{% trans "Notification service" %}';
+        row.appendChild(service);
+      }
+      return row;
+    }
+
+    function render() {
+      const container = Swal.getHtmlContainer();
+      const list = container ? container.querySelector('[data-notify-live-logs]') : null;
+      if (!list) return;
+      list.replaceChildren();
+      entries.forEach(function (entry) {
+        list.appendChild(createLogRow(entry));
+      });
+      const empty = container.querySelector('[data-notify-live-empty]');
+      if (empty) empty.hidden = entries.length > 0;
+      const count = container.querySelector('[data-notify-live-count]');
+      if (count) {
+        count.textContent = entries.length === 1
+          ? '1 {% trans "event" %}'
+          : entries.length + ' {% trans "events" %}';
+      }
+      const panel = list.closest('.notify-log-panel');
+      if (panel) panel.scrollTop = panel.scrollHeight;
+    }
+
+    const task = appriseBeginTask({
+      title: title,
+      html: markup,
+      width: '80em',
+      showLoader: false,
+      didOpen: render
+    });
+
+    return {
+      signal: task.signal,
+      wasAborted: task.wasAborted,
+      add: function (entry) {
+        entries.push(entry);
+        render();
+      },
+      finish: function (options) {
+        task.finish();
+        const popupClass = 'notify-log-popup notify-log-popup--' + options.tone;
+        appriseFire({
+          title: options.title || title,
+          html: '<p class="notify-summary">' + options.summary + '</p>' + logMarkup,
+          icon: options.icon,
+          width: '80em',
+          customClass: {popup: popupClass},
+          didOpen: render
+        });
+      },
+      close: task.finish
+    };
+  }
+
+  function notifyStreamResultOptions(status, messages) {
+    if (status === 'SUCCESS') {
+      return {tone: 'success', icon: 'success', summary: messages.success};
+    }
+    if (status === 'PARTIAL') {
+      return {tone: 'warning', icon: 'warning', summary: messages.partial};
+    }
+    return {tone: 'error', icon: 'error', summary: messages.failure};
+  }
+
+  async function sendNotifyStream(url, fetchOptions, display) {
+    const feed = createNotifyLiveFeed(display.title, display.sending);
+    try {
+      const response = await appriseFetch(notifyStreamUrl(url), Object.assign({}, fetchOptions, {
+        signal: feed.signal,
+        headers: Object.assign({}, fetchOptions.headers || {}, {'Accept': 'text/event-stream'})
+      }));
+      const finalEvent = await readNotifyEventStream(response, function (event) {
+        if (event.name === 'log') feed.add(event.data);
+      });
+      if (finalEvent.name === 'error') {
+        throw new Error(finalEvent.data.message || display.failure);
+      }
+      const resultOptions = notifyStreamResultOptions(finalEvent.data.status, display);
+      resultOptions.title = display.responseTitle;
+      feed.finish(resultOptions);
+    } catch (error) {
+      if (error.name === 'AbortError' || feed.wasAborted()) {
+        feed.close();
+        return;
+      }
+      feed.add({
+        level: 'ERROR',
+        asctime: '',
+        message: error.message || display.failure
+      });
+      feed.finish({
+        title: display.responseTitle,
+        tone: 'error',
+        icon: 'error',
+        summary: display.failure
+      });
+    }
+  }
+
   async function sendReviewTestNotification(tags, anchorEl) {
     if (!tags || tags.length === 0) {
-      Swal.fire({
+      appriseFire({
         title: '{% trans "Notification" %}',
         html: '{% trans "This test action requires at least one tag on the target entry." %}',
         icon: 'warning'
@@ -530,60 +754,20 @@
     if (anchorEl) {
       anchorEl.disabled = true;
     }
-    Swal.fire({
-      title: '{% trans "Notification" %}',
-      html: '{% trans "Sending test notification..." %}',
-    });
-    Swal.showLoading();
     try {
-      const response = await appriseFetch('{% url "notify" key %}', {
+      await sendNotifyStream('{% url "notify" key %}', {
         method: 'POST',
         headers: {
-          'Accept': 'text/html',
-          'X-Apprise-Log-Level': 'debug',
+          'X-Apprise-Log-Level': 'debug'
         },
-        body: formData,
-      });
-      const html = await response.text();
-      if (response.ok) {
-        Swal.fire({
-          title: '{% trans "Notification" %}',
-          html:
-            '<p class="notify-summary">' +
-            '{% trans "Test notification sent." %}' +
-            '</p>' +
-            '<div class="notify-log-panel">' + html + '</div>',
-          icon: 'success',
-          width: '80em'
-        });
-      } else if (response.status == 424) {
-        Swal.fire({
-          title: '{% trans "Notification" %}',
-          html:
-            '<p class="notify-summary">' +
-            '{% trans "One or more test notifications were not sent." %}' +
-            '</p>' +
-            '<div class="notify-log-panel">' + html + '</div>',
-          icon: 'warning',
-          width: '80em'
-        });
-      } else {
-        Swal.fire({
-          title: '{% trans "Notification" %}',
-          html:
-            '<p class="notify-summary">' +
-            '{% trans "Failed to send test notification." %}' +
-            '</p>' +
-            '<div class="notify-log-panel">' + html + '</div>',
-          icon: 'error',
-          width: '80em'
-        });
-      }
-    } catch (e) {
-      Swal.fire({
+        body: formData
+      }, {
         title: '{% trans "Notification" %}',
-        html: '{% trans "Failed to send test notification." %}',
-        icon: 'error'
+        responseTitle: '{% trans "Delivery Response" %}',
+        sending: '{% trans "Sending test notification…" %}',
+        success: '{% trans "Test notification sent." %}',
+        partial: '{% trans "One or more test notifications were not sent." %}',
+        failure: '{% trans "Failed to send test notification." %}'
       });
     } finally {
       if (anchorEl) {
@@ -1235,7 +1419,7 @@
       const card = anchorEl
         ? anchorEl.closest('li.card-panel') || anchorEl
         : document.body;
-      Swal.fire({
+      appriseFire({
         toast: true,
         target: card,  // anchor inside the card
         position: 'top-end',
@@ -1646,7 +1830,7 @@
         e.preventDefault();
         e.stopPropagation();
         if (!isEnabled) {
-          Swal.fire({
+          appriseFire({
             title: '{% trans "Notification" %}',
             html: '{% trans "This notification service is disabled in this Apprise API instance." %}',
             icon: 'warning'
@@ -1824,21 +2008,21 @@
             // update our settings
             main_init();
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Save" %}',
               html: '{% trans "Successfully saved the configuration." %}',
               icon: 'success'
             });
           } else if (response.status == 500) {
             // Disk issue
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Save" %}',
               html: '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
               icon: 'error'
             });
           } else {
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Save" %}',
               html: '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
               icon: 'error'
@@ -1856,14 +2040,14 @@
             // update our settings
             main_init();
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Delete" %}',
               html: '{% trans "Successfully removed configuration." %}',
               icon: 'success'
             });
           } else {
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Delete" %}',
               html: '{% trans "There was an issue removing the configuration." %}',
               icon: 'error'
@@ -2101,7 +2285,7 @@
       commitNotifyTags();
       const selectedTargets = getSelectedNotifyTargetCount();
       if (selectedTargets < 1) {
-        Swal.fire({
+        appriseFire({
           title: '{% trans "Notification" %}',
           html: '{% if CONFIG_LOCK %}{% trans "Choose at least one tag before sending." %}{% else %}{% trans "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending." %}{% endif %}',
           icon: 'warning'
@@ -2116,7 +2300,7 @@
       // Minimum payload gate: allow body-only OR attachment-only.
       if (!hasBody && !hasAttachment) {
         markNotifyMinimumMissing();
-        Swal.fire({
+        appriseFire({
           title: '{% trans "Notification" %}',
           html: '{% trans "Please provide at least a message body or one attachment before sending." %}',
           icon: 'warning'
@@ -2150,57 +2334,20 @@
         });
       }
 
-      // perform our notification
-      Swal.fire({
-        title: '{% trans "Notification" %}',
-        html: '{% trans "Sending notification(s)..." %}',
-      });
-      Swal.showLoading();
-
-      appriseFetch('{% url "notify" key %}', {
+      // POST to the SSE endpoint and append log events as they arrive.
+      sendNotifyStream('{% url "notify" key %}', {
         method: 'POST',
         body: form,
         headers: {
-          'Accept': 'text/html',
           'X-Apprise-Log-Level': 'info'
         }
-      }).then(function (response) {
-        response.text().then(function (html) {
-          if (response.status == 200) {
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html:
-                '<p class="notify-summary">' +
-                '{% trans "Successfully sent the notification(s)." %}' +
-                '</p>' +
-                '<div class="notify-log-panel">' + html + '</div>',
-              icon: 'success',
-              width: '80em'
-            });
-          } else if (response.status == 424) {
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html:
-                '<p class="notify-summary">' +
-                '{% trans "One or more of the notification(s) were not sent." %}' +
-                '</p>' +
-                '<div class="notify-log-panel">' + html + '</div>',
-              icon: 'warning',
-              width: '80em'
-            });
-          } else {
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html:
-                '<p class="notify-summary">' +
-                '{% trans "Failed to send the notification(s)." %}' +
-                '</p>' +
-                '<div class="notify-log-panel">' + html + '</div>',
-              icon: 'error',
-              width: '80em'
-            });
-          }
-        });
+      }, {
+        title: '{% trans "Notification" %}',
+        responseTitle: '{% trans "Delivery Response" %}',
+        sending: '{% trans "Sending notification(s)…" %}',
+        success: '{% trans "Successfully sent the notification(s)." %}',
+        partial: '{% trans "One or more of the notification(s) were not sent." %}',
+        failure: '{% trans "Failed to send the notification(s)." %}'
       });
       return false;
     }

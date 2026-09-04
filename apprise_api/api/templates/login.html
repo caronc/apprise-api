@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% load static %}
 {% load i18n %}
 
 {% block title %}
@@ -30,6 +31,12 @@
 {% block main_page %}
   <main class="col s12 browser-login-layout">
     <div class="section browser-login-page">
+      {% if logged_out %}
+        <div class="auth-logout-success" role="status">
+          <i class="material-icons" aria-hidden="true">check_circle</i>
+          <span>{% trans "Successfully logged out." %}</span>
+        </div>
+      {% endif %}
       <div class="browser-login-card">
         <span class="browser-login-icon" aria-hidden="true">
           {% include 'icons/user.svg' %}
@@ -70,6 +77,17 @@
           </button>
         </form>
       </div>
+      <a href="#mobile-beta-dialog"
+         class="browser-login-mobile-promo"
+         data-mobile-beta-open>
+        <span class="browser-login-mobile-promo__icon">
+          <img src="{% static 'mobile/google-play.svg' %}" alt="">
+        </span>
+        <span class="browser-login-mobile-promo__text">
+          <strong>{% trans "Get Apprise Mobile" %}</strong>
+          {% trans "Manage this server from your Android device." %}
+        </span>
+      </a>
     </div>
   </main>
   {% include 'components/legal_footer.html' %}

@@ -1363,6 +1363,9 @@ def _login_config_key(request, next_url):
     return key if isinstance(key, str) and CONFIG_KEY_PATTERN.match(key) else ""
 
 
+_LOGOUT_NOTICE_COOKIE = "apprise_logout_notice"
+
+
 @method_decorator(never_cache, name="dispatch")
 class LoginView(View):
     """Create a signed login used only by the browser interface."""
@@ -1386,11 +1389,13 @@ class LoginView(View):
             remembered_key = request.COOKIES.get("key", "").strip()
             key = remembered_key if CONFIG_KEY_PATTERN.match(remembered_key) else ""
 
+        logged_out = request.COOKIES.get(_LOGOUT_NOTICE_COOKIE) == "1"
         response = render(
             request,
             self.template_name,
             {
                 "AUTH_ENABLED": False,
+                "logged_out": logged_out,
                 "form_login": BrowserLoginForm(
                     initial={
                         "next": next_url,
@@ -1403,6 +1408,12 @@ class LoginView(View):
         # and support-banner preferences are separate and remain untouched.
         request.clear_config_cookie = True
         Authentication.clear_web_cookie(response)
+        if logged_out:
+            response.delete_cookie(
+                _LOGOUT_NOTICE_COOKIE,
+                path=settings.BASE_URL or "/",
+                samesite="Lax",
+            )
         return response
 
     def post(self, request):
@@ -1491,8 +1502,6 @@ class LoginView(View):
 class LogoutView(View):
     """End the signed browser login."""
 
-    template_name = "logout.html"
-
     def get(self, request):
         """Redirect safe navigations without changing browser state."""
         if settings.APPRISE_API_ONLY:
@@ -1508,8 +1517,18 @@ class LogoutView(View):
 
         # DetectConfigMiddleware sees this marker while the response unwinds.
         request.clear_config_cookie = True
-        response = render(request, self.template_name, {"AUTH_ENABLED": False})
+        response = redirect("login")
         Authentication.clear_web_cookie(response)
+        secure = request.is_secure() or f"https://{request.get_host()}".lower() in settings.APPRISE_TRUSTED_ORIGINS
+        response.set_cookie(
+            _LOGOUT_NOTICE_COOKIE,
+            "1",
+            max_age=60,
+            httponly=True,
+            secure=secure,
+            samesite="Lax",
+            path=settings.BASE_URL or "/",
+        )
         response["Cache-Control"] = "no-store"
         return response
 

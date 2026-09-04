@@ -762,7 +762,7 @@
   function showCopyToast(anchorEl, message) {
     var msg = message || '{% trans "Copied to clipboard" %}';
     if (window.Swal && Swal.fire) {
-      Swal.fire({
+      appriseFire({
         toast: true,
         target: anchorEl || document.body,
         position: 'top-end',
