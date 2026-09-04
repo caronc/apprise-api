@@ -109,7 +109,18 @@
                   {% include 'icons/topbar-reddit.svg' %}
                 </span>
               </a>
-              <span class="nav-divider"></span>
+              <span class="nav-divider mobile-nav-divider" aria-hidden="true"></span>
+              <a href="#mobile-beta-dialog"
+                 class="tooltipped"
+                 data-mobile-beta-open
+                 aria-label="{% trans "Open Apprise Mobile beta information" %}"
+                 data-position="bottom"
+                 data-tooltip="{% trans "Apprise Mobile" %}">
+                <span class="topbar-icon topbar-icon--play">
+                  <img src="{% static 'mobile/google-play.svg' %}" alt="">
+                </span>
+              </a>
+              <span class="nav-divider mobile-nav-divider" aria-hidden="true"></span>
               <a id="theme-toggle"
                  href="{{ request.path }}?theme={{ request.next_theme }}"
                  data-theme="{{ request.theme|safe }}"
@@ -222,6 +233,14 @@
                     {% include 'icons/tool.svg' %}
                   </span>
                   <span class="side-nav-text">{% trans "Apprise URL Builder" %}</span>
+                </a>
+                <a class="side-nav-item"
+                   href="#mobile-beta-dialog"
+                   data-mobile-beta-open>
+                  <span class="menu-icon menu-icon--play">
+                    <img src="{% static 'mobile/google-play.svg' %}" alt="">
+                  </span>
+                  <span class="side-nav-text">{% trans "Apprise Mobile Beta" %}</span>
                 </a>
               </nav>
               <div class="side-nav-label">{% trans "Support Development" %}</div>
@@ -347,12 +366,37 @@
         {% endblock layout %}
       </div>
     </div>
+    {% include 'components/mobile_beta_dialog.html' %}
+
     {# Script Block 1 - Itentionally done this way to work nicely with djlint #}
     {# djlint:off #}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Materialize Init
         M.AutoInit();
+
+        // The same beta information can be opened from any API page.
+        (function() {
+            const dialog = document.querySelector('#mobile-beta-dialog');
+            if (!(dialog instanceof HTMLDialogElement)) return;
+
+            document.querySelectorAll('[data-mobile-beta-open]').forEach(function(trigger) {
+                trigger.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    if (!dialog.open) dialog.showModal();
+                });
+            });
+
+            dialog.querySelectorAll('[data-mobile-beta-close]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    dialog.close();
+                });
+            });
+
+            dialog.addEventListener('click', function(event) {
+                if (event.target === dialog) dialog.close();
+            });
+        })();
 
         // Support banner – show unless dismissed within the last year
         (function() {

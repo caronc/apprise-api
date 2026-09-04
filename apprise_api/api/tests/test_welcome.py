@@ -29,6 +29,18 @@ class WelcomePageTests(SimpleTestCase):
         response = self.client.get("/")
         assert response.status_code == 200
 
+    def test_mobile_beta_dialog_is_available(self):
+        """The shared beta dialog presents the required steps and safe links."""
+        response = self.client.get("/")
+        self.assertContains(response, 'id="mobile-beta-dialog"')
+        self.assertContains(response, 'class="apprise-dialog-close mobile-beta-dialog__close"')
+        self.assertContains(response, 'class="nav-divider mobile-nav-divider"', count=2)
+        self.assertContains(response, "https://groups.google.com/g/apprise-testers/")
+        self.assertContains(response, "https://play.google.com/apps/testing/com.appriseit.mobile")
+        self.assertContains(response, "https://play.google.com/store/apps/details?id=com.appriseit.mobile")
+        self.assertContains(response, 'target="_blank"')
+        self.assertContains(response, 'rel="noopener noreferrer"')
+
     @override_settings(APPRISE_API_ONLY=True)
     def test_welcome_page_api_only_returns_421(self) -> None:
         response = self.client.get("/")

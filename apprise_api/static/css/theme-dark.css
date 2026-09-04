@@ -20,6 +20,25 @@
 /* =========================================
 Support Banner
 ========================================= */
+:root {
+  --mobile-beta-bg: #17181c;
+  --mobile-beta-surface: #23262f;
+  --mobile-beta-border: #34383f;
+  --mobile-beta-text: #c1c3c9;
+  --mobile-beta-heading: #edeef3;
+  --mobile-beta-muted: #888c96;
+  --mobile-beta-accent: #2cb6a6;
+  --mobile-beta-accent-soft: #0b3b37;
+  --mobile-beta-counter-text: #071b19;
+  --mobile-beta-primary-text: #071b19;
+  --dialog-close-bg: #555a62;
+  --dialog-close-border: #6f7582;
+  --dialog-close-icon: #17181c;
+  --dialog-close-hover-bg: #6f7582;
+  --dialog-close-hover-border: #888c96;
+  --dialog-close-hover-icon: #0d0f12;
+}
+
 .support-banner {
   background-color: rgba(44, 182, 166, 0.08);
   color: #7de6da;
@@ -1053,6 +1072,23 @@ Notifications — SweetAlert2
 .swal2-popup .swal2-cancel.swal2-styled:focus {
   background-color: #3f444d !important;
   color: #edeef3 !important;
+}
+
+/* Keep dialog controls readable when Materialize changes hover/focus states. */
+.apprise-dialog-close:hover,
+.apprise-dialog-close:focus,
+.swal2-popup .swal2-close:hover,
+.swal2-popup .swal2-close:focus {
+  border-color: #888c96 !important;
+  color: #0d0f12 !important;
+  background: #6f7582 !important;
+}
+
+.mobile-beta-dialog__steps a.mobile-beta-dialog__primary,
+.mobile-beta-dialog__steps a.mobile-beta-dialog__primary:hover,
+.mobile-beta-dialog__steps a.mobile-beta-dialog__primary:focus {
+  color: #071b19 !important;
+  background: #2cb6a6 !important;
 }
 
 .copy-toast.swal2-popup {

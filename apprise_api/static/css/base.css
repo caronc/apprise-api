@@ -131,6 +131,14 @@ Side Nav (replaces legacy Materialize collection sidebar)
   vertical-align: middle;
 }
 
+.menu-icon img,
+.topbar-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* Heart icon uses fill rather than stroke */
 .menu-icon--heart svg {
   fill: currentColor;
@@ -614,6 +622,252 @@ textarea {
 
 #theme-toggle .topbar-icon svg {
   transform: translateX(0.03rem);
+}
+
+/* Apprise Mobile closed-beta dialog */
+.mobile-beta-dialog {
+  width: min(58rem, calc(100vw - 2rem));
+  max-height: min(90vh, 54rem);
+  padding: 0;
+  border: 1px solid var(--mobile-beta-border);
+  border-radius: 0.8rem;
+  color: var(--mobile-beta-text);
+  background: var(--mobile-beta-bg);
+  box-shadow: 0 1.25rem 4rem rgba(0, 0, 0, 0.35);
+}
+
+.mobile-beta-dialog::backdrop {
+  background: rgba(5, 8, 10, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.mobile-beta-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--mobile-beta-border);
+}
+
+.mobile-beta-dialog__header h4 {
+  margin: 0.2rem 0 0;
+  color: var(--mobile-beta-heading);
+}
+
+.mobile-beta-dialog__badge {
+  color: var(--mobile-beta-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mobile-beta-dialog__heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.85rem;
+}
+
+.mobile-beta-dialog__play-mark {
+  display: block;
+  width: 3.25rem;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.mobile-beta-dialog__close {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+/* Shared close control for native dialogs and SweetAlert popups. */
+.apprise-dialog-close,
+.swal2-popup .swal2-close {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 2rem !important;
+  min-width: 2rem;
+  height: 2rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--dialog-close-border);
+  border-radius: 50%;
+  color: var(--dialog-close-icon) !important;
+  background: var(--dialog-close-bg) !important;
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.apprise-dialog-close svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+}
+
+.apprise-dialog-close:hover,
+.apprise-dialog-close:focus-visible,
+.swal2-popup .swal2-close:hover,
+.swal2-popup .swal2-close:focus-visible {
+  border-color: var(--dialog-close-hover-border);
+  color: var(--dialog-close-hover-icon) !important;
+  background: var(--dialog-close-hover-bg) !important;
+}
+
+.apprise-dialog-close:focus-visible,
+.swal2-popup .swal2-close:focus-visible {
+  outline: 2px solid var(--mobile-beta-accent);
+  outline-offset: 2px;
+}
+
+.mobile-beta-dialog__content {
+  padding: 1rem;
+}
+
+.mobile-beta-dialog__content>p:first-child {
+  margin-top: 0;
+}
+
+.mobile-beta-dialog__order {
+  padding: 0.65rem 0.8rem;
+  border-left: 0.22rem solid var(--mobile-beta-accent);
+  border-radius: 0.2rem;
+  background: var(--mobile-beta-accent-soft);
+}
+
+.mobile-beta-dialog__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  padding: 0;
+  margin: 1rem 0;
+  list-style: none;
+  counter-reset: mobile-beta-step;
+}
+
+.mobile-beta-dialog__steps li {
+  position: relative;
+  min-width: 0;
+  padding: 0.8rem 0.8rem 0.8rem 2.8rem;
+  border: 1px solid var(--mobile-beta-border);
+  border-radius: 0.65rem;
+  background: var(--mobile-beta-surface);
+  counter-increment: mobile-beta-step;
+}
+
+.mobile-beta-dialog__steps li::before {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.65rem;
+  display: grid;
+  width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--mobile-beta-counter-text);
+  background: var(--mobile-beta-accent);
+  font-weight: 700;
+  content: counter(mobile-beta-step);
+}
+
+.mobile-beta-dialog__steps h5 {
+  margin: 0;
+  color: var(--mobile-beta-heading);
+  font-size: 1rem;
+}
+
+.mobile-beta-dialog__steps p {
+  min-height: 3.7rem;
+  margin: 0.35rem 0 0.7rem;
+  font-size: 0.88rem;
+}
+
+.mobile-beta-dialog__steps a {
+  display: inline-flex;
+  padding: 0.42rem 0.65rem;
+  border: 1px solid var(--mobile-beta-accent);
+  border-radius: 999px;
+  color: var(--mobile-beta-accent);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mobile-beta-dialog__steps a.mobile-beta-dialog__primary {
+  min-width: 7.75rem;
+  justify-content: center;
+  color: var(--mobile-beta-primary-text) !important;
+  background: var(--mobile-beta-accent);
+}
+
+.mobile-beta-dialog__preview summary {
+  color: var(--mobile-beta-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobile-beta-dialog__screenshots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.mobile-beta-dialog__screenshots figure {
+  margin: 0;
+  text-align: center;
+}
+
+.mobile-beta-dialog__screenshots img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.mobile-beta-dialog__screenshots figcaption,
+.mobile-beta-dialog__trademark {
+  margin-top: 0.35rem;
+  color: var(--mobile-beta-muted);
+  font-size: 0.75rem;
+}
+
+.mobile-beta-dialog__trademark {
+  margin-bottom: 0;
+}
+
+@media (max-width: 700px) {
+  .mobile-beta-dialog__steps {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-beta-dialog__steps p {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-beta-dialog {
+    width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+  }
+
+  .mobile-beta-dialog__screenshots {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .mobile-beta-dialog__screenshots figure {
+    flex: 0 0 76vw;
+  }
 }
 
 @keyframes api-spin {

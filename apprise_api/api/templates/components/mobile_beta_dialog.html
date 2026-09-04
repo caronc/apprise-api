@@ -1,0 +1,98 @@
+{% load static %}
+{% load i18n %}
+
+<dialog id="mobile-beta-dialog"
+        class="mobile-beta-dialog"
+        aria-labelledby="mobile-beta-title"
+        aria-describedby="mobile-beta-intro">
+  <div class="mobile-beta-dialog__header">
+    <div class="mobile-beta-dialog__heading">
+      <img class="mobile-beta-dialog__play-mark"
+           src="{% static 'mobile/google-play.svg' %}"
+           alt="Google Play"
+           width="97"
+           height="96">
+      <div>
+        <span class="mobile-beta-dialog__badge">{% trans "Android Beta" %}</span>
+        <h4 id="mobile-beta-title">{% trans "Help Test Apprise Mobile" %}</h4>
+      </div>
+    </div>
+    <button type="button"
+            class="apprise-dialog-close mobile-beta-dialog__close"
+            data-mobile-beta-close
+            aria-label="{% trans "Close" %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M18 6 6 18"></path>
+        <path d="m6 6 12 12"></path>
+      </svg>
+    </button>
+  </div>
+  <div class="mobile-beta-dialog__content">
+    <p id="mobile-beta-intro">
+      {% trans "Apprise Mobile connects your Android device to your self-hosted Apprise API. The app is currently available through a closed Google Play test." %}
+    </p>
+    <p>
+      {% trans "We need at least 12 testers to remain enrolled for 14 continuous days before Google will allow a public release." %}
+      <strong>{% trans "Use the same Google account for all three steps." %}</strong>
+    </p>
+    <p class="mobile-beta-dialog__order">
+      {% trans "Complete these steps in order. The Play Store listing remains unavailable until Google recognizes your account as a tester." %}
+    </p>
+    <ol class="mobile-beta-dialog__steps">
+      <li>
+        <h5>{% trans "Join the Google Group" %}</h5>
+        <p>{% trans "This adds your Google account to the approved tester list." %}</p>
+        <a href="https://groups.google.com/g/apprise-testers/"
+           target="_blank"
+           rel="noopener noreferrer">{% trans "Join Apprise Testers" %}</a>
+      </li>
+      <li>
+        <h5>{% trans "Become a Tester" %}</h5>
+        <p>{% trans "Open the opt-in page and select Become a tester." %}</p>
+        <a href="https://play.google.com/apps/testing/com.appriseit.mobile"
+           target="_blank"
+           rel="noopener noreferrer">{% trans "Open the Opt-In Page" %}</a>
+      </li>
+      <li>
+        <h5>{% trans "Install Apprise Mobile" %}</h5>
+        <p>{% trans "After Google confirms your tester status, open the listing and install the app." %}</p>
+        <a class="mobile-beta-dialog__primary"
+           href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"
+           target="_blank"
+           rel="noopener noreferrer">{% trans "Open Google Play" %}</a>
+      </li>
+    </ol>
+    <details class="mobile-beta-dialog__preview">
+      <summary>{% trans "Preview the App" %}</summary>
+      <div class="mobile-beta-dialog__screenshots">
+        <figure>
+          <img src="{% static 'mobile/apprise-mobile-dashboard.png' %}"
+               alt="{% trans "Apprise Mobile dashboard" %}"
+               width="450"
+               height="932"
+               loading="lazy">
+          <figcaption>{% trans "Dashboard" %}</figcaption>
+        </figure>
+        <figure>
+          <img src="{% static 'mobile/apprise-mobile-url-builder.png' %}"
+               alt="{% trans "Apprise Mobile URL Builder" %}"
+               width="450"
+               height="932"
+               loading="lazy">
+          <figcaption>{% trans "URL Builder" %}</figcaption>
+        </figure>
+        <figure>
+          <img src="{% static 'mobile/apprise-mobile-delivery-report.png' %}"
+               alt="{% trans "Apprise Mobile delivery report" %}"
+               width="450"
+               height="932"
+               loading="lazy">
+          <figcaption>{% trans "Delivery Report" %}</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="mobile-beta-dialog__trademark">
+      {% trans "Google Play and the Google Play logo are trademarks of Google LLC." %}
+    </p>
+  </div>
+</dialog>
