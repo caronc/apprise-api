@@ -104,7 +104,7 @@ class ConfigAccessViewTests(SimpleTestCase):
         self.assertIsNone(record.username)
         self.assertIsNone(record.digest)
 
-    def test_browser_admin_credentials_win_a_configuration_collision(self):
+    def test_browser_admin_wins_credential_collision(self):
         """The browser grants admin scope when both credential sets match."""
         self.assertTrue(ConfigCache.set_auth("access_user", "master", "pass"))
         response = self.client.post(
@@ -136,7 +136,7 @@ class ConfigAccessViewTests(SimpleTestCase):
             )
         self.assertEqual(stateful_v2.status_code, 200)
 
-    def test_public_notify_requires_a_specific_tag_before_attachments(self):
+    def test_public_notify_requires_tag_for_attachments(self):
         """Missing and broad tags fail before attachment handling begins."""
         self._seed("access_public", Authentication.ACCESS_PUBLIC, credentials=False)
         with patch("api.views.parse_attachments") as parse_attachments:
@@ -642,7 +642,7 @@ class ConfigAccessViewTests(SimpleTestCase):
             Authentication.ACCESS_LOCK,
         )
 
-    def test_locked_configuration_status_is_relative_to_the_authenticated_caller(self):
+    def test_lock_status_reflects_authenticated_caller(self):
         """Admin status mirrors its real access while a config user stays locked."""
         self._seed("access_locked", Authentication.ACCESS_LOCK)
 
@@ -787,7 +787,7 @@ class ConfigAccessStorageTests(SimpleTestCase):
         self.assertTrue(store.verify_auth("record", "", " secret "))
         self.assertFalse(store.verify_auth("record", "", "secret"))
 
-    def test_public_and_disabled_policy_may_exist_without_credentials(self):
+    def test_public_and_disabled_allow_no_credentials(self):
         """Only public and disabled access can be stored without a login."""
         store = AppriseConfigCache("/tmp/apprise-public-record", mode=AppriseStoreMode.SIMPLE)
         self.addCleanup(store.clear_auth, "record")

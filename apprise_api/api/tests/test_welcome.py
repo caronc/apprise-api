@@ -42,15 +42,20 @@ class WelcomePageTests(SimpleTestCase):
         self.assertContains(response, "https://play.google.com/store/apps/details?id=com.appriseit.mobile")
         self.assertContains(response, 'target="_blank"')
         self.assertContains(response, 'rel="noopener noreferrer"')
+        self.assertContains(response, "window.appriseCloseMobileMenu();")
 
     def test_shared_popup_shell_and_task_abort_are_rendered(self):
         """Modal defaults distinguish dismissible dialogs from task aborts."""
         response = self.client.get("/cfg/popup_test")
         self.assertContains(response, "function appriseFire(options)")
         self.assertContains(response, "popupClasses.push('apprise-popup--status')")
-        self.assertContains(response, 'class="apprise-error-mark"')
+        self.assertContains(response, 'class="apprise-status-mark"')
         self.assertContains(response, "showCloseButton: !isToast")
         self.assertContains(response, "function appriseBeginTask(options)")
+        self.assertContains(response, "const hasDisplayedStatus")
+        self.assertContains(response, "if (!hasDisplayedStatus)")
+        self.assertContains(response, "if (window.appriseStatusUpdatePending)")
+        self.assertContains(response, "window.appriseStatusUpdatePending = false")
         self.assertContains(response, "Are you sure you wish to abort the current task?")
         self.assertContains(response, "signal: task.signal")
         self.assertContains(response, "streamUrl.searchParams.set('stream', '1')")

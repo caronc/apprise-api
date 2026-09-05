@@ -16,25 +16,32 @@
           href="{% static 'favicon.ico' %}" />
     <!--materialize-->
     <link rel="stylesheet"
-          href="{% get_static_prefix %}css/materialize.min.css" />
+          href="{% get_static_prefix %}css/materialize.min.css?v=1.0.0" />
     <!--material-design-icons-->
-    <link rel="stylesheet" href="{% static 'iconfont/material-icons.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'iconfont/material-icons.css' %}?v=3.0.1">
     <!--highlightjs-->
-    <link rel="stylesheet" href="{% get_static_prefix %}css/highlight.min.css">
+    <link rel="stylesheet"
+          href="{% get_static_prefix %}css/highlight.min.css?v=11.11.1">
     <!--common-->
-    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+    {# Release versions refresh local assets; vendor assets keep their pinned versions. #}
+    <link rel="stylesheet"
+          href="{% static 'css/base.css' %}?v={{ APPRISE_API_VERSION }}" />
     <!--materialize-->
-    <script src="{% static 'js/materialize.min.js' %}"></script>
+    <script src="{% static 'js/materialize.min.js' %}?v=1.0.0"></script>
     {% block head_js_optional %}
       <!--sweetalert2-->
-      <script src="{% static 'js/sweetalert2.all.min.js' %}"></script>
+      <script src="{% static 'js/sweetalert2.all.min.js' %}?v=11.26.25"></script>
       <!--highlightjs-->
-      <script src="{% static 'js/highlight.pack.js' %}"></script>
+      <script src="{% static 'js/highlight.pack.js' %}?v=11.11.1"></script>
+      <!--qrcode generator, used by the Apprise Mobile QR code popup-->
+      <script src="{% static 'js/qrcode.min.js' %}?v=1.5.2"></script>
+      <script src="{% static 'js/apprise-qr.js' %}?v={{ APPRISE_API_VERSION }}"></script>
     {% endblock head_js_optional %}
     <!--theme-->
     <link id="theme-stylesheet"
           rel="stylesheet"
-          href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.css">
+          href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.css?v={{ APPRISE_API_VERSION }}">
     <title>
       {% block title %}
         {% trans "Apprise API" %}
@@ -42,6 +49,10 @@
     </title>
   </head>
   <body>
+    <span id="apprise-mobile-admin-warning-copy"
+          hidden
+          data-title="{% trans "Administrator Credentials" %}"
+          data-text="{% trans "This configuration has no assigned user. As a result, the QR code will use the administrator account." %}"></span>
     <div class="content">
       <!-- Title -->
       <div class="nav row nav-color z-depth-2">
@@ -191,12 +202,27 @@
           <i class="material-icons">close</i>
         </button>
       </div>
+      <button id="mobile-menu-open"
+              class="mobile-menu-tab"
+              type="button"
+              aria-controls="site-side-menu"
+              aria-expanded="false"
+              aria-label="{% trans "Open Navigation Menu" %}"
+              title="{% trans "Open Navigation Menu" %}">
+        <i class="material-icons" aria-hidden="true">menu</i>
+      </button>
+      <div id="mobile-menu-backdrop"
+           class="mobile-menu-backdrop"
+           aria-hidden="true"></div>
       <!-- Page Layout here -->
       <div class="row main-layout">
         {% block layout %}
           {% block sidebar %}
             <!-- Side menu -->
-            <div class="col s12 m3 l3 side-menu">
+            <div id="site-side-menu" class="col s12 m3 l3 side-menu">
+              <div class="mobile-menu-drawer-heading">
+                <strong>{% trans "Navigation" %}</strong>
+              </div>
               {% if STATEFUL_MODE != 'disabled' %}
                 <div class="side-nav-label">{% trans "Site Controls" %}</div>
                 <nav class="side-nav-group">
@@ -439,6 +465,9 @@
             document.querySelectorAll('[data-mobile-beta-open]').forEach(function(trigger) {
                 trigger.addEventListener('click', function(event) {
                     event.preventDefault();
+                    if (typeof window.appriseCloseMobileMenu === 'function') {
+                        window.appriseCloseMobileMenu();
+                    }
                     if (!dialog.open) dialog.showModal();
                 });
             });
@@ -491,6 +520,79 @@
             });
         })();
 
+        // Phones use the existing navigation as a compact off-canvas drawer.
+        (function() {
+            const menu = document.querySelector('#site-side-menu');
+            const openButton = document.querySelector('#mobile-menu-open');
+            const backdrop = document.querySelector('#mobile-menu-backdrop');
+            const mobile = window.matchMedia('(max-width: 600px)');
+            if (!menu || !openButton || !backdrop) return;
+
+            function setOpen(open, returnFocus) {
+                const active = mobile.matches && open;
+                document.body.classList.toggle('mobile-menu-open', active);
+                openButton.setAttribute('aria-expanded', active ? 'true' : 'false');
+                menu.toggleAttribute('inert', mobile.matches && !active);
+                menu.setAttribute('aria-hidden', mobile.matches && !active ? 'true' : 'false');
+                const firstLink = menu.querySelector('a');
+                if (active && firstLink) firstLink.focus();
+                else if (!active && returnFocus) openButton.focus();
+            }
+
+            function isFormControl(element) {
+                return element instanceof Element && element.matches(
+                    'input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]), '
+                    + 'textarea, select, [contenteditable]:not([contenteditable="false"])'
+                );
+            }
+
+            function hasOpenSelectDropdown() {
+                return Array.from(
+                    document.querySelectorAll('.dropdown-content.select-dropdown')
+                ).some(function(dropdown) {
+                    return window.getComputedStyle(dropdown).display !== 'none';
+                });
+            }
+
+            function syncTabWithFocus() {
+                document.body.classList.toggle(
+                    'mobile-menu-field-focus',
+                    mobile.matches
+                    && (isFormControl(document.activeElement) || hasOpenSelectDropdown())
+                );
+            }
+
+            const selectDropdownObserver = new MutationObserver(syncTabWithFocus);
+            document.querySelectorAll('.dropdown-content.select-dropdown').forEach(function(dropdown) {
+                selectDropdownObserver.observe(dropdown, {
+                    attributes: true,
+                    attributeFilter: ['class', 'style']
+                });
+            });
+
+            openButton.addEventListener('click', function() { setOpen(true, false); });
+            backdrop.addEventListener('click', function() { setOpen(false, true); });
+            window.appriseCloseMobileMenu = function() { setOpen(false, false); };
+            menu.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() { setOpen(false, false); });
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && document.body.classList.contains('mobile-menu-open')) {
+                    setOpen(false, true);
+                }
+            });
+            document.addEventListener('focusin', syncTabWithFocus);
+            document.addEventListener('focusout', function() {
+                window.requestAnimationFrame(syncTabWithFocus);
+            });
+            mobile.addEventListener('change', function() {
+                setOpen(false, false);
+                syncTabWithFocus();
+            });
+            setOpen(false, false);
+            syncTabWithFocus();
+        })();
+
         // No-refresh theme toggle
         (function() {
             const toggle = document.querySelector('#theme-toggle');
@@ -504,7 +606,7 @@
                 const next    = current === 'dark' ? 'light' : 'dark';
 
                 // Swap stylesheet in-place — no reload
-                sheet.href = staticPrefix + 'css/theme-' + next + '.css';
+                sheet.href = staticPrefix + 'css/theme-' + next + '.css?v={{ APPRISE_API_VERSION }}';
 
                 // Update toggle state so a second click reverses correctly
                 toggle.dataset.theme = next;
@@ -582,11 +684,22 @@
 </script>
 {# Script Block 2 #}
 <script>
+  const appriseStatusIconHtml = {
+    success: `<span class="apprise-status-mark">{% include 'icons/status-ok.svg' %}</span>`,
+    error: `<span class="apprise-status-mark">{% include 'icons/status-error.svg' %}</span>`,
+    warning: `<span class="apprise-status-mark">{% include 'icons/status-warning.svg' %}</span>`,
+    info: `<span class="apprise-status-mark">{% include 'icons/status-info.svg' %}</span>`,
+    question: `<span class="apprise-status-mark">{% include 'icons/status-question.svg' %}</span>`
+  };
+
   // Shared modal defaults keep every popup consistent while leaving brief
   // toasts intentionally free of modal-only controls.
   function appriseFire(options) {
     const requested = options || {};
     const isToast = requested.toast === true;
+    if (!isToast && typeof window.appriseCloseMobileMenu === 'function') {
+      window.appriseCloseMobileMenu();
+    }
     const popupClasses = [];
     if (!isToast) {
       popupClasses.push('apprise-popup');
@@ -596,23 +709,35 @@
       if (requested.width) {
         popupClasses.push('apprise-popup--wide');
       }
+      if (requested.showCancelButton || requested.showDenyButton) {
+        popupClasses.push('apprise-popup--decision');
+      }
     }
     if (requested.appriseTask === true) {
       popupClasses.push('apprise-popup--task');
     }
 
     const customClass = Object.assign({}, requested.customClass || {});
+    const usesStatusIcon = Object.prototype.hasOwnProperty.call(
+      appriseStatusIconHtml,
+      requested.icon
+    ) && !requested.iconHtml;
     if (popupClasses.length) {
       customClass.popup = [customClass.popup || '', popupClasses.join(' ')]
         .join(' ').trim();
     }
+    if (usesStatusIcon) {
+      customClass.icon = [customClass.icon || '', 'apprise-status-icon'].join(' ').trim();
+    }
 
     const settings = Object.assign({
       showCloseButton: !isToast,
-      closeButtonHtml: '&times;'
+      closeButtonHtml: '&times;',
+      reverseButtons: !isToast
     }, requested, {customClass: customClass});
-    if (requested.icon === 'error' && !requested.iconHtml) {
-      settings.iconHtml = '<span class="apprise-error-mark" aria-hidden="true"></span>';
+    if (usesStatusIcon) {
+      settings.iconHtml = appriseStatusIconHtml[requested.icon];
+      settings.showClass = Object.assign({}, settings.showClass || {}, {icon: ''});
     }
     delete settings.appriseTask;
     return Swal.fire(settings);
@@ -645,9 +770,10 @@
           const closeButton = Swal.getCloseButton();
           if (!closeButton) return;
           closeButton.addEventListener('click', function (event) {
+            if (finished) return;
             event.preventDefault();
             event.stopImmediatePropagation();
-            if (confirmingAbort || finished) return;
+            if (confirmingAbort) return;
             confirmingAbort = true;
             appriseFire({
               title: options.abortTitle || '{% trans "Abort Current Task?" %}',
@@ -676,6 +802,9 @@
       finish: function () {
         finished = true;
         Swal.close();
+      },
+      complete: function () {
+        finished = true;
       },
       wasAborted: function () {
         return controller.signal.aborted;
@@ -772,6 +901,61 @@
   }
   appriseWireConfigIdCopy(document);
 
+  // Fetch the private Mobile URL only when its QR button is clicked.
+  function appriseWireConfigIdQr(root) {
+    root.querySelectorAll('[data-config-id-qr]').forEach(function(button) {
+      if (button.dataset.qrWired === '1') {
+        return;
+      }
+      button.dataset.qrWired = '1';
+      button.addEventListener('click', async function() {
+        const endpoint = button.dataset.qrUrl;
+        if (!endpoint) {
+          return;
+        }
+        button.disabled = true;
+        try {
+          const response = await appriseFetch(endpoint, {headers: {'Accept': 'application/json'}});
+          if (!response.ok) {
+            const failure = await appriseResponseFailure(
+              response,
+              '{% trans "The Apprise Mobile QR code could not be generated." %}'
+            );
+            throw new Error(failure.message);
+          }
+          const data = await response.json();
+          const usesAdminCredentials = AppriseQr.usesAdminCredentials(data);
+          const adminWarning = AppriseQr.adminCredentialsWarning();
+          AppriseQr.showPopup({
+            title: '{% trans "Scan with Apprise Mobile" %}',
+            url: data.url,
+            logoSrc: '{% static "mobile-icon-flat-whitebg.png" %}',
+            note: usesAdminCredentials
+              ? adminWarning.text
+              : '{% trans "Saved passwords are not included. Apprise Mobile will ask for one when required." %}',
+            warning: usesAdminCredentials,
+            warningTitle: adminWarning.title,
+            warningIconHtml: `{% include 'icons/status-warning.svg' %}`,
+            showUrlLabel: '{% trans "Show Complete URL" %}',
+            hideUrlLabel: '{% trans "Hide Complete URL" %}',
+            copyLabel: '{% trans "Copy URL to Clipboard" %}',
+            copyMessage: '{% trans "Apprise Mobile URL copied to clipboard" %}',
+            qrErrorMessage: '{% trans "This URL is too long to encode as a QR code. Use the copy button above instead." %}'
+          });
+        } catch (error) {
+          appriseFire({
+            title: '{% trans "Apprise Mobile Quick Config" %}',
+            text: error.message || '{% trans "The Apprise Mobile QR code could not be generated." %}',
+            icon: 'error'
+          });
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+  }
+  appriseWireConfigIdQr(document);
+
   // Submit a Config ID as form data so it never appears in the address bar.
   function apprisePostConfigId(configId, nextName) {
     const form = document.createElement('form');
@@ -792,6 +976,15 @@
 
   function appriseValidConfigId(configId) {
     return /^[-\w]{1,{{ CONFIG_KEY_MAX_LENGTH }}}$/u.test(configId);
+  }
+
+  // Generate a valid, hard-to-guess Config ID for new destinations.
+  function appriseRandomConfigId() {
+    const bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, function(byte) {
+      return byte.toString(16).padStart(2, '0');
+    }).join('');
   }
 
   function appriseConfirmConfigSelection(configId, nextName, explicitBase, useCookieAlias) {
@@ -897,6 +1090,11 @@
 {# Script Block 3 #}
 <script>
   async function appriseStatusUpdate() {
+    if (window.appriseStatusUpdatePending) {
+      return;
+    }
+    window.appriseStatusUpdatePending = true;
+
     const iconOverview = document.querySelector('#api-status-icon');
     const detailsOverview = document.querySelector('#api-status-details');
     const iconNav = document.querySelector('#nav-api-status-icon');
@@ -923,16 +1121,27 @@
       }
     }
 
-    setLoading(iconOverview);
-    setLoading(iconNav);
-    if (detailsOverview) {
-      detailsOverview.textContent = '';
-    }
-    if (hc) {
-      hc.style.display = 'none';
-      if (liModes) liModes.style.display = 'none';
-      if (liCfg) liCfg.style.display = 'none';
-      if (liAttach) liAttach.style.display = 'none';
+    const hasDisplayedStatus = [iconOverview, iconNav].some(function (icon) {
+      return icon && (
+        icon.classList.contains('status-ok') ||
+        icon.classList.contains('status-error')
+      );
+    });
+
+    // Show loading only on startup. Background checks retain the current
+    // status until the replacement is ready, preventing periodic page jumps.
+    if (!hasDisplayedStatus) {
+      setLoading(iconOverview);
+      setLoading(iconNav);
+      if (detailsOverview) {
+        detailsOverview.textContent = '';
+      }
+      if (hc) {
+        hc.style.display = 'none';
+        if (liModes) liModes.style.display = 'none';
+        if (liCfg) liCfg.style.display = 'none';
+        if (liAttach) liAttach.style.display = 'none';
+      }
     }
 
     try {
@@ -1055,6 +1264,8 @@
         detailsOverview.textContent = fallbackMsg;
       }
       console.warn('Apprise status check failed', e);
+    } finally {
+      window.appriseStatusUpdatePending = false;
     }
   }
 
@@ -1129,11 +1340,7 @@
           const randomize = popup.querySelector('#cfggen-randomize');
           appriseWireValueToggles(popup);
           randomize.addEventListener('click', function() {
-            const bytes = new Uint8Array(32);
-            window.crypto.getRandomValues(bytes);
-            field.value = Array.from(bytes, function(byte) {
-              return byte.toString(16).padStart(2, '0');
-            }).join('');
+            field.value = appriseRandomConfigId();
           });
           field.addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && !event.isComposing) {

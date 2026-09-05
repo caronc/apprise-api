@@ -817,12 +817,9 @@ class AppriseConfigCache:
         return response
 
     def clear_preserving_auth(self, key):
-        """Clear configuration content and restart its auth-prune grace period.
+        """Clear content while preserving its login long enough to replace it.
 
-        Configuration users use this path so deleting their content does not
-        immediately delete the account they need to save replacement content.
-        The authentication guard keeps pruning from racing the delete/touch
-        sequence.
+        The authentication guard prevents pruning during this operation.
         """
         if self.mode == AppriseStoreMode.DISABLED:
             return False

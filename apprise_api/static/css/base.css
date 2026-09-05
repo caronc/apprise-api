@@ -54,7 +54,19 @@ i.material-icons.support-banner-icon {
 2. Main Layout & Navigation
 ========================================= */
 .main-layout {
+  width: 100%;
+  min-width: 0;
   margin-top: 0.5rem;
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.main-layout>.col,
+.main-content,
+.main-content>.section {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* =========================================
@@ -162,6 +174,22 @@ Side Nav (replaces legacy Materialize collection sidebar)
   color: var(--menu-icon-heart, currentColor);
 }
 
+.mobile-menu-tab,
+.mobile-menu-drawer-heading {
+  display: none;
+}
+
+.mobile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.56);
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
 @media (max-width: 1000px) {
   .main-layout {
     align-items: flex-start;
@@ -178,8 +206,8 @@ Side Nav (replaces legacy Materialize collection sidebar)
     margin-bottom: 0.7rem;
     padding-right: 0;
     flex-direction: row;
-    flex-wrap: nowrap;
-    overflow: hidden;
+    flex-wrap: wrap;
+    overflow: visible;
     gap: 0.22rem;
     justify-content: flex-start;
     align-items: center;
@@ -201,7 +229,9 @@ Side Nav (replaces legacy Materialize collection sidebar)
   .side-nav-group {
     display: flex;
     flex-wrap: nowrap;
-    flex: 0 1 auto;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
     margin-bottom: 0;
     gap: 0;
     border-radius: 0.56rem;
@@ -217,7 +247,9 @@ Side Nav (replaces legacy Materialize collection sidebar)
   .side-nav-item {
     justify-content: center;
     gap: 0;
-    width: 9.00rem;
+    width: 3rem;
+    min-width: 2.6rem;
+    flex: 1 1 3rem;
     min-height: 4.00rem;
     padding: 0.42rem 0.3rem;
     border-top: none;
@@ -235,6 +267,155 @@ Side Nav (replaces legacy Materialize collection sidebar)
   .side-nav-item .menu-icon svg {
     width: 22px;
     height: 22px;
+  }
+}
+
+@media (max-width: 600px) {
+  .mobile-menu-tab {
+    position: fixed;
+    top: 38vh;
+    left: -1px;
+    z-index: 1099;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 12.6rem;
+    padding: 0;
+    border: 1px solid;
+    border-left: 0;
+    border-radius: 0 0.65rem 0.65rem 0;
+    font: inherit;
+    cursor: pointer;
+    opacity: 0.88;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0.25rem 0 0.8rem rgba(0, 0, 0, 0.2);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .mobile-menu-tab:hover,
+  .mobile-menu-tab:focus,
+  .mobile-menu-tab:active,
+  .mobile-menu-tab:focus-visible {
+    opacity: 0.88;
+    transform: none;
+  }
+
+  .mobile-menu-tab i {
+    font-size: 1.2rem;
+  }
+
+  .mobile-menu-drawer-heading {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid;
+    font-size: 1.05rem;
+  }
+
+  .main-layout .side-menu {
+    position: fixed;
+    top: 0;
+    right: auto !important;
+    bottom: 0;
+    left: 0 !important;
+    z-index: 1101;
+    display: block !important;
+    width: min(20rem, 88vw) !important;
+    max-width: min(20rem, 88vw) !important;
+    height: 100dvh;
+    margin: 0;
+    padding: 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    box-shadow: 0.6rem 0 1.8rem rgba(0, 0, 0, 0.28);
+  }
+
+  .mobile-menu-open {
+    overflow: hidden;
+  }
+
+  .mobile-menu-open .main-layout .side-menu {
+    transform: translateX(0);
+  }
+
+  .mobile-menu-open .mobile-menu-tab {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mobile-menu-field-focus .mobile-menu-tab {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-100%);
+  }
+
+  body.swal2-shown:not(.swal2-toast-shown) .mobile-menu-tab,
+  body:has(.apprise-dialog[open]) .mobile-menu-tab {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-100%);
+  }
+
+  .mobile-menu-open .mobile-menu-backdrop {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .main-layout .side-nav-label,
+  .main-layout .side-nav-item .side-nav-text {
+    display: block !important;
+  }
+
+  .main-layout .side-nav-group {
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: 0.55rem;
+  }
+
+  .main-layout .side-nav-group+.side-nav-group {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .main-layout .side-nav-item {
+    justify-content: flex-start;
+    gap: 0.65rem;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.8rem;
+    padding: 0.65rem 0.8rem;
+    border-left: 0;
+    border-top: 1px solid rgba(128, 136, 150, 0.14);
+  }
+
+  .main-layout .side-nav-item:first-child {
+    border-top: 0;
+  }
+
+  .main-layout .side-nav-item .menu-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mobile-menu-tab,
+  .mobile-menu-backdrop,
+  .main-layout .side-menu,
+  .reset-configuration-toggle,
+  .reset-configuration-toggle__track,
+  .reset-configuration-toggle__track>span {
+    transition: none;
   }
 }
 
@@ -906,6 +1087,8 @@ textarea {
 }
 
 .swal2-popup.apprise-popup .swal2-title {
+  display: flex;
+  align-items: center;
   box-sizing: border-box;
   width: 100%;
   max-width: none;
@@ -921,50 +1104,35 @@ textarea {
 
 .swal2-popup.apprise-popup .swal2-icon {
   position: absolute;
-  top: 0.62rem;
+  top: 0.9rem;
   left: 1.05rem;
   z-index: 3;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   margin: 0;
   border-width: 0.18rem;
   font-size: 0.55rem;
 }
 
-/* Replace SweetAlert's large, scaled-down error X with a crisp header glyph. */
-.swal2-popup.apprise-popup .swal2-error .swal2-x-mark {
-  display: none;
+.swal2-icon.apprise-status-icon {
+  border: 0;
+  animation: none !important;
 }
 
-.swal2-popup.apprise-popup .apprise-error-mark {
-  position: relative;
+.apprise-status-mark {
   display: block;
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 100%;
+  height: 100%;
 }
 
-.swal2-popup.apprise-popup .apprise-error-mark::before,
-.swal2-popup.apprise-popup .apprise-error-mark::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 1.35rem;
-  height: 0.18rem;
-  border-radius: 999px;
-  background: currentColor;
-  content: '';
-}
-
-.swal2-popup.apprise-popup .apprise-error-mark::before {
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.swal2-popup.apprise-popup .apprise-error-mark::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
+.apprise-status-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .swal2-popup.apprise-popup--status .swal2-title {
-  padding-left: 4.35rem;
+  padding-left: 3.75rem;
 }
 
 .swal2-popup.apprise-popup .swal2-html-container {
@@ -978,6 +1146,16 @@ textarea {
 .swal2-popup.apprise-popup .swal2-actions {
   margin: 1.15rem 1.35rem 1.25rem;
   grid-row: 3;
+}
+
+.swal2-popup.apprise-popup--decision .swal2-actions {
+  justify-content: flex-end;
+  width: calc(100% - 2.7rem);
+  gap: 0.65rem;
+}
+
+.swal2-popup.apprise-popup--decision .swal2-actions .swal2-styled {
+  margin: 0;
 }
 
 .swal2-popup.apprise-popup .swal2-validation-message {
@@ -1015,10 +1193,18 @@ textarea {
     font-size: 1.25rem;
   }
 
+  .swal2-popup.apprise-popup--status .swal2-title {
+    padding-left: 3.75rem;
+  }
+
   .swal2-popup.apprise-popup .swal2-html-container,
   .swal2-popup.apprise-popup .swal2-actions {
     margin-right: 1rem;
     margin-left: 1rem;
+  }
+
+  .swal2-popup.apprise-popup--decision .swal2-actions {
+    width: calc(100% - 2rem);
   }
 }
 
@@ -1273,6 +1459,199 @@ textarea {
   margin: 0;
 }
 
+.getting-started-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(19rem, 0.7fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+/* Shared page headers keep titles, supporting text, and optional controls
+   consistent across primary content areas. */
+.page-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0.9rem 1.05rem;
+  border: 1px solid var(--section-heading-border);
+  border-left: 3px solid var(--mobile-beta-accent);
+  border-radius: 0.8rem;
+  background: linear-gradient(118deg,
+      var(--section-heading-start),
+      var(--section-heading-end));
+  box-shadow: 0 0.35rem 1rem var(--section-heading-shadow);
+  box-sizing: border-box;
+}
+
+.page-section-heading__copy {
+  min-width: 0;
+}
+
+.page-section-heading h4,
+.page-section-heading h5 {
+  margin: 0;
+  color: var(--section-heading-title);
+  font-size: 1.45rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+}
+
+.page-section-heading p,
+.page-section-heading__subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--section-heading-subtitle);
+  line-height: 1.4;
+}
+
+.page-section-heading__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+}
+
+.page-section-heading--card {
+  margin-bottom: 0.9rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.65rem;
+  box-shadow: none;
+}
+
+.getting-started-card {
+  min-width: 0;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--mobile-beta-border);
+  border-radius: 1rem;
+  background: var(--mobile-beta-surface);
+}
+
+.getting-started-card>h5,
+.mobile-setup-card__heading h5 {
+  margin-top: 0;
+}
+
+.getting-started-card>ol {
+  margin-bottom: 0;
+}
+
+.mobile-setup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.mobile-setup-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.mobile-setup-card__heading h5 {
+  margin-bottom: 0.15rem;
+}
+
+.mobile-setup-card__heading p {
+  color: var(--mobile-beta-muted);
+  line-height: 1.4;
+}
+
+.mobile-setup-card__warning[hidden] {
+  display: none !important;
+}
+
+.overview-mobile-qr {
+  position: relative;
+  width: min(100%, 16rem);
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--mobile-beta-border);
+  border-radius: 0.75rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.overview-mobile-qr:focus-visible {
+  outline: 2px solid var(--mobile-beta-accent);
+  outline-offset: 3px;
+}
+
+.overview-mobile-qr .apprise-qr-art {
+  width: 100%;
+  transition: filter 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.overview-mobile-qr.is-concealed .apprise-qr-art {
+  filter: blur(12px);
+  opacity: 0.38;
+  transform: scale(1.04);
+}
+
+.overview-mobile-qr__veil {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--mobile-beta-heading);
+  background: color-mix(in srgb, var(--mobile-beta-surface) 62%, transparent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.overview-mobile-qr.is-concealed .overview-mobile-qr__veil {
+  display: flex;
+}
+
+.overview-mobile-qr__veil i.material-icons {
+  color: var(--mobile-beta-accent);
+  font-size: 1.8rem;
+}
+
+.mobile-setup-card__warning {
+  margin-top: 0.1rem;
+}
+
+.mobile-setup-card__error {
+  color: #d44;
+  text-align: center;
+}
+
+.mobile-setup-card__footer {
+  margin-top: auto !important;
+  color: var(--mobile-beta-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .getting-started-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .getting-started-card {
+    padding: 1rem;
+  }
+
+  .mobile-setup-card__heading {
+    align-items: flex-start;
+  }
+
+}
+
 .detail-buttons--width {
   width: 90%;
   min-width: 60%;
@@ -1398,10 +1777,6 @@ Welcome Page Collapsibles
 }
 
 .loaded-config-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
   margin-bottom: 0.7rem;
 }
 
@@ -1415,6 +1790,7 @@ Welcome Page Collapsibles
   justify-content: flex-end;
   gap: 0.55rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .loaded-config-heading-status {
@@ -2048,6 +2424,7 @@ body .tabs .tab.disabled a:hover i {
 .config-id-revert.btn-flat,
 .config-id-randomize.btn-flat,
 .config-id-copy.btn-flat,
+.config-id-qr.btn-flat,
 .config-list-move.btn-flat,
 .config-list-delete.btn-flat,
 .snippet-visibility-btn,
@@ -2332,15 +2709,51 @@ code.config-id.is-concealed {
   grid-area: actions;
   display: inline-flex;
   align-items: center;
+  gap: 0.1rem;
   justify-self: end;
   flex: 0 0 auto;
 }
 
+.collection.config-list-collection {
+  overflow: hidden;
+  border-color: var(--config-list-border);
+  border-radius: 0.55rem;
+  background: var(--config-list-surface);
+}
+
+.collection.config-list-collection .config-list-item {
+  padding: 0.65rem 0.85rem;
+  border-color: var(--config-list-border);
+  color: var(--config-list-text);
+  background: var(--config-list-row);
+  transition: background-color 0.15s ease;
+}
+
+.collection.config-list-collection .config-list-item:hover {
+  background: var(--config-list-row-hover);
+}
+
+.config-list-collection .config-list-link code.config-id {
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  border-color: var(--config-list-border) !important;
+  color: var(--config-list-text) !important;
+  background: var(--config-list-id-bg) !important;
+  line-height: 1.2rem;
+}
+
+.config-list-collection .config-list-actions .btn-flat {
+  color: var(--config-list-action);
+}
+
+.config-list-collection .config-list-actions .btn-flat:hover,
+.config-list-collection .config-list-actions .btn-flat:focus-visible {
+  color: var(--mobile-beta-accent) !important;
+  background: var(--config-list-id-bg);
+}
+
 .config-list-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .config-list-heading h4 {
@@ -2361,17 +2774,19 @@ code.config-id.is-concealed {
 
 @media (max-width: 640px) {
 
-  /* Keep identity details readable while placing the ID beside its actions. */
+  /* Stack the ID and actions so every control remains available on phones. */
   .config-list-item {
     grid-template-columns: 2rem minmax(0, 1fr) auto;
     grid-template-areas:
       "auth-status user access"
-      "config-id config-id actions";
+      "config-id config-id config-id"
+      "actions actions actions";
     row-gap: 0.5rem;
   }
 
   .config-list-actions {
-    margin-left: 0.35rem;
+    margin-left: 0;
+    justify-self: start;
   }
 }
 
@@ -2383,10 +2798,6 @@ Authentication Editor
 }
 
 .auth-page-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
   margin-bottom: 1rem;
 }
 
@@ -2394,13 +2805,33 @@ Authentication Editor
   margin: 0.2rem 0 0;
 }
 
-.auth-mode-badge {
-  flex-shrink: 0;
-  padding: 0.35rem 0.65rem;
+.auth-page-heading .page-section-heading__copy {
+  width: 100%;
+}
+
+.auth-mode-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.65rem;
+  padding: 0.42rem 0.65rem;
   border: 1px solid;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-left-width: 3px;
+  border-radius: 0.45rem;
+  box-sizing: border-box;
+  font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.auth-mode-status__indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, currentColor 18%, transparent);
 }
 
 .auth-card-grid {
@@ -2456,6 +2887,40 @@ Authentication Editor
 
 .auth-tools-card-icon svg {
   fill: currentColor;
+}
+
+.auth-tools-card {
+  padding: 1.25rem;
+}
+
+.auth-card-heading.auth-compact-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.auth-compact-heading .auth-card-icon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0;
+  padding: 0.55rem;
+  flex: 0 0 3rem;
+  border: 1px solid;
+  border-radius: 0.8rem;
+  box-sizing: border-box;
+}
+
+.auth-compact-heading h5 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.auth-compact-heading p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
 }
 
 .auth-move-card-icon svg {
@@ -2577,6 +3042,181 @@ Authentication Editor
   font-size: 1.25rem;
 }
 
+.config-id-qr-icon,
+.config-id-qr-icon svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.config-id-qr-icon svg {
+  fill: currentColor;
+}
+
+.apprise-qr-popup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.swal2-popup.apprise-popup--qr {
+  width: min(23rem, calc(100vw - 1rem)) !important;
+}
+
+.apprise-qr-art {
+  position: relative;
+  width: 16rem;
+  max-width: 100%;
+}
+
+.apprise-qr-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  /* Keep QR modules sharp; the logo is a separate, smoothly scaled image. */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.apprise-qr-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fff;
+  transform: translate(-50%, -50%);
+}
+
+.apprise-qr-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.apprise-qr-url-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.apprise-qr-url {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.apprise-qr-url-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.apprise-qr-visibility,
+.apprise-qr-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  min-width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 1px solid;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.apprise-qr-visibility i.material-icons,
+.apprise-qr-copy i.material-icons {
+  color: inherit;
+  font-size: 1.1rem;
+}
+
+.apprise-qr-note {
+  margin: 0;
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+.apprise-qr-note--warning {
+  display: grid;
+  grid-template-columns: 1.35rem minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: start;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--notify-log-warning-border);
+  border-radius: 0.4rem;
+  background: var(--notify-log-warning-bg);
+  opacity: 1;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.apprise-qr-warning-icon,
+.apprise-qr-warning-icon svg {
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.apprise-qr-warning-icon svg {
+  fill: none;
+  stroke: currentColor;
+}
+
+.apprise-qr-note-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.18rem;
+  text-align: left;
+}
+
+.apprise-qr-warning-title {
+  color: inherit;
+  font-size: 0.85rem;
+  line-height: 1.25;
+}
+
+/* Keep the warning heading part of the card instead of inheriting the
+   Getting Started emphasis background. */
+#overview .apprise-qr-warning-title {
+  display: block;
+  color: inherit !important;
+  background: transparent !important;
+}
+
+.apprise-qr-note-text {
+  line-height: 1.4;
+}
+
+.apprise-qr-error {
+  width: 16rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  text-align: center;
+  opacity: 0.85;
+  box-sizing: border-box;
+}
+
 .auth-password-fields {
   display: flex;
   flex-direction: column;
@@ -2609,6 +3249,132 @@ Authentication Editor
 .value-visibility-toggle:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 1px;
+}
+
+.auth-editor-card .value-visibility-toggle,
+.auth-editor-card .value-visibility-toggle:hover,
+.auth-editor-card .value-visibility-toggle:focus,
+.auth-editor-card .value-visibility-toggle:active {
+  background-color: transparent !important;
+}
+
+.move-destination-field input {
+  padding-right: 5rem !important;
+}
+
+.move-destination-field .value-visibility-toggle {
+  right: 2.85rem;
+}
+
+.move-config-randomize {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  min-width: 2rem;
+  padding: 0 !important;
+}
+
+.reset-access-dialog {
+  width: 100%;
+  text-align: left;
+}
+
+.reset-access-dialog>p {
+  margin: 0 0 0.9rem;
+  line-height: 1.45;
+}
+
+.reset-access-config-id {
+  margin: 0.5rem 0 1rem;
+}
+
+.reset-access-config-id input {
+  font-family: monospace;
+}
+
+.move-confirmation-dialog .reset-access-config-id {
+  margin-bottom: 0.55rem;
+}
+
+.move-confirmation-direction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: -0.1rem 0 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.72;
+  text-transform: uppercase;
+}
+
+.move-confirmation-direction .material-icons {
+  font-size: 1rem;
+}
+
+.reset-configuration-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid;
+  border-radius: 0.65rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.reset-configuration-toggle__track {
+  position: relative;
+  width: 2.35rem;
+  height: 1.3rem;
+  flex: 0 0 2.35rem;
+  border: 1px solid;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.reset-configuration-toggle__track>span {
+  position: absolute;
+  top: 0.17rem;
+  left: 0.18rem;
+  width: 0.82rem;
+  height: 0.82rem;
+  border-radius: 50%;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.reset-configuration-toggle[aria-checked="true"] .reset-configuration-toggle__track>span {
+  transform: translateX(1.02rem);
+}
+
+.reset-configuration-toggle__copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.reset-configuration-toggle__copy strong {
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.reset-configuration-toggle__copy small {
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.reset-configuration-toggle:focus {
+  outline: none;
+}
+
+.reset-configuration-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .input-field.has-errors input,
@@ -2787,23 +3553,62 @@ Authentication Editor
   margin: 0;
 }
 
-.auth-randomize-column,
+.auth-tool-panel,
+.auth-content-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border: 1px solid;
+  border-radius: 0.75rem;
+}
+
+.auth-content-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.auth-content-panel form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.auth-tool-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
 .auth-remove-option {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
   min-width: 0;
-  margin: 0 0 0.75rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid;
 }
 
-.auth-randomize-button {
+.auth-randomize-button,
+.auth-content-panel .auth-form-actions .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
+  border-radius: 0.55rem;
+  box-shadow: none;
+}
+
+.auth-content-panel .auth-form-actions .btn i.material-icons.right {
+  float: none;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .auth-randomize-icon {
@@ -2821,18 +3626,19 @@ Authentication Editor
 
 .auth-randomize-options {
   display: flex;
-  flex-direction: column;
   align-items: stretch;
-  flex-shrink: 0;
-  gap: 0.25rem;
-  min-width: 6rem;
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .auth-randomize-option {
-  min-height: 1.45rem;
-  padding: 0.15rem 0.55rem;
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
   border: 1px solid;
-  border-radius: 999px;
+  border-radius: 0.5rem;
   background: transparent;
   cursor: pointer;
   font-size: 0.72rem;
@@ -2870,11 +3676,31 @@ Authentication Editor
   justify-content: center;
   gap: 0.45rem;
   width: 100%;
+  border: 1px solid;
+  border-radius: 0.55rem;
+  box-shadow: none;
 }
 
 .auth-remove-option>.auth-remove-button i.material-icons.right {
   float: none;
   margin: 0;
+}
+
+.auth-remove-option>.auth-remove-button i.material-icons {
+  display: inline-flex;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 1.2rem;
+  margin: 0;
+  float: none;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.auth-remove-option>.auth-remove-button span {
+  display: inline-flex;
+  align-items: center;
 }
 
 .auth-remove-button[hidden] {
@@ -2899,21 +3725,23 @@ Authentication Editor
     justify-content: center;
   }
 
+  /* Unwrap the desktop-only grouping div so Tools, the credentials card,
+     and Move can each be given their own stacking position below, instead
+     of Tools and Move always moving together as one block. */
   .auth-secondary-column {
+    display: contents;
+  }
+
+  .auth-tools-card {
     order: -1;
+  }
+
+  .auth-move-card {
+    order: 1;
   }
 }
 
 @media (max-width: 600px) {
-  .auth-page-heading {
-    display: block;
-  }
-
-  .auth-mode-badge {
-    display: inline-block;
-    margin-top: 0.75rem;
-  }
-
   .browser-login-page {
     margin: 0.85rem 0;
   }
@@ -2956,11 +3784,23 @@ Authentication Editor
 
 .code-snippet {
   position: relative;
+  width: 100%;
+  min-width: 0;
   margin-bottom: 1rem;
 }
 
 .code-snippet pre {
+  width: 100%;
   margin: 0;
+}
+
+.code-snippet pre code {
+  display: block;
+  width: 100%;
+  min-height: 2.7rem;
+  padding: 0.7rem 5.35rem 0.7rem 0.6rem;
+  overflow-x: auto;
+  box-sizing: border-box;
 }
 
 .snippet-copy-btn,
@@ -2990,6 +3830,22 @@ Authentication Editor
 
 .snippet-config-id.is-concealed {
   letter-spacing: 0.08em;
+}
+
+.snippet-password-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.3rem 0.15rem 0;
+  color: var(--mobile-beta-muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.snippet-password-warning .material-icons {
+  flex: 0 0 auto;
+  color: var(--mobile-beta-accent);
+  font-size: 1rem;
 }
 
 /* File Input Hack */
@@ -3291,6 +4147,21 @@ Authentication Editor
   padding-top: 0.3rem;
 }
 
+/* Materialize offsets rows to balance page-level column padding. The notify
+   form is already inside a padded column, so keep its rows within the panel. */
+#notify form,
+#notify .row {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#notify .row {
+  margin-right: 0;
+  margin-left: 0;
+}
+
 .notify-top-row .input-field label[for="id_tag"] {
   position: static;
   transform: none;
@@ -3337,7 +4208,7 @@ Authentication Editor
 .notify-form-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.6rem;
   margin-top: 0.75rem;
@@ -3462,8 +4333,30 @@ Authentication Editor
 
 @media (max-width: 600px) {
   #notify .notify-form-actions {
+    flex-wrap: nowrap;
+  }
+
+  #notify .notify-form-actions .btn,
+  #notify .notify-form-actions .btn-clear-form {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  #notify .notify-form-actions .btn-clear-form .btn-text {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 360px) {
+  #notify .notify-top-row>.input-field.col {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  #notify .notify-form-actions {
     flex-direction: column;
-    align-items: stretch;
   }
 
   #notify .notify-form-actions .btn,
@@ -3521,13 +4414,22 @@ Authentication Editor
 }
 
 .swal2-popup .notify-live-pulse {
+  position: relative;
   width: 0.65rem;
   height: 0.65rem;
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--mobile-beta-accent);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--mobile-beta-accent) 45%, transparent);
+}
+
+.swal2-popup .notify-live-pulse::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  content: '';
   animation: notify-live-pulse 1.6s ease-out infinite;
+  will-change: opacity, transform;
 }
 
 .swal2-popup .notify-live-count {
@@ -3543,10 +4445,15 @@ Authentication Editor
 }
 
 @keyframes notify-live-pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
 
   70%,
   100% {
-    box-shadow: 0 0 0 0.55rem transparent;
+    opacity: 0;
+    transform: scale(2.7);
   }
 }
 
@@ -3561,6 +4468,14 @@ Authentication Editor
   text-align: left;
   scrollbar-width: thin;
   scrollbar-color: var(--notify-log-muted) var(--notify-log-bg);
+}
+
+/* Keep the progress dialog still while new log rows fill its scroll area. */
+.swal2-popup .notify-live-feed .notify-log-panel {
+  height: clamp(8rem, 42vh, 24rem);
+  height: clamp(8rem, 42dvh, 24rem);
+  box-sizing: border-box;
+  contain: layout paint;
 }
 
 .swal2-popup .notify-log-panel ul.logs {
@@ -3584,6 +4499,22 @@ Authentication Editor
   font-size: 0.84rem;
   line-height: 1.45;
   white-space: pre-wrap;
+}
+
+.swal2-popup .notify-live-feed .notify-log-row {
+  animation: notify-log-row-enter 180ms ease-out both;
+}
+
+@keyframes notify-log-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .swal2-popup .notify-log-panel ul.logs li:nth-child(even) {
@@ -3661,7 +4592,9 @@ Authentication Editor
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .swal2-popup .notify-live-pulse {
+
+  .swal2-popup .notify-live-pulse::after,
+  .swal2-popup .notify-live-feed .notify-log-row {
     animation: none;
   }
 }
@@ -3766,7 +4699,7 @@ Config Page Toolbar (URL Builder)
 .config-form-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 0.6rem;
   margin-top: 0.75rem;
@@ -3775,13 +4708,45 @@ Config Page Toolbar (URL Builder)
 /* Mobile layout */
 @media (max-width: 600px) {
   .config-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
   }
 
+  .config-format-field {
+    margin-bottom: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .config-format-field .select-wrapper {
+    max-width: 9rem;
+  }
+
+  /* The label text (any locale) is unpredictable in length, so the button
+     collapses to just its icon here rather than trying to guess a width
+     that fits every translation on the same row as the format select. */
   .config-url-builder-btn {
-    width: 100%;
-    margin-top: 0.5rem;
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    width: 2.6rem;
+    min-width: 2.6rem;
+    padding: 0;
+  }
+
+  .config-url-builder-btn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  #config .config-toolbar .config-url-builder-btn i.right {
+    margin-left: 0;
   }
 
   #config .config-form-actions .btn {

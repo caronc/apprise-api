@@ -30,6 +30,19 @@ Support Banner
   --mobile-beta-accent-soft: #e6f5f2;
   --mobile-beta-counter-text: #ffffff;
   --mobile-beta-primary-text: #ffffff;
+  --section-heading-start: #e3f4f1;
+  --section-heading-end: #f4f6f9;
+  --section-heading-border: #a9cec9;
+  --section-heading-title: #0f6f66;
+  --section-heading-subtitle: #4f5967;
+  --section-heading-shadow: rgba(31, 71, 68, 0.12);
+  --config-list-surface: #e4e7ec;
+  --config-list-row: #f6f7fa;
+  --config-list-row-hover: #eef8f6;
+  --config-list-border: #c1c3c9;
+  --config-list-id-bg: #edeef3;
+  --config-list-text: #34383f;
+  --config-list-action: #697382;
   --dialog-close-bg: #edeef3;
   --dialog-close-border: #c1c3c9;
   --dialog-close-icon: #34383f;
@@ -529,7 +542,8 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-access-warning,
-.auth-access-warning i.material-icons {
+.auth-access-warning i.material-icons,
+.apprise-qr-note--warning {
   color: #8a4b00;
 }
 
@@ -585,16 +599,91 @@ input.config-id-input.is-mismatched {
   border-color: #148c80;
 }
 
-.auth-mode-badge {
-  background-color: #edeef3;
-  border-color: #c1c3c9;
-  color: #555a62;
+.auth-compact-heading .auth-card-icon {
+  background-color: #e4f3f0;
+  border-color: #9fd5ce;
 }
 
-.auth-mode-badge.is-shared {
-  background-color: #c8f0ea;
-  border-color: #148c80;
-  color: #0f5f57;
+.auth-compact-heading p {
+  color: #656b75;
+}
+
+.auth-tool-panel,
+.auth-content-panel {
+  background-color: #ffffff;
+  border-color: #d7dbe2;
+}
+
+.auth-tool-label {
+  color: #656b75;
+}
+
+.auth-remove-option {
+  border-color: #d7dbe2;
+}
+
+.auth-editor-card .auth-remove-button {
+  color: #8b2938;
+  background-color: #fff1f3 !important;
+  border-color: #d58a93;
+}
+
+.auth-editor-card .auth-remove-button:hover,
+.auth-editor-card .auth-remove-button:focus-visible {
+  color: #ffffff;
+  background-color: #a83e4d !important;
+  border-color: #a83e4d;
+}
+
+.reset-configuration-toggle {
+  color: #34383f;
+  background-color: #f6f7fa;
+  border-color: #cfd2d9;
+}
+
+.reset-configuration-toggle:hover {
+  background-color: #eef0f4;
+  border-color: #aeb2bc;
+}
+
+.reset-configuration-toggle__track {
+  background-color: #d9dce2;
+  border-color: #aeb2bc;
+}
+
+.reset-configuration-toggle__track>span {
+  background-color: #ffffff;
+}
+
+.reset-configuration-toggle[aria-checked="true"] {
+  color: #8b2938;
+  background-color: #fff1f3;
+  border-color: #c96b78;
+}
+
+.reset-configuration-toggle[aria-checked="true"] .reset-configuration-toggle__track {
+  background-color: #c95061;
+  border-color: #a83e4d;
+}
+
+.reset-configuration-toggle[aria-checked="true"] .reset-configuration-toggle__track>span {
+  background-color: #ffffff;
+}
+
+.reset-configuration-toggle__copy small {
+  color: #656b75;
+}
+
+.auth-mode-status.is-admin {
+  background-color: #fff1f3;
+  border-color: #c96b78;
+  color: #8b2938;
+}
+
+.auth-mode-status.is-user {
+  background-color: #edf6ff;
+  border-color: #5790c0;
+  color: #245f91;
 }
 
 /* =========================================
@@ -807,6 +896,33 @@ Side Nav
   color: #a83232 !important;
 }
 
+.mobile-menu-tab {
+  color: #0f5f57;
+  background-color: #f6f7fa;
+  border-color: #9fd5ce;
+}
+
+.mobile-menu-tab:hover,
+.mobile-menu-tab:focus,
+.mobile-menu-tab:active,
+.mobile-menu-tab:focus-visible {
+  color: #0f5f57;
+  background-color: #f6f7fa;
+}
+
+@media (max-width: 600px) {
+  .main-layout .side-menu {
+    color: #34383f;
+    background-color: #ffffff;
+    border-right: 1px solid #cfd2d9;
+  }
+
+  .mobile-menu-drawer-heading {
+    color: #0f5f57;
+    border-color: #d8d9df;
+  }
+}
+
 /* =========================================
 Cards & Lists
 ========================================= */
@@ -879,16 +995,16 @@ Buttons & Chips
 }
 
 #notify .notify-form-actions .btn-clear-form {
-  background-color: #f3f5f8;
-  border-color: #cdd3dc;
-  color: #5d6675;
+  background-color: #fdecec;
+  border-color: #e2a5a5;
+  color: #8b3a3a;
 }
 
 #notify .notify-form-actions .btn-clear-form:hover,
 #notify .notify-form-actions .btn-clear-form:focus-visible {
-  background-color: #e9edf3;
-  border-color: #b7c0cc;
-  color: #3f4856 !important;
+  background-color: #fadada;
+  border-color: #c62828;
+  color: #8b0000 !important;
 }
 
 .chip {

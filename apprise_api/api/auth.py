@@ -44,11 +44,9 @@ logger = logging.getLogger("django")
 
 
 class ConfigCredentialVerifier:
-    """Safely reuse recent successful password checks.
+    """Cache successful password checks without caching credentials.
 
-    Every API request still supplies Basic Auth. The cache only remembers a
-    private fingerprint after Django accepts the password, so the fingerprint
-    cannot be sent back to the API as a replacement credential.
+    Clients must still send Basic Auth with every request.
     """
 
     _REQUEST_CACHE_ATTRIBUTE = "_apprise_auth_verification_results"
@@ -67,12 +65,10 @@ class ConfigCredentialVerifier:
         if password_checker is not None and not callable(password_checker):
             raise ValueError("password_checker must be callable")
 
-        # Track max_entries as public attributes for introspection and testing.
-        # This is a security feature: a large cache could be stolen and reused by an attacker.
+        # Keep the cache small to limit how many results remain reusable.
         self.max_entries = max_entries
 
-        # Track ttl as a public attribute for introspection and testing.
-        # This is a security feature: a long-lived cache entry could be stolen and reused by an attacker.
+        # Expire results quickly to limit how long they remain reusable.
         self.ttl = ttl
 
         # This secret exists only in this process. A cache entry is useless to
@@ -157,11 +153,9 @@ class ConfigCredentialVerifier:
                 self._cache.popitem(last=False)
 
     def verify(self, key, username, password, stored_username, digest, request=None):
-        """Return whether credentials match the current configuration digest.
+        """Check credentials, reusing a cached success when available.
 
-        The request cache avoids duplicate work inside one Django request. The
-        process cache helps later requests, while password changes naturally
-        use a different fingerprint because the saved digest changes.
+        Changing the saved password automatically invalidates cached results.
         """
         values = (key, username, password, digest)
         if not all(isinstance(value, str) for value in values):

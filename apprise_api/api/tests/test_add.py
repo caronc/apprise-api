@@ -514,7 +514,7 @@ class AddTests(SimpleTestCase):
         ConfigCache.clear_auth(key)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
-    def test_add_user_cannot_write_another_locked_public_or_disabled_key(self):
+    def test_add_user_cannot_write_other_locked_keys(self):
         """Successful authentication never broadens one user's Config ID scope."""
         owned = "test_add_user_scope"
         other = "test_add_other_scope"

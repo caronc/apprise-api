@@ -353,6 +353,7 @@ class NotifyForm(forms.Form):
         label=_("Process As"),
         initial=INPUT_FORMATS[0][0],
         choices=INPUT_FORMATS,
+        widget=forms.Select(attrs={"id": "id_notify_format"}),
         required=False,
     )
 

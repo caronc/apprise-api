@@ -21,13 +21,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-"""Small, predictable helpers for reading environment-backed settings.
+"""Read and validate environment-backed Django settings.
 
-Django settings must ultimately be ordinary module-level variables.  These
-helpers only keep repetitive conversion and validation out of settings.py so
-that each setting remains easy to find and read.  They intentionally do not
-cache anything: tests and management commands may temporarily replace the
-environment before importing the settings module.
+Values are not cached so tests and commands can replace the environment before
+loading the settings module.
 """
 
 import os
@@ -37,35 +34,20 @@ from django.core.exceptions import ImproperlyConfigured
 
 
 def env_bool(name, default=False):
-    """Return an environment value using Apprise API's loose boolean rules.
-
-    This delegates to :func:`core.utils.parse_bool`, preserving the familiar
-    first-character behavior already used throughout the project.  Values
-    beginning with ``y``, ``1``, ``t``, ``e``, ``a``, or ``+`` are true;
-    values such as ``no``, ``0``, ``false``, and ``disabled`` are false.
-    """
+    """Read a value using Apprise API's first-character boolean rules."""
     # Missing variables inherit the documented default.
     return parse_bool(os.environ.get(name), default=default)
 
 
 def env_optional_bool(name):
-    """Return ``None`` when a boolean override was not supplied.
-
-    Some Apprise options distinguish between "use the library default" and an
-    explicit yes/no override.  Keeping ``None`` for an absent variable retains
-    that third state while supplied values use the normal loose boolean rules.
-    """
+    """Read a boolean, or return ``None`` to preserve a library default."""
     return None if name not in os.environ else env_bool(name)
 
 
 def env_int(name, default, *, minimum=None, maximum=None, absolute=False):
-    """Return a validated whole-number environment setting.
+    """Read a whole number within the optional inclusive bounds.
 
-    ``minimum`` and ``maximum`` are inclusive.  ``absolute`` exists for the
-    few long-standing settings where negative input has historically meant
-    the corresponding positive limit.  Invalid configuration stops startup
-    with a clear Django configuration error instead of exposing a raw Python
-    conversion exception.
+    ``absolute`` preserves settings that historically accepted negative input.
     """
     # Keep the original text for a clear validation error during startup.
     raw_value = os.environ.get(name, default)
@@ -86,13 +68,10 @@ def env_int(name, default, *, minimum=None, maximum=None, absolute=False):
 
 
 def env_choice(name, default, choices, *, first_character=False):
-    """Return one canonical value from a documented set of choices.
+    """Read a case-insensitive choice and return its canonical value.
 
-    Matching ignores surrounding whitespace and letter case.  When
-    ``first_character`` is enabled, any value beginning with a unique choice
-    letter maps to that choice.  For example, ``s``, ``simple``, and even a
-    misspelling such as ``simpple`` all select ``simple``.  An unrelated or
-    ambiguous first letter is rejected rather than silently selecting a mode.
+    ``first_character`` also accepts values beginning with a unique choice
+    letter. Invalid or ambiguous values stop startup with a clear error.
     """
     # Canonicalize both sides once so every setting is case-insensitive.
     normalized_choices = tuple(str(choice).strip().lower() for choice in choices)

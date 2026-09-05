@@ -58,5 +58,18 @@
             title="{% trans "Copy Config ID to Clipboard" %}">
       <i class="material-icons" aria-hidden="true">content_copy</i>
     </button>
+    {% if STATEFUL_MODE != 'disabled' %}
+      <button type="button"
+              class="btn-flat btn-small config-id-qr"
+              tabindex="-1"
+              data-config-id-qr
+              data-qr-url="{% if COOKIE_CONFIG_URLS %}{% url 'qr_current' %}{% else %}{% url 'qr' key %}{% endif %}"
+              aria-label="{% trans "Show Apprise Mobile Quick Config" %}"
+              title="{% trans "Show Apprise Mobile Quick Config" %}">
+        <span class="config-id-qr-icon" aria-hidden="true">
+          {% include 'icons/qrcode.svg' %}
+        </span>
+      </button>
+    {% endif %}
   </span>
 </form>

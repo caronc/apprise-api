@@ -6,12 +6,16 @@
   <div class="api-details">
     {# Header / intro block #}
     <div class="section details-header">
-      <h4>{% trans "Apprise Details" %}</h4>
-      <p>
-        {% blocktrans %}The following services are supported by this
-        <a target="_blank" href="https://github.com/caronc/apprise" rel="noopener noreferrer">Apprise</a>
-        instance.{% endblocktrans %}
-      </p>
+      <div class="page-section-heading">
+        <div class="page-section-heading__copy">
+          <h4>{% trans "Apprise Details" %}</h4>
+          <p>
+            {% blocktrans %}The following services are supported by this
+            <a target="_blank" href="https://github.com/caronc/apprise" rel="noopener noreferrer">Apprise</a>
+            instance.{% endblocktrans %}
+          </p>
+        </div>
+      </div>
       <p>
         {% url 'details' as href %}
         {% if show_all %}
@@ -165,7 +169,9 @@
     </div>
     {# API endpoints section #}
     <div class="section details-api">
-      <h4>{% trans "API Endpoints" %}</h4>
+      <div class="page-section-heading">
+        <h4>{% trans "API Endpoints" %}</h4>
+      </div>
       <p>
         {% blocktrans %}Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:{% endblocktrans %}
       </p>

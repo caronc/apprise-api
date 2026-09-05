@@ -517,7 +517,7 @@ class AuthViewCoverageTests(SimpleTestCase):
             patch.object(ConfigCache, "clear", return_value=True),
             patch.object(ConfigCache, "clear_auth", return_value=False),
         ):
-            self.assertEqual(views.DelView.as_view()(request, key=self.key).status_code, 200)
+            self.assertEqual(views.DelView.as_view()(request, key=self.key).status_code, 500)
 
         request = self._request("delete", "/auth/key")
         with (

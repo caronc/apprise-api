@@ -5,7 +5,9 @@
 {% block body %}
   <div class="api-welcome">
     <div class="section">
-      <h4>{% trans "The Apprise API" %}</h4>
+      <div class="page-section-heading">
+        <h4>{% trans "The Apprise API" %}</h4>
+      </div>
       <p>
         {% blocktrans %}
       <a target="_blank" href="https://github.com/caronc/apprise" rel="noopener noreferrer">Apprise</a> allows you to send a notification to almost
@@ -25,7 +27,9 @@
       </ul>
     </div>
     <div class="section">
-      <h4>{% trans "Stateless Endpoints" %}</h4>
+      <div class="page-section-heading">
+        <h4>{% trans "Stateless Endpoints" %}</h4>
+      </div>
       {% if STATELESS_MODE != 'disabled' %}
         <p>
           {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener noreferrer">sidecar</a> and/or
@@ -259,7 +263,9 @@
       {% endif %}
       {% if STATEFUL_MODE != 'disabled' %}
         <div class="section">
-          <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          <div class="page-section-heading">
+            <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          </div>
           <p>
             {% blocktrans %}Those wishing to use the persistent store may do so. This section is a set it and forget it type
       deal. Set your configuration once and just trigger notifications later on demand with light-weight API
@@ -735,7 +741,9 @@
           </div>
         </div>
         <div class="section">
-          <h4>{% trans "Endpoint Notes" %}</h4>
+          <div class="page-section-heading">
+            <h4>{% trans "Endpoint Notes" %}</h4>
+          </div>
           <p>
             The Configuration ID (<em>{{ key }}</em>) you plan to associate your configuration with:
           </p>
@@ -750,7 +758,9 @@
         </div>
       {% else %}
         <div class="section">
-          <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          <div class="page-section-heading">
+            <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          </div>
           <p>{% blocktrans %}The administrator of this system has disabled persistent storage.{% endblocktrans %}</p>
         </div>
       {% endif %}

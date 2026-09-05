@@ -4,24 +4,26 @@
 
 {% block body %}
   {# The list-wide button reveals or conceals every otherwise secret Config ID. #}
-  <div class="config-list-heading">
+  <div class="config-list-heading page-section-heading">
     <h4>{% trans "Configuration List" %}</h4>
     {% if keys %}
-      <button type="button"
-              id="config-list-toggle-all"
-              class="btn-flat config-list-toggle-all"
-              aria-pressed="false"
-              aria-label="{% trans "Show All Config IDs" %}"
-              title="{% trans "Show All Config IDs" %}"
-              data-show-label="{% trans "Show All Config IDs" %}"
-              data-hide-label="{% trans "Hide All Config IDs" %}">
-        <i class="material-icons" aria-hidden="true">visibility_off</i>
-      </button>
+      <div class="page-section-heading__actions">
+        <button type="button"
+                id="config-list-toggle-all"
+                class="btn-flat config-list-toggle-all"
+                aria-pressed="false"
+                aria-label="{% trans "Show All Config IDs" %}"
+                title="{% trans "Show All Config IDs" %}"
+                data-show-label="{% trans "Show All Config IDs" %}"
+                data-hide-label="{% trans "Hide All Config IDs" %}">
+          <i class="material-icons" aria-hidden="true">visibility_off</i>
+        </button>
+      </div>
     {% endif %}
   </div>
   {% if keys %}
     {# Each row groups authentication state, the Config ID, and its actions. #}
-    <ul class="collection z-depth-1">
+    <ul class="collection config-list-collection z-depth-1">
       {% for entry in keys %}
         <li class="collection-item config-list-item">
           <a class="config-list-auth-link"
@@ -77,6 +79,16 @@
                     data-config-id-copy="{{ entry.key }}"
                     title="{% trans "Copy Config ID to Clipboard" %}">
               <i class="material-icons" aria-hidden="true">content_copy</i>
+            </button>
+            <button type="button"
+                    class="btn-flat btn-small config-id-qr"
+                    data-config-id-qr
+                    data-qr-url="{% url 'qr' entry.key %}"
+                    aria-label="{% trans "Show Apprise Mobile Quick Config" %}"
+                    title="{% trans "Show Apprise Mobile Quick Config" %}">
+              <span class="config-id-qr-icon" aria-hidden="true">
+                {% include 'icons/qrcode.svg' %}
+              </span>
             </button>
             <button type="button"
                     class="btn-flat btn-small config-list-move"
@@ -292,9 +304,7 @@
       toggleAllBtn.querySelector('i').textContent = hideMode ? 'visibility' : 'visibility_off';
     }
 
-    // Hide wins as soon as anything is visible, so the button is always
-    // ready to sweep the list back to fully concealed in one click. Only
-    // once every row is already hidden does it offer to show all instead.
+    // Offer "hide all" while any Config ID is visible; otherwise offer "show all."
     function syncToggleAllState() {
       const toggles = Array.from(rowToggles());
       if (!toggles.length) {

@@ -405,7 +405,7 @@ class MoveTests(SimpleTestCase):
         )
         assert response.status_code == 400
 
-    def test_move_restricted_user_denied_for_a_key_that_is_not_theirs(self):
+    def test_move_denies_restricted_user_for_other_key(self):
         """A per-key credential is rejected outright for a URL key it doesn't own."""
         self._seed("move_user_src")
         self._seed("move_user_other")

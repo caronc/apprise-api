@@ -430,7 +430,7 @@ class AttachmentTests(SimpleTestCase):
             self.assertIsNone(_resolve_addresses("failed.example"))
             slots.release.assert_called_once()
 
-    def test_dns_timeout_cancels_queued_work_and_releases_on_completion(self):
+    def test_dns_timeout_cancels_queue_and_releases_work(self):
         """Timed-out DNS work is cancelled and retains its slot until done."""
         from concurrent.futures import TimeoutError as FutureTimeoutError
 
@@ -536,3 +536,60 @@ class AttachmentTests(SimpleTestCase):
 
         with mock.patch("apprise_api.api.urlfilter.parse_url", side_effect=ValueError):
             self.assertFalse(af.is_allowed("http://whatever/x"))
+
+
+class WildcardBacktrackingHardeningTests(SimpleTestCase):
+    """Prevent wildcard rules from causing costly attachment URL matching."""
+
+    def test_excessive_wildcards_are_rejected_at_compile_time(self):
+        """A pattern past the wildcard cap compiles to a rule that never matches."""
+        from ..urlfilter import _MAX_WILDCARDS_PER_SEGMENT
+
+        # One more wildcard than the cap allows.
+        pattern = "*" + ("a*" * (_MAX_WILDCARDS_PER_SEGMENT + 1))
+        with self.assertLogs("django", level="WARNING") as logs:
+            af = AppriseURLFilter("", pattern)
+        self.assertTrue(any("too many wildcards" in message for message in logs.output))
+
+        # Rejected rules never match, including their apparent target.
+        self.assertFalse(af.is_allowed("http://" + "a" * 20 + "/"))
+
+    def test_wildcard_count_at_the_cap_still_compiles_and_matches(self):
+        """The cap does not reject legitimate patterns at or under the limit."""
+        from ..urlfilter import _MAX_WILDCARDS_PER_SEGMENT
+
+        # Exactly _MAX_WILDCARDS_PER_SEGMENT wildcards, not one more.
+        pattern = "a*" * _MAX_WILDCARDS_PER_SEGMENT
+        af = AppriseURLFilter(pattern, "")
+        self.assertTrue(af.is_allowed("http://" + "a" * 20 + "/"))
+
+    def test_excessive_wildcard_pattern_stays_fast(self):
+        """Reject an expensive pattern before it reaches regex matching."""
+        import time
+
+        pattern = "*" + ("a*" * 28)
+        af = AppriseURLFilter("", pattern)
+        hostile = "http://" + "a" * 30 + "X/"
+
+        start = time.perf_counter()
+        result = af.is_allowed(hostile)
+        elapsed = time.perf_counter() - start
+
+        self.assertFalse(result)
+        self.assertLess(elapsed, 1.0, "Matching took too long; wildcard backtracking may be unbounded again")
+
+    def test_overlong_url_is_rejected_before_matching(self):
+        """A URL past the length ceiling is denied without ever being parsed."""
+        from ..urlfilter import _MAX_URL_LENGTH
+
+        af = AppriseURLFilter("*", "")
+        overlong = "http://example.com/" + ("a" * _MAX_URL_LENGTH)
+        self.assertFalse(af.is_allowed(overlong))
+
+    def test_overlong_host_is_rejected_before_matching(self):
+        """A host past the length ceiling is denied even inside an otherwise-short URL."""
+        from ..urlfilter import _MAX_HOST_LENGTH
+
+        af = AppriseURLFilter("*", "")
+        overlong_host = "http://" + ("a" * (_MAX_HOST_LENGTH + 1)) + "/x"
+        self.assertFalse(af.is_allowed(overlong_host))

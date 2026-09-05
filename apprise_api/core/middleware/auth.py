@@ -38,7 +38,7 @@ from django.utils.translation import gettext_lazy as _
 
 # Route names come from Django's URL table, so adding an endpoint does not
 # require another path regular expression in this middleware.
-_KEYED_ROUTES = frozenset({"config", "add", "del", "get", "move", "notify", "json_urls", "auth", "health_key"})
+_KEYED_ROUTES = frozenset({"config", "add", "del", "get", "move", "notify", "json_urls", "auth", "health_key", "qr"})
 _HEADER_ROUTES = frozenset(
     {
         "add_by_header",
@@ -48,12 +48,13 @@ _HEADER_ROUTES = frozenset(
         "s_notify",
         "json_urls_by_header",
         "auth_by_header",
+        "qr_by_header",
         "health",
         "details",
     }
 )
 _SHARED_WEB_ROUTES = frozenset({"welcome", "config_list", "details"})
-_CURRENT_CONFIG_ROUTES = frozenset({"config_current", "auth_current", "health_current"})
+_CURRENT_CONFIG_ROUTES = frozenset({"config_current", "auth_current", "health_current", "qr_current"})
 
 
 def _request_route(request):

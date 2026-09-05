@@ -31,6 +31,19 @@ Support Banner
   --mobile-beta-accent-soft: #0b3b37;
   --mobile-beta-counter-text: #071b19;
   --mobile-beta-primary-text: #071b19;
+  --section-heading-start: #153532;
+  --section-heading-end: #222832;
+  --section-heading-border: #35514f;
+  --section-heading-title: #7de6da;
+  --section-heading-subtitle: #b8bec8;
+  --section-heading-shadow: rgba(0, 0, 0, 0.22);
+  --config-list-surface: #0d0f12;
+  --config-list-row: #15181d;
+  --config-list-row-hover: #1c2228;
+  --config-list-border: #2a2e38;
+  --config-list-id-bg: #0d0f12;
+  --config-list-text: #c1c3c9;
+  --config-list-action: #888c96;
   --dialog-close-bg: #555a62;
   --dialog-close-border: #6f7582;
   --dialog-close-icon: #17181c;
@@ -405,6 +418,33 @@ Side Nav
   color: #f0a0a0 !important;
 }
 
+.mobile-menu-tab {
+  color: #7de6da;
+  background-color: #23262f;
+  border-color: #3d5960;
+}
+
+.mobile-menu-tab:hover,
+.mobile-menu-tab:focus,
+.mobile-menu-tab:active,
+.mobile-menu-tab:focus-visible {
+  color: #7de6da;
+  background-color: #23262f;
+}
+
+@media (max-width: 600px) {
+  .main-layout .side-menu {
+    color: #c1c3c9;
+    background-color: #17191e;
+    border-right: 1px solid #3d5960;
+  }
+
+  .mobile-menu-drawer-heading {
+    color: #7de6da;
+    border-color: #34383f;
+  }
+}
+
 /* =========================================
 Dropdowns & Selects
 ========================================= */
@@ -762,7 +802,8 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-access-warning,
-.auth-access-warning i.material-icons {
+.auth-access-warning i.material-icons,
+.apprise-qr-note--warning {
   color: #f6b45f;
 }
 
@@ -818,16 +859,91 @@ input.config-id-input.is-mismatched {
   border-color: #2cb6a6;
 }
 
-.auth-mode-badge {
-  background-color: #34383f;
-  border-color: #555a62;
-  color: #c1c3c9;
+.auth-compact-heading .auth-card-icon {
+  background-color: #263a3a;
+  border-color: #3a6f69;
 }
 
-.auth-mode-badge.is-shared {
-  background-color: #0b3b37;
-  border-color: #2f7f77;
-  color: #7de6da;
+.auth-compact-heading p {
+  color: #aeb2bd;
+}
+
+.auth-tool-panel,
+.auth-content-panel {
+  background-color: #17191e;
+  border-color: #363942;
+}
+
+.auth-tool-label {
+  color: #aeb2bd;
+}
+
+.auth-remove-option {
+  border-color: #363942;
+}
+
+.auth-editor-card .auth-remove-button {
+  color: #ff9ca6;
+  background-color: rgba(117, 38, 48, 0.22) !important;
+  border-color: #75404a;
+}
+
+.auth-editor-card .auth-remove-button:hover,
+.auth-editor-card .auth-remove-button:focus-visible {
+  color: #ffd9dd;
+  background-color: rgba(151, 50, 63, 0.4) !important;
+  border-color: #b45b68;
+}
+
+.reset-configuration-toggle {
+  color: #c1c3c9;
+  background-color: #1a1c22;
+  border-color: #454952;
+}
+
+.reset-configuration-toggle:hover {
+  background-color: #23262f;
+  border-color: #686e7a;
+}
+
+.reset-configuration-toggle__track {
+  background-color: #343842;
+  border-color: #686e7a;
+}
+
+.reset-configuration-toggle__track>span {
+  background-color: #b8bbc4;
+}
+
+.reset-configuration-toggle[aria-checked="true"] {
+  color: #ffc1c8;
+  background-color: rgba(105, 35, 46, 0.42);
+  border-color: #a95562;
+}
+
+.reset-configuration-toggle[aria-checked="true"] .reset-configuration-toggle__track {
+  background-color: #a95562;
+  border-color: #d17783;
+}
+
+.reset-configuration-toggle[aria-checked="true"] .reset-configuration-toggle__track>span {
+  background-color: #fff0f2;
+}
+
+.reset-configuration-toggle__copy small {
+  color: #aeb2bd;
+}
+
+.auth-mode-status.is-admin {
+  background-color: rgba(105, 35, 46, 0.42);
+  border-color: #a95562;
+  color: #ffc1c8;
+}
+
+.auth-mode-status.is-user {
+  background-color: rgba(27, 66, 105, 0.46);
+  border-color: #477eae;
+  color: #a9d6ff;
 }
 
 /* =========================================
@@ -957,16 +1073,16 @@ Buttons & Chips
 }
 
 #notify .notify-form-actions .btn-clear-form {
-  background-color: #2a2f3a;
-  border-color: #4b5260;
-  color: #b8bec8;
+  background-color: #3a2226;
+  border-color: #6b3339;
+  color: #e6b8ba;
 }
 
 #notify .notify-form-actions .btn-clear-form:hover,
 #notify .notify-form-actions .btn-clear-form:focus-visible {
-  background-color: #323845;
-  border-color: #616a7c;
-  color: #d1d6de !important;
+  background-color: #4a262b;
+  border-color: #ef5350;
+  color: #ffcdd2 !important;
 }
 
 #url-list .copy-url-btn:hover,

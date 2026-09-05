@@ -82,7 +82,7 @@ class CommandTests(SimpleTestCase):
         self.assertIn("stopasgroup=true", supervisor)
         self.assertIn("killasgroup=true", supervisor)
 
-    def test_container_selects_nginx_without_rewriting_packaged_files(self):
+    def test_container_uses_nginx_without_rewriting_package(self):
         """Normal and strict mode render Supervisor configuration in /tmp."""
         package_dir = Path(__file__).resolve().parents[2]
         startup = package_dir / "supervisord-startup"

@@ -214,9 +214,7 @@ class DelViewAuthOrderingTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_failed_delete_keeps_auth_lock(self):
-        # Deleting is a global-administrator-only action, so this exercises
-        # the ordering with master credentials -- see AddDelPrivilegeTests
-        # for coverage of the permission gate itself.
+        # Use admin credentials here; AddDelPrivilegeTests covers permission checks.
         key = "hardening_del_fail_key"
         self.client.post("/add/{}".format(key), {"urls": "json://localhost"}, headers=_GOOD_MASTER)
         self.client.post(

@@ -29,7 +29,7 @@ import struct
 import tempfile
 import threading
 import time
-from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 import apprise
 from core.utils import parse_bool, parse_log_level
@@ -1187,6 +1187,42 @@ def _invalid_key_response(request):
     )
 
 
+def _build_apprise_mobile_url(request, key):
+    """Build a password-safe Apprise Mobile URL for this Config ID.
+
+    A configuration login takes priority over the administrator login. Saved
+    passwords are never included; ``:username@`` tells the app which username
+    to prefill while still requiring its password.
+    """
+    scheme = "apprises" if request.is_secure() else "apprise"
+    host = request.get_host()
+    base = settings.BASE_URL or ""
+
+    username, password_required, _ = _apprise_mobile_credentials(request, key)
+
+    if username and password_required:
+        userinfo = ":{}@".format(quote(username, safe=""))
+    else:
+        userinfo = "@" if password_required else ""
+
+    return "{}://{}{}{}/{}".format(scheme, userinfo, host, base, key)
+
+
+def _apprise_mobile_credentials(request, key):
+    """Choose the Config ID login, falling back to admin when unassigned."""
+    if not settings.APPRISE_AUTH_REQUIRED:
+        return "", False, False
+
+    state = Authentication.config_state(key, request)
+    if state.assigned:
+        return state.username or "", True, False
+
+    uses_admin_credentials = getattr(request, "globally_authenticated", False)
+    username = (settings.APPRISE_USER or "") if uses_admin_credentials else ""
+    password_required = bool(settings.APPRISE_PASSWORD) if uses_admin_credentials else False
+    return username, password_required, uses_admin_credentials
+
+
 def _get_config_response(request, key):
     """Return stored configuration for ``/get`` and ``/cfg``.
 
@@ -1543,13 +1579,10 @@ _PRIVILEGE_LABELS = {
 
 
 def _health_check_response(request, key=None):
-    """Return the shared status payload for keyed and keyless requests.
+    """Return status for keyed and keyless requests.
 
-    ``config_lock`` describes whether the authenticated caller is locked out
-    of configuration content.  The saved global/per-key policy is still
-    enforced for configuration users, while a global administrator receives
-    ``false`` because that same request is allowed by every configuration
-    content endpoint.
+    ``config_lock`` reflects whether this caller can access configuration
+    content; administrators are never reported as locked out.
     """
     # Detect the format our response should be in
     json_response = is_json_response(request)
@@ -2457,6 +2490,8 @@ class DelView(View):
                 request.META["REMOTE_ADDR"],
                 key,
             )
+            msg = _("The configuration was removed, but its authentication could not be removed")
+            return error_response(request, msg, ResponseCode.internal_server_error)
 
         if result is None:
             logger.warning(
@@ -2826,6 +2861,44 @@ class CurrentAuthView(View):
         """Remove credentials from the current configuration."""
         key = self._key(request)
         return AuthView.as_view()(request, key=key) if key else _missing_key_response(request)
+
+
+@method_decorator(never_cache, name="dispatch")
+class MobileQrView(View):
+    """Return the apprise[s]:// URL used to prefill the Apprise Mobile app."""
+
+    def get(self, request, key=None):
+        """Return the URL as JSON for the page's QR code icon to render."""
+        if not stateful_store_enabled():
+            return _stateful_mode_unavailable_response(request)
+
+        key = resolve_config_key(request, key)
+        if not key:
+            if config_key_header_present_but_invalid(request):
+                return _invalid_key_response(request)
+            return _missing_key_response(request)
+
+        if not Authentication.key_ok(request, key):
+            return _key_access_denied_response(request, key)
+
+        url = _build_apprise_mobile_url(request, key)
+        _, _, uses_admin_credentials = _apprise_mobile_credentials(request, key)
+        return JsonResponse(
+            {"url": url, "uses_admin_credentials": uses_admin_credentials},
+            encoder=JSONEncoder,
+            safe=False,
+            status=ResponseCode.okay,
+        )
+
+
+@method_decorator(never_cache, name="dispatch")
+class CurrentMobileQrView(View):
+    """Return the current browser configuration's Apprise Mobile URL."""
+
+    def get(self, request):
+        """Resolve the remembered Config ID, then reuse MobileQrView."""
+        key = _current_browser_config_key(request)
+        return MobileQrView.as_view()(request, key=key) if key else _missing_key_response(request)
 
 
 @method_decorator((gzip_page, never_cache), name="dispatch")

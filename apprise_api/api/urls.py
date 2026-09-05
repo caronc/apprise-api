@@ -66,6 +66,13 @@ urlpatterns = [
         name="auth",
     ),
     re_path(r"^auth/?$", views.AuthView.as_view(), name="auth_by_header"),
+    re_path(r"^qr/@/?$", views.CurrentMobileQrView.as_view(), name="qr_current"),
+    re_path(
+        r"^qr/{}/?$".format(_KEY),
+        views.MobileQrView.as_view(),
+        name="qr",
+    ),
+    re_path(r"^qr/?$", views.MobileQrView.as_view(), name="qr_by_header"),
     re_path(
         r"^notify/{}/?$".format(_KEY),
         views.StatefulNotifyView.as_view(),

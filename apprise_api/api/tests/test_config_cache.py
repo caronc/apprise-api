@@ -514,7 +514,7 @@ def test_move_cleanup_failure_never_restores_old_id(tmpdir):
     assert acc_obj.get_auth("move_strayorig_src") is None
 
 
-def test_move_retains_destination_when_source_lock_cleanup_fails(tmpdir):
+def test_move_keeps_destination_on_lock_cleanup_failure(tmpdir):
     """A destination remains protected when its old lock cannot be removed."""
     acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
     assert acc_obj.put("move_lockfallback_src", "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)

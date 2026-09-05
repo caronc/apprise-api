@@ -58,7 +58,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
     @override_settings(APPRISE_STATELESS_MODE="disabled")
     @patch("apprise.Apprise.notify")
-    def test_stateful_tag_notify_remains_available_when_stateless_is_disabled(self, mock_notify):
+    def test_stateful_tag_notify_works_without_stateless(self, mock_notify):
         """The stateless switch must govern /notify only, never /notify/<key>."""
         key = "stateful_with_stateless_disabled"
 

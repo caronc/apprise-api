@@ -23,9 +23,11 @@
 # THE SOFTWARE.
 import base64
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 from django.urls import Resolver404, resolve
 
@@ -156,6 +158,9 @@ class ManagerPageTests(SimpleTestCase):
         assert response.status_code == 200
 
         content = response.content.decode("utf-8")
+        assert content.count('id="id_format"') == 1
+        assert content.count('id="id_notify_format"') == 1
+        assert 'for="id_notify_format"' in content
         assert content.index("config-auth-status") < content.index("config-id-label")
         assert 'id="config-id-select-form"' in content
         assert 'action="/cfg/@"' in content
@@ -194,6 +199,11 @@ class ManagerPageTests(SimpleTestCase):
         assert 'id="cfggen-randomize"' in content
         assert "window.crypto.getRandomValues(bytes)" in content
         assert "appriseCopyToClipboard(" in content
+        assert "reverseButtons: !isToast" in content
+        assert "apprise-popup--decision" in content
+        stylesheet = Path(settings.BASE_DIR, "static", "css", "base.css").read_text(encoding="utf-8")
+        assert "body.swal2-shown:not(.swal2-toast-shown) .mobile-menu-tab" in stylesheet
+        assert "body:has(.apprise-dialog[open]) .mobile-menu-tab" in stylesheet
         assert "Config ID copied to clipboard" in content
         assert "snippet-config-id is-concealed" in content
         assert "snippet-visibility-btn" in content
@@ -404,6 +414,9 @@ class ManagerPageTests(SimpleTestCase):
         assert content.count("data-config-id-toggle") >= 2
         assert 'data-config-id-copy="open"' in content
         assert 'data-config-id-copy="shared"' in content
+        assert content.count('class="btn-flat btn-small config-id-qr"') == 2
+        assert 'data-qr-url="/qr/open"' in content
+        assert 'data-qr-url="/qr/shared"' in content
         assert 'class="config-list-user"' in content
         assert 'title="alice"' in content
         assert "No Username" in content
