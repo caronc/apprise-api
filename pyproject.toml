@@ -27,7 +27,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apprise-api"
-version = "1.5.3"
+version = "1.5.4"
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
@@ -86,7 +86,9 @@ include = ["apprise_api"]
 omit = [
   "*apps.py",
   "*/migrations/*",
-  "*/core/settings/*",
+  "*/core/settings/__init__.py",
+  "*/core/settings/debug/*",
+  "*/core/settings/pytest/*",
   "*/*/tests/*",
   "lib/*",
   "lib64/*",

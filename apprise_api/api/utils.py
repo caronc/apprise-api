@@ -23,12 +23,14 @@
 # THE SOFTWARE.
 import base64
 import binascii
+from collections.abc import Mapping
 from contextlib import suppress
 from datetime import datetime
 import errno
+import fcntl
 import gzip
 import hashlib
-from json import dumps
+from json import dumps, loads
 
 # import the logging library
 import logging
@@ -39,9 +41,11 @@ import tempfile
 
 import apprise
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 import requests
 
+from .auth import Authentication, AuthStorageError, ConfigAuthRecord
 from .urlfilter import AppriseURLFilter
 
 # Get an instance of a logger
@@ -53,24 +57,32 @@ logger = logging.getLogger("django")
 # application/json
 # application/x-json
 MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
-
 # Parsing of Accept; the following amounts to Accept All
 # */*
 # <blank>
 ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
 
+# This header keeps configuration keys out of URLs and access logs. Validate
+# it because headers bypass the URL pattern and may become SIMPLE filenames.
+CONFIG_KEY_HEADER = "X-Apprise-Config-ID"
 
-def is_json_response(request: HttpRequest) -> bool:
-    """Return whether the request prefers a JSON response.
+# Routes embed this expression; headers use the anchored pattern.
+CONFIG_KEY_MAX_LENGTH = 128
+CONFIG_KEY_REGEX = r"[\w_-]{{1,{}}}".format(CONFIG_KEY_MAX_LENGTH)
+CONFIG_KEY_PATTERN = re.compile(r"^{}$".format(CONFIG_KEY_REGEX))
 
-    Accept takes priority. Missing or wildcard Accept falls back to the
-    request Content-Type for backward compatibility.
-    """
-    accept = request.headers.get("accept", "")
-    content_type = request.content_type or request.headers.get("content-type", "")
-    return MIME_IS_JSON.match(accept) is not None or (
-        ACCEPT_ALL.match(accept) is not None and MIME_IS_JSON.match(content_type) is not None
-    )
+# Access our Attachment Manager Singleton
+A_MGR = apprise.manager_attachment.AttachmentManager()
+
+# Access our Notification Manager Singleton
+N_MGR = apprise.manager_plugins.NotificationManager()
+
+# Let the API unload optional modules that no enabled service still needs.
+# Other applications embedding Apprise keep loaded modules by default.
+N_MGR.evict_on_disable = True
+
+# Prepare our Attachment URL Filter
+ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
 
 
 class AppriseStoreMode:
@@ -108,22 +120,100 @@ STORE_MODES = (
     AppriseStoreMode.DISABLED,
 )
 
-# Access our Attachment Manager Singleton
-A_MGR = apprise.manager_attachment.AttachmentManager()
 
-# Access our Notification Manager Singleton
-N_MGR = apprise.manager_plugins.NotificationManager()
+def stateful_store_enabled():
+    """Return whether persistent configuration features are enabled."""
+    mode = str(settings.APPRISE_STATEFUL_MODE).strip().lower()
+    return mode in {AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE}
 
-# Opt into library eviction: when APPRISE_ALLOW_SERVICES or
-# APPRISE_DENY_SERVICES disables a plugin whose optional dependencies are
-# no longer needed by any other enabled plugin, the Apprise API actively
-# removes those modules from sys.modules to reclaim memory.  This is an
-# API-specific choice; third-party embedders of the Apprise library default
-# to False and retain all loaded modules.
-N_MGR.evict_on_disable = True
 
-# Prepare our Attachment URL Filter
-ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+class SimpleFileExtension:
+    """
+    Defines the simple file exension lookups
+    """
+
+    # Simple Configuration file
+    TEXT = "cfg"
+
+    # YAML Configuration file
+    YAML = "yml"
+
+
+SIMPLE_FILE_EXTENSION_MAPPING = {
+    apprise.ConfigFormat.TEXT.value: SimpleFileExtension.TEXT,
+    apprise.ConfigFormat.YAML.value: SimpleFileExtension.YAML,
+    SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
+    SimpleFileExtension.YAML: SimpleFileExtension.YAML,
+}
+
+SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+
+
+class MoveResult:
+    """
+    Outcome of AppriseConfigCache.move()
+    """
+
+    # The source configuration (and its lock, if any) now lives at the
+    # destination.
+    MOVED = "moved"
+
+    # The source key has no configuration to move.
+    NOT_FOUND = "not_found"
+
+    # The destination key already has configuration or a lock in place.
+    CONFLICT = "conflict"
+
+    # An OS-level error prevented the move from completing.
+    FAILED = "failed"
+
+
+def is_json_response(request: HttpRequest) -> bool:
+    """Return whether the request prefers a JSON response.
+
+    Accept takes priority. Missing or wildcard Accept falls back to the
+    request Content-Type for backward compatibility.
+    """
+    accept = request.headers.get("accept", "")
+    content_type = request.content_type or request.headers.get("content-type", "")
+    return MIME_IS_JSON.match(accept) is not None or (
+        ACCEPT_ALL.match(accept) is not None and MIME_IS_JSON.match(content_type) is not None
+    )
+
+
+def is_html_response(request: HttpRequest) -> bool:
+    """Return whether HTML is the client's preferred response type.
+
+    Honor Accept priorities so an API's HTML fallback does not start a browser
+    login.
+    """
+    html_preference = None
+    json_preference = None
+    for position, value in enumerate(request.headers.get("accept", "").split(",")):
+        media_type, *parameters = value.split(";")
+        media_type = media_type.strip().lower()
+        quality = 1.0
+        for parameter in parameters:
+            name, separator, raw_value = parameter.strip().partition("=")
+            if separator and name.lower() == "q":
+                try:
+                    quality = float(raw_value)
+                except ValueError:
+                    # An invalid quality value cannot make HTML preferable.
+                    quality = 0.0
+                break
+
+        if quality <= 0:
+            continue
+
+        # Earlier entries win when two response types have equal quality.
+        preference = (min(quality, 1.0), -position)
+        if media_type == "text/html":
+            html_preference = max(html_preference or preference, preference)
+        elif media_type in {"text/json", "text/x-json", "application/json", "application/x-json"}:
+            json_preference = max(json_preference or preference, preference)
+
+    return html_preference is not None and (json_preference is None or html_preference > json_preference)
 
 
 class Attachment(A_MGR["file"]):
@@ -196,10 +286,8 @@ class HTTPAttachment(A_MGR["http"]):
         """
         Initialize our attachment
         """
-        # Pop any name that parse_url() extracted from a ?name= query
-        # parameter.  We must remove it from kwargs before passing to
-        # AttachBase to avoid "multiple values for keyword argument 'name'".
-        # Priority: explicit filename arg > URL ?name= > None (auto-detect).
+        # Remove the parsed URL name before calling AttachBase twice with it.
+        # An explicit filename takes priority over ``?name=``.
         url_name = kwargs.pop("name", None)
         effective_name = filename if filename is not None else url_name
 
@@ -371,13 +459,10 @@ def parse_attachments(attachment_payload, files_request):
                     # We are not allowed to use this entry
                     raise ValueError(f"Denied attachment {no} (blocked web request): {entry}")
 
-                # apprise's own parse_url() already sanitizes ?name= (strips
-                # directory components and only sets the key when non-empty)
+                # Apprise sanitizes ``?name=`` and ignores empty values.
                 _parsed = A_MGR["http"].parse_url(entry)
 
-                # ?name= wins when present; otherwise derive from the URL path
-                # basename so .../6dba.jpg doesn't get renamed to attachment.001.
-                # Only fall back to attachment.NNN when no name can be found.
+                # Prefer ``?name=``, then the URL filename, then attachment.NNN.
                 if "name" not in _parsed:
                     _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
                     if not _path_name:
@@ -404,13 +489,11 @@ def parse_attachments(attachment_payload, files_request):
                                     f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
                                 )
 
-                            # apprise's own parse_url() already sanitizes
-                            # ?name= (same rules as the string-URL path above).
+                            # Apprise sanitizes ``?name=`` before it reaches us.
                             _parsed = A_MGR["http"].parse_url(entry[AttachmentPayload.URL])
 
-                            # User-provided dict filename overrides all URL
-                            # derived names.  If absent, prefer URL ?name=
-                            # then path basename, then attachment.NNN.
+                            # A supplied filename wins; otherwise use the same
+                            # URL name and fallback order as string attachments.
                             _dict_filename = entry.get("filename", "").strip()
                             if _dict_filename:
                                 _parsed["name"] = _dict_filename
@@ -503,28 +586,6 @@ def parse_attachments(attachment_payload, files_request):
     return attachments
 
 
-class SimpleFileExtension:
-    """
-    Defines the simple file exension lookups
-    """
-
-    # Simple Configuration file
-    TEXT = "cfg"
-
-    # YAML Configuration file
-    YAML = "yml"
-
-
-SIMPLE_FILE_EXTENSION_MAPPING = {
-    apprise.ConfigFormat.TEXT.value: SimpleFileExtension.TEXT,
-    apprise.ConfigFormat.YAML.value: SimpleFileExtension.YAML,
-    SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
-    SimpleFileExtension.YAML: SimpleFileExtension.YAML,
-}
-
-SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
-
-
 class AppriseConfigCache:
     """
     Designed to make it easy to store/read contact back from disk in a cache
@@ -569,10 +630,14 @@ class AppriseConfigCache:
             return False
 
         # Write our file to a temporary file
-        d, tmp_path = tempfile.mkstemp(suffix=".tmp", dir=path)
-        # Close the file handle provided by mkstemp()
-        # We're reopening it, and it can't be renamed while open on Windows
-        os.close(d)
+        try:
+            d, tmp_path = tempfile.mkstemp(suffix=".tmp", dir=path)
+            # Close the temporary handle before reopening and renaming it.
+            os.close(d)
+
+        except OSError:
+            logger.error("Could not create a temporary file in {}".format(path))
+            return False
 
         if self.mode == AppriseStoreMode.HASH:
             try:
@@ -582,7 +647,8 @@ class AppriseConfigCache:
 
             except OSError:
                 # Handle failure
-                os.remove(tmp_path)
+                with suppress(OSError):
+                    os.remove(tmp_path)
                 return False
 
         else:  # AppriseStoreMode.SIMPLE
@@ -595,13 +661,21 @@ class AppriseConfigCache:
 
             except OSError:
                 # Handle failure
-                os.remove(tmp_path)
+                with suppress(OSError):
+                    os.remove(tmp_path)
                 return False
 
         # If we reach here we successfully wrote the content. We now safely
         # move our configuration into place. The following writes our content
         # to disk
-        shutil.move(tmp_path, os.path.join(path, "{}.{}".format(filename, fmt)))
+        try:
+            shutil.move(tmp_path, os.path.join(path, "{}.{}".format(filename, fmt)))
+
+        except OSError:
+            logger.error("Could not move temporary file into place for KEY: {}".format(key))
+            with suppress(OSError):
+                os.remove(tmp_path)
+            return False
 
         # perform tidy of any other lingering files of other type in case
         # configuration changed from TEXT -> YAML or YAML -> TEXT
@@ -680,9 +754,8 @@ class AppriseConfigCache:
                     # Write our content to disk
                     content = f.read().decode()
 
-            except OSError:
-                # all none return means to let upstream know we had a hard
-                # failure
+            except (OSError, UnicodeDecodeError):
+                # Two None values distinguish a read failure from a missing file.
                 return (None, None)
 
         else:  # AppriseStoreMode.SIMPLE
@@ -691,9 +764,8 @@ class AppriseConfigCache:
                     # Write our content to disk
                     content = f.read().decode()
 
-            except OSError:
-                # all none return means to let upstream know we had a hard
-                # failure
+            except (OSError, UnicodeDecodeError):
+                # Two None values distinguish a read failure from a missing file.
                 return (None, None)
 
         # return our read content
@@ -744,6 +816,42 @@ class AppriseConfigCache:
 
         return response
 
+    def clear_preserving_auth(self, key):
+        """Clear content while preserving its login long enough to replace it.
+
+        The authentication guard prevents pruning during this operation.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock authenticated configuration deletion for KEY: %s", key)
+            return False
+
+        try:
+            try:
+                record = self.get_auth_record(key)
+            except AuthStorageError:
+                return False
+            if record is None:
+                return False
+
+            result = self.clear(key)
+            if result is False:
+                return False
+
+            path, filename = self.auth_path(key)
+            try:
+                os.utime(os.path.join(path, filename), follow_symlinks=False)
+            except OSError:
+                logger.error("Could not refresh authentication age for KEY: %s", key)
+                return False
+            return result
+        finally:
+            self._release_auth_guard(guard)
+
     def path(self, key):
         """
         returns the path and filename content should be written to based on the
@@ -758,22 +866,556 @@ class AppriseConfigCache:
             return (self.root, key)
 
     def keys(self):
-        """
-        Returns a list of keys that are currently stored
-        """
-        keys = []
-        if self.mode != AppriseStoreMode.SIMPLE:
-            return keys
+        """Return stored keys, including keys with only an access record.
 
-        for filename in sorted(os.listdir(self.root)):
+        Access-only keys are listed because they are still occupied and must
+        remain visible to administrators.
+        """
+        keys = set()
+        if self.mode != AppriseStoreMode.SIMPLE:
+            return []
+
+        lock_suffix = ".lock"
+        for filename in os.listdir(self.root):
             if filename.startswith("."):
+                # Recover keys only from the hidden lock filename format.
+                # Other hidden files do not belong to the configuration list.
+                if filename.endswith(lock_suffix) and len(filename) > len(lock_suffix) + 1:
+                    keys.add(filename[1 : -len(lock_suffix)])
                 continue
             path = os.path.join(self.root, filename)
             if os.path.isfile(path):
                 key_name = os.path.splitext(filename)[0]
-                keys.append(key_name)
+                keys.add(key_name)
 
-        return keys
+        return sorted(keys)
+
+    def auth_path(self, key):
+        """Return the directory and hidden lock filename for a key.
+
+        The lock name does not use the config format, so switching between
+        text and YAML leaves authentication unchanged.
+        """
+        path, filename = self.path(key)
+        return path, ".{}.lock".format(filename)
+
+    def _acquire_auth_guard(self, _key):
+        """Lock rare credential writes and moves; login reads never use this."""
+        os.makedirs(self.root, exist_ok=True)
+        # One shared guard avoids creating a lock file for every Config ID.
+        descriptor = os.open(os.path.join(self.root, ".auth.guard"), os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            # Fail immediately if another credential update is in progress.
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(descriptor)
+            raise
+        return descriptor
+
+    @staticmethod
+    def _release_auth_guard(descriptor):
+        """Release a credential-update guard without hiding cleanup errors."""
+        with suppress(OSError):
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+        with suppress(OSError):
+            os.close(descriptor)
+
+    def set_auth(self, key, username, password, access=Authentication.ACCESS_USER):
+        """Save credentials and an access policy for a Config ID.
+
+        Writes are atomic. Colons are rejected because Basic Auth uses one to
+        separate the username and password.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock authentication for KEY: %s", key)
+            return False
+
+        try:
+            return self._set_auth(key, username, password, access)
+        finally:
+            self._release_auth_guard(guard)
+
+    def _set_auth(self, key, username, password, access):
+        """Write credentials while the caller holds this key's guard."""
+
+        if access not in Authentication.ACCESS_CHOICES:
+            logger.error("Unsupported configuration access for KEY: %s", key)
+            return False
+
+        if username is None:
+            username = ""
+        if not isinstance(username, str) or not isinstance(password, str):
+            logger.error("Credentials must be text for KEY: %s", key)
+            return False
+
+        # Normalize usernames while leaving passwords exactly as supplied.
+        username = username.strip()
+        if ":" in username:
+            logger.error("Username cannot contain ':' for KEY: {}".format(key))
+            return False
+
+        try:
+            # Django's password hasher adds a unique salt.
+            digest = make_password("{}:{}".format(username, password))
+
+        except (TypeError, UnicodeError):
+            logger.error("Could not hash authentication credentials for KEY: {}".format(key))
+            return False
+
+        return self._write_auth_record(
+            key,
+            ConfigAuthRecord(access=access, username=username, digest=digest),
+        )
+
+    def set_access(self, key, access):
+        """Change access without replacing credentials.
+
+        New public and disabled records may omit credentials. The other modes
+        require an existing login so they never become unintentionally
+        accessible.
+        """
+        if self.mode == AppriseStoreMode.DISABLED or access not in Authentication.ACCESS_CHOICES:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock access policy for KEY: %s", key)
+            return False
+
+        try:
+            try:
+                record = self.get_auth_record(key)
+            except AuthStorageError:
+                return False
+
+            if record is None:
+                if access not in {
+                    Authentication.ACCESS_PUBLIC,
+                    Authentication.ACCESS_DISABLED,
+                }:
+                    return False
+                record = ConfigAuthRecord(access=access)
+            else:
+                if record.digest is None and access not in {
+                    Authentication.ACCESS_PUBLIC,
+                    Authentication.ACCESS_DISABLED,
+                }:
+                    return False
+                record = ConfigAuthRecord(
+                    access=access,
+                    username=record.username,
+                    digest=record.digest,
+                )
+            return self._write_auth_record(key, record)
+        finally:
+            self._release_auth_guard(guard)
+
+    def _write_auth_record(self, key, record):
+        """Atomically replace one access record."""
+
+        # Replace the lock atomically so readers never see a partial record.
+        path, filename = self.auth_path(key)
+        try:
+            os.makedirs(path, exist_ok=True)
+
+        except OSError:
+            logger.error("Could not create directory {}".format(path))
+            return False
+
+        full_path = os.path.join(path, filename)
+        try:
+            fd, tmp_path = tempfile.mkstemp(prefix="." + filename, dir=path)
+
+        except OSError:
+            logger.error("Could not create a temporary file in {}".format(path))
+            return False
+
+        try:
+            try:
+                with os.fdopen(fd, "w") as f:
+                    f.write(
+                        dumps(
+                            {
+                                "access": record.access,
+                                "username": record.username,
+                                "digest": record.digest,
+                            },
+                            separators=(",", ":"),
+                        )
+                    )
+
+                os.replace(tmp_path, full_path)
+
+            except OSError:
+                logger.error("Could not write authentication for KEY: {}".format(key))
+                return False
+
+        finally:
+            # A successful replacement consumes the temporary file.
+            # Otherwise, remove whatever was left behind.
+            with suppress(OSError):
+                os.remove(tmp_path)
+
+        return True
+
+    def get_auth_record(self, key):
+        """Return a key's saved access record, or ``None`` when absent."""
+        path, filename = self.auth_path(key)
+        full_path = os.path.join(path, filename)
+        try:
+            with open(full_path) as f:
+                stored = f.read().strip()
+
+        except FileNotFoundError:
+            return None
+
+        except (OSError, UnicodeDecodeError) as e:
+            logger.error("Could not read authentication for KEY: {} ({})".format(key, e))
+            raise AuthStorageError(str(e)) from e
+
+        try:
+            record = loads(stored)
+            access = record["access"]
+            username = record["username"]
+            digest = record["digest"]
+            if (
+                access not in Authentication.ACCESS_CHOICES
+                or (username is None) != (digest is None)
+                or (username is not None and not isinstance(username, str))
+                or (digest is not None and not isinstance(digest, str))
+                or (
+                    digest is None
+                    and access
+                    not in {
+                        Authentication.ACCESS_PUBLIC,
+                        Authentication.ACCESS_DISABLED,
+                    }
+                )
+            ):
+                raise ValueError
+
+        except (KeyError, TypeError, ValueError):
+            logger.error("Could not decode authentication for KEY: {}".format(key))
+            raise AuthStorageError("Invalid authentication record") from None
+
+        return ConfigAuthRecord(access=access, username=username, digest=digest)
+
+    def get_auth(self, key):
+        """Return a key's credential digest, or ``None`` when unlocked."""
+        record = self.get_auth_record(key)
+        return None if record is None else record.digest
+
+    def get_auth_username(self, key):
+        """Return the saved username when the lock format provides it."""
+        record = self.get_auth_record(key)
+        return None if record is None else record.username
+
+    def has_auth(self, key):
+        """Return whether a key is protected, treating unreadable locks as protected."""
+        try:
+            return self.get_auth(key) is not None
+
+        except AuthStorageError:
+            return True
+
+    def verify_auth(self, key, username, password):
+        """Check credentials, rejecting missing or unreadable locks."""
+        try:
+            record = self.get_auth_record(key)
+
+        except AuthStorageError:
+            return False
+
+        if record is None:
+            return False
+
+        if record.digest is None:
+            return False
+
+        return Authentication.credential_verifier.verify(
+            key,
+            username,
+            password,
+            record.username,
+            record.digest,
+        )
+
+    def clear_auth(self, key):
+        """Remove a key's lock file.
+
+        Returns None when absent, True when removed, and False on error.
+        """
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            return False
+
+        try:
+            return self._clear_auth(key)
+        finally:
+            self._release_auth_guard(guard)
+
+    def _clear_auth(self, key):
+        """Remove one lock while the caller holds its credential guard."""
+        path, filename = self.auth_path(key)
+        try:
+            os.remove(os.path.join(path, filename))
+            return True
+
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                return False
+            return None
+
+    def prune_unused_locks(self, older_than_seconds):
+        """Remove old access records that have no matching configuration.
+
+        HASH mode is scanned directly because its original keys are hidden.
+        Empty hash directories are removed after their stale locks are gone.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return 0
+
+        try:
+            # Share the credential guard so pruning cannot delete a fresh lock.
+            guard = self._acquire_auth_guard("prune")
+        except OSError as e:
+            logger.error("Could not lock authentication pruning (%s)", e)
+            return 0
+
+        try:
+            return self._prune_unused_locks(older_than_seconds)
+        finally:
+            # Always release the descriptor, including unexpected failures.
+            self._release_auth_guard(guard)
+
+    def _prune_unused_locks(self, older_than_seconds):
+        """Prune stale locks while the shared credential guard is held."""
+
+        # Match only the filenames created by each storage mode.
+        hash_prefix_pattern = re.compile(r"^[0-9a-f]{2}$")
+        hash_name_pattern = re.compile(r"^[0-9a-f]{54}$")
+
+        if self.mode == AppriseStoreMode.HASH:
+            # HASH lock files live under root/<prefix>/.<remainder>.lock.
+            content_extensions = (apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value)
+            name_pattern = hash_name_pattern
+            lock_dirs = []
+            if os.path.isdir(self.root):
+                try:
+                    # Keep directory metadata so symlinks can be skipped.
+                    with os.scandir(self.root) as it:
+                        entries = list(it)
+
+                except OSError as e:
+                    logger.warning("Could not list directory {} while pruning: {}".format(self.root, e))
+                    entries = []
+
+                for entry in entries:
+                    if not hash_prefix_pattern.match(entry.name):
+                        continue
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            lock_dirs.append(entry.path)
+
+                    except OSError:
+                        continue
+
+        else:  # AppriseStoreMode.SIMPLE
+            content_extensions = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+            name_pattern = CONFIG_KEY_PATTERN
+            lock_dirs = [self.root] if os.path.isdir(self.root) else []
+
+        lock_suffix = ".lock"
+        now = datetime.now().timestamp()
+        pruned = 0
+        for directory in lock_dirs:
+            try:
+                filenames = os.listdir(directory)
+
+            except OSError as e:
+                logger.warning("Could not list directory {} while pruning: {}".format(directory, e))
+                continue
+
+            for filename in filenames:
+                if not (filename.startswith(".") and filename.endswith(lock_suffix)):
+                    continue
+
+                # Strip the leading '.' and trailing '.lock'.
+                name = filename[1 : -len(lock_suffix)]
+                if not name_pattern.match(name):
+                    continue
+
+                lock_path = os.path.join(directory, filename)
+                try:
+                    age = now - os.path.getmtime(lock_path)
+
+                except OSError:
+                    continue
+
+                if age < older_than_seconds:
+                    continue
+
+                has_content = any(
+                    os.path.isfile(os.path.join(directory, "{}.{}".format(name, ext))) for ext in content_extensions
+                )
+                if has_content:
+                    continue
+
+                try:
+                    os.remove(lock_path)
+
+                except OSError as e:
+                    logger.error("Could not prune stale unused authentication lock: {} ({})".format(name, e))
+                    continue
+
+                logger.info("Pruned stale unused authentication lock: {}".format(name))
+                pruned += 1
+
+            if self.mode == AppriseStoreMode.HASH:
+                try:
+                    # rmdir succeeds only when no configuration, lock, or
+                    # concurrent file remains, so it cannot remove content.
+                    os.rmdir(directory)
+                except OSError as e:
+                    if e.errno not in (errno.ENOENT, errno.ENOTEMPTY):
+                        logger.warning("Could not remove empty directory %s (%s)", directory, e)
+
+        return pruned
+
+    def _content_paths(self, key):
+        """Return the text and YAML paths for a Config ID."""
+        path, filename = self.path(key)
+        if self.mode == AppriseStoreMode.HASH:
+            ext_text, ext_yaml = apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value
+        else:  # AppriseStoreMode.SIMPLE
+            ext_text, ext_yaml = SimpleFileExtension.TEXT, SimpleFileExtension.YAML
+        return (
+            os.path.join(path, "{}.{}".format(filename, ext_text)),
+            os.path.join(path, "{}.{}".format(filename, ext_yaml)),
+        )
+
+    def move(self, from_key, to_key):
+        """Move a configuration and its access record to another key.
+
+        An access-only key moves without configuration content. The result is a
+        ``MoveResult`` value describing success, absence, conflict, or failure.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return MoveResult.FAILED
+
+        guard = None
+        try:
+            # Guard the source and destination without locking routine logins.
+            guard = self._acquire_auth_guard(from_key)
+            return self._move(from_key, to_key)
+        except OSError as e:
+            logger.error("Could not lock configuration move from %s to %s (%s)", from_key, to_key, e)
+            return MoveResult.FAILED
+        finally:
+            if guard is not None:
+                self._release_auth_guard(guard)
+
+    def _move(self, from_key, to_key):
+        """Move content after proving every source file can be renamed."""
+
+        src_text, src_yaml = self._content_paths(from_key)
+        dst_text, dst_yaml = self._content_paths(to_key)
+        src_lock_dir, src_lock_name = self.auth_path(from_key)
+        dst_lock_dir, dst_lock_name = self.auth_path(to_key)
+        src_lock = os.path.join(src_lock_dir, src_lock_name)
+        dst_lock = os.path.join(dst_lock_dir, dst_lock_name)
+
+        candidates = [
+            (src_text, dst_text),
+            (src_yaml, dst_yaml),
+            (src_lock, dst_lock),
+        ]
+        sources = [(source, destination) for source, destination in candidates if os.path.isfile(source)]
+        if not sources:
+            return MoveResult.NOT_FOUND
+        if any(os.path.isfile(destination) for _, destination in candidates):
+            return MoveResult.CONFLICT
+
+        staged = []
+        published = []
+        try:
+            # Stage every source before publishing any destination files.
+            for source, destination in sources:
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                descriptor, stage = tempfile.mkstemp(prefix=".move-source-", dir=os.path.dirname(source))
+                os.close(descriptor)
+                try:
+                    os.replace(source, stage)
+                except OSError:
+                    with suppress(OSError):
+                        os.remove(stage)
+                    raise
+                staged.append((stage, source, destination))
+
+            # Publish the lock before content so a destination is never briefly
+            # readable without the source's authentication.
+            staged.sort(key=lambda item: not item[2].endswith(".lock"))
+            for stage, _source, destination in staged:
+                try:
+                    os.link(stage, destination)
+                except FileExistsError:
+                    raise
+                except OSError as e:
+                    if not self._exclusive_copy(stage, destination):
+                        raise OSError("could not publish staged move") from e
+                published.append(destination)
+
+        except OSError as e:
+            logger.error("Could not move KEY %s to %s (%s)", from_key, to_key, e)
+            for destination in reversed(published):
+                with suppress(OSError):
+                    os.remove(destination)
+            for stage, source, _destination in reversed(staged):
+                if os.path.exists(stage):
+                    try:
+                        os.replace(stage, source)
+                    except OSError as rollback_error:
+                        logger.error("Could not restore move source %s (%s)", source, rollback_error)
+            destination_exists = any(os.path.isfile(path) for path in (dst_text, dst_yaml, dst_lock))
+            return MoveResult.CONFLICT if destination_exists else MoveResult.FAILED
+
+        # Cleanup failures leave only hidden staging files.
+        for stage, _source, _destination in staged:
+            try:
+                os.remove(stage)
+            except OSError as e:
+                logger.warning("Could not remove completed move staging file %s (%s)", stage, e)
+
+        return MoveResult.MOVED
+
+    def _exclusive_copy(self, src_file, dst_file):
+        """Copy a file without replacing a destination created concurrently."""
+        tmp_path = None
+        try:
+            # Copy beside the destination, then publish with a hard link.
+            # os.link() is the no-replace step that closes the TOCTOU gap.
+            fd, tmp_path = tempfile.mkstemp(prefix=".move-", dir=os.path.dirname(dst_file))
+            os.close(fd)
+            shutil.copy2(src_file, tmp_path)
+            os.link(tmp_path, dst_file)
+
+        except OSError as e:
+            logger.error("Could not copy {} to {} ({})".format(src_file, dst_file, e))
+            return False
+
+        finally:
+            if tmp_path:
+                with suppress(OSError):
+                    os.remove(tmp_path)
+
+        return True
 
 
 # Initialize our singleton
@@ -782,6 +1424,24 @@ ConfigCache = AppriseConfigCache(
     salt=settings.SECRET_KEY,
     mode=settings.APPRISE_STATEFUL_MODE,
 )
+
+
+def resolve_config_key(request: HttpRequest, key: str) -> str:
+    """Return the request's effective configuration key.
+
+    A valid header takes precedence over the URL key. An invalid header
+    returns an empty value instead of falling back to the URL.
+    """
+    header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+    if not header_key:
+        return key
+    return header_key if CONFIG_KEY_PATTERN.match(header_key) else ""
+
+
+def config_key_header_present_but_invalid(request: HttpRequest) -> bool:
+    """Return whether the request supplied an invalid config ID header."""
+    header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+    return bool(header_key) and not CONFIG_KEY_PATTERN.match(header_key)
 
 
 def apply_global_filters():
@@ -821,9 +1481,7 @@ def gen_unique_config_id():
 
 
 def send_webhook(payload):
-    """
-    POST our webhook results
-    """
+    """POST a mapping or JSON chunk iterator to the webhook."""
 
     # Prepare HTTP Headers
     headers = {
@@ -856,10 +1514,34 @@ def send_webhook(payload):
     # specified that aren't otherwise part of this class
     params = {k: v for k, v in results.get("qsd", {}).items() if k not in base.template_args}
 
+    # Prepare both forms inside the protected block below.
+    body = None
+    data = None
+
     try:
-        requests.post(
+        # A mapping remains convenient for small callers and existing tests.
+        data = dumps(payload) if isinstance(payload, Mapping) else None
+
+        if data is None:
+            # Build large webhook bodies on disk instead of joining every log.
+            body = tempfile.TemporaryFile(mode="w+b")  # noqa: SIM115
+
+            for chunk in payload:
+                # Convert text chunks before writing to the binary file.
+                value = chunk.encode("utf-8") if isinstance(chunk, str) else chunk
+
+                # Never send JSON after an incomplete write.
+                if body.write(value) != len(value):
+                    raise OSError("Incomplete webhook temporary-file write.")
+
+            # Rewind so the request reads from the beginning.
+            body.seek(0)
+            data = body
+
+        response = requests.post(
             base.request_url,
-            data=dumps(payload),
+            # Small mappings use text; chunked results use the file.
+            data=data,
             params=params,
             headers=headers,
             auth=base.request_auth,
@@ -867,9 +1549,35 @@ def send_webhook(payload):
             timeout=base.request_timeout,
         )
 
+        # Report HTTP failures even when the connection itself succeeded.
+        if not 200 <= response.status_code < 300:
+            logger.warning(
+                "The Apprise Webhook Result URL returned HTTP %d: %s",
+                response.status_code,
+                base.url(privacy=True),
+            )
+
     except requests.RequestException as e:
         logger.warning("A Connection error occurred sending the Apprise Webhook results to %s.", base.url(privacy=True))
         logger.debug("Socket Exception: %s", str(e))
+
+    except (OSError, TypeError, ValueError) as e:
+        # Preparation failures must not change the notification result.
+        logger.warning(
+            "The Apprise Webhook results could not be prepared for %s.",
+            base.url(privacy=True),
+        )
+        logger.debug("Webhook preparation exception: %s", str(e))
+
+    finally:
+        if body is not None:
+            try:
+                # TemporaryFile removes the buffered webhook when closed.
+                body.close()
+
+            except (OSError, ValueError) as e:
+                logger.warning("The Apprise Webhook temporary file could not be closed.")
+                logger.debug("Webhook cleanup exception: %s", str(e))
 
     return
 
@@ -887,7 +1595,7 @@ def healthcheck(lazy=True):
         "details": [],
     }
 
-    if not (settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED or settings.APPRISE_CONFIG_LOCK):
+    if stateful_store_enabled() and not settings.APPRISE_CONFIG_LOCK:
         # Update our Configuration Check Block
         path = os.path.join(ConfigCache.root, ".tmp_hc")
         if lazy:

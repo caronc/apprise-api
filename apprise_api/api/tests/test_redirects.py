@@ -75,6 +75,9 @@ class NotifyWithRedirectTests(SimpleTestCase):
         form = NotifyForm(data=form_data)
         assert form.is_valid()
         del form.cleaned_data["attachment"]
+        if not form.cleaned_data.get("format") and "format" in form.cleaned_data:
+            # format is optional; None cannot be encoded as POST data
+            del form.cleaned_data["format"]
 
         # Redirects disabled (default)
         spy_cls, captured = self._make_asset_spy()

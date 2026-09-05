@@ -1,0 +1,33 @@
+{% load i18n %}
+
+{# Explain why editing the selector does not retarget the current page's forms. #}
+<div id="config-id-mismatch-notice"
+     class="config-id-mismatch-notice"
+     role="status"
+     hidden>
+  <span class="config-id-mismatch-icon" aria-hidden="true">
+    {% include 'icons/status-warning.svg' %}
+  </span>
+  <span>
+    <strong class="config-id-mismatch-title">{% trans "Changed Config ID Not Applied" %}</strong>
+    <span>- {% trans "The entered value is not the configuration currently being managed. Apply" %}</span>
+    <button type="button"
+            class="btn-flat config-id-mismatch-action"
+            tabindex="-1"
+            data-config-id-notice-apply
+            aria-label="{% trans "Apply Config ID" %}"
+            title="{% trans "Apply Config ID" %}">
+      <i class="material-icons" aria-hidden="true">check_circle</i>
+    </button>
+    <span>{% trans "it to switch configurations or revert" %}</span>
+    <button type="button"
+            class="btn-flat config-id-mismatch-action"
+            tabindex="-1"
+            data-config-id-notice-revert
+            aria-label="{% trans "Revert Config ID" %}"
+            title="{% trans "Revert Config ID" %}">
+      <i class="material-icons" aria-hidden="true">undo</i>
+    </button>
+    <span>{% trans "the change." %}</span>
+  </span>
+</div>

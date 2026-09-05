@@ -5,7 +5,9 @@
 {% block body %}
   <div class="api-welcome">
     <div class="section">
-      <h4>{% trans "The Apprise API" %}</h4>
+      <div class="page-section-heading">
+        <h4>{% trans "The Apprise API" %}</h4>
+      </div>
       <p>
         {% blocktrans %}
       <a target="_blank" href="https://github.com/caronc/apprise" rel="noopener noreferrer">Apprise</a> allows you to send a notification to almost
@@ -25,91 +27,94 @@
       </ul>
     </div>
     <div class="section">
-      <h4>{% trans "Stateless Endpoints" %}</h4>
-      <p>
-        {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener noreferrer">sidecar</a> and/or
+      <div class="page-section-heading">
+        <h4>{% trans "Stateless Endpoints" %}</h4>
+      </div>
+      {% if STATELESS_MODE != 'disabled' %}
+        <p>
+          {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener noreferrer">sidecar</a> and/or
     microservice to their project only need to use the following URL.{% endblocktrans %}
-      </p>
-      <div class="table-wrapper">
-        <table class="highlighted">
-          <thead>
-            <tr>
-              <th style="min-width: 18%;">{% trans "URL" %}</th>
-              <th>{% trans "Description" %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <code>{{ BASE_URL }}/notify/</code>
-              </td>
-              <td>
-                {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer">Apprise URL Builder</a> if you need help
+        </p>
+        <div class="table-wrapper">
+          <table class="highlighted">
+            <thead>
+              <tr>
+                <th style="min-width: 18%;">{% trans "URL" %}</th>
+                <th>{% trans "Description" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <code>{{ BASE_URL }}/notify/</code>
+                </td>
+                <td>
+                  {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer">Apprise URL Builder</a> if you need help
           constructing your URL(s).{% endblocktrans %}
-                <div class="section">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{% trans "Parameter" %}</th>
-                        <th>{% trans "Description" %}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>urls</td>
-                        <td>
-                          {% blocktrans %}Used to define one or more Apprise URL(s). Use a comma and/or space to separate
+                  <div class="section">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{% trans "Parameter" %}</th>
+                          <th>{% trans "Description" %}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>urls</td>
+                          <td>
+                            {% blocktrans %}Used to define one or more Apprise URL(s). Use a comma and/or space to separate
                     one URL from the next.{% endblocktrans %}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>body</td>
-                        <td>{% blocktrans %}Defines the message body. This field is required!{% endblocktrans %}</td>
-                      </tr>
-                      <tr>
-                        <td>title</td>
-                        <td>
-                          {% blocktrans %}The title to include in the notification. This is an optional
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>body</td>
+                          <td>{% blocktrans %}Defines the message body. This field is required!{% endblocktrans %}</td>
+                        </tr>
+                        <tr>
+                          <td>title</td>
+                          <td>
+                            {% blocktrans %}The title to include in the notification. This is an optional
                     field.{% endblocktrans %}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>type</td>
-                        <td>
-                          {% blocktrans %}This optional field defines the notification type. The possible options
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>type</td>
+                          <td>
+                            {% blocktrans %}This optional field defines the notification type. The possible options
                     are:{% endblocktrans %}
-                          <ol>
-                            <li>
-                              <i class="tiny material-icons" style="color: blue">info</i><code>{% trans "info" %}</code> -
-                              <i>{% blocktrans %}this is the default option if a type
+                            <ol>
+                              <li>
+                                <i class="tiny material-icons" style="color: blue">info</i><code>{% trans "info" %}</code> -
+                                <i>{% blocktrans %}this is the default option if a type
                           isn't
                           specified.{% endblocktrans %}</i>
-                            </li>
-                            <li>
-                              <i class="tiny material-icons" style="color: green">check_circle</i><code>{% trans "success" %}</code>
-                            </li>
-                            <li>
-                              <i class="tiny material-icons" style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
-                            </li>
-                            <li>
-                              <i class="tiny material-icons" style="color: red">cancel</i><code>{% trans "failure" %}</code>
-                            </li>
-                          </ol>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <ul class="collapsible">
-                    <li>
-                      <div class="collapsible-header">
-                        <i class="material-icons">code</i>Curl Example
-                      </div>
-                      <div class="collapsible-body">
-                        {# djlint:off #}
+                              </li>
+                              <li>
+                                <i class="tiny material-icons" style="color: green">check_circle</i><code>{% trans "success" %}</code>
+                              </li>
+                              <li>
+                                <i class="tiny material-icons" style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
+                              </li>
+                              <li>
+                                <i class="tiny material-icons" style="color: red">cancel</i><code>{% trans "failure" %}</code>
+                              </li>
+                            </ol>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <ul class="collapsible">
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">code</i>Curl Example
+                        </div>
+                        <div class="collapsible-body">
+                          {# djlint:off #}
                         <pre><code class="bash"># {% blocktrans %}Notifies an email address{% endblocktrans %}<br />
                         curl -X POST -d '{"urls":"mailto://user:pass@gmail.com","body":"test body","title":"test title"}' \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br />
-                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"<br />
                         <br />
                         # {% blocktrans %}Notifies an email address with attachments{% endblocktrans %}<br />
                         curl -X POST -F 'urls=mailto://user:pass@gmail.com' \<br />
@@ -117,22 +122,22 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;-F 'body=test body' \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@/path/to/attachment.doc \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@Screenshot-2.png \<br />
-                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
-                        {# djlint:on #}
-                        {# djlint:off #}
+                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
+                          {# djlint:on #}
+                          {# djlint:off #}
                         <pre><code class="bash"># {% blocktrans %}Send an web based file attachment to a <a href="https://appriseit.com/services/discord/" target="_blank" rel="noopener noreferrer">Discord</a> server:{% endblocktrans %}<br />
                         curl -X POST -F 'urls=discord://credentials' \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \<br />
-                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
-                        {# djlint:on #}
-                      </div>
-                    </li>
-                    <li>
-                      <div class="collapsible-header">
-                        <i class="material-icons">code</i>Python Example
-                      </div>
-                      <div class="collapsible-body">
-                        {# djlint:off #}
+                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
+                          {# djlint:on #}
+                        </div>
+                      </li>
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">code</i>Python Example
+                        </div>
+                        <div class="collapsible-body">
+                          {# djlint:off #}
                         <pre><code class="python">import json<br />
                         from urllib.request import Request<br />
                         <br />
@@ -143,13 +148,13 @@
                         }<br />
                         <br /># The Request<br />
                         response = Request(<br />
-                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/",<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/",<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br />
                         )</code></pre>
-                        {# djlint:on #}
-                        {# djlint:off #}
+                          {# djlint:on #}
+                          {# djlint:off #}
                         <pre><code class="python"># {% blocktrans %}Notifies an email address with attachments{% endblocktrans %}<br />
                         import requests<br /><br />
                         payload = {<br />
@@ -158,23 +163,23 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;'body': 'test body',<br />
                         }<br /><br />
                         with open("my/path/to/attachment.png", 'rb') as fp:<br />
-                        &nbsp;&nbsp;&nbsp;&nbsp;response = request.post("{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/",<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;response = request.post("{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/",<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data=payload,<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;files={'attach1':('attachment.png', fp)},<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;)</code></pre>
-                        {# djlint:on #}
-                      </div>
-                    </li>
-                    <li>
-                      <div class="collapsible-header">
-                        <i class="material-icons">code</i>PHP Example
-                      </div>
-                      <div class="collapsible-body">
-                        {# djlint:off #}
+                          {# djlint:on #}
+                        </div>
+                      </li>
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">code</i>PHP Example
+                        </div>
+                        <div class="collapsible-body">
+                          {# djlint:off #}
                         <pre><code class="php">&lt;?php<br />
                         <br />
                         // The URL<br />
-                        $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/';<br />
+                        $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/';<br />
                         <br />
                         // Initiate cURL.<br />
                         $ch = curl_init($url);<br />
@@ -204,12 +209,12 @@
                         // Close our handler<br />
                         curl_close($ch);<br />
                         ?&gt;</code></pre>
-                        {# djlint:on #}
-                        {# djlint:off #}
+                          {# djlint:on #}
+                          {# djlint:off #}
                         <pre><code class="php">&lt;?php<br />
                         // Sending an Attachment using PHP<br /><br />
                         // The URL<br />
-                        $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/';<br />
+                        $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/';<br />
                         <br />
                         //Initiate cURL.<br />
                         $ch = curl_init($url);<br />
@@ -243,19 +248,24 @@
                         // Close our handler<br />
                         curl_close($ch);<br />
                         ?&gt;</code></pre>
-                        {# djlint:on #}
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                          {# djlint:on #}
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p>{% trans "The administrator of this system has disabled stateless URL support." %}</p>
+      {% endif %}
       {% if STATEFUL_MODE != 'disabled' %}
         <div class="section">
-          <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          <div class="page-section-heading">
+            <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          </div>
           <p>
             {% blocktrans %}Those wishing to use the persistent store may do so. This section is a set it and forget it type
       deal. Set your configuration once and just trigger notifications later on demand with light-weight API
@@ -352,13 +362,13 @@
                             <pre><code class="bash"># {% blocktrans %}Load a single URL and assign it to: <em>{{key}}</em>{% endblocktrans %}<br />
                             curl -X POST -d '{"urls":"mailto://user:pass@gmail.com"}' \<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em></code></pre>
+                            &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em></code></pre>
                             {# djlint:on #}
                             {# djlint:off #}
                             <pre><code class="bash"># {% blocktrans %}Load a simple TEXT config entry sent to: <em>{{key}}</em>{% endblocktrans %}<br />
                             curl -X POST -d '{"format":"text","config":"devops=mailto://user:pass@gmail.com"}' \<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/{{key}}/</code></pre>
+                            &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/add/{{key}}/</code></pre>
                             {# djlint:on #}
                           </div>
                         </li>
@@ -375,7 +385,7 @@
                             }<br />
                             <br /># The URL if the key was <em>{{key}}</em><br />
                             req = Request(<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em>",<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em>",<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br />
@@ -390,7 +400,7 @@
                             <pre><code class="php">&lt;?php<br />
                             <br />
                             // The URL if the key was <em>{{key}}</em><br />
-                            $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em>';<br />
+                            $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em>';<br />
                             <br />
                             //Initiate cURL.<br />
                             $ch = curl_init($url);<br />
@@ -438,7 +448,7 @@
                         </div>
                         <div class="collapsible-body">{# djlint:off #}
                           <pre><code class="bash"># {% blocktrans %}Remove previously loaded configuration associated with the id of <em>{{key}}</em>{% endblocktrans %}<br />
-                          curl -X POST {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em></code></pre>
+                          curl -X POST {{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em></code></pre>
                           {# djlint:on #}</div>
                       </li>
                       <li>
@@ -450,7 +460,7 @@
                           from urllib.request import Request<br />
                           <br /># The request if the key was <em>{{key}}</em><br />
                           req = Request(<br />
-                          &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em>",<br />
+                          &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em>",<br />
                           &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
                           &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
                           &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br />
@@ -465,7 +475,7 @@
                           <pre><code class="php">&lt;?php<br />
                           <br />
                           // The URL if the key was <em>{{key}}</em><br />
-                          $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em>';<br />
+                          $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em>';<br />
                           <br />
                           //Initiate cURL.<br />
                           $ch = curl_init($url);<br />
@@ -494,7 +504,7 @@
                     <br />
                     {# djlint:off #}
                     <pre><code lang="bash"># Use Apprise to retrieve your configuration:<br />
-                    apprise --body="test message" --config={{ request.scheme }}://{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
+                    apprise --body="test message" --config={{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
                     {# djlint:on #}
                   </td>
                 </tr>
@@ -508,7 +518,7 @@
                     <br />
                     {# djlint:off #}
                     <pre><code lang="bash"># Use Apprise to retrieve your configuration:<br />
-                    apprise --body="test message" --config={{ request.scheme }}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+                    apprise --body="test message" --config={{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
                     {# djlint:on #}
                   </td>
                 </tr>
@@ -583,20 +593,20 @@
                             &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;-F "body=test body" \<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;-F "title=test title" \<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
                             {# djlint:on #}
                             {# djlint:off #}
                             <pre><code class="bash"># {% blocktrans %}Sends a notification to our endpoints with an attachment{% endblocktrans %}<br />
                             curl -X POST \<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;-F "tag=all" \<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
                             {# djlint:on #}
                             {# djlint:off #}
                             <pre><code class="bash"># {% blocktrans %}Notifies all URLs assigned the <em>devops</em> tag{% endblocktrans %}<br />
                             curl -X POST -d '{"tag":"devops","body":"test body","title":"test title"}' \<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>"</code></pre>
                             {# djlint:on #}
                           </div>
                         </li>
@@ -613,7 +623,7 @@
                             aobj = apprise.Apprise()<br />
                             <br />
                             # Add our URL<br />
-                            aobj.add("apprise{% if secure %}s{%else%}{%endif%}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>")<br />
+                            aobj.add("apprise{% if secure %}s{%else%}{%endif%}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>")<br />
                             <br />
                             # Send our notification:<br />
                             aobj.notify("test body", "test title")<br />
@@ -633,7 +643,7 @@
                             }<br />
                             <br /># The URL if the key was <em>{{key}}</em><br />
                             req = Request(<br />
-                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>",<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>",<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;{"Content-Type": "application/json"},<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;method='POST',<br />
@@ -650,7 +660,7 @@
                             <pre><code class="php">&lt;?php<br />
                             <br />
                             // The URL if the key was <em>{{key}}</em><br />
-                            $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>';<br />
+                            $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>';<br />
                             <br />
                             //Initiate cURL.<br />
                             $ch = curl_init($url);<br />
@@ -685,7 +695,7 @@
                             <pre><code class="php">&lt;?php<br />
                             // Sending an Attachment using PHP<br /><br />
                             // The URL<br />
-                            $url = '{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>';<br />
+                            $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>';<br />
                             <br />
                             //Initiate cURL.<br />
                             $ch = curl_init($url);<br />
@@ -731,7 +741,9 @@
           </div>
         </div>
         <div class="section">
-          <h4>{% trans "Endpoint Notes" %}</h4>
+          <div class="page-section-heading">
+            <h4>{% trans "Endpoint Notes" %}</h4>
+          </div>
           <p>
             The Configuration ID (<em>{{ key }}</em>) you plan to associate your configuration with:
           </p>
@@ -746,7 +758,9 @@
         </div>
       {% else %}
         <div class="section">
-          <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          <div class="page-section-heading">
+            <h4>{% trans "Persistent Store Endpoints" %}</h4>
+          </div>
           <p>{% blocktrans %}The administrator of this system has disabled persistent storage.{% endblocktrans %}</p>
         </div>
       {% endif %}
@@ -758,7 +772,7 @@
   function showCopyToast(anchorEl, message) {
     var msg = message || '{% trans "Copied to clipboard" %}';
     if (window.Swal && Swal.fire) {
-      Swal.fire({
+      appriseFire({
         toast: true,
         target: anchorEl || document.body,
         position: 'top-end',
@@ -792,7 +806,7 @@
     finally { document.body.removeChild(ta); }
   }
   document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.api-welcome .collapsible-body pre').forEach(function(pre) {
+    document.querySelectorAll('.api-welcome pre').forEach(function(pre) {
       if (pre.parentNode.classList.contains('code-snippet')) { return; }
       var code = pre.querySelector('code');
       var copyText = (code ? code.innerText : pre.innerText).trim();

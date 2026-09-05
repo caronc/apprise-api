@@ -30,12 +30,50 @@ Support Banner
   --mobile-beta-accent-soft: #e6f5f2;
   --mobile-beta-counter-text: #ffffff;
   --mobile-beta-primary-text: #ffffff;
+  --section-heading-start: #e3f4f1;
+  --section-heading-end: #f4f6f9;
+  --section-heading-border: #a9cec9;
+  --section-heading-title: #0f6f66;
+  --section-heading-subtitle: #4f5967;
+  --section-heading-shadow: rgba(31, 71, 68, 0.12);
+  --config-list-surface: #e4e7ec;
+  --config-list-row: #f6f7fa;
+  --config-list-row-hover: #eef8f6;
+  --config-list-border: #c1c3c9;
+  --config-list-id-bg: #edeef3;
+  --config-list-text: #34383f;
+  --config-list-action: #697382;
   --dialog-close-bg: #edeef3;
   --dialog-close-border: #c1c3c9;
   --dialog-close-icon: #34383f;
   --dialog-close-hover-bg: #dfe1e7;
   --dialog-close-hover-border: #888c96;
   --dialog-close-hover-icon: #17181c;
+  --dialog-surface: #ffffff;
+  --dialog-surface-raised: #f6f7fa;
+  --dialog-border: #c7cdd7;
+  --dialog-text: #34383f;
+  --dialog-heading: #23262f;
+  --dialog-header-start: #eef8f6;
+  --dialog-header-end: #dcefeb;
+  --dialog-shadow: rgba(28, 39, 49, 0.28);
+  --notify-log-bg: #f4f6f9;
+  --notify-log-row-bg: #ffffff;
+  --notify-log-row-alt-bg: #eef2f6;
+  --notify-log-border: #cfd6df;
+  --notify-log-text: #34383f;
+  --notify-log-muted: #697382;
+  --notify-log-status-bg: #e8f5f2;
+  --notify-log-status-border: #a9d9d2;
+  --notify-log-success-bg: #edf8ef;
+  --notify-log-success-border: #a9d5b0;
+  --notify-log-warning-bg: #fff7e5;
+  --notify-log-warning-border: #e8c775;
+  --notify-log-error-bg: #fff0f0;
+  --notify-log-error-border: #e3aaaa;
+  --auth-logout-success-bg: #edf8f2;
+  --auth-logout-success-border: #9dcfb1;
+  --auth-logout-success-text: #17623b;
 }
 
 .support-banner {
@@ -114,6 +152,11 @@ em {
 pre code {
   background-color: #edeef3 !important;
   color: #34383f;
+}
+
+.snippet-copy-btn,
+.snippet-visibility-btn {
+  background-color: #edeef3 !important;
 }
 
 /* =========================================
@@ -419,12 +462,228 @@ Config ID Bar
   color: #555a62;
 }
 
-code.config-id {
-  color: #0f5f57;
-  background-color: #ffffff;
-  border: 1px solid #c1c3c9;
+code.config-id,
+input.config-id-input {
+  color: #0f5f57 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #c1c3c9 !important;
   padding: 0.15em 0.45em;
   border-radius: 0.3rem;
+}
+
+input.config-id-input.is-mismatched {
+  color: #664000 !important;
+  background-color: #fff4cc !important;
+  border-color: #b66a00 !important;
+}
+
+.config-id-mismatch-notice {
+  color: #8a4b00;
+  background-color: #fff4cc;
+  border-color: #d79724;
+}
+
+.config-id-mismatch-icon,
+.config-id-mismatch-title {
+  color: inherit;
+}
+
+.config-auth-link,
+.auth-account,
+.auth-logout-link {
+  color: #0f5f57;
+}
+
+.config-auth-status.is-disabled {
+  color: #d46328;
+}
+
+.config-auth-status.is-unassigned {
+  color: #737780;
+}
+
+.config-auth-status.is-assigned {
+  color: #0f5f57;
+}
+
+.auth-account.is-master {
+  /* The master account stays red even though top-bar links set their theme color. */
+  color: #a83232 !important;
+}
+
+.logout-confirm-icon {
+  color: #0f5f57;
+}
+
+.browser-login-card,
+.auth-editor-card,
+.auth-disabled-card {
+  color: #34383f;
+  background-color: #f6f7fa;
+  border-color: #148c80;
+  box-shadow: 0 12px 32px rgba(35, 38, 47, 0.1);
+}
+
+/* Match the dark theme's explicit form-copy treatment instead of inheriting
+   Materialize's translucent default, while retaining strong light contrast. */
+.auth-editor-card .input-field>label:not(.active),
+.auth-editor-card .select-wrapper+label:not(.active),
+.auth-editor-card .helper-text {
+  color: #555a62;
+}
+
+.auth-editor-card .input-field>label.active,
+.auth-editor-card .select-wrapper+label.active {
+  color: #0f5f57;
+}
+
+.auth-editor-card .btn i.material-icons {
+  color: inherit;
+}
+
+.auth-access-warning,
+.auth-access-warning i.material-icons,
+.apprise-qr-note--warning {
+  color: #8a4b00;
+}
+
+.auth-editor-card .auth-access-help,
+.swal2-popup .auth-save-copy {
+  color: #0f5f57;
+  background-color: #eef8f6;
+  border-color: #9fd5ce;
+}
+
+.auth-editor-card .auth-access-help:hover,
+.auth-editor-card .auth-access-help:focus-visible,
+.swal2-popup .auth-save-copy:hover,
+.swal2-popup .auth-save-copy:focus-visible {
+  color: #ffffff;
+  background-color: #148c80;
+}
+
+.browser-login-icon,
+.auth-card-icon {
+  color: #0f5f57;
+}
+
+.auth-disabled-icon {
+  color: #d46328;
+}
+
+.auth-login-error {
+  color: #8b0000;
+  background-color: #fff0f0;
+  border-color: #c62828;
+}
+
+.input-field.has-errors label,
+.input-field.has-errors label.active,
+.input-field .errorlist {
+  color: #8b0000;
+}
+
+.auth-randomize-option {
+  color: #555a62;
+  border-color: #888c96;
+}
+
+.auth-randomize-option:hover {
+  color: #0f5f57;
+  border-color: #148c80;
+}
+
+.auth-randomize-option.is-selected {
+  color: #0f5f57;
+  background-color: #c8f0ea;
+  border-color: #148c80;
+}
+
+.auth-compact-heading .auth-card-icon {
+  background-color: #e4f3f0;
+  border-color: #9fd5ce;
+}
+
+.auth-compact-heading p {
+  color: #656b75;
+}
+
+.auth-tool-panel,
+.auth-content-panel {
+  background-color: #ffffff;
+  border-color: #d7dbe2;
+}
+
+.auth-tool-label {
+  color: #656b75;
+}
+
+.auth-remove-option {
+  border-color: #d7dbe2;
+}
+
+.auth-editor-card .auth-remove-button {
+  color: #8b2938;
+  background-color: #fff1f3 !important;
+  border-color: #d58a93;
+}
+
+.auth-editor-card .auth-remove-button:hover,
+.auth-editor-card .auth-remove-button:focus-visible {
+  color: #ffffff;
+  background-color: #a83e4d !important;
+  border-color: #a83e4d;
+}
+
+.reset-configuration-toggle {
+  color: #34383f;
+  background-color: #f6f7fa;
+  border-color: #cfd2d9;
+}
+
+.reset-configuration-toggle:hover {
+  background-color: #eef0f4;
+  border-color: #aeb2bc;
+}
+
+.reset-configuration-toggle__track {
+  background-color: #d9dce2;
+  border-color: #aeb2bc;
+}
+
+.reset-configuration-toggle__track>span {
+  background-color: #ffffff;
+}
+
+.reset-configuration-toggle[aria-checked="true"] {
+  color: #8b2938;
+  background-color: #fff1f3;
+  border-color: #c96b78;
+}
+
+.reset-configuration-toggle[aria-checked="true"] .reset-configuration-toggle__track {
+  background-color: #c95061;
+  border-color: #a83e4d;
+}
+
+.reset-configuration-toggle[aria-checked="true"] .reset-configuration-toggle__track>span {
+  background-color: #ffffff;
+}
+
+.reset-configuration-toggle__copy small {
+  color: #656b75;
+}
+
+.auth-mode-status.is-admin {
+  background-color: #fff1f3;
+  border-color: #c96b78;
+  color: #8b2938;
+}
+
+.auth-mode-status.is-user {
+  background-color: #edf6ff;
+  border-color: #5790c0;
+  color: #245f91;
 }
 
 /* =========================================
@@ -637,6 +896,33 @@ Side Nav
   color: #a83232 !important;
 }
 
+.mobile-menu-tab {
+  color: #0f5f57;
+  background-color: #f6f7fa;
+  border-color: #9fd5ce;
+}
+
+.mobile-menu-tab:hover,
+.mobile-menu-tab:focus,
+.mobile-menu-tab:active,
+.mobile-menu-tab:focus-visible {
+  color: #0f5f57;
+  background-color: #f6f7fa;
+}
+
+@media (max-width: 600px) {
+  .main-layout .side-menu {
+    color: #34383f;
+    background-color: #ffffff;
+    border-right: 1px solid #cfd2d9;
+  }
+
+  .mobile-menu-drawer-heading {
+    color: #0f5f57;
+    border-color: #d8d9df;
+  }
+}
+
 /* =========================================
 Cards & Lists
 ========================================= */
@@ -675,15 +961,25 @@ Buttons & Chips
   background-color: #edeef3;
 }
 
-.btn:focus,
-.btn-large:focus,
-.btn-small:focus,
-.btn-floating:focus,
+.btn:focus-visible,
+.btn-large:focus-visible,
+.btn-small:focus-visible,
+.btn-floating:focus-visible,
 .btn-large:hover,
 .btn-small:hover,
 .btn:hover {
   color: #0f5f57 !important;
   background-color: #c8f0ea;
+}
+
+.btn:focus:not(:focus-visible),
+.btn-large:focus:not(:focus-visible),
+.btn-small:focus:not(:focus-visible),
+.btn-floating:focus:not(:focus-visible) {
+  outline: none;
+  color: #0f5f57 !important;
+  background-color: #edeef3;
+  box-shadow: none;
 }
 
 .btn-flat {
@@ -694,21 +990,21 @@ Buttons & Chips
 #config .config-toolbar .config-url-builder-btn,
 #config .config-toolbar .config-url-builder-btn:visited,
 #config .config-toolbar .config-url-builder-btn:hover,
-#config .config-toolbar .config-url-builder-btn:focus {
+#config .config-toolbar .config-url-builder-btn:focus-visible {
   color: #0f5f57 !important;
 }
 
 #notify .notify-form-actions .btn-clear-form {
-  background-color: #f3f5f8;
-  border-color: #cdd3dc;
-  color: #5d6675;
+  background-color: #fdecec;
+  border-color: #e2a5a5;
+  color: #8b3a3a;
 }
 
 #notify .notify-form-actions .btn-clear-form:hover,
-#notify .notify-form-actions .btn-clear-form:focus {
-  background-color: #e9edf3;
-  border-color: #b7c0cc;
-  color: #3f4856 !important;
+#notify .notify-form-actions .btn-clear-form:focus-visible {
+  background-color: #fadada;
+  border-color: #c62828;
+  color: #8b0000 !important;
 }
 
 .chip {
@@ -803,13 +1099,13 @@ Buttons & Chips
 }
 
 #url-list .review-test-btn:hover,
-#url-list .review-test-btn:focus {
+#url-list .review-test-btn:focus-visible {
   color: #0f5f57;
 }
 
 #url-list .review-test-btn[disabled],
 #url-list .review-test-btn[disabled]:hover,
-#url-list .review-test-btn[disabled]:focus {
+#url-list .review-test-btn[disabled]:focus-visible {
   color: #8b93a0;
   background-color: #eff2f6;
   border-color: #d7dde6;
@@ -975,6 +1271,11 @@ Notifications — SweetAlert2
   color: #34383f;
 }
 
+.swal2-popup .swal2-title,
+.swal2-popup .swal2-html-container {
+  color: #34383f;
+}
+
 .swal2-popup .swal2-actions .swal2-styled {
   border-radius: 0.42rem;
   font-weight: 600;
@@ -1041,7 +1342,7 @@ Notifications — SweetAlert2
 
 /* SweetAlert2 — log colouring */
 .swal2-popup .notify-log-panel {
-  background-color: #edeef3;
+  background-color: var(--notify-log-bg);
 }
 
 .swal2-popup .logs .log_DEBUG {
@@ -1070,4 +1371,26 @@ Notifications — SweetAlert2
 .swal2-popup .logs .log_TRACE {
   color: #1976d2;
   font-style: italic;
+}
+
+.swal2-popup .logs .log_DEBUG .log_level {
+  color: #607d8b;
+}
+
+.swal2-popup .logs .log_INFO .log_level {
+  color: #2e7d32;
+}
+
+.swal2-popup .logs .log_WARNING .log_level {
+  color: #a86600;
+}
+
+.swal2-popup .logs .log_ERROR .log_level,
+.swal2-popup .logs .log_CRITICAL .log_level,
+.swal2-popup .logs .log_FATAL .log_level {
+  color: #c62828;
+}
+
+.swal2-popup .logs .log_TRACE .log_level {
+  color: #1976d2;
 }

@@ -23,10 +23,14 @@
 # THE SOFTWARE.
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 import ipaddress
+import logging
 import re
 import socket
+import threading
 
 from apprise.utils.parse import parse_url
+
+logger = logging.getLogger("django")
 
 # A reserved deny-list token; see the "internal" entry in the
 # AppriseURLFilter class docstring below for what it does.
@@ -34,12 +38,38 @@ INTERNAL_TOKEN = "internal"
 
 # Slow DNS Handling
 _RESOLVE_TIMEOUT_SEC = 5
+_RESOLVE_MAX_PENDING = 16
 
-# A shared, bounded pool for DNS resolution
+# A shared pool and admission limit for DNS resolution. ThreadPoolExecutor's
+# internal queue is unbounded, so the semaphore also caps queued work.
 _RESOLVE_POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix="apprise-urlfilter-resolve")
+_RESOLVE_SLOTS = threading.BoundedSemaphore(_RESOLVE_MAX_PENDING)
 
 # 100.64.0.0/10 - RFC 6598 - Carrier-Grade NAT shared address space
 _CGN_SHARED_V4 = ipaddress.ip_network("100.64.0.0/10")
+
+# Limit wildcards within each glob segment to prevent costly regex
+# backtracking against attachment URLs supplied by clients.
+_MAX_WILDCARDS_PER_SEGMENT = 8
+
+# Reject unusually long candidates before matching. The URL limit leaves room
+# for a normal hostname, path, and query string.
+_MAX_HOST_LENGTH = 255
+_MAX_URL_LENGTH = 4096
+
+
+class _TooManyWildcardsError(Exception):
+    """Raised when a glob segment has more wildcards than is ever legitimate."""
+
+
+# Preserve the normal rule shape when an unsafe pattern is rejected.
+# This expression can never match.
+_NEVER_MATCHES = re.compile(r"(?!)")
+
+
+def _release_resolve_slot(_future):
+    """Release one DNS admission slot after its future stops running."""
+    _RESOLVE_SLOTS.release()
 
 
 def _is_blocked_address(addr) -> bool:
@@ -77,23 +107,33 @@ def _resolve_addresses(host: str):
         # Not a literal address; fall through to DNS resolution below.
         pass
 
-    # Use a thread pool to avoid blocking the main thread on DNS resolution. The
-    # pool is shared/long-lived so that it can be reused across multiple
-    # lookups and avoid the overhead of creating a new thread for each one.
+    # Fail closed when every bounded DNS slot is busy. This prevents slow or
+    # malicious resolvers from filling ThreadPoolExecutor's unbounded queue.
+    if not _RESOLVE_SLOTS.acquire(blocking=False):
+        return None
+
     try:
         future = _RESOLVE_POOL.submit(socket.getaddrinfo, literal, None)
+
+    except Exception:
+        _RESOLVE_SLOTS.release()
+        return None
+
+    # A running getaddrinfo() call cannot be forcibly killed safely. Keep its
+    # slot until it really completes (or a queued future is cancelled).
+    future.add_done_callback(_release_resolve_slot)
+    try:
         results = future.result(timeout=_RESOLVE_TIMEOUT_SEC)
 
     except FutureTimeoutError:
-        # Don't wait for an abandoned (timed-out) lookup to finish; the
-        # pool is shared/long-lived so there's nothing to shut down here,
-        # just let this one future complete/die on its own.
+        future.cancel()
         return None
 
     except Exception:
         # DNS resolution failed.
         return None
 
+    # One hostname can legitimately have several IPv4 and IPv6 answers.
     addresses = []
     for _family, _type, _proto, _canonname, sockaddr in results:
         try:
@@ -129,6 +169,7 @@ class AppriseURLFilter:
     """
 
     def __init__(self, allow_list: str, deny_list: str):
+        # Parsing once at startup keeps request-time checks small and predictable.
         # Pre-compile our rules.
         # Each rule is stored as a tuple (compiled_regex, kind) where kind is
         # one of "url", "host", or "internal". compiled_regex is None for
@@ -157,20 +198,31 @@ class AppriseURLFilter:
                 rules.append((None, "internal"))
                 continue
 
-            if token.startswith("http://") or token.startswith("https://"):
-                # Explicit URL token.
-                compiled = self._compile_url_token(token)
-                kind = "url"
+            try:
+                if token.startswith("http://") or token.startswith("https://"):
+                    # Explicit URL token.
+                    compiled = self._compile_url_token(token)
+                    kind = "url"
 
-            elif "/" in token:
-                # Implicit URL token: prepend a scheme pattern.
-                compiled = self._compile_implicit_token(token)
-                kind = "url"
+                elif "/" in token:
+                    # Implicit URL token: prepend a scheme pattern.
+                    compiled = self._compile_implicit_token(token)
+                    kind = "url"
 
-            else:
-                # Host-based token.
-                compiled = self._compile_host_token(token)
-                kind = "host"
+                else:
+                    # Host-based token.
+                    compiled = self._compile_host_token(token)
+                    kind = "host"
+
+            except _TooManyWildcardsError:
+                # Ignore unsafe rules while logging the configuration mistake.
+                logger.warning(
+                    "URLFILTER - Ignoring a rule with too many wildcards (max %d): %s",
+                    _MAX_WILDCARDS_PER_SEGMENT,
+                    token,
+                )
+                compiled = _NEVER_MATCHES
+                kind = "url" if "/" in token else "host"
 
             rules.append((compiled, kind))
         return rules
@@ -276,7 +328,13 @@ class AppriseURLFilter:
           - Other characters are escaped.
         Special handling: if the pattern starts with "https?://", that prefix is preserved
         (so it can match either http:// or https://).
+
+        Raises _TooManyWildcardsError when a segment could cause excessive
+        regex backtracking.
         """
+        if pattern.count("*") > _MAX_WILDCARDS_PER_SEGMENT:
+            raise _TooManyWildcardsError(pattern)
+
         regex = ""
         for char in pattern:
             if char == "*":
@@ -307,12 +365,23 @@ class AppriseURLFilter:
         """
         Checks a given URL against the deny list first, then the allow list.
         """
-        parsed = parse_url(url, strict_port=True, simple=True)
+        # Reject invalid or unusually long values before parsing or matching.
+        if not isinstance(url, str) or len(url) > _MAX_URL_LENGTH:
+            return False
+
+        try:
+            parsed = parse_url(url, strict_port=True, simple=True)
+
+        except ValueError:
+            # Treat malformed URLs that raise, such as broken IPv6, as denied.
+            return False
+
         if not parsed:
             return False
 
         # A parsed result with no usable host can't be matched against
-        # anything meaningfully
+        # anything meaningfully -- treat it as blocked rather than let an
+        # empty/None host reach string formatting or DNS resolution below.
         host = parsed.get("host")
         if not host:
             return False
@@ -320,6 +389,8 @@ class AppriseURLFilter:
         # includes port if present
         port = parsed.get("port")
         netloc = f"{host}:{port}" if port is not None else host
+        if len(netloc) > _MAX_HOST_LENGTH:
+            return False
 
         # Check deny rules first.
         for pattern, kind in self.deny_rules:

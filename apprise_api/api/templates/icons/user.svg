@@ -1,0 +1,16 @@
+{# Based on abstract-user-flat-4.svg by Treer (gitlab.com/Treer). #}
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 600 600"
+     aria-hidden="true">
+  <defs>
+  <clipPath id="abstract-user-top">
+  <rect width="600" height="498" />
+  </clipPath>
+  <mask id="abstract-user-cutout">
+  <circle cx="300" cy="300" r="280" fill="white" />
+  <circle cx="300" cy="230" r="115" fill="black" />
+  <circle cx="300" cy="550" r="205" fill="black" />
+  </mask>
+  </defs>
+  <circle cx="300" cy="300" r="280" fill="currentColor" clip-path="url(#abstract-user-top)" mask="url(#abstract-user-cutout)" />
+</svg>

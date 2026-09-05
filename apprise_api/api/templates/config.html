@@ -1,29 +1,44 @@
 {% extends "base.html" %}
 
-{% load i18n %}
+{% load i18n static %}
 
 {% block body %}
   {% if STATEFUL_MODE != 'disabled' %}
     <div class="config-id-bar">
-      <span class="config-id-label">{% trans "Config ID" %}</span>
-      <span class="config-id-wrapper">
-        <code class="config-id">{{ key }}</code>
-        <button type="button"
-                class="btn-flat btn-small config-id-copy"
-                title="{% trans "Copy Config ID to Clipboard" %}">
-          <i class="material-icons">content_copy</i>
-        </button>
-      </span>
+      {% if AUTH_ENABLED %}
+        <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
+           href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' key %}{% endif %}"
+           title="{% if auth_access == 'disabled' %}{% trans "Configuration access is disabled" %}{% elif auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
+          <span class="config-auth-icon" aria-hidden="true">
+            {% include 'icons/lock.svg' %}
+          </span>
+        </a>
+      {% else %}
+        <span class="config-auth-status is-disabled"
+              title="{% trans "Authentication is disabled" %}">
+          <span class="config-auth-icon" aria-hidden="true">
+            {% include 'icons/unlock.svg' %}
+          </span>
+        </span>
+      {% endif %}
+      {% include 'components/config_id_selector.html' with config_id_next='config_current' %}
     </div>
+    {% include 'components/config_id_mismatch_notice.html' %}
+
     <div class="row">
       <div class="col s12">
         <ul class="tabs config-overview">
           <li class="tab col s3">
-            <a class="active" href="#overview"><i class="material-icons">info</i>
-            {% trans "Overview" %}</a>
+            <a class="active"
+               href="#overview"
+               aria-label="{% trans "Overview" %}"
+               title="{% trans "Overview" %}"><i class="material-icons">info</i>
+              <span class="config-tab-label">{% trans "Overview" %}</span></a>
           </li>
-          <li class="tab {% if CONFIG_LOCK %}disabled{% endif %}col s3">
+          {# Keep the grid class separate when the disabled class is rendered. #}
+          <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
             <a href="#config"
+               aria-label="{% trans "Configuration" %}"
                title="{% if not CONFIG_LOCK %}{% trans "Configuration is unlocked" %}{% else %}{% trans "Configuration is locked by the administrator" %}{% endif %}">
               <i class="material-icons">
                 {% if not CONFIG_LOCK %}
@@ -31,10 +46,11 @@
                 {% else %}
                   lock
                 {% endif %}
-              </i> {% trans "Configuration" %}</a>
+              </i><span class="config-tab-label">{% trans "Configuration" %}</span></a>
             </li>
-            <li class="tab {% if CONFIG_LOCK %}disabled{% endif %}col s3">
+            <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
               <a href="#review"
+                 aria-label="{% trans "Review" %}"
                  title="{% if not CONFIG_LOCK %}{% trans "Configuration is unlocked" %}{% else %}{% trans "Configuration is locked by the administrator" %}{% endif %}">
                 <i class="material-icons">
                   {% if not CONFIG_LOCK %}
@@ -42,10 +58,13 @@
                   {% else %}
                     lock
                   {% endif %}
-                </i> {% trans "Review" %}</a>
+                </i><span class="config-tab-label">{% trans "Review" %}</span></a>
               </li>
               <li class="tab col s3">
-                <a href="#notify"><i class="material-icons">announcement</i> {% trans "Notifications" %}
+                <a href="#notify"
+                   aria-label="{% trans "Notifications" %}"
+                   title="{% trans "Notifications" %}"><i class="material-icons">announcement</i>
+                  <span class="config-tab-label">{% trans "Notifications" %}</span>
                   {% if not CONFIG_LOCK %}<span class="card-count"></span>{% endif %}
                 </a>
               </li>
@@ -54,87 +73,142 @@
           <div id="overview" class="col s12">
             {% if not CONFIG_LOCK %}
               <div class="section getting-started">
-                <h5>{% trans "Getting Started" %}</h5>
-                <ol>
-                  <li>
-                    <span>
-                      {% trans "Verify your Apprise API Status:" %}
-                      <span id="api-status-icon"
-                            class="api-status-icon status-icon-stack status-loading"
-                            aria-hidden="true">
-                        <span class="status-icon status-icon-loading">
-                          {% include 'icons/status-loading.svg' %}
+                <div class="getting-started-grid">
+                  <section class="getting-started-card">
+                    <div class="page-section-heading page-section-heading--card">
+                      <h5>{% trans "Getting Started" %}</h5>
+                    </div>
+                    <ol>
+                      <li>
+                        <span>
+                          {% trans "Verify your Apprise API Status:" %}
+                          <span id="api-status-icon"
+                                class="api-status-icon status-icon-stack status-loading"
+                                aria-hidden="true">
+                            <span class="status-icon status-icon-loading">
+                              {% include 'icons/status-loading.svg' %}
+                            </span>
+                            <span class="status-icon status-icon-ok">
+                              {% include 'icons/status-ok.svg' %}
+                            </span>
+                            <span class="status-icon status-icon-error">
+                              {% include 'icons/status-error.svg' %}
+                            </span>
+                            <span class="status-icon status-icon-disabled">
+                              {% include 'icons/status-disabled.svg' %}
+                            </span>
+                          </span>
                         </span>
-                        <span class="status-icon status-icon-ok">
-                          {% include 'icons/status-ok.svg' %}
-                        </span>
-                        <span class="status-icon status-icon-error">
-                          {% include 'icons/status-error.svg' %}
-                        </span>
-                        <span class="status-icon status-icon-disabled">
-                          {% include 'icons/status-disabled.svg' %}
-                        </span>
-                      </span>
-                    </span>
-                    <div id="api-status-details" class="api-status-details"></div>
-                  </li>
-                  <li>
-                    <p>
-                      {% trans "The following is your Apprise Configuration ID:" %}
-                      <div class="code-snippet"
-                           data-copy-label='{% trans "Apprise configuration ID copied to clipboard" %}'
-                           data-copy-text='{{ key }}'>
-                        <pre><code>{{ key }}</code></pre>
-                      </div>
-                      {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">click here</a>.
-                    </p>
-                  </li>
-                  <li>
-                    {% blocktrans %}
+                        <div id="api-status-details" class="api-status-details"></div>
+                      </li>
+                      <li>
+                        <p>
+                          {% trans "The following is your Apprise Configuration ID:" %}
+                          <div class="code-snippet"
+                               data-copy-label='{% trans "Apprise configuration ID copied to clipboard" %}'
+                               data-copy-text='{{ key }}'>
+                            <pre><code class="nohighlight"><span data-snippet-config-id>{{ key }}</span></code></pre>
+                          </div>
+                          {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">click here</a>.
+                        </p>
+                      </li>
+                      <li>
+                        {% blocktrans %}
               In the future you can return to this configuration screen at any time by placing the following into your browser:
               {% endblocktrans %}
-                    <div class="code-snippet"
-                         data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
-                         data-copy-text='{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
-                      <pre><code>{{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}</code></pre>
-                    </div>
-                  </li>
-                  <li>
-                    <div>
-                      {% blocktrans with config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}
+                        <div class="code-snippet"
+                             data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
+                             data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+                          <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/<span data-snippet-config-id>{{ key }}</span></code></pre>
+                        </div>
+                      </li>
+                      <li>
+                        <div>
+                          {% blocktrans with config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}
               Use the {{ config_chip }} section to prepare and save your Apprise configuration.
               {% endblocktrans %}
-                    </div>
-                    <div>
-                      {% blocktrans with builder_chip='<a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer" class="tab-chip tab-chip-link tab-chip-external"><i class="material-icons">build</i> Apprise URL Builder</a>'|safe %}
+                        </div>
+                        <div>
+                          {% blocktrans with builder_chip='<a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer" class="tab-chip tab-chip-link tab-chip-external"><i class="material-icons">build</i> Apprise URL Builder</a>'|safe %}
               <i class="material-icons">lightbulb_outline</i>You can always refer to the
               {{ builder_chip }} if you're having troubles assembling your URL(s).
               {% endblocktrans %}
-                    </div>
-                  </li>
-                  <li>
-                    {% blocktrans with review_chip='<a href="#review" class="tab-chip tab-chip-link"><i class="material-icons">web</i> Review</a>'|safe %}
+                        </div>
+                      </li>
+                      <li>
+                        {% blocktrans with review_chip='<a href="#review" class="tab-chip tab-chip-link"><i class="material-icons">web</i> Review</a>'|safe %}
               Use the {{ review_chip }} section to review what was parsed/detected from your defined configuration.
               {% endblocktrans %}
-                  </li>
-                  <li>
-                    <div>
-                      {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}
+                      </li>
+                      <li>
+                        <div>
+                          {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}
               Use the {{ notify_chip }} section to test out your saved configuration.
             {% endblocktrans %}
-                    </div>
-                    <div>
-                      {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}
+                        </div>
+                        <div>
+                          {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> Notifications</a>'|safe %}
               <i class="material-icons">lightbulb_outline</i>: The number also provided in the {{ notify_chip }}
               tab identifies how many notifications will be sent (based on tags/configuration provided) when using this section.
             {% endblocktrans %}
+                        </div>
+                      </li>
+                    </ol>
+                  </section>
+                  <aside class="getting-started-card mobile-setup-card"
+                         data-mobile-setup-card
+                         data-qr-url="{% if COOKIE_CONFIG_URLS %}{% url 'qr_current' %}{% else %}{% url 'qr' key %}{% endif %}">
+                    <div class="mobile-setup-card__heading page-section-heading page-section-heading--card">
+                      <div class="page-section-heading__copy">
+                        <h5>{% trans "Apprise Mobile Quick Setup" %}</h5>
+                        <p>
+                          {% blocktrans with mobile_app_link='<a href="#mobile-beta-dialog" data-mobile-beta-open>Apprise Mobile app</a>'|safe %}Reveal and scan this code to easily load this configuration into your {{ mobile_app_link }}.{% endblocktrans %}
+                        </p>
+                      </div>
                     </div>
-                  </li>
-                </ol>
+                    <div id="overview-mobile-qr"
+                         class="overview-mobile-qr is-concealed"
+                         role="button"
+                         tabindex="0"
+                         aria-pressed="false"
+                         aria-label="{% trans 'Reveal QR Code' %}"
+                         title="{% trans 'Reveal QR Code' %}">
+                      <div class="apprise-qr-art">
+                        <canvas class="apprise-qr-canvas"></canvas>
+                        <span class="apprise-qr-logo" aria-hidden="true">
+                          <img src="{% static 'mobile-icon-flat-whitebg.png' %}" alt="">
+                        </span>
+                      </div>
+                      <div class="overview-mobile-qr__veil" aria-hidden="true">
+                        <i class="material-icons">visibility_off</i>
+                        <span>{% trans "Click here to reveal QR Code" %}</span>
+                      </div>
+                    </div>
+                    <p class="mobile-setup-card__error" data-mobile-qr-error hidden>{% trans "The QR code could not be loaded." %}</p>
+                    <div class="apprise-qr-note apprise-qr-note--warning mobile-setup-card__warning"
+                         data-mobile-qr-warning
+                         hidden>
+                      <span class="apprise-qr-warning-icon">
+                        {% include 'icons/status-warning.svg' %}
+                      </span>
+                      <span class="apprise-qr-note-copy">
+                        <strong class="apprise-qr-warning-title" data-mobile-qr-warning-title></strong>
+                        <span class="apprise-qr-note-text" data-mobile-qr-warning-text></span>
+                      </span>
+                    </div>
+                    <p class="mobile-setup-card__footer">
+                      {% trans "Need the app? Explore" %}
+                      <a href="#mobile-beta-dialog" data-mobile-beta-open>{% trans "Apprise Mobile" %}</a>
+                      {% trans "and installation options." %}
+                    </p>
+                  </aside>
+                </div>
               </div>
             {% else %}
               <div class="section">
-                <h5>{% trans "Apprise Configuration is Locked" %}</h5>
+                <div class="page-section-heading">
+                  <h5>{% trans "Apprise Configuration is Locked" %}</h5>
+                </div>
                 <p>
                   {% blocktrans %}At this time, the administrator of this server has locked down all configuration. This means
           That pre-created configuration is securely hidden for the purpose of notification transmission only.
@@ -146,21 +220,23 @@
             {% endif %}
             {% if not CONFIG_LOCK %}
               <div class="section has-config">
-                <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
+                <div class="page-section-heading">
+                  <h5>{% trans "Working Remotely With Your Configuration" %}</h5>
+                </div>
                 <h6>{% trans "Using The Apprise CLI" %}</h6>
                 <p>
                   {% blocktrans %}The following command would cause apprise to directly notify all of your services:{% endblocktrans %}
                 </p>
                 <div class="code-snippet"
-                     data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all'>
+                     data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all'>
                   <pre><code class="bash">apprise --body="Test Message" \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all</code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em data-snippet-config-id>{{key}}</em>/?tags=all</code></pre>
                 </div>
                 {% blocktrans %}Send one or more attachments like this:{% endblocktrans %}
                 <div class="code-snippet"
-                     data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
+                     data-copy-text='apprise --body="Test Message" apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/{{ key }}/?tags=all --attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png --attach=/path/to/an/attachment.jpeg'>
                   <pre><code class="bash">apprise --body=&quot;Test Message&quot; \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>/?tags=all \<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;apprise{% if request.is_secure %}s{% endif %}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em data-snippet-config-id>{{key}}</em>/?tags=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--attach=/path/to/an/attachment.jpeg<br />
                </code></pre>
@@ -171,19 +247,20 @@
           send a test notification to all of your added services:{% endblocktrans %}
                   </p>
                   <div class="code-snippet"
-                       data-copy-text='apprise --body="Test Message" --tag="all" --config="{{ request.scheme }}"://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+                       data-copy-text='apprise --body="Test Message" --tag="all" --config="{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}"'>
                     <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
-               &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
                   </div>
                   {% blocktrans %}You may also create an <a href="https://appriseit.com/config/#cli" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
                   <div class="code-snippet"
-                       data-copy-text='include {{ request.scheme }}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
-                       data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'></div>
-                  <pre><code class="bash">include {{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
+                       data-copy-text='include {{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
+                       data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'>
+                    <pre><code class="bash">include {{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
+                  </div>
                   {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
                   <div class="code-snippet"
                        data-copy-text='apprise --body="Test Message" --tag=all'>
-                    <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all</em></code></pre>
+                    <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all</code></pre>
                   </div>
                 {% endif %}
                 <h6>{% trans "Using CURL" %}</h6>
@@ -191,38 +268,42 @@
                   {% blocktrans %}The following command would cause the Apprise API to notify all of your services:{% endblocktrans %}
                 </p>
                 <div class="code-snippet"
-                     data-copy-text='curl -X POST -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+                     data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "body=Test Message" -F "tags=all" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
                   <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+                   {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
                    &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
                    &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
-                   &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+                   &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
                 </div>
                 {% blocktrans %}When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:{% endblocktrans %}
                 <div class="code-snippet"
-                     data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+                     data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "tags=all" -F "body=Test Message" -F attach=@Screenshot-1.png http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
                   <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+              {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach=@Screenshot-1.png \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
                 </div>
                 {% blocktrans %}When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:{% endblocktrans %}
                 <div class="code-snippet"
-                     data-copy-text='curl -X POST -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
+                     data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "tags=all" -F "body=Test Message" -F attach1=@Screenshot-1.png -F attach2=@/my/path/to/Apprise.doc http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
                   <pre><code class="bash">curl&nbsp;-X&nbsp;POST \<br />
+              {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tags=all&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;body=Test Message&quot; \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach1=@Screenshot-1.png \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;-F attach2=@/my/path/to/Apprise.doc \<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+              &nbsp;&nbsp;&nbsp;&nbsp;http{% if request.is_secure %}s{% endif %}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
                 </div>
                 {% blocktrans %}Sends a notification to our endpoints with an attachment and no body specified:{% endblocktrans %}
                 <div class="code-snippet"
-                     data-copy-text='curl -X POST -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify{{ key }}'>
+                     data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
                   <pre><code class="bash">curl -X POST \<br />
+               {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
                &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tag=all&quot; \ <br />
                &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png&quot; \ <br />
-               &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em></code></pre>
+               &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
                 </div>
               </div>
             {% endif %}
@@ -230,8 +311,12 @@
           <div id="config" class="col s12">
             {% if not CONFIG_LOCK %}
               <div class="section">
-                <h5>{% trans "Configuration" %}</h5>
-                <p>{% blocktrans %}Define your configuration below:{% endblocktrans %}</p>
+                <div class="page-section-heading">
+                  <div class="page-section-heading__copy">
+                    <h5>{% trans "Configuration" %}</h5>
+                    <p>{% blocktrans %}Define your configuration below:{% endblocktrans %}</p>
+                  </div>
+                </div>
                 <form id="addconfig" action="{% url "add" key %}" method="post">
                   {% for hidden in form_cfg.hidden_fields %}{{ hidden }}{% endfor %}
                   {% for field in form_cfg.visible_fields %}
@@ -250,9 +335,11 @@
                         </div>
                         <a href="https://appriseit.com/url-builder/"
                            target="_blank"
+                           tabindex="-1"
                            rel="noopener noreferrer"
+                           title="{% trans "Apprise URL Builder" %}"
                            class="btn waves-effect waves-light config-url-builder-btn">
-                          {% trans "Apprise URL Builder" %}
+                          <span class="config-url-builder-btn-label">{% trans "Apprise URL Builder" %}</span>
                           <i class="material-icons right">build</i>
                         </a>
                       </div>
@@ -265,6 +352,7 @@
                     {% endif %}
                   {% endfor %}
                   <div class="config-form-actions">
+                    {# Reaching this editor means the effective access policy permits writes. #}
                     <button class="btn waves-effect waves-light" type="submit" name="action">
                       {% trans "Save Configuration" %}
                       <i class="material-icons right">save</i>
@@ -273,8 +361,14 @@
                 </form>
               </div>
             {% else %}
-              <h5>{% trans "Your Configuration Is Locked" %}</h5>
-              <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}</p>
+              <div class="section">
+                <div class="page-section-heading">
+                  <div class="page-section-heading__copy">
+                    <h5>{% trans "Your Configuration Is Locked" %}</h5>
+                    <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}</p>
+                  </div>
+                </div>
+              </div>
             {% endif %}
           </div>
           <div id="review" class="col s12">
@@ -292,9 +386,9 @@
                 </div>
               </div>
               <div class="section has-config">
-                <div class="loaded-config-heading">
+                <div class="loaded-config-heading page-section-heading">
                   <h5>{% trans "Loaded Configuration" %}</h5>
-                  <div class="loaded-config-heading-meta">
+                  <div class="loaded-config-heading-meta page-section-heading__actions">
                     <label class="review-selected-filter"
                            title="{% trans "Show only selected notification services" %}">
                       <input id="review-selected-filter-toggle"
@@ -330,14 +424,24 @@
                 </div>
               </div>
             {% else %}
-              <h5>{% trans "Your Configuration Is Locked" %}</h5>
-              <div>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}</div>
+              <div class="section">
+                <div class="page-section-heading">
+                  <div class="page-section-heading__copy">
+                    <h5>{% trans "Your Configuration Is Locked" %}</h5>
+                    <p>{% blocktrans %}Access to your configuration has been disabled by your administrator.{% endblocktrans %}</p>
+                  </div>
+                </div>
+              </div>
             {% endif %}
           </div>
           <div id="notify" class="col s12">
             <div class="section">
-              <h5>{% trans "Notifications" %}</h5>
-              <div>{% blocktrans %}You can send a notification using the loaded configuration:{% endblocktrans %}</div>
+              <div class="page-section-heading">
+                <div class="page-section-heading__copy">
+                  <h5>{% trans "Notifications" %}</h5>
+                  <p>{% blocktrans %}You can send a notification using the loaded configuration:{% endblocktrans %}</p>
+                </div>
+              </div>
               <div id="notify-target-guidance"
                    class="notify-target-guidance"
                    aria-live="polite">
@@ -347,21 +451,25 @@
                   </span>
                   <span>{% trans "No Notification Targets Selected" %}</span>
                 </div>
-                {% blocktrans with review_chip='<a href="#review" class="tab-chip tab-chip-link"><i class="material-icons">web</i> Review</a>'|safe config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}
+                {% if CONFIG_LOCK %}
+                  {% blocktrans %}Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled.{% endblocktrans %}
+                {% else %}
+                  {% blocktrans with review_chip='<a href="#review" class="tab-chip tab-chip-link"><i class="material-icons">web</i> Review</a>'|safe config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}
         Choose one or more tags from the <strong class="notify-target-keyword">Tags dropdown</strong>, select target entries from the {{ review_chip }} section, or add more entries in the {{ config_chip }} section.
-        {% endblocktrans %}
+              {% endblocktrans %}
+                {% endif %}
               </div>
               <form id="donotify"
                     enctype="multipart/form-data"
                     action="{% url "notify" key %}"
                     method="post">
                 <div class="row notify-top-row">
-                  <div class="input-field col s12 m2">
+                  <div class="input-field col s6 m2">
                     {{ form_notify.format.label_tag }}
                     {{ form_notify.format }}
                     {{ form_notify.format.errors }}
                   </div>
-                  <div class="input-field col s12 m2">
+                  <div class="input-field col s6 m2">
                     {{ form_notify.type.label_tag }}
                     {{ form_notify.type }}
                     {{ form_notify.type.errors }}
@@ -394,14 +502,14 @@
                   </div>
                 </div>
                 <div class="notify-form-actions">
-                  <button class="btn waves-effect waves-light" type="submit" name="action">
-                    {% trans "Send Notification" %}
-                    <i class="material-icons right">send</i>
-                  </button>
                   <span class="btn btn-clear-form waves-effect waves-light">
                     <span class="btn-text">{% trans "Clear Form" %}</span>
                     <i class="material-icons">restore_page</i>
                   </span>
+                  <button class="btn waves-effect waves-light" type="submit" name="action">
+                    {% trans "Send Notification" %}
+                    <i class="material-icons right">send</i>
+                  </button>
                 </div>
               </form>
             </div>
@@ -409,7 +517,9 @@
         </div>
   {% else %}
     <div class="section">
-      <h4>{% trans "Persistent Store Endpoints" %}</h4>
+      <div class="page-section-heading">
+        <h4>{% trans "Persistent Store Endpoints" %}</h4>
+      </div>
       <p>{% blocktrans %}The administrator of this system has disabled persistent storage.{% endblocktrans %}</p>
     </div>
   {% endif %}
@@ -418,6 +528,62 @@
 {% block jsfooter %}
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
+  async function initOverviewMobileQr() {
+    const card = document.querySelector('[data-mobile-setup-card]');
+    if (!card) {
+      return;
+    }
+
+    const frame = card.querySelector('.overview-mobile-qr');
+    const canvas = card.querySelector('.apprise-qr-canvas');
+    const warning = card.querySelector('[data-mobile-qr-warning]');
+    const warningTitle = card.querySelector('[data-mobile-qr-warning-title]');
+    const warningText = card.querySelector('[data-mobile-qr-warning-text]');
+    const errorMessage = card.querySelector('[data-mobile-qr-error]');
+
+    try {
+      const response = await appriseFetch(card.dataset.qrUrl, {
+        headers: {'Accept': 'application/json'}
+      });
+      if (!response.ok) {
+        throw new Error('{% trans "The QR code could not be loaded." %}');
+      }
+
+      const data = await response.json();
+      await AppriseQr.drawQrToCanvas(canvas, data.url);
+      const usesAdminCredentials = AppriseQr.usesAdminCredentials(data);
+      if (usesAdminCredentials) {
+        const adminWarning = AppriseQr.adminCredentialsWarning();
+        warningTitle.textContent = adminWarning.title;
+        warningText.textContent = adminWarning.text;
+      }
+      warning.hidden = !usesAdminCredentials;
+    } catch (error) {
+      frame.hidden = true;
+      errorMessage.hidden = false;
+      return;
+    }
+
+    function toggleQrVisibility() {
+      const reveal = frame.classList.contains('is-concealed');
+      frame.classList.toggle('is-concealed', !reveal);
+      frame.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+      frame.setAttribute(
+        'aria-label',
+        reveal ? '{% trans "Hide QR Code" %}' : '{% trans "Reveal QR Code" %}'
+      );
+      frame.title = frame.getAttribute('aria-label');
+    }
+
+    frame.addEventListener('click', toggleQrVisibility);
+    frame.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleQrVisibility();
+      }
+    });
+  }
+
   function updateCardSelectedIcon(cardEl) {
     const icon = cardEl.querySelector('.url-selected-icon .material-icons');
     if (!icon) {
@@ -482,9 +648,277 @@
     codeEl.dataset.rawUrl = normalized;
   }
 
+  function notifyStreamUrl(url) {
+    const streamUrl = new URL(url, window.location.href);
+    streamUrl.searchParams.set('stream', '1');
+    return streamUrl.pathname + streamUrl.search;
+  }
+
+  function parseNotifyStreamEvent(block) {
+    let eventName = 'message';
+    const data = [];
+    block.split('\n').forEach(function (line) {
+      if (!line || line.startsWith(':')) return;
+      const separator = line.indexOf(':');
+      const field = separator < 0 ? line : line.slice(0, separator);
+      let value = separator < 0 ? '' : line.slice(separator + 1);
+      if (value.startsWith(' ')) value = value.slice(1);
+      if (field === 'event') eventName = value;
+      if (field === 'data') data.push(value);
+    });
+    if (!data.length) return null;
+    return {name: eventName, data: JSON.parse(data.join('\n'))};
+  }
+
+  async function readNotifyEventStream(response, onEvent) {
+    const contentType = response.headers.get('Content-Type') || '';
+    if (!response.ok || !contentType.toLowerCase().startsWith('text/event-stream')) {
+      throw new Error('{% trans "The server could not start a live notification stream." %}');
+    }
+    if (!response.body || !response.body.getReader) {
+      throw new Error('{% trans "This browser cannot display the live notification stream." %}');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let finalEvent = null;
+
+    function consume(finalChunk) {
+      buffer += finalChunk;
+      let boundary = buffer.search(/\r?\n\r?\n/);
+      while (boundary >= 0) {
+        const delimiter = buffer.slice(boundary).match(/^\r?\n\r?\n/)[0];
+        const block = buffer.slice(0, boundary).replace(/\r\n/g, '\n');
+        buffer = buffer.slice(boundary + delimiter.length);
+        const event = parseNotifyStreamEvent(block);
+        if (event) {
+          onEvent(event);
+          if (event.name === 'result' || event.name === 'error') {
+            finalEvent = event;
+          }
+        }
+        boundary = buffer.search(/\r?\n\r?\n/);
+      }
+    }
+
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      consume(decoder.decode(chunk.value, {stream: true}));
+    }
+    consume(decoder.decode());
+    if (buffer.trim()) {
+      const event = parseNotifyStreamEvent(buffer.replace(/\r\n/g, '\n'));
+      if (event) {
+        onEvent(event);
+        if (event.name === 'result' || event.name === 'error') finalEvent = event;
+      }
+    }
+    if (!finalEvent) {
+      throw new Error('{% trans "The live notification stream ended unexpectedly." %}');
+    }
+    return finalEvent;
+  }
+
+  function createNotifyLiveFeed(title, sendingText) {
+    const entries = [];
+    let renderFrame = null;
+    const logMarkup =
+      '<div class="notify-log-panel" role="log" aria-live="polite" aria-relevant="additions">' +
+        '<ul class="logs notify-live-logs" data-notify-live-logs></ul>' +
+        '<p class="notify-live-empty" data-notify-live-empty>{% trans "Waiting for log activity…" %}</p>' +
+      '</div>';
+    const markup =
+      '<div class="notify-live-feed">' +
+        '<div class="notify-live-status">' +
+          '<span class="notify-live-pulse" aria-hidden="true"></span>' +
+          '<span>' + sendingText + '</span>' +
+          '<span class="notify-live-count" data-notify-live-count></span>' +
+        '</div>' +
+        logMarkup +
+      '</div>';
+
+    function createLogRow(entry) {
+      const row = document.createElement('li');
+      const level = String(entry.level || 'INFO').toUpperCase();
+      row.className = 'notify-log-row log_' + level.replace(/[^A-Z]/g, '');
+
+      const time = document.createElement('time');
+      time.className = 'log_time';
+      time.textContent = entry.asctime || '';
+      row.appendChild(time);
+
+      const badge = document.createElement('span');
+      badge.className = 'log_level';
+      badge.textContent = level;
+      row.appendChild(badge);
+
+      const message = document.createElement('span');
+      message.className = 'log_message';
+      message.textContent = entry.message || '';
+      row.appendChild(message);
+
+      if (entry.service) {
+        const service = document.createElement('span');
+        service.className = 'log_service';
+        service.textContent = entry.service;
+        service.title = '{% trans "Notification service" %}';
+        row.appendChild(service);
+      }
+      return row;
+    }
+
+    function render() {
+      const container = Swal.getHtmlContainer();
+      const list = container ? container.querySelector('[data-notify-live-logs]') : null;
+      if (!list) return;
+      // Append new entries to avoid flicker. A new summary starts with an
+      // empty list, so it still receives every entry.
+      const fragment = document.createDocumentFragment();
+      for (let i = list.children.length; i < entries.length; i += 1) {
+        fragment.appendChild(createLogRow(entries[i]));
+      }
+      if (fragment.childNodes.length) {
+        list.appendChild(fragment);
+      }
+      const empty = container.querySelector('[data-notify-live-empty]');
+      if (empty) empty.hidden = entries.length > 0;
+      const count = container.querySelector('[data-notify-live-count]');
+      if (count) {
+        count.textContent = entries.length === 1
+          ? '1 {% trans "event" %}'
+          : entries.length + ' {% trans "events" %}';
+      }
+      const panel = list.closest('.notify-log-panel');
+      if (panel) panel.scrollTop = panel.scrollHeight;
+    }
+
+    function scheduleRender() {
+      if (renderFrame !== null) return;
+      renderFrame = window.requestAnimationFrame(function () {
+        renderFrame = null;
+        render();
+      });
+    }
+
+    function cancelRender() {
+      if (renderFrame !== null) {
+        window.cancelAnimationFrame(renderFrame);
+        renderFrame = null;
+      }
+    }
+
+    const task = appriseBeginTask({
+      title: title,
+      html: markup,
+      width: '80em',
+      showLoader: false,
+      didOpen: render
+    });
+
+    return {
+      signal: task.signal,
+      wasAborted: task.wasAborted,
+      add: function (entry) {
+        entries.push(entry);
+        scheduleRender();
+      },
+      finish: function (options) {
+        cancelRender();
+        render();
+        task.complete();
+
+        // Turn the progress dialog into its result without closing or reopening it.
+        const popup = Swal.getPopup();
+        const container = Swal.getHtmlContainer();
+        if (!popup || !container) return;
+
+        popup.classList.remove('apprise-popup--task');
+        popup.classList.add(
+          'apprise-popup--status',
+          'notify-log-popup',
+          'notify-log-popup--' + options.tone
+        );
+
+        const titleElement = popup.querySelector('.swal2-title');
+        if (titleElement) titleElement.textContent = options.title || title;
+
+        const status = container.querySelector('.notify-live-status');
+        if (status) {
+          status.className = 'notify-summary';
+          status.textContent = options.summary;
+        }
+
+        const icon = popup.querySelector('.swal2-icon');
+        if (icon && appriseStatusIconHtml[options.icon]) {
+          icon.className = 'swal2-icon apprise-status-icon swal2-' + options.icon;
+          icon.innerHTML = appriseStatusIconHtml[options.icon];
+          icon.style.display = 'flex';
+        }
+
+        const actions = popup.querySelector('.swal2-actions');
+        const confirmButton = Swal.getConfirmButton();
+        const closeButton = Swal.getCloseButton();
+        if (actions) actions.style.display = 'flex';
+        if (confirmButton) confirmButton.style.display = 'inline-block';
+        if (closeButton) closeButton.style.display = 'flex';
+      },
+      close: function () {
+        cancelRender();
+        task.finish();
+      }
+    };
+  }
+
+  function notifyStreamResultOptions(status, messages) {
+    if (status === 'SUCCESS') {
+      return {tone: 'success', icon: 'success', summary: messages.success};
+    }
+    if (status === 'PARTIAL') {
+      return {tone: 'warning', icon: 'warning', summary: messages.partial};
+    }
+    return {tone: 'error', icon: 'error', summary: messages.failure};
+  }
+
+  async function sendNotifyStream(url, fetchOptions, display) {
+    const feed = createNotifyLiveFeed(display.title, display.sending);
+    try {
+      const response = await appriseFetch(notifyStreamUrl(url), Object.assign({}, fetchOptions, {
+        signal: feed.signal,
+        headers: Object.assign({}, fetchOptions.headers || {}, {'Accept': 'text/event-stream'})
+      }));
+      const finalEvent = await readNotifyEventStream(response, function (event) {
+        if (event.name === 'log') feed.add(event.data);
+      });
+      if (finalEvent.name === 'error') {
+        throw new Error(finalEvent.data.message || display.failure);
+      }
+      const resultOptions = notifyStreamResultOptions(finalEvent.data.status, display);
+      resultOptions.title = display.responseTitle;
+      feed.finish(resultOptions);
+    } catch (error) {
+      if (error.name === 'AbortError' || feed.wasAborted()) {
+        feed.close();
+        return;
+      }
+      feed.add({
+        level: 'ERROR',
+        asctime: '',
+        message: error.message || display.failure
+      });
+      feed.finish({
+        title: display.responseTitle,
+        tone: 'error',
+        icon: 'error',
+        summary: display.failure
+      });
+    }
+  }
+
   async function sendReviewTestNotification(tags, anchorEl) {
     if (!tags || tags.length === 0) {
-      Swal.fire({
+      appriseFire({
         title: '{% trans "Notification" %}',
         html: '{% trans "This test action requires at least one tag on the target entry." %}',
         icon: 'warning'
@@ -508,60 +942,20 @@
     if (anchorEl) {
       anchorEl.disabled = true;
     }
-    Swal.fire({
-      title: '{% trans "Notification" %}',
-      html: '{% trans "Sending test notification..." %}',
-    });
-    Swal.showLoading();
     try {
-      const response = await fetch('{% url "notify" key %}', {
+      await sendNotifyStream('{% url "notify" key %}', {
         method: 'POST',
         headers: {
-          'Accept': 'text/html',
-          'X-Apprise-Log-Level': 'debug',
+          'X-Apprise-Log-Level': 'debug'
         },
-        body: formData,
-      });
-      const html = await response.text();
-      if (response.ok) {
-        Swal.fire({
-          title: '{% trans "Notification" %}',
-          html:
-            '<p class="notify-summary">' +
-            '{% trans "Test notification sent." %}' +
-            '</p>' +
-            '<div class="notify-log-panel">' + html + '</div>',
-          icon: 'success',
-          width: '80em'
-        });
-      } else if (response.status == 424) {
-        Swal.fire({
-          title: '{% trans "Notification" %}',
-          html:
-            '<p class="notify-summary">' +
-            '{% trans "One or more test notifications were not sent." %}' +
-            '</p>' +
-            '<div class="notify-log-panel">' + html + '</div>',
-          icon: 'warning',
-          width: '80em'
-        });
-      } else {
-        Swal.fire({
-          title: '{% trans "Notification" %}',
-          html:
-            '<p class="notify-summary">' +
-            '{% trans "Failed to send test notification." %}' +
-            '</p>' +
-            '<div class="notify-log-panel">' + html + '</div>',
-          icon: 'error',
-          width: '80em'
-        });
-      }
-    } catch (e) {
-      Swal.fire({
+        body: formData
+      }, {
         title: '{% trans "Notification" %}',
-        html: '{% trans "Failed to send test notification." %}',
-        icon: 'error'
+        responseTitle: '{% trans "Delivery Response" %}',
+        sending: '{% trans "Sending test notification…" %}',
+        success: '{% trans "Test notification sent." %}',
+        partial: '{% trans "One or more test notifications were not sent." %}',
+        failure: '{% trans "Failed to send test notification." %}'
       });
     } finally {
       if (anchorEl) {
@@ -810,7 +1204,8 @@
     }
     const guidance = document.querySelector('#notify-target-guidance');
     if (guidance) {
-      guidance.style.display = p_count === 0 ? null : 'none';
+      // Tags are the available targets when saved configuration is locked.
+      guidance.style.display = getSelectedNotifyTargetCount() === 0 ? null : 'none';
     }
     updateReviewEscalationBadges();
   }
@@ -1212,7 +1607,7 @@
       const card = anchorEl
         ? anchorEl.closest('li.card-panel') || anchorEl
         : document.body;
-      Swal.fire({
+      appriseFire({
         toast: true,
         target: card,  // anchor inside the card
         position: 'top-end',
@@ -1260,6 +1655,53 @@
       document.body.removeChild(textarea);
     }
   }
+  // Split tags on characters that parseNotifyTagToken does not allow.
+  // For example, "foo bar,baz;qux" commits four tags without pressing Enter.
+  // Leaving the field commits any remaining text.
+  const NOTIFY_TAG_DELIMITER_RE = /[^a-zA-Z0-9_-]+/;
+
+  function wireNotifyTagAutoCommit(chipElement) {
+    const chipInput = chipElement.querySelector('input');
+    if (!chipInput) {
+      return;
+    }
+
+    const commitNotifyTags = function (commitPending) {
+      const rawValue = chipInput.value;
+      if (!commitPending && !NOTIFY_TAG_DELIMITER_RE.test(rawValue)) {
+        return;
+      }
+
+      const endsWithSeparator = new RegExp(NOTIFY_TAG_DELIMITER_RE.source + '$').test(rawValue);
+      const parts = rawValue.split(NOTIFY_TAG_DELIMITER_RE);
+      const pending = !commitPending && !endsWithSeparator ? (parts.pop() || '') : '';
+      const instance = M.Chips.getInstance(chipElement);
+      if (!instance) {
+        return;
+      }
+
+      parts.filter(function (tag) {
+        return tag.length > 0;
+      }).forEach(function (tag) {
+        const exists = instance.chipsData.some(function (chip) {
+          return String(chip.tag).toLowerCase() === tag.toLowerCase();
+        });
+        if (!exists) {
+          instance.addChip({ tag: tag, image: '' });
+        }
+      });
+      chipInput.value = pending;
+    };
+
+    chipInput.addEventListener('keyup', function () {
+      commitNotifyTags(false);
+    });
+    chipInput.addEventListener('blur', function () {
+      // Tab, mouse, and touch navigation should not leave a tag unfinished.
+      commitNotifyTags(true);
+    });
+  }
+
   async function main_init() {
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop),
@@ -1288,7 +1730,7 @@
     });
     // perform a tag retrieval; start with 'all'
     let tags = ['all'];
-    let jsonResponse = await fetch('{% url "json_urls" key %}/?privacy=1', {
+    let jsonResponse = await appriseFetch('{% url "json_urls" key %}/?privacy=1', {
       method: 'GET',
     })
     if (jsonResponse.status == 204) {
@@ -1387,6 +1829,7 @@
         });
       });
     }
+    wireNotifyTagAutoCommit(chipElement);
     {% else %}
     {# Empty external data set #}
     const data = {
@@ -1394,9 +1837,18 @@
     };
     const chipElement = document.querySelector('.chips');
     M.Chips.init(chipElement, {
-      placeholder: '{% trans "Optional Tag" %}',
-      secondaryPlaceholder: '{% trans "Another Tag" %}'
+      placeholder: '{% trans "Required Tag" %}',
+      secondaryPlaceholder: '{% trans "Another Tag" %}',
+      onChipAdd: function () {
+        decorateNotifyChips();
+        update_count();
+      },
+      onChipDelete: function () {
+        decorateNotifyChips();
+        update_count();
+      }
     });
+    wireNotifyTagAutoCommit(chipElement);
     {% endif %}
     const chipInstance = M.Chips.getInstance(chipElement);
     if (params.tag) {
@@ -1577,7 +2029,7 @@
         e.preventDefault();
         e.stopPropagation();
         if (!isEnabled) {
-          Swal.fire({
+          appriseFire({
             title: '{% trans "Notification" %}',
             html: '{% trans "This notification service is disabled in this Apprise API instance." %}',
             icon: 'warning'
@@ -1691,10 +2143,10 @@
       //
       // Load our configuration now into the configuration tab
       //
-      let response = await fetch('{% url "get" key %}', {
+      let response = await appriseFetch('{% url "get" key %}', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json;charset=utf-8'
+          'Accept': 'application/json'
         },
       });
       if (response.status == 204) {
@@ -1747,7 +2199,7 @@
         .value.replace(/^\s+|\s+$/gm, '');
       if (content.length) {
         // perform our status check
-        let response = fetch('{% url "add" key %}', {
+        let response = appriseFetch('{% url "add" key %}', {
           method: 'POST',
           body: body,
         }).then(function (response) {
@@ -1755,21 +2207,21 @@
             // update our settings
             main_init();
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Save" %}',
               html: '{% trans "Successfully saved the configuration." %}',
               icon: 'success'
             });
           } else if (response.status == 500) {
             // Disk issue
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Save" %}',
               html: '{% trans "There was an issue writing the configuration to disk. Check your file permissions and try again." %}',
               icon: 'error'
             });
           } else {
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Save" %}',
               html: '{% trans "Failed to save the specified URL(s). Check your syntax and try again." %}',
               icon: 'error'
@@ -1779,7 +2231,7 @@
       } else {
         // Perform Delete
         // perform our status check
-        let response = fetch('{% url "del" key %}', {
+        let response = appriseFetch('{% url "del" key %}', {
           method: 'POST',
           body: body,
         }).then(function (response) {
@@ -1787,14 +2239,14 @@
             // update our settings
             main_init();
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Delete" %}',
               html: '{% trans "Successfully removed configuration." %}',
               icon: 'success'
             });
           } else {
             // user notification
-            Swal.fire({
+            appriseFire({
               title: '{% trans "Delete" %}',
               html: '{% trans "There was an issue removing the configuration." %}',
               icon: 'error'
@@ -1832,7 +2284,41 @@
   }
 
   function getSelectedNotifyTargetCount() {
+    {% if CONFIG_LOCK %}
+    // Locked configurations hide their destinations, so tags select targets.
+    const chipElement = document.querySelector('#notify .chips');
+    const chipInstance = chipElement ? M.Chips.getInstance(chipElement) : null;
+    return chipInstance ? chipInstance.chipsData.length : 0;
+    {% else %}
     return document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
+    {% endif %}
+  }
+
+  function commitNotifyTags() {
+    const chipElement = document.querySelector('#notify .chips');
+    const chipInput = chipElement ? chipElement.querySelector('input') : null;
+    if (!chipElement || !chipInput) {
+      return 0;
+    }
+
+    if (chipInput.value.trim()) {
+      // Commit text still being typed before validating the form.
+      chipInput.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true
+      }));
+    }
+
+    const chipInstance = M.Chips.getInstance(chipElement);
+    const tags = chipInstance ? chipInstance.chipsData.map(function (item) {
+      return item.tag;
+    }) : [];
+    document.querySelector('#id_tag').value = tags.join(',');
+    return tags.length;
   }
 
   function renderAttachmentList(listEl) {
@@ -1953,16 +2439,53 @@
     }
   }
 
+  function restoreNotifyFormatPreference() {
+    // Start with TEXT and remember later choices in a cookie.
+    const COOKIE = 'apprise_notify_format';
+    const formatSelect = document.querySelector('#donotify select[name="format"]');
+    if (!formatSelect) {
+      return;
+    }
+
+    const saved = document.cookie.split('; ').find(function (row) {
+      return row.startsWith(COOKIE + '=');
+    });
+    if (saved) {
+      const value = decodeURIComponent(saved.split('=').slice(1).join('='));
+      const hasOption = Array.from(formatSelect.options).some(function (opt) {
+        return opt.value === value;
+      });
+      if (hasOption) {
+        formatSelect.value = value;
+        if (window.M && M.FormSelect) {
+          const instance = M.FormSelect.getInstance(formatSelect);
+          if (instance) {
+            instance.destroy();
+          }
+          M.FormSelect.init(formatSelect);
+        }
+      }
+    }
+
+    formatSelect.addEventListener('change', function () {
+      const expires = new Date();
+      expires.setFullYear(expires.getFullYear() + 1);
+      document.cookie = COOKIE + '=' + encodeURIComponent(formatSelect.value) + '; path=/; expires=' + expires.toUTCString();
+    });
+  }
+
   function notify_init() {
     decorateNotifyChips();
+    restoreNotifyFormatPreference();
     // over-ride manual submit for a nicer user experience
     document.querySelector('#donotify').onsubmit = function (event) {
       event.preventDefault();
+      commitNotifyTags();
       const selectedTargets = getSelectedNotifyTargetCount();
       if (selectedTargets < 1) {
-        Swal.fire({
+        appriseFire({
           title: '{% trans "Notification" %}',
-          html: '{% trans "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending." %}',
+          html: '{% if CONFIG_LOCK %}{% trans "Choose at least one tag before sending." %}{% else %}{% trans "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending." %}{% endif %}',
           icon: 'warning'
         });
         return false;
@@ -1975,7 +2498,7 @@
       // Minimum payload gate: allow body-only OR attachment-only.
       if (!hasBody && !hasAttachment) {
         markNotifyMinimumMissing();
-        Swal.fire({
+        appriseFire({
           title: '{% trans "Notification" %}',
           html: '{% trans "Please provide at least a message body or one attachment before sending." %}',
           icon: 'warning'
@@ -1984,45 +2507,6 @@
       }
 
       clearNotifyMinimumMissing();
-      const chipElement = document.querySelector('.chips');
-      const chipInput = document.querySelector('.chips > input');
-      if (chipInput.value) {
-        // This code just handles text typed in the tag section that was
-        // not submitted. This forces any lingering un-committed text
-        // into a tag just prior to it's submission
-        const ev = new KeyboardEvent('keydown', {
-          altKey: false,
-          bubbles: true,
-          cancelBubble: false,
-          cancelable: true,
-          charCode: 0,
-          code: "Enter",
-          composed: true,
-          ctrlKey: false,
-          currentTarget: null,
-          defaultPrevented: true,
-          detail: 0,
-          eventPhase: 0,
-          isComposing: false,
-          isTrusted: true,
-          key: "Enter",
-          keyCode: 13,
-          location: 0,
-          metaKey: false,
-          repeat: false,
-          returnValue: false,
-          shiftKey: false,
-          type: "keydown",
-          which: 13
-        });
-        chipInput.dispatchEvent(ev);
-      }
-      // store tags (as comma separated string) from materialize chip type into form
-      document.querySelector('#id_tag').value = M.Chips.getInstance(chipElement).chipsData.reduce(
-        function (s, a) {
-          s.push(a.tag)
-          return s;
-        }, []).join(",")
 
       // our Form Handling
       const rawForm = this;
@@ -2048,57 +2532,20 @@
         });
       }
 
-      // perform our notification
-      Swal.fire({
-        title: '{% trans "Notification" %}',
-        html: '{% trans "Sending notification(s)..." %}',
-      });
-      Swal.showLoading();
-
-      fetch('{% url "notify" key %}', {
+      // POST to the SSE endpoint and append log events as they arrive.
+      sendNotifyStream('{% url "notify" key %}', {
         method: 'POST',
         body: form,
         headers: {
-          'Accept': 'text/html',
           'X-Apprise-Log-Level': 'info'
         }
-      }).then(function (response) {
-        response.text().then(function (html) {
-          if (response.status == 200) {
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html:
-                '<p class="notify-summary">' +
-                '{% trans "Successfully sent the notification(s)." %}' +
-                '</p>' +
-                '<div class="notify-log-panel">' + html + '</div>',
-              icon: 'success',
-              width: '80em'
-            });
-          } else if (response.status == 424) {
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html:
-                '<p class="notify-summary">' +
-                '{% trans "One or more of the notification(s) were not sent." %}' +
-                '</p>' +
-                '<div class="notify-log-panel">' + html + '</div>',
-              icon: 'warning',
-              width: '80em'
-            });
-          } else {
-            Swal.fire({
-              title: '{% trans "Notification" %}',
-              html:
-                '<p class="notify-summary">' +
-                '{% trans "Failed to send the notification(s)." %}' +
-                '</p>' +
-                '<div class="notify-log-panel">' + html + '</div>',
-              icon: 'error',
-              width: '80em'
-            });
-          }
-        });
+      }, {
+        title: '{% trans "Notification" %}',
+        responseTitle: '{% trans "Delivery Response" %}',
+        sending: '{% trans "Sending notification(s)…" %}',
+        success: '{% trans "Successfully sent the notification(s)." %}',
+        partial: '{% trans "One or more of the notification(s) were not sent." %}',
+        failure: '{% trans "Failed to send the notification(s)." %}'
       });
       return false;
     }
@@ -2108,6 +2555,14 @@
 {# djlint:on #}
 {# djlint:off #}
 {% block onload %}
+  // Mark only Config ID tokens so matching command words stay visible.
+  const snippetConfigMarkerStart = '\u2063';
+  const snippetConfigMarkerEnd = '\u2064';
+  document.querySelectorAll('#overview [data-snippet-config-id]').forEach(function (token) {
+    token.replaceWith(document.createTextNode(
+      snippetConfigMarkerStart + token.textContent + snippetConfigMarkerEnd
+    ));
+  });
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
   document.querySelector('label [for="id_tag"]')
@@ -2123,6 +2578,7 @@
   document.querySelector('#id_tag').style.display = 'none';
   // Sync config tabs with URL hash and allow direct hash deep links.
   initConfigTabs();
+  initOverviewMobileQr();
   const reviewSelectedFilter = document.querySelector('#review-selected-filter-toggle');
   if (reviewSelectedFilter) {
     reviewSelectedFilter.addEventListener('change', function () {
@@ -2131,25 +2587,13 @@
   }
   /* Initialize our page */
   main_init();
-  // Config ID copy-to-clipboard
-  const configIdEl = document.querySelector('code.config-id');
-  const configCopyBtn = document.querySelector('.config-id-copy');
-  if (configIdEl && configCopyBtn) {
-    configCopyBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      copyToClipboard(
-        configIdEl.textContent.trim(),
-        configCopyBtn,
-        '{% trans "Config ID copied to clipboard" %}'
-      );
-    }, false);
-  }
   // Attach copy buttons to code snippets in the overview
   document.querySelectorAll('.code-snippet').forEach(function (snippet) {
     // Avoid adding the button twice if main_init runs again
     if (snippet.querySelector('.snippet-copy-btn')) {
       return;
     }
+    // Copy the original snippet even when its display is concealed.
     const copyText = snippet.dataset.copyText;
     if (!copyText) {
       return;
@@ -2172,7 +2616,94 @@
     }, false);
     // Insert the button into the snippet container
     snippet.appendChild(copyBtn);
+
+    // The stored password cannot be recovered, so identify placeholders that
+    // users must replace after copying an authenticated example.
+    if (copyText.includes('****')) {
+      const warning = document.createElement('span');
+      warning.className = 'snippet-password-warning';
+      warning.setAttribute('role', 'note');
+
+      const warningIcon = document.createElement('i');
+      warningIcon.className = 'material-icons';
+      warningIcon.setAttribute('aria-hidden', 'true');
+      warningIcon.textContent = 'warning';
+      warning.appendChild(warningIcon);
+
+      const warningText = document.createElement('span');
+      warningText.textContent = '{% trans "Replace **** with your password before using this example." %}';
+      warning.appendChild(warningText);
+      snippet.appendChild(warning);
+    }
   });
+
+  // Highlighting replaces template markup, so conceal IDs after it finishes.
+  window.setTimeout(function () {
+    const configId = '{{ key|escapejs }}';
+    const markedConfigId = snippetConfigMarkerStart + configId + snippetConfigMarkerEnd;
+    document.querySelectorAll('#overview .code-snippet').forEach(function (snippet) {
+      const code = snippet.querySelector('pre code');
+      if (!code) {
+        snippet.classList.add('is-ready');
+        return;
+      }
+
+      const nodes = [];
+      const walker = document.createTreeWalker(code, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        if (walker.currentNode.nodeValue.includes(markedConfigId)) {
+          nodes.push(walker.currentNode);
+        }
+      }
+
+      nodes.forEach(function (node) {
+        const parts = node.nodeValue.split(markedConfigId);
+        const fragment = document.createDocumentFragment();
+        parts.forEach(function (part, index) {
+          fragment.appendChild(document.createTextNode(part));
+          if (index < parts.length - 1) {
+            const concealedId = document.createElement('span');
+            concealedId.className = 'snippet-config-id is-concealed';
+            concealedId.dataset.value = configId;
+            concealedId.setAttribute('aria-label', '{% trans "Config ID hidden" %}');
+            concealedId.textContent = '••••••••';
+            fragment.appendChild(concealedId);
+          }
+        });
+        node.parentNode.replaceChild(fragment, node);
+      });
+
+      if (nodes.length) {
+        const visibilityBtn = document.createElement('button');
+        visibilityBtn.type = 'button';
+        visibilityBtn.className = 'snippet-visibility-btn btn-flat btn-small';
+        visibilityBtn.setAttribute('aria-pressed', 'false');
+        visibilityBtn.setAttribute('aria-label', '{% trans "Show Config ID" %}');
+        visibilityBtn.setAttribute('title', '{% trans "Show Config ID" %}');
+        visibilityBtn.innerHTML = '<i class="material-icons" aria-hidden="true">visibility_off</i>';
+        visibilityBtn.addEventListener('click', function () {
+          const show = visibilityBtn.getAttribute('aria-pressed') !== 'true';
+          snippet.querySelectorAll('.snippet-config-id').forEach(function (concealedId) {
+            concealedId.textContent = show ? concealedId.dataset.value : '••••••••';
+            concealedId.classList.toggle('is-concealed', !show);
+            concealedId.setAttribute(
+              'aria-label',
+              show ? concealedId.dataset.value : '{% trans "Config ID hidden" %}'
+            );
+          });
+          visibilityBtn.setAttribute('aria-pressed', show ? 'true' : 'false');
+          visibilityBtn.setAttribute(
+            'aria-label',
+            show ? '{% trans "Hide Config ID" %}' : '{% trans "Show Config ID" %}'
+          );
+          visibilityBtn.title = visibilityBtn.getAttribute('aria-label');
+          visibilityBtn.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';
+        });
+        snippet.appendChild(visibilityBtn);
+      }
+      snippet.classList.add('is-ready');
+    });
+  }, 0);
     {% if not CONFIG_LOCK %}
       /* Initialze our configuration */
       config_init();

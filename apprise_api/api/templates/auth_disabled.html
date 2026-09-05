@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Authentication Not Required" %} - {% trans "Apprise API" %}
+{% endblock title %}
+{% block body %}
+  {# Explain why the authentication editor is unavailable on an open server. #}
+  <div class="section auth-disabled-page center">
+    <div class="auth-disabled-card">
+      <span class="auth-disabled-icon" aria-hidden="true">
+        {% include 'icons/unlock.svg' %}
+      </span>
+      <h4>{% trans "Authentication Not Required" %}</h4>
+      <p>{% trans "No authentication is required for this hosted version of Apprise." %}</p>
+    </div>
+  </div>
+{% endblock body %}
