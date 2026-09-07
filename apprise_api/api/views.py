@@ -1766,6 +1766,7 @@ class ConfigView(View):
 
         auth_state = Authentication.config_state(key, request)
         auth_username = auth_state.username
+        config_created, config_mtime = ConfigCache.get_file_times(key)
 
         return render(
             request,
@@ -1777,7 +1778,11 @@ class ConfigView(View):
                 "form_notify": NotifyForm(),
                 "auth_mode": auth_state.mode,
                 "auth_access": auth_state.access,
+                "auth_indicator": auth_state.indicator,
                 "auth_username": auth_username or "",
+                "config_created": config_created,
+                "config_mtime": config_mtime,
+                "config_timezone": settings.TIME_ZONE,
             },
         )
 
@@ -1885,6 +1890,7 @@ class ConfigListView(View):
                     "assigned": auth_state.assigned,
                     "configured": auth_state.configured,
                     "access": auth_state.access,
+                    "auth_indicator": auth_state.indicator,
                 }
             )
         status = ResponseCode.okay
@@ -2229,7 +2235,7 @@ class AddView(View):
 
         status = ResponseCode.okay
         msg = _("Successfully saved configuration")
-        return (
+        response = (
             HttpResponse(msg, status=status, content_type="text/plain")
             if not json_response
             else JsonResponse(
@@ -2241,6 +2247,13 @@ class AddView(View):
                 status=status,
             )
         )
+        config_created, config_mtime = ConfigCache.get_file_times(key)
+        if config_created is not None:
+            response["X-Apprise-Config-Created"] = config_created.isoformat(timespec="seconds")
+        if config_mtime is not None:
+            response["X-Apprise-Config-MTime"] = config_mtime.isoformat(timespec="seconds")
+        response["X-Apprise-Timezone"] = settings.TIME_ZONE
+        return response
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -2592,6 +2605,7 @@ class AuthView(View):
                 "key": key,
                 "auth_mode": auth_state.mode,
                 "auth_access": auth_state.access,
+                "auth_indicator": auth_state.indicator,
                 "auth_selected_access": selected_access,
                 "auth_access_downgraded": access_downgraded,
                 "auth_has_credentials": auth_state.assigned,
@@ -2777,7 +2791,15 @@ class AuthView(View):
         response = (
             HttpResponse(msg, status=status, content_type="text/plain")
             if not json_response
-            else JsonResponse({"error": None}, encoder=JSONEncoder, safe=False, status=status)
+            else JsonResponse(
+                {
+                    "error": None,
+                    "auth_state": Authentication.effective_config_access(access),
+                },
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
         )
         if shared_user and getattr(request, "apprise_web_auth_key", None) == key:
             # Keep the current browser signed in with the newly saved digest.
@@ -2835,7 +2857,12 @@ class AuthView(View):
         return (
             HttpResponse(msg, status=status, content_type="text/plain")
             if not json_response
-            else JsonResponse({"error": None}, encoder=JSONEncoder, safe=False, status=status)
+            else JsonResponse(
+                {"error": None, "auth_state": "admin"},
+                encoder=JSONEncoder,
+                safe=False,
+                status=status,
+            )
         )
 
 

@@ -57,6 +57,24 @@ Support Banner
   --dialog-header-start: #eef8f6;
   --dialog-header-end: #dcefeb;
   --dialog-shadow: rgba(28, 39, 49, 0.28);
+  --toast-info-bg: #eaf4ff;
+  --toast-info-border: #4b8fc9;
+  --toast-info-text: #174f7a;
+  --toast-success-bg: #edf8ef;
+  --toast-success-border: #3a9b5e;
+  --toast-success-text: #17623b;
+  --toast-warning-bg: #fff7e5;
+  --toast-warning-border: #c49125;
+  --toast-warning-text: #6b4a08;
+  --toast-error-bg: #fff0f0;
+  --toast-error-border: #c95757;
+  --toast-error-text: #842b2b;
+  --select-bg: #f8fafb;
+  --select-border: #c7cdd7;
+  --select-border-hover: #8abbb5;
+  --select-focus-ring: rgba(20, 140, 128, 0.16);
+  --select-text: #34383f;
+  --select-caret: #555a62;
   --notify-log-bg: #f4f6f9;
   --notify-log-row-bg: #ffffff;
   --notify-log-row-alt-bg: #eef2f6;
@@ -506,6 +524,30 @@ input.config-id-input.is-mismatched {
   color: #0f5f57;
 }
 
+.auth-state-indicator.auth-state-admin {
+  color: #7650a3;
+}
+
+.auth-state-indicator.auth-state-public {
+  color: #16815f;
+}
+
+.auth-state-indicator.auth-state-locked {
+  color: #9a6700;
+}
+
+.auth-state-indicator.auth-state-user {
+  color: #2874ad;
+}
+
+.auth-state-indicator.auth-state-disabled {
+  color: #737780;
+}
+
+.auth-state-indicator.auth-state-off {
+  color: #16815f;
+}
+
 .auth-account.is-master {
   /* The master account stays red even though top-bar links set their theme color. */
   color: #a83232 !important;
@@ -692,17 +734,18 @@ Dropdowns & Selects
 
 /* Trigger input */
 .select-wrapper input.select-dropdown {
-  color: #34383f;
-  border-bottom: 1px solid #c1c3c9 !important;
+  color: var(--select-text);
+  border-color: var(--select-border) !important;
 }
 
 .select-wrapper input.select-dropdown:focus {
-  border-bottom: 1px solid #148c80 !important;
+  border-color: #148c80 !important;
+  box-shadow: 0 0 0 3px var(--select-focus-ring) !important;
 }
 
 /* Caret arrow */
 .select-wrapper .caret {
-  fill: #555a62;
+  fill: var(--select-caret);
 }
 
 /* Dropdown list container */
@@ -741,6 +784,10 @@ Dropdowns & Selects
 .select-wrapper+label,
 .input-field>label {
   color: #888c96;
+}
+
+.select-wrapper+label {
+  color: #697382;
 }
 
 .select-wrapper input.select-dropdown:focus+label,
@@ -1319,20 +1366,6 @@ Notifications — SweetAlert2
 .mobile-beta-dialog__steps a.mobile-beta-dialog__primary:focus {
   color: #ffffff !important;
   background: #148c80 !important;
-}
-
-.copy-toast.swal2-popup {
-  background-color: #edeef3;
-  color: #34383f;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-  padding: .35rem .8rem;
-}
-
-.copy-toast .swal2-title {
-  margin: 0;
-  font-size: .9rem;
-  font-weight: 500;
 }
 
 .notify-attachments-list .attachment-chip {

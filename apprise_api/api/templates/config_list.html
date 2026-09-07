@@ -30,19 +30,10 @@
              href="{% url 'auth' entry.key %}"
              title="{% trans "Manage authentication for this Configuration ID" %}">
             {% if AUTH_ENABLED %}
-              <span class="config-auth-status {% if entry.configured %}is-assigned{% else %}is-unassigned{% endif %}"
-                    title="{% if entry.access == 'disabled' %}{% trans "Configuration access is disabled" %}{% elif entry.access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif entry.access == 'locked' %}{% trans "Configuration access is locked" %}{% elif entry.assigned %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
-                <span class="config-auth-icon" aria-hidden="true">
-                  {% include 'icons/lock.svg' %}
-                </span>
-              </span>
+              {% include "components/config_auth_status.html" with auth_indicator=entry.auth_indicator %}
+
             {% else %}
-              <span class="config-auth-status is-disabled"
-                    title="{% trans "Authentication is disabled" %}">
-                <span class="config-auth-icon" aria-hidden="true">
-                  {% include 'icons/unlock.svg' %}
-                </span>
-              </span>
+              {% include "components/config_auth_status.html" with auth_indicator="off" %}
             {% endif %}
             <span class="config-list-user"
                   title="{% if entry.user %}{{ entry.user }}{% else %}{% trans "No Username" %}{% endif %}">
@@ -87,7 +78,7 @@
                     aria-label="{% trans "Show Apprise Mobile Quick Config" %}"
                     title="{% trans "Show Apprise Mobile Quick Config" %}">
               <span class="config-id-qr-icon" aria-hidden="true">
-                {% include 'icons/qrcode.svg' %}
+                {% include "icons/qrcode.svg" %}
               </span>
             </button>
             <button type="button"

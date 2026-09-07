@@ -26,6 +26,7 @@
 import base64
 from contextlib import suppress
 import os
+import re
 import shutil
 from unittest.mock import patch
 
@@ -69,7 +70,9 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn('id="cfg-auth"', content)
         self.assertNotIn("config-auth-link", content)
         self.assertIn("config-auth-status is-disabled", content)
-        self.assertIn("Authentication is disabled", content)
+        self.assertIn('data-auth-state="off"', content)
+        self.assertIn("No Authorization", content)
+        self.assertIn("No authorization is required", content)
         self.assertIn('viewBox="0 0 512 512"', content)
         self.assertNotIn("auth-divider", content)
 
@@ -150,8 +153,13 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Generate credentials or reset this Config ID's access.", content)
         self.assertIn("Generate New Credentials", content)
         self.assertIn('class="btn waves-effect waves-light auth-remove-button"', content)
-        self.assertIn('class="auth-mode-status is-admin">', content)
-        self.assertIn("Administration Mode", content)
+        self.assertIn('id="auth-mode-status"', content)
+        self.assertIn('class="auth-mode-status is-admin"', content)
+        self.assertIn("auth-state-admin", content)
+        self.assertIn("Administrator", content)
+        self.assertIn("no configuration login is assigned", content)
+        self.assertIn("window.appriseSetTooltip", content)
+        self.assertIn("tooltipObserver", content)
         self.assertNotIn("Global Login Only", content)
         self.assertNotIn("Global administrator credentials can always access", content)
         self.assertNotIn("The saved password is never displayed", content)
@@ -187,6 +195,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn('href="/auth/auth_gui_key"', content)
         self.assertIn('action="/logout"', content)
         self.assertIn('data-tooltip="Logout"', content)
+        self.assertIn('data-position="left"\n                            data-tooltip="Logout"', content)
         self.assertIn("auth-logout-icon", content)
         self.assertIn("logout-confirm-icon", content)
         self.assertIn("Are you sure you wish to log out?", content)
@@ -334,7 +343,7 @@ class AuthGuiTests(SimpleTestCase):
         content = response.content.decode()
         self.assertIn('value="alice"', content)
         self.assertIn('class="auth-mode-status is-user">', content)
-        self.assertIn("User Mode", content)
+        self.assertIn(">User</span>", content)
         self.assertIn("auth-card-grid is-user", content)
         self.assertIn("auth-credentials-card", content)
         self.assertNotIn("auth-tools-card", content)
@@ -407,6 +416,20 @@ class AuthGuiTests(SimpleTestCase):
                 "username": "alice",
             },
         )
+
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
+    )
+    def test_admin_auth_page_shows_each_access_indicator(self):
+        """The administrator sees the saved access state in the shared indicator."""
+        for access in Authentication.ACCESS_CHOICES:
+            with self.subTest(access=access):
+                ConfigCache.set_auth(self.key, "alice", "secret", access=access)
+                response = self.client.get("/auth/{}".format(self.key), headers=_MASTER)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('data-auth-state="{}"'.format(access), response.content.decode())
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -662,6 +685,35 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn("secret", welcome.content.decode())
         self.assertIn("master:****@", details.content.decode())
         self.assertNotIn("master:pass@", details.content.decode())
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_config_bookmark_url_omits_the_password_placeholder(self):
+        """The 'return to this configuration screen' bookmark link never carries a `****` password.
+
+        Unlike the curl/CLI examples (which need a literal, replaceable
+        value to run as a real command), this URL is only ever a passive
+        browser bookmark and is also expected to be pasted into Apprise
+        Mobile's own QR/paste-URL import -- a `:****@` placeholder there
+        would either be mistaken for a literal password or confuse a
+        parser expecting the ordinary "no password known" form
+        (bare `user@`, no colon).
+        """
+        ConfigCache.set_auth(self.key, "alice", "secret")
+
+        page = self.client.get("/cfg/{}".format(self.key), headers=_MASTER)
+        content = page.content.decode()
+
+        match = re.search(
+            r"Apprise Configuration URL copied to clipboard'\s*"
+            r"data-copy-text='([^']*)'",
+            content,
+        )
+        self.assertIsNotNone(match, "bookmark snippet not found in rendered page")
+        bookmark_url = match.group(1)
+        self.assertIn("alice@", bookmark_url)
+        self.assertIn("/cfg/{}".format(self.key), bookmark_url)
+        self.assertNotIn("****", bookmark_url)
+        self.assertNotIn("secret", bookmark_url)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_logout_ends_browser_session_despite_cached_basic_auth(self):
@@ -1015,6 +1067,7 @@ class AuthGuiTests(SimpleTestCase):
         )
 
         self.assertEqual(changed.status_code, 200)
+        self.assertEqual(changed.json()["auth_state"], Authentication.ACCESS_USER)
         self.assertIn(Authentication.WEB_COOKIE, changed.cookies)
         self.assertNotEqual(changed.cookies[Authentication.WEB_COOKIE].value, old_cookie)
         self.assertEqual(
@@ -1282,6 +1335,7 @@ class AuthGuiTests(SimpleTestCase):
             headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
         )
         self.assertEqual(removed.status_code, 200)
+        self.assertEqual(removed.json()["auth_state"], "admin")
         self.assertFalse(ConfigCache.has_auth(self.key))
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")

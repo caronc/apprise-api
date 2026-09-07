@@ -278,6 +278,15 @@ class ConfigAuthState:
         """Return whether only an administrator may use this configuration."""
         return self.access == Authentication.ACCESS_DISABLED
 
+    @property
+    def indicator(self):
+        """Return the shared UI state used for this configuration's lock icon."""
+        if self.mode == Authentication.MODE_DISABLED:
+            return "off"
+        if self.mode == Authentication.MODE_GLOBAL:
+            return "admin"
+        return self.access
+
 
 class Authentication:
     """Keep authentication policy and request helpers in one place."""

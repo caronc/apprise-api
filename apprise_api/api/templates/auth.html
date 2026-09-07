@@ -10,16 +10,13 @@
 {% block body %}
   {# Keep the Config ID concealed until the person explicitly reveals it. #}
   <div class="config-id-bar">
-    <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
-       href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' key %}{% endif %}"
-       title="{% if auth_access == 'disabled' %}{% trans "Configuration access is disabled" %}{% elif auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
-      <span class="config-auth-icon" aria-hidden="true">
-        {% include 'icons/lock.svg' %}
-      </span>
+    <a class="btn-flat btn-small config-auth-link"
+       href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' key %}{% endif %}">
+      {% include "components/config_auth_status.html" %}
     </a>
-    {% include 'components/config_id_selector.html' with config_id_next='auth_current' %}
+    {% include "components/config_id_selector.html" with config_id_next="auth_current" %}
   </div>
-  {% include 'components/config_id_mismatch_notice.html' %}
+  {% include "components/config_id_mismatch_notice.html" %}
 
   <div class="section auth-page">
     <div class="auth-page-heading page-section-heading">
@@ -33,11 +30,13 @@
         {% endif %}
         <div id="auth-mode-status"
              class="auth-mode-status{% if shared_user %} is-user{% else %} is-admin{% endif %}">
-          <span class="auth-mode-status__indicator" aria-hidden="true"></span>
+          <span class="config-auth-icon" aria-hidden="true">
+            {% include "icons/lock.svg" %}
+          </span>
           {% if shared_user %}
-            <span>{% trans "User Mode" %}</span>
+            <span>{% trans "User" %}</span>
           {% else %}
-            <span>{% trans "Administration Mode" %}</span>
+            <span>{% trans "Administrator" %}</span>
           {% endif %}
         </div>
       </div>
@@ -46,9 +45,8 @@
     <div class="auth-card-grid {% if shared_user %}is-user{% else %}is-admin{% endif %}">
       <section class="auth-editor-card auth-credentials-card">
         <div class="auth-card-heading auth-compact-heading">
-          <span class="auth-card-icon auth-lock-card-icon" aria-hidden="true">
-            {% include 'icons/lock.svg' %}
-          </span>
+          {% include "components/config_auth_status.html" with auth_status_class="auth-card-icon auth-lock-card-icon" %}
+
           <div>
             <h5>
               {% if shared_user %}
@@ -82,7 +80,8 @@
             <div class="auth-credential-fields">
               {% if not shared_user %}
                 <div class="input-field auth-credential-field">
-                  <label class="auth-access-label" for="{{ form_auth.access.id_for_label }}">{{ form_auth.access.label }}:</label>
+                  <label class="auth-access-label"
+                         for="{{ form_auth.access.id_for_label }}">{{ form_auth.access.label }}:</label>
                   <div class="auth-access-control-row">
                     {{ form_auth.access }}
                     <button type="button"
@@ -113,18 +112,18 @@
               {% if shared_user %}
                 <div class="auth-password-fields">
                   <div class="input-field concealed-field auth-credential-field{% if form_auth.current_password.errors %} has-errors{% endif %}">
-                    {% include 'components/concealed_input.html' with field=form_auth.current_password %}
+                    {% include "components/concealed_input.html" with field=form_auth.current_password %}
                   </div>
                   <div class="input-field concealed-field auth-credential-field{% if form_auth.password.errors %} has-errors{% endif %}">
-                    {% include 'components/concealed_input.html' with field=form_auth.password %}
+                    {% include "components/concealed_input.html" with field=form_auth.password %}
                   </div>
                   <div class="input-field concealed-field auth-credential-field{% if form_auth.password_confirm.errors %} has-errors{% endif %}">
-                    {% include 'components/concealed_input.html' with field=form_auth.password_confirm %}
+                    {% include "components/concealed_input.html" with field=form_auth.password_confirm %}
                   </div>
                 </div>
               {% else %}
                 <div class="input-field concealed-field auth-credential-field{% if form_auth.password.errors %} has-errors{% endif %}">
-                  {% include 'components/concealed_input.html' with field=form_auth.password %}
+                  {% include "components/concealed_input.html" with field=form_auth.password %}
                 </div>
               {% endif %}
             </div>
@@ -142,7 +141,7 @@
           <section class="auth-editor-card auth-tools-card">
             <div class="auth-card-heading auth-compact-heading auth-tools-card-heading">
               <span class="auth-card-icon auth-tools-card-icon" aria-hidden="true">
-                {% include 'icons/tools.svg' %}
+                {% include "icons/tools.svg" %}
               </span>
               <div>
                 <h5>{% trans "Credential Tools" %}</h5>
@@ -168,7 +167,7 @@
                       class="btn waves-effect waves-light auth-randomize-button"
                       title="{% trans "Randomize the Selected Fields" %}">
                 <span class="auth-randomize-icon" aria-hidden="true">
-                  {% include 'icons/dice.svg' %}
+                  {% include "icons/dice.svg" %}
                 </span>
                 <span>{% trans "Randomize Selected" %}</span>
               </button>
@@ -179,7 +178,7 @@
                       type="button"
                       {% if auth_mode != 'assigned' %}hidden{% endif %}>
                 <i class="material-icons" aria-hidden="true">delete</i>
-                <span>{% trans "Reset Options" %}</span>
+                <span>{% trans "Reset Access" %}</span>
               </button>
             </div>
           </section>
@@ -188,7 +187,7 @@
           <section class="auth-editor-card auth-move-card">
             <div class="auth-card-heading auth-compact-heading">
               <span class="auth-card-icon auth-move-card-icon" aria-hidden="true">
-                {% include 'icons/move.svg' %}
+                {% include "icons/move.svg" %}
               </span>
               <div>
                 <h5>{% trans "Move Configuration" %}</h5>
@@ -211,10 +210,10 @@
                 <div class="auth-credential-fields">
                   <div class="input-field concealed-field auth-credential-field">
                     {# Reuse the site's common concealed-input control for Config IDs. #}
-                    {% include 'components/concealed_input.html' with field=form_move.from show_label=show_config_id hide_label=hide_config_id %}
+                    {% include "components/concealed_input.html" with field=form_move.from show_label=show_config_id hide_label=hide_config_id %}
                   </div>
                   <div class="input-field concealed-field auth-credential-field move-destination-field">
-                    {% include 'components/concealed_input.html' with field=form_move.to show_label=show_config_id hide_label=hide_config_id %}
+                    {% include "components/concealed_input.html" with field=form_move.to show_label=show_config_id hide_label=hide_config_id %}
 
                     <button type="button"
                             id="move-randomize-destination"
@@ -223,7 +222,7 @@
                             aria-label="{% trans "Randomize Destination Config ID" %}"
                             title="{% trans "Randomize Destination Config ID" %}">
                       <span aria-hidden="true">
-                        {% include 'icons/dice.svg' %}
+                        {% include "icons/dice.svg" %}
                       </span>
                     </button>
                   </div>
@@ -267,6 +266,58 @@
     base: '{{ BASE_URL|escapejs }}',
     configId: authConfigId
   };
+  const authStateCopy = {
+    admin: {
+      label: '{% trans "Admin Only" %}',
+      title: '{% trans "Admin only: no configuration login is assigned." %}'
+    },
+    public: {
+      label: '{% trans "Public" %}',
+      title: '{% trans "Public: tagged notifications do not require a login." %}'
+    },
+    locked: {
+      label: '{% trans "Locked" %}',
+      title: '{% trans "Locked: configuration content is restricted." %}'
+    },
+    user: {
+      label: '{% trans "User" %}',
+      title: '{% trans "User: the configuration has its own login." %}'
+    },
+    disabled: {
+      label: '{% trans "Disabled" %}',
+      title: '{% trans "Disabled: only an administrator may use this configuration." %}'
+    },
+    off: {
+      label: '{% trans "No Authorization" %}',
+      title: '{% trans "No authorization is required." %}'
+    }
+  };
+
+  function authUpdateIndicators(state) {
+    const copy = authStateCopy[state];
+    if (!copy) {
+      return;
+    }
+    document.querySelectorAll('.auth-state-indicator').forEach(function (indicator) {
+      indicator.classList.remove(
+        'auth-state-admin', 'auth-state-public', 'auth-state-locked',
+        'auth-state-user', 'auth-state-disabled', 'auth-state-off',
+        'is-assigned', 'is-unassigned', 'is-disabled'
+      );
+      indicator.classList.add('auth-state-' + state);
+      indicator.classList.add(
+        state === 'admin' ? 'is-unassigned'
+          : (state === 'disabled' || state === 'off' ? 'is-disabled' : 'is-assigned')
+      );
+      indicator.dataset.authState = state;
+      if (typeof window.appriseSetTooltip === 'function') {
+        window.appriseSetTooltip(indicator, copy.title);
+      } else {
+        indicator.title = copy.title;
+      }
+      indicator.setAttribute('aria-label', copy.label);
+    });
+  }
 
   if (authIsAdmin && authAccess && window.M && M.FormSelect) {
     M.FormSelect.init(authAccess);
@@ -413,6 +464,7 @@
         error.field = failure.field;
         throw error;
       }
+      const savedState = await response.json();
 
       const savedUsername = authUsername ? authUsername.value : '';
       const savedPassword = authPassword.value;
@@ -425,6 +477,7 @@
         authPasswordConfirm.value = '';
       }
       authSetShared(true);
+      authUpdateIndicators(savedState.auth_state);
       // Use a template literal because the included QR icon spans several lines.
       const savedCredentialButtons = savedPassword
         ? `<button type="button" id="auth-save-copy" class="btn-flat auth-save-copy" aria-label="{% trans "Copy Username and Password to Clipboard" %}" title="{% trans "Copy Username and Password to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>`
@@ -565,6 +618,7 @@
             );
             throw new Error(failure.message);
           }
+          const resetState = resetConfiguration ? null : await response.json();
 
           // The saved login is gone, so clear the editor as well.
           if (authUsername) {
@@ -580,6 +634,7 @@
           }
           M.updateTextFields();
           authSetShared(false);
+          authUpdateIndicators(resetState ? resetState.auth_state : 'admin');
           appriseFire({
             title: resetConfiguration
               ? '{% trans "Configuration Reset" %}'

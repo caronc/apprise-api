@@ -30,7 +30,7 @@
       <div class="page-section-heading">
         <h4>{% trans "Stateless Endpoints" %}</h4>
       </div>
-      {% if STATELESS_MODE != 'disabled' %}
+      {% if STATELESS_MODE != "disabled" %}
         <p>
           {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener noreferrer">sidecar</a> and/or
     microservice to their project only need to use the following URL.{% endblocktrans %}
@@ -85,19 +85,23 @@
                     are:{% endblocktrans %}
                             <ol>
                               <li>
-                                <i class="tiny material-icons" style="color: blue">info</i><code>{% trans "info" %}</code> -
+                                <i class="tiny material-icons"
+                                   style="color: blue">info</i><code>{% trans "info" %}</code> -
                                 <i>{% blocktrans %}this is the default option if a type
                           isn't
                           specified.{% endblocktrans %}</i>
                               </li>
                               <li>
-                                <i class="tiny material-icons" style="color: green">check_circle</i><code>{% trans "success" %}</code>
+                                <i class="tiny material-icons"
+                                   style="color: green">check_circle</i><code>{% trans "success" %}</code>
                               </li>
                               <li>
-                                <i class="tiny material-icons" style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
+                                <i class="tiny material-icons"
+                                   style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
                               </li>
                               <li>
-                                <i class="tiny material-icons" style="color: red">cancel</i><code>{% trans "failure" %}</code>
+                                <i class="tiny material-icons"
+                                   style="color: red">cancel</i><code>{% trans "failure" %}</code>
                               </li>
                             </ol>
                           </td>
@@ -261,7 +265,7 @@
       {% else %}
         <p>{% trans "The administrator of this system has disabled stateless URL support." %}</p>
       {% endif %}
-      {% if STATEFUL_MODE != 'disabled' %}
+      {% if STATEFUL_MODE != "disabled" %}
         <div class="section">
           <div class="page-section-heading">
             <h4>{% trans "Persistent Store Endpoints" %}</h4>
@@ -555,19 +559,23 @@
                       are:{% endblocktrans %}
                               <ol>
                                 <li>
-                                  <i class="tiny material-icons" style="color: blue">info</i><code>{% trans "info" %}</code> -
+                                  <i class="tiny material-icons"
+                                     style="color: blue">info</i><code>{% trans "info" %}</code> -
                                   <i>{% blocktrans %}this is the default option if a type
                             isn't
                             specified.{% endblocktrans %}</i>
                                 </li>
                                 <li>
-                                  <i class="tiny material-icons" style="color: green">check_circle</i><code>{% trans "success" %}</code>
+                                  <i class="tiny material-icons"
+                                     style="color: green">check_circle</i><code>{% trans "success" %}</code>
                                 </li>
                                 <li>
-                                  <i class="tiny material-icons" style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
+                                  <i class="tiny material-icons"
+                                     style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
                                 </li>
                                 <li>
-                                  <i class="tiny material-icons" style="color: red">cancel</i><code>{% trans "failure" %}</code>
+                                  <i class="tiny material-icons"
+                                     style="color: red">cancel</i><code>{% trans "failure" %}</code>
                                 </li>
                               </ol>
                             </td>
@@ -771,20 +779,7 @@
 {% block jsfooter %}
   function showCopyToast(anchorEl, message) {
     var msg = message || '{% trans "Copied to clipboard" %}';
-    if (window.Swal && Swal.fire) {
-      appriseFire({
-        toast: true,
-        target: anchorEl || document.body,
-        position: 'top-end',
-        title: msg,
-        showConfirmButton: false,
-        timer: 1600,
-        timerProgressBar: true,
-        customClass: { popup: 'copy-toast' }
-      });
-      return;
-    }
-    if (window.M && M.toast) { M.toast({ html: msg }); }
+    appriseShowCopyToast(msg);
   }
   async function copyToClipboard(text, anchorEl, message) {
     if (navigator.clipboard && navigator.clipboard.writeText) {

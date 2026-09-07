@@ -21,6 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from datetime import datetime
 import errno
 import gzip
 import os
@@ -88,7 +89,7 @@ def test_apprise_config_io_hash_mode(tmpdir):
     conf_dir, _ = acc_obj.path(key)
 
     # List content of directory
-    contents = os.listdir(conf_dir)
+    contents = [name for name in os.listdir(conf_dir) if not name.startswith(".")]
 
     # There should be just 1 new file in this directory
     assert len(contents) == 1
@@ -132,7 +133,7 @@ def test_apprise_config_io_hash_mode(tmpdir):
     assert acc_obj.put(key, content, ConfigFormat.YAML.value)
 
     # List content of directory
-    contents = os.listdir(conf_dir)
+    contents = [name for name in os.listdir(conf_dir) if not name.startswith(".")]
 
     # There should STILL be just 1 new file in this directory
     assert len(contents) == 1
@@ -187,11 +188,10 @@ def test_apprise_config_list_simple_mode(tmpdir):
     for key in yaml_keys:
         assert acc_obj.put(key, content_yaml, ConfigFormat.YAML.value)
 
-    # Ensure the 10 configuration files (plus the hidden file) are the only
-    # contents of the directory
+    # Hidden bookkeeping files do not affect the ten visible configurations.
     conf_dir, _ = acc_obj.path(key)
-    contents = os.listdir(conf_dir)
-    assert len(contents) == 11
+    contents = [name for name in os.listdir(conf_dir) if not name.startswith(".")]
+    assert len(contents) == 10
 
     keys = acc_obj.keys()
     assert len(keys) == 10
@@ -251,7 +251,7 @@ def test_apprise_config_list_hash_mode(tmpdir):
     # Ensure the 10 configuration files (plus the hidden file) are the only
     # contents of the directory
     conf_dir, _ = acc_obj.path(key)
-    contents = os.listdir(conf_dir)
+    contents = [name for name in os.listdir(conf_dir) if not name.startswith(".")]
     assert len(contents) == 1
 
     # does not search on hash mode
@@ -285,7 +285,7 @@ def test_apprise_config_io_simple_mode(tmpdir):
     conf_dir, _ = acc_obj.path(key)
 
     # List content of directory
-    contents = os.listdir(conf_dir)
+    contents = [name for name in os.listdir(conf_dir) if not name.startswith(".")]
 
     # There should be just 1 new file in this directory
     assert len(contents) == 1
@@ -329,7 +329,7 @@ def test_apprise_config_io_simple_mode(tmpdir):
     assert acc_obj.put(key, content, ConfigFormat.YAML.value)
 
     # List content of directory
-    contents = os.listdir(conf_dir)
+    contents = [name for name in os.listdir(conf_dir) if not name.startswith(".")]
 
     # There should STILL be just 1 new file in this directory
     assert len(contents) == 1
@@ -1056,3 +1056,36 @@ def test_prune_missing_root(tmpdir):
     missing = os.path.join(str(tmpdir), "removed-after-guard")
     acc_obj = AppriseConfigCache(missing, mode=AppriseStoreMode.HASH)
     assert acc_obj._prune_unused_locks(older_than_seconds=0) == 0
+
+
+@pytest.mark.parametrize("mode", (AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE))
+def test_get_file_times_for_stored_config(tmpdir, mode):
+    """Stored configurations expose stable creation and modification times."""
+    store = AppriseConfigCache(str(tmpdir), mode=mode)
+    assert store.get_file_times("time-key") == (None, None)
+
+    assert store.put("time-key", "json://localhost", ConfigFormat.TEXT.value)
+    created, mtime = store.get_file_times("time-key")
+
+    assert isinstance(created, datetime)
+    assert isinstance(mtime, datetime)
+
+    original_timestamp = datetime(2020, 1, 2, 3, 4, 5).timestamp()
+    os.utime(store._creation_path("time-key"), (original_timestamp, original_timestamp))
+    assert store.put("time-key", "json://example.com", ConfigFormat.TEXT.value)
+
+    updated_created, updated_mtime = store.get_file_times("time-key")
+    assert updated_created == datetime.fromtimestamp(original_timestamp)
+    assert updated_mtime >= mtime
+
+    assert store.move("time-key", "moved-time-key") == MoveResult.MOVED
+    moved_created, _ = store.get_file_times("moved-time-key")
+    assert moved_created == updated_created
+    assert store.clear("moved-time-key") is True
+    assert not os.path.exists(store._creation_path("moved-time-key"))
+
+
+def test_get_file_times_is_empty_when_storage_is_disabled(tmpdir):
+    """Disabled storage has no configuration timestamps."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED)
+    assert store.get_file_times("time-key") == (None, None)

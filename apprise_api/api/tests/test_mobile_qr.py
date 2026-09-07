@@ -464,6 +464,59 @@ global.AppriseQr.drawQrToCanvas(makeFakeCanvas(), oversizedUrl, {})
             ),
         )
 
+    def test_qr_uses_maximum_recovery_and_the_required_quiet_zone(self):
+        """Guard the scan-reliability settings independently of QR artwork."""
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node.js is not available to check JavaScript behavior")
+
+        script_path = os.path.join(settings.BASE_DIR, "static", "js", "apprise-qr.js")
+        program = """
+global.window = global;
+let requestedType = null;
+let requestedRecovery = null;
+global.qrcode = function (type, recovery) {
+  requestedType = type;
+  requestedRecovery = recovery;
+  return {
+    addData: function () {},
+    make: function () {},
+    getModuleCount: function () { return 21; },
+    isDark: function () { return false; }
+  };
+};
+eval(require('fs').readFileSync(process.argv[1], 'utf8'));
+const fills = [];
+const canvas = {
+  width: 0,
+  height: 0,
+  getContext: function () {
+    return {
+      fillStyle: '',
+      fillRect: function (x, y, width, height) { fills.push([x, y, width, height]); }
+    };
+  }
+};
+
+global.AppriseQr.drawQrToCanvas(canvas, 'apprise://host/key', {})
+  .then(function () {
+    // Type 0 chooses the smallest fitting version; H is QR's strongest
+    // standard Reed-Solomon recovery level. At eight pixels per module,
+    // the four-module quiet zone is 32 pixels on every side.
+    if (requestedType !== 0 || requestedRecovery !== 'H') process.exit(1);
+    if (canvas.width !== 232 || canvas.height !== 232) process.exit(1);
+    if (JSON.stringify(fills[0]) !== JSON.stringify([0, 0, 232, 232])) process.exit(1);
+    process.exit(0);
+  }, function () { process.exit(1); });
+"""
+        result = subprocess.run(
+            [node, "-e", program, script_path],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
 
 class AdminCredentialsWarningConsolidationTests(SimpleTestCase):
     """Keep the admin-login warning identical in every QR display.
@@ -473,8 +526,7 @@ class AdminCredentialsWarningConsolidationTests(SimpleTestCase):
     """
 
     WARNING_TEXT = (
-        "This Config ID has no assigned user. The QR code will use the "
-        "administrator login, and Apprise Mobile will prompt for its password."
+        "This configuration has no assigned user. As a result, the QR code will use the administrator account."
     )
 
     def test_source_templates_declare_the_warning_copy_exactly_once(self):

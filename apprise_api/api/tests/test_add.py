@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import base64
+from datetime import datetime
 import hashlib
 import json
 from unittest import mock
@@ -498,6 +499,9 @@ class AddTests(SimpleTestCase):
         )
         assert by_url.status_code == 200
         assert by_url.json() == {"error": None}
+        assert datetime.fromisoformat(by_url.headers["X-Apprise-Config-Created"])
+        assert datetime.fromisoformat(by_url.headers["X-Apprise-Config-MTime"])
+        assert by_url.headers["X-Apprise-Timezone"]
         assert "other:pass@yahoo.ca" in ConfigCache.get(key)[0]
 
         by_header = self.client.post(

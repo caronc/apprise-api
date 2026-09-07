@@ -3,27 +3,19 @@
 {% load i18n static %}
 
 {% block body %}
-  {% if STATEFUL_MODE != 'disabled' %}
+  {% if STATEFUL_MODE != "disabled" %}
     <div class="config-id-bar">
       {% if AUTH_ENABLED %}
-        <a class="btn-flat btn-small config-auth-link config-auth-status {% if auth_mode == 'assigned' %}is-assigned{% else %}is-unassigned{% endif %}"
-           href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' key %}{% endif %}"
-           title="{% if auth_access == 'disabled' %}{% trans "Configuration access is disabled" %}{% elif auth_access == 'public' %}{% trans "Public tagged notifications are enabled" %}{% elif auth_access == 'locked' %}{% trans "Configuration access is locked" %}{% elif auth_mode == 'assigned' %}{% trans "This configuration has its own login" %}{% else %}{% trans "No configuration login is assigned" %}{% endif %}">
-          <span class="config-auth-icon" aria-hidden="true">
-            {% include 'icons/lock.svg' %}
-          </span>
+        <a class="btn-flat btn-small config-auth-link"
+           href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' key %}{% endif %}">
+          {% include "components/config_auth_status.html" %}
         </a>
       {% else %}
-        <span class="config-auth-status is-disabled"
-              title="{% trans "Authentication is disabled" %}">
-          <span class="config-auth-icon" aria-hidden="true">
-            {% include 'icons/unlock.svg' %}
-          </span>
-        </span>
+        {% include "components/config_auth_status.html" %}
       {% endif %}
-      {% include 'components/config_id_selector.html' with config_id_next='config_current' %}
+      {% include "components/config_id_selector.html" with config_id_next="config_current" %}
     </div>
-    {% include 'components/config_id_mismatch_notice.html' %}
+    {% include "components/config_id_mismatch_notice.html" %}
 
     <div class="row">
       <div class="col s12">
@@ -86,16 +78,16 @@
                                 class="api-status-icon status-icon-stack status-loading"
                                 aria-hidden="true">
                             <span class="status-icon status-icon-loading">
-                              {% include 'icons/status-loading.svg' %}
+                              {% include "icons/status-loading.svg" %}
                             </span>
                             <span class="status-icon status-icon-ok">
-                              {% include 'icons/status-ok.svg' %}
+                              {% include "icons/status-ok.svg" %}
                             </span>
                             <span class="status-icon status-icon-error">
-                              {% include 'icons/status-error.svg' %}
+                              {% include "icons/status-error.svg" %}
                             </span>
                             <span class="status-icon status-icon-disabled">
-                              {% include 'icons/status-disabled.svg' %}
+                              {% include "icons/status-disabled.svg" %}
                             </span>
                           </span>
                         </span>
@@ -118,8 +110,8 @@
               {% endblocktrans %}
                         <div class="code-snippet"
                              data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
-                             data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
-                          <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/<span data-snippet-config-id>{{ key }}</span></code></pre>
+                             data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+                          <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/<span data-snippet-config-id>{{ key }}</span></code></pre>
                         </div>
                       </li>
                       <li>
@@ -184,12 +176,14 @@
                         <span>{% trans "Click here to reveal QR Code" %}</span>
                       </div>
                     </div>
-                    <p class="mobile-setup-card__error" data-mobile-qr-error hidden>{% trans "The QR code could not be loaded." %}</p>
+                    <p class="mobile-setup-card__error"
+                       data-mobile-qr-error
+                       hidden>{% trans "The QR code could not be loaded." %}</p>
                     <div class="apprise-qr-note apprise-qr-note--warning mobile-setup-card__warning"
                          data-mobile-qr-warning
                          hidden>
                       <span class="apprise-qr-warning-icon">
-                        {% include 'icons/status-warning.svg' %}
+                        {% include "icons/status-warning.svg" %}
                       </span>
                       <span class="apprise-qr-note-copy">
                         <strong class="apprise-qr-warning-title" data-mobile-qr-warning-title></strong>
@@ -316,17 +310,43 @@
                     <h5>{% trans "Configuration" %}</h5>
                     <p>{% blocktrans %}Define your configuration below:{% endblocktrans %}</p>
                   </div>
+                  <dl id="config-file-times"
+                      class="config-file-times"
+                      aria-label="{% trans 'Configuration file times' %}"
+                      {% if not config_created and not config_mtime %}hidden{% endif %}>
+                    <div class="config-file-time">
+                      <dt>{% trans "Created" %}</dt>
+                      <dd>
+                        <time data-config-created
+                              datetime="{{ config_created|date:'c' }}">{{ config_created|date:"Y-m-d H:i:s" }}</time>
+                      </dd>
+                    </div>
+                    <div class="config-file-time">
+                      <dt>{% trans "Modified" %}</dt>
+                      <dd>
+                        <time data-config-mtime
+                              datetime="{{ config_mtime|date:'c' }}">{{ config_mtime|date:"Y-m-d H:i:s" }}</time>
+                      </dd>
+                    </div>
+                    <div class="config-file-time">
+                      <dt>{% trans "Timezone" %}</dt>
+                      <dd data-config-timezone>
+                        {{ config_timezone }}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
                 <form id="addconfig" action="{% url "add" key %}" method="post">
                   {% for hidden in form_cfg.hidden_fields %}{{ hidden }}{% endfor %}
                   {% for field in form_cfg.visible_fields %}
-                    {% if field.name == 'config' %}
+                    {% if field.name == "config" %}
                       <div class="apprise-config-editor">
                         {{ field }}
-                        <pre aria-hidden="true" class="apprise-config-highlight"><code class="language-apprise-config" id="config-highlight"></code></pre>
+                        <pre aria-hidden="true"
+                             class="apprise-config-highlight"><code class="language-apprise-config" id="config-highlight"></code></pre>
                       </div>
                       {{ field.errors }}
-                    {% elif field.name == 'format' %}
+                    {% elif field.name == "format" %}
                       <div class="config-toolbar">
                         <div class="input-field config-format-field">
                           {{ field.label_tag }}
@@ -447,7 +467,7 @@
                    aria-live="polite">
                 <div class="notify-target-guidance-title">
                   <span class="notify-target-guidance-icon" aria-hidden="true">
-                    {% include 'icons/status-warning.svg' %}
+                    {% include "icons/status-warning.svg" %}
                   </span>
                   <span>{% trans "No Notification Targets Selected" %}</span>
                 </div>
@@ -1602,29 +1622,7 @@
 
   function showCopyToast(anchorEl, message) {
     const msg = message || '{% trans "URL copied to clipboard" %}';
-    // Try SweetAlert2 first so we can anchor to the card
-    if (window.Swal && Swal.fire) {
-      const card = anchorEl
-        ? anchorEl.closest('li.card-panel') || anchorEl
-        : document.body;
-      appriseFire({
-        toast: true,
-        target: card,  // anchor inside the card
-        position: 'top-end',
-        title: msg,
-        showConfirmButton: false,
-        timer: 1600,
-        timerProgressBar: true,
-        customClass: {
-          popup: 'copy-toast'
-        }
-      });
-      return;
-    }
-    // Fallback to Materialize toast if Swal is not available
-    if (window.M && M.toast) {
-      M.toast({ html: msg });
-    }
+    appriseShowCopyToast(msg);
   }
   async function copyToClipboard(text, anchorEl, message) {
     // Prefer modern Clipboard API
@@ -2189,6 +2187,31 @@
     return null;
   }
 {% if not CONFIG_LOCK %}
+  function updateConfigFileTimes(response) {
+    const timestamps = document.querySelector('#config-file-times');
+    if (!timestamps) return;
+
+    const created = response.headers.get('X-Apprise-Config-Created');
+    const mtime = response.headers.get('X-Apprise-Config-MTime');
+    const timezone = response.headers.get('X-Apprise-Timezone');
+    if (!created || !mtime) return;
+
+    const createdElement = timestamps.querySelector('[data-config-created]');
+    const mtimeElement = timestamps.querySelector('[data-config-mtime]');
+    const timezoneElement = timestamps.querySelector('[data-config-timezone]');
+    createdElement.dateTime = created;
+    createdElement.textContent = created.replace('T', ' ');
+    mtimeElement.dateTime = mtime;
+    mtimeElement.textContent = mtime.replace('T', ' ');
+    if (timezone && timezoneElement) timezoneElement.textContent = timezone;
+    timestamps.hidden = false;
+  }
+
+  function clearConfigFileTimes() {
+    const timestamps = document.querySelector('#config-file-times');
+    if (timestamps) timestamps.hidden = true;
+  }
+
   function config_init() {
     // over-ride manual submit for a nicer user experience
     document.querySelector('#addconfig').onsubmit = function (event) {
@@ -2204,6 +2227,7 @@
           body: body,
         }).then(function (response) {
           if (response.status == 200) {
+            updateConfigFileTimes(response);
             // update our settings
             main_init();
             // user notification
@@ -2236,6 +2260,7 @@
           body: body,
         }).then(function (response) {
           if (response.status == 200 || response.status == 204) {
+            clearConfigFileTimes();
             // update our settings
             main_init();
             // user notification

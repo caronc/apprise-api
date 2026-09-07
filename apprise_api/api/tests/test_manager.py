@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import base64
+from datetime import datetime
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -201,9 +202,22 @@ class ManagerPageTests(SimpleTestCase):
         assert "appriseCopyToClipboard(" in content
         assert "reverseButtons: !isToast" in content
         assert "apprise-popup--decision" in content
+        assert "popupClasses.push('apprise-toast', 'apprise-toast--' + effectiveIcon)" in content
+        assert "position: 'top'" in content
+        assert "function appriseShowToast(message, status, duration)" in content
+        assert "modalIsOpen" in content
+        assert "link.setAttribute('aria-label', text)" in content
+        assert "link.setAttribute('title', text)" not in content
         stylesheet = Path(settings.BASE_DIR, "static", "css", "base.css").read_text(encoding="utf-8")
         assert "body.swal2-shown:not(.swal2-toast-shown) .mobile-menu-tab" in stylesheet
         assert "body:has(.apprise-dialog[open]) .mobile-menu-tab" in stylesheet
+        assert ".select-wrapper input.select-dropdown" in stylesheet
+        assert "border-radius: 0.55rem !important;" in stylesheet
+        assert ".dropdown-content.select-dropdown li" in stylesheet
+        assert ".swal2-popup.swal2-toast.apprise-toast" in stylesheet
+        assert ".apprise-toast--success" in stylesheet
+        assert ".apprise-toast--warning" in stylesheet
+        assert ".apprise-toast--error" in stylesheet
         assert "Config ID copied to clipboard" in content
         assert "snippet-config-id is-concealed" in content
         assert "snippet-visibility-btn" in content
@@ -225,6 +239,28 @@ class ManagerPageTests(SimpleTestCase):
         assert 'data-copy-text=\'apprise --body="Test Message"' in content
         assert "nodeValue.includes(markedConfigId)" in content
         assert "nodeValue.includes(configId)" not in content
+
+    def test_config_page_shows_file_times_in_the_header(self):
+        """The editor heading shows available filesystem timestamps."""
+        view_module = resolve("/cfg/time-key").func.__module__
+        with patch(
+            "{}.ConfigCache.get_file_times".format(view_module),
+            return_value=(datetime(2026, 9, 6, 12, 34, 56), datetime(2026, 9, 6, 13, 45, 1)),
+        ):
+            response = self.client.get("/cfg/time-key")
+
+        content = response.content.decode()
+        assert 'id="config-file-times"' in content
+        assert content.index('id="config-file-times"') > content.index('<div id="config"')
+        assert "Created" in content
+        assert "Created / Changed" not in content
+        assert "2026-09-06 12:34:56" in content
+        assert "Modified" in content
+        assert "2026-09-06 13:45:01" in content
+        assert "Timezone" in content
+        assert settings.TIME_ZONE in content
+        assert "updateConfigFileTimes(response)" in content
+        assert "clearConfigFileTimes()" in content
 
     def test_open_config_switch_uses_private_cookie(self):
         """An open deployment switches Config IDs without a keyed URL."""

@@ -621,6 +621,7 @@ class AppriseConfigCache:
 
         # First two characters are reserved for cache level directory writing.
         path, filename = self.path(key)
+        created_at = self._creation_timestamp(key)
         try:
             os.makedirs(path, exist_ok=True)
 
@@ -694,6 +695,7 @@ class AppriseConfigCache:
             # fail
             return False
 
+        self._record_creation_time(key, created_at)
         return True
 
     def get(self, key):
@@ -788,6 +790,7 @@ class AppriseConfigCache:
             # Do nothing
             return response
 
+        clear_creation = formats is None
         if formats is None:
             formats = apprise.CONFIG_FORMATS
 
@@ -812,6 +815,13 @@ class AppriseConfigCache:
             except OSError as e:
                 if e.errno != errno.ENOENT:
                     # We were unable to remove the file
+                    response = False
+
+        if clear_creation and response is not False:
+            try:
+                os.remove(self._creation_path(key))
+            except OSError as e:
+                if e.errno != errno.ENOENT:
                     response = False
 
         return response
@@ -1301,6 +1311,66 @@ class AppriseConfigCache:
             os.path.join(path, "{}.{}".format(filename, ext_yaml)),
         )
 
+    def _creation_path(self, key):
+        """Return the hidden file that preserves the Config ID's creation time."""
+        path, filename = self.path(key)
+        return os.path.join(path, ".{}.created".format(filename))
+
+    def _creation_timestamp(self, key):
+        """Return the preserved creation time, falling back to existing content."""
+        try:
+            return os.path.getmtime(self._creation_path(key))
+        except OSError:
+            pass
+
+        timestamps = []
+        for path in self._content_paths(key):
+            try:
+                file_stat = os.stat(path)
+            except OSError:
+                continue
+            timestamps.append(min(file_stat.st_ctime, file_stat.st_mtime))
+        return min(timestamps) if timestamps else None
+
+    def _record_creation_time(self, key, timestamp=None):
+        """Create the timestamp marker once without replacing an existing one."""
+        marker = self._creation_path(key)
+        try:
+            descriptor = os.open(marker, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            return
+        except OSError as e:
+            logger.warning("Could not preserve creation time for KEY %s (%s)", key, e)
+            return
+
+        with suppress(OSError):
+            os.close(descriptor)
+        if timestamp is not None:
+            try:
+                os.utime(marker, (timestamp, timestamp))
+            except OSError as e:
+                logger.warning("Could not restore creation time for KEY %s (%s)", key, e)
+
+    def get_file_times(self, key):
+        """Return stable creation and current modification times, when available."""
+        if self.mode == AppriseStoreMode.DISABLED:
+            return (None, None)
+
+        for path in self._content_paths(key):
+            try:
+                file_stat = os.stat(path)
+            except FileNotFoundError:
+                continue
+            except OSError:
+                return (None, None)
+
+            return (
+                datetime.fromtimestamp(self._creation_timestamp(key) or file_stat.st_ctime),
+                datetime.fromtimestamp(file_stat.st_mtime),
+            )
+
+        return (None, None)
+
     def move(self, from_key, to_key):
         """Move a configuration and its access record to another key.
 
@@ -1331,6 +1401,8 @@ class AppriseConfigCache:
         dst_lock_dir, dst_lock_name = self.auth_path(to_key)
         src_lock = os.path.join(src_lock_dir, src_lock_name)
         dst_lock = os.path.join(dst_lock_dir, dst_lock_name)
+        src_created = self._creation_path(from_key)
+        dst_created = self._creation_path(to_key)
 
         candidates = [
             (src_text, dst_text),
@@ -1340,6 +1412,9 @@ class AppriseConfigCache:
         sources = [(source, destination) for source, destination in candidates if os.path.isfile(source)]
         if not sources:
             return MoveResult.NOT_FOUND
+        candidates.append((src_created, dst_created))
+        if os.path.isfile(src_created):
+            sources.append((src_created, dst_created))
         if any(os.path.isfile(destination) for _, destination in candidates):
             return MoveResult.CONFLICT
 

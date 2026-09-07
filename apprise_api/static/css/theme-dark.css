@@ -58,6 +58,24 @@ Support Banner
   --dialog-header-start: #163d3a;
   --dialog-header-end: #202b35;
   --dialog-shadow: rgba(0, 0, 0, 0.58);
+  --toast-info-bg: #172d42;
+  --toast-info-border: #4a86b8;
+  --toast-info-text: #b6dcfa;
+  --toast-success-bg: #183522;
+  --toast-success-border: #4b9861;
+  --toast-success-text: #a9e4bc;
+  --toast-warning-bg: #3b3018;
+  --toast-warning-border: #b48732;
+  --toast-warning-text: #f0d28a;
+  --toast-error-bg: #3a2024;
+  --toast-error-border: #a95660;
+  --toast-error-text: #f1b2b9;
+  --select-bg: #1c1f26;
+  --select-border: #454a55;
+  --select-border-hover: #68717f;
+  --select-focus-ring: rgba(44, 182, 166, 0.2);
+  --select-text: #d4d6dc;
+  --select-caret: #aeb2bd;
   --notify-log-bg: #111318;
   --notify-log-row-bg: #1b1e25;
   --notify-log-row-alt-bg: #20242c;
@@ -451,17 +469,18 @@ Dropdowns & Selects
 
 /* Trigger input */
 .select-wrapper input.select-dropdown {
-  color: #c1c3c9;
-  border-bottom: 1px solid #34383f !important;
+  color: var(--select-text);
+  border-color: var(--select-border) !important;
 }
 
 .select-wrapper input.select-dropdown:focus {
-  border-bottom: 1px solid #2cb6a6 !important;
+  border-color: #2cb6a6 !important;
+  box-shadow: 0 0 0 3px var(--select-focus-ring) !important;
 }
 
 /* Caret arrow */
 .select-wrapper .caret {
-  fill: #888c96;
+  fill: var(--select-caret);
 }
 
 /* Dropdown list container */
@@ -500,6 +519,10 @@ Dropdowns & Selects
 .select-wrapper+label,
 .input-field>label {
   color: #555a62;
+}
+
+.select-wrapper+label {
+  color: #aeb2bd;
 }
 
 .select-wrapper input.select-dropdown:focus+label,
@@ -761,6 +784,30 @@ input.config-id-input.is-mismatched {
 
 .config-auth-status.is-assigned {
   color: #7de6da;
+}
+
+.auth-state-indicator.auth-state-admin {
+  color: #c9a4f4;
+}
+
+.auth-state-indicator.auth-state-public {
+  color: #73dfb4;
+}
+
+.auth-state-indicator.auth-state-locked {
+  color: #f3c969;
+}
+
+.auth-state-indicator.auth-state-user {
+  color: #8bc9f4;
+}
+
+.auth-state-indicator.auth-state-disabled {
+  color: #9da1aa;
+}
+
+.auth-state-indicator.auth-state-off {
+  color: #73dfb4;
 }
 
 .auth-account.is-master {
@@ -1393,17 +1440,6 @@ Notifications — SweetAlert2
 .mobile-beta-dialog__steps a.mobile-beta-dialog__primary:focus {
   color: #071b19 !important;
   background: #2cb6a6 !important;
-}
-
-.copy-toast.swal2-popup {
-  background-color: #23262f;
-  color: #edeef3;
-}
-
-.copy-toast .swal2-title {
-  margin: 0;
-  font-size: .9rem;
-  font-weight: 500;
 }
 
 .notify-attachments-list .attachment-chip {

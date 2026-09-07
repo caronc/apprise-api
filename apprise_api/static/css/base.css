@@ -50,6 +50,20 @@ i.material-icons.support-banner-icon {
   vertical-align: middle;
 }
 
+.material-tooltip {
+  max-width: min(22rem, calc(100vw - 1rem));
+  min-height: 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.45rem;
+  background-color: #292d35;
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.28);
+  color: #f5f6f8;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
 /* =========================================
 2. Main Layout & Navigation
 ========================================= */
@@ -961,6 +975,106 @@ textarea {
 .swal2-container.swal2-backdrop-show {
   background: rgba(5, 8, 10, 0.7);
   backdrop-filter: blur(2px);
+}
+
+/* Compact status notices stay centered and use the same shape in every view. */
+.swal2-popup.swal2-toast.apprise-toast {
+  --toast-bg: var(--toast-info-bg);
+  --toast-border: var(--toast-info-border);
+  --toast-text: var(--toast-info-text);
+  box-sizing: border-box;
+  width: min(30rem, calc(100vw - 1.5rem));
+  margin: 0.75rem auto 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--toast-border);
+  border-left-width: 0.35rem;
+  border-radius: 0.65rem;
+  color: var(--toast-text);
+  background: var(--toast-bg);
+  box-shadow: 0 0.65rem 1.8rem var(--dialog-shadow);
+}
+
+.swal2-popup.swal2-toast.apprise-toast--success,
+#toast-container .toast.apprise-toast--success {
+  --toast-bg: var(--toast-success-bg);
+  --toast-border: var(--toast-success-border);
+  --toast-text: var(--toast-success-text);
+}
+
+.swal2-popup.swal2-toast.apprise-toast--warning,
+#toast-container .toast.apprise-toast--warning {
+  --toast-bg: var(--toast-warning-bg);
+  --toast-border: var(--toast-warning-border);
+  --toast-text: var(--toast-warning-text);
+}
+
+.swal2-popup.swal2-toast.apprise-toast--error,
+#toast-container .toast.apprise-toast--error {
+  --toast-bg: var(--toast-error-bg);
+  --toast-border: var(--toast-error-border);
+  --toast-text: var(--toast-error-text);
+}
+
+.swal2-popup.swal2-toast.apprise-toast .swal2-icon.apprise-status-icon {
+  position: static;
+  width: 1.55rem;
+  min-width: 1.55rem;
+  height: 1.55rem;
+  margin: 0 0.75rem 0 0;
+  color: var(--toast-text);
+}
+
+.swal2-popup.swal2-toast.apprise-toast .swal2-title {
+  margin: 0;
+  padding: 0;
+  color: var(--toast-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.swal2-popup.swal2-toast.apprise-toast .swal2-timer-progress-bar {
+  background: var(--toast-border);
+}
+
+#toast-container .toast.apprise-toast-fallback {
+  --toast-bg: var(--toast-info-bg);
+  --toast-border: var(--toast-info-border);
+  --toast-text: var(--toast-info-text);
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 0.5rem;
+  border: 1px solid var(--toast-border);
+  border-left-width: 0.35rem;
+  border-radius: 0.65rem;
+  color: var(--toast-text);
+  background: var(--toast-bg);
+  box-shadow: 0 0.65rem 1.8rem var(--dialog-shadow);
+}
+
+#toast-container {
+  top: 0.75rem;
+  right: 50%;
+  width: min(30rem, calc(100vw - 1.5rem));
+  max-width: none;
+  transform: translateX(50%);
+}
+
+.apprise-toast-fallback-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  margin-right: 0.75rem;
+  flex: 0 0 auto;
+}
+
+.apprise-toast-fallback-icon .apprise-status-mark,
+.apprise-toast-fallback-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .apprise-dialog__header,
@@ -2489,6 +2603,99 @@ body .tabs .tab.disabled a:hover i {
   overflow: hidden;
 }
 
+/* Give Materialize selects the same compact surface across the application. */
+.select-wrapper input.select-dropdown {
+  height: 2.75rem;
+  margin: 0;
+  padding: 0 2.35rem 0 0.8rem;
+  border: 1px solid var(--select-border) !important;
+  border-radius: 0.55rem !important;
+  background: var(--select-bg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  box-sizing: border-box;
+  line-height: 2.75rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.select-wrapper:hover input.select-dropdown:not(:focus):not([disabled]) {
+  border-color: var(--select-border-hover) !important;
+}
+
+.select-wrapper input.select-dropdown[disabled] {
+  opacity: 0.58;
+}
+
+.input-field>label:has(+ .select-wrapper) {
+  top: -0.35rem;
+  z-index: 1;
+}
+
+.select-wrapper .caret {
+  right: 0.75rem;
+  z-index: 1;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+}
+
+.dropdown-content.select-dropdown {
+  padding: 0.3rem;
+  border-radius: 0.55rem;
+}
+
+.dropdown-content.select-dropdown li {
+  min-height: 2.55rem;
+  border-radius: 0.38rem;
+}
+
+.dropdown-content.select-dropdown li>a,
+.dropdown-content.select-dropdown li>span {
+  padding: 0.65rem 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.config-file-times {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  column-gap: 0.55rem;
+  row-gap: 0.12rem;
+  margin: 0 0 0 auto;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.config-file-times[hidden] {
+  display: none;
+}
+
+.config-file-time {
+  display: contents;
+}
+
+.config-file-time dt {
+  font-weight: 500;
+  opacity: 0.62;
+}
+
+.config-file-time dd {
+  margin: 0;
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  #config .config-file-times {
+    width: 100%;
+    grid-template-columns: max-content 1fr;
+  }
+}
+
 .config-id-visibility.btn-flat,
 .config-id-copy.btn-flat {
   margin-left: 0.1rem;
@@ -2631,6 +2838,24 @@ code.config-id.is-concealed {
 .config-auth-icon svg {
   fill: none;
   stroke: currentColor;
+}
+
+.config-auth-icon .auth-state-lock,
+.config-auth-icon .auth-state-unlock {
+  display: block;
+}
+
+.auth-state-indicator:not(.auth-state-public, .auth-state-off) .auth-state-unlock,
+.auth-state-indicator:is(.auth-state-public, .auth-state-off) .auth-state-lock {
+  display: none;
+}
+
+.auth-state-indicator {
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.auth-state-indicator.auth-state-admin {
+  opacity: 1;
 }
 
 .config-auth-status {
@@ -2834,6 +3059,11 @@ Authentication Editor
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, currentColor 18%, transparent);
 }
 
+.auth-mode-status .config-auth-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
 .auth-card-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
@@ -2883,6 +3113,12 @@ Authentication Editor
   fill: none;
   stroke: currentColor;
   stroke-width: 1.5;
+}
+
+.auth-card-icon .config-auth-icon,
+.auth-card-icon .config-auth-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .auth-tools-card-icon svg {
@@ -3050,7 +3286,13 @@ Authentication Editor
 }
 
 .config-id-qr-icon svg {
-  fill: currentColor;
+  overflow: visible;
+}
+
+.config-id-qr.btn-flat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .apprise-qr-popup {

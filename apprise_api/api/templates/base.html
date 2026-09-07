@@ -58,13 +58,15 @@
       <div class="nav row nav-color z-depth-2">
         <div class="col s12">
           <a href="{% url 'welcome' %}">
-            {% include 'icons/apprise-logo.svg' %}
+            {% include "icons/apprise-logo.svg" %}
           </a>
-          <small>&nbsp;<a class="apprise-api-ver" href="{{ APPRISE_API_URL }}" target="_new">v{{ APPRISE_API_VERSION }}</a></small>
+          <small>&nbsp;<a class="apprise-api-ver"
+   href="{{ APPRISE_API_URL }}"
+   target="_new">v{{ APPRISE_API_VERSION }}</a></small>
           <ul>
             <li>
               <a class="apprise-lib-ver" href="{{ APPRISE_LIB_URL }}" target="_new">
-                {% include 'icons/apprise-badge.svg' %}
+                {% include "icons/apprise-badge.svg" %}
 
               APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
             </li>
@@ -78,16 +80,16 @@
                         class="api-status-icon status-icon-stack topbar-status-icon status-loading"
                         aria-hidden="true">
                     <span class="status-icon status-icon-loading">
-                      {% include 'icons/status-loading.svg' %}
+                      {% include "icons/status-loading.svg" %}
                     </span>
                     <span class="status-icon status-icon-ok">
-                      {% include 'icons/status-ok.svg' %}
+                      {% include "icons/status-ok.svg" %}
                     </span>
                     <span class="status-icon status-icon-error">
-                      {% include 'icons/status-error.svg' %}
+                      {% include "icons/status-error.svg" %}
                     </span>
                     <span class="status-icon status-icon-disabled">
-                      {% include 'icons/status-disabled.svg' %}
+                      {% include "icons/status-disabled.svg" %}
                     </span>
                   </span>
                 </a>
@@ -101,7 +103,7 @@
                  data-position="bottom"
                  data-tooltip="{% trans "GitHub" %}">
                 <span class="topbar-icon">
-                  {% include 'icons/topbar-github.svg' %}
+                  {% include "icons/topbar-github.svg" %}
                 </span>
               </a>
               <a href="https://discord.gg/EGg4rhmpC2"
@@ -111,7 +113,7 @@
                  data-position="bottom"
                  data-tooltip="{% trans "Discord" %}">
                 <span class="topbar-icon">
-                  {% include 'icons/topbar-discord.svg' %}
+                  {% include "icons/topbar-discord.svg" %}
                 </span>
               </a>
               <a href="https://www.reddit.com/r/Apprise/"
@@ -121,7 +123,7 @@
                  data-position="bottom"
                  data-tooltip="{% trans "Reddit" %}">
                 <span class="topbar-icon">
-                  {% include 'icons/topbar-reddit.svg' %}
+                  {% include "icons/topbar-reddit.svg" %}
                 </span>
               </a>
               <span class="nav-divider mobile-nav-divider" aria-hidden="true"></span>
@@ -143,10 +145,10 @@
                  data-position="bottom"
                  data-tooltip="{% trans "Toggle light / dark theme" %}">
                 <span class="topbar-icon">
-                  {% include 'icons/topbar-theme.svg' %}
+                  {% include "icons/topbar-theme.svg" %}
                 </span>
               </a>
-              {% if AUTH_ENABLED and AUTH_PERMISSION != 'disabled' %}
+              {% if AUTH_ENABLED and AUTH_PERMISSION != "disabled" %}
                 {# Keep session controls together after the theme toggle. #}
                 <span class="nav-divider auth-divider" aria-hidden="true"></span>
                 <span class="auth-session-nav">
@@ -155,7 +157,7 @@
                        href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
                        aria-label="{% trans "Open Authentication Settings" %}">
                       <span class="auth-account-icon" aria-hidden="true">
-                        {% include 'icons/user.svg' %}
+                        {% include "icons/user.svg" %}
                       </span>
                       <span class="auth-account-name">{{ AUTH_USERNAME }}</span>
                     </a>
@@ -164,17 +166,17 @@
                     <button class="auth-logout-link tooltipped"
                             type="submit"
                             aria-label="{% trans "Logout" %}"
-                            data-position="bottom"
+                            data-position="left"
                             data-tooltip="{% trans "Logout" %}">
                       <span class="auth-logout-icon" aria-hidden="true">
-                        {% include 'icons/logout.svg' %}
+                        {% include "icons/logout.svg" %}
                       </span>
                     </button>
                   </form>
                 </span>
                 <template id="logout-confirm-icon-template">
                   <span class="logout-confirm-icon" aria-hidden="true">
-                    {% include 'icons/logout.svg' %}
+                    {% include "icons/logout.svg" %}
                   </span>
                 </template>
               {% endif %}
@@ -223,20 +225,20 @@
               <div class="mobile-menu-drawer-heading">
                 <strong>{% trans "Navigation" %}</strong>
               </div>
-              {% if STATEFUL_MODE != 'disabled' %}
+              {% if STATEFUL_MODE != "disabled" %}
                 <div class="side-nav-label">{% trans "Site Controls" %}</div>
                 <nav class="side-nav-group">
                   <a class="side-nav-item"
                      href="{% if COOKIE_CONFIG_URLS %}{% url 'config_current' %}{% else %}{% url 'config' DEFAULT_CONFIG_ID %}{% endif %}">
                     <span class="menu-icon">
-                      {% include 'icons/settings.svg' %}
+                      {% include "icons/settings.svg" %}
                     </span>
                     <span class="side-nav-text">{% trans "Configuration Manager" %}</span>
                   </a>
-                  {% if not CONFIG_LOCK and AUTH_PERMISSION != 'user' %}
+                  {% if not CONFIG_LOCK and AUTH_PERMISSION != "user" %}
                     <a class="side-nav-item" id="cfg-gen" href="{% url 'config_current' %}">
                       <span class="menu-icon">
-                        {% include 'icons/refresh.svg' %}
+                        {% include "icons/refresh.svg" %}
                       </span>
                       <span class="side-nav-text">{% trans "New Configuration" %}</span>
                     </a>
@@ -246,7 +248,7 @@
                        id="cfg-auth"
                        href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}">
                       <span class="menu-icon">
-                        {% include 'icons/lock.svg' %}
+                        {% include "icons/lock.svg" %}
                       </span>
                       <span class="side-nav-text">{% trans "Authentication" %}</span>
                     </a>
@@ -254,14 +256,14 @@
                   {% if STATEFUL_MODE == "simple" and APPRISE_ADMIN and CAN_LIST_CONFIGS %}
                     <a class="side-nav-item" id="cfg-list" href="{% url 'config_list' %}">
                       <span class="menu-icon">
-                        {% include 'icons/list.svg' %}
+                        {% include "icons/list.svg" %}
                       </span>
                       <span class="side-nav-text">{% trans "Configuration List" %}</span>
                     </a>
                   {% endif %}
                   <a class="side-nav-item" href="{% url 'details' %}">
                     <span class="menu-icon">
-                      {% include 'icons/search.svg' %}
+                      {% include "icons/search.svg" %}
                     </span>
                     <span class="side-nav-text">{% trans "Available Plugins" %}</span>
                   </a>
@@ -274,7 +276,7 @@
                    rel="noopener noreferrer"
                    href="https://appriseit.com/services/">
                   <span class="menu-icon">
-                    {% include 'icons/bell.svg' %}
+                    {% include "icons/bell.svg" %}
                   </span>
                   <span class="side-nav-text">{% trans "Notification Services" %}</span>
                 </a>
@@ -283,7 +285,7 @@
                    rel="noopener noreferrer"
                    href="https://appriseit.com/config/">
                   <span class="menu-icon">
-                    {% include 'icons/book-open.svg' %}
+                    {% include "icons/book-open.svg" %}
                   </span>
                   <span class="side-nav-text">{% trans "Configuration Help" %}</span>
                 </a>
@@ -292,7 +294,7 @@
                    rel="noopener noreferrer"
                    href="https://appriseit.com/getting-started/">
                   <span class="menu-icon">
-                    {% include 'icons/library.svg' %}
+                    {% include "icons/library.svg" %}
                   </span>
                   <span class="side-nav-text">{% trans "Documentation" %}</span>
                 </a>
@@ -301,7 +303,7 @@
                    rel="noopener noreferrer"
                    href="https://appriseit.com/url-builder/">
                   <span class="menu-icon">
-                    {% include 'icons/tool.svg' %}
+                    {% include "icons/tool.svg" %}
                   </span>
                   <span class="side-nav-text">{% trans "Apprise URL Builder" %}</span>
                 </a>
@@ -321,7 +323,7 @@
                    rel="noopener noreferrer"
                    href="https://www.paypal.com/donate/?hosted_button_id=CR6YF7KLQWQ5E">
                   <span class="menu-icon menu-icon--coffee">
-                    {% include 'icons/coffee.svg' %}
+                    {% include "icons/coffee.svg" %}
                   </span>
                   <strong class="side-nav-text">{% trans "Buy Developer A Coffee" %}</strong>
                 </a>
@@ -330,7 +332,7 @@
                    rel="noopener noreferrer"
                    href="https://github.com/sponsors/caronc">
                   <span class="menu-icon menu-icon--heart">
-                    {% include 'icons/heart.svg' %}
+                    {% include "icons/heart.svg" %}
                   </span>
                   <strong class="side-nav-text">{% trans "Sponsor Apprise Development" %}</strong>
                 </a>
@@ -349,7 +351,7 @@
                   <li class="notification_modes" style="display: none">
                     <strong>
                       <span class="health-check-icon health-check-icon--error">
-                        {% include 'icons/status-error.svg' %}
+                        {% include "icons/status-error.svg" %}
                       </span>
                       {% trans "Notification Delivery Disabled" %}
                     </strong>
@@ -360,7 +362,7 @@
                   <li class="can_write_config" style="display: none">
                     <strong>
                       <span class="health-check-icon health-check-icon--error">
-                        {% include 'icons/status-error.svg' %}
+                        {% include "icons/status-error.svg" %}
                       </span>
                       {% trans "Configuration Write Failure" %}
                     </strong>
@@ -382,7 +384,7 @@
                   <li class="can_write_attach" style="display: none">
                     <strong>
                       <span class="health-check-icon health-check-icon--error">
-                        {% include 'icons/status-error.svg' %}
+                        {% include "icons/status-error.svg" %}
                       </span>
                       {% trans "Attachment Temporary Storage Write Failure" %}
                     </strong>
@@ -429,20 +431,78 @@
               </div>
               {% block body %}
               {% endblock body %}
-              {% include 'components/legal_footer.html' %}
+              {% include "components/legal_footer.html" %}
             </div>
           {% endblock main_page %}
         {% endblock layout %}
       </div>
     </div>
-    {% include 'components/mobile_beta_dialog.html' %}
+    {% include "components/mobile_beta_dialog.html" %}
 
     {# Script Block 1 - Itentionally done this way to work nicely with djlint #}
     {# djlint:off #}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        function escapedTooltipText(text) {
+            const holder = document.createElement('span');
+            holder.textContent = text;
+            return holder.innerHTML;
+        }
+
+        function prepareTooltip(element, text, initialize) {
+            if (!element || !text) return;
+            const safeText = escapedTooltipText(text);
+            element.removeAttribute('title');
+            element.classList.add('tooltipped');
+            element.dataset.position = element.dataset.position || 'bottom';
+            element.dataset.tooltip = safeText;
+
+            if (!initialize) return;
+            const instance = M.Tooltip.getInstance(element);
+            if (instance) {
+                instance.options.html = safeText;
+                instance.tooltipEl.innerHTML = safeText;
+            } else {
+                M.Tooltip.init(element);
+            }
+        }
+
+        window.appriseSetTooltip = function(element, text) {
+            prepareTooltip(element, text, true);
+        };
+
+        // Give every browser title the same themed tooltip treatment.
+        document.querySelectorAll('[title]').forEach(function(element) {
+            prepareTooltip(element, element.getAttribute('title'), false);
+        });
+
         // Materialize Init
         M.AutoInit();
+
+        // Apply the same treatment to controls added or renamed later.
+        const tooltipObserver = new MutationObserver(function(records) {
+            records.forEach(function(record) {
+                if (record.type === 'attributes') {
+                    window.appriseSetTooltip(record.target, record.target.getAttribute('title'));
+                    return;
+                }
+                record.addedNodes.forEach(function(node) {
+                    if (!(node instanceof Element)) return;
+                    if (node.hasAttribute('title')) {
+                        window.appriseSetTooltip(node, node.getAttribute('title'));
+                    }
+                    node.querySelectorAll('[title]').forEach(function(element) {
+                        window.appriseSetTooltip(element, element.getAttribute('title'));
+                    });
+                });
+            });
+        });
+        tooltipObserver.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['title'],
+            childList: true,
+            subtree: true
+        });
 
         // Pointer-activated controls should return to their resting appearance
         // after the click. Keyboard focus remains intact and uses :focus-visible.
@@ -505,7 +565,7 @@
             }
         })();
 
-        // Ensure icon-only mobile menu still exposes labels via native tooltip
+        // Keep navigation accessible without repeating its visible labels as tooltips.
         (function() {
             document.querySelectorAll('.side-menu .side-nav-item').forEach(function(link) {
                 const label = link.querySelector('.side-nav-text');
@@ -513,8 +573,7 @@
                     return;
                 }
                 const text = label.textContent.trim();
-                if (text.length > 0 && !link.getAttribute('title')) {
-                    link.setAttribute('title', text);
+                if (text.length > 0 && !link.getAttribute('aria-label')) {
                     link.setAttribute('aria-label', text);
                 }
             });
@@ -697,11 +756,17 @@
   function appriseFire(options) {
     const requested = options || {};
     const isToast = requested.toast === true;
+    const effectiveIcon = Object.prototype.hasOwnProperty.call(
+      appriseStatusIconHtml,
+      requested.icon
+    ) ? requested.icon : (isToast ? 'info' : null);
     if (!isToast && typeof window.appriseCloseMobileMenu === 'function') {
       window.appriseCloseMobileMenu();
     }
     const popupClasses = [];
-    if (!isToast) {
+    if (isToast) {
+      popupClasses.push('apprise-toast', 'apprise-toast--' + effectiveIcon);
+    } else {
       popupClasses.push('apprise-popup');
       if (requested.icon) {
         popupClasses.push('apprise-popup--status');
@@ -718,10 +783,7 @@
     }
 
     const customClass = Object.assign({}, requested.customClass || {});
-    const usesStatusIcon = Object.prototype.hasOwnProperty.call(
-      appriseStatusIconHtml,
-      requested.icon
-    ) && !requested.iconHtml;
+    const usesStatusIcon = effectiveIcon && !requested.iconHtml;
     if (popupClasses.length) {
       customClass.popup = [customClass.popup || '', popupClasses.join(' ')]
         .join(' ').trim();
@@ -736,7 +798,8 @@
       reverseButtons: !isToast
     }, requested, {customClass: customClass});
     if (usesStatusIcon) {
-      settings.iconHtml = appriseStatusIconHtml[requested.icon];
+      settings.icon = effectiveIcon;
+      settings.iconHtml = appriseStatusIconHtml[effectiveIcon];
       settings.showClass = Object.assign({}, settings.showClass || {}, {icon: ''});
     }
     delete settings.appriseTask;
@@ -1397,28 +1460,45 @@
   }
 
   function appriseShowCopyToast(message) {
-    if (window.M && M.toast) {
-      M.toast({ html: message || '{% trans "Copied to clipboard" %}' });
-    }
+    appriseShowToast(message || '{% trans "Copied to clipboard" %}', 'info', 2200);
   }
 
-  // Non-blocking success/failure notice
-  function appriseShowStatusToast(message, isSuccess) {
-    if (window.Swal && Swal.fire) {
+  // Show short, consistently placed feedback without interrupting the current task.
+  function appriseShowToast(message, status, duration) {
+    const supported = ['success', 'error', 'warning', 'info'];
+    const type = supported.includes(status) ? status : 'info';
+    const activePopup = window.Swal && Swal.getPopup ? Swal.getPopup() : null;
+    const modalIsOpen = activePopup && !activePopup.classList.contains('swal2-toast');
+    if (window.Swal && Swal.fire && !modalIsOpen) {
       appriseFire({
         toast: true,
-        position: 'top-end',
-        icon: isSuccess ? 'success' : 'error',
+        position: 'top',
+        icon: type,
         title: message,
         showConfirmButton: false,
-        timer: 3500,
+        timer: duration || 3500,
         timerProgressBar: true
       });
       return;
     }
     if (window.M && M.toast) {
-      M.toast({ html: message, classes: isSuccess ? 'green darken-1' : 'red darken-1' });
+      const safeMessage = document.createElement('span');
+      safeMessage.textContent = message;
+      M.toast({
+        html: '<span class="apprise-toast-fallback-icon" aria-hidden="true">'
+          + appriseStatusIconHtml[type] + '</span>' + safeMessage.outerHTML,
+        classes: 'apprise-toast-fallback apprise-toast--' + type,
+        displayLength: duration || 3500
+      });
     }
+  }
+
+  // Accept the existing boolean form while allowing an explicit status name.
+  function appriseShowStatusToast(message, status) {
+    appriseShowToast(
+      message,
+      typeof status === 'string' ? status : (status ? 'success' : 'error')
+    );
   }
 
   // Extracts a JSON error response's {error, field}

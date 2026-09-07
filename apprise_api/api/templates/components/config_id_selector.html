@@ -58,7 +58,7 @@
             title="{% trans "Copy Config ID to Clipboard" %}">
       <i class="material-icons" aria-hidden="true">content_copy</i>
     </button>
-    {% if STATEFUL_MODE != 'disabled' %}
+    {% if STATEFUL_MODE != "disabled" %}
       <button type="button"
               class="btn-flat btn-small config-id-qr"
               tabindex="-1"
@@ -67,7 +67,7 @@
               aria-label="{% trans "Show Apprise Mobile Quick Config" %}"
               title="{% trans "Show Apprise Mobile Quick Config" %}">
         <span class="config-id-qr-icon" aria-hidden="true">
-          {% include 'icons/qrcode.svg' %}
+          {% include "icons/qrcode.svg" %}
         </span>
       </button>
     {% endif %}
