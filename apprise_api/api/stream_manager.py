@@ -24,6 +24,8 @@
 
 import threading
 
+from .exceptions import AppriseAPIImproperlyConfigured
+
 
 class StreamManager:
     """
@@ -39,11 +41,11 @@ class StreamManager:
         """Create limits for running and waiting streams."""
         # At least one stream must be able to run.
         if capacity < 1:
-            raise ValueError("capacity must be at least 1")
+            raise AppriseAPIImproperlyConfigured("capacity must be at least 1")
 
         # A zero-sized queue rejects streams as soon as every worker is busy.
         if queue_size < 0:
-            raise ValueError("queue_size must not be negative")
+            raise AppriseAPIImproperlyConfigured("queue_size must not be negative")
 
         # Limit streams that are actively sending notifications.
         self._worker_semaphore = threading.BoundedSemaphore(capacity)

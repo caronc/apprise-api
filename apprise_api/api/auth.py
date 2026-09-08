@@ -40,6 +40,8 @@ from django.contrib.auth.hashers import check_password
 from django.core import signing
 from django.http import HttpRequest
 
+from .exceptions import AppriseAPIImproperlyConfigured, AppriseAPIStorageError
+
 logger = logging.getLogger("django")
 
 
@@ -55,15 +57,15 @@ class ConfigCredentialVerifier:
         """Create a bounded verifier with a fixed lifetime for each result."""
         # Validate arguments before creating any internal state.
         if not isinstance(max_entries, int) or isinstance(max_entries, bool) or max_entries < 1:
-            raise ValueError("max_entries must be at least one")
+            raise AppriseAPIImproperlyConfigured("max_entries must be at least one")
         if not isinstance(ttl, (int, float)) or isinstance(ttl, bool) or not math.isfinite(ttl) or ttl <= 0:
-            raise ValueError("ttl must be greater than zero")
+            raise AppriseAPIImproperlyConfigured("ttl must be greater than zero")
         if secret is not None and (not isinstance(secret, bytes) or len(secret) < 32):
-            raise ValueError("secret must contain at least 32 bytes")
+            raise AppriseAPIImproperlyConfigured("secret must contain at least 32 bytes")
         if clock is not None and not callable(clock):
-            raise ValueError("clock must be callable")
+            raise AppriseAPIImproperlyConfigured("clock must be callable")
         if password_checker is not None and not callable(password_checker):
-            raise ValueError("password_checker must be callable")
+            raise AppriseAPIImproperlyConfigured("password_checker must be callable")
 
         # Keep the cache small to limit how many results remain reusable.
         self.max_entries = max_entries
@@ -225,7 +227,7 @@ class ConfigCredentialVerifier:
             return False
 
 
-class AuthStorageError(Exception):
+class AuthStorageError(AppriseAPIStorageError):
     """Raised when an existing configuration access record cannot be read."""
 
 

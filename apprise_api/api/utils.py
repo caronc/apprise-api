@@ -46,6 +46,7 @@ from django.http import HttpRequest
 import requests
 
 from .auth import Authentication, AuthStorageError, ConfigAuthRecord
+from .exceptions import AppriseAPIImproperlyConfigured, AppriseAPIStorageError
 from .urlfilter import AppriseURLFilter
 
 # Get an instance of a logger
@@ -234,7 +235,9 @@ class Attachment(A_MGR["file"]):
 
         except OSError:
             # Permission error
-            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)) from None
+            raise AppriseAPIImproperlyConfigured(
+                "Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)
+            ) from None
 
         if not path:
             try:
@@ -243,7 +246,7 @@ class Attachment(A_MGR["file"]):
                 os.close(d)
 
             except FileNotFoundError:
-                raise ValueError(
+                raise AppriseAPIImproperlyConfigured(
                     "Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR)
                 ) from None
 
@@ -299,7 +302,9 @@ class HTTPAttachment(A_MGR["http"]):
 
         except OSError:
             # Permission error
-            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)) from None
+            raise AppriseAPIImproperlyConfigured(
+                "Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)
+            ) from None
 
         try:
             d, self._path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
@@ -307,7 +312,7 @@ class HTTPAttachment(A_MGR["http"]):
             os.close(d)
 
         except FileNotFoundError:
-            raise ValueError(
+            raise AppriseAPIImproperlyConfigured(
                 "Could not prepare {} attachment in {}".format(effective_name, settings.APPRISE_ATTACH_DIR)
             ) from None
 
@@ -393,7 +398,7 @@ def parse_attachments(attachment_payload, files_request):
             return []
 
         # Otherwise we need to raise an error
-        raise ValueError("Attachment support has been disabled")
+        raise AppriseAPIImproperlyConfigured("Attachment support has been disabled")
 
     # Determine how many files we have in the request.FILES
     file_count = 0
@@ -412,7 +417,7 @@ def parse_attachments(attachment_payload, files_request):
         count += 1
 
     if settings.APPRISE_MAX_ATTACHMENTS > 0 and count > settings.APPRISE_MAX_ATTACHMENTS:
-        raise ValueError(f"There is a maximum of {settings.APPRISE_MAX_ATTACHMENTS} attachments")
+        raise AppriseAPIImproperlyConfigured(f"There is a maximum of {settings.APPRISE_MAX_ATTACHMENTS} attachments")
 
     if isinstance(attachment_payload, tuple | list | set):
         for no, entry in enumerate(attachment_payload, start=1):
@@ -425,19 +430,23 @@ def parse_attachments(attachment_payload, files_request):
 
                     # Max filename size is 250
                     if len(filename) > 250:
-                        raise ValueError(f"The filename associated with attachment {no} is too long")
+                        raise AppriseAPIImproperlyConfigured(
+                            f"The filename associated with attachment {no} is too long"
+                        )
 
                     elif not filename:
                         filename = f"attachment.{no:03d}"
 
                 except AttributeError:
                     # not a string that was provided
-                    raise ValueError(f"An invalid filename was provided for attachment {no}") from None
+                    raise AppriseAPIImproperlyConfigured(
+                        f"An invalid filename was provided for attachment {no}"
+                    ) from None
 
             else:
                 # you must pass in a base64 string, or a dict containing our
                 # required parameters
-                raise ValueError(f"An invalid filename was provided for attachment {no}")
+                raise AppriseAPIImproperlyConfigured(f"An invalid filename was provided for attachment {no}")
 
             #
             # Prepare our Attachment
@@ -453,11 +462,11 @@ def parse_attachments(attachment_payload, files_request):
 
                 if not re.match(r"^https?://.+", entry[:10], re.I):
                     # We failed to retrieve the product
-                    raise ValueError(f"Failed to load attachment {no} (not web request): {entry}")
+                    raise AppriseAPIImproperlyConfigured(f"Failed to load attachment {no} (not web request): {entry}")
 
                 if not ATTACH_URL_FILTER.is_allowed(entry):
                     # We are not allowed to use this entry
-                    raise ValueError(f"Denied attachment {no} (blocked web request): {entry}")
+                    raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (blocked web request): {entry}")
 
                 # Apprise sanitizes ``?name=`` and ignores empty values.
                 _parsed = A_MGR["http"].parse_url(entry)
@@ -471,7 +480,7 @@ def parse_attachments(attachment_payload, files_request):
                 attachment = HTTPAttachment(**_parsed)
                 if not attachment:
                     # We failed to retrieve the attachment
-                    raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
+                    raise AppriseAPIImproperlyConfigured(f"Failed to retrieve attachment {no}: {entry}")
 
             else:  # web, base64 or raw
                 attachment = Attachment(filename)
@@ -485,7 +494,7 @@ def parse_attachments(attachment_payload, files_request):
                         elif isinstance(entry, dict) and AttachmentPayload.URL in entry:
                             if not ATTACH_URL_FILTER.is_allowed(entry[AttachmentPayload.URL]):
                                 # We are not allowed to use this entry
-                                raise ValueError(
+                                raise AppriseAPIImproperlyConfigured(
                                     f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
                                 )
 
@@ -505,27 +514,31 @@ def parse_attachments(attachment_payload, files_request):
                             attachment = HTTPAttachment(**_parsed)
                             if not attachment:
                                 # We failed to retrieve the attachment
-                                raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
+                                raise AppriseAPIImproperlyConfigured(f"Failed to retrieve attachment {no}: {entry}")
 
                         elif isinstance(entry, bytes):
                             # RAW
                             f.write(entry)
 
                         else:
-                            raise ValueError(f"Invalid filetype was provided for attachment {filename}")
+                            raise AppriseAPIImproperlyConfigured(
+                                f"Invalid filetype was provided for attachment {filename}"
+                            )
 
                 except binascii.Error:
                     # The file ws not base64 encoded
-                    raise ValueError(f"Invalid filecontent was provided for attachment {filename}") from None
+                    raise AppriseAPIImproperlyConfigured(
+                        f"Invalid filecontent was provided for attachment {filename}"
+                    ) from None
 
                 except OSError:
-                    raise ValueError(f"Could not write attachment {filename} to disk") from None
+                    raise AppriseAPIImproperlyConfigured(f"Could not write attachment {filename} to disk") from None
 
                 #
                 # Some Validation
                 #
                 if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-                    raise ValueError(f"attachment {filename}'s filesize is to large")
+                    raise AppriseAPIImproperlyConfigured(f"attachment {filename}'s filesize is to large")
 
             # Add our attachment
             attachments.append(attachment)
@@ -548,13 +561,13 @@ def parse_attachments(attachment_payload, files_request):
 
             # Max filename size is 250
             if len(filename) > 250:
-                raise ValueError(f"The filename associated with attachment {no} is too long")
+                raise AppriseAPIImproperlyConfigured(f"The filename associated with attachment {no} is too long")
 
             elif not filename:
                 filename = f"attachment.{no:03d}"
 
         except (AttributeError, TypeError):
-            raise ValueError(f"An invalid filename was provided for attachment {no}") from None
+            raise AppriseAPIImproperlyConfigured(f"An invalid filename was provided for attachment {no}") from None
 
         # lower() protects case from the Apprise case sensitive guessing:
         #  - Content-Type: Image/JPEG
@@ -572,13 +585,13 @@ def parse_attachments(attachment_payload, files_request):
                 f.write(meta.read())
 
         except OSError:
-            raise ValueError(f"Could not write attachment {filename} to disk") from None
+            raise AppriseAPIImproperlyConfigured(f"Could not write attachment {filename} to disk") from None
 
         #
         # Some Validation
         #
         if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-            raise ValueError(f"attachment {filename}'s filesize is to large")
+            raise AppriseAPIImproperlyConfigured(f"attachment {filename}'s filesize is to large")
 
         # Add our attachment
         attachments.append(attachment)
@@ -1444,7 +1457,7 @@ class AppriseConfigCache:
                     raise
                 except OSError as e:
                     if not self._exclusive_copy(stage, destination):
-                        raise OSError("could not publish staged move") from e
+                        raise AppriseAPIStorageError("could not publish staged move") from e
                 published.append(destination)
 
         except OSError as e:
@@ -1607,7 +1620,7 @@ def send_webhook(payload):
 
                 # Never send JSON after an incomplete write.
                 if body.write(value) != len(value):
-                    raise OSError("Incomplete webhook temporary-file write.")
+                    raise AppriseAPIStorageError("Incomplete webhook temporary-file write.")
 
             # Rewind so the request reads from the beginning.
             body.seek(0)

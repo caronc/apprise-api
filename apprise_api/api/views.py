@@ -48,6 +48,7 @@ from django.views.decorators.gzip import gzip_page
 from error.views import Error421View
 
 from .auth import Authentication
+from .exceptions import AppriseAPIImproperlyConfigured, AppriseAPIStorageError
 from .forms import (
     AUTO_DETECT_CONFIG_KEYWORD,
     CONFIG_FORMATS,
@@ -252,7 +253,7 @@ class _SpooledEventQueue:
                     # Write after the last complete event.
                     self._spool.seek(previous_offset)
                     if self._spool.write(record) != len(record):
-                        raise OSError("Temporary storage accepted an incomplete event.")
+                        raise AppriseAPIStorageError("Temporary storage accepted an incomplete event.")
                 except (OSError, ValueError) as error:
                     # Remove a partial tail while preserving earlier events.
                     try:
@@ -335,7 +336,7 @@ class _SpooledEventQueue:
                     size_data = self._spool.read(_EVENT_SIZE.size)
 
                     if len(size_data) != _EVENT_SIZE.size:
-                        raise OSError("Incomplete event size in temporary storage.")
+                        raise AppriseAPIStorageError("Incomplete event size in temporary storage.")
 
                     size = _EVENT_SIZE.unpack(size_data)[0]
 
@@ -343,7 +344,7 @@ class _SpooledEventQueue:
                     payload = self._spool.read(size)
 
                     if len(payload) != size:
-                        raise OSError("Incomplete event in temporary storage.")
+                        raise AppriseAPIStorageError("Incomplete event in temporary storage.")
 
                     # Events were stored as UTF-8 text by put().
                     event = payload.decode("utf-8")
@@ -486,7 +487,7 @@ def parse_tag_expression(tag):
     [priority:]tag[:retry].
     """
     if not isinstance(tag, str) or not TAG_VALIDATION_RE.match(tag):
-        raise ValueError("Unsupported characters found in tag definition")
+        raise AppriseAPIImproperlyConfigured("Unsupported characters found in tag definition")
 
     tags = []
     for group in TAG_OR_DELIM_RE.split(tag):
@@ -496,7 +497,7 @@ def parse_tag_expression(tag):
 
         tokens = [token for token in TAG_AND_DELIM_RE.split(group) if token]
         if not tokens or any(not TAG_TOKEN_RE.match(token) for token in tokens):
-            raise ValueError("Unsupported characters found in tag definition")
+            raise AppriseAPIImproperlyConfigured("Unsupported characters found in tag definition")
 
         tags.append(tuple(tokens) if len(tokens) > 1 else tokens[0])
 
@@ -2987,7 +2988,22 @@ def _deliver_notification(request, a_obj, content, attach, json_response, stream
             **notify_kwargs,
         )
 
-    result = a_obj.notify(content.get("body"), **notify_kwargs)
+    try:
+        result = a_obj.notify(content.get("body"), **notify_kwargs)
+
+    except apprise.exception.AppriseException as e:
+        logger.error(
+            "NOTIFY - %s - Notification delivery failed%s: %s",
+            request.META["REMOTE_ADDR"],
+            "" if key is None else f" using KEY: {key}",
+            e,
+        )
+        return error_response(
+            request,
+            _("An error occurred delivering the notification"),
+            ResponseCode.bad_request,
+        )
+
     send_notify_webhook(request.META.get("REMOTE_ADDR", ""), result)
 
     if not result:
@@ -3129,10 +3145,10 @@ def _notify_tag(request, content, key=None, require_specific=False):
         elif isinstance(tag, list | set | tuple):
             items = _tag_expression_items(tag)
             if not items or any(not TAG_TOKEN_RE.match(item) for item in items):
-                raise ValueError
+                raise AppriseAPIImproperlyConfigured("Invalid tag token")
             normalized = tag
         elif tag:
-            raise ValueError
+            raise AppriseAPIImproperlyConfigured("Invalid tag value")
         else:
             normalized = None
     except ValueError:
@@ -3256,7 +3272,7 @@ def _notify_asset(request, body_format, persistent):
     try:
         recursion = int(recursion)
         if recursion < 0:
-            raise TypeError("Invalid Recursion Value")
+            raise AppriseAPIImproperlyConfigured("Invalid Recursion Value")
         if recursion > settings.APPRISE_RECURSION_MAX:
             logger.warning(
                 "NOTIFY - %s - Recursion limit reached (%d > %d)",
@@ -3288,7 +3304,16 @@ def _notify_asset(request, body_format, persistent):
     apply_global_filters()
     kwargs["result_log_memory_size"] = settings.APPRISE_STREAM_MEMORY_SIZE
     kwargs["result_log_disk_size"] = settings.APPRISE_STREAM_DISK_SIZE
-    return apprise.AppriseAsset(**kwargs), None
+    try:
+        return apprise.AppriseAsset(**kwargs), None
+
+    except apprise.exception.AppriseException as e:
+        logger.error("NOTIFY - %s - Could not prepare Apprise asset: %s", request.META["REMOTE_ADDR"], e)
+        return None, error_response(
+            request,
+            _("An error occurred preparing the notification"),
+            ResponseCode.internal_server_error,
+        )
 
 
 @method_decorator((gzip_page, never_cache), name="dispatch")

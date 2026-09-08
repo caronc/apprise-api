@@ -30,6 +30,8 @@ import threading
 
 from apprise.utils.parse import parse_url
 
+from .exceptions import AppriseAPIImproperlyConfigured
+
 logger = logging.getLogger("django")
 
 # A reserved deny-list token; see the "internal" entry in the
@@ -58,7 +60,7 @@ _MAX_HOST_LENGTH = 255
 _MAX_URL_LENGTH = 4096
 
 
-class _TooManyWildcardsError(Exception):
+class _TooManyWildcardsError(AppriseAPIImproperlyConfigured):
     """Raised when a glob segment has more wildcards than is ever legitimate."""
 
 

@@ -208,6 +208,36 @@ class NotifyTests(SimpleTestCase):
         assert captured["result_log_memory_size"] == 17
         assert captured["result_log_disk_size"] == 29
 
+    def test_notify_asset_error_response(self):
+        """Asset setup failures return a safe 500 response."""
+        with mock.patch(
+            "apprise.AppriseAsset",
+            side_effect=apprise.exception.AppriseException("bad asset settings"),
+        ):
+            response = self.client.post(
+                "/notify",
+                data=json.dumps({"urls": "json://user:pass@localhost", "body": "Body"}),
+                content_type="application/json",
+            )
+
+        assert response.status_code == 500
+        assert json.loads(response.content)["error"]
+
+    def test_notify_delivery_error_response(self):
+        """Delivery failures return a safe 400 response."""
+        with mock.patch(
+            "apprise.Apprise.notify",
+            side_effect=apprise.exception.AppriseException("delivery failed"),
+        ):
+            response = self.client.post(
+                "/notify",
+                data=json.dumps({"urls": "json://user:pass@localhost", "body": "Body"}),
+                content_type="application/json",
+            )
+
+        assert response.status_code == 400
+        assert json.loads(response.content)["error"]
+
     def test_tag_expression_preserves_logic(self):
         """
         Advanced tag tokens should not change existing OR/AND behavior.
