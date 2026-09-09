@@ -23,6 +23,8 @@
 # THE SOFTWARE.
 import base64
 from contextlib import suppress
+import errno
+import io
 import os
 from os.path import dirname, getsize, join
 from shutil import rmtree
@@ -39,10 +41,30 @@ from django.utils.datastructures import MultiValueDict
 import requests
 
 from .. import utils
+from ..exceptions import (
+    AppriseAPIImproperlyConfigured,
+    AppriseAPIStorageError,
+)
 from ..urlfilter import AppriseURLFilter
 from ..utils import Attachment, HTTPAttachment, parse_attachments
 
 SAMPLE_FILE = join(dirname(dirname(dirname(__file__))), "static", "logo.png")
+
+
+class _ChunkedUpload:
+    """Small controllable stand-in for Django's UploadedFile."""
+
+    name = "attach.bin"
+    content_type = "application/octet-stream"
+
+    def __init__(self, chunks, size=None):
+        self._chunks = chunks
+        self.size = size
+        self.requested_chunk_size = None
+
+    def chunks(self, chunk_size=None):
+        self.requested_chunk_size = chunk_size
+        yield from self._chunks
 
 
 class AttachmentTests(SimpleTestCase):
@@ -77,15 +99,15 @@ class AttachmentTests(SimpleTestCase):
 
         with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
             with mock.patch("os.makedirs", side_effect=OSError):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(AppriseAPIImproperlyConfigured):
                     Attachment("file")
-                with self.assertRaises(ValueError):
+                with self.assertRaises(AppriseAPIImproperlyConfigured):
                     HTTPAttachment("web")
 
             with mock.patch("tempfile.mkstemp", side_effect=FileNotFoundError):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(AppriseAPIImproperlyConfigured):
                     Attachment("file")
-                with self.assertRaises(ValueError):
+                with self.assertRaises(AppriseAPIImproperlyConfigured):
                     HTTPAttachment("web")
 
             with mock.patch("os.remove", side_effect=FileNotFoundError):
@@ -151,7 +173,7 @@ class AttachmentTests(SimpleTestCase):
         # attachment to disk
         m = mock_open()
         m.side_effect = OSError()
-        with patch("builtins.open", m), self.assertRaises(ValueError):
+        with patch("builtins.open", m), self.assertRaises(AppriseAPIStorageError):
             parse_attachments(None, files_request)
 
         # Test a case where our attachment exceeds the maximum size we allow
@@ -160,33 +182,293 @@ class AttachmentTests(SimpleTestCase):
             files_request = {
                 "file1": SimpleUploadedFile(
                     "attach.txt",
-                    # More then 1 MB in size causing error to trip
+                    # More than the configured one-byte limit.
                     ("content" * 1024 * 1024).encode("utf-8"),
                     content_type="text/plain",
                 )
             }
-            with self.assertRaises(ValueError):
+            with self.assertRaises(AppriseAPIImproperlyConfigured):
                 parse_attachments(None, files_request)
 
-        # Test Attachment Size seto t zer0
+        # Disabled attachment support rejects uploaded files.
         with override_settings(APPRISE_ATTACH_SIZE=0):
             files_request = {
                 "file1": SimpleUploadedFile(
                     "attach.txt",
-                    # More then 1 MB in size causing error to trip
+                    # Content size does not matter while support is disabled.
                     ("content" * 1024 * 1024).encode("utf-8"),
                     content_type="text/plain",
                 )
             }
-            with self.assertRaises(ValueError):
+            with self.assertRaises(AppriseAPIImproperlyConfigured):
                 parse_attachments(None, files_request)
 
         # Bad data provided in filename field
         files_request = {"file1": SimpleUploadedFile(None, b"content here", content_type="text/plain")}
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(None, files_request)
 
-    @patch("requests.get")
+    def test_form_upload_streams_chunks_at_exact_limit(self):
+        """Chunked uploads may reach, but never exceed, the byte limit."""
+        upload = _ChunkedUpload(
+            (b"ab", b"", bytearray(b"cd"), memoryview(b"ef")),
+            size=None,
+        )
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=6,
+            ),
+        ):
+            result = parse_attachments(None, {"file1": upload})
+
+        self.assertEqual(result[0].size, 6)
+        self.assertEqual(upload.requested_chunk_size, 7)
+
+    def test_form_upload_rejects_advertised_oversize_before_read(self):
+        """Reliable size metadata avoids unnecessary reads and disk writes."""
+        upload = _ChunkedUpload((b"unused",), size=5)
+        upload.chunks = mock.Mock(side_effect=AssertionError("must not read"))
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=4,
+            ),
+            self.assertRaisesRegex(
+                AppriseAPIImproperlyConfigured,
+                "file size is too large",
+            ),
+        ):
+            parse_attachments(None, {"file1": upload})
+
+        upload.chunks.assert_not_called()
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_rejects_understated_oversize_during_stream(self):
+        """The streamed byte count overrides dishonest size metadata."""
+        upload = _ChunkedUpload((b"ab", b"cde"), size=1)
+
+        sizes_before_cleanup = []
+
+        def remove_partial(path):
+            sizes_before_cleanup.append(os.path.getsize(path))
+            os.unlink(path)
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=4,
+            ),
+            patch("os.remove", side_effect=remove_partial),
+            self.assertRaisesRegex(
+                AppriseAPIImproperlyConfigured,
+                "file size is too large",
+            ),
+        ):
+            parse_attachments(None, {"file1": upload})
+
+        self.assertEqual(sizes_before_cleanup, [2])
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_supports_bounded_file_reads(self):
+        """Legacy file-like uploads are read in bounded pieces."""
+
+        class FileUpload(io.BytesIO):
+            name = "attach.txt"
+            content_type = "text/plain"
+
+        upload = FileUpload(b"content")
+        with override_settings(
+            APPRISE_ATTACH_DIR=self.tmp_dir.name,
+            APPRISE_ATTACH_SIZE=7,
+        ):
+            result = parse_attachments(None, {"file1": upload})
+
+        self.assertEqual(result[0].size, 7)
+
+    def test_form_upload_rejects_missing_reader(self):
+        """Malformed upload wrappers produce a normal validation error."""
+
+        class InvalidUpload:
+            name = "attach.txt"
+            content_type = "text/plain"
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=8,
+            ),
+            self.assertRaisesRegex(
+                AppriseAPIImproperlyConfigured,
+                "Invalid file content",
+            ),
+        ):
+            parse_attachments(None, {"file1": InvalidUpload()})
+
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_rejects_non_binary_chunk(self):
+        """Only bytes-like chunks can be written to a binary attachment."""
+        upload = _ChunkedUpload(("not bytes",), size=None)
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=32,
+            ),
+            self.assertRaisesRegex(
+                AppriseAPIImproperlyConfigured,
+                "Invalid file content",
+            ),
+        ):
+            parse_attachments(None, {"file1": upload})
+
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_normalizes_reader_value_error(self):
+        """Invalid reader state is reported as invalid upload content."""
+
+        class InvalidUpload:
+            name = "attach.txt"
+            content_type = "text/plain"
+
+            def read(self, _size):
+                raise ValueError("closed upload")
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=32,
+            ),
+            self.assertRaisesRegex(
+                AppriseAPIImproperlyConfigured,
+                "Invalid file content",
+            ),
+        ):
+            parse_attachments(None, {"file1": InvalidUpload()})
+
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_normalizes_reader_io_error(self):
+        """Upload read failures use the same safe response as disk failures."""
+
+        class UnreadableUpload:
+            name = "attach.txt"
+            content_type = "text/plain"
+
+            def read(self, _size):
+                raise OSError(errno.EIO, "read failed")
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=32,
+            ),
+            self.assertRaisesRegex(
+                AppriseAPIStorageError,
+                "Could not read or write",
+            ) as caught,
+        ):
+            parse_attachments(None, {"file1": UnreadableUpload()})
+
+        self.assertEqual(caught.exception.errno, errno.EIO)
+        self.assertIsInstance(caught.exception.__cause__, OSError)
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_normalizes_disk_full_and_cleans_up(self):
+        """Disk exhaustion returns a safe error and removes the placeholder."""
+        upload = _ChunkedUpload((b"content",), size=None)
+        disk_full = OSError(errno.ENOSPC, "disk full")
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=32,
+            ),
+            patch.object(utils, "open", create=True, side_effect=disk_full),
+            self.assertRaisesRegex(
+                AppriseAPIStorageError,
+                "Could not read or write",
+            ) as caught,
+        ):
+            parse_attachments(None, {"file1": upload})
+
+        self.assertEqual(caught.exception.errno, errno.ENOSPC)
+        self.assertIs(caught.exception.__cause__, disk_full)
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_rejects_short_disk_write(self):
+        """A short filesystem write is handled like any other I/O failure."""
+        upload = _ChunkedUpload((b"content",), size=None)
+        opened = mock_open()
+        opened().write.return_value = 1
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=32,
+            ),
+            patch.object(utils, "open", opened, create=True),
+            self.assertRaisesRegex(
+                AppriseAPIStorageError,
+                "Could not read or write",
+            ) as caught,
+        ):
+            parse_attachments(None, {"file1": upload})
+
+        self.assertEqual(caught.exception.errno, errno.EIO)
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_preserves_unexpected_errors_after_cleanup(self):
+        """Unexpected server errors propagate only after partial files are removed."""
+
+        def broken_chunks():
+            yield b"partial"
+            raise RuntimeError("unexpected upload failure")
+
+        upload = _ChunkedUpload(broken_chunks(), size=None)
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=32,
+            ),
+            self.assertRaisesRegex(
+                AppriseAPIStorageError,
+                "Could not process attachment",
+            ) as caught,
+        ):
+            parse_attachments(None, {"file1": upload})
+
+        self.assertIsInstance(caught.exception.__cause__, RuntimeError)
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_form_upload_cleanup_error_does_not_hide_disk_error(self):
+        """Cleanup failure never replaces the useful upload failure."""
+        upload = _ChunkedUpload((b"content",), size=None)
+
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=32,
+            ),
+            patch.object(
+                utils,
+                "open",
+                create=True,
+                side_effect=OSError(errno.EDQUOT, "quota"),
+            ),
+            patch("os.remove", side_effect=PermissionError("cleanup denied")),
+            self.assertRaisesRegex(
+                AppriseAPIStorageError,
+                "Could not read or write",
+            ) as caught,
+        ):
+            parse_attachments(None, {"file1": upload})
+
+        self.assertEqual(caught.exception.errno, errno.EDQUOT)
+
+    @patch("apprise.utils.http.HTTPPolicySession.get")
     def test_direct_attachment_parsing(self, mock_get):
         """
         Test the parsing of file attachments
@@ -271,7 +553,7 @@ class AttachmentTests(SimpleTestCase):
             )
 
             # We will fail to parse our URL based attachment
-            with self.assertRaises(ValueError):
+            with self.assertRaises(AppriseAPIImproperlyConfigured):
                 parse_attachments(attachment_payload, {})
 
         # Reload our configuration to default values
@@ -320,7 +602,7 @@ class AttachmentTests(SimpleTestCase):
             "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
             "filename": "a" * 1000,
         }
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         # filename invalid
@@ -328,35 +610,35 @@ class AttachmentTests(SimpleTestCase):
             "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
             "filename": 1,
         }
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         attachment_payload = {
             "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
             "filename": None,
         }
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         attachment_payload = {
             "base64": base64.b64encode(b"data to be encoded").decode("utf-8"),
             "filename": object(),
         }
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         # List Entry with bad data
         attachment_payload = [
             None,
         ]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         # We expect at least a 'base64' or something in our dict
         attachment_payload = [
             {},
         ]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         # We allow empty entries, this is okay; there is just nothing
@@ -368,7 +650,7 @@ class AttachmentTests(SimpleTestCase):
         attachment_payload = {
             "base64": "not-base-64",
         }
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         # Support string; these become web requests
@@ -379,20 +661,20 @@ class AttachmentTests(SimpleTestCase):
 
         # Local files are not allowed
         attachment_payload = "file:///etc/hosts"
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
         attachment_payload = "/etc/hosts"
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
         attachment_payload = "simply invalid"
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         # Test our case where we throw an error trying to write our attachment
         # to disk
         m = mock_open()
         m.side_effect = OSError()
-        with patch("builtins.open", m), self.assertRaises(ValueError):
+        with patch("builtins.open", m), self.assertRaises(AppriseAPIStorageError):
             attachment_payload = b"some data to work with."
             parse_attachments(attachment_payload, {})
 
@@ -401,7 +683,7 @@ class AttachmentTests(SimpleTestCase):
         with override_settings(APPRISE_ATTACH_SIZE=1):
             # More then 1 MB in size causing error to trip
             attachment_payload = ("content" * 1024 * 1024).encode("utf-8")
-            with self.assertRaises(ValueError):
+            with self.assertRaises(AppriseAPIImproperlyConfigured):
                 parse_attachments(attachment_payload, {})
 
         # Support byte data
@@ -427,13 +709,13 @@ class AttachmentTests(SimpleTestCase):
             "http://127.0.0.1/myfile.png",
             "https://127.0.0.3/myfile.png",
         ]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             # We have hosts that will be blocked
             parse_attachments(attachment_payload, {})
 
         # Test each
         for ap in attachment_payload:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(AppriseAPIImproperlyConfigured):
                 # We have hosts that will be blocked
                 parse_attachments([ap], {})
 
@@ -488,7 +770,7 @@ class AttachmentTests(SimpleTestCase):
             "https://myserver/garbage/abcd1.png",
             "https://myserver/garbage/abcd2.png",
         ]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
         # Support url encoding
@@ -500,7 +782,7 @@ class AttachmentTests(SimpleTestCase):
                 "url": "https://myserver/garbage/abcd2.png",
             },
         ]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_attachments(attachment_payload, {})
 
     def test_form_file_attachment_parsing_multivalue_single_key(self):
@@ -576,7 +858,7 @@ class AttachmentTests(SimpleTestCase):
             )
 
             # 2 (payload) + 2 (files) = 4 > max=3
-            with self.assertRaises(ValueError):
+            with self.assertRaises(AppriseAPIImproperlyConfigured):
                 parse_attachments(attachment_payload, files_request)
 
     def test_form_file_attachment_parsing_honors_wire_content_type(self):
@@ -680,7 +962,7 @@ class AttachmentTests(SimpleTestCase):
             assert a._name is None
             assert a.filename is None
 
-    @patch("requests.get")
+    @patch("apprise.utils.http.HTTPPolicySession.get")
     def test_url_attachment_name_resolution(self, mock_get):
         """parse_attachments derives attachment name from URL intelligently."""
         response = mock.Mock()
@@ -754,7 +1036,7 @@ class AttachmentTests(SimpleTestCase):
         assert len(result) == 1
         assert result[0]._name == "attachment.001"
 
-    @patch("requests.get")
+    @patch("apprise.utils.http.HTTPPolicySession.get")
     def test_dict_url_attachment_name_resolution(self, mock_get):
         """parse_attachments dict+url form: filename priority order."""
         response = mock.Mock()
@@ -813,3 +1095,126 @@ class AttachmentTests(SimpleTestCase):
         )
         assert len(result) == 1
         assert result[0]._name == "passwd"
+
+
+class AttachmentSSRFPinningTests(SimpleTestCase):
+    """Verify that API attachments use Apprise's safe HTTP transport."""
+
+    def test_attachment_policy_follows_url_rules(self):
+        """The session applies full allow and deny rules to every URL."""
+        original_filter = utils.ATTACH_URL_FILTER
+        utils.ATTACH_URL_FILTER = AppriseURLFilter(
+            "https://good.example/*",
+            "https://good.example/private internal",
+        )
+        try:
+            with TemporaryDirectory() as tmp_dir, override_settings(APPRISE_ATTACH_DIR=tmp_dir):
+                attachment = HTTPAttachment(
+                    host="good.example",
+                    secure=True,
+                    fullpath="/file",
+                )
+                attachment.http_session.policy.validate_url("https://good.example/file")
+                with self.assertRaises(requests.exceptions.InvalidURL):
+                    attachment.http_session.policy.validate_url("https://good.example/private/secret")
+
+        finally:
+            utils.ATTACH_URL_FILTER = original_filter
+
+        # The attachment keeps one coherent policy after global restoration.
+        attachment.http_session.policy.validate_url("https://good.example/file")
+        with self.assertRaises(requests.exceptions.InvalidURL):
+            attachment.http_session.policy.validate_url("https://good.example/private/secret")
+        self.assertFalse(attachment.http_session.policy.address_filter("10.0.0.5"))
+
+    def test_internal_address_filter_is_opt_in(self):
+        """Private DNS answers are blocked only when ``internal`` is denied."""
+        self.assertTrue(AppriseURLFilter("*", "").is_address_allowed("10.0.0.5"))
+        self.assertFalse(AppriseURLFilter("*", "internal").is_address_allowed("10.0.0.5"))
+
+    def test_global_dns_is_unchanged(self):
+        """Importing API utilities never replaces the process DNS function."""
+        self.assertEqual(socket.getaddrinfo.__module__, "socket")
+
+    def test_attachment_closes_session_once(self):
+        """Attachment cleanup closes and clears its owned HTTP session."""
+        attachment = object.__new__(HTTPAttachment)
+        attachment.delete = False
+        attachment._path = None
+        attachment.http_session = mock.Mock()
+        session = attachment.http_session
+
+        attachment.__del__()
+        attachment.__del__()
+
+        session.close.assert_called_once_with()
+        self.assertIsNone(attachment.http_session)
+
+    def test_attachment_suppresses_session_close_error(self):
+        """A cleanup failure never escapes from the destructor."""
+        attachment = object.__new__(HTTPAttachment)
+        attachment.delete = False
+        attachment._path = None
+        attachment.http_session = mock.Mock()
+        attachment.http_session.close.side_effect = RuntimeError("close failed")
+
+        attachment.__del__()
+
+        self.assertIsNone(attachment.http_session)
+
+    def test_attachment_runs_apprise_cleanup(self):
+        """API cleanup also releases the downloaded Apprise temporary file."""
+        attachment = object.__new__(HTTPAttachment)
+        attachment.delete = False
+        attachment._path = None
+        attachment.http_session = mock.Mock()
+        cleaned = []
+
+        with mock.patch.object(
+            HTTPAttachment.__mro__[1],
+            "__del__",
+            new=lambda target: cleaned.append(target),
+        ):
+            attachment.__del__()
+
+        self.assertIn(attachment, cleaned)
+
+    def test_apprise_cleanup_error_does_not_skip_session_close(self):
+        """A parent cleanup failure cannot leave pooled sockets open."""
+        attachment = object.__new__(HTTPAttachment)
+        attachment.delete = False
+        attachment._path = None
+        attachment.http_session = mock.Mock()
+        session = attachment.http_session
+
+        with mock.patch.object(
+            HTTPAttachment.__mro__[1],
+            "__del__",
+            side_effect=RuntimeError("cleanup failed"),
+        ):
+            attachment.__del__()
+
+        session.close.assert_called_once_with()
+        self.assertIsNone(attachment.http_session)
+
+    def test_file_cleanup_error_does_not_skip_other_cleanup(self):
+        """A placeholder removal failure cannot stop remaining cleanup."""
+        attachment = object.__new__(HTTPAttachment)
+        attachment.delete = True
+        attachment._path = "/tmp/unremovable-attachment"
+        attachment.http_session = mock.Mock()
+        session = attachment.http_session
+        cleaned = []
+
+        with (
+            mock.patch("os.remove", side_effect=PermissionError),
+            mock.patch.object(
+                HTTPAttachment.__mro__[1],
+                "__del__",
+                new=lambda target: cleaned.append(target),
+            ),
+        ):
+            attachment.__del__()
+
+        self.assertIn(attachment, cleaned)
+        session.close.assert_called_once_with()

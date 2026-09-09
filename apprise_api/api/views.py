@@ -48,7 +48,11 @@ from django.views.decorators.gzip import gzip_page
 from error.views import Error421View
 
 from .auth import Authentication
-from .exceptions import AppriseAPIImproperlyConfigured, AppriseAPIStorageError
+from .exceptions import (
+    AppriseAPIError,
+    AppriseAPIImproperlyConfigured,
+    AppriseAPIStorageError,
+)
 from .forms import (
     AUTO_DETECT_CONFIG_KEYWORD,
     CONFIG_FORMATS,
@@ -3204,7 +3208,7 @@ def _notify_attachments(request, content, key=None):
         return None, None
     try:
         return parse_attachments(content.get("attachment"), request.FILES), None
-    except (TypeError, ValueError) as error:
+    except AppriseAPIError as error:
         logger.warning(
             "NOTIFY - %s - Bad attachment%s: %s",
             request.META["REMOTE_ADDR"],

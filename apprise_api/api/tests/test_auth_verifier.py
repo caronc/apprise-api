@@ -12,6 +12,7 @@ from unittest.mock import Mock, patch
 from django.test import SimpleTestCase
 
 from ..auth import ConfigCredentialVerifier
+from ..exceptions import AppriseAPIImproperlyConfigured
 
 
 class _ReadOnlyRequest:
@@ -65,17 +66,23 @@ class ConfigCredentialVerifierTests(SimpleTestCase):
 
     def test_constructor_rejects_unsafe_limits(self):
         """A cache must always have a real size and a positive lifetime."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             ConfigCredentialVerifier(max_entries=0)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             ConfigCredentialVerifier(ttl=0)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             ConfigCredentialVerifier(secret=b"too-short")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             ConfigCredentialVerifier(clock="not callable")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             ConfigCredentialVerifier(password_checker="not callable")
-        with patch("api.auth.os.urandom", side_effect=OSError("random failed")), self.assertRaises(RuntimeError):
+        with (
+            patch(
+                "api.auth.os.urandom",
+                side_effect=OSError("random failed"),
+            ),
+            self.assertRaises(AppriseAPIImproperlyConfigured),
+        ):
             ConfigCredentialVerifier()
 
     def test_success_is_cached_without_storing_plain_credentials(self):

@@ -25,6 +25,7 @@ import threading
 
 from django.test import SimpleTestCase
 
+from ..exceptions import AppriseAPIImproperlyConfigured
 from ..stream_manager import StreamManager
 
 # Maximum wait for threaded tests; completed events return immediately.
@@ -36,7 +37,10 @@ class StreamManagerTests(SimpleTestCase):
 
     def test_capacity_must_be_at_least_one(self):
         """A capacity below one is rejected."""
-        with self.assertRaisesRegex(ValueError, "capacity"):
+        with self.assertRaisesRegex(
+            AppriseAPIImproperlyConfigured,
+            "capacity",
+        ):
             StreamManager(capacity=0, queue_size=0)
 
         # A valid capacity of exactly one is accepted.
@@ -44,7 +48,10 @@ class StreamManagerTests(SimpleTestCase):
 
     def test_queue_size_must_not_be_negative(self):
         """A negative queue size is rejected."""
-        with self.assertRaisesRegex(ValueError, "queue_size"):
+        with self.assertRaisesRegex(
+            AppriseAPIImproperlyConfigured,
+            "queue_size",
+        ):
             StreamManager(capacity=1, queue_size=-1)
 
         # A queue size of exactly zero is accepted.

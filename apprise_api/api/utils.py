@@ -40,13 +40,18 @@ import shutil
 import tempfile
 
 import apprise
+from apprise.utils.http import HTTPPolicy, HTTPPolicySession
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 import requests
 
 from .auth import Authentication, AuthStorageError, ConfigAuthRecord
-from .exceptions import AppriseAPIImproperlyConfigured, AppriseAPIStorageError
+from .exceptions import (
+    AppriseAPIError,
+    AppriseAPIImproperlyConfigured,
+    AppriseAPIStorageError,
+)
 from .urlfilter import AppriseURLFilter
 
 # Get an instance of a logger
@@ -84,6 +89,9 @@ N_MGR.evict_on_disable = True
 
 # Prepare our Attachment URL Filter
 ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+
+# Keep each multipart read small while leaving enough room for efficient I/O.
+ATTACH_UPLOAD_CHUNK_SIZE = 64 * 1024
 
 
 class AppriseStoreMode:
@@ -274,8 +282,8 @@ class Attachment(A_MGR["file"]):
         De-Construtor is used to tidy up files during garbage collection
         """
         if self.delete and self._path:
-            # no problem if file is missing
-            with suppress(FileNotFoundError):
+            # Cleanup errors must not escape the destructor.
+            with suppress(OSError):
                 os.remove(self._path)
 
 
@@ -289,14 +297,30 @@ class HTTPAttachment(A_MGR["http"]):
         """
         Initialize our attachment
         """
+        # Establish every cleanup attribute before later setup can fail.
+        self.http_session = None
+        self._temp_file = None
+        self.delete = delete
+        self._path = None
+
         # Remove the parsed URL name before calling AttachBase twice with it.
         # An explicit filename takes priority over ``?name=``.
         url_name = kwargs.pop("name", None)
         effective_name = filename if filename is not None else url_name
 
         self._filename = effective_name
-        self.delete = delete
-        self._path = None
+
+        # Bind both checks to one policy so they cannot drift independently.
+        url_filter = ATTACH_URL_FILTER
+        self.http_session = HTTPPolicySession(
+            HTTPPolicy(
+                url_filter=lambda url: url_filter.is_allowed(
+                    url,
+                    resolve=False,
+                ),
+                address_filter=url_filter.is_address_allowed,
+            )
+        )
         try:
             os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
 
@@ -317,7 +341,11 @@ class HTTPAttachment(A_MGR["http"]):
             ) from None
 
         # Prepare our item
-        super().__init__(name=effective_name, **kwargs)
+        super().__init__(
+            name=effective_name,
+            http_session=self.http_session,
+            **kwargs,
+        )
 
         # Update our file size based on the settings value
         self.max_file_size = settings.APPRISE_ATTACH_SIZE
@@ -338,9 +366,21 @@ class HTTPAttachment(A_MGR["http"]):
         De-Construtor is used to tidy up files during garbage collection
         """
         if self.delete and self._path:
-            # no problem if file is missing
-            with suppress(FileNotFoundError):
+            # Cleanup errors must not skip the parent file or HTTP session.
+            with suppress(OSError):
                 os.remove(self._path)
+
+        # Let Apprise remove any temporary file created by the HTTP download.
+        with suppress(Exception):
+            super().__del__()
+
+        # Clear first so manual or repeated cleanup remains harmless.
+        http_session = self.http_session
+        self.http_session = None
+        if http_session is not None:
+            with suppress(Exception):
+                # Destructors must not leak adapter cleanup errors.
+                http_session.close()
 
 
 def touchdir(path, mode=0o770, **kwargs):
@@ -380,6 +420,80 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
         return False
 
     return True
+
+
+def _upload_chunks(upload, chunk_size):
+    """Yield bounded chunks from a Django upload or file-like object."""
+    chunks = getattr(upload, "chunks", None)
+    if callable(chunks):
+        yield from chunks(chunk_size=chunk_size)
+        return
+
+    read = getattr(upload, "read", None)
+    if not callable(read):
+        raise TypeError("upload does not provide chunks() or read()")
+
+    while chunk := read(chunk_size):
+        yield chunk
+
+
+def _write_uploaded_attachment(attachment, upload, filename, size_limit):
+    """Stream one upload to disk and remove any incomplete file on failure."""
+    path = attachment.path
+    complete = False
+    try:
+        # Reject honest oversized uploads without reading or writing their data.
+        advertised_size = getattr(upload, "size", None)
+        if isinstance(advertised_size, int) and advertised_size > size_limit:
+            raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+        with open(path, "wb") as output:
+            bytes_written = 0
+            for chunk in _upload_chunks(
+                upload,
+                min(ATTACH_UPLOAD_CHUNK_SIZE, size_limit + 1),
+            ):
+                if not isinstance(chunk, (bytes, bytearray, memoryview)):
+                    raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}")
+
+                # Empty chunks are harmless and do not affect the limit.
+                chunk_size = len(chunk)
+                if bytes_written + chunk_size > size_limit:
+                    raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+                # Regular binary files should either write the full chunk or
+                # raise. Treat a short write as an I/O failure.
+                if output.write(chunk) != chunk_size:
+                    raise OSError(errno.EIO, "short attachment write")
+
+                bytes_written += chunk_size
+
+        complete = True
+
+    except AppriseAPIError:
+        # Preserve any API exception raised by a lower attachment layer.
+        raise
+
+    except (TypeError, ValueError):
+        raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}") from None
+
+    except OSError as error:
+        # This includes read failures, permission errors, quotas, and ENOSPC.
+        error_code = error.errno if isinstance(error.errno, int) else errno.EIO
+        raise AppriseAPIStorageError(
+            f"Could not read or write attachment {filename}",
+            error_code=error_code,
+        ) from error
+
+    except Exception as error:
+        # Keep upload backend failures inside the API exception contract.
+        raise AppriseAPIStorageError(f"Could not process attachment {filename}") from error
+
+    finally:
+        if not complete:
+            # Cleanup is best effort and must not hide the original failure.
+            with suppress(OSError):
+                os.remove(path)
 
 
 def parse_attachments(attachment_payload, files_request):
@@ -464,7 +578,8 @@ def parse_attachments(attachment_payload, files_request):
                     # We failed to retrieve the product
                     raise AppriseAPIImproperlyConfigured(f"Failed to load attachment {no} (not web request): {entry}")
 
-                if not ATTACH_URL_FILTER.is_allowed(entry):
+                # The transport performs the authoritative, pinned DNS check.
+                if not ATTACH_URL_FILTER.is_allowed(entry, resolve=False):
                     # We are not allowed to use this entry
                     raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (blocked web request): {entry}")
 
@@ -492,7 +607,11 @@ def parse_attachments(attachment_payload, files_request):
                             f.write(base64.b64decode(entry[AttachmentPayload.BASE64]))
 
                         elif isinstance(entry, dict) and AttachmentPayload.URL in entry:
-                            if not ATTACH_URL_FILTER.is_allowed(entry[AttachmentPayload.URL]):
+                            # Avoid a throwaway lookup before the pinned connection.
+                            if not ATTACH_URL_FILTER.is_allowed(
+                                entry[AttachmentPayload.URL],
+                                resolve=False,
+                            ):
                                 # We are not allowed to use this entry
                                 raise AppriseAPIImproperlyConfigured(
                                     f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
@@ -531,8 +650,12 @@ def parse_attachments(attachment_payload, files_request):
                         f"Invalid filecontent was provided for attachment {filename}"
                     ) from None
 
-                except OSError:
-                    raise AppriseAPIImproperlyConfigured(f"Could not write attachment {filename} to disk") from None
+                except OSError as error:
+                    error_code = error.errno if isinstance(error.errno, int) else errno.EIO
+                    raise AppriseAPIStorageError(
+                        f"Could not write attachment {filename} to disk",
+                        error_code=error_code,
+                    ) from error
 
                 #
                 # Some Validation
@@ -579,19 +702,12 @@ def parse_attachments(attachment_payload, files_request):
             wire_mimetype = None
 
         attachment = Attachment(filename, mimetype=wire_mimetype)
-        try:
-            with open(attachment.path, "wb") as f:
-                # Write our content to disk
-                f.write(meta.read())
-
-        except OSError:
-            raise AppriseAPIImproperlyConfigured(f"Could not write attachment {filename} to disk") from None
-
-        #
-        # Some Validation
-        #
-        if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-            raise AppriseAPIImproperlyConfigured(f"attachment {filename}'s filesize is to large")
+        _write_uploaded_attachment(
+            attachment,
+            meta,
+            filename,
+            settings.APPRISE_ATTACH_SIZE,
+        )
 
         # Add our attachment
         attachments.append(attachment)

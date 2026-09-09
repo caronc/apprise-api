@@ -538,6 +538,10 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn("data-1p-ignore", content)
         self.assertIn("browser-login-card", content)
         self.assertIn("browser-login-icon", content)
+        self.assertNotIn('id="mobile-menu-open"', content)
+        self.assertNotIn('class="mobile-menu-tab"', content)
+        self.assertNotIn('id="mobile-menu-backdrop"', content)
+        self.assertNotIn('id="site-side-menu"', content)
         self.assertIn('class="page-footer-legal"', content)
         self.assertIn("Licensed under the MIT License.", content)
         self.assertIn(

@@ -204,18 +204,20 @@
           <i class="material-icons">close</i>
         </button>
       </div>
-      <button id="mobile-menu-open"
-              class="mobile-menu-tab"
-              type="button"
-              aria-controls="site-side-menu"
-              aria-expanded="false"
-              aria-label="{% trans "Open Navigation Menu" %}"
-              title="{% trans "Open Navigation Menu" %}">
-        <i class="material-icons" aria-hidden="true">menu</i>
-      </button>
-      <div id="mobile-menu-backdrop"
-           class="mobile-menu-backdrop"
-           aria-hidden="true"></div>
+      {% block mobile_menu_controls %}
+        <button id="mobile-menu-open"
+                class="mobile-menu-tab"
+                type="button"
+                aria-controls="site-side-menu"
+                aria-expanded="false"
+                aria-label="{% trans "Open Navigation Menu" %}"
+                title="{% trans "Open Navigation Menu" %}">
+          <i class="material-icons" aria-hidden="true">menu</i>
+        </button>
+        <div id="mobile-menu-backdrop"
+             class="mobile-menu-backdrop"
+             aria-hidden="true"></div>
+      {% endblock mobile_menu_controls %}
       <!-- Page Layout here -->
       <div class="row main-layout">
         {% block layout %}

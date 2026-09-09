@@ -29,12 +29,14 @@ import queue
 import threading
 from unittest import mock
 
+from api import views as runtime_views
 import apprise
 from django.core.exceptions import RequestDataTooBig
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, override_settings
 import requests
 
+from ..exceptions import AppriseAPIImproperlyConfigured
 from ..forms import NotifyForm
 from ..stream_manager import StreamManager
 from ..views import (
@@ -238,6 +240,27 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert json.loads(response.content)["error"]
 
+    def test_notify_attachment_storage_error_response(self):
+        """Attachment storage failures use the controlled client response."""
+        with mock.patch(
+            "api.views.parse_attachments",
+            side_effect=runtime_views.AppriseAPIStorageError("attachment disk failure"),
+        ):
+            response = self.client.post(
+                "/notify",
+                data=json.dumps(
+                    {
+                        "urls": "json://user:pass@localhost",
+                        "body": "Body",
+                        "attachment": "https://example.com/file",
+                    }
+                ),
+                content_type="application/json",
+            )
+
+        assert response.status_code == 400
+        assert b"Bad Attachment" in response.content
+
     def test_tag_expression_preserves_logic(self):
         """
         Advanced tag tokens should not change existing OR/AND behavior.
@@ -252,9 +275,9 @@ class NotifyTests(SimpleTestCase):
             "family:2",
             "3:friends:4",
         ]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_tag_expression("family:")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_tag_expression("9" * 5000 + ":family")
 
     def test_stream_queue_preserves_spooled_order(self):

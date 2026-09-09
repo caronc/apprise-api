@@ -476,8 +476,12 @@ li.social-theme-nav {
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.35rem;
+  row-gap: 0.3rem;
   margin-top: 0.3rem;
+  max-width: 100%;
 }
 
 li.auth-health-nav {

@@ -89,6 +89,7 @@ class AttachmentTests(SimpleTestCase):
         self.assertTrue(af.is_allowed("http://localhost/resources"))
         self.assertTrue(af.is_allowed("http://localhost/resources/sub/path/"))
         self.assertFalse(af.is_allowed("https://localhost/resources"))
+        self.assertFalse(af.is_allowed("https://localhost/resources?view=1"))
         self.assertFalse(af.is_allowed("https://localhost/resources/sub/path/"))
         self.assertTrue(af.is_allowed("http://localhost/images"))
 
@@ -389,69 +390,23 @@ class AttachmentTests(SimpleTestCase):
             self.assertFalse(af.is_allowed("http://this-does-not-resolve.invalid/x"))
 
     def test_internal_token_fails_closed_on_resolution_timeout(self):
-        """
-        A hung resolver must not be able to stall the request; the
-        resolution is bounded by a hard timeout and treated as blocked
-        if it's exceeded.
-        """
+        """A resolver timeout is treated as blocked."""
         af = AppriseURLFilter("*", "internal")
-
-        def _hang(*args, **kwargs):
-            # Long enough to guarantee it exceeds the patched timeout below.
-            import time
-
-            time.sleep(0.2)
-
-        with (
-            mock.patch("socket.getaddrinfo", side_effect=_hang),
-            mock.patch("apprise_api.api.urlfilter._RESOLVE_TIMEOUT_SEC", 0.01),
+        with mock.patch(
+            "apprise_api.api.urlfilter._HTTP_RESOLVER.resolve",
+            side_effect=socket.gaierror("timed out"),
         ):
             self.assertFalse(af.is_allowed("http://slow-dns.example/x"))
 
-    def test_dns_resolution_admission_is_bounded_and_fail_closed(self):
-        """Busy DNS admission and executor failures cannot queue more work."""
+    def test_dns_resolution_failure_is_closed(self):
+        """A failed shared resolver cannot make a host appear public."""
         from ..urlfilter import _resolve_addresses
 
-        slots = mock.Mock()
-        slots.acquire.return_value = False
-        with (
-            mock.patch("apprise_api.api.urlfilter._RESOLVE_SLOTS", slots),
-            mock.patch("apprise_api.api.urlfilter._RESOLVE_POOL") as pool,
+        with mock.patch(
+            "apprise_api.api.urlfilter._HTTP_RESOLVER.resolve",
+            side_effect=RuntimeError("resolver unavailable"),
         ):
             self.assertIsNone(_resolve_addresses("busy.example"))
-            pool.submit.assert_not_called()
-
-        slots.acquire.return_value = True
-        with (
-            mock.patch("apprise_api.api.urlfilter._RESOLVE_SLOTS", slots),
-            mock.patch("apprise_api.api.urlfilter._RESOLVE_POOL") as pool,
-        ):
-            pool.submit.side_effect = RuntimeError("executor unavailable")
-            self.assertIsNone(_resolve_addresses("failed.example"))
-            slots.release.assert_called_once()
-
-    def test_dns_timeout_cancels_queue_and_releases_work(self):
-        """Timed-out DNS work is cancelled and retains its slot until done."""
-        from concurrent.futures import TimeoutError as FutureTimeoutError
-
-        from ..urlfilter import _release_resolve_slot, _resolve_addresses
-
-        slots = mock.Mock()
-        slots.acquire.return_value = True
-        future = mock.Mock()
-        future.result.side_effect = FutureTimeoutError
-        with (
-            mock.patch("apprise_api.api.urlfilter._RESOLVE_SLOTS", slots),
-            mock.patch("apprise_api.api.urlfilter._RESOLVE_POOL") as pool,
-        ):
-            pool.submit.return_value = future
-            self.assertIsNone(_resolve_addresses("slow.example"))
-            future.add_done_callback.assert_called_once_with(_release_resolve_slot)
-            future.cancel.assert_called_once_with()
-            slots.release.assert_not_called()
-
-            _release_resolve_slot(future)
-            slots.release.assert_called_once_with()
 
     def test_internal_token_skips_unparseable_resolved_records(self):
         """
@@ -489,6 +444,29 @@ class AttachmentTests(SimpleTestCase):
         self.assertFalse(af.is_allowed("http://8.8.8.8/x"))
         self.assertFalse(af.is_allowed("http://example.com/x"))
 
+    def test_is_host_denied_matches_host_rules_only(self):
+        """Bare-host checks apply host rules without URL or port details."""
+        af = AppriseURLFilter("*", "localhost* evil.example.com")
+
+        self.assertTrue(af.is_host_denied("localhost"))
+        self.assertTrue(af.is_host_denied("localhost.localdomain"))
+        self.assertTrue(af.is_host_denied("evil.example.com"))
+        self.assertTrue(af.is_host_denied("evil.example.com."))
+        self.assertFalse(af.is_host_denied("example.com"))
+
+    def test_is_host_denied_ignores_url_kind_deny_rules(self):
+        """Bare-host checks ignore rules that require a full URL."""
+        af = AppriseURLFilter("*", "https://example.com/blocked")
+
+        self.assertFalse(af.is_host_denied("example.com"))
+
+    def test_is_host_denied_blocks_missing_host(self):
+        """A missing hostname can't be proven safe, so it is denied."""
+        af = AppriseURLFilter("*", "internal")
+
+        self.assertTrue(af.is_host_denied(""))
+        self.assertTrue(af.is_host_denied(None))
+
     def test_malformed_url_does_not_raise(self):
         """
         handling of malformed urls.
@@ -498,6 +476,75 @@ class AttachmentTests(SimpleTestCase):
         # Unbalanced IPv6 bracket: apprise's parse_url() raises here.
         self.assertFalse(af.is_allowed("http://[/x"))
         self.assertFalse(af.is_allowed("http://[::1/x"))
+
+    def test_url_rule_rejects_non_string_value(self):
+        """A URL rule safely rejects values outside normal filter input."""
+        from ..urlfilter import _URLRule
+
+        self.assertFalse(_URLRule("https://example.com").match(None))
+
+    def test_query_rules_match_candidate_queries(self):
+        """Configured query patterns participate in URL matching."""
+        af = AppriseURLFilter(
+            "https://example.com/path?view=*",
+            "https://example.com/path?token=*",
+        )
+
+        self.assertFalse(af.is_allowed("https://example.com/path?token=secret"))
+        self.assertTrue(af.is_allowed("https://example.com/path?view=summary"))
+        self.assertTrue(af.is_allowed("https://example.com/path?view="))
+        self.assertFalse(af.is_allowed("https://example.com/path?other=value"))
+
+        encoded = AppriseURLFilter(
+            "*",
+            "https://example.com/path?token=secret",
+        )
+        self.assertFalse(encoded.is_allowed("https://example.com/path?token=%73ecret"))
+
+        single = AppriseURLFilter(
+            "https://example.com/path?id=?",
+            "",
+        )
+        self.assertTrue(single.is_allowed("https://example.com/path?id=a"))
+        self.assertFalse(single.is_allowed("https://example.com/path?id=ab"))
+
+    def test_query_wildcards_accept_query_punctuation(self):
+        """A query wildcard may span URL values containing separators."""
+        af = AppriseURLFilter(
+            "https://example.com/path?next=*",
+            "",
+        )
+
+        self.assertTrue(af.is_allowed("https://example.com/path?next=/one/two&mode=full"))
+
+    def test_path_rules_use_canonical_paths(self):
+        """Encoded names, separators, and dot segments cannot bypass rules."""
+        deny_admin = AppriseURLFilter("*", "https://example.com/admin")
+        self.assertFalse(deny_admin.is_allowed("https://example.com/a%64min"))
+        self.assertFalse(deny_admin.is_allowed("https://example.com/../admin"))
+        self.assertFalse(deny_admin.is_allowed("https://example.com/x/../admin"))
+        self.assertFalse(deny_admin.is_allowed("https://example.com/x%2f..%2fadmin"))
+        self.assertFalse(deny_admin.is_allowed("https://example.com/x\\..\\admin"))
+
+        allow_public = AppriseURLFilter("https://example.com/public", "")
+        self.assertFalse(allow_public.is_allowed("https://example.com/public/%2e%2e/admin"))
+        self.assertTrue(allow_public.is_allowed("https://example.com/public/./images"))
+
+    def test_ambiguous_url_encoding_fails_closed(self):
+        """Malformed, nested, invalid UTF-8, and control escapes are denied."""
+        af = AppriseURLFilter("*", "")
+
+        self.assertFalse(af.is_allowed("https://example.com/bad%escape"))
+        self.assertFalse(af.is_allowed("https://example.com/%252e%252e/admin"))
+        self.assertFalse(af.is_allowed("https://example.com/%ff"))
+        self.assertFalse(af.is_allowed("https://example.com/path?value=%00"))
+
+    def test_unsafe_configured_rule_is_rejected(self):
+        """Ambiguous administrator URL rules fail during configuration."""
+        from ..exceptions import AppriseAPIImproperlyConfigured
+
+        with self.assertRaises(AppriseAPIImproperlyConfigured):
+            AppriseURLFilter("https://example.com/%252e", "")
 
     def test_unresolvable_host_does_not_raise(self):
         """
@@ -542,34 +589,35 @@ class WildcardBacktrackingHardeningTests(SimpleTestCase):
     """Prevent wildcard rules from causing costly attachment URL matching."""
 
     def test_excessive_wildcards_are_rejected_at_compile_time(self):
-        """A pattern past the wildcard cap compiles to a rule that never matches."""
-        from ..urlfilter import _MAX_WILDCARDS_PER_SEGMENT
+        """A pattern past the wildcard cap rejects invalid configuration."""
+        from ..urlfilter import (
+            _MAX_WILDCARDS_PER_RULE,
+            _TooManyWildcardsError,
+        )
 
         # One more wildcard than the cap allows.
-        pattern = "*" + ("a*" * (_MAX_WILDCARDS_PER_SEGMENT + 1))
-        with self.assertLogs("django", level="WARNING") as logs:
-            af = AppriseURLFilter("", pattern)
-        self.assertTrue(any("too many wildcards" in message for message in logs.output))
-
-        # Rejected rules never match, including their apparent target.
-        self.assertFalse(af.is_allowed("http://" + "a" * 20 + "/"))
+        pattern = "*" + ("a*" * (_MAX_WILDCARDS_PER_RULE + 1))
+        with self.assertRaises(_TooManyWildcardsError):
+            AppriseURLFilter("", pattern)
 
     def test_wildcard_count_at_the_cap_still_compiles_and_matches(self):
         """The cap does not reject legitimate patterns at or under the limit."""
-        from ..urlfilter import _MAX_WILDCARDS_PER_SEGMENT
+        from ..urlfilter import _MAX_WILDCARDS_PER_RULE
 
-        # Exactly _MAX_WILDCARDS_PER_SEGMENT wildcards, not one more.
-        pattern = "a*" * _MAX_WILDCARDS_PER_SEGMENT
+        # Exactly _MAX_WILDCARDS_PER_RULE wildcards, not one more.
+        pattern = "a*" * _MAX_WILDCARDS_PER_RULE
         af = AppriseURLFilter(pattern, "")
         self.assertTrue(af.is_allowed("http://" + "a" * 20 + "/"))
 
     def test_excessive_wildcard_pattern_stays_fast(self):
-        """Reject an expensive pattern before it reaches regex matching."""
+        """Allowed wildcard patterns match in bounded time."""
         import time
 
-        pattern = "*" + ("a*" * 28)
+        from ..urlfilter import _MAX_WILDCARDS_PER_RULE
+
+        pattern = "*" + ("a*" * (_MAX_WILDCARDS_PER_RULE - 1)) + "b"
         af = AppriseURLFilter("", pattern)
-        hostile = "http://" + "a" * 30 + "X/"
+        hostile = "http://" + "a" * 253 + "/"
 
         start = time.perf_counter()
         result = af.is_allowed(hostile)
@@ -577,6 +625,20 @@ class WildcardBacktrackingHardeningTests(SimpleTestCase):
 
         self.assertFalse(result)
         self.assertLess(elapsed, 1.0, "Matching took too long; wildcard backtracking may be unbounded again")
+
+    def test_path_prefix_matching_stays_fast(self):
+        """Many path boundaries do not cause repeated glob evaluation."""
+        import time
+
+        af = AppriseURLFilter("https://example.com/a*a*a*a*a*a*a*b", "")
+        hostile = "https://example.com/" + ("a/" * 1500)
+
+        start = time.perf_counter()
+        result = af.is_allowed(hostile)
+        elapsed = time.perf_counter() - start
+
+        self.assertFalse(result)
+        self.assertLess(elapsed, 1.0)
 
     def test_overlong_url_is_rejected_before_matching(self):
         """A URL past the length ceiling is denied without ever being parsed."""
@@ -593,3 +655,10 @@ class WildcardBacktrackingHardeningTests(SimpleTestCase):
         af = AppriseURLFilter("*", "")
         overlong_host = "http://" + ("a" * (_MAX_HOST_LENGTH + 1)) + "/x"
         self.assertFalse(af.is_allowed(overlong_host))
+
+        # Keep the post-parse guard covered independently of parser limits.
+        with mock.patch(
+            "apprise_api.api.urlfilter.parse_url",
+            return_value={"host": "a" * (_MAX_HOST_LENGTH + 1)},
+        ):
+            self.assertFalse(af.is_allowed("http://example.com/x"))

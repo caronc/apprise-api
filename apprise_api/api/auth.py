@@ -81,7 +81,7 @@ class ConfigCredentialVerifier:
             except OSError as e:
                 # Starting without secure randomness could expose every cache
                 # fingerprint, so refusing to start is safer than guessing.
-                raise RuntimeError("secure randomness is unavailable") from e
+                raise AppriseAPIImproperlyConfigured("secure randomness is unavailable") from e
         self._secret = secret
         self._clock = clock or time.monotonic
         self._password_checker = password_checker or check_password
