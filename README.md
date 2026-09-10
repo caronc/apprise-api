@@ -183,6 +183,10 @@ services:
       - /tmp
 ```
 
+### Easypanel
+
+[Easypanel](https://easypanel.io/) can deploy Apprise API with one click using its [official template](https://easypanel.io/templates/apprise-api), without needing to manually run Docker commands.
+
 ## Dockerfile Details
 
 The following architectures are supported: `amd64`, `arm/v7`, and `arm64`. The following tags can be used:
