@@ -168,16 +168,10 @@ LOGGING = {
 
 WSGI_APPLICATION = "core.wsgi.application"
 
-# Define our base URL
-#
-# Prefer APPRISE_BASE_URL for documentation and new deployments, but
-# continue to support the legacy BASE_URL environment variable for
-# backward compatibility. APPRISE_BASE_URL takes precedence when both are
-# defined.
+# Define the optional URL prefix for deployments under a subpath.
 #
 # Examples:
 #   APPRISE_BASE_URL=/apprise
-#   BASE_URL=/apprise
 #
 # A blank value means the application is hosted at the site root.
 
@@ -186,7 +180,7 @@ WSGI_APPLICATION = "core.wsgi.application"
 #   apprise   -> /apprise
 #   /         -> ''
 # Fetch the environment variable and strip whitespace
-_raw_base = os.environ.get("APPRISE_BASE_URL", os.environ.get("BASE_URL", "")).strip(" /")
+_raw_base = os.environ.get("APPRISE_BASE_URL", "").strip().strip("/")
 
 # Prepend exactly one slash if a path exists, otherwise leave it empty
 BASE_URL = f"/{_raw_base}" if _raw_base else ""

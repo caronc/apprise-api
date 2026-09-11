@@ -319,55 +319,45 @@ class NumericSettingsTests(SimpleTestCase):
 
 
 class BaseUrlParsingTests(SimpleTestCase):
-    """
-    Test the BASE_URL environment variable parsing logic to ensure it correctly
-    normalizes prefixes, strips trailing slashes, and falls back properly.
-    """
+    """Test public URL prefix parsing."""
 
     def _get_base_url(self, apprise_base=None, base=None):
-        """
-        Helper to simulate the exact logic found in settings/__init__.py
-        """
+        """Load the setting with a controlled environment."""
         env = {}
         if apprise_base is not None:
             env["APPRISE_BASE_URL"] = apprise_base
         if base is not None:
             env["BASE_URL"] = base
 
-        with mock.patch.dict(os.environ, env, clear=True):
-            # Simulate the exact logic from settings/__init__.py
-            _raw_base = os.environ.get("APPRISE_BASE_URL", os.environ.get("BASE_URL", "")).strip().strip("/")
-
-            return f"/{_raw_base}" if _raw_base else ""
+        return _load_settings(env).BASE_URL
 
     def test_base_url_normalization(self):
-        """
-        Test that priority, fallback, and slash-stripping behave correctly
-        """
-        # 1. Prioritize APPRISE_BASE_URL over legacy BASE_URL
-        self.assertEqual(self._get_base_url(apprise_base="/apprise", base="/wrong"), "/apprise")
-
-        # 2. Fallback to BASE_URL if APPRISE_BASE_URL is not set
-        self.assertEqual(self._get_base_url(apprise_base=None, base="/apprise"), "/apprise")
-
-        # 3. Strip trailing/leading slashes and whitespace aggressively
+        """APPRISE_BASE_URL is normalized to one leading slash."""
         self.assertEqual(self._get_base_url(apprise_base="  /apprise/  "), "/apprise")
         self.assertEqual(self._get_base_url(apprise_base="apprise/"), "/apprise")
         self.assertEqual(self._get_base_url(apprise_base="/apprise"), "/apprise")
         self.assertEqual(self._get_base_url(apprise_base="apprise"), "/apprise")
 
-        # 3b. Strip tabs and newlines (not just spaces)
+        # Surrounding whitespace is removed.
         self.assertEqual(self._get_base_url(apprise_base="\t/apprise\n"), "/apprise")
         self.assertEqual(self._get_base_url(apprise_base="\n/apprise\n"), "/apprise")
 
-        # 3c. Normalize multiple leading slashes to a single slash
+        # Extra leading and trailing slashes are removed.
         self.assertEqual(self._get_base_url(apprise_base="///apprise"), "/apprise")
         self.assertEqual(self._get_base_url(apprise_base="///apprise///"), "/apprise")
 
-        # 4. Handle empty/root paths safely (must result in an empty string)
+        # Empty and root paths disable prefixing.
         self.assertEqual(self._get_base_url(apprise_base="/"), "")
         self.assertEqual(self._get_base_url(apprise_base="   "), "")
-        self.assertEqual(self._get_base_url(apprise_base=None, base=None), "")
+        self.assertEqual(self._get_base_url(), "")
+
+    def test_base_url_alias_is_ignored(self):
+        """The removed BASE_URL environment alias has no effect."""
+        self.assertEqual(self._get_base_url(base="/old-prefix"), "")
+        self.assertEqual(
+            self._get_base_url(apprise_base="/apprise", base="/old-prefix"),
+            "/apprise",
+        )
 
 
 class TimezoneSettingsTests(SimpleTestCase):

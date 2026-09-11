@@ -124,16 +124,10 @@ fi
 
 
 apply_base_url_to_nginx() {
-   # Prioritize APPRISE_BASE_URL, fallback to BASE_URL
-   local base_url="${APPRISE_BASE_URL:-${BASE_URL:-}}"
+   # Read the public URL prefix used by nginx and Django.
+   local base_url="${APPRISE_BASE_URL:-}"
    local conf_file="/tmp/apprise/nginx-base-url.conf"
-   
-   # Log a helpful deprecation warning if they are using the old variable
-   if [ -z "${APPRISE_BASE_URL+x}" ] && [ -n "${BASE_URL+x}" ]; then
-      echo "WARNING: The BASE_URL environment variable is deprecated."
-      echo "         Please use APPRISE_BASE_URL instead."
-   fi
-   
+
    # Reject values containing newlines or carriage returns; these would split
    # across grep lines and silently pass validation while corrupting nginx config
    case "$base_url" in

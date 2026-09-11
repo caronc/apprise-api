@@ -96,6 +96,50 @@ class CommandTests(SimpleTestCase):
         self.assertIn('SUPERVISORD_CONF="$RUNTIME_SUPERVISORD_CONF"', content)
         self.assertNotIn('sed -i -e "s/nginx\\.conf/nginx-strict.conf/g"', content)
 
+    def test_container_base_url_uses_supported_environment_name(self):
+        """Only APPRISE_BASE_URL configures the nginx prefix."""
+        package_dir = Path(__file__).resolve().parents[2]
+        startup = package_dir / "supervisord-startup"
+        content = startup.read_text()
+
+        function_start = content.index("apply_base_url_to_nginx() {")
+        function_end = content.index("\n}\n", function_start) + 3
+        function = content[function_start:function_end]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_conf = Path(temp_dir) / "nginx-base-url.conf"
+            function = function.replace(
+                'local conf_file="/tmp/apprise/nginx-base-url.conf"',
+                f'local conf_file="{base_conf}"',
+            )
+            script = f"{function}\napply_base_url_to_nginx"
+
+            # The removed BASE_URL alias must not configure nginx.
+            env = os.environ.copy()
+            env.pop("APPRISE_BASE_URL", None)
+            env["BASE_URL"] = "/old-prefix"
+            result = subprocess.run(
+                ["bash", "-c", script],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(base_conf.read_text(), "")
+
+            # The supported setting still produces the nginx configuration.
+            env["APPRISE_BASE_URL"] = "/apprise"
+            result = subprocess.run(
+                ["bash", "-c", script],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("location = /apprise", base_conf.read_text())
+
     def test_container_stream_timeout(self):
         """The container accepts safe stream timeouts and rejects invalid ones."""
         package_dir = Path(__file__).resolve().parents[2]
