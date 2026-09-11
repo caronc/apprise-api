@@ -38,6 +38,7 @@ import os
 import re
 import shutil
 import tempfile
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import apprise
 from apprise.utils.http import HTTPPolicy, HTTPPolicySession
@@ -63,6 +64,11 @@ logger = logging.getLogger("django")
 # application/json
 # application/x-json
 MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
+
+# Only HTTP(S) attachment sources are allowed; local paths and schemes could
+# otherwise expose files on the API server.
+ATTACH_HTTP_SCHEME = re.compile(r"^https?://", re.I)
+
 # Parsing of Accept; the following amounts to Accept All
 # */*
 # <blank>
@@ -76,6 +82,21 @@ CONFIG_KEY_HEADER = "X-Apprise-Config-ID"
 CONFIG_KEY_MAX_LENGTH = 128
 CONFIG_KEY_REGEX = r"[\w_-]{{1,{}}}".format(CONFIG_KEY_MAX_LENGTH)
 CONFIG_KEY_PATTERN = re.compile(r"^{}$".format(CONFIG_KEY_REGEX))
+
+
+def _configured_datetime(timestamp):
+    """Convert a Unix timestamp to the timezone shown by the API."""
+    try:
+        configured_timezone = ZoneInfo(settings.TIME_ZONE)
+    except (TypeError, ValueError, ZoneInfoNotFoundError):
+        # Startup normally validates this setting. Keep file details usable if
+        # an embedded caller supplies an unsupported timezone.
+        return datetime.fromtimestamp(timestamp)
+
+    # The UI shows the timezone separately, so retain its existing timestamp
+    # format after applying the correct UTC offset.
+    return datetime.fromtimestamp(timestamp, configured_timezone).replace(tzinfo=None)
+
 
 # Access our Attachment Manager Singleton
 A_MGR = apprise.manager_attachment.AttachmentManager()
@@ -99,12 +120,10 @@ class AppriseStoreMode:
     Defines the store modes of configuration
     """
 
-    # This is the default option. Content is cached and written by
-    # it's key
+    # This is the default option. Content is cached under its key.
     HASH = "hash"
 
-    # Content is written straight to disk using it's key
-    # there is nothing further done
+    # Content is written directly to disk under its key.
     SIMPLE = "simple"
 
     # When set to disabled; stateful functionality is disabled
@@ -138,7 +157,7 @@ def stateful_store_enabled():
 
 class SimpleFileExtension:
     """
-    Defines the simple file exension lookups
+    Defines the simple file extension lookups.
     """
 
     # Simple Configuration file
@@ -225,6 +244,50 @@ def is_html_response(request: HttpRequest) -> bool:
     return html_preference is not None and (json_preference is None or html_preference > json_preference)
 
 
+def _attachment_storage_error(message, error):
+    """Build a storage error while preserving the original error code."""
+    error_code = error.errno if isinstance(error.errno, int) else errno.EIO
+    return AppriseAPIStorageError(message, error_code=error_code)
+
+
+def _prepare_attachment_dir():
+    """Create and return the configured attachment directory."""
+    try:
+        os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+
+    except OSError as error:
+        raise _attachment_storage_error("Could not create attachment directory", error) from error
+
+    return settings.APPRISE_ATTACH_DIR
+
+
+def _prepare_attachment_path(filename, path=None):
+    """Return the supplied path or create a temporary attachment file."""
+    _prepare_attachment_dir()
+
+    if path:
+        return path
+
+    try:
+        descriptor, path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
+
+    except OSError as error:
+        raise _attachment_storage_error(f"Could not prepare attachment {filename}", error) from error
+
+    try:
+        # Do not retry: a failed close may still release the descriptor for
+        # another thread to reuse.
+        os.close(descriptor)
+
+    except OSError as error:
+        with suppress(OSError):
+            os.remove(path)
+
+        raise _attachment_storage_error(f"Could not prepare attachment {filename}", error) from error
+
+    return path
+
+
 class Attachment(A_MGR["file"]):
     """
     A Light Weight Attachment Object for Auto-cleanup that wraps the Apprise
@@ -238,27 +301,7 @@ class Attachment(A_MGR["file"]):
         self._filename = filename
         self.delete = delete
         self._path = None
-        try:
-            os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
-
-        except OSError:
-            # Permission error
-            raise AppriseAPIImproperlyConfigured(
-                "Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)
-            ) from None
-
-        if not path:
-            try:
-                d, path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
-                # Close our file descriptor
-                os.close(d)
-
-            except FileNotFoundError:
-                raise AppriseAPIImproperlyConfigured(
-                    "Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR)
-                ) from None
-
-        self._path = path
+        self._path = _prepare_attachment_path(filename, path)
 
         # Prepare our item
         super().__init__(path=self._path, name=filename, **kwargs)
@@ -278,9 +321,7 @@ class Attachment(A_MGR["file"]):
         return os.stat(self._path).st_size
 
     def __del__(self):
-        """
-        De-Construtor is used to tidy up files during garbage collection
-        """
+        """Clean up files during garbage collection."""
         if self.delete and self._path:
             # Cleanup errors must not escape the destructor.
             with suppress(OSError):
@@ -301,7 +342,6 @@ class HTTPAttachment(A_MGR["http"]):
         self.http_session = None
         self._temp_file = None
         self.delete = delete
-        self._path = None
 
         # Remove the parsed URL name before calling AttachBase twice with it.
         # An explicit filename takes priority over ``?name=``.
@@ -322,28 +362,21 @@ class HTTPAttachment(A_MGR["http"]):
             )
         )
         try:
-            os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+            download_dir = _prepare_attachment_dir()
 
-        except OSError:
-            # Permission error
-            raise AppriseAPIImproperlyConfigured(
-                "Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)
-            ) from None
+        except AppriseAPIStorageError:
+            # Close the session immediately when construction cannot finish.
+            with suppress(Exception):
+                self.http_session.close()
 
-        try:
-            d, self._path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
-            # Close our file descriptor
-            os.close(d)
+            self.http_session = None
+            raise
 
-        except FileNotFoundError:
-            raise AppriseAPIImproperlyConfigured(
-                "Could not prepare {} attachment in {}".format(effective_name, settings.APPRISE_ATTACH_DIR)
-            ) from None
-
-        # Prepare our item
+        # Keep downloads in the API attachment directory.
         super().__init__(
             name=effective_name,
             http_session=self.http_session,
+            download_dir=download_dir,
             **kwargs,
         )
 
@@ -359,20 +392,14 @@ class HTTPAttachment(A_MGR["http"]):
         """
         Return filesize
         """
-        return 0 if not self else os.stat(self._path).st_size
+        return len(self)
 
     def __del__(self):
-        """
-        De-Construtor is used to tidy up files during garbage collection
-        """
-        if self.delete and self._path:
-            # Cleanup errors must not skip the parent file or HTTP session.
-            with suppress(OSError):
-                os.remove(self._path)
-
-        # Let Apprise remove any temporary file created by the HTTP download.
-        with suppress(Exception):
-            super().__del__()
+        """Clean up the download and HTTP session during garbage collection."""
+        if self.delete:
+            # Let Apprise remove the file created by the HTTP download.
+            with suppress(Exception):
+                super().__del__()
 
         # Clear first so manual or repeated cleanup remains harmless.
         http_session = self.http_session
@@ -479,11 +506,7 @@ def _write_uploaded_attachment(attachment, upload, filename, size_limit):
 
     except OSError as error:
         # This includes read failures, permission errors, quotas, and ENOSPC.
-        error_code = error.errno if isinstance(error.errno, int) else errno.EIO
-        raise AppriseAPIStorageError(
-            f"Could not read or write attachment {filename}",
-            error_code=error_code,
-        ) from error
+        raise _attachment_storage_error(f"Could not read or write attachment {filename}", error) from error
 
     except Exception as error:
         # Keep upload backend failures inside the API exception contract.
@@ -496,13 +519,94 @@ def _write_uploaded_attachment(attachment, upload, filename, size_limit):
                 os.remove(path)
 
 
-def parse_attachments(attachment_payload, files_request):
-    """
-    Takes the payload provided in a `/notify` call and extracts the
-    attachments out of it.
+def _decode_base64_attachment(value, filename, size_limit):
+    """Decode a base64 attachment after validating its type and size."""
+    if isinstance(value, str):
+        try:
+            encoded = value.encode("ascii")
+        except UnicodeEncodeError:
+            raise AppriseAPIImproperlyConfigured(
+                f"Invalid file content was provided for attachment {filename}"
+            ) from None
 
-    Content is written to a temporary directory until the garbage
-    collection kicks in.
+    elif isinstance(value, (bytes, bytearray, memoryview)):
+        encoded = bytes(value)
+
+    else:
+        raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}")
+
+    # Permit wrapped base64 while rejecting other non-alphabet characters.
+    encoded = encoded.translate(None, b" \t\r\n\v\f")
+
+    # Four encoded bytes represent at most three decoded bytes.
+    if len(encoded) > 4 * ((size_limit + 2) // 3):
+        raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+    try:
+        decoded = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, ValueError):
+        raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}") from None
+
+    if len(decoded) > size_limit:
+        raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+    return decoded
+
+
+def _build_http_attachment(url, no, fallback_filename, override_filename=None):
+    """Build a hosted HTTP attachment from either supported URL input form.
+
+    Only HTTP(S) URLs that pass the configured rules are accepted. An explicit
+    filename wins over URL-derived names, with ``fallback_filename`` used last.
+    """
+    if not isinstance(url, str) or not ATTACH_HTTP_SCHEME.match(url):
+        # Reject local and unsupported sources before parsing the URL.
+        raise AppriseAPIImproperlyConfigured(f"Failed to load attachment {no} (not web request)")
+
+    # The HTTP transport checks and pins the destination address.
+    if not ATTACH_URL_FILTER.is_allowed(url, resolve=False):
+        # Reject URLs blocked by the configured attachment rules.
+        raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (blocked web request)")
+
+    # Apprise sanitizes ``?name=`` and ignores empty values.
+    _parsed = A_MGR["http"].parse_url(url)
+    if not _parsed:
+        raise AppriseAPIImproperlyConfigured(f"Failed to parse attachment {no} URL")
+
+    # Prefer an explicit name, then ``?name=``, the URL path, and the fallback.
+    if override_filename:
+        _parsed["name"] = override_filename
+    elif "name" not in _parsed:
+        _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
+        if not _path_name:
+            _parsed["name"] = fallback_filename
+
+    attachment = HTTPAttachment(**_parsed)
+    try:
+        available = bool(attachment)
+    except OSError as error:
+        raise _attachment_storage_error(f"Could not store attachment {no}", error) from error
+
+    if not available:
+        download_error = getattr(attachment, "download_error", None)
+        if isinstance(download_error, OSError):
+            raise _attachment_storage_error(f"Could not store attachment {no}", download_error) from download_error
+
+        # Report download failures through the API's attachment error.
+        raise AppriseAPIImproperlyConfigured(f"Failed to retrieve attachment {no}")
+
+    # Accept only remote content, never a file read from the API server.
+    if attachment.location != apprise.ContentLocation.HOSTED:
+        raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (not a hosted resource)")
+
+    return attachment
+
+
+def parse_attachments(attachment_payload, files_request):
+    """Build attachments from a `/notify` payload and uploaded files.
+
+    Content is stored temporarily and removed when its attachment is cleaned
+    up.
     """
     attachments = []
 
@@ -541,6 +645,7 @@ def parse_attachments(attachment_payload, files_request):
             elif isinstance(entry, dict):
                 try:
                     filename = entry.get("filename", "").strip()
+                    override_filename = filename or None
 
                     # Max filename size is 250
                     if len(filename) > 250:
@@ -567,95 +672,55 @@ def parse_attachments(attachment_payload, files_request):
             #
             if isinstance(entry, str):
                 if not entry.strip():
-                    # ignore blank entries; these can come from using the
-                    # api/website and submitting without an element defined.
-                    # There is no need have a bad outcome; just decrement our
-                    # counter and move along
+                    # Ignore empty form entries and adjust the attachment count.
                     count -= 1
                     continue
 
-                if not re.match(r"^https?://.+", entry[:10], re.I):
-                    # We failed to retrieve the product
-                    raise AppriseAPIImproperlyConfigured(f"Failed to load attachment {no} (not web request): {entry}")
+                attachment = _build_http_attachment(entry, no, filename)
 
-                # The transport performs the authoritative, pinned DNS check.
-                if not ATTACH_URL_FILTER.is_allowed(entry, resolve=False):
-                    # We are not allowed to use this entry
-                    raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (blocked web request): {entry}")
+            elif isinstance(entry, dict) and AttachmentPayload.URL in entry and AttachmentPayload.BASE64 not in entry:
+                # URL dictionaries use the same validation as string URLs.
+                attachment = _build_http_attachment(
+                    entry[AttachmentPayload.URL],
+                    no,
+                    filename,
+                    override_filename=override_filename,
+                )
 
-                # Apprise sanitizes ``?name=`` and ignores empty values.
-                _parsed = A_MGR["http"].parse_url(entry)
-
-                # Prefer ``?name=``, then the URL filename, then attachment.NNN.
-                if "name" not in _parsed:
-                    _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
-                    if not _path_name:
-                        _parsed["name"] = filename
-
-                attachment = HTTPAttachment(**_parsed)
-                if not attachment:
-                    # We failed to retrieve the attachment
-                    raise AppriseAPIImproperlyConfigured(f"Failed to retrieve attachment {no}: {entry}")
-
-            else:  # web, base64 or raw
+            else:  # base64 or raw
                 attachment = Attachment(filename)
+                complete = False
                 try:
                     with open(attachment.path, "wb") as f:
-                        # Write our content to disk
                         if isinstance(entry, dict) and AttachmentPayload.BASE64 in entry:
-                            # BASE64
-                            f.write(base64.b64decode(entry[AttachmentPayload.BASE64]))
-
-                        elif isinstance(entry, dict) and AttachmentPayload.URL in entry:
-                            # Avoid a throwaway lookup before the pinned connection.
-                            if not ATTACH_URL_FILTER.is_allowed(
-                                entry[AttachmentPayload.URL],
-                                resolve=False,
-                            ):
-                                # We are not allowed to use this entry
-                                raise AppriseAPIImproperlyConfigured(
-                                    f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
-                                )
-
-                            # Apprise sanitizes ``?name=`` before it reaches us.
-                            _parsed = A_MGR["http"].parse_url(entry[AttachmentPayload.URL])
-
-                            # A supplied filename wins; otherwise use the same
-                            # URL name and fallback order as string attachments.
-                            _dict_filename = entry.get("filename", "").strip()
-                            if _dict_filename:
-                                _parsed["name"] = _dict_filename
-                            elif "name" not in _parsed:
-                                _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
-                                if not _path_name:
-                                    _parsed["name"] = filename
-
-                            attachment = HTTPAttachment(**_parsed)
-                            if not attachment:
-                                # We failed to retrieve the attachment
-                                raise AppriseAPIImproperlyConfigured(f"Failed to retrieve attachment {no}: {entry}")
+                            content = _decode_base64_attachment(
+                                entry[AttachmentPayload.BASE64],
+                                filename,
+                                settings.APPRISE_ATTACH_SIZE,
+                            )
 
                         elif isinstance(entry, bytes):
-                            # RAW
-                            f.write(entry)
+                            content = entry
 
                         else:
                             raise AppriseAPIImproperlyConfigured(
                                 f"Invalid filetype was provided for attachment {filename}"
                             )
 
-                except binascii.Error:
-                    # The file ws not base64 encoded
-                    raise AppriseAPIImproperlyConfigured(
-                        f"Invalid filecontent was provided for attachment {filename}"
-                    ) from None
+                        # A short write is a storage failure, not valid content.
+                        if f.write(content) != len(content):
+                            raise OSError(errno.EIO, "short attachment write")
+
+                    complete = True
 
                 except OSError as error:
-                    error_code = error.errno if isinstance(error.errno, int) else errno.EIO
-                    raise AppriseAPIStorageError(
-                        f"Could not write attachment {filename} to disk",
-                        error_code=error_code,
-                    ) from error
+                    raise _attachment_storage_error(f"Could not write attachment {filename} to disk", error) from error
+
+                finally:
+                    if not complete:
+                        # Do not retain empty or partial files after rejection.
+                        with suppress(OSError):
+                            os.remove(attachment.path)
 
                 #
                 # Some Validation
@@ -733,14 +798,10 @@ class AppriseConfigCache:
             logger.error("APPRISE_STATEFUL_MODE {} is not supported; reverted to {}.".format(mode, self.mode))
 
     def put(self, key, content, fmt):
-        """
-        Based on the key specified, content is written to disk (compressed)
+        """Write configuration content to disk.
 
-        key:     is an alphanumeric string needed to write and read back this
-                 file being written.
-        content: the content to be written to disk
-        fmt:     the content config format (of type apprise.ConfigFormat)
-
+        ``key`` identifies the entry, ``content`` is its value, and ``fmt`` is
+        an ``apprise.ConfigFormat`` value.
         """
         # There isn't a lot of error handling done here as it is presumed most
         # of the checking has been done higher up.
@@ -828,17 +889,10 @@ class AppriseConfigCache:
         return True
 
     def get(self, key):
-        """
-        Based on the key specified, content is written to disk (compressed)
+        """Read the configuration identified by ``key``.
 
-        key:     is an alphanumeric string needed to write and read back this
-                 file being written.
-
-        The function returns a tuple of (content, fmt) where the content
-        is the uncompressed content found in the file and fmt is the
-        content representation (of type apprise.ConfigFormat).
-
-        If no data was found, then (None, None) is returned.
+        Return ``(content, format)`` when found, ``(None, "")`` when missing,
+        or ``(None, None)`` when the read fails.
         """
 
         if self.mode == AppriseStoreMode.DISABLED:
@@ -903,14 +957,10 @@ class AppriseConfigCache:
         return (content, fmt)
 
     def clear(self, key, formats=None):
-        """
-        Removes any content associated with the specified key should it
-        exist.
+        """Remove content for ``key``, optionally limited by format.
 
-        None is returned if there was nothing to clear
-        True is returned if content was cleared
-        False is returned if an internal error prevented data from being
-              cleared
+        Return ``True`` when content was removed, ``None`` when nothing
+        existed, or ``False`` when removal failed.
         """
         # Default our response None
         response = None
@@ -1494,8 +1544,8 @@ class AppriseConfigCache:
                 return (None, None)
 
             return (
-                datetime.fromtimestamp(self._creation_timestamp(key) or file_stat.st_ctime),
-                datetime.fromtimestamp(file_stat.st_mtime),
+                _configured_datetime(self._creation_timestamp(key) or file_stat.st_ctime),
+                _configured_datetime(file_stat.st_mtime),
             )
 
         return (None, None)
@@ -1689,7 +1739,7 @@ def send_webhook(payload):
 
     # Prepare HTTP Headers
     headers = {
-        "User-Agent": "Apprise-API",
+        "User-Agent": f"Apprise-API/{settings.APP_VERSION}",
         "Content-Type": "application/json",
     }
 

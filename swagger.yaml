@@ -105,7 +105,7 @@ paths:
         Performs a health check on the server configuration.
         Returns 200 if OK, 417 if there is a configuration/permission issue.
         Sending X-Apprise-Config-ID applies that key's own authentication
-        gate (if any) to this same response -- see /status/{key}.
+        gate (if any) to this same response; see /status/{key}.
       tags:
         - Meta
       parameters:
@@ -123,11 +123,11 @@ paths:
                 $ref: '#/components/schemas/StatusResponse'
         '400':
           description: >
-            Bad Request -- only when X-Apprise-Config-ID is supplied and
+            Bad Request. Returned only when X-Apprise-Config-ID is supplied and
             invalid.
         '401':
           description: >
-            Unauthorized -- authentication is enabled and the administrator
+            Unauthorized. Authentication is enabled and the administrator
             login was not accepted, or X-Apprise-Config-ID supplied a key
             whose authentication requirements were not met.
         '417':
@@ -303,12 +303,12 @@ paths:
             X-Apprise-Config-ID).
         '401':
           description: >
-            Unauthorized -- administrator credentials were not supplied and
+            Unauthorized. Administrator credentials were not supplied and
             the request did not include valid credentials for the configuration
             named by X-Apprise-Config-ID.
         '403':
           description: >
-            Access Denied -- APPRISE_STATELESS_MODE is disabled, or the
+            Access Denied. APPRISE_STATELESS_MODE is disabled, or the
             supplied configuration uses locked, public, or disabled access.
         '406':
           description: Method Not Accepted (Recursion limit reached).
@@ -672,11 +672,11 @@ paths:
             match).
         '401':
           description: >
-            Unauthorized -- use global credentials for a first access record, or
+            Unauthorized. Use global credentials for a first access record, or
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- persistent storage or authentication mode is disabled,
+            Forbidden. Persistent storage or authentication mode is disabled,
             or a configuration user attempted to change the username or access.
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -698,15 +698,42 @@ paths:
         '200':
           description: Authentication removed.
         '401':
-          description: Unauthorized -- the supplied credentials are invalid.
+          description: Unauthorized because the supplied credentials are invalid.
         '403':
           description: >
-            Forbidden -- persistent storage or authentication mode is disabled,
+            Forbidden. Persistent storage or authentication mode is disabled,
             or configuration credentials were used. An administrator account is required.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           description: Internal Error (Could not remove from disk).
+
+  /qr/{key}:
+    get:
+      operationId: Persistent_GetMobileQrUrl
+      summary: Returns an Apprise Mobile setup URL for {key}.
+      description: >
+        The URL may identify the saved configuration username, but never
+        includes a saved password. The response is not cacheable.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/key'
+      responses:
+        '200':
+          description: Apprise Mobile setup URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileQrResponse'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden because persistent storage is disabled or the
+            configuration permits only an administrator.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   /cfg/{key}:
     post:
@@ -1134,11 +1161,11 @@ paths:
             containing ':', or confirmation passwords that do not match).
         '401':
           description: >
-            Unauthorized -- use global credentials for a first access record, or
+            Unauthorized. Use global credentials for a first access record, or
             global/current key credentials for later changes.
         '403':
           description: >
-            Forbidden -- persistent storage or authentication mode is disabled,
+            Forbidden. Persistent storage or authentication mode is disabled,
             or a configuration user attempted to change the username or access.
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -1162,10 +1189,10 @@ paths:
         '400':
           description: Bad Request (missing or invalid X-Apprise-Config-ID).
         '401':
-          description: Unauthorized -- the supplied credentials are invalid.
+          description: Unauthorized because the supplied credentials are invalid.
         '403':
           description: >
-            Forbidden -- persistent storage or authentication mode is disabled,
+            Forbidden. Persistent storage or authentication mode is disabled,
             or configuration credentials were used. An administrator account is required.
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -1222,6 +1249,35 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
+  /qr/:
+    get:
+      operationId: Persistent_GetMobileQrUrlByHeader
+      summary: Header-based equivalent of GET /qr/{key}.
+      description: >
+        The Config ID comes from X-Apprise-Config-ID. The returned URL may
+        identify a username, but never includes a saved password.
+      tags:
+        - Persistent
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      responses:
+        '200':
+          description: Apprise Mobile setup URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileQrResponse'
+        '400':
+          description: Bad Request (missing or invalid X-Apprise-Config-ID).
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden because persistent storage is disabled or the
+            configuration permits only an administrator.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
 components:
   securitySchemes:
     basicAuth:
@@ -1235,7 +1291,7 @@ components:
   responses:
     TooManyRequests:
       description: >
-        Too Many Requests -- the reverse proxy has temporarily limited this
+        Too Many Requests. The reverse proxy has temporarily limited this
         request. Both packaged configurations limit health and metrics checks;
         strict mode also limits login changes and protected routes. Packaged
         responses use a 60-second delay and are not cacheable.
@@ -1337,7 +1393,7 @@ components:
       type: string
       nullable: true
       description: >-
-        Text format of the message body. Optional -- if omitted, no
+        Text format of the message body. If omitted, no
         format is applied and the content is passed through untouched
         (unless the server has APPRISE_DEFAULT_FORMAT configured).
         Sending this as an empty string or null also forces
@@ -1405,6 +1461,18 @@ components:
         config:
           type: string
           description: The raw configuration content.
+
+    MobileQrResponse:
+      type: object
+      required: [url, uses_admin_credentials]
+      properties:
+        url:
+          type: string
+          description: Password-safe Apprise Mobile setup URL.
+          example: apprise://:alice@apprise.example.com/alerts
+        uses_admin_credentials:
+          type: boolean
+          description: Whether the app must use the administrator login.
 
     LogResponse:
       type: object

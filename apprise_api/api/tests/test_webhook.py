@@ -25,6 +25,7 @@ import io
 from json import loads
 from unittest import mock
 
+from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 import requests
@@ -162,7 +163,7 @@ class WebhookTests(SimpleTestCase):
             assert loads(details[1]["data"]) == {}
             assert "User-Agent" in details[1]["headers"]
             assert "Content-Type" in details[1]["headers"]
-            assert details[1]["headers"]["User-Agent"] == "Apprise-API"
+            assert details[1]["headers"]["User-Agent"] == f"Apprise-API/{settings.APP_VERSION}"
             assert details[1]["headers"]["Content-Type"] == "application/json"
             assert details[1]["auth"] == ("user", "pass")
             assert details[1]["verify"] is True
@@ -182,7 +183,7 @@ class WebhookTests(SimpleTestCase):
             assert loads(details[1]["data"]) == {}
             assert "User-Agent" in details[1]["headers"]
             assert "Content-Type" in details[1]["headers"]
-            assert details[1]["headers"]["User-Agent"] == "Apprise-API"
+            assert details[1]["headers"]["User-Agent"] == f"Apprise-API/{settings.APP_VERSION}"
             assert details[1]["headers"]["Content-Type"] == "application/json"
             assert details[1]["auth"] == ("user", None)
             assert details[1]["verify"] is False

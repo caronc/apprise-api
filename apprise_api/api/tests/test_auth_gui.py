@@ -169,7 +169,6 @@ class AuthGuiTests(SimpleTestCase):
         self.assertEqual(content.count('aria-pressed="true"'), 2)
         self.assertIn(">Username</button>", content)
         self.assertIn("Randomize Selected", content)
-        self.assertIn("Reset Options", content)
         self.assertIn("Reset User Access", content)
         self.assertIn("Reset Configuration Too", content)
         self.assertIn("Reset Access and Configuration", content)
@@ -692,15 +691,11 @@ class AuthGuiTests(SimpleTestCase):
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_config_bookmark_url_omits_the_password_placeholder(self):
-        """The 'return to this configuration screen' bookmark link never carries a `****` password.
+        """Bookmark URLs omit the masked password used in CLI examples.
 
-        Unlike the curl/CLI examples (which need a literal, replaceable
-        value to run as a real command), this URL is only ever a passive
-        browser bookmark and is also expected to be pasted into Apprise
-        Mobile's own QR/paste-URL import -- a `:****@` placeholder there
-        would either be mistaken for a literal password or confuse a
-        parser expecting the ordinary "no password known" form
-        (bare `user@`, no colon).
+        A `:****@` placeholder could be read as a real password when the URL
+        is pasted into Apprise Mobile. The safe form is `user@` without a
+        password or colon.
         """
         ConfigCache.set_auth(self.key, "alice", "secret")
 

@@ -27,6 +27,7 @@ from pathlib import Path
 from api.utils import CONFIG_KEY_MAX_LENGTH
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+import yaml
 
 
 class ErrorTests(SimpleTestCase):
@@ -112,6 +113,7 @@ class ErrorTests(SimpleTestCase):
             "error_page 500 = /_/50x/;",
             "error_page 502 503 504 /50x.html;",
         )
+        qr_location = 'location ~ "^/qr(/([\\w_-]{{1,{}}}|@))?/?$"'.format(CONFIG_KEY_MAX_LENGTH)
         for filename in ("nginx.conf", "nginx-strict.conf"):
             config = (etc_dir / filename).read_text(encoding="utf-8")
             with self.subTest(filename=filename):
@@ -130,7 +132,7 @@ class ErrorTests(SimpleTestCase):
                 assert "proxy_hide_header Retry-After;" in config
                 assert "add_header Retry-After $apprise_retry_after always;" in config
                 assert config.count("access_log off;") == 1
-                assert config.count('add_header Allow "GET, HEAD" always;') == 3
+                assert config.count('add_header Allow "GET, HEAD" always;') == 4
                 assert "if ($request_method !~ ^(GET|HEAD)$)" in config
                 assert "proxy_set_header X-Real-IP $remote_addr;" in config
                 assert "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
@@ -140,6 +142,23 @@ class ErrorTests(SimpleTestCase):
                 assert (
                     'location ~ "^/(status(/([\\w_-]{{1,{}}}|@))?|metrics)/?$"'.format(CONFIG_KEY_MAX_LENGTH) in config
                 )
+                assert qr_location in config
+
+                qr_start = config.index(qr_location)
+                qr_end = config.index("# 7. Django Error Handling", qr_start)
+                qr_block = config[qr_start:qr_end]
+                assert "if ($request_method !~ ^(GET|HEAD)$)" in qr_block
+                assert 'add_header Allow "GET, HEAD" always;' in qr_block
+                assert "proxy_pass_request_body off;" in qr_block
+                assert 'proxy_set_header Content-Length "";' in qr_block
+                assert "proxy_buffering off;" in qr_block
+                assert "proxy_hide_header Cache-Control;" in qr_block
+                assert 'add_header Cache-Control "no-store" always;' in qr_block
+
+                if filename == "nginx-strict.conf":
+                    assert "limit_req zone=key_auth burst=20 nodelay;" in qr_block
+                else:
+                    assert "limit_req zone=key_auth" not in qr_block
 
         fallback = Path(__file__).resolve().parents[2] / "static" / "50x.html"
         assert fallback.is_file()
@@ -162,11 +181,31 @@ class ErrorTests(SimpleTestCase):
 
     def test_method_rejections_include_allowed_methods(self):
         """Django supplies standards-based 405 responses for known routes."""
-        for path, allowed in (("/notify", "POST"), ("/status", "GET"), ("/add/test", "POST")):
+        for path, allowed in (
+            ("/notify", "POST"),
+            ("/status", "GET"),
+            ("/add/test", "POST"),
+            ("/qr/test", "GET"),
+        ):
             with self.subTest(path=path):
                 response = self.client.put(path)
                 assert response.status_code == 405
                 assert allowed in response["Allow"].split(", ")
+
+    def test_swagger_exposes_mobile_qr(self):
+        """The API specification documents both supported API forms."""
+        swagger_path = Path(__file__).resolve().parents[3] / "swagger.yaml"
+        specification = yaml.safe_load(swagger_path.read_text(encoding="utf-8"))
+
+        for path in ("/qr/{key}", "/qr/"):
+            operation = specification["paths"][path]["get"]
+            assert "security" not in operation
+            assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+                "$ref": "#/components/schemas/MobileQrResponse"
+            }
+
+        schema = specification["components"]["schemas"]["MobileQrResponse"]
+        assert set(schema["required"]) == {"url", "uses_admin_credentials"}
 
     def test_get_401(self):
         """The static authentication page includes its challenge header."""

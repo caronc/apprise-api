@@ -32,6 +32,7 @@ from apprise import ConfigFormat
 from django.core.exceptions import RequestDataTooBig
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from django.urls import resolve
 
 from ..auth import Authentication
 from ..forms import AUTO_DETECT_CONFIG_KEYWORD
@@ -476,6 +477,28 @@ class AddTests(SimpleTestCase):
         )
         # Passes the length check; invalid apprise content → 400 (not 413/431)
         assert response.status_code == 400
+
+    def test_add_omits_file_time_headers_when_unavailable(self):
+        """A save whose timestamps cannot be read still succeeds."""
+        key = "test_add_no_file_times"
+        self.addCleanup(ConfigCache.clear, key)
+
+        view_module = resolve("/add/{}".format(key)).func.__module__
+        with patch(
+            "{}.ConfigCache.get_file_times".format(view_module),
+            return_value=(None, None),
+        ):
+            response = self.client.post(
+                "/add/{}".format(key),
+                {"urls": "mailto://user:pass@yahoo.ca"},
+            )
+
+        assert response.status_code == 200
+        assert "X-Apprise-Config-Created" not in response.headers
+        assert "X-Apprise-Config-MTime" not in response.headers
+
+        # The timezone header is unconditional and still present
+        assert response.headers["X-Apprise-Timezone"]
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_add_user_can_replace_own_key_by_url_or_header(self):

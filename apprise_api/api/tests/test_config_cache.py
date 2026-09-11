@@ -21,7 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from datetime import datetime
+from datetime import UTC, datetime
 import errno
 import gzip
 import os
@@ -30,9 +30,17 @@ import time
 from unittest.mock import mock_open, patch
 
 from apprise import ConfigFormat
+from django.test import override_settings
 import pytest
 
-from ..utils import AppriseConfigCache, AppriseStoreMode, AuthStorageError, MoveResult, SimpleFileExtension
+from ..utils import (
+    AppriseConfigCache,
+    AppriseStoreMode,
+    AuthStorageError,
+    MoveResult,
+    SimpleFileExtension,
+    _configured_datetime,
+)
 
 
 def _backdate(path, seconds_ago):
@@ -914,7 +922,7 @@ def test_prune_unused_locks_simple_mode(tmpdir):
     assert pruned == 1
     assert not acc_obj.has_auth(old_key)
     assert acc_obj.has_auth(young_key)
-    # Same age as old_key's lock -- only survives because it has content.
+    # This old lock remains because its configuration still exists.
     assert acc_obj.has_auth(configured_key)
     assert acc_obj.get(configured_key) == ("mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
 
@@ -929,7 +937,7 @@ def test_prune_removes_all_eligible(tmpdir):
         path, filename = acc_obj.auth_path(key)
         _backdate(os.path.join(path, filename), seconds_ago=1000)
 
-    # An unrelated, unlocked config -- pruning must never touch it.
+    # Pruning must not touch an unrelated, unlocked configuration.
     unlocked_key = "test_prune_multi_unlocked"
     assert acc_obj.put(unlocked_key, "mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
 
@@ -1085,7 +1093,85 @@ def test_get_file_times_for_stored_config(tmpdir, mode):
     assert not os.path.exists(store._creation_path("moved-time-key"))
 
 
+@override_settings(TIME_ZONE="America/New_York")
+def test_get_file_times_use_configured_timezone(tmpdir):
+    """Configuration times follow the configured zone across DST changes."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert store.put("zoned-time-key", "json://localhost", ConfigFormat.TEXT.value)
+
+    created_timestamp = datetime(2026, 1, 15, 12, tzinfo=UTC).timestamp()
+    modified_timestamp = datetime(2026, 7, 15, 12, tzinfo=UTC).timestamp()
+    os.utime(store._creation_path("zoned-time-key"), (created_timestamp, created_timestamp))
+    content_path = next(path for path in store._content_paths("zoned-time-key") if os.path.isfile(path))
+    os.utime(content_path, (modified_timestamp, modified_timestamp))
+
+    created, modified = store.get_file_times("zoned-time-key")
+    assert created == datetime(2026, 1, 15, 7)
+    assert modified == datetime(2026, 7, 15, 8)
+
+
+@override_settings(TIME_ZONE="Not/A-Timezone")
+def test_configured_datetime_handles_unknown_timezone():
+    """An invalid embedded setting falls back without hiding file details."""
+    assert isinstance(_configured_datetime(0), datetime)
+
+
 def test_get_file_times_is_empty_when_storage_is_disabled(tmpdir):
     """Disabled storage has no configuration timestamps."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED)
     assert store.get_file_times("time-key") == (None, None)
+
+
+def test_clear_reports_creation_marker_removal_failure(tmpdir):
+    """A marker we cannot delete makes the clear report a failure."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.put("marker-key", "json://localhost", ConfigFormat.TEXT.value)
+
+    marker = store._creation_path("marker-key")
+    real_remove = os.remove
+
+    def remove(path, *args, **kwargs):
+        if path == marker:
+            raise OSError(errno.EACCES, "denied")
+
+        return real_remove(path, *args, **kwargs)
+
+    with patch("os.remove", side_effect=remove):
+        assert store.clear("marker-key") is False
+
+
+def test_creation_marker_open_failure_is_not_fatal(tmpdir):
+    """A marker we cannot create is logged and skipped, not raised."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+
+    with patch("os.open", side_effect=OSError(errno.EACCES, "denied")):
+        assert store._record_creation_time("open-fail-key") is None
+
+    assert not os.path.exists(store._creation_path("open-fail-key"))
+
+
+def test_creation_marker_timestamp_failure_is_not_fatal(tmpdir):
+    """A marker that cannot be backdated keeps its own creation time."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.put("utime-fail-key", "json://localhost", ConfigFormat.TEXT.value)
+
+    # Drop the marker put() wrote so a fresh one gets created below
+    marker = store._creation_path("utime-fail-key")
+    os.remove(marker)
+
+    original_timestamp = datetime(2020, 1, 2, 3, 4, 5).timestamp()
+    with patch("os.utime", side_effect=OSError(errno.EACCES, "denied")):
+        assert store._record_creation_time("utime-fail-key", original_timestamp) is None
+
+    # The marker still exists; only its timestamp could not be restored
+    assert os.path.exists(marker)
+    assert os.path.getmtime(marker) != original_timestamp
+
+
+def test_get_file_times_is_empty_when_content_is_unreadable(tmpdir):
+    """Content we cannot stat reports no timestamps at all."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.put("unreadable-key", "json://localhost", ConfigFormat.TEXT.value)
+
+    with patch("os.stat", side_effect=OSError(errno.EACCES, "denied")):
+        assert store.get_file_times("unreadable-key") == (None, None)

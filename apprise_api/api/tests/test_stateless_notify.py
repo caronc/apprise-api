@@ -32,7 +32,7 @@ from django.test.utils import override_settings
 import requests
 
 from ..forms import NotifyByUrlForm
-from .helpers import notify_result
+from .helpers import NotifyAttachmentSecurityMixin, notify_result
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -1283,3 +1283,23 @@ class StatelessNotifyTests(SimpleTestCase):
             content = json.loads(response.content)
             assert "error" in content
             mock_notify.assert_not_called()
+
+
+class StatelessAttachmentSecurityTests(NotifyAttachmentSecurityMixin, SimpleTestCase):
+    """Check unsafe attachments on stateless notifications."""
+
+    def post_attachment(self, payload, as_json=False):
+        """Submit an attachment to the stateless notification endpoint."""
+        content = {
+            "urls": "mailto://user:pass@hotmail.com",
+            "body": "test notification",
+            "attach": payload,
+        }
+        if as_json:
+            return self.client.post(
+                "/notify/",
+                data=json.dumps(content),
+                content_type="application/json",
+            )
+
+        return self.client.post("/notify", content)

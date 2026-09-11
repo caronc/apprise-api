@@ -34,6 +34,7 @@ import requests
 
 from ..forms import NotifyForm
 from ..utils import ConfigCache
+from .helpers import NotifyAttachmentSecurityMixin
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -692,3 +693,28 @@ class StatefulNotifyTests(SimpleTestCase):
         )
         assert response.status_code == 400
         assert mock_post.call_count == 0
+
+
+class StatefulAttachmentSecurityTests(NotifyAttachmentSecurityMixin, SimpleTestCase):
+    """Check unsafe attachments on stateful notifications."""
+
+    def setUp(self):
+        super().setUp()
+        self.key = "stateful_local_file_disclosure"
+        response = self.client.post(f"/add/{self.key}", {"urls": "json://localhost"})
+        assert response.status_code == 200
+        self.addCleanup(ConfigCache.clear, self.key)
+
+    def post_attachment(self, payload, as_json=False):
+        """Submit an attachment to the stateful notification endpoint."""
+        if as_json:
+            return self.client.post(
+                f"/notify/{self.key}",
+                dumps({"body": "test notification", "attach": payload}),
+                content_type="application/json",
+            )
+
+        return self.client.post(
+            f"/notify/{self.key}",
+            {"body": "test notification", "attach": payload},
+        )

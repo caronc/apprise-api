@@ -67,6 +67,18 @@ class BuildAppriseMobileUrlTests(SimpleTestCase):
             url = _build_apprise_mobile_url(request, "mykey")
         self.assertEqual(url, "apprises://testserver/mykey")
 
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=False,
+        APPRISE_TRUSTED_ORIGINS=["https://testserver"],
+    )
+    def test_trusted_proxy_origin_uses_apprises_scheme(self):
+        """A trusted public HTTPS origin keeps the Mobile URL secure."""
+        request = self.factory.get("/qr/mykey")
+        self.assertEqual(
+            _build_apprise_mobile_url(request, "mykey"),
+            "apprises://testserver/mykey",
+        )
+
     @override_settings(BASE_URL="/apprise")
     def test_base_url_prefix_is_included(self):
         """A reverse-proxy base path sits between the host and the config ID."""
@@ -156,7 +168,12 @@ class MobileQrViewTests(SimpleTestCase):
     """Test the /qr endpoints backing the Apprise Mobile QR code popup."""
 
     def tearDown(self):
-        for key in ("qr_view_key", "qr_view_assigned_key"):
+        for key in (
+            "qr_view_key",
+            "qr_view_assigned_key",
+            "qr_view_public_key",
+            "qr_view_disabled_key",
+        ):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
@@ -169,15 +186,59 @@ class MobileQrViewTests(SimpleTestCase):
         """With auth disabled, the endpoint is reachable and returns a bare URL."""
         response = self.client.get("/qr/qr_view_key", headers={"accept": "application/json"})
         self.assertEqual(response.status_code, 200)
+        self.assertIn("no-store", response["Cache-Control"])
         payload = loads(response.content)
         self.assertTrue(payload["url"].startswith("apprise://"))
         self.assertTrue(payload["url"].endswith("/qr_view_key"))
+
+    def test_header_selects_config_id(self):
+        """The bare route accepts a valid Config ID header."""
+        response = self.client.get(
+            "/qr/",
+            headers={"accept": "application/json", "X-Apprise-Config-ID": "qr_view_key"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["url"], "apprise://testserver/qr_view_key")
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_requires_authentication_when_enabled(self):
         """A protected key rejects a request with no credentials."""
         response = self.client.get("/qr/qr_view_key", headers={"accept": "application/json"})
         self.assertEqual(response.status_code, 401)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_public_access_does_not_expose_qr(self):
+        """Public notification access does not reveal Mobile setup details."""
+        key = "qr_view_public_key"
+        self.assertTrue(ConfigCache.set_access(key, Authentication.ACCESS_PUBLIC))
+
+        response = self.client.get(f"/qr/{key}", headers={"accept": "application/json"})
+        self.assertEqual(response.status_code, 401)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_disabled_account_requires_admin(self):
+        """A disabled configuration user cannot retrieve its Mobile URL."""
+        key = "qr_view_disabled_key"
+        self.assertTrue(
+            ConfigCache.set_auth(
+                key,
+                "alice",
+                "alice-secret",
+                access=Authentication.ACCESS_DISABLED,
+            )
+        )
+
+        response = self.client.get(
+            f"/qr/{key}",
+            headers={"accept": "application/json", "authorization": _basic("alice", "alice-secret")},
+        )
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(
+            f"/qr/{key}",
+            headers={"accept": "application/json", **_GOOD_MASTER},
+        )
+        self.assertEqual(response.status_code, 200)
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -232,6 +293,34 @@ class MobileQrViewTests(SimpleTestCase):
     def test_current_alias_without_key_returns_bad_request(self):
         """The cookie-based alias fails cleanly with no remembered configuration."""
         response = self.client.get("/qr/@", headers={"accept": "application/json"})
+        self.assertEqual(response.status_code, 400)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_current_alias_uses_browser_config(self):
+        """The browser alias resolves the Config ID stored in its login."""
+        key = "qr_view_assigned_key"
+        ConfigCache.set_auth(key, "alice", "alice-secret")
+        client = _web_cookie_client(Authentication.ROLE_USER, "alice", key)
+
+        response = client.get(
+            "/qr/@",
+            headers={"accept": "application/json", Authentication.WEB_HEADER: "1"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["url"], f"apprise://:alice@testserver/{key}")
+
+    @override_settings(APPRISE_STATEFUL_MODE="disabled")
+    def test_disabled_stateful_mode_is_unavailable(self):
+        """There is nothing to scan when configurations are not stored."""
+        response = self.client.get("/qr/qr_view_key", headers={"accept": "application/json"})
+        self.assertEqual(response.status_code, 403)
+
+    def test_invalid_key_header_returns_bad_request(self):
+        """A malformed config ID header is reported rather than ignored."""
+        response = self.client.get(
+            "/qr/",
+            headers={"accept": "application/json", "X-Apprise-Config-ID": "not a valid key!"},
+        )
         self.assertEqual(response.status_code, 400)
 
 

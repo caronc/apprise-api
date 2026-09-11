@@ -469,7 +469,7 @@ TAG_VALIDATION_RE = re.compile(r"^[a-z0-9\s| ,_:+&-]+$", re.IGNORECASE)
 # Split OR groups only on commas or pipes.
 TAG_OR_DELIM_RE = re.compile(r"\s*[|,]\s*")
 
-# Break apart our objects anded together.
+# Split each AND group into individual tags.
 TAG_AND_DELIM_RE = re.compile(r"[\s&+]+")
 
 # A single Apprise tag token. Supports [priority:]name[:retry].
@@ -483,12 +483,10 @@ TAG_SELECTION_MAX_ITEMS = 256
 
 
 def parse_tag_expression(tag):
-    """
-    Convert a user-provided tag expression into Apprise's OR/AND structure.
+    """Convert a tag expression into Apprise's OR/AND structure.
 
-    Commas and pipes are OR separators. Whitespace, ampersands, and plus signs are AND
-    separators. Individual tokens may use Apprise's advanced tag syntax:
-    [priority:]tag[:retry].
+    Commas and pipes mean OR. Spaces, ampersands, and plus signs mean AND.
+    Tokens may use ``[priority:]tag[:retry]``.
     """
     if not isinstance(tag, str) or not TAG_VALIDATION_RE.match(tag):
         raise AppriseAPIImproperlyConfigured("Unsupported characters found in tag definition")
@@ -1199,8 +1197,9 @@ def _build_apprise_mobile_url(request, key):
     passwords are never included; ``:username@`` tells the app which username
     to prefill while still requiring its password.
     """
-    scheme = "apprises" if request.is_secure() else "apprise"
     host = request.get_host()
+    secure = request.is_secure() or f"https://{host}".lower() in settings.APPRISE_TRUSTED_ORIGINS
+    scheme = "apprises" if secure else "apprise"
     base = settings.BASE_URL or ""
 
     username, password_required, _ = _apprise_mobile_credentials(request, key)
@@ -1321,7 +1320,7 @@ def _get_config_response(request, key):
     # Our configuration was retrieved; now our response varies on whether
     # we are a YAML configuration or a TEXT based one.  This allows us to
     # be compatible with those using the AppriseConfig() library or the
-    # reference to it through the --config (-c) option in the CLI.
+    # reference to it through the CLI's -c option.
     content_type = (
         "text/yaml; charset=utf-8" if format == apprise.ConfigFormat.YAML.value else "text/plain; charset=utf-8"
     )

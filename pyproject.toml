@@ -82,7 +82,7 @@ branch = true
 data_file = ".coverage-reports/.coverage"
 parallel = false
 concurrency = ["multiprocessing"]
-include = ["apprise_api"]
+source = ["apprise_api"]
 omit = [
   "*apps.py",
   "*/migrations/*",

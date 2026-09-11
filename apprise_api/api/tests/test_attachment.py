@@ -27,7 +27,6 @@ import errno
 import io
 import os
 from os.path import dirname, getsize, join
-from shutil import rmtree
 import socket
 from tempfile import TemporaryDirectory
 from unittest import mock
@@ -46,7 +45,8 @@ from ..exceptions import (
     AppriseAPIStorageError,
 )
 from ..urlfilter import AppriseURLFilter
-from ..utils import Attachment, HTTPAttachment, parse_attachments
+from ..utils import Attachment, HTTPAttachment, _build_http_attachment, parse_attachments
+from .helpers import LocalFileFixtureMixin
 
 SAMPLE_FILE = join(dirname(dirname(dirname(__file__))), "static", "logo.png")
 
@@ -71,12 +71,10 @@ class AttachmentTests(SimpleTestCase):
     def setUp(self):
         # Prepare a temporary directory
         self.tmp_dir = TemporaryDirectory()
+        self.addCleanup(self.tmp_dir.cleanup)
 
-        # The "internal" deny token (opt-in via APPRISE_ATTACH_REJECT_URL)
-        # resolves each attachment host as part of its SSRF check. Keep
-        # loopback hostnames resolving to loopback so that check still
-        # has something to catch; everything else gets a public address
-        # so tests don't depend on real DNS.
+        # Keep local hosts on loopback for internal-address tests. Give all
+        # other hosts a public test address so the suite never uses real DNS.
         def _fake_getaddrinfo(host, *_args, **_kwargs):
             addr = "127.0.0.1" if host in ("localhost", "localhost.localdomain") else "93.184.215.14"
             return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (addr, 0))]
@@ -85,30 +83,23 @@ class AttachmentTests(SimpleTestCase):
         getaddrinfo_patcher.start()
         self.addCleanup(getaddrinfo_patcher.stop)
 
-    def tearDown(self):
-        # Clear content if possible
-        with suppress(FileNotFoundError):
-            rmtree(self.tmp_dir.name)
-
-        self.tmp_dir = None
-
     def test_attachment_initialization(self):
         """
         Test attachment handling
         """
 
         with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
-            with mock.patch("os.makedirs", side_effect=OSError):
-                with self.assertRaises(AppriseAPIImproperlyConfigured):
+            with mock.patch("os.makedirs", side_effect=OSError(errno.EACCES, "denied")):
+                with self.assertRaises(AppriseAPIStorageError):
                     Attachment("file")
-                with self.assertRaises(AppriseAPIImproperlyConfigured):
+                with self.assertRaises(AppriseAPIStorageError):
                     HTTPAttachment("web")
 
-            with mock.patch("tempfile.mkstemp", side_effect=FileNotFoundError):
-                with self.assertRaises(AppriseAPIImproperlyConfigured):
-                    Attachment("file")
-                with self.assertRaises(AppriseAPIImproperlyConfigured):
-                    HTTPAttachment("web")
+            with (
+                mock.patch("tempfile.mkstemp", side_effect=OSError(errno.ENOSPC, "full")),
+                self.assertRaises(AppriseAPIStorageError),
+            ):
+                Attachment("file")
 
             with mock.patch("os.remove", side_effect=FileNotFoundError):
                 a = Attachment("file")
@@ -117,7 +108,6 @@ class AttachmentTests(SimpleTestCase):
                 del a
 
                 a = HTTPAttachment("web")
-                a._path = "abcd"
                 assert a.filename == "web"
                 # Force __del__ call to throw an exception which we gracefully
                 # handle
@@ -134,6 +124,58 @@ class AttachmentTests(SimpleTestCase):
             os.close(fd)
             a = Attachment("explicit.txt", path=explicit_path, delete=False)
             assert a._path == explicit_path
+
+    def test_http_session_closes_on_storage_error(self):
+        """A failed constructor must release its HTTP session immediately."""
+        error = OSError(errno.EACCES, "denied")
+        with (
+            override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name),
+            mock.patch.object(utils, "HTTPPolicySession") as session_type,
+            mock.patch("os.makedirs", side_effect=error),
+            self.assertRaises(AppriseAPIStorageError) as caught,
+        ):
+            HTTPAttachment("web")
+
+        self.assertEqual(caught.exception.errno, error.errno)
+        self.assertIs(caught.exception.__cause__, error)
+        session_type.return_value.close.assert_called_once_with()
+
+    def test_storage_error_survives_cleanup_failure(self):
+        """Session cleanup must not hide the attachment storage error."""
+        storage_error = OSError(errno.ENOSPC, "full")
+        with (
+            override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name),
+            mock.patch.object(utils, "HTTPPolicySession") as session_type,
+            mock.patch("os.makedirs", side_effect=storage_error),
+            self.assertRaises(AppriseAPIStorageError) as caught,
+        ):
+            session_type.return_value.close.side_effect = OSError("close failed")
+            HTTPAttachment("web")
+
+        self.assertIs(caught.exception.__cause__, storage_error)
+        session_type.return_value.close.assert_called_once_with()
+
+    def test_close_failure_removes_partial_file(self):
+        """A descriptor close failure must remove its temporary file."""
+        descriptor, path = utils.tempfile.mkstemp(dir=self.tmp_dir.name)
+
+        def close_always_fails(fd):
+            raise OSError(errno.EIO, "close failed")
+
+        with (
+            override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name),
+            mock.patch("tempfile.mkstemp", return_value=(descriptor, path)),
+            mock.patch("os.close", side_effect=close_always_fails) as mock_close,
+            self.assertRaises(AppriseAPIStorageError) as caught,
+        ):
+            Attachment("file")
+
+        self.assertEqual(caught.exception.errno, errno.EIO)
+        self.assertFalse(os.path.exists(path))
+
+        # Do not retry: another thread may already own this descriptor.
+        mock_close.assert_called_once_with(descriptor)
+        os.close(descriptor)
 
     def test_form_file_attachment_parsing(self):
         """
@@ -485,19 +527,16 @@ class AttachmentTests(SimpleTestCase):
         response.headers = {
             "Content-Length": getsize(SAMPLE_FILE),
         }
-        ref = {
-            "io": None,
-        }
 
         def iter_content(chunk_size=1024, *args, **kwargs):
-            if not ref["io"]:
-                ref["io"] = open(SAMPLE_FILE, "rb")  # noqa: SIM115
-            block = ref["io"].read(chunk_size)
-            if not block:
-                # Close for re-use
-                ref["io"].close()
-                ref["io"] = None
-            yield block
+            # Mirror Requests by yielding every chunk from one response.
+            stream = open(SAMPLE_FILE, "rb")  # noqa: SIM115
+            try:
+                while block := stream.read(chunk_size):
+                    yield block
+            finally:
+                # Also close the file if the caller stops consuming early.
+                stream.close()
 
         response.iter_content = iter_content
 
@@ -963,6 +1002,37 @@ class AttachmentTests(SimpleTestCase):
             assert a.filename is None
 
     @patch("apprise.utils.http.HTTPPolicySession.get")
+    def test_http_attachment_storage(self, mock_get):
+        """Remote content lands in APPRISE_ATTACH_DIR and reports its size."""
+        payload = b"data"
+        response = mock.Mock()
+        response.status_code = requests.codes.ok
+        response.raise_for_status.return_value = True
+        response.headers = {}
+        response.iter_content.return_value = iter([payload])
+        response.__enter__ = lambda s, *a, **kw: response
+        response.__exit__ = mock.Mock(return_value=False)
+        mock_get.return_value = response
+
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            attachment = HTTPAttachment(
+                host="example.com",
+                fullpath="/file.txt",
+                secure=True,
+            )
+            assert attachment
+
+            # Our download lives in the configured attachment directory
+            assert os.path.dirname(attachment.path) == self.tmp_dir.name
+
+            # It is the only file there; nothing extra was allocated
+            assert len(os.listdir(self.tmp_dir.name)) == 1
+
+            # The reported size matches what we actually retrieved
+            assert attachment.size == len(payload)
+            assert len(attachment) == len(payload)
+
+    @patch("apprise.utils.http.HTTPPolicySession.get")
     def test_url_attachment_name_resolution(self, mock_get):
         """parse_attachments derives attachment name from URL intelligently."""
         response = mock.Mock()
@@ -1096,6 +1166,134 @@ class AttachmentTests(SimpleTestCase):
         assert len(result) == 1
         assert result[0]._name == "passwd"
 
+    @patch("apprise.utils.http.HTTPPolicySession.get")
+    def test_dict_url_skips_local_attachment(self, mock_get):
+        """A URL dictionary must not create an unused local attachment."""
+        response = mock.MagicMock()
+        response.status_code = requests.codes.ok
+        response.headers = {}
+        response.iter_content.return_value = iter([b"data"])
+        response.__enter__.return_value = response
+        mock_get.return_value = response
+
+        with patch.object(utils, "Attachment") as local_attachment:
+            result = parse_attachments([{"url": "https://example.com/file.txt"}], {})
+
+        self.assertEqual(len(result), 1)
+        local_attachment.assert_not_called()
+
+    def test_base64_takes_priority_over_url(self):
+        """A dictionary containing both fields retains base64 precedence."""
+        payload = {
+            "base64": base64.b64encode(b"local data").decode(),
+            "url": "file:///should-not-be-used",
+        }
+        result = parse_attachments([payload], {})
+
+        self.assertEqual(len(result), 1)
+        with open(result[0].path, "rb") as stream:
+            self.assertEqual(stream.read(), b"local data")
+
+    def test_base64_accepts_ascii_whitespace(self):
+        """Wrapped base64 remains compatible with common encoders."""
+        encoded = base64.b64encode(b"wrapped content").decode()
+        wrapped = f"\n {encoded[:8]}\r\n{encoded[8:]}\t"
+
+        result = parse_attachments([{"base64": wrapped}], {})
+
+        with open(result[0].path, "rb") as stream:
+            self.assertEqual(stream.read(), b"wrapped content")
+
+    def test_base64_accepts_bytes_like_values(self):
+        """Internal callers may supply base64 as any bytes-like value."""
+        encoded = base64.b64encode(b"binary content")
+        for value in (encoded, bytearray(encoded), memoryview(encoded)):
+            with self.subTest(value=type(value).__name__):
+                result = parse_attachments([{"base64": value}], {})
+                with open(result[0].path, "rb") as stream:
+                    self.assertEqual(stream.read(), b"binary content")
+
+    def test_base64_rejects_malformed_values(self):
+        """Invalid base64 values always use the API validation error."""
+        with override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name):
+            for value in (None, [], {}, "é", "%%%", "abc"):
+                with self.subTest(value=value), self.assertRaises(AppriseAPIImproperlyConfigured):
+                    parse_attachments([{"base64": value}], {})
+
+            self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_base64_rejects_oversize_before_decode(self):
+        """Known oversized base64 is rejected before decoding or writing."""
+        encoded = base64.b64encode(b"four").decode()
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=3,
+            ),
+            patch.object(utils.base64, "b64decode") as decode,
+            self.assertRaisesRegex(
+                AppriseAPIImproperlyConfigured,
+                "file size is too large",
+            ),
+        ):
+            parse_attachments([{"base64": encoded}], {})
+
+        decode.assert_not_called()
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_base64_checks_decoded_size(self):
+        """Padding-aware validation enforces the exact decoded size."""
+        encoded = base64.b64encode(b"ab").decode()
+        with (
+            override_settings(
+                APPRISE_ATTACH_DIR=self.tmp_dir.name,
+                APPRISE_ATTACH_SIZE=1,
+            ),
+            self.assertRaisesRegex(
+                AppriseAPIImproperlyConfigured,
+                "file size is too large",
+            ),
+        ):
+            parse_attachments([{"base64": encoded}], {})
+
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    def test_base64_rejects_short_write(self):
+        """A short base64 write is reported as a storage failure."""
+        opened = mock_open()
+        opened().write.return_value = 1
+        encoded = base64.b64encode(b"content").decode()
+
+        with (
+            override_settings(APPRISE_ATTACH_DIR=self.tmp_dir.name),
+            patch("builtins.open", opened),
+            self.assertRaises(AppriseAPIStorageError) as caught,
+        ):
+            parse_attachments([{"base64": encoded}], {})
+
+        self.assertEqual(caught.exception.errno, errno.EIO)
+        self.assertEqual(os.listdir(self.tmp_dir.name), [])
+
+    @patch("apprise.utils.http.HTTPPolicySession.get")
+    def test_remote_storage_error_uses_api_error(self, mock_get):
+        """Remote download storage errors retain their original I/O code."""
+        response = mock.MagicMock()
+        response.status_code = requests.codes.ok
+        response.headers = {}
+        response.iter_content.return_value = iter([b"data"])
+        response.__enter__.return_value = response
+        mock_get.return_value = response
+        storage_error = OSError(errno.ENOSPC, "disk full")
+
+        with (
+            patch("apprise.attachment.http.NamedTemporaryFile", side_effect=storage_error),
+            self.assertRaises(AppriseAPIStorageError) as caught,
+        ):
+            parse_attachments(["https://example.com/file.txt"], {})
+
+        self.assertEqual(caught.exception.errno, errno.ENOSPC)
+        self.assertIs(caught.exception.__cause__, storage_error)
+
 
 class AttachmentSSRFPinningTests(SimpleTestCase):
     """Verify that API attachments use Apprise's safe HTTP transport."""
@@ -1140,7 +1338,6 @@ class AttachmentSSRFPinningTests(SimpleTestCase):
         """Attachment cleanup closes and clears its owned HTTP session."""
         attachment = object.__new__(HTTPAttachment)
         attachment.delete = False
-        attachment._path = None
         attachment.http_session = mock.Mock()
         session = attachment.http_session
 
@@ -1154,7 +1351,6 @@ class AttachmentSSRFPinningTests(SimpleTestCase):
         """A cleanup failure never escapes from the destructor."""
         attachment = object.__new__(HTTPAttachment)
         attachment.delete = False
-        attachment._path = None
         attachment.http_session = mock.Mock()
         attachment.http_session.close.side_effect = RuntimeError("close failed")
 
@@ -1163,10 +1359,9 @@ class AttachmentSSRFPinningTests(SimpleTestCase):
         self.assertIsNone(attachment.http_session)
 
     def test_attachment_runs_apprise_cleanup(self):
-        """API cleanup also releases the downloaded Apprise temporary file."""
+        """API cleanup also releases the file Apprise downloaded for us."""
         attachment = object.__new__(HTTPAttachment)
-        attachment.delete = False
-        attachment._path = None
+        attachment.delete = True
         attachment.http_session = mock.Mock()
         cleaned = []
 
@@ -1179,11 +1374,10 @@ class AttachmentSSRFPinningTests(SimpleTestCase):
 
         self.assertIn(attachment, cleaned)
 
-    def test_apprise_cleanup_error_does_not_skip_session_close(self):
+    def test_cleanup_error_still_closes_session(self):
         """A parent cleanup failure cannot leave pooled sockets open."""
         attachment = object.__new__(HTTPAttachment)
-        attachment.delete = False
-        attachment._path = None
+        attachment.delete = True
         attachment.http_session = mock.Mock()
         session = attachment.http_session
 
@@ -1197,24 +1391,98 @@ class AttachmentSSRFPinningTests(SimpleTestCase):
         session.close.assert_called_once_with()
         self.assertIsNone(attachment.http_session)
 
-    def test_file_cleanup_error_does_not_skip_other_cleanup(self):
-        """A placeholder removal failure cannot stop remaining cleanup."""
+    def test_retained_attachment_skips_apprise_cleanup(self):
+        """A caller asking to keep the download still gets its session back."""
         attachment = object.__new__(HTTPAttachment)
-        attachment.delete = True
-        attachment._path = "/tmp/unremovable-attachment"
+        attachment.delete = False
         attachment.http_session = mock.Mock()
         session = attachment.http_session
         cleaned = []
 
-        with (
-            mock.patch("os.remove", side_effect=PermissionError),
-            mock.patch.object(
-                HTTPAttachment.__mro__[1],
-                "__del__",
-                new=lambda target: cleaned.append(target),
-            ),
+        with mock.patch.object(
+            HTTPAttachment.__mro__[1],
+            "__del__",
+            new=lambda target: cleaned.append(target),
         ):
             attachment.__del__()
 
-        self.assertIn(attachment, cleaned)
+        self.assertEqual(cleaned, [])
         session.close.assert_called_once_with()
+
+
+class LocalFileDisclosureTests(LocalFileFixtureMixin, SimpleTestCase):
+    """Ensure URL attachments cannot read files from the API server."""
+
+    def test_string_rejects_local_files(self):
+        """A plain string attachment entry can't reference a local path."""
+        for label, candidate in self.local_file_variants().items():
+            with self.subTest(style=label):
+                with self.assertRaises(AppriseAPIImproperlyConfigured) as caught:
+                    parse_attachments([candidate], {})
+                self.assert_marker_not_leaked(None, str(caught.exception))
+
+    def test_dict_url_rejects_local_files(self):
+        """A ``{"url": ...}`` attachment entry can't reference a local path."""
+        for label, candidate in self.local_file_variants().items():
+            with self.subTest(style=label):
+                with self.assertRaises(AppriseAPIImproperlyConfigured) as caught:
+                    parse_attachments([{"url": candidate}], {})
+                self.assert_marker_not_leaked(str(caught.exception))
+
+    def test_local_files_are_not_copied(self):
+        """Even a rejected attempt must not leave the content on disk."""
+        with TemporaryDirectory() as attach_dir, override_settings(APPRISE_ATTACH_DIR=attach_dir):
+            for candidate in self.local_file_variants().values():
+                for payload in (candidate, {"url": candidate}):
+                    with suppress(AppriseAPIImproperlyConfigured):
+                        parse_attachments([payload], {})
+
+            self.assert_attach_dir_clean(attach_dir)
+
+    def test_url_errors_hide_input(self):
+        """Attachment errors must not repeat credentials or control characters."""
+        url = "https://user:secret@example.com/attachment\nforged-log-entry"
+        with (
+            patch.object(utils.ATTACH_URL_FILTER, "is_allowed", return_value=False),
+            self.assertRaises(AppriseAPIImproperlyConfigured) as caught,
+        ):
+            _build_http_attachment(url, 1, "attachment.001")
+
+        self.assertNotIn("secret", str(caught.exception))
+        self.assertNotIn("forged-log-entry", str(caught.exception))
+
+    def test_invalid_parsed_url_uses_api_error(self):
+        """A parser disagreement must still produce a controlled API error."""
+        with (
+            patch.object(utils.ATTACH_URL_FILTER, "is_allowed", return_value=True),
+            patch.object(utils.A_MGR["http"], "parse_url", return_value=None),
+            self.assertRaises(AppriseAPIImproperlyConfigured),
+        ):
+            _build_http_attachment("https://example.com/file", 1, "attachment.001")
+
+    def test_http_storage_exception_uses_api_error(self):
+        """A raised HTTP storage error is converted to the API contract."""
+        storage_error = OSError(errno.EIO, "write failed")
+        attachment = mock.MagicMock()
+        attachment.__bool__.side_effect = storage_error
+        with (
+            patch.object(utils.ATTACH_URL_FILTER, "is_allowed", return_value=True),
+            patch.object(utils, "HTTPAttachment", return_value=attachment),
+            self.assertRaises(AppriseAPIStorageError) as caught,
+        ):
+            _build_http_attachment("https://example.com/file", 1, "attachment.001")
+
+        self.assertEqual(caught.exception.errno, errno.EIO)
+        self.assertIs(caught.exception.__cause__, storage_error)
+
+    def test_rejects_non_hosted_http_attachment(self):
+        """Reject an attachment if its source is not classified as hosted."""
+        attachment = mock.MagicMock()
+        attachment.location = utils.apprise.ContentLocation.LOCAL
+        with (
+            patch.object(utils.ATTACH_URL_FILTER, "is_allowed", return_value=True),
+            patch.object(utils.A_MGR["http"], "parse_url", return_value={"host": "example.com"}),
+            patch.object(utils, "HTTPAttachment", return_value=attachment),
+            self.assertRaises(AppriseAPIImproperlyConfigured),
+        ):
+            _build_http_attachment("https://example.com/file", 1, "attachment.001")

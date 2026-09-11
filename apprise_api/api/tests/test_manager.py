@@ -22,8 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import base64
-from datetime import datetime
+from datetime import UTC, datetime
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -240,6 +241,7 @@ class ManagerPageTests(SimpleTestCase):
         assert "nodeValue.includes(markedConfigId)" in content
         assert "nodeValue.includes(configId)" not in content
 
+    @override_settings(TIME_ZONE="America/St_Johns")
     def test_config_page_shows_file_times_in_the_header(self):
         """The editor heading shows available filesystem timestamps."""
         view_module = resolve("/cfg/time-key").func.__module__
@@ -258,9 +260,29 @@ class ManagerPageTests(SimpleTestCase):
         assert "Modified" in content
         assert "2026-09-06 13:45:01" in content
         assert "Timezone" in content
-        assert settings.TIME_ZONE in content
+        assert "America/St_Johns" in content
         assert "updateConfigFileTimes(response)" in content
         assert "clearConfigFileTimes()" in content
+
+    @override_settings(TIME_ZONE="Asia/Kathmandu")
+    def test_config_page_converts_file_times_to_configured_timezone(self):
+        """The page converts stored Unix times before presenting them."""
+        key = "config-page-zoned-times"
+        self.addCleanup(ConfigCache.clear, key)
+        assert ConfigCache.put(key, "json://localhost", "text")
+
+        created_timestamp = datetime(2026, 1, 15, 12, tzinfo=UTC).timestamp()
+        modified_timestamp = datetime(2026, 1, 15, 13, tzinfo=UTC).timestamp()
+        os.utime(ConfigCache._creation_path(key), (created_timestamp, created_timestamp))
+        content_path = next(path for path in ConfigCache._content_paths(key) if os.path.isfile(path))
+        os.utime(content_path, (modified_timestamp, modified_timestamp))
+
+        response = self.client.get(f"/cfg/{key}")
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert "2026-01-15 17:45:00" in content
+        assert "2026-01-15 18:45:00" in content
+        assert "Asia/Kathmandu" in content
 
     def test_open_config_switch_uses_private_cookie(self):
         """An open deployment switches Config IDs without a keyed URL."""
