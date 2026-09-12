@@ -25,12 +25,56 @@ import os
 import tempfile
 from unittest import mock
 
-from django.test import SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase
 
 from .. import utils
 
 
 class UtilsTests(SimpleTestCase):
+    def test_json_response_negotiation(self):
+        """Accept wins while wildcard or missing Accept uses Content-Type."""
+        cases = (
+            (None, None, False),
+            (None, "application/json", True),
+            ("*/*", "application/json", True),
+            ("application/json", "text/plain", True),
+            ("text/json", "text/plain", True),
+            ("text/html", "application/json", False),
+            ("text/plain", "application/json", False),
+        )
+        factory = RequestFactory()
+        for accept, content_type, expected in cases:
+            with self.subTest(
+                accept=accept,
+                content_type=content_type,
+            ):
+                headers = {} if accept is None else {"HTTP_ACCEPT": accept}
+                if content_type is not None:
+                    headers["CONTENT_TYPE"] = content_type
+
+                request = factory.get("/", **headers)
+                assert utils.is_json_response(request) is expected
+
+    def test_html_response_negotiation(self):
+        """HTML must be preferred, not merely listed as an API fallback."""
+        cases = (
+            ("text/html", True),
+            ("text/html,application/json", True),
+            ("application/json,text/html", False),
+            ("application/json,text/html;q=0", False),
+            ("text/html;q=0.5,application/json;q=0.9", False),
+            ("text/html;q=bogus,application/json", False),
+            ("text/html;level=1", True),
+            ("text/html;q=5,application/json;q=0.9", True),
+            ("*/*", False),
+            ("", False),
+        )
+        factory = RequestFactory()
+        for accept, expected in cases:
+            with self.subTest(accept=accept):
+                request = factory.get("/", HTTP_ACCEPT=accept)
+                assert utils.is_html_response(request) is expected
+
     def test_touchdir(self):
         """
         Test touchdir()

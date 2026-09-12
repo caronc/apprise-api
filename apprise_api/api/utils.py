@@ -23,12 +23,14 @@
 # THE SOFTWARE.
 import base64
 import binascii
+from collections.abc import Mapping
 from contextlib import suppress
 from datetime import datetime
 import errno
+import fcntl
 import gzip
 import hashlib
-from json import dumps
+from json import dumps, loads
 
 # import the logging library
 import logging
@@ -36,12 +38,21 @@ import os
 import re
 import shutil
 import tempfile
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import apprise
+from apprise.utils.http import HTTPPolicy, HTTPPolicySession
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 import requests
 
+from .auth import Authentication, AuthStorageError, ConfigAuthRecord
+from .exceptions import (
+    AppriseAPIError,
+    AppriseAPIImproperlyConfigured,
+    AppriseAPIStorageError,
+)
 from .urlfilter import AppriseURLFilter
 
 # Get an instance of a logger
@@ -54,23 +65,54 @@ logger = logging.getLogger("django")
 # application/x-json
 MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
 
+# Only HTTP(S) attachment sources are allowed; local paths and schemes could
+# otherwise expose files on the API server.
+ATTACH_HTTP_SCHEME = re.compile(r"^https?://", re.I)
+
 # Parsing of Accept; the following amounts to Accept All
 # */*
 # <blank>
 ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
 
+# This header keeps configuration keys out of URLs and access logs. Validate
+# it because headers bypass the URL pattern and may become SIMPLE filenames.
+CONFIG_KEY_HEADER = "X-Apprise-Config-ID"
 
-def is_json_response(request: HttpRequest) -> bool:
-    """Return whether the request prefers a JSON response.
+# Routes embed this expression; headers use the anchored pattern.
+CONFIG_KEY_MAX_LENGTH = 128
+CONFIG_KEY_REGEX = r"[\w_-]{{1,{}}}".format(CONFIG_KEY_MAX_LENGTH)
+CONFIG_KEY_PATTERN = re.compile(r"^{}$".format(CONFIG_KEY_REGEX))
 
-    Accept takes priority. Missing or wildcard Accept falls back to the
-    request Content-Type for backward compatibility.
-    """
-    accept = request.headers.get("accept", "")
-    content_type = request.content_type or request.headers.get("content-type", "")
-    return MIME_IS_JSON.match(accept) is not None or (
-        ACCEPT_ALL.match(accept) is not None and MIME_IS_JSON.match(content_type) is not None
-    )
+
+def _configured_datetime(timestamp):
+    """Convert a Unix timestamp to the timezone shown by the API."""
+    try:
+        configured_timezone = ZoneInfo(settings.TIME_ZONE)
+    except (TypeError, ValueError, ZoneInfoNotFoundError):
+        # Startup normally validates this setting. Keep file details usable if
+        # an embedded caller supplies an unsupported timezone.
+        return datetime.fromtimestamp(timestamp)
+
+    # The UI shows the timezone separately, so retain its existing timestamp
+    # format after applying the correct UTC offset.
+    return datetime.fromtimestamp(timestamp, configured_timezone).replace(tzinfo=None)
+
+
+# Access our Attachment Manager Singleton
+A_MGR = apprise.manager_attachment.AttachmentManager()
+
+# Access our Notification Manager Singleton
+N_MGR = apprise.manager_plugins.NotificationManager()
+
+# Let the API unload optional modules that no enabled service still needs.
+# Other applications embedding Apprise keep loaded modules by default.
+N_MGR.evict_on_disable = True
+
+# Prepare our Attachment URL Filter
+ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+
+# Keep each multipart read small while leaving enough room for efficient I/O.
+ATTACH_UPLOAD_CHUNK_SIZE = 64 * 1024
 
 
 class AppriseStoreMode:
@@ -78,12 +120,10 @@ class AppriseStoreMode:
     Defines the store modes of configuration
     """
 
-    # This is the default option. Content is cached and written by
-    # it's key
+    # This is the default option. Content is cached under its key.
     HASH = "hash"
 
-    # Content is written straight to disk using it's key
-    # there is nothing further done
+    # Content is written directly to disk under its key.
     SIMPLE = "simple"
 
     # When set to disabled; stateful functionality is disabled
@@ -108,22 +148,144 @@ STORE_MODES = (
     AppriseStoreMode.DISABLED,
 )
 
-# Access our Attachment Manager Singleton
-A_MGR = apprise.manager_attachment.AttachmentManager()
 
-# Access our Notification Manager Singleton
-N_MGR = apprise.manager_plugins.NotificationManager()
+def stateful_store_enabled():
+    """Return whether persistent configuration features are enabled."""
+    mode = str(settings.APPRISE_STATEFUL_MODE).strip().lower()
+    return mode in {AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE}
 
-# Opt into library eviction: when APPRISE_ALLOW_SERVICES or
-# APPRISE_DENY_SERVICES disables a plugin whose optional dependencies are
-# no longer needed by any other enabled plugin, the Apprise API actively
-# removes those modules from sys.modules to reclaim memory.  This is an
-# API-specific choice; third-party embedders of the Apprise library default
-# to False and retain all loaded modules.
-N_MGR.evict_on_disable = True
 
-# Prepare our Attachment URL Filter
-ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+class SimpleFileExtension:
+    """
+    Defines the simple file extension lookups.
+    """
+
+    # Simple Configuration file
+    TEXT = "cfg"
+
+    # YAML Configuration file
+    YAML = "yml"
+
+
+SIMPLE_FILE_EXTENSION_MAPPING = {
+    apprise.ConfigFormat.TEXT.value: SimpleFileExtension.TEXT,
+    apprise.ConfigFormat.YAML.value: SimpleFileExtension.YAML,
+    SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
+    SimpleFileExtension.YAML: SimpleFileExtension.YAML,
+}
+
+SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+
+
+class MoveResult:
+    """
+    Outcome of AppriseConfigCache.move()
+    """
+
+    # The source configuration (and its lock, if any) now lives at the
+    # destination.
+    MOVED = "moved"
+
+    # The source key has no configuration to move.
+    NOT_FOUND = "not_found"
+
+    # The destination key already has configuration or a lock in place.
+    CONFLICT = "conflict"
+
+    # An OS-level error prevented the move from completing.
+    FAILED = "failed"
+
+
+def is_json_response(request: HttpRequest) -> bool:
+    """Return whether the request prefers a JSON response.
+
+    Accept takes priority. Missing or wildcard Accept falls back to the
+    request Content-Type for backward compatibility.
+    """
+    accept = request.headers.get("accept", "")
+    content_type = request.content_type or request.headers.get("content-type", "")
+    return MIME_IS_JSON.match(accept) is not None or (
+        ACCEPT_ALL.match(accept) is not None and MIME_IS_JSON.match(content_type) is not None
+    )
+
+
+def is_html_response(request: HttpRequest) -> bool:
+    """Return whether HTML is the client's preferred response type.
+
+    Honor Accept priorities so an API's HTML fallback does not start a browser
+    login.
+    """
+    html_preference = None
+    json_preference = None
+    for position, value in enumerate(request.headers.get("accept", "").split(",")):
+        media_type, *parameters = value.split(";")
+        media_type = media_type.strip().lower()
+        quality = 1.0
+        for parameter in parameters:
+            name, separator, raw_value = parameter.strip().partition("=")
+            if separator and name.lower() == "q":
+                try:
+                    quality = float(raw_value)
+                except ValueError:
+                    # An invalid quality value cannot make HTML preferable.
+                    quality = 0.0
+                break
+
+        if quality <= 0:
+            continue
+
+        # Earlier entries win when two response types have equal quality.
+        preference = (min(quality, 1.0), -position)
+        if media_type == "text/html":
+            html_preference = max(html_preference or preference, preference)
+        elif media_type in {"text/json", "text/x-json", "application/json", "application/x-json"}:
+            json_preference = max(json_preference or preference, preference)
+
+    return html_preference is not None and (json_preference is None or html_preference > json_preference)
+
+
+def _attachment_storage_error(message, error):
+    """Build a storage error while preserving the original error code."""
+    error_code = error.errno if isinstance(error.errno, int) else errno.EIO
+    return AppriseAPIStorageError(message, error_code=error_code)
+
+
+def _prepare_attachment_dir():
+    """Create and return the configured attachment directory."""
+    try:
+        os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+
+    except OSError as error:
+        raise _attachment_storage_error("Could not create attachment directory", error) from error
+
+    return settings.APPRISE_ATTACH_DIR
+
+
+def _prepare_attachment_path(filename, path=None):
+    """Return the supplied path or create a temporary attachment file."""
+    _prepare_attachment_dir()
+
+    if path:
+        return path
+
+    try:
+        descriptor, path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
+
+    except OSError as error:
+        raise _attachment_storage_error(f"Could not prepare attachment {filename}", error) from error
+
+    try:
+        # Do not retry: a failed close may still release the descriptor for
+        # another thread to reuse.
+        os.close(descriptor)
+
+    except OSError as error:
+        with suppress(OSError):
+            os.remove(path)
+
+        raise _attachment_storage_error(f"Could not prepare attachment {filename}", error) from error
+
+    return path
 
 
 class Attachment(A_MGR["file"]):
@@ -139,25 +301,7 @@ class Attachment(A_MGR["file"]):
         self._filename = filename
         self.delete = delete
         self._path = None
-        try:
-            os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
-
-        except OSError:
-            # Permission error
-            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)) from None
-
-        if not path:
-            try:
-                d, path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
-                # Close our file descriptor
-                os.close(d)
-
-            except FileNotFoundError:
-                raise ValueError(
-                    "Could not prepare {} attachment in {}".format(filename, settings.APPRISE_ATTACH_DIR)
-                ) from None
-
-        self._path = path
+        self._path = _prepare_attachment_path(filename, path)
 
         # Prepare our item
         super().__init__(path=self._path, name=filename, **kwargs)
@@ -177,12 +321,10 @@ class Attachment(A_MGR["file"]):
         return os.stat(self._path).st_size
 
     def __del__(self):
-        """
-        De-Construtor is used to tidy up files during garbage collection
-        """
+        """Clean up files during garbage collection."""
         if self.delete and self._path:
-            # no problem if file is missing
-            with suppress(FileNotFoundError):
+            # Cleanup errors must not escape the destructor.
+            with suppress(OSError):
                 os.remove(self._path)
 
 
@@ -196,35 +338,47 @@ class HTTPAttachment(A_MGR["http"]):
         """
         Initialize our attachment
         """
-        # Pop any name that parse_url() extracted from a ?name= query
-        # parameter.  We must remove it from kwargs before passing to
-        # AttachBase to avoid "multiple values for keyword argument 'name'".
-        # Priority: explicit filename arg > URL ?name= > None (auto-detect).
+        # Establish every cleanup attribute before later setup can fail.
+        self.http_session = None
+        self._temp_file = None
+        self.delete = delete
+
+        # Remove the parsed URL name before calling AttachBase twice with it.
+        # An explicit filename takes priority over ``?name=``.
         url_name = kwargs.pop("name", None)
         effective_name = filename if filename is not None else url_name
 
         self._filename = effective_name
-        self.delete = delete
-        self._path = None
+
+        # Bind both checks to one policy so they cannot drift independently.
+        url_filter = ATTACH_URL_FILTER
+        self.http_session = HTTPPolicySession(
+            HTTPPolicy(
+                url_filter=lambda url: url_filter.is_allowed(
+                    url,
+                    resolve=False,
+                ),
+                address_filter=url_filter.is_address_allowed,
+            )
+        )
         try:
-            os.makedirs(settings.APPRISE_ATTACH_DIR, exist_ok=True)
+            download_dir = _prepare_attachment_dir()
 
-        except OSError:
-            # Permission error
-            raise ValueError("Could not create directory {}".format(settings.APPRISE_ATTACH_DIR)) from None
+        except AppriseAPIStorageError:
+            # Close the session immediately when construction cannot finish.
+            with suppress(Exception):
+                self.http_session.close()
 
-        try:
-            d, self._path = tempfile.mkstemp(dir=settings.APPRISE_ATTACH_DIR)
-            # Close our file descriptor
-            os.close(d)
+            self.http_session = None
+            raise
 
-        except FileNotFoundError:
-            raise ValueError(
-                "Could not prepare {} attachment in {}".format(effective_name, settings.APPRISE_ATTACH_DIR)
-            ) from None
-
-        # Prepare our item
-        super().__init__(name=effective_name, **kwargs)
+        # Keep downloads in the API attachment directory.
+        super().__init__(
+            name=effective_name,
+            http_session=self.http_session,
+            download_dir=download_dir,
+            **kwargs,
+        )
 
         # Update our file size based on the settings value
         self.max_file_size = settings.APPRISE_ATTACH_SIZE
@@ -238,16 +392,22 @@ class HTTPAttachment(A_MGR["http"]):
         """
         Return filesize
         """
-        return 0 if not self else os.stat(self._path).st_size
+        return len(self)
 
     def __del__(self):
-        """
-        De-Construtor is used to tidy up files during garbage collection
-        """
-        if self.delete and self._path:
-            # no problem if file is missing
-            with suppress(FileNotFoundError):
-                os.remove(self._path)
+        """Clean up the download and HTTP session during garbage collection."""
+        if self.delete:
+            # Let Apprise remove the file created by the HTTP download.
+            with suppress(Exception):
+                super().__del__()
+
+        # Clear first so manual or repeated cleanup remains harmless.
+        http_session = self.http_session
+        self.http_session = None
+        if http_session is not None:
+            with suppress(Exception):
+                # Destructors must not leak adapter cleanup errors.
+                http_session.close()
 
 
 def touchdir(path, mode=0o770, **kwargs):
@@ -289,13 +449,164 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
     return True
 
 
-def parse_attachments(attachment_payload, files_request):
-    """
-    Takes the payload provided in a `/notify` call and extracts the
-    attachments out of it.
+def _upload_chunks(upload, chunk_size):
+    """Yield bounded chunks from a Django upload or file-like object."""
+    chunks = getattr(upload, "chunks", None)
+    if callable(chunks):
+        yield from chunks(chunk_size=chunk_size)
+        return
 
-    Content is written to a temporary directory until the garbage
-    collection kicks in.
+    read = getattr(upload, "read", None)
+    if not callable(read):
+        raise TypeError("upload does not provide chunks() or read()")
+
+    while chunk := read(chunk_size):
+        yield chunk
+
+
+def _write_uploaded_attachment(attachment, upload, filename, size_limit):
+    """Stream one upload to disk and remove any incomplete file on failure."""
+    path = attachment.path
+    complete = False
+    try:
+        # Reject honest oversized uploads without reading or writing their data.
+        advertised_size = getattr(upload, "size", None)
+        if isinstance(advertised_size, int) and advertised_size > size_limit:
+            raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+        with open(path, "wb") as output:
+            bytes_written = 0
+            for chunk in _upload_chunks(
+                upload,
+                min(ATTACH_UPLOAD_CHUNK_SIZE, size_limit + 1),
+            ):
+                if not isinstance(chunk, (bytes, bytearray, memoryview)):
+                    raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}")
+
+                # Empty chunks are harmless and do not affect the limit.
+                chunk_size = len(chunk)
+                if bytes_written + chunk_size > size_limit:
+                    raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+                # Regular binary files should either write the full chunk or
+                # raise. Treat a short write as an I/O failure.
+                if output.write(chunk) != chunk_size:
+                    raise OSError(errno.EIO, "short attachment write")
+
+                bytes_written += chunk_size
+
+        complete = True
+
+    except AppriseAPIError:
+        # Preserve any API exception raised by a lower attachment layer.
+        raise
+
+    except (TypeError, ValueError):
+        raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}") from None
+
+    except OSError as error:
+        # This includes read failures, permission errors, quotas, and ENOSPC.
+        raise _attachment_storage_error(f"Could not read or write attachment {filename}", error) from error
+
+    except Exception as error:
+        # Keep upload backend failures inside the API exception contract.
+        raise AppriseAPIStorageError(f"Could not process attachment {filename}") from error
+
+    finally:
+        if not complete:
+            # Cleanup is best effort and must not hide the original failure.
+            with suppress(OSError):
+                os.remove(path)
+
+
+def _decode_base64_attachment(value, filename, size_limit):
+    """Decode a base64 attachment after validating its type and size."""
+    if isinstance(value, str):
+        try:
+            encoded = value.encode("ascii")
+        except UnicodeEncodeError:
+            raise AppriseAPIImproperlyConfigured(
+                f"Invalid file content was provided for attachment {filename}"
+            ) from None
+
+    elif isinstance(value, (bytes, bytearray, memoryview)):
+        encoded = bytes(value)
+
+    else:
+        raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}")
+
+    # Permit wrapped base64 while rejecting other non-alphabet characters.
+    encoded = encoded.translate(None, b" \t\r\n\v\f")
+
+    # Four encoded bytes represent at most three decoded bytes.
+    if len(encoded) > 4 * ((size_limit + 2) // 3):
+        raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+    try:
+        decoded = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, ValueError):
+        raise AppriseAPIImproperlyConfigured(f"Invalid file content was provided for attachment {filename}") from None
+
+    if len(decoded) > size_limit:
+        raise AppriseAPIImproperlyConfigured(f"Attachment {filename}'s file size is too large")
+
+    return decoded
+
+
+def _build_http_attachment(url, no, fallback_filename, override_filename=None):
+    """Build a hosted HTTP attachment from either supported URL input form.
+
+    Only HTTP(S) URLs that pass the configured rules are accepted. An explicit
+    filename wins over URL-derived names, with ``fallback_filename`` used last.
+    """
+    if not isinstance(url, str) or not ATTACH_HTTP_SCHEME.match(url):
+        # Reject local and unsupported sources before parsing the URL.
+        raise AppriseAPIImproperlyConfigured(f"Failed to load attachment {no} (not web request)")
+
+    # The HTTP transport checks and pins the destination address.
+    if not ATTACH_URL_FILTER.is_allowed(url, resolve=False):
+        # Reject URLs blocked by the configured attachment rules.
+        raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (blocked web request)")
+
+    # Apprise sanitizes ``?name=`` and ignores empty values.
+    _parsed = A_MGR["http"].parse_url(url)
+    if not _parsed:
+        raise AppriseAPIImproperlyConfigured(f"Failed to parse attachment {no} URL")
+
+    # Prefer an explicit name, then ``?name=``, the URL path, and the fallback.
+    if override_filename:
+        _parsed["name"] = override_filename
+    elif "name" not in _parsed:
+        _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
+        if not _path_name:
+            _parsed["name"] = fallback_filename
+
+    attachment = HTTPAttachment(**_parsed)
+    try:
+        available = bool(attachment)
+    except OSError as error:
+        raise _attachment_storage_error(f"Could not store attachment {no}", error) from error
+
+    if not available:
+        download_error = getattr(attachment, "download_error", None)
+        if isinstance(download_error, OSError):
+            raise _attachment_storage_error(f"Could not store attachment {no}", download_error) from download_error
+
+        # Report download failures through the API's attachment error.
+        raise AppriseAPIImproperlyConfigured(f"Failed to retrieve attachment {no}")
+
+    # Accept only remote content, never a file read from the API server.
+    if attachment.location != apprise.ContentLocation.HOSTED:
+        raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (not a hosted resource)")
+
+    return attachment
+
+
+def parse_attachments(attachment_payload, files_request):
+    """Build attachments from a `/notify` payload and uploaded files.
+
+    Content is stored temporarily and removed when its attachment is cleaned
+    up.
     """
     attachments = []
 
@@ -305,7 +616,7 @@ def parse_attachments(attachment_payload, files_request):
             return []
 
         # Otherwise we need to raise an error
-        raise ValueError("Attachment support has been disabled")
+        raise AppriseAPIImproperlyConfigured("Attachment support has been disabled")
 
     # Determine how many files we have in the request.FILES
     file_count = 0
@@ -324,7 +635,7 @@ def parse_attachments(attachment_payload, files_request):
         count += 1
 
     if settings.APPRISE_MAX_ATTACHMENTS > 0 and count > settings.APPRISE_MAX_ATTACHMENTS:
-        raise ValueError(f"There is a maximum of {settings.APPRISE_MAX_ATTACHMENTS} attachments")
+        raise AppriseAPIImproperlyConfigured(f"There is a maximum of {settings.APPRISE_MAX_ATTACHMENTS} attachments")
 
     if isinstance(attachment_payload, tuple | list | set):
         for no, entry in enumerate(attachment_payload, start=1):
@@ -334,115 +645,88 @@ def parse_attachments(attachment_payload, files_request):
             elif isinstance(entry, dict):
                 try:
                     filename = entry.get("filename", "").strip()
+                    override_filename = filename or None
 
                     # Max filename size is 250
                     if len(filename) > 250:
-                        raise ValueError(f"The filename associated with attachment {no} is too long")
+                        raise AppriseAPIImproperlyConfigured(
+                            f"The filename associated with attachment {no} is too long"
+                        )
 
                     elif not filename:
                         filename = f"attachment.{no:03d}"
 
                 except AttributeError:
                     # not a string that was provided
-                    raise ValueError(f"An invalid filename was provided for attachment {no}") from None
+                    raise AppriseAPIImproperlyConfigured(
+                        f"An invalid filename was provided for attachment {no}"
+                    ) from None
 
             else:
                 # you must pass in a base64 string, or a dict containing our
                 # required parameters
-                raise ValueError(f"An invalid filename was provided for attachment {no}")
+                raise AppriseAPIImproperlyConfigured(f"An invalid filename was provided for attachment {no}")
 
             #
             # Prepare our Attachment
             #
             if isinstance(entry, str):
                 if not entry.strip():
-                    # ignore blank entries; these can come from using the
-                    # api/website and submitting without an element defined.
-                    # There is no need have a bad outcome; just decrement our
-                    # counter and move along
+                    # Ignore empty form entries and adjust the attachment count.
                     count -= 1
                     continue
 
-                if not re.match(r"^https?://.+", entry[:10], re.I):
-                    # We failed to retrieve the product
-                    raise ValueError(f"Failed to load attachment {no} (not web request): {entry}")
+                attachment = _build_http_attachment(entry, no, filename)
 
-                if not ATTACH_URL_FILTER.is_allowed(entry):
-                    # We are not allowed to use this entry
-                    raise ValueError(f"Denied attachment {no} (blocked web request): {entry}")
+            elif isinstance(entry, dict) and AttachmentPayload.URL in entry and AttachmentPayload.BASE64 not in entry:
+                # URL dictionaries use the same validation as string URLs.
+                attachment = _build_http_attachment(
+                    entry[AttachmentPayload.URL],
+                    no,
+                    filename,
+                    override_filename=override_filename,
+                )
 
-                # apprise's own parse_url() already sanitizes ?name= (strips
-                # directory components and only sets the key when non-empty)
-                _parsed = A_MGR["http"].parse_url(entry)
-
-                # ?name= wins when present; otherwise derive from the URL path
-                # basename so .../6dba.jpg doesn't get renamed to attachment.001.
-                # Only fall back to attachment.NNN when no name can be found.
-                if "name" not in _parsed:
-                    _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
-                    if not _path_name:
-                        _parsed["name"] = filename
-
-                attachment = HTTPAttachment(**_parsed)
-                if not attachment:
-                    # We failed to retrieve the attachment
-                    raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
-
-            else:  # web, base64 or raw
+            else:  # base64 or raw
                 attachment = Attachment(filename)
+                complete = False
                 try:
                     with open(attachment.path, "wb") as f:
-                        # Write our content to disk
                         if isinstance(entry, dict) and AttachmentPayload.BASE64 in entry:
-                            # BASE64
-                            f.write(base64.b64decode(entry[AttachmentPayload.BASE64]))
-
-                        elif isinstance(entry, dict) and AttachmentPayload.URL in entry:
-                            if not ATTACH_URL_FILTER.is_allowed(entry[AttachmentPayload.URL]):
-                                # We are not allowed to use this entry
-                                raise ValueError(
-                                    f"Denied attachment {no} (blocked web request): {entry[AttachmentPayload.URL]}"
-                                )
-
-                            # apprise's own parse_url() already sanitizes
-                            # ?name= (same rules as the string-URL path above).
-                            _parsed = A_MGR["http"].parse_url(entry[AttachmentPayload.URL])
-
-                            # User-provided dict filename overrides all URL
-                            # derived names.  If absent, prefer URL ?name=
-                            # then path basename, then attachment.NNN.
-                            _dict_filename = entry.get("filename", "").strip()
-                            if _dict_filename:
-                                _parsed["name"] = _dict_filename
-                            elif "name" not in _parsed:
-                                _path_name = os.path.basename(_parsed.get("fullpath", "").rstrip("/"))
-                                if not _path_name:
-                                    _parsed["name"] = filename
-
-                            attachment = HTTPAttachment(**_parsed)
-                            if not attachment:
-                                # We failed to retrieve the attachment
-                                raise ValueError(f"Failed to retrieve attachment {no}: {entry}")
+                            content = _decode_base64_attachment(
+                                entry[AttachmentPayload.BASE64],
+                                filename,
+                                settings.APPRISE_ATTACH_SIZE,
+                            )
 
                         elif isinstance(entry, bytes):
-                            # RAW
-                            f.write(entry)
+                            content = entry
 
                         else:
-                            raise ValueError(f"Invalid filetype was provided for attachment {filename}")
+                            raise AppriseAPIImproperlyConfigured(
+                                f"Invalid filetype was provided for attachment {filename}"
+                            )
 
-                except binascii.Error:
-                    # The file ws not base64 encoded
-                    raise ValueError(f"Invalid filecontent was provided for attachment {filename}") from None
+                        # A short write is a storage failure, not valid content.
+                        if f.write(content) != len(content):
+                            raise OSError(errno.EIO, "short attachment write")
 
-                except OSError:
-                    raise ValueError(f"Could not write attachment {filename} to disk") from None
+                    complete = True
+
+                except OSError as error:
+                    raise _attachment_storage_error(f"Could not write attachment {filename} to disk", error) from error
+
+                finally:
+                    if not complete:
+                        # Do not retain empty or partial files after rejection.
+                        with suppress(OSError):
+                            os.remove(attachment.path)
 
                 #
                 # Some Validation
                 #
                 if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-                    raise ValueError(f"attachment {filename}'s filesize is to large")
+                    raise AppriseAPIImproperlyConfigured(f"attachment {filename}'s filesize is to large")
 
             # Add our attachment
             attachments.append(attachment)
@@ -465,13 +749,13 @@ def parse_attachments(attachment_payload, files_request):
 
             # Max filename size is 250
             if len(filename) > 250:
-                raise ValueError(f"The filename associated with attachment {no} is too long")
+                raise AppriseAPIImproperlyConfigured(f"The filename associated with attachment {no} is too long")
 
             elif not filename:
                 filename = f"attachment.{no:03d}"
 
         except (AttributeError, TypeError):
-            raise ValueError(f"An invalid filename was provided for attachment {no}") from None
+            raise AppriseAPIImproperlyConfigured(f"An invalid filename was provided for attachment {no}") from None
 
         # lower() protects case from the Apprise case sensitive guessing:
         #  - Content-Type: Image/JPEG
@@ -483,46 +767,17 @@ def parse_attachments(attachment_payload, files_request):
             wire_mimetype = None
 
         attachment = Attachment(filename, mimetype=wire_mimetype)
-        try:
-            with open(attachment.path, "wb") as f:
-                # Write our content to disk
-                f.write(meta.read())
-
-        except OSError:
-            raise ValueError(f"Could not write attachment {filename} to disk") from None
-
-        #
-        # Some Validation
-        #
-        if settings.APPRISE_ATTACH_SIZE > 0 and attachment.size > settings.APPRISE_ATTACH_SIZE:
-            raise ValueError(f"attachment {filename}'s filesize is to large")
+        _write_uploaded_attachment(
+            attachment,
+            meta,
+            filename,
+            settings.APPRISE_ATTACH_SIZE,
+        )
 
         # Add our attachment
         attachments.append(attachment)
 
     return attachments
-
-
-class SimpleFileExtension:
-    """
-    Defines the simple file exension lookups
-    """
-
-    # Simple Configuration file
-    TEXT = "cfg"
-
-    # YAML Configuration file
-    YAML = "yml"
-
-
-SIMPLE_FILE_EXTENSION_MAPPING = {
-    apprise.ConfigFormat.TEXT.value: SimpleFileExtension.TEXT,
-    apprise.ConfigFormat.YAML.value: SimpleFileExtension.YAML,
-    SimpleFileExtension.TEXT: SimpleFileExtension.TEXT,
-    SimpleFileExtension.YAML: SimpleFileExtension.YAML,
-}
-
-SIMPLE_FILE_EXTENSIONS = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
 
 
 class AppriseConfigCache:
@@ -543,14 +798,10 @@ class AppriseConfigCache:
             logger.error("APPRISE_STATEFUL_MODE {} is not supported; reverted to {}.".format(mode, self.mode))
 
     def put(self, key, content, fmt):
-        """
-        Based on the key specified, content is written to disk (compressed)
+        """Write configuration content to disk.
 
-        key:     is an alphanumeric string needed to write and read back this
-                 file being written.
-        content: the content to be written to disk
-        fmt:     the content config format (of type apprise.ConfigFormat)
-
+        ``key`` identifies the entry, ``content`` is its value, and ``fmt`` is
+        an ``apprise.ConfigFormat`` value.
         """
         # There isn't a lot of error handling done here as it is presumed most
         # of the checking has been done higher up.
@@ -560,6 +811,7 @@ class AppriseConfigCache:
 
         # First two characters are reserved for cache level directory writing.
         path, filename = self.path(key)
+        created_at = self._creation_timestamp(key)
         try:
             os.makedirs(path, exist_ok=True)
 
@@ -569,10 +821,14 @@ class AppriseConfigCache:
             return False
 
         # Write our file to a temporary file
-        d, tmp_path = tempfile.mkstemp(suffix=".tmp", dir=path)
-        # Close the file handle provided by mkstemp()
-        # We're reopening it, and it can't be renamed while open on Windows
-        os.close(d)
+        try:
+            d, tmp_path = tempfile.mkstemp(suffix=".tmp", dir=path)
+            # Close the temporary handle before reopening and renaming it.
+            os.close(d)
+
+        except OSError:
+            logger.error("Could not create a temporary file in {}".format(path))
+            return False
 
         if self.mode == AppriseStoreMode.HASH:
             try:
@@ -582,7 +838,8 @@ class AppriseConfigCache:
 
             except OSError:
                 # Handle failure
-                os.remove(tmp_path)
+                with suppress(OSError):
+                    os.remove(tmp_path)
                 return False
 
         else:  # AppriseStoreMode.SIMPLE
@@ -595,13 +852,21 @@ class AppriseConfigCache:
 
             except OSError:
                 # Handle failure
-                os.remove(tmp_path)
+                with suppress(OSError):
+                    os.remove(tmp_path)
                 return False
 
         # If we reach here we successfully wrote the content. We now safely
         # move our configuration into place. The following writes our content
         # to disk
-        shutil.move(tmp_path, os.path.join(path, "{}.{}".format(filename, fmt)))
+        try:
+            shutil.move(tmp_path, os.path.join(path, "{}.{}".format(filename, fmt)))
+
+        except OSError:
+            logger.error("Could not move temporary file into place for KEY: {}".format(key))
+            with suppress(OSError):
+                os.remove(tmp_path)
+            return False
 
         # perform tidy of any other lingering files of other type in case
         # configuration changed from TEXT -> YAML or YAML -> TEXT
@@ -620,20 +885,14 @@ class AppriseConfigCache:
             # fail
             return False
 
+        self._record_creation_time(key, created_at)
         return True
 
     def get(self, key):
-        """
-        Based on the key specified, content is written to disk (compressed)
+        """Read the configuration identified by ``key``.
 
-        key:     is an alphanumeric string needed to write and read back this
-                 file being written.
-
-        The function returns a tuple of (content, fmt) where the content
-        is the uncompressed content found in the file and fmt is the
-        content representation (of type apprise.ConfigFormat).
-
-        If no data was found, then (None, None) is returned.
+        Return ``(content, format)`` when found, ``(None, "")`` when missing,
+        or ``(None, None)`` when the read fails.
         """
 
         if self.mode == AppriseStoreMode.DISABLED:
@@ -680,9 +939,8 @@ class AppriseConfigCache:
                     # Write our content to disk
                     content = f.read().decode()
 
-            except OSError:
-                # all none return means to let upstream know we had a hard
-                # failure
+            except (OSError, UnicodeDecodeError):
+                # Two None values distinguish a read failure from a missing file.
                 return (None, None)
 
         else:  # AppriseStoreMode.SIMPLE
@@ -691,23 +949,18 @@ class AppriseConfigCache:
                     # Write our content to disk
                     content = f.read().decode()
 
-            except OSError:
-                # all none return means to let upstream know we had a hard
-                # failure
+            except (OSError, UnicodeDecodeError):
+                # Two None values distinguish a read failure from a missing file.
                 return (None, None)
 
         # return our read content
         return (content, fmt)
 
     def clear(self, key, formats=None):
-        """
-        Removes any content associated with the specified key should it
-        exist.
+        """Remove content for ``key``, optionally limited by format.
 
-        None is returned if there was nothing to clear
-        True is returned if content was cleared
-        False is returned if an internal error prevented data from being
-              cleared
+        Return ``True`` when content was removed, ``None`` when nothing
+        existed, or ``False`` when removal failed.
         """
         # Default our response None
         response = None
@@ -716,6 +969,7 @@ class AppriseConfigCache:
             # Do nothing
             return response
 
+        clear_creation = formats is None
         if formats is None:
             formats = apprise.CONFIG_FORMATS
 
@@ -742,7 +996,50 @@ class AppriseConfigCache:
                     # We were unable to remove the file
                     response = False
 
+        if clear_creation and response is not False:
+            try:
+                os.remove(self._creation_path(key))
+            except OSError as e:
+                if e.errno != errno.ENOENT:
+                    response = False
+
         return response
+
+    def clear_preserving_auth(self, key):
+        """Clear content while preserving its login long enough to replace it.
+
+        The authentication guard prevents pruning during this operation.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock authenticated configuration deletion for KEY: %s", key)
+            return False
+
+        try:
+            try:
+                record = self.get_auth_record(key)
+            except AuthStorageError:
+                return False
+            if record is None:
+                return False
+
+            result = self.clear(key)
+            if result is False:
+                return False
+
+            path, filename = self.auth_path(key)
+            try:
+                os.utime(os.path.join(path, filename), follow_symlinks=False)
+            except OSError:
+                logger.error("Could not refresh authentication age for KEY: %s", key)
+                return False
+            return result
+        finally:
+            self._release_auth_guard(guard)
 
     def path(self, key):
         """
@@ -758,22 +1055,621 @@ class AppriseConfigCache:
             return (self.root, key)
 
     def keys(self):
-        """
-        Returns a list of keys that are currently stored
-        """
-        keys = []
-        if self.mode != AppriseStoreMode.SIMPLE:
-            return keys
+        """Return stored keys, including keys with only an access record.
 
-        for filename in sorted(os.listdir(self.root)):
+        Access-only keys are listed because they are still occupied and must
+        remain visible to administrators.
+        """
+        keys = set()
+        if self.mode != AppriseStoreMode.SIMPLE:
+            return []
+
+        lock_suffix = ".lock"
+        for filename in os.listdir(self.root):
             if filename.startswith("."):
+                # Recover keys only from the hidden lock filename format.
+                # Other hidden files do not belong to the configuration list.
+                if filename.endswith(lock_suffix) and len(filename) > len(lock_suffix) + 1:
+                    keys.add(filename[1 : -len(lock_suffix)])
                 continue
             path = os.path.join(self.root, filename)
             if os.path.isfile(path):
                 key_name = os.path.splitext(filename)[0]
-                keys.append(key_name)
+                keys.add(key_name)
 
-        return keys
+        return sorted(keys)
+
+    def auth_path(self, key):
+        """Return the directory and hidden lock filename for a key.
+
+        The lock name does not use the config format, so switching between
+        text and YAML leaves authentication unchanged.
+        """
+        path, filename = self.path(key)
+        return path, ".{}.lock".format(filename)
+
+    def _acquire_auth_guard(self, _key):
+        """Lock rare credential writes and moves; login reads never use this."""
+        os.makedirs(self.root, exist_ok=True)
+        # One shared guard avoids creating a lock file for every Config ID.
+        descriptor = os.open(os.path.join(self.root, ".auth.guard"), os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            # Fail immediately if another credential update is in progress.
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(descriptor)
+            raise
+        return descriptor
+
+    @staticmethod
+    def _release_auth_guard(descriptor):
+        """Release a credential-update guard without hiding cleanup errors."""
+        with suppress(OSError):
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+        with suppress(OSError):
+            os.close(descriptor)
+
+    def set_auth(self, key, username, password, access=Authentication.ACCESS_USER):
+        """Save credentials and an access policy for a Config ID.
+
+        Writes are atomic. Colons are rejected because Basic Auth uses one to
+        separate the username and password.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock authentication for KEY: %s", key)
+            return False
+
+        try:
+            return self._set_auth(key, username, password, access)
+        finally:
+            self._release_auth_guard(guard)
+
+    def _set_auth(self, key, username, password, access):
+        """Write credentials while the caller holds this key's guard."""
+
+        if access not in Authentication.ACCESS_CHOICES:
+            logger.error("Unsupported configuration access for KEY: %s", key)
+            return False
+
+        if username is None:
+            username = ""
+        if not isinstance(username, str) or not isinstance(password, str):
+            logger.error("Credentials must be text for KEY: %s", key)
+            return False
+
+        # Normalize usernames while leaving passwords exactly as supplied.
+        username = username.strip()
+        if ":" in username:
+            logger.error("Username cannot contain ':' for KEY: {}".format(key))
+            return False
+
+        try:
+            # Django's password hasher adds a unique salt.
+            digest = make_password("{}:{}".format(username, password))
+
+        except (TypeError, UnicodeError):
+            logger.error("Could not hash authentication credentials for KEY: {}".format(key))
+            return False
+
+        return self._write_auth_record(
+            key,
+            ConfigAuthRecord(access=access, username=username, digest=digest),
+        )
+
+    def set_access(self, key, access):
+        """Change access without replacing credentials.
+
+        New public and disabled records may omit credentials. The other modes
+        require an existing login so they never become unintentionally
+        accessible.
+        """
+        if self.mode == AppriseStoreMode.DISABLED or access not in Authentication.ACCESS_CHOICES:
+            return False
+
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            logger.error("Could not lock access policy for KEY: %s", key)
+            return False
+
+        try:
+            try:
+                record = self.get_auth_record(key)
+            except AuthStorageError:
+                return False
+
+            if record is None:
+                if access not in {
+                    Authentication.ACCESS_PUBLIC,
+                    Authentication.ACCESS_DISABLED,
+                }:
+                    return False
+                record = ConfigAuthRecord(access=access)
+            else:
+                if record.digest is None and access not in {
+                    Authentication.ACCESS_PUBLIC,
+                    Authentication.ACCESS_DISABLED,
+                }:
+                    return False
+                record = ConfigAuthRecord(
+                    access=access,
+                    username=record.username,
+                    digest=record.digest,
+                )
+            return self._write_auth_record(key, record)
+        finally:
+            self._release_auth_guard(guard)
+
+    def _write_auth_record(self, key, record):
+        """Atomically replace one access record."""
+
+        # Replace the lock atomically so readers never see a partial record.
+        path, filename = self.auth_path(key)
+        try:
+            os.makedirs(path, exist_ok=True)
+
+        except OSError:
+            logger.error("Could not create directory {}".format(path))
+            return False
+
+        full_path = os.path.join(path, filename)
+        try:
+            fd, tmp_path = tempfile.mkstemp(prefix="." + filename, dir=path)
+
+        except OSError:
+            logger.error("Could not create a temporary file in {}".format(path))
+            return False
+
+        try:
+            try:
+                with os.fdopen(fd, "w") as f:
+                    f.write(
+                        dumps(
+                            {
+                                "access": record.access,
+                                "username": record.username,
+                                "digest": record.digest,
+                            },
+                            separators=(",", ":"),
+                        )
+                    )
+
+                os.replace(tmp_path, full_path)
+
+            except OSError:
+                logger.error("Could not write authentication for KEY: {}".format(key))
+                return False
+
+        finally:
+            # A successful replacement consumes the temporary file.
+            # Otherwise, remove whatever was left behind.
+            with suppress(OSError):
+                os.remove(tmp_path)
+
+        return True
+
+    def get_auth_record(self, key):
+        """Return a key's saved access record, or ``None`` when absent."""
+        path, filename = self.auth_path(key)
+        full_path = os.path.join(path, filename)
+        try:
+            with open(full_path) as f:
+                stored = f.read().strip()
+
+        except FileNotFoundError:
+            return None
+
+        except (OSError, UnicodeDecodeError) as e:
+            logger.error("Could not read authentication for KEY: {} ({})".format(key, e))
+            raise AuthStorageError(str(e)) from e
+
+        try:
+            record = loads(stored)
+            access = record["access"]
+            username = record["username"]
+            digest = record["digest"]
+            if (
+                access not in Authentication.ACCESS_CHOICES
+                or (username is None) != (digest is None)
+                or (username is not None and not isinstance(username, str))
+                or (digest is not None and not isinstance(digest, str))
+                or (
+                    digest is None
+                    and access
+                    not in {
+                        Authentication.ACCESS_PUBLIC,
+                        Authentication.ACCESS_DISABLED,
+                    }
+                )
+            ):
+                raise ValueError
+
+        except (KeyError, TypeError, ValueError):
+            logger.error("Could not decode authentication for KEY: {}".format(key))
+            raise AuthStorageError("Invalid authentication record") from None
+
+        return ConfigAuthRecord(access=access, username=username, digest=digest)
+
+    def get_auth(self, key):
+        """Return a key's credential digest, or ``None`` when unlocked."""
+        record = self.get_auth_record(key)
+        return None if record is None else record.digest
+
+    def get_auth_username(self, key):
+        """Return the saved username when the lock format provides it."""
+        record = self.get_auth_record(key)
+        return None if record is None else record.username
+
+    def has_auth(self, key):
+        """Return whether a key is protected, treating unreadable locks as protected."""
+        try:
+            return self.get_auth(key) is not None
+
+        except AuthStorageError:
+            return True
+
+    def verify_auth(self, key, username, password):
+        """Check credentials, rejecting missing or unreadable locks."""
+        try:
+            record = self.get_auth_record(key)
+
+        except AuthStorageError:
+            return False
+
+        if record is None:
+            return False
+
+        if record.digest is None:
+            return False
+
+        return Authentication.credential_verifier.verify(
+            key,
+            username,
+            password,
+            record.username,
+            record.digest,
+        )
+
+    def clear_auth(self, key):
+        """Remove a key's lock file.
+
+        Returns None when absent, True when removed, and False on error.
+        """
+        try:
+            guard = self._acquire_auth_guard(key)
+        except OSError:
+            return False
+
+        try:
+            return self._clear_auth(key)
+        finally:
+            self._release_auth_guard(guard)
+
+    def _clear_auth(self, key):
+        """Remove one lock while the caller holds its credential guard."""
+        path, filename = self.auth_path(key)
+        try:
+            os.remove(os.path.join(path, filename))
+            return True
+
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                return False
+            return None
+
+    def prune_unused_locks(self, older_than_seconds):
+        """Remove old access records that have no matching configuration.
+
+        HASH mode is scanned directly because its original keys are hidden.
+        Empty hash directories are removed after their stale locks are gone.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return 0
+
+        try:
+            # Share the credential guard so pruning cannot delete a fresh lock.
+            guard = self._acquire_auth_guard("prune")
+        except OSError as e:
+            logger.error("Could not lock authentication pruning (%s)", e)
+            return 0
+
+        try:
+            return self._prune_unused_locks(older_than_seconds)
+        finally:
+            # Always release the descriptor, including unexpected failures.
+            self._release_auth_guard(guard)
+
+    def _prune_unused_locks(self, older_than_seconds):
+        """Prune stale locks while the shared credential guard is held."""
+
+        # Match only the filenames created by each storage mode.
+        hash_prefix_pattern = re.compile(r"^[0-9a-f]{2}$")
+        hash_name_pattern = re.compile(r"^[0-9a-f]{54}$")
+
+        if self.mode == AppriseStoreMode.HASH:
+            # HASH lock files live under root/<prefix>/.<remainder>.lock.
+            content_extensions = (apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value)
+            name_pattern = hash_name_pattern
+            lock_dirs = []
+            if os.path.isdir(self.root):
+                try:
+                    # Keep directory metadata so symlinks can be skipped.
+                    with os.scandir(self.root) as it:
+                        entries = list(it)
+
+                except OSError as e:
+                    logger.warning("Could not list directory {} while pruning: {}".format(self.root, e))
+                    entries = []
+
+                for entry in entries:
+                    if not hash_prefix_pattern.match(entry.name):
+                        continue
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            lock_dirs.append(entry.path)
+
+                    except OSError:
+                        continue
+
+        else:  # AppriseStoreMode.SIMPLE
+            content_extensions = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+            name_pattern = CONFIG_KEY_PATTERN
+            lock_dirs = [self.root] if os.path.isdir(self.root) else []
+
+        lock_suffix = ".lock"
+        now = datetime.now().timestamp()
+        pruned = 0
+        for directory in lock_dirs:
+            try:
+                filenames = os.listdir(directory)
+
+            except OSError as e:
+                logger.warning("Could not list directory {} while pruning: {}".format(directory, e))
+                continue
+
+            for filename in filenames:
+                if not (filename.startswith(".") and filename.endswith(lock_suffix)):
+                    continue
+
+                # Strip the leading '.' and trailing '.lock'.
+                name = filename[1 : -len(lock_suffix)]
+                if not name_pattern.match(name):
+                    continue
+
+                lock_path = os.path.join(directory, filename)
+                try:
+                    age = now - os.path.getmtime(lock_path)
+
+                except OSError:
+                    continue
+
+                if age < older_than_seconds:
+                    continue
+
+                has_content = any(
+                    os.path.isfile(os.path.join(directory, "{}.{}".format(name, ext))) for ext in content_extensions
+                )
+                if has_content:
+                    continue
+
+                try:
+                    os.remove(lock_path)
+
+                except OSError as e:
+                    logger.error("Could not prune stale unused authentication lock: {} ({})".format(name, e))
+                    continue
+
+                logger.info("Pruned stale unused authentication lock: {}".format(name))
+                pruned += 1
+
+            if self.mode == AppriseStoreMode.HASH:
+                try:
+                    # rmdir succeeds only when no configuration, lock, or
+                    # concurrent file remains, so it cannot remove content.
+                    os.rmdir(directory)
+                except OSError as e:
+                    if e.errno not in (errno.ENOENT, errno.ENOTEMPTY):
+                        logger.warning("Could not remove empty directory %s (%s)", directory, e)
+
+        return pruned
+
+    def _content_paths(self, key):
+        """Return the text and YAML paths for a Config ID."""
+        path, filename = self.path(key)
+        if self.mode == AppriseStoreMode.HASH:
+            ext_text, ext_yaml = apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value
+        else:  # AppriseStoreMode.SIMPLE
+            ext_text, ext_yaml = SimpleFileExtension.TEXT, SimpleFileExtension.YAML
+        return (
+            os.path.join(path, "{}.{}".format(filename, ext_text)),
+            os.path.join(path, "{}.{}".format(filename, ext_yaml)),
+        )
+
+    def _creation_path(self, key):
+        """Return the hidden file that preserves the Config ID's creation time."""
+        path, filename = self.path(key)
+        return os.path.join(path, ".{}.created".format(filename))
+
+    def _creation_timestamp(self, key):
+        """Return the preserved creation time, falling back to existing content."""
+        try:
+            return os.path.getmtime(self._creation_path(key))
+        except OSError:
+            pass
+
+        timestamps = []
+        for path in self._content_paths(key):
+            try:
+                file_stat = os.stat(path)
+            except OSError:
+                continue
+            timestamps.append(min(file_stat.st_ctime, file_stat.st_mtime))
+        return min(timestamps) if timestamps else None
+
+    def _record_creation_time(self, key, timestamp=None):
+        """Create the timestamp marker once without replacing an existing one."""
+        marker = self._creation_path(key)
+        try:
+            descriptor = os.open(marker, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            return
+        except OSError as e:
+            logger.warning("Could not preserve creation time for KEY %s (%s)", key, e)
+            return
+
+        with suppress(OSError):
+            os.close(descriptor)
+        if timestamp is not None:
+            try:
+                os.utime(marker, (timestamp, timestamp))
+            except OSError as e:
+                logger.warning("Could not restore creation time for KEY %s (%s)", key, e)
+
+    def get_file_times(self, key):
+        """Return stable creation and current modification times, when available."""
+        if self.mode == AppriseStoreMode.DISABLED:
+            return (None, None)
+
+        for path in self._content_paths(key):
+            try:
+                file_stat = os.stat(path)
+            except FileNotFoundError:
+                continue
+            except OSError:
+                return (None, None)
+
+            return (
+                _configured_datetime(self._creation_timestamp(key) or file_stat.st_ctime),
+                _configured_datetime(file_stat.st_mtime),
+            )
+
+        return (None, None)
+
+    def move(self, from_key, to_key):
+        """Move a configuration and its access record to another key.
+
+        An access-only key moves without configuration content. The result is a
+        ``MoveResult`` value describing success, absence, conflict, or failure.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return MoveResult.FAILED
+
+        guard = None
+        try:
+            # Guard the source and destination without locking routine logins.
+            guard = self._acquire_auth_guard(from_key)
+            return self._move(from_key, to_key)
+        except OSError as e:
+            logger.error("Could not lock configuration move from %s to %s (%s)", from_key, to_key, e)
+            return MoveResult.FAILED
+        finally:
+            if guard is not None:
+                self._release_auth_guard(guard)
+
+    def _move(self, from_key, to_key):
+        """Move content after proving every source file can be renamed."""
+
+        src_text, src_yaml = self._content_paths(from_key)
+        dst_text, dst_yaml = self._content_paths(to_key)
+        src_lock_dir, src_lock_name = self.auth_path(from_key)
+        dst_lock_dir, dst_lock_name = self.auth_path(to_key)
+        src_lock = os.path.join(src_lock_dir, src_lock_name)
+        dst_lock = os.path.join(dst_lock_dir, dst_lock_name)
+        src_created = self._creation_path(from_key)
+        dst_created = self._creation_path(to_key)
+
+        candidates = [
+            (src_text, dst_text),
+            (src_yaml, dst_yaml),
+            (src_lock, dst_lock),
+        ]
+        sources = [(source, destination) for source, destination in candidates if os.path.isfile(source)]
+        if not sources:
+            return MoveResult.NOT_FOUND
+        candidates.append((src_created, dst_created))
+        if os.path.isfile(src_created):
+            sources.append((src_created, dst_created))
+        if any(os.path.isfile(destination) for _, destination in candidates):
+            return MoveResult.CONFLICT
+
+        staged = []
+        published = []
+        try:
+            # Stage every source before publishing any destination files.
+            for source, destination in sources:
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                descriptor, stage = tempfile.mkstemp(prefix=".move-source-", dir=os.path.dirname(source))
+                os.close(descriptor)
+                try:
+                    os.replace(source, stage)
+                except OSError:
+                    with suppress(OSError):
+                        os.remove(stage)
+                    raise
+                staged.append((stage, source, destination))
+
+            # Publish the lock before content so a destination is never briefly
+            # readable without the source's authentication.
+            staged.sort(key=lambda item: not item[2].endswith(".lock"))
+            for stage, _source, destination in staged:
+                try:
+                    os.link(stage, destination)
+                except FileExistsError:
+                    raise
+                except OSError as e:
+                    if not self._exclusive_copy(stage, destination):
+                        raise AppriseAPIStorageError("could not publish staged move") from e
+                published.append(destination)
+
+        except OSError as e:
+            logger.error("Could not move KEY %s to %s (%s)", from_key, to_key, e)
+            for destination in reversed(published):
+                with suppress(OSError):
+                    os.remove(destination)
+            for stage, source, _destination in reversed(staged):
+                if os.path.exists(stage):
+                    try:
+                        os.replace(stage, source)
+                    except OSError as rollback_error:
+                        logger.error("Could not restore move source %s (%s)", source, rollback_error)
+            destination_exists = any(os.path.isfile(path) for path in (dst_text, dst_yaml, dst_lock))
+            return MoveResult.CONFLICT if destination_exists else MoveResult.FAILED
+
+        # Cleanup failures leave only hidden staging files.
+        for stage, _source, _destination in staged:
+            try:
+                os.remove(stage)
+            except OSError as e:
+                logger.warning("Could not remove completed move staging file %s (%s)", stage, e)
+
+        return MoveResult.MOVED
+
+    def _exclusive_copy(self, src_file, dst_file):
+        """Copy a file without replacing a destination created concurrently."""
+        tmp_path = None
+        try:
+            # Copy beside the destination, then publish with a hard link.
+            # os.link() is the no-replace step that closes the TOCTOU gap.
+            fd, tmp_path = tempfile.mkstemp(prefix=".move-", dir=os.path.dirname(dst_file))
+            os.close(fd)
+            shutil.copy2(src_file, tmp_path)
+            os.link(tmp_path, dst_file)
+
+        except OSError as e:
+            logger.error("Could not copy {} to {} ({})".format(src_file, dst_file, e))
+            return False
+
+        finally:
+            if tmp_path:
+                with suppress(OSError):
+                    os.remove(tmp_path)
+
+        return True
 
 
 # Initialize our singleton
@@ -782,6 +1678,24 @@ ConfigCache = AppriseConfigCache(
     salt=settings.SECRET_KEY,
     mode=settings.APPRISE_STATEFUL_MODE,
 )
+
+
+def resolve_config_key(request: HttpRequest, key: str) -> str:
+    """Return the request's effective configuration key.
+
+    A valid header takes precedence over the URL key. An invalid header
+    returns an empty value instead of falling back to the URL.
+    """
+    header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+    if not header_key:
+        return key
+    return header_key if CONFIG_KEY_PATTERN.match(header_key) else ""
+
+
+def config_key_header_present_but_invalid(request: HttpRequest) -> bool:
+    """Return whether the request supplied an invalid config ID header."""
+    header_key = request.headers.get(CONFIG_KEY_HEADER, "").strip()
+    return bool(header_key) and not CONFIG_KEY_PATTERN.match(header_key)
 
 
 def apply_global_filters():
@@ -821,13 +1735,11 @@ def gen_unique_config_id():
 
 
 def send_webhook(payload):
-    """
-    POST our webhook results
-    """
+    """POST a mapping or JSON chunk iterator to the webhook."""
 
     # Prepare HTTP Headers
     headers = {
-        "User-Agent": "Apprise-API",
+        "User-Agent": f"Apprise-API/{settings.APP_VERSION}",
         "Content-Type": "application/json",
     }
 
@@ -856,10 +1768,34 @@ def send_webhook(payload):
     # specified that aren't otherwise part of this class
     params = {k: v for k, v in results.get("qsd", {}).items() if k not in base.template_args}
 
+    # Prepare both forms inside the protected block below.
+    body = None
+    data = None
+
     try:
-        requests.post(
+        # A mapping remains convenient for small callers and existing tests.
+        data = dumps(payload) if isinstance(payload, Mapping) else None
+
+        if data is None:
+            # Build large webhook bodies on disk instead of joining every log.
+            body = tempfile.TemporaryFile(mode="w+b")  # noqa: SIM115
+
+            for chunk in payload:
+                # Convert text chunks before writing to the binary file.
+                value = chunk.encode("utf-8") if isinstance(chunk, str) else chunk
+
+                # Never send JSON after an incomplete write.
+                if body.write(value) != len(value):
+                    raise AppriseAPIStorageError("Incomplete webhook temporary-file write.")
+
+            # Rewind so the request reads from the beginning.
+            body.seek(0)
+            data = body
+
+        response = requests.post(
             base.request_url,
-            data=dumps(payload),
+            # Small mappings use text; chunked results use the file.
+            data=data,
             params=params,
             headers=headers,
             auth=base.request_auth,
@@ -867,9 +1803,35 @@ def send_webhook(payload):
             timeout=base.request_timeout,
         )
 
+        # Report HTTP failures even when the connection itself succeeded.
+        if not 200 <= response.status_code < 300:
+            logger.warning(
+                "The Apprise Webhook Result URL returned HTTP %d: %s",
+                response.status_code,
+                base.url(privacy=True),
+            )
+
     except requests.RequestException as e:
         logger.warning("A Connection error occurred sending the Apprise Webhook results to %s.", base.url(privacy=True))
         logger.debug("Socket Exception: %s", str(e))
+
+    except (OSError, TypeError, ValueError) as e:
+        # Preparation failures must not change the notification result.
+        logger.warning(
+            "The Apprise Webhook results could not be prepared for %s.",
+            base.url(privacy=True),
+        )
+        logger.debug("Webhook preparation exception: %s", str(e))
+
+    finally:
+        if body is not None:
+            try:
+                # TemporaryFile removes the buffered webhook when closed.
+                body.close()
+
+            except (OSError, ValueError) as e:
+                logger.warning("The Apprise Webhook temporary file could not be closed.")
+                logger.debug("Webhook cleanup exception: %s", str(e))
 
     return
 
@@ -887,7 +1849,7 @@ def healthcheck(lazy=True):
         "details": [],
     }
 
-    if not (settings.APPRISE_STATEFUL_MODE == AppriseStoreMode.DISABLED or settings.APPRISE_CONFIG_LOCK):
+    if stateful_store_enabled() and not settings.APPRISE_CONFIG_LOCK:
         # Update our Configuration Check Block
         path = os.path.join(ConfigCache.root, ".tmp_hc")
         if lazy:

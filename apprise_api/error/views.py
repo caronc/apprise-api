@@ -22,11 +22,44 @@
 # THE SOFTWARE.
 
 
-from api.utils import MIME_IS_JSON
-from django.http import JsonResponse
-from django.shortcuts import render
+from api.responses import error_response
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+
+# Nginx uses this page for rejected request bursts.
+RATE_LIMIT_RETRY_AFTER_SECONDS = 60
+
+
+class Error401View(View):
+    """Render the authentication-required response."""
+
+    template_name = "401.html"
+
+    def get(self, request):
+        """Return an HTML or JSON response with a Basic Auth challenge."""
+        return error_response(
+            request,
+            _("Access Denied"),
+            401,
+            template=self.template_name,
+            headers={"WWW-Authenticate": 'Basic realm="{}"'.format(settings.APPRISE_BASIC_AUTH_REALM)},
+        )
+
+
+class Error403View(View):
+    """Render the permission-denied response."""
+
+    template_name = "403.html"
+
+    def get(self, request):
+        """Return a friendly response without issuing an auth challenge."""
+        return error_response(
+            request,
+            _("Permission Denied"),
+            403,
+            template=self.template_name,
+        )
 
 
 class Error404View(View):
@@ -34,7 +67,6 @@ class Error404View(View):
     Render a 404 page for errors
 
     Proxy must pass:
-      - HTTP_X_ERROR_CODE
       - HTTP_X_ORIGINAL_URI
       - HTTP_X_ORIGINAL_METHOD
     """
@@ -53,24 +85,71 @@ class Error404View(View):
             "remote_ip": remote_ip,
         }
 
-        # Detect the format our response should be in
-        json_response = (
-            MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
-            )
-            is not None
+        return error_response(
+            request,
+            _("Page not found"),
+            404,
+            template=self.template_name,
+            context=context,
         )
 
-        return (
-            render(request, self.template_name, context=context, status=404)
-            if not json_response
-            else JsonResponse(
-                {"error": _("Page not found")},
-                safe=False,
-                status=404,
-            )
+
+class Error405View(View):
+    """Render nginx's method-not-allowed response."""
+
+    template_name = "405.html"
+
+    def get(self, request):
+        """Return the original request details and its allowed methods."""
+        original_uri = request.META.get("HTTP_X_ORIGINAL_URI", request.path)
+        original_method = request.META.get("HTTP_X_ORIGINAL_METHOD", request.method)
+        remote_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR")
+        allowed_methods = "GET, HEAD"
+
+        context = {
+            "original_uri": original_uri,
+            "original_method": original_method,
+            "remote_ip": remote_ip,
+            "allowed_methods": allowed_methods,
+        }
+
+        return error_response(
+            request,
+            _("Method Not Allowed"),
+            405,
+            template=self.template_name,
+            context=context,
+            headers={"Allow": allowed_methods},
+        )
+
+
+class Error413View(View):
+    """Render nginx's request-too-large response."""
+
+    template_name = "413.html"
+
+    def get(self, request):
+        """Tell the caller to reduce the request body or attachments."""
+        return error_response(
+            request,
+            _("Content Too Large"),
+            413,
+            template=self.template_name,
+        )
+
+
+class Error414View(View):
+    """Render nginx's request-target-too-long response."""
+
+    template_name = "414.html"
+
+    def get(self, request):
+        """Tell the caller to shorten the URL and use the request body."""
+        return error_response(
+            request,
+            _("URI Too Long"),
+            414,
+            template=self.template_name,
         )
 
 
@@ -79,7 +158,6 @@ class Error421View(View):
     Render a 421 page for errors
 
     Proxy must pass:
-      - HTTP_X_ERROR_CODE
       - HTTP_X_ORIGINAL_URI
       - HTTP_X_ORIGINAL_METHOD
     """
@@ -98,24 +176,32 @@ class Error421View(View):
             "remote_ip": remote_ip,
         }
 
-        # Detect the format our response should be in
-        json_response = (
-            MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
-            )
-            is not None
+        return error_response(
+            request,
+            _("Page not found"),
+            421,
+            template=self.template_name,
+            context=context,
         )
 
-        return (
-            render(request, self.template_name, context=context, status=421)
-            if not json_response
-            else JsonResponse(
-                {"error": _("Page not found")},
-                safe=False,
-                status=421,
-            )
+
+class Error429View(View):
+    """Render nginx's rate-limit response."""
+
+    template_name = "429.html"
+
+    def get(self, request):
+        """Return an HTML or JSON response with the retry delay."""
+        return error_response(
+            request,
+            _("Too Many Requests"),
+            429,
+            template=self.template_name,
+            context={"retry_after": RATE_LIMIT_RETRY_AFTER_SECONDS},
+            headers={
+                "Retry-After": str(RATE_LIMIT_RETRY_AFTER_SECONDS),
+                "Cache-Control": "no-store",
+            },
         )
 
 
@@ -124,7 +210,6 @@ class Error50xView(View):
     50x Error Code Response
 
     Proxy must pass:
-      - HTTP_X_ERROR_CODE
       - HTTP_X_ORIGINAL_URI
       - HTTP_X_ORIGINAL_METHOD
     """
@@ -143,22 +228,10 @@ class Error50xView(View):
             "remote_ip": remote_ip,
         }
 
-        # Detect the format our response should be in
-        json_response = (
-            MIME_IS_JSON.match(
-                request.content_type
-                if request.content_type
-                else request.headers.get("accept", request.headers.get("content-type", ""))
-            )
-            is not None
-        )
-
-        return (
-            render(request, self.template_name, context=context, status=500)
-            if not json_response
-            else JsonResponse(
-                {"error": _("System error")},
-                safe=False,
-                status=500,
-            )
+        return error_response(
+            request,
+            _("System error"),
+            500,
+            template=self.template_name,
+            context=context,
         )

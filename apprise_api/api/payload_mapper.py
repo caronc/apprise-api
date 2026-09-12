@@ -34,6 +34,10 @@ logger = logging.getLogger("django")
 # Matches a single [N] subscript at the start of a string.
 _SUBSCRIPT_RE = re.compile(r"^\[(\d+)\]")
 
+# Keep integer conversion well below Python's safety limit for decimal strings.
+# An index this large is already far beyond any accepted request payload.
+_SUBSCRIPT_MAX_DIGITS = 9
+
 
 def _parse_path(key):
     """
@@ -95,7 +99,10 @@ def _parse_path(key):
                 return None, (
                     f"malformed bracket notation at '{segment}'; expected [N] where N is a non-negative integer"
                 )
-            steps.append(("index", int(m.group(1))))
+            raw_index = m.group(1)
+            if len(raw_index) > _SUBSCRIPT_MAX_DIGITS:
+                return None, (f"array index in '{segment}' exceeds the maximum of {_SUBSCRIPT_MAX_DIGITS} digits")
+            steps.append(("index", int(raw_index)))
             remaining = remaining[m.end() :]
 
     return steps, None
