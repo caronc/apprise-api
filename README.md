@@ -6,6 +6,7 @@ Take advantage of [Apprise](https://github.com/caronc/apprise) through your netw
 - An incredibly lightweight gateway to Apprise.
 - A production-ready micro-service at your disposal.
 - A Simple Website to verify and test your configuration with.
+- An [Android app](#apprise-mobile-android) to notify and manage your server from your phone.
 
 Apprise API was designed to easily fit into existing (and new) ecosystems that are looking for a simple notification solution.
 
@@ -34,6 +35,50 @@ With configuration in place, you'll be able to use the *Notification* tab to sen
 
 At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
 
+## Apprise Mobile (Android)
+
+<a href="https://appriseit.com/mobile/"><img align="left" width="84" hspace="16" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/google-play.svg" alt="Google Play"></a>
+
+**Apprise Mobile** puts this API in your pocket. Send a message, a photo you just took, or any file to one destination, a group, or every destination you've configured. It's a client for *your* Apprise API server, so all of your notifications continue to flow through your own infrastructure.
+
+<br clear="left"/>
+
+<table>
+<tr>
+<th width="33%" align="center">Dashboard</th>
+<th width="33%" align="center">URL Builder</th>
+<th width="33%" align="center">Delivery Report</th>
+</tr>
+<tr>
+<td align="center"><img width="80%" alt="Apprise Mobile dashboard" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-dashboard.png"></td>
+<td align="center"><img width="80%" alt="Apprise Mobile URL Builder" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-url-builder.png"></td>
+<td align="center"><img width="80%" alt="Apprise Mobile delivery report" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-delivery-report.png"></td>
+</tr>
+</table>
+
+### Sign Up for the Beta
+
+The app is in a closed Google Play test while we work toward a public release. Google requires at least 12 testers to stay enrolled for 14 continuous days before that can happen, so joining and trying the app genuinely helps.
+
+Use the **same Google account** for all three steps, and complete them in order. The Play Store listing stays unavailable until Google recognizes your account as a tester.
+
+1. **Join the Google Group** - this adds your Google account to the approved tester list:<br/>
+   https://groups.google.com/g/apprise-testers/
+2. **Become a tester** - open the opt-in page and select *Become a tester*:<br/>
+   https://play.google.com/apps/testing/com.appriseit.mobile
+3. **Install Apprise Mobile** - once Google confirms your tester status, open the listing and install:<br/>
+   https://play.google.com/store/apps/details?id=com.appriseit.mobile
+
+If step 3 shows an error or says the app is unavailable, Google has not finished processing your tester status yet. Give it a few minutes and try again.
+
+### Connecting to Your Server
+
+Once the app is installed, open the *Configuration Manager* in your browser and reveal the **Apprise Mobile Quick Setup** QR code on any configuration you've saved. Scanning it from the app adds your server and loads that configuration in one step - no typing URLs on a phone keyboard.
+
+Visit the [Apprise Mobile](https://appriseit.com/mobile/) page for more details, screenshots, and the app's privacy policy and terms.
+
+*Google Play and the Google Play logo are trademarks of Google LLC.*
+
 ## Installation
 
 The following options should allow you to access the API at: `http://localhost:8000/` from your browser.
@@ -51,8 +96,7 @@ docker pull caronc/apprise:latest
 # /plugin is used for a location you can add your own custom apprise plugins.
 #         You do not have to mount this if you don't intend to use it.
 # /attach is used for file attachments
-#
-# /tmp         Temporary files, suitable for `tmpfs` in hardened deployments.
+# /tmp    Temporary files, suitable for `tmpfs` in hardened deployments.
 #
 # The below example sets a the APPRISE_WORKER_COUNT to a small value (overriding
 # a full production environment setting).  This may be all that is needed for
