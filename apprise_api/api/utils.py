@@ -38,6 +38,7 @@ import shutil
 import tempfile
 
 import apprise
+from apprise.config.file import ConfigFile
 from django.conf import settings
 from django.http import HttpRequest
 import requests
@@ -698,6 +699,24 @@ class AppriseConfigCache:
 
         # return our read content
         return (content, fmt)
+
+    def load(self, key, content, fmt, asset=None):
+        """Load a saved configuration, trusting locked simple files as local sources."""
+        config = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
+        if settings.APPRISE_CONFIG_LOCK and self.mode == AppriseStoreMode.SIMPLE:
+            path, filename = self.path(key)
+            source = ConfigFile(
+                path=os.path.join(path, "{}.{}".format(filename, SIMPLE_FILE_EXTENSION_MAPPING[fmt])),
+                format=fmt,
+                asset=asset,
+                recursion=settings.APPRISE_RECURSION_MAX,
+            )
+            # Preserve the cache reader's support for administrator-provided files of any size.
+            source.max_buffer_size = 0
+            config.add(source)
+        else:
+            config.add_config(content, format=fmt)
+        return config
 
     def clear(self, key, formats=None):
         """

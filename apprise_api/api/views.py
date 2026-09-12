@@ -1528,10 +1528,7 @@ class NotifyView(View):
         a_obj = apprise.Apprise(asset=asset)
 
         # Create an apprise config object
-        ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
-
-        # Load our configuration
-        ac_obj.add_config(config, format=format)
+        ac_obj = ConfigCache.load(key, config, format, asset=asset)
 
         # Add our configuration
         a_obj.add(ac_obj)
@@ -2439,10 +2436,7 @@ class JsonUrlView(View):
         a_obj = apprise.Apprise()
 
         # Create an apprise config object
-        ac_obj = apprise.AppriseConfig(recursion=settings.APPRISE_RECURSION_MAX)
-
-        # Load our configuration
-        ac_obj.add_config(config, format=format)
+        ac_obj = ConfigCache.load(key, config, format)
 
         # Add our configuration
         a_obj.add(ac_obj)

@@ -134,6 +134,63 @@ services:
       - ./attach:/attach
 ```
 
+### Environment Variables in Mounted Configurations
+
+Administrator-managed configuration files can use `${NAME}` placeholders for
+credentials supplied through the container environment. Enable both
+`APPRISE_STATEFUL_MODE=simple` and `APPRISE_CONFIG_LOCK=yes`. The lock disables
+configuration uploads, edits, deletion, and exports through the API and web UI;
+notifications and the credential-masked URL list remain available.
+
+For example, keep this in `./config/apprise.cfg`:
+
+```text
+notifications = tgram://123456789:${TELEGRAM_BOT_TOKEN}/-1001234567890
+```
+
+Supply the token separately in an untracked `apprise.env` file:
+
+```dotenv
+TELEGRAM_BOT_TOKEN=your-token
+```
+
+Add these settings to your Compose service:
+
+```yaml
+services:
+  apprise:
+    environment:
+      APPRISE_STATEFUL_MODE: simple
+      APPRISE_CONFIG_LOCK: "yes"
+    env_file:
+      - ./apprise.env
+    volumes:
+      - ./config:/config
+```
+
+Send a notification using the filename as the key:
+
+```bash
+curl http://localhost:8000/notify/apprise \
+  --data-urlencode 'body=Test notification' \
+  --data-urlencode 'tag=notifications'
+```
+
+The same substitution works in YAML URLs and URL option values in `apprise.yml`.
+Files retain their placeholders, so protocols, tags, and destination IDs can be
+backed up without the token. Recreate the container after updating `apprise.env`
+to supply the new environment. Missing or empty variables reject the configuration;
+use `$${NAME}` for a literal placeholder. Values used inside URLs require normal
+URL percent-encoding.
+
+Only administrator-managed files in locked, simple storage use this feature.
+Review existing configurations before enabling it. Uploaded configurations in
+unlocked storage, hash storage, stateless notification URLs, and remotely included
+configurations retain literal values. Locked files follow Apprise's local-file
+include rules and the configured recursion limit.
+
+### Production Compose Settings
+
 For production deployments, do not use `docker-compose.override.yml`.
 Deploy using only `docker-compose.yml`, so the container uses the immutable image and its bundled static assets.
 ```bash
