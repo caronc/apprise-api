@@ -483,31 +483,34 @@
                     enctype="multipart/form-data"
                     action="{% url "notify" key %}"
                     method="post">
-                <div class="row notify-top-row">
-                  <div class="input-field col s6 m2">
-                    {{ form_notify.format.label_tag }}
-                    {{ form_notify.format }}
-                    {{ form_notify.format.errors }}
+                <section class="notify-form-section notify-delivery-options"
+                         aria-label="{% trans 'Delivery Options' %}">
+                  <div class="row notify-top-row">
+                    <div class="input-field col s6 m2">
+                      {{ form_notify.format.label_tag }}
+                      {{ form_notify.format }}
+                      {{ form_notify.format.errors }}
+                    </div>
+                    <div class="input-field col s6 m2">
+                      {{ form_notify.type.label_tag }}
+                      {{ form_notify.type }}
+                      {{ form_notify.type.errors }}
+                    </div>
+                    <div class="input-field col s12 m4">
+                      {{ form_notify.tag.label_tag }}
+                      {{ form_notify.tag }}
+                      {{ form_notify.tag.errors }}
+                    </div>
+                    <div class="input-field col s12 m4 notify-attachments-field">
+                      {{ form_notify.attachment.label_tag }}
+                      {{ form_notify.attachment }}
+                      {{ form_notify.attachment.errors }}
+                      {# Where we will render the selected files #}
+                      <div class="notify-attachments-list"></div>
+                    </div>
                   </div>
-                  <div class="input-field col s6 m2">
-                    {{ form_notify.type.label_tag }}
-                    {{ form_notify.type }}
-                    {{ form_notify.type.errors }}
-                  </div>
-                  <div class="input-field col s12 m4">
-                    {{ form_notify.tag.label_tag }}
-                    {{ form_notify.tag }}
-                    {{ form_notify.tag.errors }}
-                  </div>
-                  <div class="input-field col s12 m4 notify-attachments-field">
-                    {{ form_notify.attachment.label_tag }}
-                    {{ form_notify.attachment }}
-                    {{ form_notify.attachment.errors }}
-                    {# Where we will render the selected files #}
-                    <div class="notify-attachments-list"></div>
-                  </div>
-                </div>
-                <section class="notify-template-values"
+                </section>
+                <section class="notify-form-section notify-template-values"
                          aria-labelledby="notify-template-values-title">
                   <div class="notify-template-values-heading">
                     <div>
@@ -525,20 +528,23 @@
                        class="notify-template-rows"
                        aria-live="polite"></div>
                 </section>
-                <div class="row">
-                  <div class="input-field col s12">
-                    {{ form_notify.title.label_tag }}
-                    {{ form_notify.title }}
-                    {{ form_notify.title.errors }}
+                <section class="notify-form-section notify-message-fields"
+                         aria-label="{% trans 'Message' %}">
+                  <div class="row">
+                    <div class="input-field col s12">
+                      {{ form_notify.title.label_tag }}
+                      {{ form_notify.title }}
+                      {{ form_notify.title.errors }}
+                    </div>
                   </div>
-                </div>
-                <div class="row">
-                  <div class="input-field col s12">
-                    {{ form_notify.body.label_tag }}
-                    {{ form_notify.body }}
-                    {{ form_notify.body.errors }}
+                  <div class="row">
+                    <div class="input-field col s12">
+                      {{ form_notify.body.label_tag }}
+                      {{ form_notify.body }}
+                      {{ form_notify.body.errors }}
+                    </div>
                   </div>
-                </div>
+                </section>
                 <div class="notify-form-actions">
                   <span class="btn btn-clear-form waves-effect waves-light">
                     <span class="btn-text">{% trans "Clear Form" %}</span>

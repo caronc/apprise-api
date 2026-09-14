@@ -3030,7 +3030,7 @@ code.config-id.is-concealed {
   overflow: hidden;
   border-color: var(--config-list-border);
   border-radius: 0.55rem;
-  background: var(--config-list-surface);
+  background: var(--select-bg);
 }
 
 .collection.config-list-collection .config-list-item {
@@ -4345,12 +4345,17 @@ Authentication Editor
   }
 }
 
-.notify-top-row .input-field>label {
+#notify .notify-form-section .input-field>label,
+#notify .notify-form-section .input-field>label.active {
   position: static;
-  transform: none;
   display: block;
   margin: 0 0 0.2rem 0;
-  font-size: 0.9rem;
+  transform: none;
+  color: var(--mobile-beta-accent);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .notify-target-guidance {
@@ -4399,7 +4404,7 @@ Authentication Editor
 
 .notify-attachments-field .btn-file {
   display: inline-flex;
-  margin-top: 0.25rem;
+  margin-top: 0;
 }
 
 #notify #id_body.notify-missing {
@@ -4468,12 +4473,72 @@ Authentication Editor
   margin-left: 0.25rem;
 }
 
-.notify-template-values {
-  margin: 0.65rem 0 0.45rem;
+.notify-form-section {
+  width: 100%;
+  min-width: 0;
+  margin: 0.55rem 0 0;
   padding: 0.8rem;
   border: 1px solid var(--select-border);
   border-radius: 10px;
+  box-sizing: border-box;
   background: var(--dialog-surface-raised);
+}
+
+.notify-delivery-options .notify-top-row,
+.notify-message-fields .row {
+  margin-top: 0;
+}
+
+#notify .notify-form-section .select-wrapper input.select-dropdown,
+#notify .notify-form-section .chips,
+#notify .notify-template-row input,
+#notify .notify-message-fields input,
+#notify .notify-message-fields textarea {
+  border: 1px solid var(--select-border) !important;
+  border-radius: 7px !important;
+  box-sizing: border-box;
+  background: var(--select-bg);
+  color: var(--select-text);
+}
+
+#notify .notify-form-section .select-wrapper input.select-dropdown,
+#notify .notify-message-fields input {
+  min-height: 2.75rem;
+  height: 2.75rem;
+}
+
+#notify .notify-form-section .chips {
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0 0.65rem;
+}
+
+#notify .notify-delivery-options .notify-attachments-field .btn-file {
+  min-height: 2.75rem;
+  height: 2.75rem;
+  line-height: 2.75rem;
+}
+
+#notify .notify-form-section .chips input {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent;
+}
+
+#notify .notify-message-fields input,
+#notify .notify-message-fields textarea {
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+}
+
+#notify .notify-message-fields textarea {
+  resize: vertical;
 }
 
 .notify-template-values-heading {
@@ -4555,13 +4620,13 @@ Authentication Editor
 
 #notify .notify-template-row input {
   width: 100%;
-  height: 2.55rem;
+  height: 2.75rem;
   margin: 0;
   padding: 0 0.65rem !important;
   border: 1px solid var(--select-border) !important;
   border-radius: 7px !important;
   box-sizing: border-box !important;
-  background: var(--select-bg);
+  background: var(--config-list-surface);
   color: var(--select-text);
   font-family: monospace;
 }
@@ -4584,7 +4649,7 @@ Authentication Editor
   height: 2rem;
   line-height: 2rem;
   transform: translateY(-50%);
-  background-color: var(--notify-template-toggle-bg) !important;
+  background-color: var(--select-bg) !important;
 }
 
 .notify-template-remove {
@@ -4593,7 +4658,7 @@ Authentication Editor
   justify-content: center;
   width: 2.5rem;
   min-width: 2.5rem;
-  height: 2.55rem;
+  height: 2.75rem;
   padding: 0;
   border: 1px solid var(--select-border);
   border-radius: 7px;
@@ -4627,15 +4692,6 @@ Authentication Editor
 #notify .row {
   margin-right: 0;
   margin-left: 0;
-}
-
-.notify-top-row .input-field label[for="id_tag"] {
-  position: static;
-  transform: none;
-  display: block;
-  margin-top: -0.1rem;
-  margin-bottom: 0;
-  font-size: 0.9rem;
 }
 
 .btn-clear-form {
@@ -4832,6 +4888,10 @@ Authentication Editor
 }
 
 @media (max-width: 360px) {
+  .notify-form-section {
+    padding: 0.55rem;
+  }
+
   .notify-template-values-heading {
     align-items: stretch;
     flex-direction: column;
@@ -4844,6 +4904,11 @@ Authentication Editor
   #notify .notify-top-row>.input-field.col {
     width: 100%;
     margin-left: 0;
+  }
+
+  #notify .notify-form-section .row>.input-field.col {
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
   }
 
   #notify .notify-form-actions {

@@ -544,6 +544,8 @@ class TemplateTests(SimpleTestCase):
         assert "template-prompt-" in page
         assert 'id="notify-template-rows"' in page
         assert 'id="notify-template-add"' in page
+        assert 'class="notify-form-section notify-delivery-options"' in page
+        assert 'class="notify-form-section notify-message-fields"' in page
         assert "collectNotifyTemplateValues" in page
         assert "Show Value" in page
 
@@ -684,13 +686,18 @@ class TemplateTests(SimpleTestCase):
 
         css = (Path(settings.BASE_DIR) / "static" / "css" / "base.css").read_text()
         assert ".notify-template-row.is-included" in css
+        assert ".notify-form-section" in css
+        assert "#notify .notify-form-section .row>.input-field.col" in css
+        assert "#notify .notify-form-section .input-field>label.active" in css
+        assert "color: var(--mobile-beta-accent);" in css
         assert "grid-row: 1;" in css
         assert "transform: translateY(-50%);" in css
 
         light_css = (Path(settings.BASE_DIR) / "static" / "css" / "theme-light.css").read_text()
         dark_css = (Path(settings.BASE_DIR) / "static" / "css" / "theme-dark.css").read_text()
-        assert "--notify-template-toggle-bg: #ffffff;" in light_css
-        assert "--notify-template-toggle-bg: #1c1f26;" in dark_css
+        assert "--select-bg: #f8fafb;" in light_css
+        assert "--select-bg: #1c1f26;" in dark_css
+        assert "background: var(--select-bg);" in css
 
     def test_review_dialog_does_not_track_blank_overrides(self):
         """The quick-test dialog never sends a blank override."""
