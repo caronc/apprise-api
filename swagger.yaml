@@ -259,6 +259,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/RecursionHeader'
         - $ref: '#/components/parameters/IdHeader'
+        - $ref: '#/components/parameters/LogLevelHeader'
         - $ref: '#/components/parameters/StreamQueryParam'
         - $ref: '#/components/parameters/ConfigIdHeader'
       requestBody:
@@ -443,7 +444,7 @@ paths:
         '403':
           description: >
             Forbidden (persistent storage is disabled, the configuration's
-            effective access is not `user`, or CONFIG_LOCK requires an
+            enforced access is not `user`, or CONFIG_LOCK requires an
             authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -582,7 +583,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [mode, access, effective_access, username]
+                required: [mode, access, username]
                 properties:
                   mode:
                     type: string
@@ -590,11 +591,7 @@ paths:
                   access:
                     type: string
                     enum: [user, locked, public, disabled]
-                    description: Saved access selection.
-                  effective_access:
-                    type: string
-                    enum: [user, locked, public, disabled]
-                    description: Access currently enforced after global policy is applied.
+                    description: Access selected for this configuration.
                   username:
                     type: string
                     nullable: true
@@ -615,8 +612,9 @@ paths:
         credentials and access. Configuration users repeat their username and
         send a new password; they cannot change access. Configuration content
         is unchanged. While APPRISE_CONFIG_LOCK is enabled, new records default
-        to `locked`; an administrator may preserve `user` or `public`, but
-        either behaves as `locked` until the global lock is removed.
+        to `locked`, and saved `user` access behaves as `locked` without being
+        rewritten. Saved `public` access remains public because it already
+        hides configuration content.
       tags:
         - Persistent
       security:
@@ -659,11 +657,7 @@ paths:
                 example: "Successfully set authentication"
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    nullable: true
+                $ref: '#/components/schemas/AuthChangeResponse'
         '400':
           description: >
             Bad Request (missing/invalid JSON payload, a Content-Type
@@ -697,6 +691,14 @@ paths:
       responses:
         '200':
           description: Authentication removed.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Successfully removed authentication"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthChangeResponse'
         '401':
           description: Unauthorized because the supplied credentials are invalid.
         '403':
@@ -789,6 +791,7 @@ paths:
         - $ref: '#/components/parameters/key'
         - $ref: '#/components/parameters/RecursionHeader'
         - $ref: '#/components/parameters/IdHeader'
+        - $ref: '#/components/parameters/LogLevelHeader'
         - $ref: '#/components/parameters/StreamQueryParam'
       requestBody:
         required: false
@@ -853,7 +856,11 @@ paths:
         with {key}.
       description: >
         With CONFIG_LOCK, only an authenticated administrator may inspect this
-        listing. Stateful notifications remain available to configuration users.
+        listing. Whoever may read it is told, for each URL, the template names
+        it uses and which of them must be supplied, so a caller knows what to
+        prompt for. Defaults declared in the configuration are withheld when
+        privacy is requested. Server environment values are never returned.
+        The template block is empty only when templates are disabled server-wide.
       tags:
         - Persistent
       parameters:
@@ -866,7 +873,8 @@ paths:
             x-enumNames: ["ShowSecrets", "HideSecrets"]
           required: false
           description: >
-            When set to 1, secrets within URLs are redacted.
+            When set to 1, secrets within URLs are redacted. Template names and
+            required status remain available; template values are never returned.
         - in: query
           name: tag
           schema:
@@ -957,7 +965,7 @@ paths:
         '403':
           description: >
             Forbidden (persistent storage is disabled, the configuration's
-            effective access is not `user`, or CONFIG_LOCK requires an
+            enforced access is not `user`, or CONFIG_LOCK requires an
             authenticated administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -1081,7 +1089,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [mode, access, effective_access, username]
+                required: [mode, access, username]
                 properties:
                   mode:
                     type: string
@@ -1089,11 +1097,7 @@ paths:
                   access:
                     type: string
                     enum: [user, locked, public, disabled]
-                    description: Saved access selection.
-                  effective_access:
-                    type: string
-                    enum: [user, locked, public, disabled]
-                    description: Access currently enforced after global policy is applied.
+                    description: Access selected for this configuration.
                   username:
                     type: string
                     nullable: true
@@ -1115,8 +1119,9 @@ paths:
         Identical to POST /auth/{key}, key via X-Apprise-Config-ID instead
         of the URL. The header is required and the body must be JSON. While
         APPRISE_CONFIG_LOCK is enabled, new records default to `locked`; an
-        administrator may preserve `user` or `public`, but either behaves as
-        `locked` until the global lock is removed.
+        administrator may preserve `user` or `public`. Saved `user` access
+        behaves as `locked`, while saved `public` access remains public because
+        it already hides configuration content.
       tags:
         - Persistent
       security:
@@ -1153,6 +1158,14 @@ paths:
       responses:
         '200':
           description: Authentication set (or replaced).
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Successfully set authentication"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthChangeResponse'
         '400':
           description: >
             Bad Request (missing/invalid JSON payload, a missing/invalid
@@ -1186,6 +1199,14 @@ paths:
       responses:
         '200':
           description: Authentication removed.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Successfully removed authentication"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthChangeResponse'
         '400':
           description: Bad Request (missing or invalid X-Apprise-Config-ID).
         '401':
@@ -1218,7 +1239,9 @@ paths:
             enum: [0, 1]
             x-enumNames: ["ShowSecrets", "HideSecrets"]
           required: false
-          description: When set to 1, secrets within URLs are redacted.
+          description: >
+            When set to 1, secrets within URLs are redacted. Template names and
+            required status remain available; template values are never returned.
         - in: query
           name: tag
           schema:
@@ -1328,6 +1351,19 @@ components:
         minLength: 1
         maxLength: 128
       description: Configuration key (1-128 chars, alphanumeric, _, -).
+    LogLevelHeader:
+      in: header
+      name: X-Apprise-Log-Level
+      schema:
+        type: string
+        enum: [trace, debug, info, warning, error, critical]
+      description: >
+        How much detail to report back about the delivery. `debug` and `trace`
+        may expose a saved configuration, so stateful calls allow them only for
+        administrators or configurations with `user` access. Calls using
+        `locked`, `public`, or `disabled` access receive no more than `info`.
+        Stateless calls allow every level because the caller supplies the URLs.
+
     RecursionHeader:
       in: header
       name: X-Apprise-Recursion-Count
@@ -1421,12 +1457,14 @@ components:
           type: boolean
           description: >-
             Whether persistent (stateful) storage is enabled, i.e.
-            APPRISE_STATEFUL_MODE is not set to "disabled".
+            APPRISE_STATEFUL_MODE is not set to "disabled". This is a
+            server-wide mode and does not grant the caller access.
         stateless_enabled:
           type: boolean
           description: >-
             Whether stateless /notify calls are accepted, i.e.
-            APPRISE_STATELESS_MODE is not set to "disabled".
+            APPRISE_STATELESS_MODE is not set to "disabled". This is a
+            server-wide mode and does not grant the caller access.
         degraded:
           type: boolean
           description: >-
@@ -1451,6 +1489,29 @@ components:
               type: array
               items:
                 type: string
+        privilege:
+          type: string
+          enum: [admin, user]
+          description: >-
+            What this caller may reach. `user` is a caller authenticated
+            against a single configuration; `admin` covers an unrestricted
+            credential and a server with authentication turned off.
+
+    AuthChangeResponse:
+      type: object
+      required: [error, auth_state]
+      properties:
+        error:
+          type: string
+          nullable: true
+          description: Null on success, otherwise why the change was refused.
+        auth_state:
+          type: string
+          enum: [user, locked, public, disabled, admin]
+          description: >-
+            The access now in force. With APPRISE_CONFIG_LOCK, saved `user`
+            access is reported here as `locked`; saved `public` access stays
+            public. Removing per-key authentication reports `admin`.
 
     ConfigResponse:
       type: object
@@ -1541,6 +1602,19 @@ components:
             Optional Apprise tag expression. Supports tag, priority:tag,
             tag:retry, and priority:tag:retry tokens. Comma or pipe separates
             OR groups; whitespace, ampersand, or plus separates AND terms.
+        template:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+                maxLength: 1024
+              - type: number
+              - type: boolean
+          description: >
+            Unused by URLs named in the payload, which carry no ${NAME}
+            markers. A call that sends X-Apprise-Config-ID without `urls` is
+            handled as a stateful one, and the values are applied there.
+            Names are case-insensitive.
       required:
         - body
 
@@ -1565,6 +1639,14 @@ components:
             type: string
             format: binary
           description: File attachments.
+        "template[NAME]":
+          type: string
+          maxLength: 1024
+          description: >
+            Unused by URLs named in the payload, which carry no ${NAME}
+            markers. A call that sends X-Apprise-Config-ID without `urls` is
+            handled as a stateful one, and the values are applied there.
+            Names are case-insensitive.
       required:
         - body
 
@@ -1582,6 +1664,14 @@ components:
           $ref: '#/components/schemas/NotificationType'
         format:
           $ref: '#/components/schemas/NotificationFormat'
+        "template[NAME]":
+          type: string
+          maxLength: 1024
+          description: >
+            Unused by URLs named in the payload, which carry no ${NAME}
+            markers. A call that sends X-Apprise-Config-ID without `urls` is
+            handled as a stateful one, and the values are applied there.
+            Names are case-insensitive.
       required:
         - body
 
@@ -1627,6 +1717,26 @@ components:
             Optional Apprise tag expression. Supports tag, priority:tag,
             tag:retry, and priority:tag:retry tokens. Comma or pipe separates
             OR groups; whitespace, ampersand, or plus separates AND terms.
+        template:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+                maxLength: 1024
+              - type: number
+              - type: boolean
+          description: >
+            Values for ${NAME} markers in a saved configuration. Request
+            values take priority over APPRISE_TEMPLATE_<NAME> and configuration
+            defaults; names ignore case and an empty string is a value. URLs
+            still missing a value are skipped and the response reports 424
+            without naming it. URL placement is unrestricted, including the
+            host, so the completed destination receives that URL's credentials
+            and settings. Prefer a named YAML setting when a less-trusted
+            caller should control only one option. Variables cannot replace
+            the service before :// or a tag/tags value.
+          example:
+            api_key: your-secret-key
       required:
         - body
 
@@ -1647,6 +1757,14 @@ components:
             Optional Apprise tag expression. Supports tag, priority:tag,
             tag:retry, and priority:tag:retry tokens. Comma or pipe separates
             OR groups; whitespace, ampersand, or plus separates AND terms.
+        "template[NAME]":
+          type: string
+          maxLength: 1024
+          description: >
+            Value for a configuration written with ${NAME} markers, one field
+            per name. For example, template[api_key]=your-secret-key fills in
+            ${API_KEY}. See the template property of
+            PersistentNotificationRequest for how values are chosen.
         attach:
           type: array
           items:
@@ -1672,6 +1790,14 @@ components:
             Optional Apprise tag expression. Supports tag, priority:tag,
             tag:retry, and priority:tag:retry tokens. Comma or pipe separates
             OR groups; whitespace, ampersand, or plus separates AND terms.
+        "template[NAME]":
+          type: string
+          maxLength: 1024
+          description: >
+            Value for a configuration written with ${NAME} markers, one field
+            per name. For example, template[api_key]=your-secret-key fills in
+            ${API_KEY}. See the template property of
+            PersistentNotificationRequest for how values are chosen.
       required:
         - body
 
@@ -1693,6 +1819,10 @@ components:
       properties:
         id:
           type: string
+          nullable: true
+          description: >
+            Null while a URL is still waiting on a template value; it cannot
+            be worked out until the service is built.
         service_name:
           type: string
         enabled:
@@ -1710,6 +1840,28 @@ components:
           description: Bare tag names associated with this URL.
           items:
             type: string
+        template:
+          type: object
+          description: >
+            Template names used by this URL. Configuration defaults are
+            omitted when privacy=1, and server environment values are never
+            returned. The whole object is empty when templates are disabled.
+          properties:
+            required:
+              type: array
+              description: Names with no default, which must be supplied.
+              items:
+                type: string
+            optional:
+              type: array
+              description: Names that have a default but may be overridden.
+              items:
+                type: string
+            defaults:
+              type: object
+              description: Configuration defaults keyed by optional template name.
+              additionalProperties:
+                type: string
         tag_details:
           type: array
           description: Structured tag metadata, including priority-aware exact tokens.

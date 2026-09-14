@@ -242,7 +242,7 @@ class ConfigAuthRecord:
 
 @dataclass(frozen=True)
 class ConfigAuthState:
-    """Describe one Config ID's saved and effective access policy."""
+    """Describe one Config ID's saved and currently enforced access."""
 
     mode: str
     username: str | None = None
@@ -313,12 +313,10 @@ class Authentication:
     @staticmethod
     def effective_config_access(access: str) -> str:
         """Apply the global lock without rewriting a saved per-key choice."""
-        if settings.APPRISE_CONFIG_LOCK and access in {
-            Authentication.ACCESS_USER,
-            Authentication.ACCESS_PUBLIC,
-        }:
-            # The site-wide policy is a minimum: only the stricter disabled
-            # mode may remain different while configuration locking is active.
+        if settings.APPRISE_CONFIG_LOCK and access == Authentication.ACCESS_USER:
+            # Hide configuration content without changing the saved choice.
+            # Public access already hides content and keeps its notification
+            # behavior, while locked and disabled are already stricter.
             return Authentication.ACCESS_LOCK
         return access
 

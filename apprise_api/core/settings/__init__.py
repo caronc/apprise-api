@@ -116,6 +116,7 @@ TEMPLATES = [
                 "api.context_processors.stateless_mode",
                 "api.context_processors.config_lock",
                 "api.context_processors.admin_enabled",
+                "api.context_processors.template_variables",
                 "api.context_processors.authentication",
                 "api.context_processors.apprise_metadata",
             ],
@@ -443,6 +444,11 @@ APPRISE_ALLOW_SERVICES = os.environ.get("APPRISE_ALLOW_SERVICES", "")
 # a call to the same server again, and again and again. By default we allow
 # 1 level of recursion
 APPRISE_RECURSION_MAX = env_int("APPRISE_RECURSION_MAX", 1, minimum=0)
+
+# Pass template support directly to AppriseAsset. When disabled, template
+# sections and environment values are ignored, markers remain ordinary text,
+# and template-specific checks do not run.
+APPRISE_ALLOW_TEMPLATES = env_bool("APPRISE_ALLOW_TEMPLATES", True)
 
 # Provided optional plugin paths to scan for custom schema definitions
 APPRISE_PLUGIN_PATHS = os.environ.get("APPRISE_PLUGIN_PATHS", os.path.join(BASE_DIR, "var", "plugin")).split(",")

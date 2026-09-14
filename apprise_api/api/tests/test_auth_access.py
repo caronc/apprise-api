@@ -338,10 +338,12 @@ class ConfigAccessViewTests(SimpleTestCase):
         self.assertEqual(user.status_code, 403)
 
     @override_settings(APPRISE_CONFIG_LOCK=True)
-    def test_global_config_lock_is_the_minimum_access_policy(self):
-        """Weaker saved modes cannot bypass the site-wide configuration lock."""
+    def test_global_lock_preserves_notification_access(self):
+        """The global lock hides content without disabling public delivery."""
         self._seed("access_user", Authentication.ACCESS_USER)
+        self._seed("access_locked", Authentication.ACCESS_LOCK)
         self._seed("access_public", Authentication.ACCESS_PUBLIC, credentials=False)
+        self._seed("access_public_header", Authentication.ACCESS_PUBLIC)
         self._seed("access_disabled", Authentication.ACCESS_DISABLED, credentials=False)
 
         # Directly seeded records model files created before the global lock or
@@ -360,6 +362,10 @@ class ConfigAccessViewTests(SimpleTestCase):
         )
         self.assertEqual(
             Authentication.config_state("access_public").access,
+            Authentication.ACCESS_PUBLIC,
+        )
+        self.assertEqual(
+            Authentication.config_state("access_locked").access,
             Authentication.ACCESS_LOCK,
         )
         self.assertEqual(
@@ -370,6 +376,54 @@ class ConfigAccessViewTests(SimpleTestCase):
             Authentication.config_state("unused_config").access,
             Authentication.ACCESS_LOCK,
         )
+
+        # Configuration locking is relative to the caller. Notification mode
+        # flags describe the server itself and remain the same for both roles.
+        admin_health = self.client.get(
+            "/status/access_user",
+            headers={**_MASTER, "accept": "application/json"},
+        )
+        user_health = self.client.get(
+            "/status/access_user",
+            headers={**_USER, "accept": "application/json"},
+        )
+        public_health = self.client.get(
+            "/status/access_public",
+            headers={"accept": "application/json"},
+        )
+        public_user_health = self.client.get(
+            "/status/access_public_header",
+            headers={**_USER, "accept": "application/json"},
+        )
+        self.assertEqual(admin_health.status_code, 200)
+        self.assertFalse(admin_health.json()["config_lock"])
+        self.assertEqual(admin_health.json()["privilege"], Authentication.ROLE_ADMIN)
+        self.assertTrue(admin_health.json()["stateful_enabled"])
+        self.assertTrue(admin_health.json()["stateless_enabled"])
+        self.assertEqual(user_health.status_code, 200)
+        self.assertTrue(user_health.json()["config_lock"])
+        self.assertEqual(user_health.json()["privilege"], Authentication.ROLE_USER)
+        self.assertTrue(user_health.json()["stateful_enabled"])
+        self.assertTrue(user_health.json()["stateless_enabled"])
+        self.assertEqual(public_health.status_code, 401)
+        self.assertEqual(public_user_health.status_code, 200)
+        self.assertTrue(public_user_health.json()["config_lock"])
+        self.assertEqual(
+            public_user_health.json()["privilege"],
+            Authentication.ROLE_USER,
+        )
+        self.assertTrue(public_user_health.json()["stateful_enabled"])
+        self.assertTrue(public_user_health.json()["stateless_enabled"])
+
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            mode_health = self.client.get(
+                "/status/access_user",
+                headers={**_USER, "accept": "application/json"},
+            )
+        self.assertEqual(mode_health.status_code, 200)
+        self.assertTrue(mode_health.json()["stateful_enabled"])
+        self.assertFalse(mode_health.json()["stateless_enabled"])
+        self.assertFalse(mode_health.json()["degraded"])
 
         api_state = self.client.get(
             "/auth/access_user",
@@ -386,7 +440,6 @@ class ConfigAccessViewTests(SimpleTestCase):
             headers={"accept": "text/html"},
         )
         self.assertEqual(api_state.json()["access"], Authentication.ACCESS_USER)
-        self.assertEqual(api_state.json()["effective_access"], Authentication.ACCESS_LOCK)
         editor_content = editor.content.decode()
         self.assertIn('<option value="user" selected', editor_content)
         self.assertIn('<option value="public"', editor_content)
@@ -404,6 +457,10 @@ class ConfigAccessViewTests(SimpleTestCase):
         )
         self.assertEqual(preserved_user.status_code, 200)
         self.assertEqual(
+            preserved_user.json()["auth_state"],
+            Authentication.ACCESS_LOCK,
+        )
+        self.assertEqual(
             ConfigCache.get_auth_record("access_user").access,
             Authentication.ACCESS_USER,
         )
@@ -415,6 +472,10 @@ class ConfigAccessViewTests(SimpleTestCase):
             headers=_MASTER,
         )
         self.assertEqual(preserved_public.status_code, 200)
+        self.assertEqual(
+            preserved_public.json()["auth_state"],
+            Authentication.ACCESS_PUBLIC,
+        )
         self.assertEqual(
             ConfigCache.get_auth_record("access_public").access,
             Authentication.ACCESS_PUBLIC,
@@ -444,6 +505,15 @@ class ConfigAccessViewTests(SimpleTestCase):
                 "/notify/access_public",
                 {"body": "hello", "tag": "known"},
             )
+            public_untagged = self.client.post(
+                "/notify/access_public",
+                {"body": "hello"},
+            )
+            public_stateless = self.client.post(
+                "/notify",
+                {"urls": "json://remote-target", "body": "hello"},
+                headers={"X-Apprise-Config-ID": "access_public"},
+            )
             admin_stateless = self.client.post(
                 "/notify",
                 {"urls": "json://remote-target", "body": "hello"},
@@ -452,9 +522,11 @@ class ConfigAccessViewTests(SimpleTestCase):
 
         self.assertEqual(user_stateful.status_code, 200)
         self.assertEqual(user_stateless.status_code, 403)
-        self.assertEqual(public_stateful.status_code, 401)
+        self.assertEqual(public_stateful.status_code, 200)
+        self.assertEqual(public_untagged.status_code, 400)
+        self.assertEqual(public_stateless.status_code, 401)
         self.assertEqual(admin_stateless.status_code, 200)
-        self.assertEqual(notify.call_count, 2)
+        self.assertEqual(notify.call_count, 3)
 
         rotated = self.client.post(
             "/auth/access_user",

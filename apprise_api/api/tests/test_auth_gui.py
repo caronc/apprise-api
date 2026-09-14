@@ -411,7 +411,6 @@ class AuthGuiTests(SimpleTestCase):
             {
                 "mode": Authentication.MODE_ASSIGNED,
                 "access": Authentication.ACCESS_USER,
-                "effective_access": Authentication.ACCESS_USER,
                 "username": "alice",
             },
         )

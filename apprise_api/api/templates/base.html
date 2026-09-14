@@ -1515,9 +1515,18 @@
 
   // Register custom Apprise TEXT config language
   hljs.registerLanguage('apprise-config', function(hljs) {
+    // Template values stand out in both URLs and YAML settings.
+    const TEMPLATE_VARIABLE = {
+      className: 'template-variable',
+      begin: /\$\{[A-Za-z0-9_]{1,{{ TEMPLATE_NAME_MAXLEN }}}\}/,
+      relevance: 0
+    };
+
     const URL = {
       className: 'string',
-      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s#]*/,
+      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\//,
+      end: /(?=\s|#|$)/,
+      contains: [TEMPLATE_VARIABLE],
       relevance: 0
     };
 
@@ -1548,6 +1557,7 @@
         COMMENT,
         TAG_DECL,
         URL,
+        TEMPLATE_VARIABLE,
         TAG_NAME
       ]
     };

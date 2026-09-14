@@ -2500,6 +2500,89 @@ body .tabs .tab.disabled a:hover i {
   letter-spacing: 0.01em;
 }
 
+/* A ${NAME} marker inside a displayed URL.  It is highlighted so it is
+   obvious which parts of the URL are filled in when a notification is
+   sent, rather than being part of the address itself. */
+#url-list .url-template-var {
+  font-weight: 600;
+  padding: 0 0.12rem;
+  border-radius: 3px;
+  background: rgba(255, 152, 0, 0.16);
+  border-bottom: 1px dotted rgba(255, 152, 0, 0.9);
+  white-space: nowrap;
+}
+
+/* The small form shown before a test send, asking for the values an
+   entry is waiting on. */
+.review-template-form {
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+.review-template-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.6rem;
+}
+
+.review-template-control {
+  width: 100%;
+}
+
+.review-template-field label {
+  font-family: monospace;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.review-template-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.3rem 2.7rem 0.3rem 0.45rem !important;
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.review-template-field .value-visibility-toggle {
+  right: 0.35rem;
+  top: 0.15rem;
+}
+
+/* Values a configuration entry is still waiting on.  These sit under
+   the URL so it is clear which ${NAME} markers above need filling in. */
+#url-list .url-template-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.3rem;
+  margin-top: 0.25rem;
+}
+
+#url-list .url-template-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.65;
+}
+
+#url-list .url-template-chip {
+  font-family: monospace;
+  font-size: 0.74rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  border: 1px dashed rgba(128, 128, 128, 0.55);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+#url-list .url-template-chip.required {
+  border-style: solid;
+  border-color: rgba(255, 152, 0, 0.75);
+  opacity: 1;
+}
+
 #url-list .url-tags-row {
   display: flex;
   align-items: flex-start;
@@ -4385,6 +4468,144 @@ Authentication Editor
   margin-left: 0.25rem;
 }
 
+.notify-template-values {
+  margin: 0.65rem 0 0.45rem;
+  padding: 0.8rem;
+  border: 1px solid var(--select-border);
+  border-radius: 10px;
+  background: var(--dialog-surface-raised);
+}
+
+.notify-template-values-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.notify-template-values-heading h6,
+.notify-template-values-heading p {
+  margin: 0;
+}
+
+.notify-template-values-heading p,
+.notify-template-empty {
+  color: var(--notify-log-muted);
+  font-size: 0.82rem;
+}
+
+.notify-template-add {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.25rem;
+  border: 1px solid var(--select-border);
+  border-radius: 8px;
+}
+
+.notify-template-add:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.notify-template-add i.material-icons,
+.notify-template-remove i.material-icons {
+  font-size: 1.2rem;
+}
+
+.notify-template-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.notify-template-empty {
+  margin: 0.15rem 0;
+}
+
+.notify-template-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.8fr) minmax(12rem, 1.5fr) 2.5rem;
+  gap: 0.55rem;
+  align-items: end;
+  padding: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.notify-template-row.is-included {
+  border-color: var(--notify-log-success-border);
+  background: var(--notify-log-success-bg);
+}
+
+.notify-template-key-field,
+.notify-template-value-field {
+  min-width: 0;
+}
+
+.notify-template-key-field label,
+.notify-template-value-field label {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--notify-log-muted);
+  font-size: 0.75rem;
+}
+
+#notify .notify-template-row input {
+  width: 100%;
+  height: 2.55rem;
+  margin: 0;
+  padding: 0 0.65rem !important;
+  border: 1px solid var(--select-border) !important;
+  border-radius: 7px !important;
+  box-sizing: border-box !important;
+  background: var(--select-bg);
+  color: var(--select-text);
+  font-family: monospace;
+}
+
+#notify .notify-template-row input:focus {
+  border-color: var(--select-border-hover) !important;
+  box-shadow: 0 0 0 3px var(--select-focus-ring) !important;
+}
+
+#notify .notify-template-value-control input {
+  padding-right: 2.8rem !important;
+}
+
+.notify-template-value-control .value-visibility-toggle,
+.notify-template-value-control .value-visibility-toggle:hover,
+.notify-template-value-control .value-visibility-toggle:focus,
+.notify-template-value-control .value-visibility-toggle:active {
+  top: 50%;
+  right: 0.35rem;
+  height: 2rem;
+  line-height: 2rem;
+  transform: translateY(-50%);
+  background-color: var(--notify-template-toggle-bg) !important;
+}
+
+.notify-template-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.55rem;
+  padding: 0;
+  border: 1px solid var(--select-border);
+  border-radius: 7px;
+  color: var(--notify-log-error-border);
+}
+
+.notify-template-remove:hover,
+.notify-template-remove:focus-visible {
+  border-color: var(--notify-log-error-border);
+  background: var(--notify-log-error-bg);
+}
+
 #notify .row,
 #notify .row .input-field {
   margin-top: 0.2em;
@@ -4578,6 +4799,21 @@ Authentication Editor
 }
 
 @media (max-width: 600px) {
+  .notify-template-row {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+
+  .notify-template-key-field,
+  .notify-template-value-field {
+    grid-column: 1;
+  }
+
+  .notify-template-remove {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+  }
+
   #notify .notify-form-actions {
     flex-wrap: nowrap;
   }
@@ -4596,6 +4832,15 @@ Authentication Editor
 }
 
 @media (max-width: 360px) {
+  .notify-template-values-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notify-template-add {
+    justify-content: center;
+  }
+
   #notify .notify-top-row>.input-field.col {
     width: 100%;
     margin-left: 0;

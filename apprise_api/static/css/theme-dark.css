@@ -76,6 +76,7 @@ Support Banner
   --select-focus-ring: rgba(44, 182, 166, 0.2);
   --select-text: #d4d6dc;
   --select-caret: #aeb2bd;
+  --notify-template-toggle-bg: #1c1f26;
   --notify-log-bg: #111318;
   --notify-log-row-bg: #1b1e25;
   --notify-log-row-alt-bg: #20242c;
@@ -1344,7 +1345,13 @@ Config Editor — textarea border override
   color: #888c96 !important;
 }
 
-/* 6. Standard Text */
+/* 6. Template variables — distinct from URLs and YAML keys */
+.apprise-config-yaml .apprise-config-highlight .hljs-template-variable {
+  color: #ffb454 !important;
+  font-weight: 600;
+}
+
+/* 7. Standard Text */
 .apprise-config-highlight {
   color: #c1c3c9 !important;
 }

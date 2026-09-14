@@ -41,7 +41,14 @@ import tempfile
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import apprise
+from apprise.exception import AppriseTemplateError
 from apprise.utils.http import HTTPPolicy, HTTPPolicySession
+from apprise.utils.template import (
+    TEMPLATE_NAME_PATTERN,
+    TEMPLATE_NAME_RE,
+    normalize_name,
+    validate_value,
+)
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
@@ -153,6 +160,86 @@ def stateful_store_enabled():
     """Return whether persistent configuration features are enabled."""
     mode = str(settings.APPRISE_STATEFUL_MODE).strip().lower()
     return mode in {AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE}
+
+
+# Matches a template[name] form field. A template value is posted as
+# template[name]=value.
+TEMPLATE_FIELD_RE = re.compile(r"\Atemplate\[(?P<name>" + TEMPLATE_NAME_PATTERN + r")\]\Z")
+
+# Anything written as template[...] that the pattern above turns down. A
+# field meant as a template value but named wrongly is reported rather
+# than passed over, so a form behaves the same way a JSON payload does.
+TEMPLATE_FIELD_PREFIX = "template["
+
+
+class TemplateValueError(ValueError):
+    """Raised when a supplied set of template values cannot be used."""
+
+
+def normalize_template_values(entries):
+    """Return posted template values keyed by their lowercase name.
+
+    JSON and form requests share these checks. Errors use general messages so
+    they do not reveal details about a saved configuration.
+    """
+
+    if entries is None:
+        return {}
+
+    if not isinstance(entries, Mapping):
+        raise TemplateValueError("template must be a mapping of name/value pairs")
+
+    values = {}
+    for name, value in entries.items():
+        if not isinstance(name, str) or not TEMPLATE_NAME_RE.match(name):
+            raise TemplateValueError("invalid template variable name")
+
+        normalized = normalize_name(name)
+        if normalized in values:
+            # Case variants still identify the same template name.
+            raise TemplateValueError("duplicate template variable name")
+
+        try:
+            values[normalized] = validate_value(normalized, value)
+
+        except AppriseTemplateError:
+            raise TemplateValueError("invalid template value") from None
+
+    return values
+
+
+def extract_template_fields(data):
+    """Pull ``template[name]=value`` entries out of posted form data.
+
+    Anything written as ``template[...]`` that is not a usable name is
+    reported rather than passed over, so a form behaves the same way a
+    JSON payload does.
+    """
+
+    # A form can repeat one field name; only a mapping that can report
+    # every value knows whether that happened.
+    getlist = getattr(data, "getlist", None)
+
+    entries = {}
+    for key in data:
+        match = TEMPLATE_FIELD_RE.match(key)
+        if match:
+            if getlist is not None and len(getlist(key)) > 1:
+                # The same field sent twice leaves no way to tell which
+                # value was meant.
+                raise TemplateValueError("duplicate template variable name")
+
+            name = match.group("name")
+            if normalize_name(name) in {normalize_name(k) for k in entries}:
+                raise TemplateValueError("duplicate template variable name")
+
+            entries[name] = data[key]
+
+        elif key.startswith(TEMPLATE_FIELD_PREFIX):
+            # Meant as a template value, but not a usable name
+            raise TemplateValueError("invalid template variable name")
+
+    return normalize_template_values(entries)
 
 
 class SimpleFileExtension:
