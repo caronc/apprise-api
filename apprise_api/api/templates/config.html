@@ -424,6 +424,18 @@
                     </p>
                   </div>
                 </div>
+                <div id="review-unsaved-guidance"
+                     class="notify-target-guidance review-unsaved-guidance"
+                     aria-live="polite"
+                     hidden>
+                  <div class="notify-target-guidance-title">
+                    <span class="notify-target-guidance-icon" aria-hidden="true">
+                      {% include "icons/status-warning.svg" %}
+                    </span>
+                    <span>{% trans "Unsaved Configuration Changes" %}</span>
+                  </div>
+                  {% blocktrans with config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the {{ config_chip }} section to see the result here.{% endblocktrans %}
+                </div>
                 <div class="loaded-config-tip">
                   <ul class="loaded-config-tip-list">
                     <li>{% trans "Review the parsed destinations below before sending." %}</li>
@@ -482,6 +494,7 @@
               <form id="donotify"
                     enctype="multipart/form-data"
                     action="{% url "notify" key %}"
+                    autocomplete="off"
                     method="post">
                 <section class="notify-form-section notify-delivery-options"
                          aria-label="{% trans 'Delivery Options' %}">
@@ -720,7 +733,7 @@
     const normalized = decodeHtmlEntities(url);
     const details = templateDetails || {};
     const declaredNames = new Set(
-      (details.required || []).concat(details.optional || []).map(
+      Object.keys(details).map(
         function (name) { return String(name).toLowerCase(); }
       )
     );
@@ -814,6 +827,12 @@
     const entries = [];
     let renderFrame = null;
     const logMarkup =
+      '<div class="notify-log-actions">' +
+        '<button type="button" class="btn-flat notify-log-copy" data-notify-copy-logs>' +
+          '<i class="material-icons" aria-hidden="true">content_copy</i>' +
+          '<span>{% trans "Copy Logs" %}</span>' +
+        '</button>' +
+      '</div>' +
       '<div class="notify-log-panel" role="log" aria-live="polite" aria-relevant="additions">' +
         '<ul class="logs notify-live-logs" data-notify-live-logs></ul>' +
         '<p class="notify-live-empty" data-notify-live-empty>{% trans "Waiting for log activity…" %}</p>' +
@@ -858,6 +877,28 @@
       return row;
     }
 
+    // Build one plain-text record per log entry, wrapped for easy pasting.
+    function clipboardText() {
+      const lines = entries.map(function (entry) {
+        const parts = [];
+        // Time is optional for messages added locally after a request fails.
+        if (entry.asctime) parts.push(String(entry.asctime));
+        // Keep the level visible even if a log entry omitted it.
+        parts.push('[' + String(entry.level || 'INFO').toUpperCase() + ']');
+        parts.push(String(entry.message || ''));
+        if (entry.service) {
+          // Name the service when the message came from one.
+          parts.push(`({% trans "Service" %}: ${String(entry.service)})`);
+        }
+        return '- ' + parts.join(' ');
+      });
+      return [
+        '--- {% trans "BEGIN APPRISE NOTIFICATION LOG" %} ---',
+        ...lines,
+        '--- {% trans "END APPRISE NOTIFICATION LOG" %} ---'
+      ].join('\n');
+    }
+
     function render() {
       const container = Swal.getHtmlContainer();
       const list = container ? container.querySelector('[data-notify-live-logs]') : null;
@@ -878,6 +919,17 @@
         count.textContent = entries.length === 1
           ? '1 {% trans "event" %}'
           : entries.length + ' {% trans "events" %}';
+      }
+      const copy = container.querySelector('[data-notify-copy-logs]');
+      if (copy && copy.dataset.wired !== '1') {
+        // Render can run many times; connect the button only once.
+        copy.dataset.wired = '1';
+        copy.addEventListener('click', function () {
+          // Copy the same entries currently shown in the live log panel.
+          copyToClipboard(
+            clipboardText(), copy, '{% trans "Notification logs copied to clipboard" %}'
+          );
+        });
       }
       const panel = list.closest('.notify-log-panel');
       if (panel) panel.scrollTop = panel.scrollHeight;
@@ -1005,12 +1057,24 @@
     }
   }
 
+  // Keep template inputs out of browser and password-manager autofill.
+  function disableTemplateAutofill(input) {
+    input.autocomplete = 'off';
+    // These attributes cover common password managers as well as browsers.
+    input.setAttribute('data-1p-ignore', 'true');
+    input.setAttribute('data-bwignore', 'true');
+    input.setAttribute('data-lpignore', 'true');
+    input.setAttribute('data-protonpass-ignore', 'true');
+    input.setAttribute('data-form-type', 'other');
+  }
+
   // Ask for the values an entry is waiting on before a test send.
   // Returns a {name: value} object, or null when the prompt was closed.
-  //
   // Blank values are omitted so the server can use its configured fallback.
-  async function promptForTemplateValues(required, optional) {
-    const names = required.concat(optional);
+  async function promptForTemplateValues(template) {
+    // Each name carries its declared default, or null when none is available.
+    const declared = template || {};
+    const names = Object.keys(declared);
     if (names.length === 0) {
       return {};
     }
@@ -1025,15 +1089,15 @@
     wrapper.appendChild(intro);
 
     names.forEach(function (name) {
-      const isRequired = required.indexOf(name) !== -1;
+      const hasDefault = declared[name] !== null
+        && declared[name] !== undefined;
       const field = document.createElement('div');
       field.setAttribute('class', 'review-template-field');
 
       const label = document.createElement('label');
       const inputId = 'template-prompt-' + String(templatePromptId++);
       label.setAttribute('for', inputId);
-      label.textContent = '${' + name.toUpperCase() + '}'
-        + (isRequired ? ' *' : '');
+      label.textContent = '${' + name.toUpperCase() + '}';
       field.appendChild(label);
 
       const control = document.createElement('div');
@@ -1041,13 +1105,15 @@
 
       const input = document.createElement('input');
       input.id = inputId;
-      input.setAttribute('type', 'password');
-      input.setAttribute('autocomplete', 'new-password');
+      // Conceal a text field visually so password managers leave it alone.
+      input.setAttribute('type', 'text');
+      input.dataset.concealedText = 'true';
+      disableTemplateAutofill(input);
       input.dataset.templateName = name;
-      if (!isRequired) {
-        // An optional name always has something behind it already.
+      if (hasDefault) {
+        // A declared default fills this name if the field stays blank.
         input.setAttribute('placeholder',
-          '{% trans "Leave blank to use the configured value" %}');
+          '{% trans "default used if blank" %}');
       }
       control.appendChild(input);
 
@@ -1073,6 +1139,14 @@
 
     // Use the same accessible visibility behavior as other concealed fields.
     appriseWireValueToggles(wrapper);
+    // Enter confirms the prompt without submitting another page form.
+    wrapper.addEventListener('keydown', function (event) {
+      if (event.target.matches('input')
+          && event.key === 'Enter' && !event.isComposing) {
+        event.preventDefault();
+        Swal.clickConfirm();
+      }
+    });
 
     const result = await appriseFire({
       title: '{% trans "Template Values" %}',
@@ -1081,22 +1155,17 @@
       confirmButtonText: '{% trans "Send" %}',
       focusConfirm: false,
       preConfirm: function () {
+        // Send only the fields that were filled in. A blank one is left
+        // out so the saved default, or the server's own environment, can
+        // supply it. The server reports anything it still cannot resolve.
         const values = {};
-        let missing = false;
         wrapper.querySelectorAll('[data-template-name]').forEach(function (el) {
           const name = el.getAttribute('data-template-name');
           const value = (el.value || '').trim();
           if (value) {
             values[name] = value;
-          } else if (required.indexOf(name) !== -1) {
-            missing = true;
           }
         });
-        if (missing) {
-          Swal.showValidationMessage(
-            '{% trans "Every required value must be filled in." %}');
-          return false;
-        }
         return values;
       }
     });
@@ -1104,7 +1173,8 @@
     return result && result.isConfirmed ? (result.value || {}) : null;
   }
 
-  async function sendReviewTestNotification(tags, anchorEl, templateValues) {
+  // The index narrows this quick test to its card; tags still filter delivery.
+  async function sendReviewTestNotification(tags, entryIndex, anchorEl, templateValues) {
     if (!tags || tags.length === 0) {
       appriseFire({
         title: '{% trans "Notification" %}',
@@ -1140,7 +1210,9 @@
       await sendNotifyStream('{% url "notify" key %}', {
         method: 'POST',
         headers: {
-          'X-Apprise-Log-Level': 'debug'
+          'X-Apprise-Log-Level': 'debug',
+          // This card's position is checked against the loaded entries.
+          'X-Apprise-Notification-Index': String(entryIndex)
         },
         body: formData
       }, {
@@ -1248,7 +1320,7 @@
     keyInput.id = keyId;
     keyInput.className = 'notify-template-key';
     keyInput.type = 'text';
-    keyInput.autocomplete = 'off';
+    disableTemplateAutofill(keyInput);
     keyInput.spellcheck = false;
     keyInput.placeholder = 'NAME';
     keyInput.value = name || '';
@@ -1265,8 +1337,9 @@
     const valueInput = document.createElement('input');
     valueInput.id = valueId;
     valueInput.className = 'notify-template-value';
-    valueInput.type = 'password';
-    valueInput.autocomplete = 'new-password';
+    valueInput.type = 'text';
+    valueInput.dataset.concealedText = 'true';
+    disableTemplateAutofill(valueInput);
     valueInput.value = value || '';
     concealed.appendChild(valueInput);
 
@@ -1357,7 +1430,7 @@
       return;
     }
     const details = selectedNotifyTemplateDetails();
-    const names = details.required.concat(details.optional);
+    const names = Object.keys(details);
     const active = new Set(names.map(normalizeNotifyTemplateName));
 
     Array.from(notifyTemplateSuppressed).forEach(function (name) {
@@ -1384,9 +1457,10 @@
       if (!normalized || notifyTemplateSuppressed.has(normalized)) {
         return;
       }
-      const value = Object.prototype.hasOwnProperty.call(
-        details.defaults, normalized
-      ) ? details.defaults[normalized] : '';
+      // Null means nothing to suggest; the field starts empty.
+      const suggested = details[normalized];
+      const value = (suggested === null || suggested === undefined)
+        ? '' : suggested;
       const existing = notifyTemplateRowFor(normalized);
       if (existing) {
         if (existing.dataset.automatic === '1') {
@@ -2235,7 +2309,9 @@
       (data.urls || []).forEach(function (entry, index) {
         const source = (defaultsData.urls || [])[index];
         if (entry.template && source && source.template) {
-          entry.template.defaults = source.template.defaults || {};
+          // The private listing withholds every default; take them from
+          // the unmasked one, which this editor may already read anyway.
+          entry.template = source.template;
         }
       });
     }
@@ -2356,14 +2432,15 @@
     // Now build our our loaded list of configuration for our welcome page
     let urlList = document.createElement('ul');
     // Create a list item for each url retrieved
-    data.urls.forEach(function (entry) {
+    // Keep each loaded entry's position for its card-level quick test.
+    data.urls.forEach(function (entry, entryIndex) {
       const isEnabled = entry.enabled !== false;
       const entryTags = Array.isArray(entry.tags) ? entry.tags.slice() : [];
       let li = document.createElement('li');
       li.setAttribute('class', 'card-panel url-item');
       li.dataset.retryCount = String(parseInt(entry.retry || 0, 10) || 0);
       // Keep template metadata with its card for the main send dialog.
-      li.templateDetails = entry.template || { required: [], optional: [] };
+      li.templateDetails = entry.template || {};
       if (!isEnabled) {
         li.classList.add('url-item-disabled');
         li.title = `{% trans "This Apprise API instance has disabled support for" %} ${getReviewPluginTitle(entry.service_name, entry.url)}.`;
@@ -2446,23 +2523,21 @@
       li.appendChild(header);
 
       // List the values this entry still needs.
-      const tplRequired = (entry.template && entry.template.required) || [];
-      const tplOptional = (entry.template && entry.template.optional) || [];
-      if (tplRequired.length || tplOptional.length) {
+      const tplNames = Object.keys(entry.template || {});
+      if (tplNames.length) {
         let tplRow = document.createElement('div');
         tplRow.setAttribute('class', 'url-template-row');
         let tplLabel = document.createElement('span');
         tplLabel.setAttribute('class', 'url-template-label');
         tplLabel.textContent = '{% trans "Values" %}:';
         tplRow.appendChild(tplLabel);
-        tplRequired.concat(tplOptional).forEach(function (name) {
-          const isRequired = tplRequired.indexOf(name) !== -1;
+        // Every name looks alike; the server may hold an environment value
+        // that this page cannot reveal.
+        tplNames.forEach(function (name) {
           let chip = document.createElement('span');
-          chip.setAttribute('class',
-            'url-template-chip' + (isRequired ? ' required' : ''));
-          chip.setAttribute('title', isRequired
-            ? '{% trans "Must be supplied before this entry can be used" %}'
-            : '{% trans "Has a default, but can be overridden" %}');
+          chip.setAttribute('class', 'url-template-chip');
+          chip.setAttribute('title',
+            '{% trans "A value can be supplied for this name when sending" %}');
           chip.textContent = '${' + name.toUpperCase() + '}';
           tplRow.appendChild(chip);
         });
@@ -2553,16 +2628,16 @@
           });
           return;
         }
-        if (tplRequired.length || tplOptional.length) {
-          promptForTemplateValues(tplRequired, tplOptional).then(
+        if (tplNames.length) {
+          promptForTemplateValues(entry.template || {}).then(
             function (values) {
               if (values !== null) {
-                sendReviewTestNotification(testTags, testBtn, values);
+                sendReviewTestNotification(testTags, entryIndex, testBtn, values);
               }
             });
           return;
         }
-        sendReviewTestNotification(testTags, testBtn, {});
+        sendReviewTestNotification(testTags, entryIndex, testBtn, {});
       }, false);
       tagRow.appendChild(testBtn);
       li.appendChild(tagRow);
@@ -2614,7 +2689,7 @@
         } else {
           // no tags were defined for this element
           chip.classList.add('chip-notag');
-          chip.textContent = '🔖 no-tag';
+          chip.textContent = '🔖 {% trans "no-tag" %}';
           if (chipInstance.chipsData.length === 0 && isEnabled) {
             chip.classList.add('selected');
             if (!li.classList.contains('selected')) {
@@ -2677,6 +2752,8 @@
       });
       if (response.status == 204) {
         // no problem; we simply have no content to retrieve
+        // An empty saved configuration is still the current saved state.
+        markConfigSaved('');
         return '';
       }
       else if (response.status == 200) {
@@ -2706,6 +2783,8 @@
           event.initEvent('change', true, true);
         }
         document.querySelector('#id_format').dispatchEvent(event);
+        // This is the configuration the entries above were parsed from.
+        markConfigSaved();
       }
     } else {
       document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
@@ -2715,6 +2794,45 @@
     return null;
   }
 {% if not CONFIG_LOCK %}
+  // Review shows the last saved configuration. Compare it with the editor
+  // so unsaved changes can be flagged.
+  let savedConfigSnapshot = null;
+
+  function configSnapshot(text, format) {
+    // A format only changes how text is read, so it is only worth
+    // comparing while there is some text to read.
+    return JSON.stringify([text, text.trim() ? format : '']);
+  }
+
+  function currentConfigSnapshot() {
+    // Read the fields the user can edit on the Configuration tab.
+    const config = document.querySelector('#id_config');
+    const format = document.querySelector('#id_format');
+    return configSnapshot(
+      config ? config.value : '', format ? format.value : '');
+  }
+
+  function refreshUnsavedConfigNotice() {
+    // Show the notice only when editable text differs from saved text.
+    const notice = document.querySelector('#review-unsaved-guidance');
+    if (!notice) return;
+
+    // Until the saved configuration is known there is nothing to compare
+    // against, so nothing is claimed either way.
+    notice.hidden = savedConfigSnapshot === null
+      || currentConfigSnapshot() === savedConfigSnapshot;
+  }
+
+  function markConfigSaved(savedText) {
+    // Remember either the provided saved text or the editor's current text.
+    const config = document.querySelector('#id_config');
+    const format = document.querySelector('#id_format');
+    savedConfigSnapshot = configSnapshot(
+      savedText === undefined ? (config ? config.value : '') : savedText,
+      format ? format.value : '');
+    refreshUnsavedConfigNotice();
+  }
+
   function updateConfigFileTimes(response) {
     const timestamps = document.querySelector('#config-file-times');
     if (!timestamps) return;
@@ -2741,6 +2859,16 @@
   }
 
   function config_init() {
+    // Keep the Review tab honest about edits that have not been saved.
+    const configField = document.querySelector('#id_config');
+    if (configField) {
+      configField.addEventListener('input', refreshUnsavedConfigNotice);
+    }
+    const formatField = document.querySelector('#id_format');
+    if (formatField) {
+      formatField.addEventListener('change', refreshUnsavedConfigNotice);
+    }
+
     // over-ride manual submit for a nicer user experience
     document.querySelector('#addconfig').onsubmit = function (event) {
       event.preventDefault();
@@ -3027,72 +3155,46 @@
     });
   }
 
-  // Gather the template names every selected entry still needs. A name
-  // that is required anywhere is required for the whole send.
+  // Gather names across selected entries. Suggest a default only when
+  // every entry using that name declares the same value; otherwise leave
+  // it blank so one entry's value is not sent to another.
   function selectedNotifyTemplateDetails() {
     const variables = {};
 
     document.querySelectorAll(
       '#url-list li.card-panel.selected:not(.url-item-disabled)'
     ).forEach(function (card) {
-      const details = card.templateDetails || {};
-      const defaults = details.defaults || {};
-      (details.required || []).forEach(function (name) {
+      const declared = card.templateDetails || {};
+      Object.keys(declared).forEach(function (name) {
         const normalized = normalizeNotifyTemplateName(name);
         if (!normalized) {
           return;
         }
-        variables[normalized] = variables[normalized] || {
-          name: String(name),
-          required: false,
+        const variable = variables[normalized] || {
           defaults: [],
-          optionalCount: 0
+          seen: 0
         };
-        variables[normalized].required = true;
-      });
-      (details.optional || []).forEach(function (name) {
-        const normalized = normalizeNotifyTemplateName(name);
-        if (!normalized) {
-          return;
-        }
-        variables[normalized] = variables[normalized] || {
-          name: String(name),
-          required: false,
-          defaults: [],
-          optionalCount: 0
-        };
-        variables[normalized].optionalCount += 1;
-        if (Object.prototype.hasOwnProperty.call(defaults, name)) {
-          variables[normalized].defaults.push(String(defaults[name]));
-        } else if (Object.prototype.hasOwnProperty.call(
-          defaults, normalized
-        )) {
-          variables[normalized].defaults.push(String(defaults[normalized]));
+        variables[normalized] = variable;
+        variable.seen += 1;
+        const value = declared[name];
+        if (value !== null && value !== undefined) {
+          variable.defaults.push(String(value));
         }
       });
     });
 
-    const required = [];
-    const optional = [];
-    const defaults = {};
+    const details = {};
     Object.keys(variables).sort().forEach(function (normalized) {
       const variable = variables[normalized];
-      (variable.required ? required : optional).push(variable.name);
-      if (!variable.required
-          && variable.defaults.length === variable.optionalCount
-          && variable.defaults.length > 0
-          && variable.defaults.every(function (value) {
-            return value === variable.defaults[0];
-          })) {
-        defaults[normalized] = variable.defaults[0];
-      }
+      const agreed = variable.defaults.length === variable.seen
+        && variable.defaults.length > 0
+        && variable.defaults.every(function (value) {
+          return value === variable.defaults[0];
+        });
+      details[normalized] = agreed ? variable.defaults[0] : null;
     });
 
-    return {
-      required: required,
-      optional: optional,
-      defaults: defaults
-    };
+    return details;
   }
 
   function notify_init() {

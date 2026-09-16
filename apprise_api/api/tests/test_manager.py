@@ -264,6 +264,39 @@ class ManagerPageTests(SimpleTestCase):
         assert "updateConfigFileTimes(response)" in content
         assert "clearConfigFileTimes()" in content
 
+    def test_review_warns_about_configuration_that_was_not_saved(self):
+        """Review warns when its entries no longer match the editor.
+
+        It shows the last saved result. The notice sits below the Review
+        heading, above those entries, and shares the Notification tab style.
+        """
+        content = self.client.get("/cfg/unsaved-key").content.decode()
+
+        assert 'id="review-unsaved-guidance"' in content
+        assert "Unsaved Configuration Changes" in content
+
+        # Below the heading, above the entries
+        assert (
+            content.index("Loaded Configuration")
+            < content.index('id="review-unsaved-guidance"')
+            < content.index('id="url-list"')
+        )
+
+        # It reuses the Notification tab's guidance styling
+        assert 'class="notify-target-guidance review-unsaved-guidance"' in content
+
+        # Hidden until the editor and the saved configuration disagree
+        assert "refreshUnsavedConfigNotice" in content
+        assert "markConfigSaved" in content
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_review_unsaved_notice_is_absent_when_locked(self):
+        """A locked configuration has no editor, so nothing can be unsaved."""
+        content = self.client.get("/cfg/locked-key").content.decode()
+
+        assert 'id="review-unsaved-guidance"' not in content
+        assert "refreshUnsavedConfigNotice" not in content
+
     @override_settings(TIME_ZONE="Asia/Kathmandu")
     def test_config_page_converts_file_times_to_configured_timezone(self):
         """The page converts stored Unix times before presenting them."""

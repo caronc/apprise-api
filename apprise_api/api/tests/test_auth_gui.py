@@ -239,6 +239,13 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn('tabindex="-1"', content[access_help_start : access_help_start + 500])
         self.assertIn('class="auth-save-result"', content)
         self.assertIn('class="btn-flat auth-save-copy"', content)
+        # Copying credentials includes everything needed to reach the
+        # configuration, the Config ID included.
+        self.assertIn("'USERNAME=' + savedUsername", content)
+        self.assertIn("+ '\\nPASSWORD=' + savedPassword", content)
+        self.assertIn("+ '\\nCONFIG_ID=' + authConfigId", content)
+        self.assertIn("Copy Username, Password, and Config ID to Clipboard", content)
+        self.assertIn("Username, password, and Config ID copied to clipboard", content)
         self.assertIn(">User</option>", content)
         self.assertIn(">Locked</option>", content)
         self.assertIn(">Public</option>", content)

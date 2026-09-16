@@ -95,6 +95,9 @@ logger = logging.getLogger("django")
 # multipart/form-data
 MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencoded)", re.I)
 
+# Used by the Review tab to narrow a quick test to the selected card.
+NOTIFY_ENTRY_INDEX_HEADER = "X-Apprise-Notification-Index"
+
 # Each disk entry starts with its byte length.
 _EVENT_SIZE = struct.Struct("!Q")
 
@@ -1274,12 +1277,8 @@ def _get_config_response(request, key):
 
     config, format = ConfigCache.get(key)
     if config is None:
-        # The returned value of config and format tell a rather cryptic
-        # story; this portion could probably be updated in the future.
-        # but for now it reads like this:
-        #   config == None and format == None: We had an internal error
-        #   config == None and format != None: we simply have no data
-        #   config != None: we simply have no data
+        # A missing format means the storage read failed; an empty
+        # format means this key has no saved configuration.
         if format is not None:
             # no content to return
             logger.warning(
@@ -3083,6 +3082,46 @@ def _deliver_notification(request, a_obj, content, attach, json_response, stream
     )
 
 
+def _select_notify_entry(request, a_obj):
+    """Select one loaded entry for a Review-tab quick test.
+
+    The request header carries the card's index. Return ``(a_obj, None)``
+    on success or ``(None, error_response)`` if it is invalid or stale.
+    """
+    # Without this header, the normal request sends to every matching entry.
+    raw_index = request.headers.get(NOTIFY_ENTRY_INDEX_HEADER)
+    if raw_index is None:
+        return a_obj, None
+
+    # Accept only short, ordinary decimal indexes before converting to int.
+    if not re.fullmatch(r"0|[1-9][0-9]{0,9}", raw_index):
+        return None, error_response(
+            request,
+            _("The selected notification entry is invalid"),
+            ResponseCode.bad_request,
+        )
+
+    wanted = int(raw_index)
+    # Read loaded entries without resolving a pending template first.
+    selected = next(
+        (service for index, service in enumerate(a_obj.find(resolve=False)) if index == wanted),
+        None,
+    )
+    if selected is None:
+        # A card may have been removed since the Review tab was opened.
+        return None, error_response(
+            request,
+            _("The selected notification entry is no longer available"),
+            ResponseCode.bad_request,
+        )
+
+    # Keep the entry in its loaded form. It may still be a pending template,
+    # which the normal delivery pass resolves after applying caller values.
+    # Replace the service list so sibling entries sharing a tag cannot run.
+    a_obj.services[:] = [selected]
+    return a_obj, None
+
+
 def _load_notify_content(request, form_class, key=None):
     """Load and remap one notification payload for either notify endpoint."""
     json_response = is_json_response(request)
@@ -3469,12 +3508,8 @@ class StatefulNotifyView(View):
         # with.
         config, format = ConfigCache.get(key)
         if config is None:
-            # The returned value of config and format tell a rather cryptic
-            # story; this portion could probably be updated in the future.
-            # but for now it reads like this:
-            #   config == None and format == None: We had an internal error
-            #   config == None and format != None: we simply have no data
-            #   config != None: we simply have no data
+            # A missing format means the storage read failed; an empty
+            # format means this key has no saved configuration.
             if format is not None:
                 # no content to return
                 logger.debug(
@@ -3535,6 +3570,12 @@ class StatefulNotifyView(View):
 
         # Add our configuration
         a_obj.add(ac_obj)
+
+        # A card-level quick test must not include sibling entries that happen
+        # to share its tag. The tag is retained as an additional restriction.
+        a_obj, invalid = _select_notify_entry(request, a_obj)
+        if invalid is not None:
+            return invalid
 
         return _deliver_notification(
             request,
@@ -3768,9 +3809,10 @@ class JsonUrlView(View):
         # Support 'yes', '1', 'true', 'enable', 'active', and +
         privacy = parse_bool(request.GET.get("privacy"), default=False)
 
-        # Privacy hides configuration defaults along with URL secrets.
-        # Environment values are resolved only during delivery and never
-        # enter this response.
+        # Privacy masks URL secrets and omits configuration defaults.
+        # It does not restrict access: callers can request privacy=0.
+        # Server environment values never appear in this listing.
+        # Template names and ${NAME} markers remain visible in both modes.
         expose_template_names = settings.APPRISE_ALLOW_TEMPLATES
         expose_template_defaults = expose_template_names and not privacy
 
@@ -3779,12 +3821,8 @@ class JsonUrlView(View):
 
         config, format = ConfigCache.get(key)
         if config is None:
-            # The returned value of config and format tell a rather cryptic
-            # story; this portion could probably be updated in the future.
-            # but for now it reads like this:
-            #   config == None and format == None: We had an internal error
-            #   config == None and format != None: we simply have no data
-            #   config != None: we simply have no data
+            # A missing format means the storage read failed; an empty
+            # format means this key has no saved configuration.
             if format is not None:
                 # no content to return
                 return JsonResponse(
@@ -3826,11 +3864,14 @@ class JsonUrlView(View):
             retry = service_retry(notification, url)
             optional = service_optional(notification, url)
 
-            template_required = sorted(getattr(notification, "template_required", ()))
-            template_optional = sorted(set(getattr(notification, "template_names", ())) - set(template_required))
-            optional_defaults = {
-                name: notification.template_schema.variables[name].default for name in template_optional
-            }
+            # List each name with its default, or null when none exists or
+            # privacy hides it. The environment may fill null when sending,
+            # but its values stay private.
+            template = {}
+            if expose_template_names:
+                for name in sorted(getattr(notification, "template_names", ())):
+                    default = notification.template_schema.variables[name].default
+                    template[name] = default if expose_template_defaults else None
             # Set Notification
             response["urls"].append(
                 {
@@ -3842,15 +3883,7 @@ class JsonUrlView(View):
                     "optional": optional,
                     "tags": sorted(tag_names(notification.tags)),
                     "tag_details": details,
-                    "template": (
-                        {
-                            "required": template_required,
-                            "optional": template_optional,
-                            "defaults": (optional_defaults if expose_template_defaults else {}),
-                        }
-                        if expose_template_names
-                        else {}
-                    ),
+                    "template": template,
                 }
             )
 

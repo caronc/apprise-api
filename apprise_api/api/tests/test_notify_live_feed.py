@@ -252,3 +252,4 @@ class NotifyLiveFeedRenderTests(SimpleTestCase):
         self.assertIn("height: clamp(8rem, 42dvh, 24rem);", content)
         self.assertIn("animation: notify-log-row-enter 180ms ease-out both;", content)
         self.assertIn("@keyframes notify-log-row-enter", content)
+        self.assertIn(".notify-log-copy", content)

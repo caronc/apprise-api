@@ -179,19 +179,27 @@ class TemplateValueError(ValueError):
 def normalize_template_values(entries):
     """Return posted template values keyed by their lowercase name.
 
-    JSON and form requests share these checks. Errors use general messages so
-    they do not reveal details about a saved configuration.
+    JSON and form requests share these rules:
+
+    - ``None`` returns an empty mapping for callers without ``template``.
+    - Text is trimmed; blank text is omitted so fallback values can apply.
+    - Names and values are validated before use.
+
+    Errors stay general so they reveal nothing about the saved configuration.
     """
 
     if entries is None:
+        # Older clients may omit the template field entirely.
         return {}
 
     if not isinstance(entries, Mapping):
+        # Both JSON and form input must provide name/value pairs.
         raise TemplateValueError("template must be a mapping of name/value pairs")
 
     values = {}
     for name, value in entries.items():
         if not isinstance(name, str) or not TEMPLATE_NAME_RE.match(name):
+            # Reject malformed names before they reach URLs or log messages.
             raise TemplateValueError("invalid template variable name")
 
         normalized = normalize_name(name)
@@ -199,10 +207,19 @@ def normalize_template_values(entries):
             # Case variants still identify the same template name.
             raise TemplateValueError("duplicate template variable name")
 
+        if isinstance(value, str):
+            # Trim before deciding whether the caller supplied a value.
+            value = value.strip()
+            if not value:
+                # A blank field lets the configuration or environment fill it.
+                continue
+
         try:
+            # The library applies the same value and length rules as the CLI.
             values[normalized] = validate_value(normalized, value)
 
         except AppriseTemplateError:
+            # Keep the error independent of saved template names and values.
             raise TemplateValueError("invalid template value") from None
 
     return values

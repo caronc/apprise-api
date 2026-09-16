@@ -856,11 +856,10 @@ paths:
         with {key}.
       description: >
         With CONFIG_LOCK, only an authenticated administrator may inspect this
-        listing. Whoever may read it is told, for each URL, the template names
-        it uses and which of them must be supplied, so a caller knows what to
-        prompt for. Defaults declared in the configuration are withheld when
-        privacy is requested. Server environment values are never returned.
-        The template block is empty only when templates are disabled server-wide.
+        listing. Each URL lists its template names and configuration defaults,
+        or null when none is available. Privacy hides declared defaults;
+        server environment values are never returned. The template block is
+        also empty when no template names are used.
       tags:
         - Persistent
       parameters:
@@ -873,8 +872,8 @@ paths:
             x-enumNames: ["ShowSecrets", "HideSecrets"]
           required: false
           description: >
-            When set to 1, secrets within URLs are redacted. Template names and
-            required status remain available; template values are never returned.
+            When set to 1, URL secrets are redacted. Template names remain
+            available, while their listed defaults become null.
         - in: query
           name: tag
           schema:
@@ -1240,8 +1239,8 @@ paths:
             x-enumNames: ["ShowSecrets", "HideSecrets"]
           required: false
           description: >
-            When set to 1, secrets within URLs are redacted. Template names and
-            required status remain available; template values are never returned.
+            When set to 1, URL secrets are redacted. Template names remain
+            available, while their listed defaults become null.
         - in: query
           name: tag
           schema:
@@ -1726,11 +1725,15 @@ components:
               - type: number
               - type: boolean
           description: >
-            Values for ${NAME} markers in a saved configuration. Request
-            values take priority over APPRISE_TEMPLATE_<NAME> and configuration
-            defaults; names ignore case and an empty string is a value. URLs
-            still missing a value are skipped and the response reports 424
-            without naming it. URL placement is unrestricted, including the
+            Values for ${NAME} markers in a saved configuration. A request
+            value is used first, then the default written in the template
+            section, and only then APPRISE_TEMPLATE_<NAME>; the environment is
+            therefore reached only by a name declared without a default, and is
+            never returned to a caller. Names ignore case. Surrounding
+            whitespace is removed and a name left empty counts as not sent, so
+            the next source applies. The whole field may be omitted. URLs still
+            missing a value are skipped and the response reports 424 without
+            naming it. URL placement is unrestricted, including the
             host, so the completed destination receives that URL's credentials
             and settings. Prefer a named YAML setting when a less-trusted
             caller should control only one option. Variables cannot replace
@@ -1829,6 +1832,13 @@ components:
           type: boolean
         url:
           type: string
+          description: >
+            The stored URL shows unresolved values as literal uppercase
+            ${NAME} markers. YAML settings appear under the URL arguments
+            that set them (for example, `smtp:` becomes `?smtp=${NAME}`).
+            Names used only in unsupported settings appear under `template`
+            but have no URL marker. With privacy=1, stored text around markers
+            is masked; request privacy=0 for a URL you can fill in and send.
         retry:
           type: integer
           description: Configured retry count for this URL.
@@ -1843,25 +1853,21 @@ components:
         template:
           type: object
           description: >
-            Template names used by this URL. Configuration defaults are
-            omitted when privacy=1, and server environment values are never
-            returned. The whole object is empty when templates are disabled.
-          properties:
-            required:
-              type: array
-              description: Names with no default, which must be supplied.
-              items:
-                type: string
-            optional:
-              type: array
-              description: Names that have a default but may be overridden.
-              items:
-                type: string
-            defaults:
-              type: object
-              description: Configuration defaults keyed by optional template name.
-              additionalProperties:
-                type: string
+            Every template name this URL uses, mapped to the default declared
+            for it in the configuration's template section. Null means there
+            is no default to offer, either because none was written or because
+            privacy=1 withholds it; a value may still come from the server's
+            own APPRISE_TEMPLATE_<NAME> when the notification is sent, and
+            those are never returned here. Names are lowercase; match them to
+            the uppercase URL markers without regard to case. Always present,
+            and empty when the URL uses no template names, the configuration
+            is not YAML, or templates are disabled.
+          additionalProperties:
+            type: string
+            nullable: true
+          example:
+            recipient: default@example.com
+            smtpserver: null
         tag_details:
           type: array
           description: Structured tag metadata, including priority-aware exact tokens.

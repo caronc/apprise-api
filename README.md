@@ -422,7 +422,7 @@ The `/cfg` list requires `APPRISE_ADMIN=yes` and `APPRISE_STATEFUL_MODE=simple`.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).<br/>📌 **template**: Values for a configuration written with `${NAME}` markers. Send a JSON object (`"template": {"api_key": "..."}`) or one form field per name (`template[api_key]=...`).
-| `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL also reports the template names it uses and which must be supplied. With `privacy=1`, names and required status remain available while defaults and URL secrets are hidden. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required.
+| `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists template names with their configuration defaults (or `null`). With `privacy=1`, URL secrets are hidden and listed defaults become `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
 | `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, `access`, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
@@ -452,7 +452,11 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 }
 ```
 
-You can pass `privacy=1` to `/json/urls/{KEY}` to hide passwords, secret tokens, and defaults declared in the configuration. Template names and whether they are required remain available so a client can still prompt for them. Server environment values are never returned, even without privacy. You can use `tag=` to filter the results with a comma-separated set of tags. If omitted, `tag=all` is used.
+You can pass `privacy=1` to `/json/urls/{KEY}` to hide passwords, secret tokens,
+and configuration defaults. Template names remain available, but a `null`
+value can mean either no default was declared or privacy hid it. Server
+environment values are never returned. Use `tag=` to filter results with a
+comma-separated set of tags; if omitted, `tag=all` is used.
 
 When `APPRISE_CONFIG_LOCK` is set, only an authenticated administrator may use `/json/urls/{KEY}`. Other callers receive `403` without revealing saved URLs or tags. Non-admin notification callers must provide a specific tag; `all` is rejected.
 
@@ -509,9 +513,9 @@ section:
 
 ```yaml
 template:
-  # A value written here is used when nothing else supplies one
+  # A default is used unless the notification supplies a value
   smtp_host: smtp.example.com
-  # No value, so this one must always be supplied
+  # No default: the notification or server environment must fill this name
   api_key:
 
 urls:
@@ -528,12 +532,6 @@ curl -X POST -H "Content-Type: application/json" \
     http://localhost:8000/notify/abc123
 ```
 
-The **Notifications** tab creates concealed fields for variables used by the
-selected destinations. Defaults declared in `template:` are filled when
-available, but server environment values are never shown. A blank field uses
-the server fallback. **Clear Form** rebuilds the suggestions; **Add Value** is
-available after every current row has a name. Highlighted rows will be sent.
-
 ...or as one form field per name:
 
 ```bash
@@ -544,34 +542,24 @@ curl -X POST \
     http://localhost:8000/notify/abc123
 ```
 
-#### Environment Variable Assignment Ordering
-
-Apprise uses the first available value in this order:
-
-1. the value sent with the notification
-2. the environment variable `APPRISE_TEMPLATE_<NAME>`
-3. the default written in the `template:` section
-
-Names are case-insensitive, and an empty value is still a value. Extra names
-are ignored and only their names appear in the local debug log. Values may be
-up to 1,024 characters. If a required value is missing, its URL is skipped and
-the response reports `424` without revealing the missing name. Use the
-**Review** tab or `/json/urls/{KEY}` to see what the configuration needs.
+Apprise uses the first value it finds: the one sent with the notification, then
+the default in the `template:` section, then `APPRISE_TEMPLATE_<NAME>` from the
+server's own environment. Environment values are never shown to a caller. A URL
+still missing a value is skipped and the response reports `424` without saying
+which name it was. The **Notifications** and **Review** tabs prompt for the
+names a configuration needs, and `/json/urls/{KEY}` reports them to other
+clients.
 
 :warning: A variable placed in a URL can change any part of it, including its
-host. The URL's credentials and other settings then go to the completed
-destination. This freedom is intentional, but a named YAML setting is safer
-when a less-trusted caller should control only one option. This is especially
-important for `public` and `locked` configurations.
+host. A named YAML setting is safer when a less-trusted caller should control
+only one option, which matters most for `public` and `locked` configurations.
 
-#### Server Settings
+Set `APPRISE_ALLOW_TEMPLATES=no` to switch the feature off; `${NAME}` is then
+ordinary text.
 
-:warning: `APPRISE_TEMPLATE_<NAME>` is read from the server's own environment,
-so **every saved configuration on the server sees the same value**.
-
-Set `APPRISE_ALLOW_TEMPLATES=no` to disable template variables. The server then
-ignores `template:` sections and template environment variables, leaving
-`${NAME}` as ordinary text.
+For the full details -- where each value may be placed, what the API returns,
+and how to fill in markers from your own client -- see
+[appriseit.com](https://appriseit.com/api/usage/#supplying-template-values).
 
 ### Tagging
 
@@ -698,7 +686,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6). If `IPV4_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
 | `HTTP_PORT` | Force the default listening port to be something other than `8000` within the Docker container.
 | `APPRISE_ALLOW_TEMPLATES` | Pass template support directly to Apprise. Defaults to `yes`, matching the CLI. Set it to `no` to ignore `template:` sections and `APPRISE_TEMPLATE_<NAME>`, leave `${NAME}` as ordinary text, and skip template-specific checks. Only the server operator controls this setting.
-| `APPRISE_TEMPLATE_<NAME>` | Supplies a value for a `${NAME}` used by a saved YAML configuration. For example `APPRISE_TEMPLATE_API_KEY` fills in `${API_KEY}`. A value sent with the notification takes priority over this.
+| `APPRISE_TEMPLATE_<NAME>` | Fills a `${NAME}` in saved YAML only when the notification supplies no value and the configuration has no default. Blank values are ignored. |
 | `STRICT_MODE` | Applicable only to container deployments. Set this to `yes` to allow only known Apprise routes and add tighter authentication rate limits. Unknown routes return `404`, unsupported methods return `405`, and rate-limited requests return `429`, allowing reverse proxies and other security tooling to handle them reliably. The default is `no`.
 | `APPRISE_CONNECTION_TIMEOUT` | How long the container waits for activity from a live notification stream, in seconds. Accepts `30` to `3600` and defaults to `600` (10 minutes). This does not limit the total notification time.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided. The values are case-insensitive, and `l` or `d` may be used as shorthand. The theme can be toggled from within the website as well.

@@ -2577,11 +2577,6 @@ body .tabs .tab.disabled a:hover i {
   white-space: nowrap;
 }
 
-#url-list .url-template-chip.required {
-  border-style: solid;
-  border-color: rgba(255, 152, 0, 0.75);
-  opacity: 1;
-}
 
 #url-list .url-tags-row {
   display: flex;
@@ -3559,6 +3554,12 @@ Authentication Editor
 .concealed-field input {
   padding-right: 2.5rem !important;
   box-sizing: border-box !important;
+}
+
+/* Template values look concealed without becoming password-manager fields. */
+.concealed-field input[data-concealed-text="true"]:not(.value-is-visible) {
+  -webkit-text-security: disc;
+  text-security: disc;
 }
 
 .value-visibility-toggle {
@@ -4998,6 +4999,30 @@ Authentication Editor
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.swal2-popup .notify-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 0.45rem;
+}
+
+.swal2-popup .notify-log-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--notify-log-border);
+  border-radius: 0.45rem;
+  color: var(--mobile-beta-accent);
+  background: var(--dialog-surface-raised);
+  line-height: 2.25rem;
+}
+
+.swal2-popup .notify-log-copy i.material-icons {
+  margin: 0;
+  font-size: 1.1rem;
 }
 
 @keyframes notify-live-pulse {

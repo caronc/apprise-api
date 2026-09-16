@@ -35,6 +35,7 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import apprise
 from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
@@ -337,6 +338,38 @@ class TemplateTests(SimpleTestCase):
         assert "localhost" in dumps([str(call) for call in mock_request.call_args_list])
 
     @patch("requests.request")
+    def test_review_quick_test_sends_only_selected_entry(self, mock_request):
+        """A card test does not include another entry with the same tag."""
+        upstream = Mock()
+        upstream.status_code = requests.codes.ok
+        upstream.content = ""
+        upstream.headers = {}
+        mock_request.return_value = upstream
+
+        result = self.client.post(
+            f"/notify/{self.key}",
+            {"body": "test", "tag": "work:0", "template[token]": "abc123"},
+            headers={"X-Apprise-Notification-Index": "0"},
+        )
+
+        assert result.status_code == 200
+        assert mock_request.call_count == 1
+
+    @patch("requests.request")
+    def test_review_quick_test_rejects_invalid_entry_index(self, mock_request):
+        """Malformed or stale card indexes never fall back to a broad send."""
+        for value in ("-1", "01", "invalid", "999"):
+            with self.subTest(value=value):
+                result = self.client.post(
+                    f"/notify/{self.key}",
+                    {"body": "test", "tag": "work:0", "template[token]": "abc123"},
+                    headers={"X-Apprise-Notification-Index": value},
+                )
+                assert result.status_code == 400
+
+        assert mock_request.call_count == 0
+
+    @patch("requests.request")
     def test_environment_value_used(self, mock_request):
         """A value need not be sent with every notification."""
         response = Mock()
@@ -435,12 +468,15 @@ class TemplateTests(SimpleTestCase):
 
         payload = result.json()
 
-        # Reported against the entry that is waiting on them
-        waiting = [entry for entry in payload["urls"] if entry["template"]["required"]]
+        # Reported against the entry that is waiting on them; a name maps
+        # to the default the configuration offers, or to None when none
+        # can be offered
+        waiting = [entry for entry in payload["urls"] if entry["template"]]
         assert len(waiting) == 1
-        assert waiting[0]["template"]["required"] == ["token"]
-        assert waiting[0]["template"]["optional"] == ["host_name"]
-        assert waiting[0]["template"]["defaults"] == {"host_name": "localhost"}
+        assert waiting[0]["template"] == {
+            "host_name": "localhost",
+            "token": None,
+        }
 
         # It has no identifier yet; it is not a service until it loads
         assert waiting[0]["id"] is None
@@ -462,14 +498,12 @@ class TemplateTests(SimpleTestCase):
         # No default value comes through, not even for the optional name
         assert "localhost" not in dumps(payload)
 
-        waiting = [entry for entry in payload["urls"] if entry["template"]["required"]]
+        waiting = [entry for entry in payload["urls"] if entry["template"]]
         assert len(waiting) == 1
-        assert waiting[0]["template"]["required"] == ["token"]
 
-        # The optional name is listed without handing over its value, which
-        # is how a caller tells "no value needed" apart from "must be typed"
-        assert waiting[0]["template"]["optional"] == ["host_name"]
-        assert waiting[0]["template"]["defaults"] == {}
+        # Both names are still listed; neither carries a value, which is
+        # all a caller needs in order to know what to prompt for
+        assert waiting[0]["template"] == {"host_name": None, "token": None}
 
         # Markers stay readable so a caller can still see where a value goes
         assert "${TOKEN}" in waiting[0]["url"]
@@ -490,12 +524,16 @@ class TemplateTests(SimpleTestCase):
         assert private.status_code == 200
         visible_payload = visible.json()
         private_payload = private.json()
-        visible_waiting = [entry for entry in visible_payload["urls"] if entry["template"]["required"]]
-        private_waiting = [entry for entry in private_payload["urls"] if entry["template"]["required"]]
-        assert visible_waiting[0]["template"]["defaults"] == {"host_name": "localhost"}
-        assert private_waiting[0]["template"]["defaults"] == {}
-        assert visible_waiting[0]["template"]["required"] == ["token"]
-        assert private_waiting[0]["template"]["required"] == ["token"]
+        visible_waiting = [entry for entry in visible_payload["urls"] if entry["template"]]
+        private_waiting = [entry for entry in private_payload["urls"] if entry["template"]]
+        assert visible_waiting[0]["template"] == {
+            "host_name": "localhost",
+            "token": None,
+        }
+        assert private_waiting[0]["template"] == {
+            "host_name": None,
+            "token": None,
+        }
         for payload in (visible_payload, private_payload):
             assert "environment.example" not in dumps(payload)
             assert "environment-secret" not in dumps(payload)
@@ -544,9 +582,27 @@ class TemplateTests(SimpleTestCase):
         assert "template-prompt-" in page
         assert 'id="notify-template-rows"' in page
         assert 'id="notify-template-add"' in page
+        assert 'autocomplete="off"' in page
         assert 'class="notify-form-section notify-delivery-options"' in page
         assert 'class="notify-form-section notify-message-fields"' in page
         assert "collectNotifyTemplateValues" in page
+        assert "sendReviewTestNotification(tags, entryIndex" in page
+        assert "'X-Apprise-Notification-Index': String(entryIndex)" in page
+        assert "data-notify-copy-logs" in page
+        assert "--- BEGIN APPRISE NOTIFICATION LOG ---" in page
+        assert "--- END APPRISE NOTIFICATION LOG ---" in page
+        assert "disableTemplateAutofill" in page
+        assert "input.autocomplete = 'off'" in page
+        assert "input.dataset.concealedText = 'true'" in page
+        assert "input.setAttribute('type', 'password')" not in page
+        assert "valueInput.type = 'password'" not in page
+        assert "wrapper.addEventListener('keydown'" in page
+        assert "Swal.clickConfirm()" in page
+        assert "data-1p-ignore" in page
+        assert "data-bwignore" in page
+        assert "data-lpignore" in page
+        assert "data-protonpass-ignore" in page
+        assert "data-form-type" in page
         assert "Show Value" in page
 
     @patch("apprise.Apprise.notify")
@@ -589,22 +645,25 @@ class TemplateTests(SimpleTestCase):
         assert result.status_code == 200
         payload = result.json()
 
-        waiting = [entry for entry in payload["urls"] if entry["template"]["required"]]
+        waiting = [entry for entry in payload["urls"] if entry["template"]]
         assert len(waiting) == 1
-        assert waiting[0]["template"]["required"] == ["token"]
+        assert waiting[0]["template"]["token"] is None
 
         # ...and the marker is readable, not concealed behind stars
         assert "${TOKEN}" in waiting[0]["url"]
         assert "****" not in waiting[0]["url"]
 
     def test_web_dialog_omits_blank_values(self):
-        """Quick tests trim values and still require mandatory entries."""
+        """The quick-test dialog trims values and leaves blanks out."""
         result = self.client.get(f"/cfg/{self.key}")
         assert result.status_code == 200
         page = result.content.decode("utf-8")
 
         assert "const value = (el.value || '').trim();" in page
-        assert "} else if (required.indexOf(name) !== -1) {" in page
+
+        # A blank field is simply not sent, so the saved default or the
+        # server environment can still supply it.
+        assert "required.indexOf" not in page
 
     @patch("requests.request")
     def test_host_variable(self, mock_request):
@@ -635,20 +694,24 @@ class TemplateTests(SimpleTestCase):
 
     @patch("apprise.Apprise.notify")
     def test_form_empty_value(self, mock_notify):
-        """An empty field clears a default rather than being passed over."""
+        """A field left empty reads the same as not sending the name.
+
+        The value is dropped, so a default in the configuration or a value
+        the server holds in its own environment still applies.
+        """
         mock_notify.return_value = True
 
         response = self.client.post(
             f"/notify/{self.key}",
-            {"body": "test", "template[host_name]": ""},
+            {"body": "test", "template[host_name]": "   "},
         )
 
         assert response.status_code == 200
-        assert mock_notify.call_args.kwargs["template"] == {"host_name": ""}
+        assert mock_notify.call_args.kwargs["template"] is None
 
     @patch("apprise.Apprise.notify")
     def test_json_empty_value(self, mock_notify):
-        """A JSON payload clears a default the same way."""
+        """A JSON payload drops an empty value the same way."""
         mock_notify.return_value = True
 
         response = self.client.post(
@@ -658,7 +721,46 @@ class TemplateTests(SimpleTestCase):
         )
 
         assert response.status_code == 200
-        assert mock_notify.call_args.kwargs["template"] == {"host_name": ""}
+        assert mock_notify.call_args.kwargs["template"] is None
+
+    @patch("apprise.Apprise.notify")
+    def test_values_are_trimmed(self, mock_notify):
+        """Surrounding whitespace never reaches a URL."""
+        mock_notify.return_value = True
+
+        response = self.client.post(
+            f"/notify/{self.key}",
+            data=dumps({"body": "test", "template": {"token": "  abc  "}}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["template"] == {"token": "abc"}
+
+    @patch("apprise.Apprise.notify")
+    def test_payload_without_template_is_accepted(self, mock_notify):
+        """A caller that knows nothing about template values still works.
+
+        Leaving the field out, sending an empty set, or sending only blank
+        values all mean the same thing, which keeps the payload usable by
+        clients written before template values existed.
+        """
+        mock_notify.return_value = True
+
+        for payload in (
+            {"body": "test"},
+            {"body": "test", "template": {}},
+            {"body": "test", "template": None},
+            {"body": "test", "template": {"token": "   "}},
+        ):
+            response = self.client.post(
+                f"/notify/{self.key}",
+                data=dumps(payload),
+                content_type="application/json",
+            )
+
+            assert response.status_code == 200, payload
+            assert mock_notify.call_args.kwargs["template"] is None, payload
 
     def test_review_separates_redacted_urls_from_declared_defaults(self):
         """The review displays private URLs and reads YAML defaults separately."""
@@ -668,7 +770,7 @@ class TemplateTests(SimpleTestCase):
         assert "/json/urls/" in page
         assert "?privacy=1" in page
         assert "?privacy=0" in page
-        assert "entry.template.defaults = source.template.defaults || {};" in page
+        assert "entry.template = source.template;" in page
 
     def test_notification_values_skip_blank_and_duplicate_names(self):
         """The Notification tab trims values and sends each name once."""
@@ -681,11 +783,12 @@ class TemplateTests(SimpleTestCase):
         assert "syncNotifyTemplateRows(true)" in page
         assert "add.disabled = !canAdd" in page
         assert "'is-included', Boolean(name && value && !duplicate)" in page
-        assert "const defaults = details.defaults || {};" in page
+        assert "const declared = card.templateDetails || {};" in page
         assert "valueInput.value = value || '';" in page
 
         css = (Path(settings.BASE_DIR) / "static" / "css" / "base.css").read_text()
         assert ".notify-template-row.is-included" in css
+        assert 'input[data-concealed-text="true"]:not(.value-is-visible)' in css
         assert ".notify-form-section" in css
         assert "#notify .notify-form-section .row>.input-field.col" in css
         assert "#notify .notify-form-section .input-field>label.active" in css
@@ -851,17 +954,103 @@ class TemplateTests(SimpleTestCase):
         key = "test_template_setting_list"
         ConfigCache.put(
             key,
-            "version: 2\ntemplate:\n  - target\nurls:\n  - json://user:pass@fixed.example/:\n      - to: ${TARGET}\n",
+            "version: 2\ntemplate:\n  - target\nurls:\n  - mailto://user:pass@gmail.com:\n      - to: ${TARGET}\n",
             "yaml",
         )
 
         payload = self.client.get(f"/json/urls/{key}?privacy=1").json()
         entry = payload["urls"][0]
-        assert entry["template"]["required"] == ["target"]
+        assert entry["template"] == {"target": None}
 
         # The marker shows where the value belongs, as a query parameter
         assert "${TARGET}" in entry["url"]
         ConfigCache.clear(key)
+
+    def test_listing_names_unsupported_setting(self):
+        """List a needed value even when the service has no URL option for it.
+
+        The marker cannot appear in the URL because this service ignores
+        that setting. The template name still tells callers what was declared.
+        """
+        key = "test_template_inert_setting"
+        ConfigCache.put(
+            key,
+            "version: 2\ntemplate:\n  - target\nurls:\n  - json://user:pass@fixed.example/:\n      to: ${TARGET}\n",
+            "yaml",
+        )
+
+        entry = self.client.get(f"/json/urls/{key}").json()["urls"][0]
+        assert entry["template"] == {"target": None}
+        assert "to=" not in entry["url"]
+        ConfigCache.clear(key)
+
+    def test_listing_shows_each_marker(self):
+        """A caller can find and replace every value the entry needs.
+
+        Review and mobile clients read this listing, find URL markers, and
+        fill them in before sending. A missing marker would silently drop a
+        setting, so check each supported shape:
+
+        - a setting the service reads as a list, such as email recipients
+        - a setting stored under a different name, such as mailto's smtp
+        - a header, which arrives grouped with the other headers
+        - a port
+        - one name used by two different settings
+        """
+        cases = {
+            "list_setting": (
+                "urls:\n  - mailto://user:pass@gmail.com:\n      to: ${TARGET}\n",
+                ["to=${TARGET}"],
+            ),
+            "renamed_setting": (
+                "urls:\n  - mailto://user:pass@gmail.com:\n      smtp: ${TARGET}\n",
+                ["smtp=${TARGET}"],
+            ),
+            "grouped_setting": (
+                "urls:\n  - json://localhost:\n      '+X-Token': ${TARGET}\n",
+                ["${TARGET}"],
+            ),
+            "port_setting": (
+                "urls:\n  - mailto://user:pass@gmail.com:\n      port: ${TARGET}\n",
+                [":${TARGET}"],
+            ),
+            "two_settings": (
+                "urls:\n  - mailto://user:pass@gmail.com:\n      smtp: ${TARGET}\n      cc: ${TARGET}\n",
+                ["smtp=${TARGET}", "cc=${TARGET}"],
+            ),
+        }
+
+        for name, (urls, expected) in cases.items():
+            key = f"test_template_shape_{name}"
+            ConfigCache.put(key, "version: 2\ntemplate:\n  - target\n" + urls, "yaml")
+
+            for query in ("", "?privacy=1"):
+                entry = self.client.get(f"/json/urls/{key}{query}").json()["urls"][0]
+                assert entry["template"] == {"target": None}
+                for marker in expected:
+                    assert marker in entry["url"], (name, query, entry["url"])
+
+                # A marker is not a value yet; leaving it escaped would give
+                # a caller nothing to search for
+                assert "%24%7B" not in entry["url"]
+
+            ConfigCache.clear(key)
+
+    def test_listed_url_reloads_once_its_values_are_filled_in(self):
+        """A filled-in URL reaches the same setting the configuration did."""
+        key = "test_template_reload"
+        ConfigCache.put(
+            key,
+            "version: 2\ntemplate:\n  - target\nurls:\n  - mailto://user:pass@gmail.com:\n      smtp: ${TARGET}\n",
+            "yaml",
+        )
+
+        entry = self.client.get(f"/json/urls/{key}").json()["urls"][0]
+        ConfigCache.clear(key)
+
+        filled = entry["url"].replace("${TARGET}", "mail.example.com")
+        service = apprise.Apprise.instantiate(filled)
+        assert service.smtp_host == "mail.example.com"
 
     @override_settings(APPRISE_AUTH_REQUIRED=True)
     def test_public_caller_cannot_discover_variables(self):
