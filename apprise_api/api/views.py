@@ -32,6 +32,8 @@ import time
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 import apprise
+from apprise.exception import AppriseTemplateError
+from apprise.utils.template import resolve_values
 from core.utils import parse_bool, parse_log_level
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
@@ -3815,6 +3817,9 @@ class JsonUrlView(View):
         # Template names and ${NAME} markers remain visible in both modes.
         expose_template_names = settings.APPRISE_ALLOW_TEMPLATES
         expose_template_defaults = expose_template_names and not privacy
+        expose_fallback_availability = expose_template_defaults and parse_bool(
+            request.GET.get("fallbacks"), default=False
+        )
 
         # Optionally filter on tags. Use comma to identify more then one
         tag = request.GET.get("tag", "all")
@@ -3865,12 +3870,23 @@ class JsonUrlView(View):
             optional = service_optional(notification, url)
 
             # List each name with its default, or null when none exists or
-            # privacy hides it. The environment may fill null when sending,
-            # but its values stay private.
+            # privacy hides it. The editor may request fallback availability,
+            # but environment values always stay private.
             template = {}
             if expose_template_names:
                 for name in sorted(getattr(notification, "template_names", ())):
                     default = notification.template_schema.variables[name].default
+                    if default is None and expose_fallback_availability:
+                        try:
+                            # Report availability without returning the value.
+                            resolve_values(
+                                notification.template_schema,
+                                names={name},
+                            )
+                        except AppriseTemplateError:
+                            pass
+                        else:
+                            default = ""
                     template[name] = default if expose_template_defaults else None
             # Set Notification
             response["urls"].append(

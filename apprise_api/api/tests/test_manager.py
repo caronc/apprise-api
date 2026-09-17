@@ -216,6 +216,9 @@ class ManagerPageTests(SimpleTestCase):
         assert "border-radius: 0.55rem !important;" in stylesheet
         assert ".dropdown-content.select-dropdown li" in stylesheet
         assert ".swal2-popup.swal2-toast.apprise-toast" in stylesheet
+        assert "grid-template-columns: 1.55rem minmax(0, 1fr);" in stylesheet
+        assert "#toast-container .toast.apprise-toast-fallback" in stylesheet
+        assert "justify-content: flex-start;" in stylesheet
         assert ".apprise-toast--success" in stylesheet
         assert ".apprise-toast--warning" in stylesheet
         assert ".apprise-toast--error" in stylesheet

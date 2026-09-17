@@ -719,7 +719,7 @@
       let marker = document.createElement('span');
       marker.setAttribute('class', 'url-template-var');
       marker.setAttribute('title',
-        '{% trans "A value is filled in here when the notification is sent" %}');
+        '{% trans "Template Variable" %}');
       marker.textContent = match[0];
       codeEl.appendChild(marker);
       position = match.index + match[0].length;
@@ -1083,6 +1083,22 @@
     const wrapper = document.createElement('div');
     wrapper.setAttribute('class', 'review-template-form');
 
+    const summary = document.createElement('div');
+    summary.setAttribute(
+      'class', 'auth-login-error review-template-summary-error');
+    summary.setAttribute('role', 'alert');
+    summary.hidden = true;
+    const summaryIcon = document.createElement('i');
+    summaryIcon.setAttribute('class', 'material-icons');
+    summaryIcon.setAttribute('aria-hidden', 'true');
+    summaryIcon.textContent = 'error_outline';
+    summary.appendChild(summaryIcon);
+    const summaryMessage = document.createElement('div');
+    summaryMessage.textContent =
+      '{% trans "Provide the required template values before sending." %}';
+    summary.appendChild(summaryMessage);
+    wrapper.appendChild(summary);
+
     const intro = document.createElement('p');
     intro.textContent =
       '{% trans "Provide the values needed by the selected notification entries." %}';
@@ -1114,6 +1130,9 @@
         // A declared default fills this name if the field stays blank.
         input.setAttribute('placeholder',
           '{% trans "default used if blank" %}');
+      } else {
+        input.required = true;
+        input.dataset.templateRequired = 'true';
       }
       control.appendChild(input);
 
@@ -1133,6 +1152,26 @@
       control.appendChild(visibility);
 
       field.appendChild(control);
+
+      const error = document.createElement('span');
+      error.id = inputId + '-error';
+      error.setAttribute('class', 'review-template-error');
+      error.textContent = '{% trans "A value is required." %}';
+      error.hidden = true;
+      field.appendChild(error);
+      input.setAttribute('aria-describedby', error.id);
+      input.addEventListener('input', function () {
+        if (input.value.trim()) {
+          input.classList.remove('is-invalid');
+          input.removeAttribute('aria-invalid');
+          error.hidden = true;
+          summary.hidden = !Array.from(wrapper.querySelectorAll(
+            '[data-template-required="true"]'
+          )).some(function (requiredInput) {
+            return !requiredInput.value.trim();
+          });
+        }
+      });
 
       wrapper.appendChild(field);
     });
@@ -1155,6 +1194,28 @@
       confirmButtonText: '{% trans "Send" %}',
       focusConfirm: false,
       preConfirm: function () {
+        let firstInvalid = null;
+        wrapper.querySelectorAll('[data-template-required="true"]')
+          .forEach(function (el) {
+            const error = document.getElementById(el.id + '-error');
+            const invalid = !el.value.trim();
+            el.classList.toggle('is-invalid', invalid);
+            if (invalid) {
+              el.setAttribute('aria-invalid', 'true');
+              if (error) error.hidden = false;
+              firstInvalid = firstInvalid || el;
+            } else {
+              el.removeAttribute('aria-invalid');
+              if (error) error.hidden = true;
+            }
+        });
+        if (firstInvalid) {
+          summary.hidden = false;
+          firstInvalid.focus();
+          return false;
+        }
+        summary.hidden = true;
+
         // Send only the fields that were filled in. A blank one is left
         // out so the saved default, or the server's own environment, can
         // supply it. The server reports anything it still cannot resolve.
@@ -2298,11 +2359,10 @@
     // configuration.
     const data = await jsonResponse.json();
 
-    // This editor can already read the saved configuration. Use a normal,
-    // non-private listing only to prefill YAML-declared defaults; environment
-    // fallbacks never appear in this response.
+    // Prefill YAML defaults and learn which blanks have a server fallback.
+    // Environment values themselves never appear in the response.
     const defaultsResponse = await appriseFetch(
-      '{% url "json_urls" key %}/?privacy=0', {method: 'GET'}
+      '{% url "json_urls" key %}/?privacy=0&fallbacks=1', {method: 'GET'}
     );
     if (defaultsResponse.status === 200) {
       const defaultsData = await defaultsResponse.json();
@@ -2436,6 +2496,7 @@
     data.urls.forEach(function (entry, entryIndex) {
       const isEnabled = entry.enabled !== false;
       const entryTags = Array.isArray(entry.tags) ? entry.tags.slice() : [];
+      const tplNames = Object.keys(entry.template || {});
       let li = document.createElement('li');
       li.setAttribute('class', 'card-panel url-item');
       li.dataset.retryCount = String(parseInt(entry.retry || 0, 10) || 0);
@@ -2445,7 +2506,7 @@
         li.classList.add('url-item-disabled');
         li.title = `{% trans "This Apprise API instance has disabled support for" %} ${getReviewPluginTitle(entry.service_name, entry.url)}.`;
       }
-      // Header row: plugin title + optional id
+      // Header row: plugin title, template names, and service status.
       let meta = document.createElement('div');
       meta.setAttribute('class', 'url-meta');
       let pluginTitle = document.createElement('span');
@@ -2454,6 +2515,20 @@
       meta.appendChild(pluginTitle);
       let metaRight = document.createElement('div');
       metaRight.setAttribute('class', 'url-meta-right');
+      if (tplNames.length) {
+        let tplSummary = document.createElement('div');
+        tplSummary.setAttribute('class', 'url-template-summary');
+        tplSummary.setAttribute('aria-label', '{% trans "Template Variable" %}');
+        tplNames.forEach(function (name) {
+          let chip = document.createElement('span');
+          chip.setAttribute('class', 'url-template-chip');
+          chip.setAttribute('title',
+            '{% trans "Template Variable" %}');
+          chip.textContent = '${' + name.toUpperCase() + '}';
+          tplSummary.appendChild(chip);
+        });
+        metaRight.appendChild(tplSummary);
+      }
       let retryBadge = null;
       if (isEnabled) {
         retryBadge = document.createElement('span');
@@ -2463,8 +2538,8 @@
       if (isEnabled && entry.optional === true) {
         let optionalBadge = document.createElement('span');
         optionalBadge.setAttribute('class', 'review-optional-badge material-icons');
-        optionalBadge.setAttribute('aria-label', '{% trans "Optional service" %}');
-        optionalBadge.title = '{% trans "Optional service: failures are ignored when determining notification success" %}';
+        optionalBadge.setAttribute('aria-label', '{% trans "Optional Service" %}');
+        optionalBadge.title = '{% trans "Optional Service: failures are ignored when determining notification success" %}';
         optionalBadge.textContent = 'check_circle';
         metaRight.appendChild(optionalBadge);
       }
@@ -2521,28 +2596,6 @@
       }, false);
       header.appendChild(copyBtn);
       li.appendChild(header);
-
-      // List the values this entry still needs.
-      const tplNames = Object.keys(entry.template || {});
-      if (tplNames.length) {
-        let tplRow = document.createElement('div');
-        tplRow.setAttribute('class', 'url-template-row');
-        let tplLabel = document.createElement('span');
-        tplLabel.setAttribute('class', 'url-template-label');
-        tplLabel.textContent = '{% trans "Values" %}:';
-        tplRow.appendChild(tplLabel);
-        // Every name looks alike; the server may hold an environment value
-        // that this page cannot reveal.
-        tplNames.forEach(function (name) {
-          let chip = document.createElement('span');
-          chip.setAttribute('class', 'url-template-chip');
-          chip.setAttribute('title',
-            '{% trans "A value can be supplied for this name when sending" %}');
-          chip.textContent = '${' + name.toUpperCase() + '}';
-          tplRow.appendChild(chip);
-        });
-        li.appendChild(tplRow);
-      }
 
       // Tag row
       let tagRow = document.createElement('div');

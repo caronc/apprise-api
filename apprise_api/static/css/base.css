@@ -986,6 +986,11 @@ textarea {
   --toast-bg: var(--toast-info-bg);
   --toast-border: var(--toast-info-border);
   --toast-text: var(--toast-info-text);
+  display: grid !important;
+  grid-template-columns: 1.55rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: center;
+  justify-content: stretch;
   box-sizing: border-box;
   width: min(30rem, calc(100vw - 1.5rem));
   margin: 0.75rem auto 0;
@@ -1021,14 +1026,19 @@ textarea {
 
 .swal2-popup.swal2-toast.apprise-toast .swal2-icon.apprise-status-icon {
   position: static;
+  grid-column: 1;
+  grid-row: 1;
   width: 1.55rem;
   min-width: 1.55rem;
   height: 1.55rem;
-  margin: 0 0.75rem 0 0;
+  margin: 0;
   color: var(--toast-text);
 }
 
 .swal2-popup.swal2-toast.apprise-toast .swal2-title {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
   margin: 0;
   padding: 0;
   color: var(--toast-text);
@@ -1039,7 +1049,17 @@ textarea {
 }
 
 .swal2-popup.swal2-toast.apprise-toast .swal2-timer-progress-bar {
+  grid-column: 1 / -1;
   background: var(--toast-border);
+}
+
+.swal2-popup.swal2-toast.apprise-toast .swal2-close {
+  display: none !important;
+}
+
+.swal2-popup.swal2-toast.apprise-toast .swal2-timer-progress-bar-container {
+  grid-column: 1 / -1;
+  grid-row: 2;
 }
 
 #toast-container .toast.apprise-toast-fallback {
@@ -1048,15 +1068,31 @@ textarea {
   --toast-text: var(--toast-info-text);
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
   width: 100%;
   min-width: 0;
+  min-height: 0;
   margin: 0 0 0.5rem;
+  padding: 0.8rem 1rem;
   border: 1px solid var(--toast-border);
   border-left-width: 0.35rem;
   border-radius: 0.65rem;
   color: var(--toast-text);
   background: var(--toast-bg);
   box-shadow: 0 0.65rem 1.8rem var(--dialog-shadow);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+}
+
+#toast-container .toast.apprise-toast-fallback>span:not(.apprise-toast-fallback-icon) {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 #toast-container {
@@ -1070,7 +1106,7 @@ textarea {
 .apprise-toast-fallback-icon {
   width: 1.55rem;
   height: 1.55rem;
-  margin-right: 0.75rem;
+  margin: 0;
   flex: 0 0 auto;
 }
 
@@ -2217,6 +2253,7 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .card-panel {
+  --review-control-size: 1.95rem;
   break-inside: avoid;
   page-break-inside: avoid;
   display: block;
@@ -2258,20 +2295,22 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .url-plugin-title {
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.1;
-  opacity: 0.78;
+  opacity: 0.9;
 }
 
 #url-list .url-meta-right {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.34rem;
+  min-width: 0;
   flex: 0 0 auto;
-  --review-state-icon-box-size: 1.95rem;
 }
 
 #url-list .url-header {
@@ -2380,8 +2419,8 @@ body .tabs .tab.disabled a:hover i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--review-state-icon-box-size);
-  height: var(--review-state-icon-box-size);
+  width: var(--review-control-size);
+  height: var(--review-control-size);
   border-radius: 50%;
   opacity: 0.72;
   line-height: 1;
@@ -2480,8 +2519,8 @@ body .tabs .tab.disabled a:hover i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--review-state-icon-box-size);
-  height: var(--review-state-icon-box-size);
+  width: var(--review-control-size);
+  height: var(--review-control-size);
   border-radius: 50%;
   line-height: 1;
   flex: 0 0 auto;
@@ -2500,16 +2539,39 @@ body .tabs .tab.disabled a:hover i {
   letter-spacing: 0.01em;
 }
 
-/* A ${NAME} marker inside a displayed URL.  It is highlighted so it is
-   obvious which parts of the URL are filled in when a notification is
-   sent, rather than being part of the address itself. */
-#url-list .url-template-var {
+/* Use the same theme accent for template names in the URL and header. */
+#url-list .url-template-var,
+#url-list .url-template-chip,
+.review-template-field label {
+  color: var(--mobile-beta-accent);
+  background: var(--mobile-beta-accent-soft);
+  border: 1px solid var(--mobile-beta-accent);
+  border-radius: 999px;
+  font-family: monospace;
   font-weight: 600;
-  padding: 0 0.12rem;
-  border-radius: 3px;
-  background: rgba(255, 152, 0, 0.16);
-  border-bottom: 1px dotted rgba(255, 152, 0, 0.9);
   white-space: nowrap;
+}
+
+#url-list .url-template-var {
+  display: inline-block;
+  position: relative;
+  z-index: 0;
+  padding: 0 0.27rem;
+  border: 0;
+  background: transparent;
+  line-height: 1;
+  vertical-align: baseline;
+}
+
+/* Expand the marker inside the field without changing the URL row height. */
+#url-list .url-template-var::before {
+  content: "";
+  position: absolute;
+  inset: -0.29rem 0 -0.35rem;
+  z-index: -1;
+  border: 1px solid var(--mobile-beta-accent);
+  border-radius: 999px;
+  background: var(--mobile-beta-accent-soft);
 }
 
 /* The small form shown before a test send, asking for the values an
@@ -2531,9 +2593,14 @@ body .tabs .tab.disabled a:hover i {
 }
 
 .review-template-field label {
-  font-family: monospace;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 1.28rem;
+  padding: 0.05rem 0.38rem 0.1rem;
+  box-sizing: border-box;
   font-size: 0.8rem;
-  opacity: 0.8;
+  line-height: 1;
 }
 
 .review-template-field input {
@@ -2545,42 +2612,58 @@ body .tabs .tab.disabled a:hover i {
   font-family: monospace;
 }
 
+.review-template-field input::placeholder {
+  color: inherit;
+  opacity: 0.28;
+}
+
+.review-template-field input.is-invalid {
+  border-color: var(--form-error-border) !important;
+  box-shadow: 0 1px 0 0 var(--form-error-border) !important;
+}
+
+.review-template-error {
+  color: var(--form-error-text);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.review-template-summary-error {
+  margin: 0 0 1rem;
+}
+
+.review-template-summary-error[hidden] {
+  display: none;
+}
+
 .review-template-field .value-visibility-toggle {
   right: 0.35rem;
   top: 0.15rem;
 }
 
-/* Values a configuration entry is still waiting on.  These sit under
-   the URL so it is clear which ${NAME} markers above need filling in. */
-#url-list .url-template-row {
-  display: flex;
+/* Compact template names sit before the card's status controls. */
+#url-list .url-template-summary {
+  display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.2rem 0.3rem;
-  margin-top: 0.25rem;
-}
-
-#url-list .url-template-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.65;
+  justify-content: flex-end;
+  gap: 0.22rem;
+  min-width: 0;
 }
 
 #url-list .url-template-chip {
-  font-family: monospace;
-  font-size: 0.74rem;
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  border: 1px dashed rgba(128, 128, 128, 0.55);
-  opacity: 0.8;
-  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.28rem;
+  padding: 0.05rem 0.38rem 0.1rem;
+  box-sizing: border-box;
+  font-size: 0.66rem;
+  line-height: 1;
 }
-
 
 #url-list .url-tags-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.4rem;
   margin-top: 0.2rem;
   min-height: 1.55rem;
@@ -2598,13 +2681,21 @@ body .tabs .tab.disabled a:hover i {
 #url-list .review-test-btn {
   margin-left: auto;
   border-radius: 8px !important;
-  padding: 0 0.42rem;
-  min-width: 0;
+  padding: 0;
+  min-width: var(--review-control-size);
+  width: var(--review-control-size);
+  height: var(--review-control-size);
+  min-height: var(--review-control-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   flex: 0 0 auto;
   border: 1px solid transparent;
 }
 
 #url-list .review-test-btn .material-icons {
+  display: block;
   font-size: 1.05rem;
   line-height: 1;
 }
@@ -2633,7 +2724,16 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .copy-url-btn {
-  margin-top: 0.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--review-control-size);
+  height: var(--review-control-size);
+  min-width: var(--review-control-size);
+  min-height: var(--review-control-size);
+  margin: 0;
+  padding: 0;
+  line-height: 1;
 }
 
 #url-list .copy-url-btn .material-icons,
@@ -2646,6 +2746,23 @@ body .tabs .tab.disabled a:hover i {
 .snippet-visibility-btn .material-icons,
 .snippet-copy-btn .material-icons {
   font-size: 1.1rem;
+}
+
+#url-list .copy-url-btn .material-icons {
+  display: block;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  #url-list .url-meta {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  #url-list .url-meta-right {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
 }
 
 .config-id-bar {

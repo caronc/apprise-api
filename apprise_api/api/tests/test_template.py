@@ -519,13 +519,17 @@ class TemplateTests(SimpleTestCase):
         ):
             visible = self.client.get(f"/json/urls/{self.key}")
             private = self.client.get(f"/json/urls/{self.key}?privacy=1")
+            availability = self.client.get(f"/json/urls/{self.key}?privacy=0&fallbacks=1")
 
         assert visible.status_code == 200
         assert private.status_code == 200
+        assert availability.status_code == 200
         visible_payload = visible.json()
         private_payload = private.json()
+        availability_payload = availability.json()
         visible_waiting = [entry for entry in visible_payload["urls"] if entry["template"]]
         private_waiting = [entry for entry in private_payload["urls"] if entry["template"]]
+        availability_waiting = [entry for entry in availability_payload["urls"] if entry["template"]]
         assert visible_waiting[0]["template"] == {
             "host_name": "localhost",
             "token": None,
@@ -534,7 +538,12 @@ class TemplateTests(SimpleTestCase):
             "host_name": None,
             "token": None,
         }
-        for payload in (visible_payload, private_payload):
+        # The editor learns that a fallback exists, but never receives it.
+        assert availability_waiting[0]["template"] == {
+            "host_name": "localhost",
+            "token": "",
+        }
+        for payload in (visible_payload, private_payload, availability_payload):
             assert "environment.example" not in dumps(payload)
             assert "environment-secret" not in dumps(payload)
 
@@ -585,6 +594,8 @@ class TemplateTests(SimpleTestCase):
         assert 'autocomplete="off"' in page
         assert 'class="notify-form-section notify-delivery-options"' in page
         assert 'class="notify-form-section notify-message-fields"' in page
+        assert "url-template-summary" in page
+        assert "url-template-row" not in page
         assert "collectNotifyTemplateValues" in page
         assert "sendReviewTestNotification(tags, entryIndex" in page
         assert "'X-Apprise-Notification-Index': String(entryIndex)" in page
@@ -660,6 +671,11 @@ class TemplateTests(SimpleTestCase):
         page = result.content.decode("utf-8")
 
         assert "const value = (el.value || '').trim();" in page
+        assert "input.dataset.templateRequired = 'true';" in page
+        assert "auth-login-error review-template-summary-error" in page
+        assert "summary.hidden = false;" in page
+        assert "Provide the required template values before sending." in page
+        assert "privacy=0&fallbacks=1" in page
 
         # A blank field is simply not sent, so the saved default or the
         # server environment can still supply it.
@@ -790,6 +806,11 @@ class TemplateTests(SimpleTestCase):
         assert ".notify-template-row.is-included" in css
         assert 'input[data-concealed-text="true"]:not(.value-is-visible)' in css
         assert ".notify-form-section" in css
+        assert "--review-control-size: 1.95rem;" in css
+        assert "#url-list .url-template-summary" in css
+        assert "#url-list .url-template-var," in css
+        assert ".review-template-field label {" in css
+        assert "background: var(--mobile-beta-accent-soft);" in css
         assert "#notify .notify-form-section .row>.input-field.col" in css
         assert "#notify .notify-form-section .input-field>label.active" in css
         assert "color: var(--mobile-beta-accent);" in css
@@ -800,6 +821,8 @@ class TemplateTests(SimpleTestCase):
         dark_css = (Path(settings.BASE_DIR) / "static" / "css" / "theme-dark.css").read_text()
         assert "--select-bg: #f8fafb;" in light_css
         assert "--select-bg: #1c1f26;" in dark_css
+        assert "color: var(--mobile-beta-accent) !important;" in light_css
+        assert "color: var(--mobile-beta-accent) !important;" in dark_css
         assert "background: var(--select-bg);" in css
 
     def test_review_dialog_does_not_track_blank_overrides(self):

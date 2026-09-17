@@ -70,6 +70,9 @@ Support Banner
   --toast-error-bg: #3a2024;
   --toast-error-border: #a95660;
   --toast-error-text: #f1b2b9;
+  --form-error-bg: #3b171b;
+  --form-error-border: #ef5350;
+  --form-error-text: #ff8a80;
   --select-bg: #1c1f26;
   --select-border: #454a55;
   --select-border-hover: #68717f;
@@ -879,15 +882,16 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-login-error {
-  color: #ff8a80;
-  background-color: #3b171b;
-  border-color: #ef5350;
+  color: var(--form-error-text);
+  background-color: var(--form-error-bg);
+  border-color: var(--form-error-border);
 }
 
 .input-field.has-errors label,
 .input-field.has-errors label.active,
-.input-field .errorlist {
-  color: #ff8a80;
+.input-field .errorlist,
+.review-template-error {
+  color: var(--form-error-text);
 }
 
 .auth-randomize-option {
@@ -1344,9 +1348,9 @@ Config Editor — textarea border override
   color: #888c96 !important;
 }
 
-/* 6. Template variables — distinct from URLs and YAML keys */
+/* 6. Template variables use the same accent throughout the interface. */
 .apprise-config-yaml .apprise-config-highlight .hljs-template-variable {
-  color: #ffb454 !important;
+  color: var(--mobile-beta-accent) !important;
   font-weight: 600;
 }
 
