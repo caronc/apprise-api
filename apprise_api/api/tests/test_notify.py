@@ -1669,16 +1669,25 @@ class NotifyTests(SimpleTestCase):
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
         assert response.status_code == 200
 
-        # Subfield mapping via form POST — expected to fail (400).
+        # Subfield mapping via form POST — expected to fail (400) by default.
         # Form POST delivers flat string values; the "event" key arrives as a
         # plain string, not a nested dict, so the dot-notation path cannot be
-        # resolved.
+        # resolved without explicit JSON parsing.
         response = self.client.post(
             f"/notify/{key}/?:event.title=title&:event.body=body",
             {"event": '{"title": "hi", "body": "world"}'},
         )
         assert response.status_code == 400
         assert mock_notify.call_count == 0
+
+        # Subfield mapping via form POST with explicit ::json modifier — succeeds (200)
+        # because the modifier triggers parsing of the string into a dictionary.
+        response = self.client.post(
+            f"/notify/{key}/?:event::json.title=title&:event::json.body=body",
+            {"event": '{"title": "hi", "body": "world"}'},
+        )
+        assert response.status_code == 200
+        assert mock_notify.call_count == 1
 
         mock_notify.reset_mock()
 
