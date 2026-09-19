@@ -44,7 +44,6 @@ import requests
 from ..utils import ConfigCache
 
 CONFIG = """
-version: 2
 template:
   - token
   - host_name: localhost
@@ -426,7 +425,7 @@ class TemplateTests(SimpleTestCase):
     def test_templates_disabled_ignores_table_when_saving(self):
         """The server toggle also controls validation during a save."""
         key = "test_disabled_template_save"
-        config = "version: 2\ntemplate: not-a-table\nurls:\n  - json://localhost/\n"
+        config = "template: not-a-table\nurls:\n  - json://localhost/\n"
 
         assert self.client.post(f"/add/{key}", {"config": config, "format": "yaml"}).status_code == 400
 
@@ -484,7 +483,7 @@ class TemplateTests(SimpleTestCase):
         # ...and it reads back as it was written
         assert "${TOKEN}" in waiting[0]["url"]
 
-    def test_private_url_listing_hides_defaults_but_not_names(self):
+    def test_private_listing_hides_defaults(self):
         """Privacy withholds values while still saying what to ask for.
 
         A caller has to know which names to prompt for and which of them
@@ -641,7 +640,7 @@ class TemplateTests(SimpleTestCase):
         key = "test_template_only"
         response = self.client.post(
             f"/add/{key}",
-            {"config": ("version: 2\ntemplate:\n  - token\nurls:\n  - json://user:${TOKEN}@localhost/\n")},
+            {"config": ("template:\n  - token\nurls:\n  - json://user:${TOKEN}@localhost/\n")},
         )
 
         assert response.status_code == 200
@@ -778,7 +777,7 @@ class TemplateTests(SimpleTestCase):
             assert response.status_code == 200, payload
             assert mock_notify.call_args.kwargs["template"] is None, payload
 
-    def test_review_separates_redacted_urls_from_declared_defaults(self):
+    def test_review_keeps_defaults_separate(self):
         """The review displays private URLs and reads YAML defaults separately."""
         result = self.client.get(f"/cfg/{self.key}")
         assert result.status_code == 200
@@ -788,7 +787,7 @@ class TemplateTests(SimpleTestCase):
         assert "?privacy=0" in page
         assert "entry.template = source.template;" in page
 
-    def test_notification_values_skip_blank_and_duplicate_names(self):
+    def test_notification_values_skip_blanks_and_duplicates(self):
         """The Notification tab trims values and sends each name once."""
         result = self.client.get(f"/cfg/{self.key}")
         assert result.status_code == 200
@@ -945,7 +944,7 @@ class TemplateTests(SimpleTestCase):
         key = "test_template_setting"
         ConfigCache.put(
             key,
-            "version: 2\ntemplate:\n  - target\n"
+            "template:\n  - target\n"
             "urls:\n  - json://user:pass@fixed.example/:\n"
             "      - to: ${TARGET}\n        tag: work\n",
             "yaml",
@@ -977,7 +976,7 @@ class TemplateTests(SimpleTestCase):
         key = "test_template_setting_list"
         ConfigCache.put(
             key,
-            "version: 2\ntemplate:\n  - target\nurls:\n  - mailto://user:pass@gmail.com:\n      - to: ${TARGET}\n",
+            "template:\n  - target\nurls:\n  - mailto://user:pass@gmail.com:\n      - to: ${TARGET}\n",
             "yaml",
         )
 
@@ -998,7 +997,7 @@ class TemplateTests(SimpleTestCase):
         key = "test_template_inert_setting"
         ConfigCache.put(
             key,
-            "version: 2\ntemplate:\n  - target\nurls:\n  - json://user:pass@fixed.example/:\n      to: ${TARGET}\n",
+            "template:\n  - target\nurls:\n  - json://user:pass@fixed.example/:\n      to: ${TARGET}\n",
             "yaml",
         )
 
@@ -1045,7 +1044,7 @@ class TemplateTests(SimpleTestCase):
 
         for name, (urls, expected) in cases.items():
             key = f"test_template_shape_{name}"
-            ConfigCache.put(key, "version: 2\ntemplate:\n  - target\n" + urls, "yaml")
+            ConfigCache.put(key, "template:\n  - target\n" + urls, "yaml")
 
             for query in ("", "?privacy=1"):
                 entry = self.client.get(f"/json/urls/{key}{query}").json()["urls"][0]
@@ -1059,12 +1058,12 @@ class TemplateTests(SimpleTestCase):
 
             ConfigCache.clear(key)
 
-    def test_listed_url_reloads_once_its_values_are_filled_in(self):
+    def test_listed_url_round_trip(self):
         """A filled-in URL reaches the same setting the configuration did."""
         key = "test_template_reload"
         ConfigCache.put(
             key,
-            "version: 2\ntemplate:\n  - target\nurls:\n  - mailto://user:pass@gmail.com:\n      smtp: ${TARGET}\n",
+            "template:\n  - target\nurls:\n  - mailto://user:pass@gmail.com:\n      smtp: ${TARGET}\n",
             "yaml",
         )
 

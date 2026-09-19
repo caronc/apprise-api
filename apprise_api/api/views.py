@@ -3117,9 +3117,7 @@ def _select_notify_entry(request, a_obj):
             ResponseCode.bad_request,
         )
 
-    # Keep the entry in its loaded form. It may still be a pending template,
-    # which the normal delivery pass resolves after applying caller values.
-    # Replace the service list so sibling entries sharing a tag cannot run.
+    # Keep pending templates unresolved and exclude sibling entries.
     a_obj.services[:] = [selected]
     return a_obj, None
 
@@ -3811,10 +3809,8 @@ class JsonUrlView(View):
         # Support 'yes', '1', 'true', 'enable', 'active', and +
         privacy = parse_bool(request.GET.get("privacy"), default=False)
 
-        # Privacy masks URL secrets and omits configuration defaults.
-        # It does not restrict access: callers can request privacy=0.
-        # Server environment values never appear in this listing.
-        # Template names and ${NAME} markers remain visible in both modes.
+        # Privacy masks URL secrets and defaults, but not template names.
+        # Environment values are never returned.
         expose_template_names = settings.APPRISE_ALLOW_TEMPLATES
         expose_template_defaults = expose_template_names and not privacy
         expose_fallback_availability = expose_template_defaults and parse_bool(
@@ -3869,9 +3865,8 @@ class JsonUrlView(View):
             retry = service_retry(notification, url)
             optional = service_optional(notification, url)
 
-            # List each name with its default, or null when none exists or
-            # privacy hides it. The editor may request fallback availability,
-            # but environment values always stay private.
+            # List defaults when allowed. A blank reports that a private
+            # environment fallback exists without exposing its value.
             template = {}
             if expose_template_names:
                 for name in sorted(getattr(notification, "template_names", ())):

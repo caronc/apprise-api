@@ -445,9 +445,8 @@ APPRISE_ALLOW_SERVICES = os.environ.get("APPRISE_ALLOW_SERVICES", "")
 # 1 level of recursion
 APPRISE_RECURSION_MAX = env_int("APPRISE_RECURSION_MAX", 1, minimum=0)
 
-# Pass template support directly to AppriseAsset. When disabled, template
-# sections and environment values are ignored, markers remain ordinary text,
-# and template-specific checks do not run.
+# When disabled, template sections and environment values are ignored and
+# markers remain ordinary text.
 APPRISE_ALLOW_TEMPLATES = env_bool("APPRISE_ALLOW_TEMPLATES", True)
 
 # Provided optional plugin paths to scan for custom schema definitions

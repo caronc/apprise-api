@@ -166,9 +166,7 @@ def stateful_store_enabled():
 # template[name]=value.
 TEMPLATE_FIELD_RE = re.compile(r"\Atemplate\[(?P<name>" + TEMPLATE_NAME_PATTERN + r")\]\Z")
 
-# Anything written as template[...] that the pattern above turns down. A
-# field meant as a template value but named wrongly is reported rather
-# than passed over, so a form behaves the same way a JSON payload does.
+# Reject malformed template[...] fields instead of silently ignoring them.
 TEMPLATE_FIELD_PREFIX = "template["
 
 
@@ -226,11 +224,9 @@ def normalize_template_values(entries):
 
 
 def extract_template_fields(data):
-    """Pull ``template[name]=value`` entries out of posted form data.
+    """Return values from valid ``template[name]`` form fields.
 
-    Anything written as ``template[...]`` that is not a usable name is
-    reported rather than passed over, so a form behaves the same way a
-    JSON payload does.
+    Malformed or repeated fields raise :class:`TemplateValueError`.
     """
 
     # A form can repeat one field name; only a mapping that can report
