@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import apprise
+from apprise.utils.template import TEMPLATE_NAME_MAXLEN
 from django.conf import settings
 
 from .auth import Authentication
@@ -53,6 +54,15 @@ def config_lock(request):
         None,
     )
     return {"CONFIG_LOCK": not Authentication.config_lock_allows(request, key)}
+
+
+def template_variables(request):
+    """Share the template-name limit with the page scripts.
+
+    The editor uses the same limit as the server when highlighting `${NAME}`
+    markers, keeping browser and server validation aligned.
+    """
+    return {"TEMPLATE_NAME_MAXLEN": TEMPLATE_NAME_MAXLEN}
 
 
 def admin_enabled(request):

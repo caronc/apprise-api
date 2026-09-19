@@ -32,6 +32,8 @@ from .auth import Authentication
 from .utils import (
     CONFIG_KEY_MAX_LENGTH,
     CONFIG_KEY_PATTERN,
+    TemplateValueError,
+    extract_template_fields,
 )
 
 # Auto-Detect Keyword
@@ -398,6 +400,23 @@ class NotifyForm(forms.Form):
         widget=forms.HiddenInput(),
         required=False,
     )
+
+    def clean(self):
+        """Read any template[name]=value fields that were posted."""
+        cleaned_data = super().clean()
+
+        try:
+            values = extract_template_fields(self.data)
+
+        except TemplateValueError:
+            # Do not reveal which names the stored configuration expects.
+            raise ValidationError(_("One or more template values are invalid")) from None
+
+        if values:
+            # Omit an empty mapping from reused form data.
+            cleaned_data["template"] = values
+
+        return cleaned_data
 
     def clean_type(self):
         """

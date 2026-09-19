@@ -32,6 +32,8 @@ import time
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 import apprise
+from apprise.exception import AppriseTemplateError
+from apprise.utils.template import resolve_values
 from core.utils import parse_bool, parse_log_level
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
@@ -74,11 +76,13 @@ from .utils import (
     MIME_IS_JSON,
     ConfigCache,
     MoveResult,
+    TemplateValueError,
     apply_global_filters,
     config_key_header_present_but_invalid,
     healthcheck,
     is_html_response,
     is_json_response,
+    normalize_template_values,
     parse_attachments,
     resolve_config_key,
     send_webhook,
@@ -92,6 +96,9 @@ logger = logging.getLogger("django")
 # application/x-www-form-urlencoded
 # multipart/form-data
 MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencoded)", re.I)
+
+# Used by the Review tab to narrow a quick test to the selected card.
+NOTIFY_ENTRY_INDEX_HEADER = "X-Apprise-Notification-Index"
 
 # Each disk entry starts with its byte length.
 _EVENT_SIZE = struct.Struct("!Q")
@@ -867,6 +874,7 @@ def stream_notify_response(
     tag,
     attach,
     log_level,
+    template=None,
     webhook_source=None,
     match_always=True,
     stream_manager=None,
@@ -936,6 +944,7 @@ def stream_notify_response(
                 tag=tag,
                 match_always=match_always,
                 attach=attach,
+                template=template,
                 log_level=log_level,
                 log_callback=log_callback,
             )
@@ -1270,12 +1279,8 @@ def _get_config_response(request, key):
 
     config, format = ConfigCache.get(key)
     if config is None:
-        # The returned value of config and format tell a rather cryptic
-        # story; this portion could probably be updated in the future.
-        # but for now it reads like this:
-        #   config == None and format == None: We had an internal error
-        #   config == None and format != None: we simply have no data
-        #   config != None: we simply have no data
+        # A missing format means the storage read failed; an empty
+        # format means this key has no saved configuration.
         if format is not None:
             # no content to return
             logger.warning(
@@ -1585,8 +1590,8 @@ _PRIVILEGE_LABELS = {
 def _health_check_response(request, key=None):
     """Return status for keyed and keyless requests.
 
-    ``config_lock`` reflects whether this caller can access configuration
-    content; administrators are never reported as locked out.
+    ``config_lock`` says whether this caller may read configuration
+    content; an administrator is never reported as locked out.
     """
     # Detect the format our response should be in
     json_response = is_json_response(request)
@@ -2129,7 +2134,8 @@ class AddView(View):
                 )
 
             # Prepare our apprise config object
-            ac_obj = apprise.AppriseConfig(recursion=settings.APPRISE_RECURSION_MAX)
+            asset = apprise.AppriseAsset(allow_templates=settings.APPRISE_ALLOW_TEMPLATES)
+            ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
 
             if fmt == AUTO_DETECT_CONFIG_KEYWORD:
                 # By setting format to None, it is automatically detected from
@@ -2594,7 +2600,6 @@ class AuthView(View):
                 {
                     "mode": auth_state.mode,
                     "access": selected_access,
-                    "effective_access": auth_state.access,
                     "username": username,
                 },
                 encoder=JSONEncoder,
@@ -2943,6 +2948,34 @@ class GetView(View):
         return _get_config_response(request, key)
 
 
+def _notify_log_level(request, key=None):
+    """Allow detailed stored-config logs only for admins or ``user`` access."""
+    level = parse_log_level(
+        request.headers.get("X-Apprise-Log-Level"),
+        settings.APPRISE_LOG_LEVEL,
+    )
+
+    if key is None or level >= logging.INFO:
+        # Nothing stored is at stake, or nothing detailed was asked for
+        return level
+
+    if not settings.APPRISE_AUTH_REQUIRED:
+        # No access control is set up on this server at all
+        return level
+
+    role = getattr(request, "apprise_auth_permission", None)
+    if role == Authentication.ROLE_ADMIN:
+        return level
+
+    if (
+        role == Authentication.ROLE_USER
+        and Authentication.config_state(key, request).access == Authentication.ACCESS_USER
+    ):
+        return level
+
+    return logging.INFO
+
+
 def _deliver_notification(request, a_obj, content, attach, json_response, stream_response, tag, key=None):
     """Run and render the common stateful/stateless notification path."""
     if json_response:
@@ -2954,16 +2987,14 @@ def _deliver_notification(request, a_obj, content, attach, json_response, stream
         )
         content_type = "text/html" if re.search(r"text\/(\*|html)", accept, re.IGNORECASE) else "text/plain"
 
-    level = parse_log_level(
-        request.headers.get("X-Apprise-Log-Level"),
-        settings.APPRISE_LOG_LEVEL,
-    )
+    level = _notify_log_level(request, key)
     selected_tag = content.get("tag") or ("all" if key is None else None)
     notify_kwargs = {
         "title": content.get("title", ""),
         "notify_type": content.get("type", apprise.NotifyType.INFO.value),
         "tag": selected_tag,
         "attach": attach,
+        "template": content.get("template") or None,
         "log_level": level,
     }
 
@@ -3053,6 +3084,44 @@ def _deliver_notification(request, a_obj, content, attach, json_response, stream
     )
 
 
+def _select_notify_entry(request, a_obj):
+    """Select one loaded entry for a Review-tab quick test.
+
+    The request header carries the card's index. Return ``(a_obj, None)``
+    on success or ``(None, error_response)`` if it is invalid or stale.
+    """
+    # Without this header, the normal request sends to every matching entry.
+    raw_index = request.headers.get(NOTIFY_ENTRY_INDEX_HEADER)
+    if raw_index is None:
+        return a_obj, None
+
+    # Accept only short, ordinary decimal indexes before converting to int.
+    if not re.fullmatch(r"0|[1-9][0-9]{0,9}", raw_index):
+        return None, error_response(
+            request,
+            _("The selected notification entry is invalid"),
+            ResponseCode.bad_request,
+        )
+
+    wanted = int(raw_index)
+    # Read loaded entries without resolving a pending template first.
+    selected = next(
+        (service for index, service in enumerate(a_obj.find(resolve=False)) if index == wanted),
+        None,
+    )
+    if selected is None:
+        # A card may have been removed since the Review tab was opened.
+        return None, error_response(
+            request,
+            _("The selected notification entry is no longer available"),
+            ResponseCode.bad_request,
+        )
+
+    # Keep pending templates unresolved and exclude sibling entries.
+    a_obj.services[:] = [selected]
+    return a_obj, None
+
+
 def _load_notify_content(request, form_class, key=None):
     """Load and remap one notification payload for either notify endpoint."""
     json_response = is_json_response(request)
@@ -3114,6 +3183,13 @@ def _load_notify_content(request, form_class, key=None):
                     field="urls",
                 ),
             )
+
+        if "template" in content:
+            template, error = _notify_template(request, content["template"])
+            if error is not None:
+                return None, json_response, error
+
+            content["template"] = template
     else:
         form = form_class(data=data, files=request.FILES)
         content = dict(form.cleaned_data) if form.is_valid() else {}
@@ -3134,6 +3210,28 @@ def _load_notify_content(request, form_class, key=None):
             ResponseCode.bad_request,
         ),
     )
+
+
+def _notify_template(request, template):
+    """Validate JSON template values without revealing required names.
+
+    Return ``(values, None)`` on success or ``(None, response)`` on error.
+    """
+
+    try:
+        # One shared reader keeps this in step with the form fields.
+        # A missing field simply reads as nothing supplied.
+        values = normalize_template_values(template)
+
+    except TemplateValueError:
+        return None, error_response(
+            request,
+            _("The template field must be an object of name/value pairs"),
+            ResponseCode.bad_request,
+            field="template",
+        )
+
+    return (values or None), None
 
 
 def _notify_tag(request, content, key=None, require_specific=False):
@@ -3307,6 +3405,9 @@ def _notify_asset(request, body_format, persistent):
     apply_global_filters()
     kwargs["result_log_memory_size"] = settings.APPRISE_STREAM_MEMORY_SIZE
     kwargs["result_log_disk_size"] = settings.APPRISE_STREAM_DISK_SIZE
+    # Only the person running this server decides whether a saved
+    # configuration may use template variables.
+    kwargs["allow_templates"] = settings.APPRISE_ALLOW_TEMPLATES
     try:
         return apprise.AppriseAsset(**kwargs), None
 
@@ -3407,12 +3508,8 @@ class StatefulNotifyView(View):
         # with.
         config, format = ConfigCache.get(key)
         if config is None:
-            # The returned value of config and format tell a rather cryptic
-            # story; this portion could probably be updated in the future.
-            # but for now it reads like this:
-            #   config == None and format == None: We had an internal error
-            #   config == None and format != None: we simply have no data
-            #   config != None: we simply have no data
+            # A missing format means the storage read failed; an empty
+            # format means this key has no saved configuration.
             if format is not None:
                 # no content to return
                 logger.debug(
@@ -3473,6 +3570,12 @@ class StatefulNotifyView(View):
 
         # Add our configuration
         a_obj.add(ac_obj)
+
+        # A card-level quick test must not include sibling entries that happen
+        # to share its tag. The tag is retained as an additional restriction.
+        a_obj, invalid = _select_notify_entry(request, a_obj)
+        if invalid is not None:
+            return invalid
 
         return _deliver_notification(
             request,
@@ -3706,17 +3809,21 @@ class JsonUrlView(View):
         # Support 'yes', '1', 'true', 'enable', 'active', and +
         privacy = parse_bool(request.GET.get("privacy"), default=False)
 
+        # Privacy masks URL secrets and defaults, but not template names.
+        # Environment values are never returned.
+        expose_template_names = settings.APPRISE_ALLOW_TEMPLATES
+        expose_template_defaults = expose_template_names and not privacy
+        expose_fallback_availability = expose_template_defaults and parse_bool(
+            request.GET.get("fallbacks"), default=False
+        )
+
         # Optionally filter on tags. Use comma to identify more then one
         tag = request.GET.get("tag", "all")
 
         config, format = ConfigCache.get(key)
         if config is None:
-            # The returned value of config and format tell a rather cryptic
-            # story; this portion could probably be updated in the future.
-            # but for now it reads like this:
-            #   config == None and format == None: We had an internal error
-            #   config == None and format != None: we simply have no data
-            #   config != None: we simply have no data
+            # A missing format means the storage read failed; an empty
+            # format means this key has no saved configuration.
             if format is not None:
                 # no content to return
                 return JsonResponse(
@@ -3735,11 +3842,12 @@ class JsonUrlView(View):
                 status=ResponseCode.internal_server_error,
             )
 
-        # Prepare our apprise object
-        a_obj = apprise.Apprise()
+        # Use one asset so parsing and reporting share the server toggle.
+        asset = apprise.AppriseAsset(allow_templates=settings.APPRISE_ALLOW_TEMPLATES)
+        a_obj = apprise.Apprise(asset=asset)
 
         # Create an apprise config object
-        ac_obj = apprise.AppriseConfig(recursion=settings.APPRISE_RECURSION_MAX)
+        ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
 
         # Load our configuration
         ac_obj.add_config(config, format=format)
@@ -3747,7 +3855,8 @@ class JsonUrlView(View):
         # Add our configuration
         a_obj.add(ac_obj)
 
-        for notification in a_obj.find(tag):
+        # List pending entries as written so their markers remain visible.
+        for notification in a_obj.find(tag, resolve=False):
             details = sorted(
                 [tag_detail(t) for t in notification.tags],
                 key=lambda item: (item["name"], item["priority"]),
@@ -3756,6 +3865,24 @@ class JsonUrlView(View):
             retry = service_retry(notification, url)
             optional = service_optional(notification, url)
 
+            # List defaults when allowed. A blank reports that a private
+            # environment fallback exists without exposing its value.
+            template = {}
+            if expose_template_names:
+                for name in sorted(getattr(notification, "template_names", ())):
+                    default = notification.template_schema.variables[name].default
+                    if default is None and expose_fallback_availability:
+                        try:
+                            # Report availability without returning the value.
+                            resolve_values(
+                                notification.template_schema,
+                                names={name},
+                            )
+                        except AppriseTemplateError:
+                            pass
+                        else:
+                            default = ""
+                    template[name] = default if expose_template_defaults else None
             # Set Notification
             response["urls"].append(
                 {
@@ -3767,6 +3894,7 @@ class JsonUrlView(View):
                     "optional": optional,
                     "tags": sorted(tag_names(notification.tags)),
                     "tag_details": details,
+                    "template": template,
                 }
             )
 

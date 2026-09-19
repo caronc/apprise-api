@@ -986,6 +986,11 @@ textarea {
   --toast-bg: var(--toast-info-bg);
   --toast-border: var(--toast-info-border);
   --toast-text: var(--toast-info-text);
+  display: grid !important;
+  grid-template-columns: 1.55rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: center;
+  justify-content: stretch;
   box-sizing: border-box;
   width: min(30rem, calc(100vw - 1.5rem));
   margin: 0.75rem auto 0;
@@ -1021,14 +1026,19 @@ textarea {
 
 .swal2-popup.swal2-toast.apprise-toast .swal2-icon.apprise-status-icon {
   position: static;
+  grid-column: 1;
+  grid-row: 1;
   width: 1.55rem;
   min-width: 1.55rem;
   height: 1.55rem;
-  margin: 0 0.75rem 0 0;
+  margin: 0;
   color: var(--toast-text);
 }
 
 .swal2-popup.swal2-toast.apprise-toast .swal2-title {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
   margin: 0;
   padding: 0;
   color: var(--toast-text);
@@ -1039,7 +1049,17 @@ textarea {
 }
 
 .swal2-popup.swal2-toast.apprise-toast .swal2-timer-progress-bar {
+  grid-column: 1 / -1;
   background: var(--toast-border);
+}
+
+.swal2-popup.swal2-toast.apprise-toast .swal2-close {
+  display: none !important;
+}
+
+.swal2-popup.swal2-toast.apprise-toast .swal2-timer-progress-bar-container {
+  grid-column: 1 / -1;
+  grid-row: 2;
 }
 
 #toast-container .toast.apprise-toast-fallback {
@@ -1048,15 +1068,31 @@ textarea {
   --toast-text: var(--toast-info-text);
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
   width: 100%;
   min-width: 0;
+  min-height: 0;
   margin: 0 0 0.5rem;
+  padding: 0.8rem 1rem;
   border: 1px solid var(--toast-border);
   border-left-width: 0.35rem;
   border-radius: 0.65rem;
   color: var(--toast-text);
   background: var(--toast-bg);
   box-shadow: 0 0.65rem 1.8rem var(--dialog-shadow);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+}
+
+#toast-container .toast.apprise-toast-fallback>span:not(.apprise-toast-fallback-icon) {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 #toast-container {
@@ -1070,7 +1106,7 @@ textarea {
 .apprise-toast-fallback-icon {
   width: 1.55rem;
   height: 1.55rem;
-  margin-right: 0.75rem;
+  margin: 0;
   flex: 0 0 auto;
 }
 
@@ -2217,6 +2253,7 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .card-panel {
+  --review-control-size: 1.95rem;
   break-inside: avoid;
   page-break-inside: avoid;
   display: block;
@@ -2258,20 +2295,22 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .url-plugin-title {
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.1;
-  opacity: 0.78;
+  opacity: 0.9;
 }
 
 #url-list .url-meta-right {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.34rem;
+  min-width: 0;
   flex: 0 0 auto;
-  --review-state-icon-box-size: 1.95rem;
 }
 
 #url-list .url-header {
@@ -2380,8 +2419,8 @@ body .tabs .tab.disabled a:hover i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--review-state-icon-box-size);
-  height: var(--review-state-icon-box-size);
+  width: var(--review-control-size);
+  height: var(--review-control-size);
   border-radius: 50%;
   opacity: 0.72;
   line-height: 1;
@@ -2480,8 +2519,8 @@ body .tabs .tab.disabled a:hover i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--review-state-icon-box-size);
-  height: var(--review-state-icon-box-size);
+  width: var(--review-control-size);
+  height: var(--review-control-size);
   border-radius: 50%;
   line-height: 1;
   flex: 0 0 auto;
@@ -2500,9 +2539,131 @@ body .tabs .tab.disabled a:hover i {
   letter-spacing: 0.01em;
 }
 
+/* Use the same theme accent for template names in the URL and header. */
+#url-list .url-template-var,
+#url-list .url-template-chip,
+.review-template-field label {
+  color: var(--mobile-beta-accent);
+  background: var(--mobile-beta-accent-soft);
+  border: 1px solid var(--mobile-beta-accent);
+  border-radius: 999px;
+  font-family: monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#url-list .url-template-var {
+  display: inline-block;
+  position: relative;
+  z-index: 0;
+  padding: 0 0.27rem;
+  border: 0;
+  background: transparent;
+  line-height: 1;
+  vertical-align: baseline;
+}
+
+/* Expand the marker inside the field without changing the URL row height. */
+#url-list .url-template-var::before {
+  content: "";
+  position: absolute;
+  inset: -0.29rem 0 -0.35rem;
+  z-index: -1;
+  border: 1px solid var(--mobile-beta-accent);
+  border-radius: 999px;
+  background: var(--mobile-beta-accent-soft);
+}
+
+/* The small form shown before a test send, asking for the values an
+   entry is waiting on. */
+.review-template-form {
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+.review-template-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.6rem;
+}
+
+.review-template-control {
+  width: 100%;
+}
+
+.review-template-field label {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 1.28rem;
+  padding: 0.05rem 0.38rem 0.1rem;
+  box-sizing: border-box;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.review-template-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.3rem 2.7rem 0.3rem 0.45rem !important;
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.review-template-field input::placeholder {
+  color: inherit;
+  opacity: 0.28;
+}
+
+.review-template-field input.is-invalid {
+  border-color: var(--form-error-border) !important;
+  box-shadow: 0 1px 0 0 var(--form-error-border) !important;
+}
+
+.review-template-error {
+  color: var(--form-error-text);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.review-template-summary-error {
+  margin: 0 0 1rem;
+}
+
+.review-template-summary-error[hidden] {
+  display: none;
+}
+
+.review-template-field .value-visibility-toggle {
+  right: 0.35rem;
+  top: 0.15rem;
+}
+
+/* Compact template names sit before the card's status controls. */
+#url-list .url-template-summary {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+#url-list .url-template-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.28rem;
+  padding: 0.05rem 0.38rem 0.1rem;
+  box-sizing: border-box;
+  font-size: 0.66rem;
+  line-height: 1;
+}
+
 #url-list .url-tags-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.4rem;
   margin-top: 0.2rem;
   min-height: 1.55rem;
@@ -2520,13 +2681,21 @@ body .tabs .tab.disabled a:hover i {
 #url-list .review-test-btn {
   margin-left: auto;
   border-radius: 8px !important;
-  padding: 0 0.42rem;
-  min-width: 0;
+  padding: 0;
+  min-width: var(--review-control-size);
+  width: var(--review-control-size);
+  height: var(--review-control-size);
+  min-height: var(--review-control-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   flex: 0 0 auto;
   border: 1px solid transparent;
 }
 
 #url-list .review-test-btn .material-icons {
+  display: block;
   font-size: 1.05rem;
   line-height: 1;
 }
@@ -2555,7 +2724,16 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #url-list .copy-url-btn {
-  margin-top: 0.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--review-control-size);
+  height: var(--review-control-size);
+  min-width: var(--review-control-size);
+  min-height: var(--review-control-size);
+  margin: 0;
+  padding: 0;
+  line-height: 1;
 }
 
 #url-list .copy-url-btn .material-icons,
@@ -2568,6 +2746,23 @@ body .tabs .tab.disabled a:hover i {
 .snippet-visibility-btn .material-icons,
 .snippet-copy-btn .material-icons {
   font-size: 1.1rem;
+}
+
+#url-list .copy-url-btn .material-icons {
+  display: block;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  #url-list .url-meta {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  #url-list .url-meta-right {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
 }
 
 .config-id-bar {
@@ -2947,7 +3142,7 @@ code.config-id.is-concealed {
   overflow: hidden;
   border-color: var(--config-list-border);
   border-radius: 0.55rem;
-  background: var(--config-list-surface);
+  background: var(--select-bg);
 }
 
 .collection.config-list-collection .config-list-item {
@@ -3476,6 +3671,12 @@ Authentication Editor
 .concealed-field input {
   padding-right: 2.5rem !important;
   box-sizing: border-box !important;
+}
+
+/* Template values look concealed without becoming password-manager fields. */
+.concealed-field input[data-concealed-text="true"]:not(.value-is-visible) {
+  -webkit-text-security: disc;
+  text-security: disc;
 }
 
 .value-visibility-toggle {
@@ -4262,12 +4463,17 @@ Authentication Editor
   }
 }
 
-.notify-top-row .input-field>label {
+#notify .notify-form-section .input-field>label,
+#notify .notify-form-section .input-field>label.active {
   position: static;
-  transform: none;
   display: block;
   margin: 0 0 0.2rem 0;
-  font-size: 0.9rem;
+  transform: none;
+  color: var(--mobile-beta-accent);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .notify-target-guidance {
@@ -4316,7 +4522,7 @@ Authentication Editor
 
 .notify-attachments-field .btn-file {
   display: inline-flex;
-  margin-top: 0.25rem;
+  margin-top: 0;
 }
 
 #notify #id_body.notify-missing {
@@ -4385,6 +4591,204 @@ Authentication Editor
   margin-left: 0.25rem;
 }
 
+.notify-form-section {
+  width: 100%;
+  min-width: 0;
+  margin: 0.55rem 0 0;
+  padding: 0.8rem;
+  border: 1px solid var(--select-border);
+  border-radius: 10px;
+  box-sizing: border-box;
+  background: var(--dialog-surface-raised);
+}
+
+.notify-delivery-options .notify-top-row,
+.notify-message-fields .row {
+  margin-top: 0;
+}
+
+#notify .notify-form-section .select-wrapper input.select-dropdown,
+#notify .notify-form-section .chips,
+#notify .notify-template-row input,
+#notify .notify-message-fields input,
+#notify .notify-message-fields textarea {
+  border: 1px solid var(--select-border) !important;
+  border-radius: 7px !important;
+  box-sizing: border-box;
+  background: var(--select-bg);
+  color: var(--select-text);
+}
+
+#notify .notify-form-section .select-wrapper input.select-dropdown,
+#notify .notify-message-fields input {
+  min-height: 2.75rem;
+  height: 2.75rem;
+}
+
+#notify .notify-form-section .chips {
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0 0.65rem;
+}
+
+#notify .notify-delivery-options .notify-attachments-field .btn-file {
+  min-height: 2.75rem;
+  height: 2.75rem;
+  line-height: 2.75rem;
+}
+
+#notify .notify-form-section .chips input {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent;
+}
+
+#notify .notify-message-fields input,
+#notify .notify-message-fields textarea {
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+}
+
+#notify .notify-message-fields textarea {
+  resize: vertical;
+}
+
+.notify-template-values-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.notify-template-values-heading h6,
+.notify-template-values-heading p {
+  margin: 0;
+}
+
+.notify-template-values-heading p,
+.notify-template-empty {
+  color: var(--notify-log-muted);
+  font-size: 0.82rem;
+}
+
+.notify-template-add {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.25rem;
+  border: 1px solid var(--select-border);
+  border-radius: 8px;
+}
+
+.notify-template-add:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.notify-template-add i.material-icons,
+.notify-template-remove i.material-icons {
+  font-size: 1.2rem;
+}
+
+.notify-template-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.notify-template-empty {
+  margin: 0.15rem 0;
+}
+
+.notify-template-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.8fr) minmax(12rem, 1.5fr) 2.5rem;
+  gap: 0.55rem;
+  align-items: end;
+  padding: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.notify-template-row.is-included {
+  border-color: var(--notify-log-success-border);
+  background: var(--notify-log-success-bg);
+}
+
+.notify-template-key-field,
+.notify-template-value-field {
+  min-width: 0;
+}
+
+.notify-template-key-field label,
+.notify-template-value-field label {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--notify-log-muted);
+  font-size: 0.75rem;
+}
+
+#notify .notify-template-row input {
+  width: 100%;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0 0.65rem !important;
+  border: 1px solid var(--select-border) !important;
+  border-radius: 7px !important;
+  box-sizing: border-box !important;
+  background: var(--config-list-surface);
+  color: var(--select-text);
+  font-family: monospace;
+}
+
+#notify .notify-template-row input:focus {
+  border-color: var(--select-border-hover) !important;
+  box-shadow: 0 0 0 3px var(--select-focus-ring) !important;
+}
+
+#notify .notify-template-value-control input {
+  padding-right: 2.8rem !important;
+}
+
+.notify-template-value-control .value-visibility-toggle,
+.notify-template-value-control .value-visibility-toggle:hover,
+.notify-template-value-control .value-visibility-toggle:focus,
+.notify-template-value-control .value-visibility-toggle:active {
+  top: 50%;
+  right: 0.35rem;
+  height: 2rem;
+  line-height: 2rem;
+  transform: translateY(-50%);
+  background-color: var(--select-bg) !important;
+}
+
+.notify-template-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--select-border);
+  border-radius: 7px;
+  color: var(--notify-log-error-border);
+}
+
+.notify-template-remove:hover,
+.notify-template-remove:focus-visible {
+  border-color: var(--notify-log-error-border);
+  background: var(--notify-log-error-bg);
+}
+
 #notify .row,
 #notify .row .input-field {
   margin-top: 0.2em;
@@ -4406,15 +4810,6 @@ Authentication Editor
 #notify .row {
   margin-right: 0;
   margin-left: 0;
-}
-
-.notify-top-row .input-field label[for="id_tag"] {
-  position: static;
-  transform: none;
-  display: block;
-  margin-top: -0.1rem;
-  margin-bottom: 0;
-  font-size: 0.9rem;
 }
 
 .btn-clear-form {
@@ -4578,6 +4973,21 @@ Authentication Editor
 }
 
 @media (max-width: 600px) {
+  .notify-template-row {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+
+  .notify-template-key-field,
+  .notify-template-value-field {
+    grid-column: 1;
+  }
+
+  .notify-template-remove {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+  }
+
   #notify .notify-form-actions {
     flex-wrap: nowrap;
   }
@@ -4596,9 +5006,27 @@ Authentication Editor
 }
 
 @media (max-width: 360px) {
+  .notify-form-section {
+    padding: 0.55rem;
+  }
+
+  .notify-template-values-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notify-template-add {
+    justify-content: center;
+  }
+
   #notify .notify-top-row>.input-field.col {
     width: 100%;
     margin-left: 0;
+  }
+
+  #notify .notify-form-section .row>.input-field.col {
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
   }
 
   #notify .notify-form-actions {
@@ -4688,6 +5116,30 @@ Authentication Editor
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.swal2-popup .notify-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 0.45rem;
+}
+
+.swal2-popup .notify-log-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--notify-log-border);
+  border-radius: 0.45rem;
+  color: var(--mobile-beta-accent);
+  background: var(--dialog-surface-raised);
+  line-height: 2.25rem;
+}
+
+.swal2-popup .notify-log-copy i.material-icons {
+  margin: 0;
+  font-size: 1.1rem;
 }
 
 @keyframes notify-live-pulse {

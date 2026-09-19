@@ -310,9 +310,10 @@ The above output may look like this:
 ```
 
 - The `attach_lock` always cross references if the `APPRISE_ATTACH_SIZE` on whether or not it is `0` (zero) or less.
-- The `config_lock` always cross references if the `APPRISE_CONFIG_LOCK` is enabled or not.
-- `stateful_enabled` shows whether `APPRISE_STATEFUL_MODE` is enabled.
-- `stateless_enabled` shows whether `APPRISE_STATELESS_MODE` is enabled.
+- `config_lock` reports whether this caller may view configuration content. It
+  is `false` for an administrator who can bypass the lock.
+- `stateful_enabled` and `stateless_enabled` report the server-wide mode
+  switches. They do not grant the current caller permission to use each mode.
 - `degraded` is `true` when both notification modes are disabled.
 - `max_attachments` is the active `APPRISE_MAX_ATTACHMENTS` value.
 - `attach_size` is the active `APPRISE_ATTACH_SIZE` value.
@@ -420,10 +421,10 @@ The `/cfg` list requires `APPRISE_ADMIN=yes` and `APPRISE_STATEFUL_MODE=simple`.
 | `/move/{KEY}` |  POST  | Moves the configuration stored at *{KEY}* to a new Config ID.<br/>*Payload Parameters*<br/>📌 **to**: The destination Config ID. It must not already have a configuration. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
-| `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).
-| `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
+| `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).<br/>📌 **template**: Values for a configuration written with `${NAME}` markers. Send a JSON object (`"template": {"api_key": "..."}`) or one form field per name (`template[api_key]=...`).
+| `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists template names with their configuration defaults (or `null`). With `privacy=1`, URL secrets are hidden and listed defaults become `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
-| `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, access, and username as JSON. Passwords are never returned.
+| `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, `access`, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
@@ -451,7 +452,11 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 }
 ```
 
-You can pass in attributes to the `/json/urls/{KEY}` such as `privacy=1` which hides the passwords and secret tokens when returning the response.  You can also set `tag=` and filter the returned results based on a comma separated set of tags. if no `tag=` is specified, then `tag=all` is used as the default.
+You can pass `privacy=1` to `/json/urls/{KEY}` to hide passwords, secret tokens,
+and configuration defaults. Template names remain available, but a `null`
+value can mean either no default was declared or privacy hid it. Server
+environment values are never returned. Use `tag=` to filter results with a
+comma-separated set of tags; if omitted, `tag=all` is used.
 
 When `APPRISE_CONFIG_LOCK` is set, only an authenticated administrator may use `/json/urls/{KEY}`. Other callers receive `403` without revealing saved URLs or tags. Non-admin notification callers must provide a specific tag; `all` is rejected.
 
@@ -496,6 +501,65 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/abc123
 ```
+
+### Template Values
+
+A saved YAML configuration can leave a value out of a URL and have it filled in
+when the notification is sent. This lets you store the configuration without
+the secrets in it, or let the caller fill in a value chosen by the author.
+
+Write `${NAME}` where the value belongs and declare every name in a `template:`
+section:
+
+```yaml
+template:
+  # A default is used unless the notification supplies a value
+  smtp_host: smtp.example.com
+  # No default: the notification or server environment must fill this name
+  api_key:
+
+urls:
+  - sendgrid://${API_KEY}:noreply@example.com/you@example.com:
+      - tag: alerts
+```
+
+Send the values along with the notification, as a JSON object:
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+    -d '{"tag":"alerts", "body":"test message",
+         "template": {"api_key": "your-secret-key"}}' \
+    http://localhost:8000/notify/abc123
+```
+
+...or as one form field per name:
+
+```bash
+curl -X POST \
+    -F "tag=alerts" \
+    -F "body=test message" \
+    -F "template[api_key]=your-secret-key" \
+    http://localhost:8000/notify/abc123
+```
+
+Apprise uses the first value it finds: the one sent with the notification, then
+the default in the `template:` section, then `APPRISE_TEMPLATE_<NAME>` from the
+server's own environment. Environment values are never shown to a caller. A URL
+still missing a value is skipped and the response reports `424` without saying
+which name it was. The **Notifications** and **Review** tabs prompt for the
+names a configuration needs, and `/json/urls/{KEY}` reports them to other
+clients.
+
+:warning: A variable placed in a URL can change any part of it, including its
+host. A named YAML setting is safer when a less-trusted caller should control
+only one option, which matters most for `public` and `locked` configurations.
+
+Set `APPRISE_ALLOW_TEMPLATES=no` to switch the feature off; `${NAME}` is then
+ordinary text.
+
+For the full details -- where each value may be placed, what the API returns,
+and how to fill in markers from your own client -- see
+[appriseit.com](https://appriseit.com/api/usage/#supplying-template-values).
 
 ### Tagging
 
@@ -548,6 +612,14 @@ logs one entry at a time. This avoids rebuilding a large result in memory. Live
 progress streaming sends logs while notification work is still running.
 
 The response contains `log` events followed by one `result` event. An unexpected processing failure produces an `error` event instead. See the `StreamEvent` schema in `swagger.yaml` for the event fields.
+
+#### Log Detail
+
+Send `X-Apprise-Log-Level` to choose how much detail comes back (`trace`,
+`debug`, `info`, `warning`, `error`, or `critical`). For saved configurations,
+`debug` and `trace` require administrator privileges or `user` access. Calls
+using `locked`, `public`, or `disabled` access are limited to `info`. Stateless
+calls allow every level because the caller provides their own URLs.
 
 Slow clients keep up to 2 MB in memory before using automatically cleaned temporary storage, which holds up to 256 MB by default. During normal operation, events remain ordered and are not omitted while the client stays connected.
 
@@ -613,6 +685,8 @@ The use of environment variables allow you to provide overrides to default setti
 | `IPV4_ONLY` | Force an all IPv4 only environment (default supports both IPV4 and IPv6). If `IPV6_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
 | `IPV6_ONLY` | Force an all IPv6 only environment (default supports both IPv4 and IPv6). If `IPV4_ONLY` is also set, this is treated as an invalid, ambiguous configuration and the startup script will exit with an error.
 | `HTTP_PORT` | Force the default listening port to be something other than `8000` within the Docker container.
+| `APPRISE_ALLOW_TEMPLATES` | Pass template support directly to Apprise. Defaults to `yes`, matching the CLI. Set it to `no` to ignore `template:` sections and `APPRISE_TEMPLATE_<NAME>`, leave `${NAME}` as ordinary text, and skip template-specific checks. Only the server operator controls this setting.
+| `APPRISE_TEMPLATE_<NAME>` | Fills a `${NAME}` in saved YAML only when the notification supplies no value and the configuration has no default. Blank values are ignored. |
 | `STRICT_MODE` | Applicable only to container deployments. Set this to `yes` to allow only known Apprise routes and add tighter authentication rate limits. Unknown routes return `404`, unsupported methods return `405`, and rate-limited requests return `429`, allowing reverse proxies and other security tooling to handle them reliably. The default is `no`.
 | `APPRISE_CONNECTION_TIMEOUT` | How long the container waits for activity from a live notification stream, in seconds. Accepts `30` to `3600` and defaults to `600` (10 minutes). This does not limit the total notification time.
 | `APPRISE_DEFAULT_THEME` | Can be set to `light` or `dark`; it defaults to `light` if not otherwise provided. The values are case-insensitive, and `l` or `d` may be used as shorthand. The theme can be toggled from within the website as well.
@@ -718,7 +792,7 @@ Each Config ID has one access mode. The administrator can recover and manage eve
 | --- | --- | --- |
 | `user` | Requires its credentials. Tags are optional. The user may edit or clear their configuration. |
 | `locked` | Requires its credentials plus a specific tag other than `all`. Content is hidden, but the user may change their password and move the Config ID. |
-| `public` | Requires only the Config ID and a specific tag other than `all`.Content stays hidden. Saved credentials, if present, retain the `locked` user abilities. |
+| `public` | Requires only the Config ID and a specific tag other than `all`. Content stays hidden. Saved credentials, if present, retain the `locked` user abilities. |
 | `disabled` | Freezes configuration from use by others.  The administrator account can however still send notifications using this if they choose. |
 
 Public access applies only to `POST /notify/{KEY}`. Health, configuration, listing, management, and stateless endpoints still require suitable credentials. Attachments remain available to public notification callers.
@@ -774,8 +848,6 @@ Per-key locks are ignored while `APPRISE_AUTH_REQUIRED` is disabled, restoring t
 **Logout** ends the signed browser login. Credentials cached by a browser cannot silently restore it.
 
 `APPRISE_CONFIG_LOCK` does not block setting, rotating, or removing per-key credentials.
-
-While `APPRISE_CONFIG_LOCK=yes`, it also acts as the minimum per-configuration access policy. New records default to `locked`. An administrator may still save `user` or `public`; the editor warns that either behaves as `locked` until the global lock is removed. Saved access is not rewritten, and the stricter `disabled` mode remains available.
 
 Old locks without configuration are removed after `APPRISE_AUTH_PRUNE_SECONDS` (30 days by default). When a `user` clears their configuration, their credentials remain and this grace period restarts so they can save a replacement. Locks with configuration remain. See [Pruning](#pruning).
 
