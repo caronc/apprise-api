@@ -384,6 +384,39 @@ class TemplateTests(SimpleTestCase):
         assert mock_request.call_count == 2
 
     @patch("requests.request")
+    def test_configuration_default_beats_the_environment(self, mock_request):
+        """A value follows caller, then configuration default, then server.
+
+        The environment is the last one consulted, so a default written in
+        the configuration is used ahead of anything the deployment set.
+        """
+        response = Mock()
+        response.status_code = requests.codes.ok
+        response.content = ""
+        response.headers = {}
+        mock_request.return_value = response
+
+        with patch.dict(
+            os.environ,
+            {
+                # host_name carries a default of "localhost"; token has none
+                "APPRISE_TEMPLATE_HOST_NAME": "environment.example",
+                "APPRISE_TEMPLATE_TOKEN": "from-env",
+            },
+        ):
+            result = self.client.post(f"/notify/{self.key}", {"body": "x", "tag": "work"})
+
+        assert result.status_code == 200
+        sent = dumps([str(call) for call in mock_request.call_args_list])
+
+        # The configuration default was used, not the environment value
+        assert "localhost" in sent
+        assert "environment.example" not in sent
+
+        # With no default of its own, token did fall back to the environment
+        assert "from-env" in sent
+
+    @patch("requests.request")
     def test_templates_disabled_reads_config_verbatim(self, mock_request):
         """Reads the configuration as it was read before templates existed.
 
