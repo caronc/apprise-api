@@ -590,6 +590,38 @@ li.social-theme-nav>a:focus-visible,
   white-space: nowrap;
 }
 
+/* Handle cases when a long account name pushes the logo in a
+   weird way that breaks the layout; this is  small fix to push
+   the line containing hte username to not interfere with the logo
+   when realestate is limited */
+@media (max-width: 600px) {
+  .nav .apprise-logo {
+    height: 3.5em;
+  }
+
+  li.social-theme-nav {
+    gap: 0.22rem;
+  }
+
+  .auth-session-nav {
+    gap: 0.22rem;
+  }
+
+  .auth-account-name {
+    max-width: 5.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav .apprise-logo {
+    height: 2.75em;
+  }
+
+  .auth-account-name {
+    display: none;
+  }
+}
+
 .logout-confirm-icon {
   display: inline-flex;
   width: 4.5rem;
