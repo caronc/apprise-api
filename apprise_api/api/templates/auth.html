@@ -480,7 +480,7 @@
       authUpdateIndicators(savedState.auth_state);
       // Use a template literal because the included QR icon spans several lines.
       const savedCredentialButtons = savedPassword
-        ? `<button type="button" id="auth-save-copy" class="btn-flat auth-save-copy" aria-label="{% trans "Copy Username and Password to Clipboard" %}" title="{% trans "Copy Username and Password to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>`
+        ? `<button type="button" id="auth-save-copy" class="btn-flat auth-save-copy" aria-label="{% trans "Copy Username, Password, and Config ID to Clipboard" %}" title="{% trans "Copy Username, Password, and Config ID to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>`
           + `<button type="button" id="auth-save-qr" class="btn-flat auth-save-copy" aria-label="{% trans "Show Apprise Mobile Quick Config" %}" title="{% trans "Show Apprise Mobile Quick Config" %}"><span class="config-id-qr-icon" aria-hidden="true">{% include 'icons/qrcode.svg' %}</span></button>`
         : '';
       appriseFire({
@@ -491,9 +491,13 @@
           const copyButton = document.getElementById('auth-save-copy');
           if (copyButton) {
             copyButton.addEventListener('click', function () {
+              // The Config ID completes the set, so what is pasted is
+              // everything needed to reach this configuration.
               appriseCopyToClipboard(
-                'USERNAME=' + savedUsername + '\nPASSWORD=' + savedPassword,
-                '{% trans "Username and password copied to clipboard" %}'
+                'USERNAME=' + savedUsername
+                  + '\nPASSWORD=' + savedPassword
+                  + '\nCONFIG_ID=' + authConfigId,
+                '{% trans "Username, password, and Config ID copied to clipboard" %}'
               );
             });
           }

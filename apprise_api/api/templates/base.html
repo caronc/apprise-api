@@ -888,7 +888,14 @@
   // Keep every concealed input and its accessibility labels synchronized.
   function appriseSetValueVisibility(input, toggle, show, focusInput) {
     const label = show ? toggle.dataset.hideLabel : toggle.dataset.showLabel;
-    input.type = show ? 'text' : 'password';
+    if (input.dataset.concealedText === 'true') {
+      // Template values stay text inputs; CSS conceals them without turning
+      // them into password fields that browser managers may autofill.
+      input.classList.toggle('value-is-visible', show);
+    } else {
+      // Ordinary credential fields still use the browser's password mode.
+      input.type = show ? 'text' : 'password';
+    }
     // The icon describes the current state: crossed out while hidden and open
     // while the value is visible.
     toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';
@@ -915,7 +922,10 @@
         if (!input) {
           return;
         }
-        const show = input.type !== 'text';
+        // Use the same current-state check as the visibility setter above.
+        const show = input.dataset.concealedText === 'true'
+          ? !input.classList.contains('value-is-visible')
+          : input.type !== 'text';
         appriseSetValueVisibility(
           input,
           toggle,
@@ -1515,9 +1525,18 @@
 
   // Register custom Apprise TEXT config language
   hljs.registerLanguage('apprise-config', function(hljs) {
+    // Template values stand out in both URLs and YAML settings.
+    const TEMPLATE_VARIABLE = {
+      className: 'template-variable',
+      begin: /\$\{[A-Za-z0-9_]{1,{{ TEMPLATE_NAME_MAXLEN }}}\}/,
+      relevance: 0
+    };
+
     const URL = {
       className: 'string',
-      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s#]*/,
+      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\//,
+      end: /(?=\s|#|$)/,
+      contains: [TEMPLATE_VARIABLE],
       relevance: 0
     };
 
@@ -1548,6 +1567,7 @@
         COMMENT,
         TAG_DECL,
         URL,
+        TEMPLATE_VARIABLE,
         TAG_NAME
       ]
     };

@@ -372,7 +372,7 @@
                     {% endif %}
                   {% endfor %}
                   <div class="config-form-actions">
-                    {# Reaching this editor means the effective access policy permits writes. #}
+                    {# Reaching this editor means the caller may save changes. #}
                     <button class="btn waves-effect waves-light" type="submit" name="action">
                       {% trans "Save Configuration" %}
                       <i class="material-icons right">save</i>
@@ -423,6 +423,18 @@
                       {% blocktrans %}<span class="loaded-config-heading-status-text"><span class="card-count" data-count-format="plain">0</span> notification(s) selected for sending</span>{% endblocktrans %}
                     </p>
                   </div>
+                </div>
+                <div id="review-unsaved-guidance"
+                     class="notify-target-guidance review-unsaved-guidance"
+                     aria-live="polite"
+                     hidden>
+                  <div class="notify-target-guidance-title">
+                    <span class="notify-target-guidance-icon" aria-hidden="true">
+                      {% include "icons/status-warning.svg" %}
+                    </span>
+                    <span>{% trans "Unsaved Configuration Changes" %}</span>
+                  </div>
+                  {% blocktrans with config_chip='<a href="#config" class="tab-chip tab-chip-link"><i class="material-icons">settings</i> Configuration</a>'|safe %}The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the {{ config_chip }} section to see the result here.{% endblocktrans %}
                 </div>
                 <div class="loaded-config-tip">
                   <ul class="loaded-config-tip-list">
@@ -482,45 +494,70 @@
               <form id="donotify"
                     enctype="multipart/form-data"
                     action="{% url "notify" key %}"
+                    autocomplete="off"
                     method="post">
-                <div class="row notify-top-row">
-                  <div class="input-field col s6 m2">
-                    {{ form_notify.format.label_tag }}
-                    {{ form_notify.format }}
-                    {{ form_notify.format.errors }}
+                <section class="notify-form-section notify-delivery-options"
+                         aria-label="{% trans 'Delivery Options' %}">
+                  <div class="row notify-top-row">
+                    <div class="input-field col s6 m2">
+                      {{ form_notify.format.label_tag }}
+                      {{ form_notify.format }}
+                      {{ form_notify.format.errors }}
+                    </div>
+                    <div class="input-field col s6 m2">
+                      {{ form_notify.type.label_tag }}
+                      {{ form_notify.type }}
+                      {{ form_notify.type.errors }}
+                    </div>
+                    <div class="input-field col s12 m4">
+                      {{ form_notify.tag.label_tag }}
+                      {{ form_notify.tag }}
+                      {{ form_notify.tag.errors }}
+                    </div>
+                    <div class="input-field col s12 m4 notify-attachments-field">
+                      {{ form_notify.attachment.label_tag }}
+                      {{ form_notify.attachment }}
+                      {{ form_notify.attachment.errors }}
+                      {# Where we will render the selected files #}
+                      <div class="notify-attachments-list"></div>
+                    </div>
                   </div>
-                  <div class="input-field col s6 m2">
-                    {{ form_notify.type.label_tag }}
-                    {{ form_notify.type }}
-                    {{ form_notify.type.errors }}
+                </section>
+                <section class="notify-form-section notify-template-values"
+                         aria-labelledby="notify-template-values-title">
+                  <div class="notify-template-values-heading">
+                    <div>
+                      <h6 id="notify-template-values-title">{% trans "Template Values" %}</h6>
+                      <p>{% trans "Rows with a value are sent; blank values use the server fallback (if defined)." %}</p>
+                    </div>
+                    <button id="notify-template-add"
+                            class="btn-flat notify-template-add"
+                            type="button">
+                      <i class="material-icons" aria-hidden="true">add</i>
+                      <span>{% trans "Add Value" %}</span>
+                    </button>
                   </div>
-                  <div class="input-field col s12 m4">
-                    {{ form_notify.tag.label_tag }}
-                    {{ form_notify.tag }}
-                    {{ form_notify.tag.errors }}
+                  <div id="notify-template-rows"
+                       class="notify-template-rows"
+                       aria-live="polite"></div>
+                </section>
+                <section class="notify-form-section notify-message-fields"
+                         aria-label="{% trans 'Message' %}">
+                  <div class="row">
+                    <div class="input-field col s12">
+                      {{ form_notify.title.label_tag }}
+                      {{ form_notify.title }}
+                      {{ form_notify.title.errors }}
+                    </div>
                   </div>
-                  <div class="input-field col s12 m4 notify-attachments-field">
-                    {{ form_notify.attachment.label_tag }}
-                    {{ form_notify.attachment }}
-                    {{ form_notify.attachment.errors }}
-                    {# Where we will render the selected files #}
-                    <div class="notify-attachments-list"></div>
+                  <div class="row">
+                    <div class="input-field col s12">
+                      {{ form_notify.body.label_tag }}
+                      {{ form_notify.body }}
+                      {{ form_notify.body.errors }}
+                    </div>
                   </div>
-                </div>
-                <div class="row">
-                  <div class="input-field col s12">
-                    {{ form_notify.title.label_tag }}
-                    {{ form_notify.title }}
-                    {{ form_notify.title.errors }}
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="input-field col s12">
-                    {{ form_notify.body.label_tag }}
-                    {{ form_notify.body }}
-                    {{ form_notify.body.errors }}
-                  </div>
-                </div>
+                </section>
                 <div class="notify-form-actions">
                   <span class="btn btn-clear-form waves-effect waves-light">
                     <span class="btn-text">{% trans "Clear Form" %}</span>
@@ -653,13 +690,58 @@
     return textarea.value;
   }
 
-  function setReviewUrlTextWithBreaks(codeEl, url) {
+  // Matches the same ${NAME} markers the server recognises. The length
+  // limit comes from the server so the two can never disagree.
+  const TEMPLATE_VAR_RE =
+    new RegExp('\\$\\{([A-Za-z0-9_]{1,{{ TEMPLATE_NAME_MAXLEN }}})\\}', 'g');
+
+  // Incremented for accessible input IDs created inside template dialogs.
+  let templatePromptId = 0;
+
+  // Names removed from the Notification tab stay hidden until the selected
+  // destinations no longer use them or the form is cleared.
+  const notifyTemplateSuppressed = new Set();
+  let notifyTemplateRowId = 0;
+
+  // Highlight declared ${NAME} markers within the displayed URL.
+  function appendReviewUrlPiece(codeEl, text, declaredNames) {
+    let position = 0;
+    TEMPLATE_VAR_RE.lastIndex = 0;
+    let match;
+    while ((match = TEMPLATE_VAR_RE.exec(text)) !== null) {
+      if (!declaredNames.has(match[1].toLowerCase())) {
+        continue;
+      }
+      if (match.index > position) {
+        codeEl.appendChild(
+          document.createTextNode(text.slice(position, match.index)));
+      }
+      let marker = document.createElement('span');
+      marker.setAttribute('class', 'url-template-var');
+      marker.setAttribute('title',
+        '{% trans "Template Variable" %}');
+      marker.textContent = match[0];
+      codeEl.appendChild(marker);
+      position = match.index + match[0].length;
+    }
+    if (position < text.length) {
+      codeEl.appendChild(document.createTextNode(text.slice(position)));
+    }
+  }
+
+  function setReviewUrlTextWithBreaks(codeEl, url, templateDetails) {
     const normalized = decodeHtmlEntities(url);
+    const details = templateDetails || {};
+    const declaredNames = new Set(
+      Object.keys(details).map(
+        function (name) { return String(name).toLowerCase(); }
+      )
+    );
     codeEl.textContent = '';
     const pieces = normalized.split(/([?&])/);
     pieces.forEach(function (piece, index) {
       if (piece.length > 0) {
-        codeEl.appendChild(document.createTextNode(piece));
+        appendReviewUrlPiece(codeEl, piece, declaredNames);
       }
       if ((piece === '?' || piece === '&') && index < pieces.length - 1) {
         codeEl.appendChild(document.createElement('wbr'));
@@ -745,6 +827,12 @@
     const entries = [];
     let renderFrame = null;
     const logMarkup =
+      '<div class="notify-log-actions">' +
+        '<button type="button" class="btn-flat notify-log-copy" data-notify-copy-logs>' +
+          '<i class="material-icons" aria-hidden="true">content_copy</i>' +
+          '<span>{% trans "Copy Logs" %}</span>' +
+        '</button>' +
+      '</div>' +
       '<div class="notify-log-panel" role="log" aria-live="polite" aria-relevant="additions">' +
         '<ul class="logs notify-live-logs" data-notify-live-logs></ul>' +
         '<p class="notify-live-empty" data-notify-live-empty>{% trans "Waiting for log activity…" %}</p>' +
@@ -789,6 +877,28 @@
       return row;
     }
 
+    // Build one plain-text record per log entry, wrapped for easy pasting.
+    function clipboardText() {
+      const lines = entries.map(function (entry) {
+        const parts = [];
+        // Time is optional for messages added locally after a request fails.
+        if (entry.asctime) parts.push(String(entry.asctime));
+        // Keep the level visible even if a log entry omitted it.
+        parts.push('[' + String(entry.level || 'INFO').toUpperCase() + ']');
+        parts.push(String(entry.message || ''));
+        if (entry.service) {
+          // Name the service when the message came from one.
+          parts.push(`({% trans "Service" %}: ${String(entry.service)})`);
+        }
+        return '- ' + parts.join(' ');
+      });
+      return [
+        '--- {% trans "BEGIN APPRISE NOTIFICATION LOG" %} ---',
+        ...lines,
+        '--- {% trans "END APPRISE NOTIFICATION LOG" %} ---'
+      ].join('\n');
+    }
+
     function render() {
       const container = Swal.getHtmlContainer();
       const list = container ? container.querySelector('[data-notify-live-logs]') : null;
@@ -809,6 +919,17 @@
         count.textContent = entries.length === 1
           ? '1 {% trans "event" %}'
           : entries.length + ' {% trans "events" %}';
+      }
+      const copy = container.querySelector('[data-notify-copy-logs]');
+      if (copy && copy.dataset.wired !== '1') {
+        // Render can run many times; connect the button only once.
+        copy.dataset.wired = '1';
+        copy.addEventListener('click', function () {
+          // Copy the same entries currently shown in the live log panel.
+          copyToClipboard(
+            clipboardText(), copy, '{% trans "Notification logs copied to clipboard" %}'
+          );
+        });
       }
       const panel = list.closest('.notify-log-panel');
       if (panel) panel.scrollTop = panel.scrollHeight;
@@ -936,7 +1057,185 @@
     }
   }
 
-  async function sendReviewTestNotification(tags, anchorEl) {
+  // Keep template inputs out of browser and password-manager autofill.
+  function disableTemplateAutofill(input) {
+    input.autocomplete = 'off';
+    // These attributes cover common password managers as well as browsers.
+    input.setAttribute('data-1p-ignore', 'true');
+    input.setAttribute('data-bwignore', 'true');
+    input.setAttribute('data-lpignore', 'true');
+    input.setAttribute('data-protonpass-ignore', 'true');
+    input.setAttribute('data-form-type', 'other');
+  }
+
+  // Ask for the values an entry is waiting on before a test send.
+  // Returns a {name: value} object, or null when the prompt was closed.
+  // Blank values are omitted so the server can use its configured fallback.
+  async function promptForTemplateValues(template) {
+    // Each name carries its declared default, or null when none is available.
+    const declared = template || {};
+    const names = Object.keys(declared);
+    if (names.length === 0) {
+      return {};
+    }
+
+    // Use DOM elements so variable names cannot become markup.
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('class', 'review-template-form');
+
+    const summary = document.createElement('div');
+    summary.setAttribute(
+      'class', 'auth-login-error review-template-summary-error');
+    summary.setAttribute('role', 'alert');
+    summary.hidden = true;
+    const summaryIcon = document.createElement('i');
+    summaryIcon.setAttribute('class', 'material-icons');
+    summaryIcon.setAttribute('aria-hidden', 'true');
+    summaryIcon.textContent = 'error_outline';
+    summary.appendChild(summaryIcon);
+    const summaryMessage = document.createElement('div');
+    summaryMessage.textContent =
+      '{% trans "Provide the required template values before sending." %}';
+    summary.appendChild(summaryMessage);
+    wrapper.appendChild(summary);
+
+    const intro = document.createElement('p');
+    intro.textContent =
+      '{% trans "Provide the values needed by the selected notification entries." %}';
+    wrapper.appendChild(intro);
+
+    names.forEach(function (name) {
+      const hasDefault = declared[name] !== null
+        && declared[name] !== undefined;
+      const field = document.createElement('div');
+      field.setAttribute('class', 'review-template-field');
+
+      const label = document.createElement('label');
+      const inputId = 'template-prompt-' + String(templatePromptId++);
+      label.setAttribute('for', inputId);
+      label.textContent = '${' + name.toUpperCase() + '}';
+      field.appendChild(label);
+
+      const control = document.createElement('div');
+      control.setAttribute('class', 'review-template-control concealed-field');
+
+      const input = document.createElement('input');
+      input.id = inputId;
+      // Conceal a text field visually so password managers leave it alone.
+      input.setAttribute('type', 'text');
+      input.dataset.concealedText = 'true';
+      disableTemplateAutofill(input);
+      input.dataset.templateName = name;
+      if (hasDefault) {
+        // A declared default fills this name if the field stays blank.
+        input.setAttribute('placeholder',
+          '{% trans "default used if blank" %}');
+      } else {
+        input.required = true;
+        input.dataset.templateRequired = 'true';
+      }
+      control.appendChild(input);
+
+      const visibility = document.createElement('button');
+      visibility.type = 'button';
+      visibility.setAttribute(
+        'class', 'btn-flat value-visibility-toggle');
+      visibility.setAttribute('tabindex', '-1');
+      visibility.setAttribute('data-value-toggle', '');
+      visibility.setAttribute('aria-controls', inputId);
+      visibility.setAttribute('aria-label', '{% trans "Show Value" %}');
+      visibility.setAttribute('title', '{% trans "Show Value" %}');
+      visibility.dataset.showLabel = '{% trans "Show Value" %}';
+      visibility.dataset.hideLabel = '{% trans "Hide Value" %}';
+      visibility.innerHTML =
+        '<i class="material-icons" aria-hidden="true">visibility_off</i>';
+      control.appendChild(visibility);
+
+      field.appendChild(control);
+
+      const error = document.createElement('span');
+      error.id = inputId + '-error';
+      error.setAttribute('class', 'review-template-error');
+      error.textContent = '{% trans "A value is required." %}';
+      error.hidden = true;
+      field.appendChild(error);
+      input.setAttribute('aria-describedby', error.id);
+      input.addEventListener('input', function () {
+        if (input.value.trim()) {
+          input.classList.remove('is-invalid');
+          input.removeAttribute('aria-invalid');
+          error.hidden = true;
+          summary.hidden = !Array.from(wrapper.querySelectorAll(
+            '[data-template-required="true"]'
+          )).some(function (requiredInput) {
+            return !requiredInput.value.trim();
+          });
+        }
+      });
+
+      wrapper.appendChild(field);
+    });
+
+    // Use the same accessible visibility behavior as other concealed fields.
+    appriseWireValueToggles(wrapper);
+    // Enter confirms the prompt without submitting another page form.
+    wrapper.addEventListener('keydown', function (event) {
+      if (event.target.matches('input')
+          && event.key === 'Enter' && !event.isComposing) {
+        event.preventDefault();
+        Swal.clickConfirm();
+      }
+    });
+
+    const result = await appriseFire({
+      title: '{% trans "Template Values" %}',
+      html: wrapper,
+      showCancelButton: true,
+      confirmButtonText: '{% trans "Send" %}',
+      focusConfirm: false,
+      preConfirm: function () {
+        let firstInvalid = null;
+        wrapper.querySelectorAll('[data-template-required="true"]')
+          .forEach(function (el) {
+            const error = document.getElementById(el.id + '-error');
+            const invalid = !el.value.trim();
+            el.classList.toggle('is-invalid', invalid);
+            if (invalid) {
+              el.setAttribute('aria-invalid', 'true');
+              if (error) error.hidden = false;
+              firstInvalid = firstInvalid || el;
+            } else {
+              el.removeAttribute('aria-invalid');
+              if (error) error.hidden = true;
+            }
+        });
+        if (firstInvalid) {
+          summary.hidden = false;
+          firstInvalid.focus();
+          return false;
+        }
+        summary.hidden = true;
+
+        // Send only the fields that were filled in. A blank one is left
+        // out so the saved default, or the server's own environment, can
+        // supply it. The server reports anything it still cannot resolve.
+        const values = {};
+        wrapper.querySelectorAll('[data-template-name]').forEach(function (el) {
+          const name = el.getAttribute('data-template-name');
+          const value = (el.value || '').trim();
+          if (value) {
+            values[name] = value;
+          }
+        });
+        return values;
+      }
+    });
+
+    return result && result.isConfirmed ? (result.value || {}) : null;
+  }
+
+  // The index narrows this quick test to its card; tags still filter delivery.
+  async function sendReviewTestNotification(tags, entryIndex, anchorEl, templateValues) {
     if (!tags || tags.length === 0) {
       appriseFire({
         title: '{% trans "Notification" %}',
@@ -958,6 +1257,12 @@
     formData.append('title', '{% trans "Apprise API Test" %}');
     formData.append('body', '{% trans "Message Body" %}');
     formData.append('tag', debugTags.join(','));
+    Object.keys(templateValues || {}).forEach(function (name) {
+      const value = String(templateValues[name] || '').trim();
+      if (name.trim() && value) {
+        formData.append('template[' + name.trim() + ']', value);
+      }
+    });
 
     if (anchorEl) {
       anchorEl.disabled = true;
@@ -966,7 +1271,9 @@
       await sendNotifyStream('{% url "notify" key %}', {
         method: 'POST',
         headers: {
-          'X-Apprise-Log-Level': 'debug'
+          'X-Apprise-Log-Level': 'debug',
+          // This card's position is checked against the loaded entries.
+          'X-Apprise-Notification-Index': String(entryIndex)
         },
         body: formData
       }, {
@@ -982,6 +1289,295 @@
         anchorEl.disabled = false;
       }
     }
+  }
+
+  // Template names are case-insensitive throughout Apprise.
+  function normalizeNotifyTemplateName(name) {
+    return String(name || '').trim().toLowerCase();
+  }
+
+  function notifyTemplateRowFor(name) {
+    const normalized = normalizeNotifyTemplateName(name);
+    return Array.from(document.querySelectorAll(
+      '#notify-template-rows .notify-template-row'
+    )).find(function (row) {
+      const key = row.querySelector('.notify-template-key');
+      return key && normalizeNotifyTemplateName(key.value) === normalized;
+    }) || null;
+  }
+
+  function updateNotifyTemplateEmptyState() {
+    const container = document.querySelector('#notify-template-rows');
+    if (!container) {
+      return;
+    }
+    const oldMessage = container.querySelector('.notify-template-empty');
+    const hasRows = container.querySelector('.notify-template-row') !== null;
+    if (hasRows && oldMessage) {
+      oldMessage.remove();
+    } else if (!hasRows && !oldMessage) {
+      const message = document.createElement('p');
+      message.className = 'notify-template-empty';
+      message.textContent =
+        '{% trans "No template values are currently defined." %}';
+      container.appendChild(message);
+    }
+  }
+
+  // Highlight rows that will be sent and allow only one unfinished name.
+  function updateNotifyTemplateControls() {
+    const rows = document.querySelectorAll(
+      '#notify-template-rows .notify-template-row'
+    );
+    const names = new Set();
+    let canAdd = true;
+    rows.forEach(function (row) {
+      const keyInput = row.querySelector('.notify-template-key');
+      const valueInput = row.querySelector('.notify-template-value');
+      const name = normalizeNotifyTemplateName(
+        keyInput ? keyInput.value : ''
+      );
+      const value = valueInput ? valueInput.value.trim() : '';
+      const duplicate = Boolean(name && names.has(name));
+      if (!name || duplicate) {
+        canAdd = false;
+      }
+      if (name) {
+        names.add(name);
+      }
+      row.classList.toggle(
+        'is-included', Boolean(name && value && !duplicate)
+      );
+    });
+
+    const add = document.querySelector('#notify-template-add');
+    if (add) {
+      add.disabled = !canAdd;
+    }
+    return canAdd;
+  }
+
+  // Automatic rows follow the selected destinations until the user edits them.
+  function createNotifyTemplateRow(name, value, automatic) {
+    const container = document.querySelector('#notify-template-rows');
+    if (!container) {
+      return null;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'notify-template-row';
+    row.dataset.automatic = automatic ? '1' : '0';
+    row.dataset.seedName = normalizeNotifyTemplateName(name);
+
+    const keyId = 'notify-template-key-' + String(notifyTemplateRowId);
+    const valueId = 'notify-template-value-' + String(notifyTemplateRowId++);
+
+    const keyField = document.createElement('div');
+    keyField.className = 'notify-template-key-field';
+    const keyLabel = document.createElement('label');
+    keyLabel.setAttribute('for', keyId);
+    keyLabel.textContent = '{% trans "Name" %}';
+    const keyInput = document.createElement('input');
+    keyInput.id = keyId;
+    keyInput.className = 'notify-template-key';
+    keyInput.type = 'text';
+    disableTemplateAutofill(keyInput);
+    keyInput.spellcheck = false;
+    keyInput.placeholder = 'NAME';
+    keyInput.value = name || '';
+    keyField.appendChild(keyLabel);
+    keyField.appendChild(keyInput);
+
+    const valueField = document.createElement('div');
+    valueField.className = 'notify-template-value-field';
+    const valueLabel = document.createElement('label');
+    valueLabel.setAttribute('for', valueId);
+    valueLabel.textContent = '{% trans "Value" %}';
+    const concealed = document.createElement('div');
+    concealed.className = 'notify-template-value-control concealed-field';
+    const valueInput = document.createElement('input');
+    valueInput.id = valueId;
+    valueInput.className = 'notify-template-value';
+    valueInput.type = 'text';
+    valueInput.dataset.concealedText = 'true';
+    disableTemplateAutofill(valueInput);
+    valueInput.value = value || '';
+    concealed.appendChild(valueInput);
+
+    const visibility = document.createElement('button');
+    visibility.type = 'button';
+    visibility.className = 'btn-flat value-visibility-toggle';
+    visibility.setAttribute('tabindex', '-1');
+    visibility.setAttribute('data-value-toggle', '');
+    visibility.setAttribute('aria-controls', valueId);
+    visibility.setAttribute('aria-label', '{% trans "Show Value" %}');
+    visibility.setAttribute('title', '{% trans "Show Value" %}');
+    visibility.dataset.showLabel = '{% trans "Show Value" %}';
+    visibility.dataset.hideLabel = '{% trans "Hide Value" %}';
+    visibility.innerHTML =
+      '<i class="material-icons" aria-hidden="true">visibility_off</i>';
+    concealed.appendChild(visibility);
+    valueField.appendChild(valueLabel);
+    valueField.appendChild(concealed);
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn-flat notify-template-remove';
+    remove.setAttribute('aria-label', '{% trans "Remove Template Value" %}');
+    remove.setAttribute('title', '{% trans "Remove Template Value" %}');
+    remove.innerHTML = '<i class="material-icons" aria-hidden="true">close</i>';
+
+    keyInput.addEventListener('input', function () {
+      const original = row.dataset.seedName;
+      const current = normalizeNotifyTemplateName(keyInput.value);
+      if (row.dataset.automatic === '1' && current !== original) {
+        if (original) {
+          notifyTemplateSuppressed.add(original);
+        }
+        row.dataset.automatic = '0';
+      }
+      updateNotifyTemplateControls();
+    });
+    keyInput.addEventListener('change', function () {
+      const normalized = normalizeNotifyTemplateName(keyInput.value);
+      if (!normalized) {
+        updateNotifyTemplateControls();
+        return;
+      }
+      notifyTemplateSuppressed.delete(normalized);
+      const duplicate = notifyTemplateRowFor(normalized);
+      if (duplicate && duplicate !== row) {
+        const duplicateValue = duplicate.querySelector(
+          '.notify-template-value'
+        );
+        if (duplicateValue && !duplicateValue.value.trim()
+            && valueInput.value.trim()) {
+          duplicateValue.value = valueInput.value.trim();
+        }
+        row.remove();
+        updateNotifyTemplateEmptyState();
+        updateNotifyTemplateControls();
+        (duplicateValue || duplicate).focus();
+      }
+    });
+    valueInput.addEventListener('input', function () {
+      row.dataset.automatic = '0';
+      updateNotifyTemplateControls();
+    });
+    remove.addEventListener('click', function () {
+      const normalized = normalizeNotifyTemplateName(keyInput.value);
+      if (normalized) {
+        notifyTemplateSuppressed.add(normalized);
+      }
+      row.remove();
+      updateNotifyTemplateEmptyState();
+      updateNotifyTemplateControls();
+    });
+
+    row.appendChild(keyField);
+    row.appendChild(valueField);
+    row.appendChild(remove);
+    container.appendChild(row);
+    appriseWireValueToggles(row);
+    updateNotifyTemplateEmptyState();
+    updateNotifyTemplateControls();
+    return row;
+  }
+
+  // Refresh suggested names without overwriting manual entries.
+  function syncNotifyTemplateRows(reset) {
+    const container = document.querySelector('#notify-template-rows');
+    if (!container) {
+      return;
+    }
+    const details = selectedNotifyTemplateDetails();
+    const names = Object.keys(details);
+    const active = new Set(names.map(normalizeNotifyTemplateName));
+
+    Array.from(notifyTemplateSuppressed).forEach(function (name) {
+      if (!active.has(name)) {
+        notifyTemplateSuppressed.delete(name);
+      }
+    });
+
+    if (reset) {
+      container.textContent = '';
+      notifyTemplateSuppressed.clear();
+    } else {
+      container.querySelectorAll(
+        '.notify-template-row[data-automatic="1"]'
+      ).forEach(function (row) {
+        if (!active.has(row.dataset.seedName)) {
+          row.remove();
+        }
+      });
+    }
+
+    names.forEach(function (name) {
+      const normalized = normalizeNotifyTemplateName(name);
+      if (!normalized || notifyTemplateSuppressed.has(normalized)) {
+        return;
+      }
+      // Null means nothing to suggest; the field starts empty.
+      const suggested = details[normalized];
+      const value = (suggested === null || suggested === undefined)
+        ? '' : suggested;
+      const existing = notifyTemplateRowFor(normalized);
+      if (existing) {
+        if (existing.dataset.automatic === '1') {
+          existing.querySelector('.notify-template-value').value = value;
+        }
+        return;
+      }
+      createNotifyTemplateRow(name, value, true);
+    });
+    updateNotifyTemplateEmptyState();
+    updateNotifyTemplateControls();
+  }
+
+  // Trim each pair and omit blanks or case-insensitive duplicates.
+  function collectNotifyTemplateValues() {
+    const values = [];
+    const seen = new Set();
+    document.querySelectorAll(
+      '#notify-template-rows .notify-template-row'
+    ).forEach(function (row) {
+      const keyInput = row.querySelector('.notify-template-key');
+      const valueInput = row.querySelector('.notify-template-value');
+      const name = keyInput ? keyInput.value.trim() : '';
+      const value = valueInput ? valueInput.value.trim() : '';
+      const normalized = normalizeNotifyTemplateName(name);
+      if (!normalized || !value || seen.has(normalized)) {
+        return;
+      }
+      seen.add(normalized);
+      values.push({name: name, value: value});
+    });
+    return values;
+  }
+
+  function initNotifyTemplateValues() {
+    const add = document.querySelector('#notify-template-add');
+    if (add && add.dataset.wired !== '1') {
+      add.dataset.wired = '1';
+      add.addEventListener('click', function () {
+        if (!updateNotifyTemplateControls()) {
+          const unfinished = document.querySelector(
+            '#notify-template-rows .notify-template-key:placeholder-shown'
+          );
+          if (unfinished) {
+            unfinished.focus();
+          }
+          return;
+        }
+        const row = createNotifyTemplateRow('', '', false);
+        const key = row ? row.querySelector('.notify-template-key') : null;
+        if (key) {
+          key.focus();
+        }
+      });
+    }
+    syncNotifyTemplateRows(false);
   }
 
   function resetNotifyForm() {
@@ -1038,6 +1634,7 @@
     const bodyEl = form.querySelector('#id_body');
     if (titleEl) titleEl.value = '';
     if (bodyEl) bodyEl.value = '';
+    syncNotifyTemplateRows(true);
     if (window.M && M.updateTextFields) {
       M.updateTextFields();
     }
@@ -1046,6 +1643,7 @@
   function initAppriseConfigEditor() {
     const textarea = document.getElementById('id_config');
     const code = document.getElementById('config-highlight');
+    const format = document.getElementById('id_format');
     if (!textarea || !code) return;
     // Disable browser spell-check and similar “helpful” features
     textarea.setAttribute('spellcheck', 'false');
@@ -1069,6 +1667,16 @@
     const update = () => {
       const rawText = textarea.value;
       let text = normalizeConfigEditorText(rawText);
+
+      // Template markers are active in YAML configurations only.
+      const editor = textarea.closest('.apprise-config-editor');
+      const selectedFormat = format ? format.value.toLowerCase() : '';
+      if (editor) {
+        editor.classList.toggle(
+          'apprise-config-yaml',
+          selectedFormat === 'yaml' || selectedFormat === 'yml'
+        );
+      }
 
       // Keep the real editable value and the visible highlight layer on the
       // same line-ending model. Otherwise the hidden textarea caret can drift
@@ -1097,6 +1705,9 @@
     };
     // --- Events ---
     textarea.addEventListener('input', update);
+    if (format) {
+      format.addEventListener('change', update);
+    }
     textarea.addEventListener('scroll', () => {
       code.scrollTop = textarea.scrollTop;
       code.scrollLeft = textarea.scrollLeft;
@@ -1228,6 +1839,7 @@
       guidance.style.display = getSelectedNotifyTargetCount() === 0 ? null : 'none';
     }
     updateReviewEscalationBadges();
+    syncNotifyTemplateRows(false);
   }
 
   function applyReviewSelectedFilter() {
@@ -1746,6 +2358,23 @@
     // choose from. Tags are based off ones found in the saved
     // configuration.
     const data = await jsonResponse.json();
+
+    // Prefill YAML defaults and learn which blanks have a server fallback.
+    // Environment values themselves never appear in the response.
+    const defaultsResponse = await appriseFetch(
+      '{% url "json_urls" key %}/?privacy=0&fallbacks=1', {method: 'GET'}
+    );
+    if (defaultsResponse.status === 200) {
+      const defaultsData = await defaultsResponse.json();
+      (data.urls || []).forEach(function (entry, index) {
+        const source = (defaultsData.urls || [])[index];
+        if (entry.template && source && source.template) {
+          // The private listing withholds every default; take them from
+          // the unmasked one, which this editor may already read anyway.
+          entry.template = source.template;
+        }
+      });
+    }
     const notifyTagOptions = buildNotifyTagOptions(data);
     const notifyTagOptionMap = notifyTagOptions.reduce(function (result, item) {
       result[item.token] = item;
@@ -1863,17 +2492,21 @@
     // Now build our our loaded list of configuration for our welcome page
     let urlList = document.createElement('ul');
     // Create a list item for each url retrieved
-    data.urls.forEach(function (entry) {
+    // Keep each loaded entry's position for its card-level quick test.
+    data.urls.forEach(function (entry, entryIndex) {
       const isEnabled = entry.enabled !== false;
       const entryTags = Array.isArray(entry.tags) ? entry.tags.slice() : [];
+      const tplNames = Object.keys(entry.template || {});
       let li = document.createElement('li');
       li.setAttribute('class', 'card-panel url-item');
       li.dataset.retryCount = String(parseInt(entry.retry || 0, 10) || 0);
+      // Keep template metadata with its card for the main send dialog.
+      li.templateDetails = entry.template || {};
       if (!isEnabled) {
         li.classList.add('url-item-disabled');
         li.title = `{% trans "This Apprise API instance has disabled support for" %} ${getReviewPluginTitle(entry.service_name, entry.url)}.`;
       }
-      // Header row: plugin title + optional id
+      // Header row: plugin title, template names, and service status.
       let meta = document.createElement('div');
       meta.setAttribute('class', 'url-meta');
       let pluginTitle = document.createElement('span');
@@ -1882,6 +2515,20 @@
       meta.appendChild(pluginTitle);
       let metaRight = document.createElement('div');
       metaRight.setAttribute('class', 'url-meta-right');
+      if (tplNames.length) {
+        let tplSummary = document.createElement('div');
+        tplSummary.setAttribute('class', 'url-template-summary');
+        tplSummary.setAttribute('aria-label', '{% trans "Template Variable" %}');
+        tplNames.forEach(function (name) {
+          let chip = document.createElement('span');
+          chip.setAttribute('class', 'url-template-chip');
+          chip.setAttribute('title',
+            '{% trans "Template Variable" %}');
+          chip.textContent = '${' + name.toUpperCase() + '}';
+          tplSummary.appendChild(chip);
+        });
+        metaRight.appendChild(tplSummary);
+      }
       let retryBadge = null;
       if (isEnabled) {
         retryBadge = document.createElement('span');
@@ -1891,8 +2538,8 @@
       if (isEnabled && entry.optional === true) {
         let optionalBadge = document.createElement('span');
         optionalBadge.setAttribute('class', 'review-optional-badge material-icons');
-        optionalBadge.setAttribute('aria-label', '{% trans "Optional service" %}');
-        optionalBadge.title = '{% trans "Optional service: failures are ignored when determining notification success" %}';
+        optionalBadge.setAttribute('aria-label', '{% trans "Optional Service" %}');
+        optionalBadge.title = '{% trans "Optional Service: failures are ignored when determining notification success" %}';
         optionalBadge.textContent = 'check_circle';
         metaRight.appendChild(optionalBadge);
       }
@@ -1931,7 +2578,7 @@
       // URL text
       let code = document.createElement('code');
       code.setAttribute('class', 'url-text');
-      setReviewUrlTextWithBreaks(code, entry.url);
+      setReviewUrlTextWithBreaks(code, entry.url, entry.template);
       header.appendChild(code);
       // Copy button
       let copyBtn = document.createElement('button');
@@ -2034,7 +2681,16 @@
           });
           return;
         }
-        sendReviewTestNotification(testTags, testBtn);
+        if (tplNames.length) {
+          promptForTemplateValues(entry.template || {}).then(
+            function (values) {
+              if (values !== null) {
+                sendReviewTestNotification(testTags, entryIndex, testBtn, values);
+              }
+            });
+          return;
+        }
+        sendReviewTestNotification(testTags, entryIndex, testBtn, {});
       }, false);
       tagRow.appendChild(testBtn);
       li.appendChild(tagRow);
@@ -2086,7 +2742,7 @@
         } else {
           // no tags were defined for this element
           chip.classList.add('chip-notag');
-          chip.textContent = '🔖 no-tag';
+          chip.textContent = '🔖 {% trans "no-tag" %}';
           if (chipInstance.chipsData.length === 0 && isEnabled) {
             chip.classList.add('selected');
             if (!li.classList.contains('selected')) {
@@ -2149,6 +2805,8 @@
       });
       if (response.status == 204) {
         // no problem; we simply have no content to retrieve
+        // An empty saved configuration is still the current saved state.
+        markConfigSaved('');
         return '';
       }
       else if (response.status == 200) {
@@ -2178,6 +2836,8 @@
           event.initEvent('change', true, true);
         }
         document.querySelector('#id_format').dispatchEvent(event);
+        // This is the configuration the entries above were parsed from.
+        markConfigSaved();
       }
     } else {
       document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
@@ -2187,6 +2847,45 @@
     return null;
   }
 {% if not CONFIG_LOCK %}
+  // Review shows the last saved configuration. Compare it with the editor
+  // so unsaved changes can be flagged.
+  let savedConfigSnapshot = null;
+
+  function configSnapshot(text, format) {
+    // A format only changes how text is read, so it is only worth
+    // comparing while there is some text to read.
+    return JSON.stringify([text, text.trim() ? format : '']);
+  }
+
+  function currentConfigSnapshot() {
+    // Read the fields the user can edit on the Configuration tab.
+    const config = document.querySelector('#id_config');
+    const format = document.querySelector('#id_format');
+    return configSnapshot(
+      config ? config.value : '', format ? format.value : '');
+  }
+
+  function refreshUnsavedConfigNotice() {
+    // Show the notice only when editable text differs from saved text.
+    const notice = document.querySelector('#review-unsaved-guidance');
+    if (!notice) return;
+
+    // Until the saved configuration is known there is nothing to compare
+    // against, so nothing is claimed either way.
+    notice.hidden = savedConfigSnapshot === null
+      || currentConfigSnapshot() === savedConfigSnapshot;
+  }
+
+  function markConfigSaved(savedText) {
+    // Remember either the provided saved text or the editor's current text.
+    const config = document.querySelector('#id_config');
+    const format = document.querySelector('#id_format');
+    savedConfigSnapshot = configSnapshot(
+      savedText === undefined ? (config ? config.value : '') : savedText,
+      format ? format.value : '');
+    refreshUnsavedConfigNotice();
+  }
+
   function updateConfigFileTimes(response) {
     const timestamps = document.querySelector('#config-file-times');
     if (!timestamps) return;
@@ -2213,6 +2912,16 @@
   }
 
   function config_init() {
+    // Keep the Review tab honest about edits that have not been saved.
+    const configField = document.querySelector('#id_config');
+    if (configField) {
+      configField.addEventListener('input', refreshUnsavedConfigNotice);
+    }
+    const formatField = document.querySelector('#id_format');
+    if (formatField) {
+      formatField.addEventListener('change', refreshUnsavedConfigNotice);
+    }
+
     // over-ride manual submit for a nicer user experience
     document.querySelector('#addconfig').onsubmit = function (event) {
       event.preventDefault();
@@ -2499,11 +3208,54 @@
     });
   }
 
+  // Gather names across selected entries. Suggest a default only when
+  // every entry using that name declares the same value; otherwise leave
+  // it blank so one entry's value is not sent to another.
+  function selectedNotifyTemplateDetails() {
+    const variables = {};
+
+    document.querySelectorAll(
+      '#url-list li.card-panel.selected:not(.url-item-disabled)'
+    ).forEach(function (card) {
+      const declared = card.templateDetails || {};
+      Object.keys(declared).forEach(function (name) {
+        const normalized = normalizeNotifyTemplateName(name);
+        if (!normalized) {
+          return;
+        }
+        const variable = variables[normalized] || {
+          defaults: [],
+          seen: 0
+        };
+        variables[normalized] = variable;
+        variable.seen += 1;
+        const value = declared[name];
+        if (value !== null && value !== undefined) {
+          variable.defaults.push(String(value));
+        }
+      });
+    });
+
+    const details = {};
+    Object.keys(variables).sort().forEach(function (normalized) {
+      const variable = variables[normalized];
+      const agreed = variable.defaults.length === variable.seen
+        && variable.defaults.length > 0
+        && variable.defaults.every(function (value) {
+          return value === variable.defaults[0];
+        });
+      details[normalized] = agreed ? variable.defaults[0] : null;
+    });
+
+    return details;
+  }
+
   function notify_init() {
     decorateNotifyChips();
     restoreNotifyFormatPreference();
+    initNotifyTemplateValues();
     // over-ride manual submit for a nicer user experience
-    document.querySelector('#donotify').onsubmit = function (event) {
+    document.querySelector('#donotify').onsubmit = async function (event) {
       event.preventDefault();
       commitNotifyTags();
       const selectedTargets = getSelectedNotifyTargetCount();
@@ -2533,6 +3285,8 @@
 
       clearNotifyMinimumMissing();
 
+      const templateValues = collectNotifyTemplateValues();
+
       // our Form Handling
       const rawForm = this;
       const form = new FormData();
@@ -2547,6 +3301,11 @@
         }
         form.append(el.name, el.value);
      });
+
+      // Template values share the same form shape as API clients.
+      templateValues.forEach(function (entry) {
+        form.append('template[' + entry.name + ']', entry.value);
+      });
 
       // Attach files from our notifyAttachments buffer
       // Each file is sent under the "attachment" field name, which
