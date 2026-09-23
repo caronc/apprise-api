@@ -101,6 +101,20 @@ class TemplateTests(SimpleTestCase):
         assert mock_notify.call_args.kwargs["template"] == {"token": "abc123"}
 
     @patch("apprise.Apprise.notify")
+    def test_json_number_value(self, mock_notify):
+        """A JSON value that is not text is taken as its text form."""
+        mock_notify.return_value = True
+
+        response = self.client.post(
+            f"/notify/{self.key}",
+            data=dumps({"body": "test", "template": {"token": 42}}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["template"] == {"token": "42"}
+
+    @patch("apprise.Apprise.notify")
     def test_form_value(self, mock_notify):
         """A form posts each value as template[name]."""
         mock_notify.return_value = True
@@ -578,6 +592,26 @@ class TemplateTests(SimpleTestCase):
         for payload in (visible_payload, private_payload, availability_payload):
             assert "environment.example" not in dumps(payload)
             assert "environment-secret" not in dumps(payload)
+
+    def test_fallback_availability_with_nothing_to_fall_back_on(self):
+        """Asking about fallbacks reports none when the environment is empty."""
+        with patch.dict(os.environ):
+            # Nothing is waiting in the environment for either name
+            os.environ.pop("APPRISE_TEMPLATE_HOST_NAME", None)
+            os.environ.pop("APPRISE_TEMPLATE_TOKEN", None)
+
+            result = self.client.get(f"/json/urls/{self.key}?privacy=0&fallbacks=1")
+
+        assert result.status_code == 200
+        waiting = [entry for entry in result.json()["urls"] if entry["template"]]
+        assert len(waiting) == 1
+
+        # host_name keeps the default the configuration offers; token has no
+        # default and no fallback, so it stays unanswered
+        assert waiting[0]["template"] == {
+            "host_name": "localhost",
+            "token": None,
+        }
 
     @override_settings(APPRISE_CONFIG_LOCK=True)
     @patch("api.views.Authentication.key_ok", return_value=True)
