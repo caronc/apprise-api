@@ -9,7 +9,6 @@ services:
       # Environment values are strings even when they resemble booleans.
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
-      APPRISE_ADMIN: "y"
       APPRISE_DEFAULT_FORMAT: "text"
       TZ: America/Toronto
 

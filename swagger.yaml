@@ -328,8 +328,9 @@ paths:
       summary: List all stored configuration keys.
       description: >
         Returns Config ID strings when authentication is off. When it is on,
-        each item includes its assigned username. This requires APPRISE_ADMIN,
-        SIMPLE stateful mode, and administrator access.
+        each item includes its assigned username. This requires SIMPLE stateful
+        mode and administrator access; it is available unless APPRISE_ADMIN is
+        turned off.
       tags:
         - Persistent
       responses:
@@ -370,9 +371,9 @@ paths:
           description: Unauthorized (administrator credentials are required; this listing has no per-key fallback).
         '403':
           description: >
-            Forbidden (persistent storage or APPRISE_ADMIN is disabled,
-            authentication is insufficient, or CONFIG_LOCK is enabled and the
-            caller is not an authenticated administrator).
+            Forbidden (persistent storage is disabled, APPRISE_ADMIN was
+            turned off, authentication is insufficient, or CONFIG_LOCK is
+            enabled and the caller is not an authenticated administrator).
 
   /add/{key}:
     post:

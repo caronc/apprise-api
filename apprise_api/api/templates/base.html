@@ -130,7 +130,7 @@
               <a href="#mobile-beta-dialog"
                  class="tooltipped"
                  data-mobile-beta-open
-                 aria-label="{% trans "Open Apprise Mobile beta information" %}"
+                 aria-label="{% trans "Open Apprise Mobile app information" %}"
                  data-position="bottom"
                  data-tooltip="{% trans "Apprise Mobile" %}">
                 <span class="topbar-icon topbar-icon--play">
@@ -315,7 +315,7 @@
                   <span class="menu-icon menu-icon--play">
                     <img src="{% static 'mobile/google-play.svg' %}" alt="">
                   </span>
-                  <span class="side-nav-text">{% trans "Apprise Mobile Beta" %}</span>
+                  <span class="side-nav-text">{% trans "Get Apprise Mobile" %}</span>
                 </a>
               </nav>
               <div class="side-nav-label">{% trans "Support Development" %}</div>
@@ -519,7 +519,7 @@
             });
         });
 
-        // The same beta information can be opened from any API page.
+        // Make the Apprise Mobile dialog available on every API page.
         (function() {
             const dialog = document.querySelector('#mobile-beta-dialog');
             if (!(dialog instanceof HTMLDialogElement)) return;

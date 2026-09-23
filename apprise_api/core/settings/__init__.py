@@ -469,9 +469,8 @@ APPRISE_WEBHOOK_MAPPING_MAX_DEPTH = env_int("APPRISE_WEBHOOK_MAPPING_MAX_DEPTH",
 # - The default value of this is 'no'
 APPRISE_API_ONLY = env_bool("APPRISE_API_ONLY")
 
-# Allow Admin mode:
-# - showing a list of configuration keys (when STATEFUL_MODE is set to simple)
-APPRISE_ADMIN = env_bool("APPRISE_ADMIN")
+# Show configuration keys in simple stateful mode unless explicitly disabled.
+APPRISE_ADMIN = env_bool("APPRISE_ADMIN", default=True)
 
 # Allow Interpret Emojis override
 APPRISE_INTERPRET_EMOJIS = env_optional_bool("APPRISE_INTERPRET_EMOJIS")

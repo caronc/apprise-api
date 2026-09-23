@@ -191,9 +191,7 @@
                       </span>
                     </div>
                     <p class="mobile-setup-card__footer">
-                      {% trans "Need the app? Explore" %}
-                      <a href="#mobile-beta-dialog" data-mobile-beta-open>{% trans "Apprise Mobile" %}</a>
-                      {% trans "and installation options." %}
+                      {% blocktrans with mobile_app_link='<a href="#mobile-beta-dialog" data-mobile-beta-open>Apprise Mobile</a>'|safe %}Need the app? Get {{ mobile_app_link }} for Android.{% endblocktrans %}
                     </p>
                   </aside>
                 </div>

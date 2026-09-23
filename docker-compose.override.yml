@@ -11,7 +11,6 @@ services:
       # A single worker makes local logs and debugging easier to follow.
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
-      APPRISE_ADMIN: "y"
       APPRISE_DEFAULT_FORMAT: "text"
     volumes:
       # Mount source read-only so edits remain on the host and are easy to review.

@@ -1162,7 +1162,7 @@ textarea {
   z-index: 2;
 }
 
-/* Apprise Mobile closed-beta dialog */
+/* Apprise Mobile promotion dialog */
 .mobile-beta-dialog {
   width: min(58rem, calc(100vw - 2rem));
   max-height: min(90vh, 54rem);
@@ -1408,77 +1408,54 @@ textarea {
   margin-top: 0;
 }
 
-.mobile-beta-dialog__order {
-  padding: 0.65rem 0.8rem;
-  border-left: 0.22rem solid var(--mobile-beta-accent);
-  border-radius: 0.2rem;
-  background: var(--mobile-beta-accent-soft);
-}
-
-.mobile-beta-dialog__steps {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.7rem;
+.mobile-beta-dialog__highlights {
   padding: 0;
-  margin: 1rem 0;
+  margin: 0.9rem 0;
   list-style: none;
-  counter-reset: mobile-beta-step;
 }
 
-.mobile-beta-dialog__steps li {
+.mobile-beta-dialog__highlights li {
   position: relative;
-  min-width: 0;
-  padding: 0.8rem;
-  border: 1px solid var(--mobile-beta-border);
-  border-radius: 0.65rem;
-  background: var(--mobile-beta-surface);
-  counter-increment: mobile-beta-step;
+  padding-left: 1.4rem;
+  margin: 0.4rem 0;
+  font-size: 0.92rem;
 }
 
-.mobile-beta-dialog__steps li::before {
+.mobile-beta-dialog__highlights li::before {
   position: absolute;
-  top: 0.8rem;
-  left: 0.65rem;
-  display: grid;
-  width: 1.6rem;
-  height: 1.6rem;
-  place-items: center;
+  top: 0.58em;
+  left: 0.3rem;
+  width: 0.4rem;
+  height: 0.4rem;
   border-radius: 50%;
-  color: var(--mobile-beta-counter-text);
   background: var(--mobile-beta-accent);
-  font-weight: 700;
-  content: counter(mobile-beta-step);
+  content: "";
 }
 
-.mobile-beta-dialog__steps h5 {
-  margin: 0 0 0 2rem;
-  color: var(--mobile-beta-heading);
-  font-size: 1rem;
-}
-
-.mobile-beta-dialog__steps p {
-  min-height: 3.7rem;
-  margin: 0.35rem 0 0.7rem 2rem;
-  font-size: 0.88rem;
-}
-
-.mobile-beta-dialog__steps a {
+.mobile-beta-dialog__cta {
   display: flex;
-  width: fit-content;
-  padding: 0.42rem 0.65rem;
-  margin-right: auto;
-  margin-left: auto;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 1rem 0 1.25rem;
+}
+
+.mobile-beta-dialog__cta a {
+  display: inline-flex;
+  min-width: 11rem;
+  min-height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 1.1rem;
   border: 1px solid var(--mobile-beta-accent);
   border-radius: 999px;
   color: var(--mobile-beta-accent);
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.2;
 }
 
-.mobile-beta-dialog__steps a.mobile-beta-dialog__primary {
-  min-width: 7.75rem;
-  justify-content: center;
+.mobile-beta-dialog__cta a.mobile-beta-dialog__primary {
   color: var(--mobile-beta-primary-text) !important;
   background: var(--mobile-beta-accent);
 }
@@ -1520,18 +1497,8 @@ textarea {
 }
 
 @media (max-width: 700px) {
-  .mobile-beta-dialog__steps {
-    grid-template-columns: 1fr;
-  }
-
-  .mobile-beta-dialog__steps p {
-    min-height: 0;
-  }
-
-  .mobile-beta-dialog__steps a {
-    display: inline-flex;
-    margin-right: 0;
-    margin-left: 2rem;
+  .mobile-beta-dialog__cta a {
+    flex: 1 1 100%;
   }
 }
 

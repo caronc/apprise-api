@@ -257,6 +257,19 @@ class StreamSizeSettingsTests(SimpleTestCase):
                 _load_settings({"APPRISE_STREAM_QUEUE_SIZE": value})
 
 
+class AdminListingSettingTests(SimpleTestCase):
+    """Check the configuration listing switch."""
+
+    def test_configuration_list_is_enabled_unless_turned_off(self):
+        """The list is on out of the box and honours a negative value.
+
+        - no environment variable: on
+        - `APPRISE_ADMIN=no`: off
+        """
+        self.assertTrue(_load_settings().APPRISE_ADMIN)
+        self.assertFalse(_load_settings({"APPRISE_ADMIN": "no"}).APPRISE_ADMIN)
+
+
 class ChoiceSettingsTests(SimpleTestCase):
     """Validate canonical and first-character mode settings."""
 

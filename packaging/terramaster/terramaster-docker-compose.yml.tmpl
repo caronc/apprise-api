@@ -21,7 +21,6 @@ services:
       # managing configuration through the browser.
       - APPRISE_STATEFUL_MODE=simple
       - APPRISE_WORKER_COUNT=1
-      - APPRISE_ADMIN=y
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/status"]
       interval: 30s

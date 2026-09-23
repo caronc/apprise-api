@@ -21,25 +21,24 @@ Visit the [Official Documentation](https://appriseit.com/getting-started/) site 
 
 ## Screenshots
 
-There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser allowing you to create and save as many configurations as you'd like. Each configuration is differentiated by a unique `{KEY}` that you decide on:<br/>
-![Screenshot of GUI - Using Keys](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
-
-Below is a screenshot of how you can assign your Apprise URLs to your `{KEY}`. You can define both TEXT or YAML [Apprise configurations](https://appriseit.com/config/).<br/>
-![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
+There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser allowing you to create and save as many configurations as you'd like. Each configuration is differentiated by a unique _Configuration ID_ that you decide on:<br/>
+![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
 
 Below is a screenshot of the review tab where you can preview what Apprise URL(s) got loaded from your defined configuration. It also allows you to view the tags associated with them (if any). Should you chose to send a test notification via this API, you can select the tags in advance you wish to target from here.<br/>
-![Screenshot of GUI - Review](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-3.png)
+![Screenshot of GUI - Review](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
 
 With configuration in place, you'll be able to use the *Notification* tab to send a test message to one or more of the services you defined in your configuration. You can also select from the tags (if any) you pre-assigned to your URLs defined. If you did not define any tags with you configured URLs, then you do not need to identify any here. You can use the tag `all` to notify all of your services regardless of what tag had otherwise been assigned to them (if any at all).<br/>
-![Screenshot of GUI - Notifications](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-4.png)
+![Screenshot of GUI - Notifications](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-3.png)
 
 At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
 
 ## Apprise Mobile (Android)
 
-<a href="https://appriseit.com/mobile/"><img align="left" width="84" hspace="16" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/google-play.svg" alt="Google Play"></a>
+<a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img align="left" width="84" hspace="16" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/google-play.svg" alt="Get Apprise Mobile on Google Play"></a>
 
 **Apprise Mobile** puts this API in your pocket. Send a message, a photo you just took, or any file to one destination, a group, or every destination you've configured. It's a client for *your* Apprise API server, so all of your notifications continue to flow through your own infrastructure.
+
+**[Get Apprise Mobile on Google Play](https://play.google.com/store/apps/details?id=com.appriseit.mobile)** — install it on your Android device, then connect it to your Apprise API server.
 
 <br clear="left"/>
 
@@ -55,21 +54,6 @@ At the end of the day, the GUI just simply offers a user friendly interface to t
 <td align="center"><img width="80%" alt="Apprise Mobile delivery report" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-delivery-report.png"></td>
 </tr>
 </table>
-
-### Sign Up for the Beta
-
-The app is in a closed Google Play test while we work toward a public release. Google requires at least 12 testers to stay enrolled for 14 continuous days before that can happen, so joining and trying the app genuinely helps.
-
-Use the **same Google account** for all three steps, and complete them in order. The Play Store listing stays unavailable until Google recognizes your account as a tester.
-
-1. **Join the Google Group** - this adds your Google account to the approved tester list:<br/>
-   https://groups.google.com/g/apprise-testers/
-2. **Become a tester** - open the opt-in page and select *Become a tester*:<br/>
-   https://play.google.com/apps/testing/com.appriseit.mobile
-3. **Install Apprise Mobile** - once Google confirms your tester status, open the listing and install:<br/>
-   https://play.google.com/store/apps/details?id=com.appriseit.mobile
-
-If step 3 shows an error or says the app is unavailable, Google has not finished processing your tester status yet. Give it a few minutes and try again.
 
 ### Connecting to Your Server
 
@@ -117,7 +101,6 @@ docker run --name apprise \
    -v /path/to/local/attach:/attach \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
-   -e APPRISE_ADMIN=y \
    -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -d caronc/apprise:latest
@@ -138,7 +121,6 @@ docker run --name apprise \
    --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
-   -e APPRISE_ADMIN=y \
    -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -v /etc/apprise:/config \
@@ -152,7 +134,6 @@ docker run --name apprise \
    --user "$(id -u):$(id -g)" \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
-   -e APPRISE_ADMIN=y \
    -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -v ./config:/config \
@@ -173,7 +154,6 @@ services:
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
-      APPRISE_ADMIN: "y"
       APPRISE_DEFAULT_FORMAT: "text"
       TZ: America/Toronto
     volumes:
@@ -217,7 +197,6 @@ services:
     environment:
       APPRISE_STATEFUL_MODE: simple
       APPRISE_WORKER_COUNT: "1"
-      APPRISE_ADMIN: "y"
       APPRISE_DEFAULT_FORMAT: "text"
       TZ: America/Toronto
 
@@ -412,7 +391,7 @@ Stateful endpoints also accept `X-Apprise-Config-ID`. This keeps the Config ID o
 
 If both the URL and header contain a key, the header wins. Invalid headers return `400`. Existing URL-based requests remain supported.
 
-The `/cfg` list requires `APPRISE_ADMIN=yes` and `APPRISE_STATEFUL_MODE=simple`. When `APPRISE_CONFIG_LOCK` is enabled, the list also requires an authenticated administrator.
+The `/cfg` list requires `APPRISE_STATEFUL_MODE=simple` and is available by default; set `APPRISE_ADMIN=no` to turn it off. When `APPRISE_CONFIG_LOCK` is enabled, the list also requires an authenticated administrator.
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
@@ -719,7 +698,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_BASIC_AUTH_REALM` | Label shown in Basic Auth prompts. Defaults to `Apprise API`; use a different label for each instance sharing a host.
 | `APPRISE_WEB_AUTH_SECRET` | Optional key used to sign browser logins. It has its own built-in default. Changing it signs users out without moving hash-mode configurations.
 | `APPRISE_TRUSTED_ORIGINS` | Origins allowed to make browser writes, separated by commas. Use `scheme://host[:port]`, such as `https://apprise.example.com`. HTTPS deployments should set this because bundled nginx does not forward the original scheme ([issue #275](https://github.com/caronc/apprise-api/issues/275)).
-| `APPRISE_ADMIN` | Shows the configuration list when `APPRISE_STATEFUL_MODE=simple`. Authentication permissions still decide who may use it. Defaults to `no`.
+| `APPRISE_ADMIN` | Shows the configuration list when `APPRISE_STATEFUL_MODE=simple`. Authentication permissions still decide who may use it. Defaults to `yes`; set it to `no` to hide the list.
 | `APPRISE_INTERPRET_EMOJIS` | Override the Apprise `interpret-emojis` setting. This defaults to `none` (not set), but can be enforced to `no` or `yes`.
 | `APPRISE_HTTP_REDIRECTS` | By default, Apprise follows HTTP 3xx redirects, matching the behaviour of the underlying requests library. Set to `no` to disable redirect following globally across all plugins without having to add `redirect=no` to every individual URL. Individual URLs can always override this with `?redirect=yes` or `?redirect=no` regardless of this setting. This defaults to `yes`.
 | `APPRISE_DEFAULT_FORMAT` | Optional `text`, `html`, or `markdown` default for API requests that omit `format`. Blank, `null`, and explicit request values take priority. The Web UI starts with `TEXT` selected and always submits a choice, so this setting applies only to direct API calls.
@@ -904,7 +883,6 @@ docker run --name apprise \
    -v ./apprise_api.htpasswd:/etc/nginx/.htpasswd:ro \
    -e APPRISE_STATEFUL_MODE=simple \
    -e APPRISE_WORKER_COUNT=1 \
-   -e APPRISE_ADMIN=y \
    -e APPRISE_DEFAULT_FORMAT=text \
    -e TZ=America/Toronto \
    -d caronc/apprise:latest
@@ -1116,8 +1094,6 @@ spec:
               value: simple
             - name: APPRISE_WORKER_COUNT
               value: "1"
-            - name: APPRISE_ADMIN
-              value: "y"
             - name: TZ
               value: America/Toronto
           ports:
