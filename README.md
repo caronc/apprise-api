@@ -19,6 +19,12 @@ Apprise API was designed to easily fit into existing (and new) ecosystems that a
 
 Visit the [Official Documentation](https://appriseit.com/getting-started/) site for more information on the Apprise API.
 
+## How It Works
+
+Apprise provides one consistent notification interface for your apps, automation, and infrastructure. Generate an Apprise URL, send it through the API or core library, and deliver notifications to more than 150 services.
+
+[![Apprise overview showing notification sources, API entry points, and supported destinations](Apprise-Overview.png)](Apprise-Overview.png)
+
 ## Screenshots
 
 There is a small built-in *Configuration Manager* that can be optionally accessed through your web browser allowing you to create and save as many configurations as you'd like. Each configuration is differentiated by a unique _Configuration ID_ that you decide on:<br/>
@@ -36,7 +42,9 @@ At the end of the day, the GUI just simply offers a user friendly interface to t
 
 <a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img align="left" width="84" hspace="16" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/google-play.svg" alt="Get Apprise Mobile on Google Play"></a>
 
-**Apprise Mobile** puts this API in your pocket. Send a message, a photo you just took, or any file to one destination, a group, or every destination you've configured. It's a client for *your* Apprise API server, so all of your notifications continue to flow through your own infrastructure.
+**Apprise Mobile** is the Android companion app for Apprise API. It gives you a phone-friendly way to send a message, photo, or file to one destination, a group, or every destination you've configured. The app sends each request to *your* Apprise API server, which manages the configuration and delivers the notification through your own infrastructure.
+
+To use Apprise Mobile, you need access to a running Apprise API server. The mobile app is a client for that server, not a standalone notification service.
 
 **[Get Apprise Mobile on Google Play](https://play.google.com/store/apps/details?id=com.appriseit.mobile)** — install it on your Android device, then connect it to your Apprise API server.
 
@@ -57,7 +65,7 @@ At the end of the day, the GUI just simply offers a user friendly interface to t
 
 ### Connecting to Your Server
 
-Once the app is installed, open the *Configuration Manager* in your browser and reveal the **Apprise Mobile Quick Setup** QR code on any configuration you've saved. Scanning it from the app adds your server and loads that configuration in one step - no typing URLs on a phone keyboard.
+After your Apprise API server is running and has a saved configuration, open its *Configuration Manager* in your browser and reveal the **Apprise Mobile Quick Setup** QR code. Scanning it from the app adds your server and loads that configuration in one step—no typing URLs on a phone keyboard.
 
 Visit the [Apprise Mobile](https://appriseit.com/mobile/) page for more details, screenshots, and the app's privacy policy and terms.
 
