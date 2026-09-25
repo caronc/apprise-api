@@ -368,14 +368,15 @@ class NotifyForm(forms.Form):
 
     title = forms.CharField(
         label=_("Title"),
-        widget=forms.TextInput(attrs={"placeholder": _("Optional Title")}),
+        # dir="auto" keeps a message written in Arabic or Hebrew readable
+        widget=forms.TextInput(attrs={"placeholder": _("Optional Title"), "dir": "auto"}),
         max_length=apprise.NotifyBase.title_maxlen,
         required=False,
     )
 
     body = forms.CharField(
         label=_("Body"),
-        widget=forms.Textarea(attrs={"placeholder": _("Define your message body here...")}),
+        widget=forms.Textarea(attrs={"placeholder": _("Define your message body here..."), "dir": "auto"}),
         max_length=apprise.NotifyBase.body_maxlen,
         required=False,
     )

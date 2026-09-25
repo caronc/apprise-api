@@ -75,28 +75,6 @@ class UtilsTests(SimpleTestCase):
                 request = factory.get("/", HTTP_ACCEPT=accept)
                 assert utils.is_html_response(request) is expected
 
-    def test_touchdir(self):
-        """
-        Test touchdir()
-        """
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with mock.patch("os.makedirs", side_effect=OSError()):
-                assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is False
-
-            with mock.patch("os.makedirs", side_effect=FileExistsError()):
-                # Dir doesn't exist
-                assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is False
-
-            assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is True
-
-            # Date is updated
-            assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is True
-
-            with mock.patch("os.utime", side_effect=OSError()):
-                # Fails to update file
-                assert utils.touchdir(os.path.join(tmpdir, "tmp-file")) is False
-
     def test_touch(self):
         """
         Test touch()

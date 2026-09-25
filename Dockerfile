@@ -49,6 +49,13 @@ WORKDIR /opt/apprise
 # Copy over Apprise API
 COPY apprise_api/ webapp
 
+# Compile the translations for Apprise API and Apprise; without them every
+# language quietly falls back to English. polib is only needed for this step.
+RUN set -eux && \
+    pip3 install --no-cache-dir -q polib && \
+    python3 webapp/apprise_translations.py && \
+    pip3 uninstall --yes -q polib
+
 # Directory Setup
 RUN umask 0002 && \
     touch /etc/nginx/server-override.conf && \

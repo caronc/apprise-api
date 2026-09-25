@@ -27,11 +27,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apprise-api"
-version = "1.5.4"
+version = "2.0.0"
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
-  "apprise == 1.13.1",
+  "apprise == 2.0.0",
   "django",
   "gevent",
   "gunicorn[gevent]",
@@ -61,7 +61,8 @@ dev = [
   "jsbeautifier",
   "openapi-spec-validator",
   "tox",
-  "mock"
+  "mock",
+  "polib"
 ]
 
 [tool.setuptools]
@@ -70,6 +71,9 @@ license-files = ["LICENSE"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["apprise_api*"]
+
+[tool.setuptools.package-data]
+apprise_api = ["locale/*/LC_MESSAGES/*.mo"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "core.settings.pytest"
@@ -158,6 +162,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Terra-Master TOS7 Support Build Script
 "packaging/terramaster/build-package.py" = ["T201"]
+# This reporting CLI intentionally writes its results to stdout.
+"scripts/translations.py" = ["T201"]
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true

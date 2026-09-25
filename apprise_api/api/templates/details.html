@@ -158,7 +158,7 @@
                   <p>
                     {% blocktrans %}For more details and additional Apprise
                     configuration options available to this service:{% endblocktrans %}
-                    <a href="{{ entry.setup_url }}" target="_blank">Click Here</a>
+                    <a href="{{ entry.setup_url }}" target="_blank">{% trans "Click Here" %}</a>
                   </p>
                 </li>
               </ul>
@@ -178,7 +178,7 @@
       <ul class="collapsible">
         <li>
           <div class="collapsible-header">
-            <i class="material-icons">code</i>Curl Example
+            <i class="material-icons">code</i>{% trans "Curl Example" %}
           </div>
           <div class="collapsible-body">{# djlint:off #}
             <pre><code class="bash">#{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
@@ -188,12 +188,12 @@
         </li>
         <li>
           <div class="collapsible-header">
-            <i class="material-icons">code</i>Python Example
+            <i class="material-icons">code</i>{% trans "Python Example" %}
           </div>
           <div class="collapsible-body">{# djlint:off #}
             <pre><code class="python">import json<br />
 from urllib.request import Request<br />
-<br /># The URL<br />
+<br /># {% trans "The URL" %}<br />
 req = Request(<br />
 &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
 &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
@@ -204,21 +204,21 @@ req = Request(<br />
         </li>
         <li>
           <div class="collapsible-header">
-            <i class="material-icons">code</i>PHP Example
+            <i class="material-icons">code</i>{% trans "PHP Example" %}
           </div>
           <div class="collapsible-body">{# djlint:off #}
             <pre><code class="php">&lt;?php<br />
 <br />
-// The URL<br />
+// {% trans "The URL" %}<br />
 $url = '{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
 <br />
-//Initiate cURL.<br />
+// {% trans "Initiate cURL." %}<br />
 $ch = curl_init($url);<br />
 <br />
-//Set the content type to application/json<br />
+// {% trans "Set the content type to application/json" %}<br />
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));<br />
 <br />
-//Execute the request<br />
+// {% trans "Execute the request" %}<br />
 $result = curl_exec($ch);</code></pre>
             {# djlint:on #}</div>
         </li>

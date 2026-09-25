@@ -27,6 +27,9 @@ from django.urls import path
 from error import urls as error_urls
 
 urlpatterns = [
+    # Django owns the set-language view used by the header form. Browser
+    # posts to it are origin-checked by our own middleware.
+    path("i18n/", include("django.conf.urls.i18n")),
     path("", include(api_urls)),
     path("", include(error_urls)),
     path("", include("django_prometheus.urls")),

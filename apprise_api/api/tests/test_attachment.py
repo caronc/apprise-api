@@ -1399,10 +1399,20 @@ class AttachmentSSRFPinningTests(SimpleTestCase):
         session = attachment.http_session
         cleaned = []
 
+        def record(target):
+            """Record only the attachment this test created.
+
+            The patch is installed on the parent class, so the collector
+            finalizing any other attachment while it is in place would
+            otherwise be recorded here too.
+            """
+            if target is attachment:
+                cleaned.append(target)
+
         with mock.patch.object(
             HTTPAttachment.__mro__[1],
             "__del__",
-            new=lambda target: cleaned.append(target),
+            new=record,
         ):
             attachment.__del__()
 

@@ -6,6 +6,8 @@ import re
 import subprocess
 import sys
 
+from apprise_api.apprise_translations import compile_all_translations
+
 BRANCH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 
 
@@ -70,6 +72,11 @@ def main(argv=None):
         install_apprise_branch(options.branch)
     elif apprise_is_vcs_installed():
         install_apprise_pypi()
+
+    # Only the translation sources are kept in git, and an install of Apprise
+    # from git (or an older release) has none compiled either; without them
+    # every language would read as English
+    compile_all_translations()
 
     return subprocess.call([sys.executable, "manage.py", "runserver", *runserver_args])
 

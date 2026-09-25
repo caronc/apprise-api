@@ -101,7 +101,7 @@
                                data-copy-text='{{ key }}'>
                             <pre><code class="nohighlight"><span data-snippet-config-id>{{ key }}</span></code></pre>
                           </div>
-                          {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">click here</a>.
+                          {% trans "For some examples on how to build a development environment around this:" %} <a href="{% url 'welcome' %}?key={{ key }}">{% trans "click here" %}</a>.
                         </p>
                       </li>
                       <li>

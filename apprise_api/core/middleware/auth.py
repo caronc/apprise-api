@@ -139,6 +139,13 @@ class GlobalAuthMiddleware:
         if route_name == "login":
             return self.get_response(request)
 
+        # The login page offers the language selector, so the view behind it
+        # must work before a browser can sign in. It only stores a language
+        # cookie, exposes no protected data, and browser posts to it are
+        # still origin-checked.
+        if route_name == "set_language":
+            return self.get_response(request)
+
         html_request = is_html_response(request)
         web_request = html_request or request.headers.get(Authentication.WEB_HEADER) == "1"
         if web_request:

@@ -92,10 +92,30 @@ from .utils import (
 # Get an instance of a logger
 logger = logging.getLogger("django")
 
-# Content-Type Parsing
-# application/x-www-form-urlencoded
-# multipart/form-data
-MIME_IS_FORM = re.compile(r"(multipart|application)/(x-www-)?form-(data|urlencoded)", re.I)
+
+def _request_language(request):
+    """Return the normalized language selected by locale middleware."""
+    # Middleware sets this for web requests; direct callers fall back to English.
+    return getattr(request, "LANGUAGE_CODE", settings.LANGUAGE_CODE)
+
+
+def _apprise_asset(request, **kwargs):
+    """Create an asset carrying the request language for core localization."""
+    # The asset validates the code as it is created and stores it in Apprise's
+    # own spelling, so a de-DE request becomes de_DE here. An asset language
+    # cannot be changed afterwards, which is why it is passed in here.
+    return apprise.AppriseAsset(language=_request_language(request), **kwargs)
+
+
+def _apprise_object(request, asset=None):
+    """Create an Apprise object prepared for the request language."""
+    # Reuse one asset so every Apprise component sees the same settings.
+    asset = asset or _apprise_asset(request)
+
+    # Apprise resolves the asset language on its own, preferring a regional
+    # catalog, then its plain language, and finally English.
+    return apprise.Apprise(asset=asset)
+
 
 # Used by the Review tab to narrow a quick test to the selected card.
 NOTIFY_ENTRY_INDEX_HEADER = "X-Apprise-Notification-Index"
@@ -1722,9 +1742,9 @@ class DetailsView(View):
         apply_global_filters()
 
         # Create an Apprise Object
-        a_obj = apprise.Apprise()
+        a_obj = _apprise_object(request)
 
-        # Load our details
+        # Load our details; the asset language decides what they read as
         details = a_obj.details(show_disabled=show_all)
 
         # Sort our result set
@@ -2033,7 +2053,7 @@ class AddView(View):
             )
 
         # Create ourselves an apprise object to work with
-        a_obj = apprise.Apprise()
+        a_obj = _apprise_object(request)
         if "urls" in content:
             # Load our content
             a_obj.add(content["urls"])
@@ -2134,7 +2154,7 @@ class AddView(View):
                 )
 
             # Prepare our apprise config object
-            asset = apprise.AppriseAsset(allow_templates=settings.APPRISE_ALLOW_TEMPLATES)
+            asset = _apprise_asset(request, allow_templates=settings.APPRISE_ALLOW_TEMPLATES)
             ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
 
             if fmt == AUTO_DETECT_CONFIG_KEYWORD:
@@ -3409,7 +3429,7 @@ def _notify_asset(request, body_format, persistent):
     # configuration may use template variables.
     kwargs["allow_templates"] = settings.APPRISE_ALLOW_TEMPLATES
     try:
-        return apprise.AppriseAsset(**kwargs), None
+        return _apprise_asset(request, **kwargs), None
 
     except apprise.exception.AppriseException as e:
         logger.error("NOTIFY - %s - Could not prepare Apprise asset: %s", request.META["REMOTE_ADDR"], e)
@@ -3560,7 +3580,7 @@ class StatefulNotifyView(View):
             return invalid
 
         # Prepare our apprise object
-        a_obj = apprise.Apprise(asset=asset)
+        a_obj = _apprise_object(request, asset=asset)
 
         # Create an apprise config object
         ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
@@ -3716,7 +3736,7 @@ class StatelessNotifyView(View):
             return invalid
 
         # Prepare our apprise object
-        a_obj = apprise.Apprise(asset=asset)
+        a_obj = _apprise_object(request, asset=asset)
 
         # Add URLs
         a_obj.add(content.get("urls"))
@@ -3843,8 +3863,8 @@ class JsonUrlView(View):
             )
 
         # Use one asset so parsing and reporting share the server toggle.
-        asset = apprise.AppriseAsset(allow_templates=settings.APPRISE_ALLOW_TEMPLATES)
-        a_obj = apprise.Apprise(asset=asset)
+        asset = _apprise_asset(request, allow_templates=settings.APPRISE_ALLOW_TEMPLATES)
+        a_obj = _apprise_object(request, asset=asset)
 
         # Create an apprise config object
         ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)

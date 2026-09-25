@@ -42,6 +42,9 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import apprise
 from apprise.exception import AppriseTemplateError
+
+# Shared with Apprise on purpose so both projects apply the same destination
+# checks; see the module notes in apprise/utils/http.py.
 from apprise.utils.http import HTTPPolicy, HTTPPolicySession
 from apprise.utils.template import (
     TEMPLATE_NAME_PATTERN,
@@ -508,26 +511,6 @@ class HTTPAttachment(A_MGR["http"]):
             with suppress(Exception):
                 # Destructors must not leak adapter cleanup errors.
                 http_session.close()
-
-
-def touchdir(path, mode=0o770, **kwargs):
-    """
-    Acts like a Linux touch and updates a dir with a current timestamp
-    """
-    try:
-        os.makedirs(path, mode=mode, exist_ok=False)
-
-    except FileExistsError:
-        # Update the mtime of the directory
-        try:
-            os.utime(path, None)
-        except OSError:
-            return False
-
-    except OSError:
-        return False
-
-    return True
 
 
 def touch(fname, mode=0o666, dir_fd=None, **kwargs):
@@ -1399,11 +1382,6 @@ class AppriseConfigCache:
         """Return a key's credential digest, or ``None`` when unlocked."""
         record = self.get_auth_record(key)
         return None if record is None else record.digest
-
-    def get_auth_username(self, key):
-        """Return the saved username when the lock format provides it."""
-        record = self.get_auth_record(key)
-        return None if record is None else record.username
 
     def has_auth(self, key):
         """Return whether a key is protected, treating unreadable locks as protected."""

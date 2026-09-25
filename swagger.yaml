@@ -13,7 +13,7 @@ info:
     administrator bypasses per-configuration policy, but never a globally
     disabled stateful or stateless mode. Packaged nginx deployments may return
     429 with Retry-After when a route is rate-limited.
-  version: 1.5.4
+  version: 2.0.0
 
 servers:
   # The relative entry lets Swagger UI use whichever host served this document.

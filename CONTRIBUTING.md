@@ -151,6 +151,65 @@ tox -e test
 
 Coverage reporting is configured via `pyproject.toml`, and the QA environment runs coverage in parallel mode as part of `tox -e qa`.
 
+### Translations
+
+The supported languages are defined in `apprise_api/core/settings/__init__.py`.
+Updating and compiling catalogs needs the GNU gettext tools (`xgettext`,
+`msgmerge`, and `msgfmt`) on your PATH; the Python development dependencies
+alone are not enough. Install them with `dnf install gettext`,
+`apt install gettext`, or `brew install gettext`.
+
+After adding or changing human-readable text, refresh every catalog:
+
+- Wrap Python text shown to people with Django's `gettext` helpers.
+- Wrap template text with `{% trans %}` or `{% blocktrans %}`.
+- Do not translate JSON keys, enum values, status tokens, or other values that
+  client code must interpret consistently. A value the API parses, such as
+  `success` or `text`, stays English even where the words around it do not.
+- Check both an LTR language and Arabic when changing shared page layout.
+
+```bash
+tox -e translations -- --update
+```
+
+The command reports every supported language and lists each missing or fuzzy
+translation beneath its catalog. Edit the corresponding file under
+`apprise_api/locale/<language>/LC_MESSAGES/django.po` until the report is
+clean. Do not leave fuzzy translations in the repository.
+
+Run the report without changing files at any time:
+
+```bash
+tox -e translations
+```
+
+After the report is clean, compile and validate the catalogs:
+
+```bash
+tox -e translations -- --compile
+```
+
+Only the `.po` files are kept in git; commit those. The compiled `.mo` files
+are ignored and rebuilt for you by `tox -e runserver`, the test suite, and the
+Docker image build. With `docker compose up` for development, your local
+`apprise_api/` folder is mounted over the image, so run
+`tox -e translations -- --compile` once first or every page shows in English.
+
+#### Apprise Library Translations
+
+The Apprise library has its own catalogs, separate from the ones above. An
+Apprise installed from PyPI already includes them compiled. An Apprise
+installed from git (a `--branch` or a `git+https://` line in
+`requirements.txt`) only has the `.po` sources, so they have to be compiled
+before other languages show up. This is done for you:
+
+- **`tox -e runserver`**: compiled every time it starts, including after a
+  `--branch` install.
+- **Docker** (`docker build` or `docker compose up`): compiled while the image
+  is built.
+
+Only missing or outdated catalogs are compiled, so starts stay fast.
+
 ## Pull Request Guidance
 
 - Prefer small, well-scoped pull requests.

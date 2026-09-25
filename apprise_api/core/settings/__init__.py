@@ -41,7 +41,7 @@ APP_AUTHOR = "Chris Caron"
 APP_COPYRIGHT = "Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>"
 APP_LICENSE = "MIT"
 APP_URL = "https://github.com/caronc/apprise-api"
-APP_VERSION = "1.5.4"
+APP_VERSION = "2.0.0"
 
 # Mirror the container's TZ environment variable so Django does not
 # override the process timezone with its own default (America/Chicago).
@@ -92,6 +92,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.common.CommonMiddleware",
+    # Select and activate one language before authentication or views run.
+    "core.middleware.locale.AcceptLanguageLocaleMiddleware",
     "core.middleware.csrf.OriginValidationMiddleware",
     "core.middleware.auth.GlobalAuthMiddleware",
     "core.middleware.theme.AutoThemeMiddleware",
@@ -109,6 +111,8 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                # Expose LANGUAGE_CODE, LANGUAGES, and LANGUAGE_BIDI to templates.
+                "django.template.context_processors.i18n",
                 "core.context_processors.base_url",
                 "api.context_processors.default_config_id",
                 "api.context_processors.unique_config_id",
@@ -123,6 +127,42 @@ TEMPLATES = [
         },
     },
 ]
+
+# Languages shared with Apprise Mobile. The selector uses two-letter codes,
+# while the middleware is ready for future regional codes.
+LANGUAGE_CODE = "en"
+# Native names help users recognize their language.
+LANGUAGES = [
+    ("ar", "العربية"),
+    ("de", "Deutsch"),
+    ("en", "English"),
+    ("es", "Español"),
+    ("fr", "Français"),
+    ("hi", "हिन्दी"),
+    ("id", "Bahasa Indonesia"),
+    ("it", "Italiano"),
+    ("ja", "日本語"),
+    ("ko", "한국어"),
+    ("ms", "Bahasa Melayu"),
+    ("nl", "Nederlands"),
+    ("pl", "Polski"),
+    ("pt", "Português"),
+    ("ru", "Русский"),
+    ("th", "ไทย"),
+    ("tl", "Tagalog"),
+    ("tr", "Türkçe"),
+    ("vi", "Tiếng Việt"),
+    ("zh", "中文"),
+]
+# Django reads source catalogs and compiled catalogs from this repository path.
+LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
+# Remember an explicit selector choice for one year, like the theme setting.
+LANGUAGE_COOKIE_AGE = 365 * 24 * 60 * 60
+# Lax allows normal navigation while avoiding cross-site cookie submission.
+LANGUAGE_COOKIE_SAMESITE = "Lax"
+# Only the server reads this choice, so scripts on the page never need it.
+# Secure is deliberately left off; plain HTTP is a supported deployment.
+LANGUAGE_COOKIE_HTTPONLY = True
 
 # Keep Django startup safe when LOG_LEVEL is empty or unsupported.
 _LOG_LEVEL = logging.getLevelName(
