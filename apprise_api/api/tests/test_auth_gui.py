@@ -505,7 +505,7 @@ class AuthGuiTests(SimpleTestCase):
     def test_lock_file_retains_username_and_access(self):
         """Saved records retain the username and debut access mode."""
         self.assertTrue(ConfigCache.set_auth(self.key, "alice", "secret"))
-        self.assertEqual(ConfigCache.get_auth_username(self.key), "alice")
+        self.assertEqual(ConfigCache.get_auth_record(self.key).username, "alice")
         self.assertTrue(ConfigCache.verify_auth(self.key, "alice", "secret"))
         record = ConfigCache.get_auth_record(self.key)
         self.assertEqual(record.access, Authentication.ACCESS_USER)

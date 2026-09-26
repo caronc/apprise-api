@@ -444,29 +444,6 @@ class AttachmentTests(SimpleTestCase):
         self.assertFalse(af.is_allowed("http://8.8.8.8/x"))
         self.assertFalse(af.is_allowed("http://example.com/x"))
 
-    def test_is_host_denied_matches_host_rules_only(self):
-        """Bare-host checks apply host rules without URL or port details."""
-        af = AppriseURLFilter("*", "localhost* evil.example.com")
-
-        self.assertTrue(af.is_host_denied("localhost"))
-        self.assertTrue(af.is_host_denied("localhost.localdomain"))
-        self.assertTrue(af.is_host_denied("evil.example.com"))
-        self.assertTrue(af.is_host_denied("evil.example.com."))
-        self.assertFalse(af.is_host_denied("example.com"))
-
-    def test_is_host_denied_ignores_url_kind_deny_rules(self):
-        """Bare-host checks ignore rules that require a full URL."""
-        af = AppriseURLFilter("*", "https://example.com/blocked")
-
-        self.assertFalse(af.is_host_denied("example.com"))
-
-    def test_is_host_denied_blocks_missing_host(self):
-        """A missing hostname can't be proven safe, so it is denied."""
-        af = AppriseURLFilter("*", "internal")
-
-        self.assertTrue(af.is_host_denied(""))
-        self.assertTrue(af.is_host_denied(None))
-
     def test_malformed_url_does_not_raise(self):
         """
         handling of malformed urls.

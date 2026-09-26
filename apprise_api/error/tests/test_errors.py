@@ -205,7 +205,7 @@ class ErrorTests(SimpleTestCase):
             }
 
         schema = specification["components"]["schemas"]["MobileQrResponse"]
-        assert set(schema["required"]) == {"url", "uses_admin_credentials"}
+        assert set(schema["required"]) == {"url", "uses_admin_credentials", "password_required"}
 
     def test_get_401(self):
         """The static authentication page includes its challenge header."""

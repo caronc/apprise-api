@@ -433,6 +433,31 @@ Side Nav (replaces legacy Materialize collection sidebar)
   }
 }
 
+/* Keep the logo and API version together in LTR and RTL layouts. */
+.nav-brand {
+  float: left;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+  direction: ltr;
+}
+
+.nav-brand-link {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.nav-brand .apprise-logo {
+  float: none !important;
+}
+
+.nav-api-version {
+  flex: 0 0 auto;
+  margin-top: 0.28rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .nav ul li {
   list-style: none;
   display: flex;
@@ -442,6 +467,8 @@ Side Nav (replaces legacy Materialize collection sidebar)
 
 .nav ul {
   float: right;
+  /* Keep control order stable; dir="auto" handles translated labels. */
+  direction: ltr;
   font-style: normal;
   margin: 0;
   padding: 0.18rem 0 0 0;
@@ -452,6 +479,11 @@ Side Nav (replaces legacy Materialize collection sidebar)
 }
 
 /* Apprise Library text – tight to the top-right */
+.nav ul li.library-language-nav {
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+}
+
 .nav ul li .apprise-lib-ver {
   line-height: 1.15;
   margin-top: 0;
@@ -562,6 +594,87 @@ li.social-theme-nav>a:focus-visible,
   margin: 0;
 }
 
+.language-selector-form,
+.language-selector-label {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
+.language-selector-label {
+  position: relative;
+}
+
+.language-selector-label::after {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  width: 0.34rem;
+  height: 0.34rem;
+  border-right: 1.5px solid var(--select-caret);
+  border-bottom: 1.5px solid var(--select-caret);
+  content: "";
+  pointer-events: none;
+  transform: translateY(-0.12rem) rotate(45deg);
+}
+
+.language-selector {
+  display: block;
+  width: 3.25rem;
+  height: 1.7rem;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 0.45rem 1.15rem;
+  border: 1px solid var(--select-border);
+  border-radius: 0.42rem;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--select-bg);
+  color: var(--select-text);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.language-selector:hover {
+  border-color: var(--select-border-hover);
+}
+
+.language-selector:focus-visible {
+  border-color: var(--mobile-beta-accent);
+  box-shadow: 0 0 0 3px var(--select-focus-ring);
+}
+
+.language-selector-submit {
+  min-width: 0;
+  height: 1.7rem;
+  margin-left: 0.25rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--select-border);
+  border-radius: 0.42rem;
+  background-color: var(--select-bg);
+  color: var(--select-text);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .auth-session-nav {
   display: inline-flex;
   align-items: center;
@@ -603,6 +716,14 @@ li.social-theme-nav>a:focus-visible,
     gap: 0.22rem;
   }
 
+  .language-selector {
+    width: 3rem;
+  }
+
+  .nav ul li.library-language-nav {
+    gap: 0.22rem;
+  }
+
   .auth-session-nav {
     gap: 0.22rem;
   }
@@ -618,6 +739,12 @@ li.social-theme-nav>a:focus-visible,
   }
 
   .auth-account-name {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .apprise-lib-label {
     display: none;
   }
 }
@@ -760,6 +887,19 @@ code {
   white-space: normal;
   padding: 0.2rem;
   border-radius: 4px;
+}
+
+/* URLs, paths and code samples are always read left to right. Isolating them
+   keeps a leading slash at the front of /notify/KEY on a right-to-left page
+   instead of letting the browser move it to the end. Message fields are left
+   out on purpose; those hold whatever language the person is writing in. */
+code,
+pre,
+kbd,
+samp,
+.apprise-config-editor textarea {
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 /* Inside <pre>, preserve newlines that hljs injects when converting <br> tags */
@@ -1777,6 +1917,12 @@ textarea {
 
 .mobile-setup-card__error {
   color: #d44;
+  text-align: center;
+}
+
+.mobile-setup-card__password-note {
+  color: var(--mobile-beta-muted);
+  line-height: 1.4;
   text-align: center;
 }
 
@@ -3542,6 +3688,13 @@ Authentication Editor
   object-fit: contain;
 }
 
+.apprise-qr-warning-icon i.material-icons {
+  display: block;
+  color: inherit !important;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
 .apprise-qr-url-row {
   display: flex;
   align-items: flex-start;
@@ -3593,13 +3746,13 @@ Authentication Editor
 
 .apprise-qr-note--warning {
   display: grid;
-  grid-template-columns: 1.35rem minmax(0, 1fr);
-  gap: 0.6rem;
-  align-items: start;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
   width: 100%;
-  padding: 0.65rem 0.75rem;
+  padding: 0.75rem 0.85rem;
   border: 1px solid var(--notify-log-warning-border);
-  border-radius: 0.4rem;
+  border-radius: 0.55rem;
   background: var(--notify-log-warning-bg);
   opacity: 1;
   text-align: left;
@@ -3608,12 +3761,22 @@ Authentication Editor
 
 .apprise-qr-warning-icon,
 .apprise-qr-warning-icon svg {
-  display: block;
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.apprise-qr-warning-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 .apprise-qr-warning-icon svg {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
   fill: none;
   stroke: currentColor;
 }

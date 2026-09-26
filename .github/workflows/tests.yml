@@ -52,7 +52,7 @@ jobs:
 
     - name: Lint with Ruff
       run: |
-        ruff check apprise_api
+        ruff check apprise_api scripts
 
     - name: Run tests with coverage
       run: |
@@ -116,6 +116,21 @@ jobs:
 
         echo "Timed out waiting for a healthy response."
         exit 1
+
+    # Translations are compiled while the image is built, not kept in git
+    #  - Tests: one compiled catalog for every language in the source tree
+    #  - expect a German page to actually be shown in German
+    - name: Check translations are included
+      run: |
+        sources=$(ls apprise_api/locale/*/LC_MESSAGES/django.po | wc -l)
+        compiled=$(docker exec apprise-smoke sh -c 'ls /opt/apprise/webapp/locale/*/LC_MESSAGES/django.mo | wc -l')
+        echo "Translation catalogs: ${sources} sources, ${compiled} compiled"
+        test "${sources}" -eq "${compiled}"
+
+        # Fetch the whole page first; piping into grep -q can end curl early
+        page=$(curl -sf -H "Accept-Language: de" http://localhost:8000/)
+        grep -q 'aria-label="Sprache"' <<< "${page}"
+        echo "German page is translated."
 
     - name: Show container logs
       if: always()

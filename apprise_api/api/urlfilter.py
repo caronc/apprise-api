@@ -34,7 +34,8 @@ from .exceptions import AppriseAPIImproperlyConfigured
 # AppriseURLFilter class docstring below for what it does.
 INTERNAL_TOKEN = "internal"
 
-# Reuse Apprise's bounded resolver for early URL checks.
+# Reuse Apprise's bounded resolver for early URL checks. Both projects share
+# it so a destination allowed here is judged the same way when it is sent to.
 _HTTP_RESOLVER = HTTPPolicy()
 
 # Keep administrator patterns reasonably sized even though matching is bounded.
@@ -364,17 +365,6 @@ class AppriseURLFilter:
             return True
 
         return any(_is_blocked_address(addr) for addr in addresses)
-
-    def is_host_denied(self, host: str) -> bool:
-        """Return whether a hostname matches a host-only deny rule.
-
-        Connection checks lack URL and port details, so URL rules are ignored.
-        Address safety is checked separately.
-        """
-        if not host:
-            return True
-
-        return any(pattern.match(host) for pattern, kind in self.deny_rules if kind == "host")
 
     @property
     def blocks_internal(self) -> bool:

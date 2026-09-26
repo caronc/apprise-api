@@ -2,7 +2,8 @@
 {% load i18n %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}"
+      dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
   <head>
     <meta charset="utf-8">
     <!--Let browser know website is optimized for mobile-->
@@ -53,26 +54,60 @@
           hidden
           data-title="{% trans "Administrator Credentials" %}"
           data-text="{% trans "This configuration has no assigned user. As a result, the QR code will use the administrator account." %}"></span>
+    <template id="apprise-mobile-password-note">
+      {% include "components/qr_password_note.html" %}
+    </template>
     <div class="content">
       <!-- Title -->
       <div class="nav row nav-color z-depth-2">
         <div class="col s12">
-          <a href="{% url 'welcome' %}">
-            {% include "icons/apprise-logo.svg" %}
-          </a>
-          <small>&nbsp;<a class="apprise-api-ver"
+          {# Keep the API version attached to the logo even when the page uses RTL text. #}
+          <div class="nav-brand">
+            <a class="nav-brand-link" href="{% url 'welcome' %}">
+              {% include "icons/apprise-logo.svg" %}
+            </a>
+            <small class="nav-api-version"><a class="apprise-api-ver"
    href="{{ APPRISE_API_URL }}"
    target="_new">v{{ APPRISE_API_VERSION }}</a></small>
-          <ul>
-            <li>
+          </div>
+          {# Header controls keep one predictable visual order in LTR and RTL locales. #}
+          <ul class="nav-actions">
+            <li class="library-language-nav">
               <a class="apprise-lib-ver" href="{{ APPRISE_LIB_URL }}" target="_new">
                 {% include "icons/apprise-badge.svg" %}
 
-              APPRISE LIBRARY v{{ APPRISE_LIB_VERSION }}</a>
+                <span class="apprise-lib-label"
+                      dir="auto">{% trans "APPRISE LIBRARY" %}</span> v{{ APPRISE_LIB_VERSION }}</a>
+              <span class="nav-divider language-nav-divider" aria-hidden="true"></span>
+              <form class="language-selector-form"
+                    action="{% url 'set_language' %}"
+                    method="post">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                <label class="language-selector-label">
+                  <span class="sr-only">{% trans "Language" %}</span>
+                  <select class="browser-default language-selector"
+                          name="language"
+                          dir="ltr"
+                          aria-label="{% trans "Language" %}"
+                          title="{% trans "Language" %}"
+                          onchange="this.form.submit()">
+                    {% for code, name in LANGUAGES %}
+                      <option value="{{ code }}"
+                              lang="{{ code }}"
+                              aria-label="{{ name }}"
+                              {% if code == LANGUAGE_CODE %}selected{% endif %}>{{ code }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <noscript>
+                  <button class="language-selector-submit" type="submit">{% trans "Apply" %}</button>
+                </noscript>
+              </form>
             </li>
             <li class="auth-health-nav">
               <span class="api-status-nav">
-                <span>{% trans "API HEALTH" %}</span>
+                <span dir="auto">{% trans "API HEALTH" %}</span>
                 <a href="{% if AUTH_PERMISSION == 'user' %}{% url 'health_current' %}{% else %}{% url 'health' %}{% endif %}"
                    target="_new"
                    id="nav-api-status-link">
@@ -1005,9 +1040,11 @@
             title: '{% trans "Scan with Apprise Mobile" %}',
             url: data.url,
             logoSrc: '{% static "mobile-icon-flat-whitebg.png" %}',
-            note: usesAdminCredentials
-              ? adminWarning.text
-              : '{% trans "Saved passwords are not included. Apprise Mobile will ask for one when required." %}',
+            // Only mention the missing password when the app will ask for one
+            note: [
+              usesAdminCredentials ? adminWarning.text : '',
+              data.password_required ? AppriseQr.passwordNoteHtml() : ''
+            ].filter(Boolean).join(' '),
             warning: usesAdminCredentials,
             warningTitle: adminWarning.title,
             warningIconHtml: `{% include 'icons/status-warning.svg' %}`,

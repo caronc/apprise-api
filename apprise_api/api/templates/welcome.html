@@ -85,23 +85,20 @@
                     are:{% endblocktrans %}
                             <ol>
                               <li>
-                                <i class="tiny material-icons"
-                                   style="color: blue">info</i><code>{% trans "info" %}</code> -
+                                <i class="tiny material-icons" style="color: blue">info</i><code>info</code> -
                                 <i>{% blocktrans %}this is the default option if a type
                           isn't
                           specified.{% endblocktrans %}</i>
                               </li>
                               <li>
-                                <i class="tiny material-icons"
-                                   style="color: green">check_circle</i><code>{% trans "success" %}</code>
+                                <i class="tiny material-icons" style="color: green">check_circle</i><code>success</code>
                               </li>
                               <li>
                                 <i class="tiny material-icons"
-                                   style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
+                                   style="color: orange">report_problem</i><code>warning</code>
                               </li>
                               <li>
-                                <i class="tiny material-icons"
-                                   style="color: red">cancel</i><code>{% trans "failure" %}</code>
+                                <i class="tiny material-icons" style="color: red">cancel</i><code>failure</code>
                               </li>
                             </ol>
                           </td>
@@ -111,7 +108,7 @@
                     <ul class="collapsible">
                       <li>
                         <div class="collapsible-header">
-                          <i class="material-icons">code</i>Curl Example
+                          <i class="material-icons">code</i>{% trans "Curl Example" %}
                         </div>
                         <div class="collapsible-body">
                           {# djlint:off #}
@@ -138,7 +135,7 @@
                       </li>
                       <li>
                         <div class="collapsible-header">
-                          <i class="material-icons">code</i>Python Example
+                          <i class="material-icons">code</i>{% trans "Python Example" %}
                         </div>
                         <div class="collapsible-body">
                           {# djlint:off #}
@@ -150,7 +147,7 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;'title': 'test title',<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;'body': 'test body',<br />
                         }<br />
-                        <br /># The Request<br />
+                        <br /># {% trans "The Request" %}<br />
                         response = Request(<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/",<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
@@ -176,63 +173,63 @@
                       </li>
                       <li>
                         <div class="collapsible-header">
-                          <i class="material-icons">code</i>PHP Example
+                          <i class="material-icons">code</i>{% trans "PHP Example" %}
                         </div>
                         <div class="collapsible-body">
                           {# djlint:off #}
                         <pre><code class="php">&lt;?php<br />
                         <br />
-                        // The URL<br />
+                        // {% trans "The URL" %}<br />
                         $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/';<br />
                         <br />
-                        // Initiate cURL.<br />
+                        // {% trans "Initiate cURL." %}<br />
                         $ch = curl_init($url);<br />
                         <br />
-                        // The JSON data.<br />
+                        // {% trans "The JSON data." %}<br />
                         $jsonData = array(<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;'urls' => 'mailto://user:pass@hotmail.com',<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;'title' => 'test title',<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;'body' => 'test body'<br />
                         );<br />
                         <br />
-                        //Encode the array into JSON.<br />
+                        // {% trans "Encode the array into JSON." %}<br />
                         $jsonDataEncoded = json_encode($jsonData);<br />
                         <br />
-                        //Tell cURL that we want to send a POST request.<br />
+                        // {% trans "Tell cURL that we want to send a POST request." %}<br />
                         curl_setopt($ch, CURLOPT_POST, 1);<br />
                         <br />
-                        //Attach our encoded JSON string to the POST fields.<br />
+                        // {% trans "Attach our encoded JSON string to the POST fields." %}<br />
                         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonDataEncoded);<br />
                         <br />
-                        //Set the content type to application/json<br />
+                        // {% trans "Set the content type to application/json" %}<br />
                         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));<br />
                         <br />
-                        //Execute the request<br />
+                        // {% trans "Execute the request" %}<br />
                         $result = curl_exec($ch);<br />
                         <br />
-                        // Close our handler<br />
+                        // {% trans "Close our handler" %}<br />
                         curl_close($ch);<br />
                         ?&gt;</code></pre>
                           {# djlint:on #}
                           {# djlint:off #}
                         <pre><code class="php">&lt;?php<br />
-                        // Sending an Attachment using PHP<br /><br />
-                        // The URL<br />
+                        // {% trans "Sending an attachment using PHP" %}<br /><br />
+                        // {% trans "The URL" %}<br />
                         $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/';<br />
                         <br />
-                        //Initiate cURL.<br />
+                        // {% trans "Initiate cURL." %}<br />
                         $ch = curl_init($url);<br />
                         <br />
-                        // Prepare our File attachment<br />
+                        // {% trans "Prepare our file attachment" %}<br />
                         $path = '/path/to/photo.jpg';<br />
                         <br />
-                        // Acquire our Filename<br />
+                        // {% trans "Acquire our filename" %}<br />
                         $fname = basename($path);<br />
                         <br />
-                        // Get our attachment mime-type (in this case it's 'image/jpg')<br />
+                        // {% trans "Get the attachment MIME type (in this case it is 'image/jpg')" %}<br />
                         $mimeType = mime_content_type($path);<br />
                         <br />
-                        //The multipart data.<br />
+                        // {% trans "The multipart data." %}<br />
                         $data = array(<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;'urls' => 'mailto://user:pass@hotmail.com',<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;'title' => 'test title',<br />
@@ -240,16 +237,16 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;'attach1' => new CURLFile($path, $mimeType, $fname)<br />
                         );<br />
                         <br />
-                        //Tell cURL that we want to send a POST request.<br />
+                        // {% trans "Tell cURL that we want to send a POST request." %}<br />
                         curl_setopt($ch, CURLOPT_POST, 1);<br />
                         <br />
-                        //Attach our data to the POST fields.<br />
+                        // {% trans "Attach the data to the POST fields." %}<br />
                         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);<br />
                         <br />
-                        //Execute the request<br />
+                        // {% trans "Execute the request" %}<br />
                         $result = curl_exec($ch);<br />
                         <br />
-                        // Close our handler<br />
+                        // {% trans "Close our handler" %}<br />
                         curl_close($ch);<br />
                         ?&gt;</code></pre>
                           {# djlint:on #}
@@ -330,10 +327,10 @@
                       options are:{% endblocktrans %}
                               <ol>
                                 <li>
-                                  <code>{% trans "yaml" %}</code>
+                                  <code>yaml</code>
                                 </li>
                                 <li>
-                                  <code>{% trans "text" %}</code>
+                                  <code>text</code>
                                 </li>
                               </ol>
                               <ul>
@@ -359,7 +356,7 @@
                       <ul class="collapsible">
                         <li>
                           <div class="collapsible-header">
-                            <i class="material-icons">code</i>Curl Example
+                            <i class="material-icons">code</i>{% trans "Curl Example" %}
                           </div>
                           <div class="collapsible-body">
                             {# djlint:off #}
@@ -378,7 +375,7 @@
                         </li>
                         <li>
                           <div class="collapsible-header">
-                            <i class="material-icons">code</i>Python Example
+                            <i class="material-icons">code</i>{% trans "Python Example" %}
                           </div>
                           <div class="collapsible-body">{# djlint:off #}
                             <pre><code class="python">import json<br />
@@ -387,7 +384,7 @@
                             payload = {<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'urls': 'mailto://user:pass@gmail.com',<br />
                             }<br />
-                            <br /># The URL if the key was <em>{{key}}</em><br />
+                            <br /># {% blocktrans %}The URL if the key was <em>{{key}}</em>{% endblocktrans %}<br />
                             req = Request(<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em>",<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
@@ -398,38 +395,38 @@
                         </li>
                         <li>
                           <div class="collapsible-header">
-                            <i class="material-icons">code</i>PHP Example
+                            <i class="material-icons">code</i>{% trans "PHP Example" %}
                           </div>
                           <div class="collapsible-body">{# djlint:off #}
                             <pre><code class="php">&lt;?php<br />
                             <br />
-                            // The URL if the key was <em>{{key}}</em><br />
+                            // {% blocktrans %}The URL if the key was <em>{{key}}</em>{% endblocktrans %}<br />
                             $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/add/<em>{{key}}</em>';<br />
                             <br />
-                            //Initiate cURL.<br />
+                            // {% trans "Initiate cURL." %}<br />
                             $ch = curl_init($url);<br />
                             <br />
-                            //The JSON data.<br />
+                            // {% trans "The JSON data." %}<br />
                             $jsonData = array(<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'urls' => 'mailto://user:pass@hotmail.com'<br />
                             );<br />
                             <br />
-                            //Encode the array into JSON.<br />
+                            // {% trans "Encode the array into JSON." %}<br />
                             $jsonDataEncoded = json_encode($jsonData);<br />
                             <br />
-                            //Tell cURL that we want to send a POST request.<br />
+                            // {% trans "Tell cURL that we want to send a POST request." %}<br />
                             curl_setopt($ch, CURLOPT_POST, 1);<br />
                             <br />
-                            //Attach our encoded JSON string to the POST fields.<br />
+                            // {% trans "Attach our encoded JSON string to the POST fields." %}<br />
                             curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonDataEncoded);<br />
                             <br />
-                            //Set the content type to application/json<br />
+                            // {% trans "Set the content type to application/json" %}<br />
                             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));<br />
                             <br />
-                            //Execute the request<br />
+                            // {% trans "Execute the request" %}<br />
                             $result = curl_exec($ch);<br />
                             <br />
-                            // Close our handler<br />
+                            // {% trans "Close our handler" %}<br />
                             curl_close($ch);<br />
                             ?&gt;</code></pre>
                             {# djlint:on #}</div>
@@ -448,7 +445,7 @@
                     <ul class="collapsible">
                       <li>
                         <div class="collapsible-header">
-                          <i class="material-icons">code</i>Curl Example
+                          <i class="material-icons">code</i>{% trans "Curl Example" %}
                         </div>
                         <div class="collapsible-body">{# djlint:off #}
                           <pre><code class="bash"># {% blocktrans %}Remove previously loaded configuration associated with the id of <em>{{key}}</em>{% endblocktrans %}<br />
@@ -457,12 +454,12 @@
                       </li>
                       <li>
                         <div class="collapsible-header">
-                          <i class="material-icons">code</i>Python Example
+                          <i class="material-icons">code</i>{% trans "Python Example" %}
                         </div>
                         <div class="collapsible-body">{# djlint:off #}
                           <pre><code class="python">import json<br />
                           from urllib.request import Request<br />
-                          <br /># The request if the key was <em>{{key}}</em><br />
+                          <br /># {% blocktrans %}The request if the key was <em>{{key}}</em>{% endblocktrans %}<br />
                           req = Request(<br />
                           &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em>",<br />
                           &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
@@ -473,24 +470,24 @@
                       </li>
                       <li>
                         <div class="collapsible-header">
-                          <i class="material-icons">code</i>PHP Example
+                          <i class="material-icons">code</i>{% trans "PHP Example" %}
                         </div>
                         <div class="collapsible-body">{# djlint:off #}
                           <pre><code class="php">&lt;?php<br />
                           <br />
-                          // The URL if the key was <em>{{key}}</em><br />
+                          // {% blocktrans %}The URL if the key was <em>{{key}}</em>{% endblocktrans %}<br />
                           $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/del/<em>{{key}}</em>';<br />
                           <br />
-                          //Initiate cURL.<br />
+                          // {% trans "Initiate cURL." %}<br />
                           $ch = curl_init($url);<br />
                           <br />
-                          //Tell cURL that we want to send a POST request.<br />
+                          // {% trans "Tell cURL that we want to send a POST request." %}<br />
                           curl_setopt($ch, CURLOPT_POST, 1);<br />
                           <br />
-                          //Execute the request<br />
+                          // {% trans "Execute the request" %}<br />
                           $result = curl_exec($ch);<br />
                           <br />
-                          // Close our handler<br />
+                          // {% trans "Close our handler" %}<br />
                           curl_close($ch);<br />
                           ?&gt;</code></pre>
                           {# djlint:on #}</div>
@@ -507,7 +504,7 @@
             the configuration associated with the configuration identified through the id of <em>{{key}}</em>.{% endblocktrans %}
                     <br />
                     {# djlint:off #}
-                    <pre><code lang="bash"># Use Apprise to retrieve your configuration:<br />
+                    <pre><code lang="bash"># {% trans "Use Apprise to retrieve your configuration:" %}<br />
                     apprise --body="test message" --config={{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/get/<em>{{key}}</em></code></pre>
                     {# djlint:on #}
                   </td>
@@ -521,7 +518,7 @@
             the configuration associated with the configuration identified through the id of <em>{{key}}</em>.{% endblocktrans %}
                     <br />
                     {# djlint:off #}
-                    <pre><code lang="bash"># Use Apprise to retrieve your configuration:<br />
+                    <pre><code lang="bash"># {% trans "Use Apprise to retrieve your configuration:" %}<br />
                     apprise --body="test message" --config={{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em>{{key}}</em></code></pre>
                     {# djlint:on #}
                   </td>
@@ -559,23 +556,21 @@
                       are:{% endblocktrans %}
                               <ol>
                                 <li>
-                                  <i class="tiny material-icons"
-                                     style="color: blue">info</i><code>{% trans "info" %}</code> -
+                                  <i class="tiny material-icons" style="color: blue">info</i><code>info</code> -
                                   <i>{% blocktrans %}this is the default option if a type
                             isn't
                             specified.{% endblocktrans %}</i>
                                 </li>
                                 <li>
                                   <i class="tiny material-icons"
-                                     style="color: green">check_circle</i><code>{% trans "success" %}</code>
+                                     style="color: green">check_circle</i><code>success</code>
                                 </li>
                                 <li>
                                   <i class="tiny material-icons"
-                                     style="color: orange">report_problem</i><code>{% trans "warning" %}</code>
+                                     style="color: orange">report_problem</i><code>warning</code>
                                 </li>
                                 <li>
-                                  <i class="tiny material-icons"
-                                     style="color: red">cancel</i><code>{% trans "failure" %}</code>
+                                  <i class="tiny material-icons" style="color: red">cancel</i><code>failure</code>
                                 </li>
                               </ol>
                             </td>
@@ -592,7 +587,7 @@
                       <ul class="collapsible">
                         <li>
                           <div class="collapsible-header">
-                            <i class="material-icons">code</i>Curl Example
+                            <i class="material-icons">code</i>{% trans "Curl Example" %}
                           </div>
                           <div class="collapsible-body">
                             {# djlint:off #}
@@ -620,26 +615,26 @@
                         </li>
                         <li>
                           <div class="collapsible-header">
-                            <i class="material-icons">code</i>Python Example
+                            <i class="material-icons">code</i>{% trans "Python Example" %}
                           </div>
                           <div class="collapsible-body">
-                            Ideally you should leverage the Apprise Library, it will make your life much easier:
+                            {% trans "Ideally you should leverage the Apprise Library; it will make your life much easier:" %}
                             {# djlint:off #}
                             <pre><code class="python">import apprise<br />
                             <br />
-                            # Create an Apprise Instance<br />
+                            # {% trans "Create an Apprise instance" %}<br />
                             aobj = apprise.Apprise()<br />
                             <br />
-                            # Add our URL<br />
+                            # {% trans "Add our URL" %}<br />
                             aobj.add("apprise{% if secure %}s{%else%}{%endif%}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/<em>{{key}}</em>")<br />
                             <br />
-                            # Send our notification:<br />
+                            # {% trans "Send our notification:" %}<br />
                             aobj.notify("test body", "test title")<br />
                             <br />
-                            # Sending an attachment is just as easy:<br />
+                            # {% trans "Sending an attachment is just as easy:" %}<br />
                             aobj.notify("test body", "test title", attach="/path/to/file")</code></pre>
                             {# djlint:on #}
-                            The legacy (but more compatible and light weight) way of doing things:
+                            {% trans "The legacy (but more compatible and lightweight) way of doing things:" %}
                             {# djlint:off #}
                             <pre><code class="python">import json<br />
                             from urllib.request import Request<br />
@@ -649,7 +644,7 @@
                             &nbsp;&nbsp;&nbsp;&nbsp;'title': 'test title',<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'body': 'test body',<br />
                             }<br />
-                            <br /># The URL if the key was <em>{{key}}</em><br />
+                            <br /># {% blocktrans %}The URL if the key was <em>{{key}}</em>{% endblocktrans %}<br />
                             req = Request(<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>",<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
@@ -661,63 +656,63 @@
                         </li>
                         <li>
                           <div class="collapsible-header">
-                            <i class="material-icons">code</i>PHP Example
+                            <i class="material-icons">code</i>{% trans "PHP Example" %}
                           </div>
                           <div class="collapsible-body">
                             {# djlint:off #}
                             <pre><code class="php">&lt;?php<br />
                             <br />
-                            // The URL if the key was <em>{{key}}</em><br />
+                            // {% blocktrans %}The URL if the key was <em>{{key}}</em>{% endblocktrans %}<br />
                             $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>';<br />
                             <br />
-                            //Initiate cURL.<br />
+                            // {% trans "Initiate cURL." %}<br />
                             $ch = curl_init($url);<br />
                             <br />
-                            //The JSON data.<br />
+                            // {% trans "The JSON data." %}<br />
                             $jsonData = array(<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'tag' => 'devops',<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'title' => 'test title',<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'body' => 'test body'<br />
                             );<br />
                             <br />
-                            //Encode the array into JSON.<br />
+                            // {% trans "Encode the array into JSON." %}<br />
                             $jsonDataEncoded = json_encode($jsonData);<br />
                             <br />
-                            //Tell cURL that we want to send a POST request.<br />
+                            // {% trans "Tell cURL that we want to send a POST request." %}<br />
                             curl_setopt($ch, CURLOPT_POST, 1);<br />
                             <br />
-                            //Attach our encoded JSON string to the POST fields.<br />
+                            // {% trans "Attach our encoded JSON string to the POST fields." %}<br />
                             curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonDataEncoded);<br />
                             <br />
-                            //Set the content type to application/json<br />
+                            // {% trans "Set the content type to application/json" %}<br />
                             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));<br />
                             <br />
-                            //Execute the request<br />
+                            // {% trans "Execute the request" %}<br />
                             $result = curl_exec($ch);<br />
                             <br />
-                            // Close our handler<br />
+                            // {% trans "Close our handler" %}<br />
                             curl_close($ch);<br />
                             ?&gt;</code></pre>
                             {# djlint:on #}
                             {# djlint:off #}
                             <pre><code class="php">&lt;?php<br />
-                            // Sending an Attachment using PHP<br /><br />
-                            // The URL<br />
+                            // {% trans "Sending an attachment using PHP" %}<br /><br />
+                            // {% trans "The URL" %}<br />
                             $url = '{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em>{{key}}</em>';<br />
                             <br />
-                            //Initiate cURL.<br />
+                            // {% trans "Initiate cURL." %}<br />
                             $ch = curl_init($url);<br />
                             <br />
-                            // Prepare our File attachment<br />
+                            // {% trans "Prepare our file attachment" %}<br />
                             $path = '/path/to/photo.jpg';<br />
                             <br />
-                            // Acquire our Filename<br />
+                            // {% trans "Acquire our filename" %}<br />
                             $fname = basename($path);<br />
                             <br />
-                            // Get our attachment mime-type (in this case it's 'image/jpg')<br />
+                            // {% trans "Get the attachment MIME type (in this case it is 'image/jpg')" %}<br />
                             $mimeType = mime_content_type($path);<br />
                             <br />
-                            //The multipart data.<br />
+                            // {% trans "The multipart data." %}<br />
                             $data = array(<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'urls' => 'mailto://user:pass@hotmail.com',<br />
                             &nbsp;&nbsp;&nbsp;&nbsp;'title' => 'test title',<br />
@@ -725,16 +720,16 @@
                             &nbsp;&nbsp;&nbsp;&nbsp;'attach1' => new CURLFile($path, $mimeType, $fname)<br />
                             );<br />
                             <br />
-                            //Tell cURL that we want to send a POST request.<br />
+                            // {% trans "Tell cURL that we want to send a POST request." %}<br />
                             curl_setopt($ch, CURLOPT_POST, 1);<br />
                             <br />
-                            //Attach our data to the POST fields.<br />
+                            // {% trans "Attach the data to the POST fields." %}<br />
                             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);<br />
                             <br />
-                            //Execute the request<br />
+                            // {% trans "Execute the request" %}<br />
                             $result = curl_exec($ch);<br />
                             <br />
-                            // Close our handler<br />
+                            // {% trans "Close our handler" %}<br />
                             curl_close($ch);<br />
                             ?&gt;</code></pre>
                             {# djlint:on #}
@@ -753,15 +748,15 @@
             <h4>{% trans "Endpoint Notes" %}</h4>
           </div>
           <p>
-            The Configuration ID (<em>{{ key }}</em>) you plan to associate your configuration with:
+            {% blocktrans %}The Configuration ID (<em>{{ key }}</em>) you plan to associate your configuration with:{% endblocktrans %}
           </p>
           <ol>
             <li>
-              Can not have spaces and/or special characters in it. Both a dash (<code>-</code>) and underscore
-              (<code>_</code>) are the only exceptions to this rule.
+              {% blocktrans %}Cannot have spaces or special characters. A dash (<code>-</code>) and underscore
+              (<code>_</code>) are the only exceptions to this rule.{% endblocktrans %}
             </li>
-            <li>Must start with at least 2 alpha/numeric characters.</li>
-            <li>Can not exceed 64 characters in total length.</li>
+            <li>{% trans "Must start with at least two alphanumeric characters." %}</li>
+            <li>{% trans "Cannot exceed 64 characters in total length." %}</li>
           </ol>
         </div>
       {% else %}
