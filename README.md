@@ -408,7 +408,7 @@ The `/cfg` list requires `APPRISE_STATEFUL_MODE=simple` and is available by defa
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).<br/>📌 **template**: Values for a configuration written with `${NAME}` markers. Send a JSON object (`"template": {"api_key": "..."}`) or one form field per name (`template[api_key]=...`).
-| `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists template names with their configuration defaults (or `null`). With `privacy=1`, URL secrets are hidden and listed defaults become `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required.
+| `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists its template names. With `privacy=0`, each name carries its configuration default (or `null`). With `privacy=1`, URL secrets are hidden and every name is `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required and every name is `null`.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
 | `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, `access`, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
@@ -438,13 +438,14 @@ As an example, the `/json/urls/{KEY}` response might return something like this:
 }
 ```
 
-You can pass `privacy=1` to `/json/urls/{KEY}` to hide passwords, secret tokens,
-and configuration defaults. Template names remain available, but a `null`
-value can mean either no default was declared or privacy hid it. Server
-environment values are never returned. Use `tag=` to filter results with a
-comma-separated set of tags; if omitted, `tag=all` is used.
+You can pass `privacy=1` to `/json/urls/{KEY}` to hide passwords and secret
+tokens. The `template` section of each URL still lists every name it uses, but
+each is `null`. With `privacy=0`, each name maps to its configuration default,
+or `null` when none was declared. Server environment values, and whether they
+exist, are never returned. Use `tag=` to filter results with a comma-separated
+set of tags; if omitted, `tag=all` is used.
 
-When `APPRISE_CONFIG_LOCK` is set, only an authenticated administrator may use `/json/urls/{KEY}`. Other callers receive `403` without revealing saved URLs or tags. Non-admin notification callers must provide a specific tag; `all` is rejected.
+When `APPRISE_CONFIG_LOCK` is set, only an authenticated administrator may use `/json/urls/{KEY}`, and every `template` name is `null`. Other callers receive `403` without revealing saved URLs or tags. Non-admin notification callers must provide a specific tag; `all` is rejected.
 
 Here is an example using `curl` as to how someone might send a notification to everyone associated with the tag `abc123` (using `/notify/{key}`):
 

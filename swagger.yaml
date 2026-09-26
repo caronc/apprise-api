@@ -219,7 +219,7 @@ paths:
               schema:
                 type: object
               example:
-                version: "1.13.0"
+                version: "2.0.0"
                 schemas:
                   - service_name: JSON
                     protocols: ["json"]
@@ -857,10 +857,10 @@ paths:
         with {key}.
       description: >
         With CONFIG_LOCK, only an authenticated administrator may inspect this
-        listing. Each URL lists its template names and configuration defaults,
-        or null when none is available. Privacy hides declared defaults;
-        server environment values are never returned. The template block is
-        also empty when no template names are used.
+        listing. Each URL lists its template names. With privacy=0, each name
+        carries its configuration default, or null when none was declared.
+        With privacy=1 or CONFIG_LOCK, every name is null. Server environment
+        values are never returned.
       tags:
         - Persistent
       parameters:
@@ -874,7 +874,7 @@ paths:
           required: false
           description: >
             When set to 1, URL secrets are redacted. Template names remain
-            available, while their listed defaults become null.
+            listed, but every name is null.
         - in: query
           name: tag
           schema:
@@ -1241,7 +1241,7 @@ paths:
           required: false
           description: >
             When set to 1, URL secrets are redacted. Template names remain
-            available, while their listed defaults become null.
+            listed, but every name is null.
         - in: query
           name: tag
           schema:
@@ -1857,15 +1857,16 @@ components:
         template:
           type: object
           description: >
-            Every template name this URL uses, mapped to the default declared
-            for it in the configuration's template section. Null means there
-            is no default to offer, either because none was written or because
-            privacy=1 withholds it; a value may still come from the server's
-            own APPRISE_TEMPLATE_<NAME> when the notification is sent, and
-            those are never returned here. Names are lowercase; match them to
-            the uppercase URL markers without regard to case. Always present,
-            and empty when the URL uses no template names, the configuration
-            is not YAML, or templates are disabled.
+            Every template name this URL uses. With privacy=0, each maps to
+            the default declared for it in the configuration's template
+            section, or null when none was declared. With privacy=1 or
+            CONFIG_LOCK, every name maps to null. A null name may still be
+            filled from the server's own APPRISE_TEMPLATE_<NAME> when the
+            notification is sent; those values, and whether they exist, are
+            never returned here. Names are lowercase; match them to the
+            uppercase URL markers without regard to case. Always present, and
+            empty when the URL uses no template names, the configuration is
+            not YAML, or templates are disabled.
           additionalProperties:
             type: string
             nullable: true

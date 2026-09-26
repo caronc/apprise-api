@@ -32,8 +32,6 @@ import time
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 import apprise
-from apprise.exception import AppriseTemplateError
-from apprise.utils.template import resolve_values
 from core.utils import parse_bool, parse_log_level
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
@@ -3833,13 +3831,11 @@ class JsonUrlView(View):
         # Support 'yes', '1', 'true', 'enable', 'active', and +
         privacy = parse_bool(request.GET.get("privacy"), default=False)
 
-        # Privacy masks URL secrets and defaults, but not template names.
-        # Environment values are never returned.
+        # Template names are always listed. Their configuration defaults are
+        # only shown with privacy=0 and never while CONFIG_LOCK is set. Server
+        # environment values are never returned or hinted at.
         expose_template_names = settings.APPRISE_ALLOW_TEMPLATES
-        expose_template_defaults = expose_template_names and not privacy
-        expose_fallback_availability = expose_template_defaults and parse_bool(
-            request.GET.get("fallbacks"), default=False
-        )
+        expose_template_defaults = expose_template_names and not privacy and not settings.APPRISE_CONFIG_LOCK
 
         # Optionally filter on tags. Use comma to identify more then one
         tag = request.GET.get("tag", "all")
@@ -3889,23 +3885,11 @@ class JsonUrlView(View):
             retry = service_retry(notification, url)
             optional = service_optional(notification, url)
 
-            # List defaults when allowed. A blank reports that a private
-            # environment fallback exists without exposing its value.
+            # Each name maps to its YAML default when allowed, otherwise None.
             template = {}
             if expose_template_names:
                 for name in sorted(getattr(notification, "template_names", ())):
                     default = notification.template_schema.variables[name].default
-                    if default is None and expose_fallback_availability:
-                        try:
-                            # Report availability without returning the value.
-                            resolve_values(
-                                notification.template_schema,
-                                names={name},
-                            )
-                        except AppriseTemplateError:
-                            pass
-                        else:
-                            default = ""
                     template[name] = default if expose_template_defaults else None
             # Set Notification
             response["urls"].append(

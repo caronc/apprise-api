@@ -531,12 +531,7 @@ class TemplateTests(SimpleTestCase):
         assert "${TOKEN}" in waiting[0]["url"]
 
     def test_private_listing_hides_defaults(self):
-        """Privacy withholds values while still saying what to ask for.
-
-        A caller has to know which names to prompt for and which of them
-        are mandatory.  A default is a different matter: it can hold a
-        secret, so it is left out.
-        """
+        """Privacy lists every template name but withholds its default."""
         result = self.client.get(f"/json/urls/{self.key}?privacy=1")
         assert result.status_code == 200
         payload = result.json()
@@ -544,18 +539,16 @@ class TemplateTests(SimpleTestCase):
         # No default value comes through, not even for the optional name
         assert "localhost" not in dumps(payload)
 
+        # Both names are still listed so a caller knows what to prompt for
         waiting = [entry for entry in payload["urls"] if entry["template"]]
         assert len(waiting) == 1
-
-        # Both names are still listed; neither carries a value, which is
-        # all a caller needs in order to know what to prompt for
         assert waiting[0]["template"] == {"host_name": None, "token": None}
 
         # Markers stay readable so a caller can still see where a value goes
         assert "${TOKEN}" in waiting[0]["url"]
 
     def test_url_listing_never_exposes_environment_values(self):
-        """Environment fallbacks stay server-side in both privacy modes."""
+        """Server environment values, or whether they exist, are never listed."""
         with patch.dict(
             os.environ,
             {
@@ -565,53 +558,26 @@ class TemplateTests(SimpleTestCase):
         ):
             visible = self.client.get(f"/json/urls/{self.key}")
             private = self.client.get(f"/json/urls/{self.key}?privacy=1")
-            availability = self.client.get(f"/json/urls/{self.key}?privacy=0&fallbacks=1")
 
         assert visible.status_code == 200
         assert private.status_code == 200
-        assert availability.status_code == 200
         visible_payload = visible.json()
         private_payload = private.json()
-        availability_payload = availability.json()
+
+        # Only the configuration default is listed; the environment adds nothing
         visible_waiting = [entry for entry in visible_payload["urls"] if entry["template"]]
-        private_waiting = [entry for entry in private_payload["urls"] if entry["template"]]
-        availability_waiting = [entry for entry in availability_payload["urls"] if entry["template"]]
         assert visible_waiting[0]["template"] == {
             "host_name": "localhost",
             "token": None,
         }
+        private_waiting = [entry for entry in private_payload["urls"] if entry["template"]]
         assert private_waiting[0]["template"] == {
             "host_name": None,
             "token": None,
         }
-        # The editor learns that a fallback exists, but never receives it.
-        assert availability_waiting[0]["template"] == {
-            "host_name": "localhost",
-            "token": "",
-        }
-        for payload in (visible_payload, private_payload, availability_payload):
+        for payload in (visible_payload, private_payload):
             assert "environment.example" not in dumps(payload)
             assert "environment-secret" not in dumps(payload)
-
-    def test_fallback_availability_with_nothing_to_fall_back_on(self):
-        """Asking about fallbacks reports none when the environment is empty."""
-        with patch.dict(os.environ):
-            # Nothing is waiting in the environment for either name
-            os.environ.pop("APPRISE_TEMPLATE_HOST_NAME", None)
-            os.environ.pop("APPRISE_TEMPLATE_TOKEN", None)
-
-            result = self.client.get(f"/json/urls/{self.key}?privacy=0&fallbacks=1")
-
-        assert result.status_code == 200
-        waiting = [entry for entry in result.json()["urls"] if entry["template"]]
-        assert len(waiting) == 1
-
-        # host_name keeps the default the configuration offers; token has no
-        # default and no fallback, so it stays unanswered
-        assert waiting[0]["template"] == {
-            "host_name": "localhost",
-            "token": None,
-        }
 
     @override_settings(APPRISE_CONFIG_LOCK=True)
     @patch("api.views.Authentication.key_ok", return_value=True)
@@ -716,19 +682,23 @@ class TemplateTests(SimpleTestCase):
     @override_settings(APPRISE_CONFIG_LOCK=True)
     @patch("api.views.Authentication.key_ok", return_value=True)
     @patch("api.views.Authentication.config_lock_allows", return_value=True)
-    def test_admin_still_sees_template_names(self, _mock_allows, _mock_key_ok):
-        """An administrator past the lock can still be told what to ask for."""
-        result = self.client.get(f"/json/urls/{self.key}?privacy=1")
-        assert result.status_code == 200
-        payload = result.json()
+    def test_config_lock_lists_names_without_defaults(self, _mock_allows, _mock_key_ok):
+        """An administrator past the lock sees template names but no defaults."""
+        for query in ("", "?privacy=1"):
+            result = self.client.get(f"/json/urls/{self.key}{query}")
+            assert result.status_code == 200
+            payload = result.json()
+            assert "localhost" not in dumps(payload)
 
-        waiting = [entry for entry in payload["urls"] if entry["template"]]
-        assert len(waiting) == 1
-        assert waiting[0]["template"]["token"] is None
+            waiting = [entry for entry in payload["urls"] if entry["template"]]
+            assert len(waiting) == 1
+            assert waiting[0]["template"] == {"host_name": None, "token": None}
 
-        # ...and the marker is readable, not concealed behind stars
-        assert "${TOKEN}" in waiting[0]["url"]
-        assert "****" not in waiting[0]["url"]
+        # The unmasked marker is readable, not concealed behind stars
+        entry = self.client.get(f"/json/urls/{self.key}").json()["urls"]
+        url = next(item["url"] for item in entry if item["template"])
+        assert "${TOKEN}" in url
+        assert "****" not in url
 
     def test_web_dialog_omits_blank_values(self):
         """The quick-test dialog trims values and leaves blanks out."""
@@ -741,7 +711,7 @@ class TemplateTests(SimpleTestCase):
         assert "auth-login-error review-template-summary-error" in page
         assert "summary.hidden = false;" in page
         assert "Provide the required template values before sending." in page
-        assert "privacy=0&fallbacks=1" in page
+        assert "/?privacy=0'" in page
 
         # A blank field is simply not sent, so the saved default or the
         # server environment can still supply it.
@@ -1047,7 +1017,7 @@ class TemplateTests(SimpleTestCase):
             "yaml",
         )
 
-        payload = self.client.get(f"/json/urls/{key}?privacy=1").json()
+        payload = self.client.get(f"/json/urls/{key}").json()
         entry = payload["urls"][0]
         assert entry["template"] == {"target": None}
 

@@ -2369,17 +2369,16 @@
     // configuration.
     const data = await jsonResponse.json();
 
-    // Prefill YAML defaults and learn which blanks have a server fallback.
-    // Environment values themselves never appear in the response.
+    // Prefill YAML defaults, which only the unmasked listing includes.
     const defaultsResponse = await appriseFetch(
-      '{% url "json_urls" key %}/?privacy=0&fallbacks=1', {method: 'GET'}
+      '{% url "json_urls" key %}/?privacy=0', {method: 'GET'}
     );
     if (defaultsResponse.status === 200) {
       const defaultsData = await defaultsResponse.json();
       (data.urls || []).forEach(function (entry, index) {
         const source = (defaultsData.urls || [])[index];
         if (entry.template && source && source.template) {
-          // The private listing withholds every default; take them from
+          // The masked listing withholds every default; take them from
           // the unmasked one, which this editor may already read anyway.
           entry.template = source.template;
         }

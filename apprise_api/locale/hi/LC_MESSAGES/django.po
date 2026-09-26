@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-25 19:03+0000\n"
+"POT-Creation-Date: 2026-09-26 21:31+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: hi\n"
@@ -92,7 +92,7 @@ msgstr "यूज़रनेम"
 msgid "Password"
 msgstr "पासवर्ड"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1405
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1410
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -122,7 +122,7 @@ msgstr "नया पासवर्ड"
 msgid "Confirm New Password"
 msgstr "नया पासवर्ड पुष्टि करें"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2750
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2743
 msgid "The username cannot be changed by a configuration user"
 msgstr "उपयोगकर्ता नाम को एक कॉन्फ़िगरेशन उपयोगकर्ता द्वारा बदला नहीं जा सकता"
 
@@ -154,9 +154,10 @@ msgstr "URLs"
 msgid "Format"
 msgstr "फ़ॉर्मेट करें"
 
-#: apprise_api/api/forms.py:283 apprise_api/api/templates/config.html:33
-#: apprise_api/api/templates/config.html:41
-#: apprise_api/api/templates/config.html:308
+#: apprise_api/api/forms.py:283 apprise_api/api/templates/config.html:7
+#: apprise_api/api/templates/config.html:38
+#: apprise_api/api/templates/config.html:46
+#: apprise_api/api/templates/config.html:318
 msgid "Configuration"
 msgstr "कॉन्फ़िगरेशन"
 
@@ -237,24 +238,24 @@ msgid "The JSON payload must be an object"
 msgstr "पेलोड एक ऑब्जेक्ट होना चाहिए JSON"
 
 #: apprise_api/api/templates/auth.html:5
-#: apprise_api/api/templates/auth.html:555
-#: apprise_api/api/templates/auth.html:556
-#: apprise_api/api/templates/auth.html:557
-#: apprise_api/api/templates/auth.html:719
-#: apprise_api/api/templates/auth.html:720
-#: apprise_api/api/templates/auth.html:721
-#: apprise_api/api/templates/auth.html:738
-#: apprise_api/api/templates/auth.html:739
-#: apprise_api/api/templates/auth.html:740
-#: apprise_api/api/templates/base.html:1421
-#: apprise_api/api/templates/base.html:1422
-#: apprise_api/api/templates/base.html:1423
+#: apprise_api/api/templates/auth.html:558
+#: apprise_api/api/templates/auth.html:559
+#: apprise_api/api/templates/auth.html:560
+#: apprise_api/api/templates/auth.html:722
+#: apprise_api/api/templates/auth.html:723
+#: apprise_api/api/templates/auth.html:724
+#: apprise_api/api/templates/auth.html:741
+#: apprise_api/api/templates/auth.html:742
+#: apprise_api/api/templates/auth.html:743
+#: apprise_api/api/templates/base.html:1426
+#: apprise_api/api/templates/base.html:1427
+#: apprise_api/api/templates/base.html:1428
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
-#: apprise_api/api/templates/config.html:3463
-#: apprise_api/api/templates/config.html:3464
-#: apprise_api/api/templates/config.html:3479
+#: apprise_api/api/templates/config.html:3474
+#: apprise_api/api/templates/config.html:3475
+#: apprise_api/api/templates/config.html:3490
 #: apprise_api/api/templates/config_list.html:62
 #: apprise_api/api/templates/config_list.html:63
 #: apprise_api/api/templates/config_list.html:64
@@ -269,12 +270,12 @@ msgid "Show Config ID"
 msgstr "कॉन्फ़िग ID"
 
 #: apprise_api/api/templates/auth.html:6
-#: apprise_api/api/templates/auth.html:558
-#: apprise_api/api/templates/auth.html:722
-#: apprise_api/api/templates/auth.html:741
-#: apprise_api/api/templates/base.html:1424
+#: apprise_api/api/templates/auth.html:561
+#: apprise_api/api/templates/auth.html:725
+#: apprise_api/api/templates/auth.html:744
+#: apprise_api/api/templates/base.html:1429
 #: apprise_api/api/templates/components/config_id_selector.html:36
-#: apprise_api/api/templates/config.html:3479
+#: apprise_api/api/templates/config.html:3490
 #: apprise_api/api/templates/config_list.html:65
 #: apprise_api/api/templates/config_list.html:168
 #: apprise_api/api/templates/config_list.html:183
@@ -284,7 +285,7 @@ msgstr "दिखाएँ कॉन्फ़िग ID"
 
 #: apprise_api/api/templates/auth.html:8
 #: apprise_api/api/templates/auth.html:487
-#: apprise_api/api/templates/base.html:287
+#: apprise_api/api/templates/base.html:290
 msgid "Authentication"
 msgstr "प्रमाणीकरण"
 
@@ -343,9 +344,9 @@ msgid "Saved %(saved)s access is currently enforced as locked by the global conf
 msgstr "सहेजा गया %(saved)s एक्सेस वर्तमान में वैश्विक कॉन्फ़िगरेशन लॉक द्वारा लॉक किया गया है। यदि वैश्विक लॉक हटाया गया तो यह लौट आएगा।"
 
 #: apprise_api/api/templates/auth.html:132
-#: apprise_api/api/templates/config.html:2942
-#: apprise_api/api/templates/config.html:2949
-#: apprise_api/api/templates/config.html:2956
+#: apprise_api/api/templates/config.html:2953
+#: apprise_api/api/templates/config.html:2960
+#: apprise_api/api/templates/config.html:2967
 msgid "Save"
 msgstr "सेव करें"
 
@@ -378,7 +379,7 @@ msgid "Reset Access"
 msgstr "एक्सेस रीसेट करें"
 
 #: apprise_api/api/templates/auth.html:193
-#: apprise_api/api/templates/auth.html:782
+#: apprise_api/api/templates/auth.html:785
 msgid "Move Configuration"
 msgstr "कॉन्फ़िगरेशन ले जाएँ"
 
@@ -392,7 +393,7 @@ msgid "Randomize Destination Config ID"
 msgstr "गंतव्य Config ID यादृच्छिक करें"
 
 #: apprise_api/api/templates/auth.html:232
-#: apprise_api/api/templates/auth.html:749
+#: apprise_api/api/templates/auth.html:752
 #: apprise_api/api/templates/config_list.html:189
 msgid "Move"
 msgstr "ले जाएँ"
@@ -448,9 +449,9 @@ msgstr "मोड"
 #: apprise_api/api/templates/auth.html:331
 #: apprise_api/api/templates/welcome.html:43
 #: apprise_api/api/templates/welcome.html:59
-#: apprise_api/api/templates/welcome.html:289
-#: apprise_api/api/templates/welcome.html:306
-#: apprise_api/api/templates/welcome.html:540
+#: apprise_api/api/templates/welcome.html:286
+#: apprise_api/api/templates/welcome.html:303
+#: apprise_api/api/templates/welcome.html:537
 msgid "Description"
 msgstr "विवरण"
 
@@ -480,7 +481,7 @@ msgid "The passwords do not match."
 msgstr "पासवर्ड मेल नहीं खाते।"
 
 #: apprise_api/api/templates/auth.html:462
-#: apprise_api/api/templates/auth.html:531
+#: apprise_api/api/templates/auth.html:534
 msgid "Authentication could not be saved."
 msgstr "प्रमाणीकरण सहेजा नहीं जा सका।"
 
@@ -505,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "यूज़रनेम, पासवर्ड, और कॉन्फ़िग आईडी क्लिपबोर्ड पर कॉपी किया गया"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1037
+#: apprise_api/api/templates/base.html:1040
 msgid "Scan with Apprise Mobile"
 msgstr "स्कैन करें Apprise Mobile"
 
@@ -513,127 +514,128 @@ msgstr "स्कैन करें Apprise Mobile"
 msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
 msgstr "इस QR कोड में नया पासवर्ड शामिल है। इसे अभी सहेजें या सुरक्षित रूप से साझा करें; पासवर्ड को फिर से नहीं दिखाया जा सकता।"
 
-#: apprise_api/api/templates/auth.html:518
-#: apprise_api/api/templates/base.html:1046
+#: apprise_api/api/templates/auth.html:521
+#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/tests/test_localization.py:413
 msgid "Show Complete URL"
 msgstr "पूरा दिखाएँ URL"
 
-#: apprise_api/api/templates/auth.html:519
-#: apprise_api/api/templates/base.html:1047
+#: apprise_api/api/templates/auth.html:522
+#: apprise_api/api/templates/base.html:1052
 msgid "Hide Complete URL"
 msgstr "पूरा छुपाएँ URL"
 
-#: apprise_api/api/templates/auth.html:520
-#: apprise_api/api/templates/base.html:1048
-#: apprise_api/api/templates/config.html:2585
+#: apprise_api/api/templates/auth.html:523
+#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "URL को क्लिपबोर्ड पर कॉपी करें"
 
-#: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1049
+#: apprise_api/api/templates/auth.html:524
+#: apprise_api/api/templates/base.html:1054
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL क्लिपबोर्ड पर कॉपी किया गया"
 
-#: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1050
+#: apprise_api/api/templates/auth.html:525
+#: apprise_api/api/templates/base.html:1055
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "यह URL QR कोड के रूप में एन्कोड करने के लिए बहुत लंबा है। इसके बजाय ऊपर दिया गया कॉपी बटन उपयोग करें।"
 
-#: apprise_api/api/templates/auth.html:543
+#: apprise_api/api/templates/auth.html:546
 msgid "Reset Access or Configuration?"
 msgstr "एक्सेस या कॉन्फ़िगरेशन रीसेट करें?"
 
-#: apprise_api/api/templates/auth.html:546
+#: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "यह केवल उस उपयोगकर्ता एक्सेस को रीसेट करेगा जो वर्तमान में इस कॉन्फ़िगरेशन से जुड़ा हुआ है:"
 
-#: apprise_api/api/templates/auth.html:549
+#: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
 msgstr "कॉन्फ़िगरेशन ID"
 
-#: apprise_api/api/templates/auth.html:571
+#: apprise_api/api/templates/auth.html:574
 msgid "Reset Configuration Too"
 msgstr "कॉन्फ़िगरेशन भी रीसेट करें"
 
-#: apprise_api/api/templates/auth.html:572
+#: apprise_api/api/templates/auth.html:575
 msgid "Also permanently remove its saved notification configuration."
 msgstr "इसके सहेजे गए नोटिफ़िकेशन कॉन्फ़िगरेशन को भी स्थायी रूप से हटाएं।"
 
-#: apprise_api/api/templates/auth.html:579
-#: apprise_api/api/templates/auth.html:594
+#: apprise_api/api/templates/auth.html:582
+#: apprise_api/api/templates/auth.html:597
 msgid "Reset User Access"
 msgstr "उपयोगकर्ता एक्सेस रीसेट करें"
 
-#: apprise_api/api/templates/auth.html:580
-#: apprise_api/api/templates/auth.html:750
-#: apprise_api/api/templates/base.html:1112
+#: apprise_api/api/templates/auth.html:583
+#: apprise_api/api/templates/auth.html:753
+#: apprise_api/api/templates/base.html:1117
 #: apprise_api/api/templates/config_list.html:119
 #: apprise_api/api/templates/config_list.html:190
 msgid "Cancel"
 msgstr "रद्द करें"
 
-#: apprise_api/api/templates/auth.html:593
+#: apprise_api/api/templates/auth.html:596
 msgid "Reset Access and Configuration"
 msgstr "एक्सेस और कॉन्फ़िगरेशन रीसेट करें"
 
-#: apprise_api/api/templates/auth.html:620
+#: apprise_api/api/templates/auth.html:623
 msgid "The access and configuration could not be reset."
 msgstr "एक्सेस और कॉन्फ़िगरेशन रीसेट नहीं किया जा सका।"
 
-#: apprise_api/api/templates/auth.html:621
-#: apprise_api/api/templates/auth.html:653
+#: apprise_api/api/templates/auth.html:624
+#: apprise_api/api/templates/auth.html:656
 msgid "Configuration access could not be reset."
 msgstr "कॉन्फ़िगरेशन एक्सेस रीसेट नहीं किया जा सका।"
 
-#: apprise_api/api/templates/auth.html:644
+#: apprise_api/api/templates/auth.html:647
 msgid "Configuration Reset"
 msgstr "कॉन्फ़िगरेशन रीसेट"
 
-#: apprise_api/api/templates/auth.html:645
+#: apprise_api/api/templates/auth.html:648
 msgid "Authentication Reset"
 msgstr "प्रमाणीकरण रीसेट"
 
-#: apprise_api/api/templates/auth.html:647
+#: apprise_api/api/templates/auth.html:650
 msgid "The user access and saved configuration were removed."
 msgstr "उपयोगकर्ता पहुँच और सहेजी गई कॉन्फ़िगरेशन हटा दी गई थी।"
 
-#: apprise_api/api/templates/auth.html:648
+#: apprise_api/api/templates/auth.html:651
 msgid "The user access was removed. The saved configuration was kept."
 msgstr "उपयोगकर्ता पहुँच हटा दी गई थी। सहेजी गई कॉन्फ़िगरेशन रखी गई थी।"
 
-#: apprise_api/api/templates/auth.html:700
+#: apprise_api/api/templates/auth.html:703
 #: apprise_api/api/templates/config_list.html:214
 msgid "A destination configuration ID is required."
 msgstr "एक गंतव्य कॉन्फ़िगरेशन आईडी आवश्यक है।"
 
-#: apprise_api/api/templates/auth.html:707
+#: apprise_api/api/templates/auth.html:710
 msgid "Move Configuration?"
 msgstr "कॉन्फ़िगरेशन स्थानांतरित करें?"
 
-#: apprise_api/api/templates/auth.html:710
+#: apprise_api/api/templates/auth.html:713
 msgid "Confirm that you want to move this configuration:"
 msgstr "क्या आप सच में यह कॉन्फ़िगरेशन स्थानांतरित करना चाहते हैं:"
 
-#: apprise_api/api/templates/auth.html:713
+#: apprise_api/api/templates/auth.html:716
 msgid "From Config ID"
 msgstr "कॉन्फ़िग आईडी"
 
-#: apprise_api/api/templates/auth.html:728
+#: apprise_api/api/templates/auth.html:731
 msgid "Move To"
 msgstr "से"
 
-#: apprise_api/api/templates/auth.html:732
+#: apprise_api/api/templates/auth.html:735
 msgid "To Config ID"
 msgstr "पर कॉन्फ़िग आईडी"
 
-#: apprise_api/api/templates/auth.html:773
-#: apprise_api/api/templates/auth.html:795
+#: apprise_api/api/templates/auth.html:776
+#: apprise_api/api/templates/auth.html:798
 #: apprise_api/api/templates/config_list.html:227
 #: apprise_api/api/templates/config_list.html:233
 msgid "The configuration could not be moved."
 msgstr "में स्थानांतरित करें। कॉन्फ़िगरेशन को स्थानांतरित नहीं किया जा सका।"
 
-#: apprise_api/api/templates/auth.html:783
+#: apprise_api/api/templates/auth.html:786
 msgid "Configuration moved successfully."
 msgstr "कॉन्फ़िगरेशन सफलतापूर्वक स्थानांतरित किया गया।"
 
@@ -654,323 +656,320 @@ msgstr "व्यवस्थापक प्रमाणपत्र।"
 msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
 msgstr "इस कॉन्फ़िगरेशन के लिए कोई असाइन किया गया उपयोगकर्ता नहीं है। नतीजतन, QR कोड व्यवस्थापक खाते का उपयोग करेगा।"
 
-#: apprise_api/api/templates/base.html:77
+#: apprise_api/api/templates/base.html:80
 msgid "APPRISE LIBRARY"
 msgstr "APPRISE LIBRARY"
 
-#: apprise_api/api/templates/base.html:85
-#: apprise_api/api/templates/base.html:89
-#: apprise_api/api/templates/base.html:90
-#: apprise_api/api/tests/test_localization.py:299
+#: apprise_api/api/templates/base.html:88
+#: apprise_api/api/templates/base.html:92
+#: apprise_api/api/templates/base.html:93
+#: apprise_api/api/tests/test_localization.py:348
 msgid "Language"
 msgstr "भाषा"
 
-#: apprise_api/api/templates/base.html:101
+#: apprise_api/api/templates/base.html:104
 msgid "Apply"
 msgstr "लागू करें"
 
-#: apprise_api/api/templates/base.html:107
+#: apprise_api/api/templates/base.html:110
 msgid "API HEALTH"
 msgstr "API HEALTH"
 
-#: apprise_api/api/templates/base.html:136
+#: apprise_api/api/templates/base.html:139
 msgid "GitHub"
 msgstr "GitHub"
 
-#: apprise_api/api/templates/base.html:146
+#: apprise_api/api/templates/base.html:149
 msgid "Discord"
 msgstr "Discord"
 
-#: apprise_api/api/templates/base.html:156
+#: apprise_api/api/templates/base.html:159
 msgid "Reddit"
 msgstr "Reddit"
 
-#: apprise_api/api/templates/base.html:165
+#: apprise_api/api/templates/base.html:168
 msgid "Open Apprise Mobile app information"
 msgstr "Apprise Mobile ऐप जानकारी खोलें"
 
-#: apprise_api/api/templates/base.html:167
+#: apprise_api/api/templates/base.html:170
 msgid "Apprise Mobile"
 msgstr "Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:178
+#: apprise_api/api/templates/base.html:181
 msgid "Toggle light / dark theme"
 msgstr "लागू करें लाइट / डार्क थीम बदलें"
 
-#: apprise_api/api/templates/base.html:190
+#: apprise_api/api/templates/base.html:193
 msgid "Open Authentication Settings"
 msgstr "प्रमाणीकरण सेटिंग्स खोलें"
 
-#: apprise_api/api/templates/base.html:200
-#: apprise_api/api/templates/base.html:202
+#: apprise_api/api/templates/base.html:203
+#: apprise_api/api/templates/base.html:205
 msgid "Logout"
 msgstr "लॉग आउट"
 
-#: apprise_api/api/templates/base.html:223
+#: apprise_api/api/templates/base.html:226
 msgid "If Apprise has been useful to you, please consider supporting its development."
 msgstr "यदि Apprise आपके लिए उपयोगी साबित हुआ है, तो कृपया इसके विकास का समर्थन करने पर विचार करें।"
 
-#: apprise_api/api/templates/base.html:227
+#: apprise_api/api/templates/base.html:230
 msgid "GitHub Sponsors"
 msgstr "GitHub प्रायोजक"
 
-#: apprise_api/api/templates/base.html:231
+#: apprise_api/api/templates/base.html:234
 msgid "PayPal"
 msgstr "पेपाल"
 
-#: apprise_api/api/templates/base.html:235
+#: apprise_api/api/templates/base.html:238
 msgid "Dismiss"
 msgstr "खारिज करें"
 
-#: apprise_api/api/templates/base.html:245
-#: apprise_api/api/templates/base.html:246
+#: apprise_api/api/templates/base.html:248
+#: apprise_api/api/templates/base.html:249
 msgid "Open Navigation Menu"
 msgstr "नेविगेशन मेनू खोलें"
 
-#: apprise_api/api/templates/base.html:260
+#: apprise_api/api/templates/base.html:263
 msgid "Navigation"
 msgstr "नेविगेशन"
 
-#: apprise_api/api/templates/base.html:263
+#: apprise_api/api/templates/base.html:266
 msgid "Site Controls"
 msgstr "साइट नियंत्रण"
 
-#: apprise_api/api/templates/base.html:270
+#: apprise_api/api/templates/base.html:273
 msgid "Configuration Manager"
 msgstr "कॉन्फ़िगरेशन मैनेजर"
 
-#: apprise_api/api/templates/base.html:277
-#: apprise_api/api/templates/base.html:1400
+#: apprise_api/api/templates/base.html:280
+#: apprise_api/api/templates/base.html:1405
 msgid "New Configuration"
 msgstr "नया कॉन्फ़िगरेशन"
 
-#: apprise_api/api/templates/base.html:295
+#: apprise_api/api/templates/base.html:298
 #: apprise_api/api/templates/config_list.html:8
 msgid "Configuration List"
 msgstr "कॉन्फ़िगरेशन सूची"
 
-#: apprise_api/api/templates/base.html:302
+#: apprise_api/api/templates/base.html:305
 msgid "Available Plugins"
 msgstr "उपलब्ध प्लगइन्स"
 
-#: apprise_api/api/templates/base.html:306
+#: apprise_api/api/templates/base.html:309
 msgid "Docs & Tools"
 msgstr "डॉक्स और टूल्स"
 
-#: apprise_api/api/templates/base.html:315
+#: apprise_api/api/templates/base.html:318
 msgid "Notification Services"
 msgstr "सूचना सेवाएँ"
 
-#: apprise_api/api/templates/base.html:324
+#: apprise_api/api/templates/base.html:327
 msgid "Configuration Help"
 msgstr "कॉन्फ़िगरेशन सहायता"
 
-#: apprise_api/api/templates/base.html:333
+#: apprise_api/api/templates/base.html:336
 msgid "Documentation"
 msgstr "दस्तावेज़ीकरण"
 
-#: apprise_api/api/templates/base.html:342
-#: apprise_api/api/templates/config.html:358
-#: apprise_api/api/templates/config.html:360
+#: apprise_api/api/templates/base.html:345
+#: apprise_api/api/templates/config.html:8
+#: apprise_api/api/templates/config.html:368
+#: apprise_api/api/templates/config.html:370
 #: apprise_api/api/templates/details.html:69
 #: apprise_api/api/templates/details.html:79
 #: apprise_api/api/templates/details.html:89
 msgid "Apprise URL Builder"
 msgstr "Apprise URL बिल्डर"
 
-#: apprise_api/api/templates/base.html:350
+#: apprise_api/api/templates/base.html:353
 #: apprise_api/api/templates/components/mobile_beta_dialog.html:17
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:353
+#: apprise_api/api/templates/base.html:356
 msgid "Support Development"
 msgstr "विकास सहायता प्राप्त करें"
 
-#: apprise_api/api/templates/base.html:362
+#: apprise_api/api/templates/base.html:365
 msgid "Buy Developer A Coffee"
 msgstr "डेवलपर को कॉफी खरीदें"
 
-#: apprise_api/api/templates/base.html:371
+#: apprise_api/api/templates/base.html:374
 msgid "Sponsor Apprise Development"
 msgstr "प्रायोजक Apprise विकास"
 
-#: apprise_api/api/templates/base.html:382
+#: apprise_api/api/templates/base.html:385
 msgid "Apprise Health Check Failed"
 msgstr "Apprise स्वास्थ्य जांच असफल"
 
-#: apprise_api/api/templates/base.html:383
+#: apprise_api/api/templates/base.html:386
 msgid "The following issues have been detected with your Apprise instance:"
 msgstr "आपके Apprise इंस्टेंस के साथ निम्नलिखित समस्याएँ पाई गई हैं:"
 
-#: apprise_api/api/templates/base.html:390
+#: apprise_api/api/templates/base.html:393
 msgid "Notification Delivery Disabled"
 msgstr "सूचनाओं की डिलीवरी अक्षम है"
 
-#: apprise_api/api/templates/base.html:393
+#: apprise_api/api/templates/base.html:396
 msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
 msgstr "स्टेटलेस सूचनाएं और स्थायी संग्रहण दोनों अक्षम हैं। इस सर्वर को सूचनाएं डिलीवर करने से पहले कम से कम एक मोड को सक्षम करने के लिए एक व्यवस्थापक को सक्षम करना होगा।"
 
-#: apprise_api/api/templates/base.html:401
+#: apprise_api/api/templates/base.html:404
 msgid "Configuration Write Failure"
 msgstr "कॉन्फ़िगरेशन लिखने में विफलता"
 
-#: apprise_api/api/templates/base.html:403
+#: apprise_api/api/templates/base.html:406
 msgid "Apprise can not write new configuration information to the directory:"
 msgstr "Apprise डायरेक्टरी में नई कॉन्फ़िगरेशन जानकारी नहीं लिख सकता:"
 
-#: apprise_api/api/templates/base.html:405
-#: apprise_api/api/templates/base.html:429
+#: apprise_api/api/templates/base.html:408
+#: apprise_api/api/templates/base.html:432
 msgid "Path copied to clipboard"
 msgstr "पथ क्लिपबोर्ड में कॉपी किया गया"
 
-#: apprise_api/api/templates/base.html:410
-#: apprise_api/api/templates/base.html:434
+#: apprise_api/api/templates/base.html:413
+#: apprise_api/api/templates/base.html:437
 msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
 msgstr "<em> नोट:</em> यदि यह अपेक्षित व्यवहार है, तो नीचे दिखाए गए पर्यावरण चर को पहले से सेट करें और अपने Apprise उदाहरण को पुनः लोड करें।"
 
-#: apprise_api/api/templates/base.html:413
-#: apprise_api/api/templates/base.html:437
+#: apprise_api/api/templates/base.html:416
+#: apprise_api/api/templates/base.html:440
 msgid "Environment variable copied to clipboard"
 msgstr "पर्यावरण चर क्लिपबोर्ड पर कॉपी किया गया"
 
-#: apprise_api/api/templates/base.html:423
+#: apprise_api/api/templates/base.html:426
 msgid "Attachment Temporary Storage Write Failure"
 msgstr "अटैचमेंट अस्थायी संग्रहण लेखन विफलता"
 
-#: apprise_api/api/templates/base.html:426
+#: apprise_api/api/templates/base.html:429
 msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
 msgstr "Apprise अटैचमेंट (यदि प्रदान किया गया है) का प्रेषण नहीं कर सकता है क्योंकि डायरेक्टरी पर लेखन की अनुमति नहीं है:"
 
-#: apprise_api/api/templates/base.html:444
+#: apprise_api/api/templates/base.html:447
 msgid "More Details"
 msgstr "और विवरण"
 
-#: apprise_api/api/templates/base.html:447
+#: apprise_api/api/templates/base.html:450
 msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
 msgstr "अधिकांश परिस्थितियों में, यहाँ पहचानी गई समस्या(एं) आमतौर पर अनुमति समस्याओं से संबंधित होती हैं। सुनिश्चित करें कि आपने सही <code>PUID</code> और <code>GUID</code> सेट किया है ताकि वह अनुमतियाँ प्रदर्शित हो सकें जिन्हें आप Apprise द्वारा उसके फाइलों को पढ़ने और लिखने में उपयोग करना चाहते हैं। इसके अलावा, आपको यह सुनिश्चित करना पड़ सकता है कि जिन डिरेक्टरीज़ को आपने मैप किया है, उन पर अनुमति सही ढंग से सेट की गई हो।"
 
-#: apprise_api/api/templates/base.html:450
+#: apprise_api/api/templates/base.html:453
 msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
 msgstr "यहाँ पहचानी गई समस्या(एं) SELinux से भी जुड़ी हो सकती हैं। आप अस्थायी रूप से इसे निष्क्रिय करके SELinux को अलग कर सकते हैं:"
 
-#: apprise_api/api/templates/base.html:453
-#: apprise_api/api/templates/base.html:459
-#: apprise_api/api/templates/config.html:3384
+#: apprise_api/api/templates/base.html:456
+#: apprise_api/api/templates/base.html:462
+#: apprise_api/api/templates/config.html:3395
 msgid "Command copied to clipboard"
 msgstr "कमांड क्लिपबोर्ड पर कॉपी किया गया"
 
-#: apprise_api/api/templates/base.html:457
+#: apprise_api/api/templates/base.html:460
 msgid "You can always re-enable it with:"
 msgstr "आप इसे हमेशा पुनः सक्षम कर सकते हैं:"
 
-#: apprise_api/api/templates/base.html:724
+#: apprise_api/api/templates/base.html:727
 msgid "Log Out?"
 msgstr "लॉग आउट?"
 
-#: apprise_api/api/templates/base.html:725
+#: apprise_api/api/templates/base.html:728
 msgid "Are you sure you wish to log out?"
 msgstr "क्या आप वाकई लॉग आउट करना चाहते हैं?"
 
-#: apprise_api/api/templates/base.html:727
-#: apprise_api/api/templates/base.html:1442
+#: apprise_api/api/templates/base.html:730
+#: apprise_api/api/templates/base.html:1447
 msgid "Yes"
 msgstr "हां"
 
-#: apprise_api/api/templates/base.html:728
-#: apprise_api/api/templates/base.html:1443
+#: apprise_api/api/templates/base.html:731
+#: apprise_api/api/templates/base.html:1448
 msgid "No"
 msgstr "नहीं"
 
-#: apprise_api/api/templates/base.html:876
+#: apprise_api/api/templates/base.html:879
 msgid "Abort Current Task?"
 msgstr "वर्तमान कार्य रद्द करना चाहते हैं?"
 
-#: apprise_api/api/templates/base.html:877
+#: apprise_api/api/templates/base.html:880
 msgid "Are you sure you wish to abort the current task?"
 msgstr "क्या आप वाकई वर्तमान कार्य रद्द करना चाहते हैं?"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:883
 msgid "Abort Task"
 msgstr "कार्य रद्द करें"
 
-#: apprise_api/api/templates/base.html:881
+#: apprise_api/api/templates/base.html:884
 msgid "Keep Running"
 msgstr "चलाना जारी रखें"
 
-#: apprise_api/api/templates/base.html:987
-#: apprise_api/api/templates/config.html:3450
-#: apprise_api/api/templates/config.html:3473
+#: apprise_api/api/templates/base.html:990
+#: apprise_api/api/templates/config.html:3461
+#: apprise_api/api/templates/config.html:3484
 #: apprise_api/api/templates/config_list.html:54
 msgid "Config ID hidden"
 msgstr "कॉन्फ़िग आईडी छिपी हुई"
 
-#: apprise_api/api/templates/base.html:1004
+#: apprise_api/api/templates/base.html:1007
 msgid "Config ID copied to clipboard"
 msgstr "कॉन्फ़िग आईडी क्लिपबोर्ड में कॉपी की गई"
 
-#: apprise_api/api/templates/base.html:1029
-#: apprise_api/api/templates/base.html:1055
+#: apprise_api/api/templates/base.html:1032
+#: apprise_api/api/templates/base.html:1060
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "Apprise Mobile QR कोड जनरेट नहीं किया जा सका।"
 
-#: apprise_api/api/templates/base.html:1042
-msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
-msgstr "सहेजे गए पासवर्ड शामिल नहीं हैं। Apprise Mobile आवश्यक होने पर पूछेगा।"
-
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1059
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile त्वरित कॉन्फ़िग"
 
-#: apprise_api/api/templates/base.html:1100
-#: apprise_api/api/templates/base.html:1464
+#: apprise_api/api/templates/base.html:1105
+#: apprise_api/api/templates/base.html:1469
 msgid "Enter a valid Config ID before continuing."
 msgstr "जारी रखने से पहले वैध कॉन्फ़िग आईडी दर्ज करें।"
 
-#: apprise_api/api/templates/base.html:1107
+#: apprise_api/api/templates/base.html:1112
 msgid "Open Configuration"
 msgstr "कॉन्फ़िगरेशन खोलें"
 
-#: apprise_api/api/templates/base.html:1108
+#: apprise_api/api/templates/base.html:1113
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "यह अलग कॉन्फ़िग आईडी खोलता है। इस पृष्ठ पर कोई भी असुरक्षित परिवर्तन खो जाएगा।"
 
-#: apprise_api/api/templates/base.html:1111
+#: apprise_api/api/templates/base.html:1116
 msgid "Continue"
 msgstr "जारी रखें"
 
-#: apprise_api/api/templates/base.html:1338
-#: apprise_api/api/templates/base.html:1358
+#: apprise_api/api/templates/base.html:1343
+#: apprise_api/api/templates/base.html:1363
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Apprise API स्थिति एन्डपॉइंट तक पहुँचना असंभव।"
 
-#: apprise_api/api/templates/base.html:1344
+#: apprise_api/api/templates/base.html:1349
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "सूचना वितरण अक्षम है। सेवा फिर से शुरू करने के लिए स्टेटलेस सूचनाओं या स्थायी भंडारण को सक्षम करें।"
 
-#: apprise_api/api/templates/base.html:1403
+#: apprise_api/api/templates/base.html:1408
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "नया कॉन्फ़िग आईडी चुनें। आप इसे संपादित कर सकते हैं या जारी रखने से पहले दूसरा उत्पन्न कर सकते हैं।"
 
-#: apprise_api/api/templates/base.html:1415
+#: apprise_api/api/templates/base.html:1420
 msgid "New Config ID"
 msgstr "नया कॉन्फ़िग आईडी"
 
-#: apprise_api/api/templates/base.html:1431
-#: apprise_api/api/templates/base.html:1432
+#: apprise_api/api/templates/base.html:1436
+#: apprise_api/api/templates/base.html:1437
 msgid "Generate Another Config ID"
 msgstr "एक और कॉन्फ़िग आईडी उत्पन्न करें"
 
-#: apprise_api/api/templates/base.html:1437
+#: apprise_api/api/templates/base.html:1442
 msgid "Do you wish to open this configuration?"
 msgstr "क्या आप इस कॉन्फ़िगरेशन को खोलना चाहते हैं?"
 
-#: apprise_api/api/templates/base.html:1507
+#: apprise_api/api/templates/base.html:1512
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
-#: apprise_api/api/templates/welcome.html:781
-#: apprise_api/api/templates/welcome.html:824
+#: apprise_api/api/templates/welcome.html:776
+#: apprise_api/api/templates/welcome.html:819
 msgid "Copied to clipboard"
 msgstr "क्लिपबोर्ड पर कॉपी किया गया"
 
@@ -1090,59 +1089,69 @@ msgstr "डिलीवरी रिपोर्ट"
 msgid "Google Play and the Google Play logo are trademarks of Google LLC."
 msgstr "Google Play और Google Play लोगो Google के ट्रेडमार्क हैं LLC।"
 
-#: apprise_api/api/templates/config.html:26
-#: apprise_api/api/templates/config.html:27
-#: apprise_api/api/templates/config.html:28
-msgid "Overview"
-msgstr "अवलोकन"
+#: apprise_api/api/templates/components/qr_password_note.html:4
+msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
+msgstr "सहेजे गए पासवर्ड शामिल नहीं हैं। Apprise Mobile आवश्यक होने पर पूछेगा।"
 
-#: apprise_api/api/templates/config.html:34
-#: apprise_api/api/templates/config.html:46
-msgid "Configuration is unlocked"
-msgstr "कॉन्फ़िगरेशन अनलॉक है"
+#: apprise_api/api/templates/components/qr_password_note.html:7
+msgid "Why?"
+msgstr "क्यों?"
 
-#: apprise_api/api/templates/config.html:34
-#: apprise_api/api/templates/config.html:46
-msgid "Configuration is locked by the administrator"
-msgstr "कॉन्फ़िगरेशन व्यवस्थापक द्वारा लॉक किया गया है"
-
-#: apprise_api/api/templates/config.html:45
-#: apprise_api/api/templates/config.html:53
+#: apprise_api/api/templates/config.html:9
+#: apprise_api/api/templates/config.html:50
+#: apprise_api/api/templates/config.html:58
 msgid "Review"
 msgstr "समीक्षा करें"
 
-#: apprise_api/api/templates/config.html:57
-#: apprise_api/api/templates/config.html:58
-#: apprise_api/api/templates/config.html:59
-#: apprise_api/api/templates/config.html:471
+#: apprise_api/api/templates/config.html:10
+#: apprise_api/api/templates/config.html:62
+#: apprise_api/api/templates/config.html:63
+#: apprise_api/api/templates/config.html:64
+#: apprise_api/api/templates/config.html:481
 msgid "Notifications"
 msgstr "सूचनाएँ"
 
-#: apprise_api/api/templates/config.html:71
+#: apprise_api/api/templates/config.html:31
+#: apprise_api/api/templates/config.html:32
+#: apprise_api/api/templates/config.html:33
+msgid "Overview"
+msgstr "अवलोकन"
+
+#: apprise_api/api/templates/config.html:39
+#: apprise_api/api/templates/config.html:51
+msgid "Configuration is unlocked"
+msgstr "कॉन्फ़िगरेशन अनलॉक है"
+
+#: apprise_api/api/templates/config.html:39
+#: apprise_api/api/templates/config.html:51
+msgid "Configuration is locked by the administrator"
+msgstr "कॉन्फ़िगरेशन व्यवस्थापक द्वारा लॉक किया गया है"
+
+#: apprise_api/api/templates/config.html:76
 msgid "Getting Started"
 msgstr "शुरुआत करना"
 
-#: apprise_api/api/templates/config.html:76
+#: apprise_api/api/templates/config.html:81
 msgid "Verify your Apprise API Status:"
 msgstr "अपना Apprise सत्यापित करें API स्थिति:"
 
-#: apprise_api/api/templates/config.html:98
+#: apprise_api/api/templates/config.html:103
 msgid "The following is your Apprise Configuration ID:"
 msgstr "निम्नलिखित आपकी Apprise कॉन्फ़िगरेशन है ID:"
 
-#: apprise_api/api/templates/config.html:100
+#: apprise_api/api/templates/config.html:105
 msgid "Apprise configuration ID copied to clipboard"
 msgstr "Apprise कॉन्फ़िगरेशन ID क्लिपबोर्ड में कॉपी किया गया"
 
-#: apprise_api/api/templates/config.html:104
+#: apprise_api/api/templates/config.html:109
 msgid "For some examples on how to build a development environment around this:"
 msgstr "इस पर आधारित विकास वातावरण बनाने के लिए कुछ उदाहरणों के लिए:"
 
-#: apprise_api/api/templates/config.html:104
+#: apprise_api/api/templates/config.html:109
 msgid "click here"
 msgstr "यहाँ क्लिक करें"
 
-#: apprise_api/api/templates/config.html:108
+#: apprise_api/api/templates/config.html:113
 msgid ""
 "\n"
 "              In the future you can return to this configuration screen at any time by placing the following into your browser:\n"
@@ -1151,11 +1160,11 @@ msgstr ""
 "\n"
 "भविष्य में, आप किसी भी समय इस कॉन्फ़िगरेशन स्क्रीन पर वापस जा सकते हैं, बस इसे अपने ब्राउज़र में डालें:"
 
-#: apprise_api/api/templates/config.html:112
+#: apprise_api/api/templates/config.html:117
 msgid "Apprise Configuration URL copied to clipboard"
 msgstr "Apprise कॉन्फ़िगरेशन URL क्लिपबोर्ड में कॉपी किया गया"
 
-#: apprise_api/api/templates/config.html:119
+#: apprise_api/api/templates/config.html:124
 #, python-format
 msgid ""
 "\n"
@@ -1165,7 +1174,7 @@ msgstr ""
 "\n"
 "अपने Apprise कॉन्फ़िगरेशन को तैयार और सहेजने के लिए %(config_chip)s सेक्शन का उपयोग करें।"
 
-#: apprise_api/api/templates/config.html:124
+#: apprise_api/api/templates/config.html:129
 #, python-format
 msgid ""
 "\n"
@@ -1176,7 +1185,7 @@ msgstr ""
 "\n"
 "<i class=\"material-icons\">lightbulb_outline</i> यदि आप अपने URL(ओं) को असेंबल करने में समस्या का सामना कर रहे हैं, तो आप हमेशा %(builder_chip)s का संदर्भ ले सकते हैं।"
 
-#: apprise_api/api/templates/config.html:131
+#: apprise_api/api/templates/config.html:136
 #, python-format
 msgid ""
 "\n"
@@ -1186,7 +1195,7 @@ msgstr ""
 "\n"
 "अपने परिभाषित कॉन्फ़िगरेशन से पार्स/डिटेक्ट किए गए विवरण की समीक्षा करने के लिए %(review_chip)s सेक्शन का उपयोग करें।"
 
-#: apprise_api/api/templates/config.html:137
+#: apprise_api/api/templates/config.html:142
 #, python-format
 msgid ""
 "\n"
@@ -1196,7 +1205,7 @@ msgstr ""
 "\n"
 "अपने सहेजे गए कॉन्फ़िगरेशन का परीक्षण करने के लिए %(notify_chip)s सेक्शन का उपयोग करें।"
 
-#: apprise_api/api/templates/config.html:142
+#: apprise_api/api/templates/config.html:147
 #, python-format
 msgid ""
 "\n"
@@ -1207,40 +1216,40 @@ msgstr ""
 "\n"
 "<i class=\"material-icons\">lightbulb_outline</i>: जिस संख्या को %(notify_chip)s टैब में भी प्रदान किया गया है, वह यह बताता है कि इस अनुभाग का उपयोग करते समय कितनी सूचनाएँ भेजी जाएंगी (प्रदान किए गए टैग/कॉन्फ़िगरेशन के आधार पर)।"
 
-#: apprise_api/api/templates/config.html:155
+#: apprise_api/api/templates/config.html:160
 msgid "Apprise Mobile Quick Setup"
 msgstr "Apprise Mobile त्वरित सेटअप"
 
-#: apprise_api/api/templates/config.html:157
+#: apprise_api/api/templates/config.html:162
 #, python-format
 msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
 msgstr "इस कोड को प्रकट करें और स्कैन करें ताकि इस %(mobile_app_link)s में इस कॉन्फ़िगरेशन को आसानी से लोड किया जा सके।"
 
-#: apprise_api/api/templates/config.html:166
-#: apprise_api/api/templates/config.html:167
-#: apprise_api/api/templates/config.html:628
+#: apprise_api/api/templates/config.html:171
+#: apprise_api/api/templates/config.html:172
+#: apprise_api/api/templates/config.html:640
 msgid "Reveal QR Code"
 msgstr "QR कोड प्रकट करें"
 
-#: apprise_api/api/templates/config.html:176
+#: apprise_api/api/templates/config.html:181
 msgid "Click here to reveal QR Code"
 msgstr "QR कोड को प्रकट करने के लिए यहां क्लिक करें"
 
-#: apprise_api/api/templates/config.html:181
-#: apprise_api/api/templates/config.html:604
+#: apprise_api/api/templates/config.html:186
+#: apprise_api/api/templates/config.html:615
 msgid "The QR code could not be loaded."
 msgstr "QR कोड लोड नहीं किया जा सका।"
 
-#: apprise_api/api/templates/config.html:194
+#: apprise_api/api/templates/config.html:204
 #, python-format
 msgid "Need the app? Get %(mobile_app_link)s for Android."
 msgstr "क्या आपको ऐप चाहिए? %(mobile_app_link)s लें Android के लिए।"
 
-#: apprise_api/api/templates/config.html:202
+#: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
 msgstr "Apprise कॉन्फ़िगरेशन लॉक है"
 
-#: apprise_api/api/templates/config.html:205
+#: apprise_api/api/templates/config.html:215
 msgid ""
 "At this time, the administrator of this server has locked down all configuration. This means\n"
 "          That pre-created configuration is securely hidden for the purpose of notification transmission only.\n"
@@ -1249,153 +1258,153 @@ msgid ""
 "          "
 msgstr "इस समय, इस सर्वर का प्रशासक सभी कॉन्फ़िगरेशन को लॉक कर चुका है। इसका मतलब है कि पूर्व-निर्मित कॉन्फ़िगरेशन केवल सूचना प्रसारण के उद्देश्य से सुरक्षित रूप से छिपा हुआ है। नया कॉन्फ़िगरेशन सेट नहीं किया जा सकता, और मौजूदा कॉन्फ़िगरेशन को संशोधित या देखा नहीं जा सकता।"
 
-#: apprise_api/api/templates/config.html:216
+#: apprise_api/api/templates/config.html:226
 msgid "Working Remotely With Your Configuration"
 msgstr "अपने कॉन्फ़िगरेशन के साथ दूर से काम करना"
 
-#: apprise_api/api/templates/config.html:218
+#: apprise_api/api/templates/config.html:228
 msgid "Using The Apprise CLI"
 msgstr "Apprise CLI का उपयोग करना"
 
-#: apprise_api/api/templates/config.html:220
+#: apprise_api/api/templates/config.html:230
 msgid "The following command would cause apprise to directly notify all of your services:"
 msgstr "निम्नलिखित कमांड Apprise को सीधे आपके सभी सेवाओं को सूचित करने का कारण बनेगा:"
 
-#: apprise_api/api/templates/config.html:227
+#: apprise_api/api/templates/config.html:237
 msgid "Send one or more attachments like this:"
 msgstr "इस प्रकार के एक या अधिक अटैचमेंट भेजें:"
 
-#: apprise_api/api/templates/config.html:238
+#: apprise_api/api/templates/config.html:248
 msgid ""
 "The following command would cause apprise to retrieve the configuration loaded and\n"
 "          send a test notification to all of your added services:"
 msgstr "निम्नलिखित कमांड Apprise को लोड किए गए कॉन्फ़िगरेशन को पुनः प्राप्त करने और आपके सभी जोड़ी गई सेवाओं को एक टेस्ट नोटिफिकेशन भेजने का कारण बनेगा:"
 
-#: apprise_api/api/templates/config.html:246
+#: apprise_api/api/templates/config.html:256
 msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
 msgstr "आप एक <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise कॉन्फ़िगरेशन फ़ाइल</a> भी बना सकते हैं जिसमें कहीं इस लाइन को शामिल किया गया हो:"
 
-#: apprise_api/api/templates/config.html:249
+#: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "Apprise कॉन्फ़िगरेशन 'include' एंट्री क्लिपबोर्ड में कॉपी की गई"
 
-#: apprise_api/api/templates/config.html:252
+#: apprise_api/api/templates/config.html:262
 msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
 msgstr "<em>include</em> निर्देश का लाभ उठाकर, यह भविष्य में <code>apprise</code> टूल के लिए स्वतः संदर्भित हो जाएगा। अब सभी भविष्य के कॉल Apprise का उपयोग करते हुए सरल बन जाते हैं:"
 
-#: apprise_api/api/templates/config.html:258
+#: apprise_api/api/templates/config.html:268
 msgid "Using CURL"
 msgstr "का उपयोग करते हुए CURL"
 
-#: apprise_api/api/templates/config.html:260
+#: apprise_api/api/templates/config.html:270
 msgid "The following command would cause the Apprise API to notify all of your services:"
 msgstr "निम्नलिखित कमांड आपके सभी सेवाओं को सूचित करने के लिए Apprise API को कारण बनेगा:"
 
-#: apprise_api/api/templates/config.html:270
+#: apprise_api/api/templates/config.html:280
 msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
 msgstr "संलग्नक भेजते समय, <code>curl</code> यह आवश्यक है कि सभी स्थानीय फ़ाइलों के आगे <code>@</code> लगाया गया हो। आप इस तरह एक संलग्नक जोड़ सकते हैं:"
 
-#: apprise_api/api/templates/config.html:280
+#: apprise_api/api/templates/config.html:290
 msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
 msgstr "जब एक से अधिक संलग्नक भेज रहे हों, तो आपको प्रत्येक संलग्नक को एक नए आईडी में विशिष्ट रूप से असाइन करना होगा। नीचे दिया गया उदाहरण <code>attach1</code> और <code>attach2</code> का उपयोग करता है:"
 
-#: apprise_api/api/templates/config.html:291
+#: apprise_api/api/templates/config.html:301
 msgid "Sends a notification to our endpoints with an attachment and no body specified:"
 msgstr "संलग्नक के साथ और कोई बॉडी निर्दिष्ट किए बिना हमारे एंडपॉइंट्स को सूचना भेजता है:"
 
-#: apprise_api/api/templates/config.html:309
+#: apprise_api/api/templates/config.html:319
 msgid "Define your configuration below:"
 msgstr "नीचे अपनी कॉन्फ़िगरेशन परिभाषित करें:"
 
-#: apprise_api/api/templates/config.html:313
+#: apprise_api/api/templates/config.html:323
 msgid "Configuration file times"
 msgstr "कॉन्फ़िगरेशन फ़ाइल समय"
 
-#: apprise_api/api/templates/config.html:316
+#: apprise_api/api/templates/config.html:326
 msgid "Created"
 msgstr "बनाई गई"
 
-#: apprise_api/api/templates/config.html:323
+#: apprise_api/api/templates/config.html:333
 msgid "Modified"
 msgstr "संशोधित"
 
-#: apprise_api/api/templates/config.html:330
+#: apprise_api/api/templates/config.html:340
 msgid "Timezone"
 msgstr "समयक्षेत्र"
 
-#: apprise_api/api/templates/config.html:375
+#: apprise_api/api/templates/config.html:385
 msgid "Save Configuration"
 msgstr "कॉन्फ़िगरेशन सहेजें"
 
-#: apprise_api/api/templates/config.html:385
-#: apprise_api/api/templates/config.html:460
+#: apprise_api/api/templates/config.html:395
+#: apprise_api/api/templates/config.html:470
 msgid "Your Configuration Is Locked"
 msgstr "आपकी कॉन्फ़िगरेशन लॉक है"
 
-#: apprise_api/api/templates/config.html:386
-#: apprise_api/api/templates/config.html:461
+#: apprise_api/api/templates/config.html:396
+#: apprise_api/api/templates/config.html:471
 msgid "Access to your configuration has been disabled by your administrator."
 msgstr "आपके व्यवस्थापक द्वारा आपके कॉन्फ़िगरेशन तक पहुंच अक्षम कर दी गई है।"
 
-#: apprise_api/api/templates/config.html:400
+#: apprise_api/api/templates/config.html:410
 #, python-format
 msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
 msgstr "एक बार जब आप सफलतापूर्वक <i> कम से कम एक Apprise URL</i> को %(config_chip)s अनुभाग में लोड कर लेते हैं, तो आपके लोड किए गए एन्ट्रीज़ यहां दिखाई देंगे।"
 
-#: apprise_api/api/templates/config.html:408
+#: apprise_api/api/templates/config.html:418
 msgid "Loaded Configuration"
 msgstr "लोड की गई कॉन्फ़िगरेशन"
 
-#: apprise_api/api/templates/config.html:411
-#: apprise_api/api/templates/config.html:414
+#: apprise_api/api/templates/config.html:421
+#: apprise_api/api/templates/config.html:424
 msgid "Show only selected notification services"
 msgstr "केवल चयनित सूचना सेवाओं को दिखाएँ"
 
-#: apprise_api/api/templates/config.html:421
+#: apprise_api/api/templates/config.html:431
 msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
 msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> भेजने के लिए चयनित सूचना(ओं)</span>"
 
-#: apprise_api/api/templates/config.html:433
+#: apprise_api/api/templates/config.html:443
 msgid "Unsaved Configuration Changes"
 msgstr "अप्रयुक्त कॉन्फ़िगरेशन परिवर्तन"
 
-#: apprise_api/api/templates/config.html:435
+#: apprise_api/api/templates/config.html:445
 #, python-format
 msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
 msgstr "नीचे दी गई प्रविष्टियाँ पिछले संग्रहीत कॉन्फ़िगरेशन से पार्स की गई थीं, इसलिए वे आपके हाल के संपादनों को दर्शा सकती हैं। यहाँ परिणाम देखने के लिए उन्हें %(config_chip)s अनुभाग में सहेजें।"
 
-#: apprise_api/api/templates/config.html:439
+#: apprise_api/api/templates/config.html:449
 msgid "Review the parsed destinations below before sending."
 msgstr "भेजने से पहले नीचे पार्स किए गए गंतव्यों की समीक्षा करें।"
 
-#: apprise_api/api/templates/config.html:441
+#: apprise_api/api/templates/config.html:451
 #, python-format
 msgid "Select a tag (🏷️) on any entry to include it in %(notify_chip)s."
 msgstr "किसी भी प्रविष्टि पर एक टैग (🏷️) चुनें ताकि इसे %(notify_chip)s में शामिल किया जा सके।"
 
-#: apprise_api/api/templates/config.html:444
+#: apprise_api/api/templates/config.html:454
 #, python-format
 msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
 msgstr "%(send_icon)s का उपयोग करके एक त्वरित परीक्षण चलाएँ और उस प्रविष्टि के लिए पूर्ण डिबग आउटपुट का निरीक्षण करें।"
 
-#: apprise_api/api/templates/config.html:447
+#: apprise_api/api/templates/config.html:457
 #, python-format
 msgid "Need more destinations? Add or update them in %(config_chip)s."
 msgstr "अधिक गंतव्य चाहिए? उन्हें %(config_chip)s में जोड़ें या अपडेट करें।"
 
-#: apprise_api/api/templates/config.html:472
+#: apprise_api/api/templates/config.html:482
 msgid "You can send a notification using the loaded configuration:"
 msgstr "आप लोड की गई कॉन्फ़िगरेशन का उपयोग करके सूचना भेज सकते हैं:"
 
-#: apprise_api/api/templates/config.html:482
+#: apprise_api/api/templates/config.html:492
 msgid "No Notification Targets Selected"
 msgstr "कोई नोटिफिकेशन लक्ष्य नहीं चुना गया।"
 
-#: apprise_api/api/templates/config.html:485
+#: apprise_api/api/templates/config.html:495
 msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
 msgstr "कम से कम एक टैग चुनें। जब कॉन्फ़िगरेशन लॉकिंग सक्षम हो, तब सहेजे गए गंतव्य छिपे रहते हैं।"
 
-#: apprise_api/api/templates/config.html:487
+#: apprise_api/api/templates/config.html:497
 #, python-format
 msgid ""
 "\n"
@@ -1406,324 +1415,324 @@ msgstr ""
 "        <strong class=\"notify-target-keyword\">टैग ड्रॉपडाउन</strong> से एक या अधिक टैग चुनें, %(review_chip)s अनुभाग से लक्ष्य प्रविष्टियाँ चुनें, या %(config_chip)s अनुभाग में और प्रविष्टियाँ जोड़ें।\n"
 "              "
 
-#: apprise_api/api/templates/config.html:498
+#: apprise_api/api/templates/config.html:508
 msgid "Delivery Options"
 msgstr "डिलीवरी विकल्प"
 
-#: apprise_api/api/templates/config.html:528
-#: apprise_api/api/templates/config.html:1189
+#: apprise_api/api/templates/config.html:538
+#: apprise_api/api/templates/config.html:1201
 msgid "Template Values"
 msgstr "टेम्पलेट मान"
 
-#: apprise_api/api/templates/config.html:529
+#: apprise_api/api/templates/config.html:539
 msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
 msgstr "एक मान वाली पंक्तियां भेजी जाती हैं; खाली मान सर्वर फॉलबैक का उपयोग करते हैं (यदि परिभाषित हो)।"
 
-#: apprise_api/api/templates/config.html:535
+#: apprise_api/api/templates/config.html:545
 msgid "Add Value"
 msgstr "मान जोड़ें"
 
-#: apprise_api/api/templates/config.html:543
+#: apprise_api/api/templates/config.html:553
 msgid "Message"
 msgstr "मैसेज"
 
-#: apprise_api/api/templates/config.html:561
+#: apprise_api/api/templates/config.html:571
 msgid "Clear Form"
 msgstr "फ़ॉर्म साफ़ करें"
 
-#: apprise_api/api/templates/config.html:565
+#: apprise_api/api/templates/config.html:575
 msgid "Send Notification"
 msgstr "नोटिफिकेशन भेजें"
 
-#: apprise_api/api/templates/config.html:576
-#: apprise_api/api/templates/welcome.html:271
-#: apprise_api/api/templates/welcome.html:770
+#: apprise_api/api/templates/config.html:586
+#: apprise_api/api/templates/welcome.html:268
+#: apprise_api/api/templates/welcome.html:765
 msgid "Persistent Store Endpoints"
 msgstr "स्थायी स्टोर एंडपॉइंट्स"
 
-#: apprise_api/api/templates/config.html:578
-#: apprise_api/api/templates/welcome.html:772
+#: apprise_api/api/templates/config.html:588
+#: apprise_api/api/templates/welcome.html:767
 msgid "The administrator of this system has disabled persistent storage."
 msgstr "इस सिस्टम के प्रशासक ने स्थायी संग्रहण को अक्षम कर दिया है।"
 
-#: apprise_api/api/templates/config.html:628
+#: apprise_api/api/templates/config.html:640
 msgid "Hide QR Code"
 msgstr "क्यूआर कोड छिपाएं"
 
-#: apprise_api/api/templates/config.html:657
+#: apprise_api/api/templates/config.html:669
 msgid "Escalation group"
 msgstr "एस्कलेशन समूह"
 
-#: apprise_api/api/templates/config.html:665
+#: apprise_api/api/templates/config.html:677
 msgid "Maximum number of retries attempted if the service fails before giving up"
 msgstr "सेवा विफल होने पर अधिकतम प्रयासों की संख्या जब तक हार मानना न हो"
 
-#: apprise_api/api/templates/config.html:676
+#: apprise_api/api/templates/config.html:688
 msgid "Unknown Plugin"
 msgstr "अज्ञात प्लगइन"
 
-#: apprise_api/api/templates/config.html:720
-#: apprise_api/api/templates/config.html:2519
-#: apprise_api/api/templates/config.html:2524
+#: apprise_api/api/templates/config.html:732
+#: apprise_api/api/templates/config.html:2530
+#: apprise_api/api/templates/config.html:2535
 msgid "Template Variable"
 msgstr "टेम्पलेट वेरिएबल"
 
-#: apprise_api/api/templates/config.html:776
+#: apprise_api/api/templates/config.html:788
 msgid "The server could not start a live notification stream."
 msgstr "सर्वर लाइव नोटिफिकेशन स्ट्रीम शुरू नहीं कर सकता।"
 
-#: apprise_api/api/templates/config.html:779
+#: apprise_api/api/templates/config.html:791
 msgid "This browser cannot display the live notification stream."
 msgstr "यह ब्राउज़र लाइव नोटिफिकेशन स्ट्रीम दिखा नहीं सकता।"
 
-#: apprise_api/api/templates/config.html:819
+#: apprise_api/api/templates/config.html:831
 msgid "The live notification stream ended unexpectedly."
 msgstr "लाइव नोटिफिकेशन स्ट्रीम अचानक समाप्त हो गई।"
 
-#: apprise_api/api/templates/config.html:831
+#: apprise_api/api/templates/config.html:843
 msgid "Copy Logs"
 msgstr "लॉग्स कॉपी करें"
 
-#: apprise_api/api/templates/config.html:836
+#: apprise_api/api/templates/config.html:848
 msgid "Waiting for log activity…"
 msgstr "लॉग गतिविधि की प्रतीक्षा कर रहे हैं…"
 
-#: apprise_api/api/templates/config.html:872
+#: apprise_api/api/templates/config.html:884
 msgid "Notification service"
 msgstr "सूचना सेवा"
 
-#: apprise_api/api/templates/config.html:889
+#: apprise_api/api/templates/config.html:901
 msgid "Service"
 msgstr "सेवा"
 
-#: apprise_api/api/templates/config.html:894
+#: apprise_api/api/templates/config.html:906
 msgid "BEGIN APPRISE NOTIFICATION LOG"
 msgstr "BEGIN APPRISE NOTIFICATION LOG"
 
-#: apprise_api/api/templates/config.html:896
+#: apprise_api/api/templates/config.html:908
 msgid "END APPRISE NOTIFICATION LOG"
 msgstr "END APPRISE NOTIFICATION LOG"
 
-#: apprise_api/api/templates/config.html:918
+#: apprise_api/api/templates/config.html:930
 msgid "event"
 msgstr "घटना"
 
-#: apprise_api/api/templates/config.html:919
+#: apprise_api/api/templates/config.html:931
 msgid "events"
 msgstr "घटनाएँ"
 
-#: apprise_api/api/templates/config.html:928
+#: apprise_api/api/templates/config.html:940
 msgid "Notification logs copied to clipboard"
 msgstr "सूचना लॉग क्लिपबोर्ड पर कॉपी किए गए"
 
-#: apprise_api/api/templates/config.html:1096
+#: apprise_api/api/templates/config.html:1108
 msgid "Provide the required template values before sending."
 msgstr "भेजने से पहले आवश्यक टेम्पलेट मान प्रदान करें।"
 
-#: apprise_api/api/templates/config.html:1102
+#: apprise_api/api/templates/config.html:1114
 msgid "Provide the values needed by the selected notification entries."
 msgstr "चयनित सूचना प्रविष्टियों द्वारा आवश्यक मान प्रदान करें।"
 
-#: apprise_api/api/templates/config.html:1130
+#: apprise_api/api/templates/config.html:1142
 msgid "default used if blank"
 msgstr "यदि खाली हो तो डिफ़ॉल्ट का उपयोग किया गया"
 
-#: apprise_api/api/templates/config.html:1144
-#: apprise_api/api/templates/config.html:1145
-#: apprise_api/api/templates/config.html:1146
-#: apprise_api/api/templates/config.html:1411
-#: apprise_api/api/templates/config.html:1412
-#: apprise_api/api/templates/config.html:1413
+#: apprise_api/api/templates/config.html:1156
+#: apprise_api/api/templates/config.html:1157
+#: apprise_api/api/templates/config.html:1158
+#: apprise_api/api/templates/config.html:1423
+#: apprise_api/api/templates/config.html:1424
+#: apprise_api/api/templates/config.html:1425
 msgid "Show Value"
 msgstr "मान दिखाएँ"
 
-#: apprise_api/api/templates/config.html:1147
-#: apprise_api/api/templates/config.html:1414
+#: apprise_api/api/templates/config.html:1159
+#: apprise_api/api/templates/config.html:1426
 msgid "Hide Value"
 msgstr "मान छिपाएँ"
 
-#: apprise_api/api/templates/config.html:1157
+#: apprise_api/api/templates/config.html:1169
 msgid "A value is required."
 msgstr "एक मान आवश्यक है।"
 
-#: apprise_api/api/templates/config.html:1192
+#: apprise_api/api/templates/config.html:1204
 msgid "Send"
 msgstr "भेजें"
 
-#: apprise_api/api/templates/config.html:1239
-#: apprise_api/api/templates/config.html:1278
-#: apprise_api/api/templates/config.html:2676
-#: apprise_api/api/templates/config.html:3262
-#: apprise_api/api/templates/config.html:3277
-#: apprise_api/api/templates/config.html:3325
+#: apprise_api/api/templates/config.html:1251
+#: apprise_api/api/templates/config.html:1290
+#: apprise_api/api/templates/config.html:2687
+#: apprise_api/api/templates/config.html:3273
+#: apprise_api/api/templates/config.html:3288
+#: apprise_api/api/templates/config.html:3336
 msgid "Notification"
 msgstr "सूचना"
 
-#: apprise_api/api/templates/config.html:1240
+#: apprise_api/api/templates/config.html:1252
 msgid "This test action requires at least one tag on the target entry."
 msgstr "इस परीक्षण कार्रवाई के लिए लक्ष्य प्रविष्टि पर कम से कम एक टैग आवश्यक है।"
 
-#: apprise_api/api/templates/config.html:1255
+#: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Apprise API परीक्षण"
 
-#: apprise_api/api/templates/config.html:1256
+#: apprise_api/api/templates/config.html:1268
 msgid "Message Body"
 msgstr "संदेश सामग्री"
 
-#: apprise_api/api/templates/config.html:1279
-#: apprise_api/api/templates/config.html:3326
+#: apprise_api/api/templates/config.html:1291
+#: apprise_api/api/templates/config.html:3337
 msgid "Delivery Response"
 msgstr "डिलीवरी प्रतिक्रिया"
 
-#: apprise_api/api/templates/config.html:1280
+#: apprise_api/api/templates/config.html:1292
 msgid "Sending test notification…"
 msgstr "परीक्षण सूचना भेजी जा रही है…"
 
-#: apprise_api/api/templates/config.html:1281
+#: apprise_api/api/templates/config.html:1293
 msgid "Test notification sent."
 msgstr "परीक्षण सूचना भेज दी गई।"
 
-#: apprise_api/api/templates/config.html:1282
+#: apprise_api/api/templates/config.html:1294
 msgid "One or more test notifications were not sent."
 msgstr "एक या अधिक परीक्षण सूचनाएँ नहीं भेजी गईं।"
 
-#: apprise_api/api/templates/config.html:1283
+#: apprise_api/api/templates/config.html:1295
 msgid "Failed to send test notification."
 msgstr "परीक्षण सूचना भेजने में विफल।"
 
-#: apprise_api/api/templates/config.html:1320
+#: apprise_api/api/templates/config.html:1332
 msgid "No template values are currently defined."
 msgstr "अभी कोई टेम्पलेट मान तय नहीं है।"
 
-#: apprise_api/api/templates/config.html:1377
+#: apprise_api/api/templates/config.html:1389
 msgid "Name"
 msgstr "नाम"
 
-#: apprise_api/api/templates/config.html:1393
+#: apprise_api/api/templates/config.html:1405
 msgid "Value"
 msgstr "मान"
 
-#: apprise_api/api/templates/config.html:1424
-#: apprise_api/api/templates/config.html:1425
+#: apprise_api/api/templates/config.html:1436
+#: apprise_api/api/templates/config.html:1437
 msgid "Remove Template Value"
 msgstr "टेम्पलेट मान हटाएँ"
 
-#: apprise_api/api/templates/config.html:2234
+#: apprise_api/api/templates/config.html:2246
 msgid "URL copied to clipboard"
 msgstr "URL क्लिपबोर्ड में कॉपी किया गया"
 
-#: apprise_api/api/templates/config.html:2352
+#: apprise_api/api/templates/config.html:2364
 msgid "💣 An error occurred retrieving the list of loaded Apprise URL(s)"
 msgstr "💣 लोड किए गए Apprise URL(s) की सूची प्राप्त करने में त्रुटि हुई"
 
-#: apprise_api/api/templates/config.html:2387
+#: apprise_api/api/templates/config.html:2398
 msgid "Optional Tag(s)"
 msgstr "वैकल्पिक टैग(स)"
 
-#: apprise_api/api/templates/config.html:2388
+#: apprise_api/api/templates/config.html:2399
 msgid "Add another?"
 msgstr "और जोड़ें?"
 
-#: apprise_api/api/templates/config.html:2465
+#: apprise_api/api/templates/config.html:2476
 msgid "Required Tag"
 msgstr "आवश्यक टैग"
 
-#: apprise_api/api/templates/config.html:2466
+#: apprise_api/api/templates/config.html:2477
 msgid "Another Tag"
 msgstr "एक और टैग"
 
-#: apprise_api/api/templates/config.html:2505
+#: apprise_api/api/templates/config.html:2516
 msgid "This Apprise API instance has disabled support for"
 msgstr "इस Apprise API उदाहरण ने"
 
-#: apprise_api/api/templates/config.html:2539
+#: apprise_api/api/templates/config.html:2550
 msgid "Optional Service"
 msgstr "वैकल्पिक सेवा के लिए समर्थन अक्षम कर दिया है"
 
-#: apprise_api/api/templates/config.html:2540
+#: apprise_api/api/templates/config.html:2551
 msgid "Optional Service: failures are ignored when determining notification success"
 msgstr "वैकल्पिक सेवा: अधिसूचना सफलता निर्धारित करते समय विफलताओं की अनदेखी की जाती है"
 
-#: apprise_api/api/templates/config.html:2663
+#: apprise_api/api/templates/config.html:2674
 msgid "Send Test Notification"
 msgstr "परीक्षण अधिसूचना भेजें"
 
-#: apprise_api/api/templates/config.html:2677
+#: apprise_api/api/templates/config.html:2688
 msgid "This notification service is disabled in this Apprise API instance."
 msgstr "यह अधिसूचना सेवा इस Apprise API उदाहरण में अक्षम है।"
 
-#: apprise_api/api/templates/config.html:2743
+#: apprise_api/api/templates/config.html:2754
 msgid "no-tag"
 msgstr "कोई-टैग"
 
-#: apprise_api/api/templates/config.html:2841
+#: apprise_api/api/templates/config.html:2852
 msgid "There are no Apprise URL(s) loaded."
 msgstr "कोई Apprise URL लोड नहीं हैं।"
 
-#: apprise_api/api/templates/config.html:2943
+#: apprise_api/api/templates/config.html:2954
 msgid "Successfully saved the configuration."
 msgstr "कॉन्फ़िगरेशन सफलतापूर्वक सहेजा गया।"
 
-#: apprise_api/api/templates/config.html:2950
+#: apprise_api/api/templates/config.html:2961
 msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
 msgstr "डिस्क पर कॉन्फ़िगरेशन लिखने में समस्या हुई थी। अपनी फ़ाइल अनुमतियों की जाँच करें और पुनः प्रयास करें।"
 
-#: apprise_api/api/templates/config.html:2957
+#: apprise_api/api/templates/config.html:2968
 msgid "Failed to save the specified URL(s). Check your syntax and try again."
 msgstr "निर्दिष्ट URL(s) को सहेजने में विफल रहा। अपनी वाक्य रचना की जाँच करें और पुनः प्रयास करें।"
 
-#: apprise_api/api/templates/config.html:2975
-#: apprise_api/api/templates/config.html:2982
+#: apprise_api/api/templates/config.html:2986
+#: apprise_api/api/templates/config.html:2993
 #: apprise_api/api/templates/config_list.html:118
 msgid "Delete"
 msgstr "हटाएँ"
 
-#: apprise_api/api/templates/config.html:2976
+#: apprise_api/api/templates/config.html:2987
 msgid "Successfully removed configuration."
 msgstr "कॉन्फ़िगरेशन सफलतापूर्वक हटाया गया।"
 
-#: apprise_api/api/templates/config.html:2983
+#: apprise_api/api/templates/config.html:2994
 msgid "There was an issue removing the configuration."
 msgstr "कॉन्फ़िगरेशन हटाने में समस्या हुई।"
 
-#: apprise_api/api/templates/config.html:3105
+#: apprise_api/api/templates/config.html:3116
 msgid "Browse"
 msgstr "ब्राउज़ करें"
 
-#: apprise_api/api/templates/config.html:3263
+#: apprise_api/api/templates/config.html:3274
 msgid "Choose at least one tag before sending."
 msgstr "संदेश भेजने से पहले कम से कम एक टैग चुनें।"
 
-#: apprise_api/api/templates/config.html:3263
+#: apprise_api/api/templates/config.html:3274
 msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
 msgstr "कोई सूचना लक्ष्य चयनित नहीं हैं। संदेश भेजने से पहले कॉन्फ़िगरेशन एन्डपॉइंट जोड़ें या एक या अधिक मेल खाने वाले टैग चुनें।"
 
-#: apprise_api/api/templates/config.html:3278
+#: apprise_api/api/templates/config.html:3289
 msgid "Please provide at least a message body or one attachment before sending."
 msgstr "कृपया संदेश बॉडी या एक संलग्नक भेजने से पहले प्रदान करें।"
 
-#: apprise_api/api/templates/config.html:3327
+#: apprise_api/api/templates/config.html:3338
 msgid "Sending notification(s)…"
 msgstr "सूचना(एँ) भेजी जा रही हैं…"
 
-#: apprise_api/api/templates/config.html:3328
+#: apprise_api/api/templates/config.html:3339
 msgid "Successfully sent the notification(s)."
 msgstr "सूचना(एँ) सफलतापूर्वक भेज दी गई हैं।"
 
-#: apprise_api/api/templates/config.html:3329
+#: apprise_api/api/templates/config.html:3340
 msgid "One or more of the notification(s) were not sent."
 msgstr "एक या एक से अधिक सूचना(एँ) नहीं भेजी गई हैं।"
 
-#: apprise_api/api/templates/config.html:3330
+#: apprise_api/api/templates/config.html:3341
 msgid "Failed to send the notification(s)."
 msgstr "सूचना(यों) को भेजने में विफल।"
 
-#: apprise_api/api/templates/config.html:3389
+#: apprise_api/api/templates/config.html:3400
 msgid "Copy command to Clipboard"
 msgstr "आदेश को क्लिपबोर्ड पर कॉपी करें"
 
-#: apprise_api/api/templates/config.html:3416
+#: apprise_api/api/templates/config.html:3427
 msgid "Replace **** with your password before using this example."
 msgstr "इस उदाहरण का उपयोग करने से पहले **** को अपने पासवर्ड से बदलें।"
 
@@ -1866,10 +1875,10 @@ msgid "Developers who wish to receive this result set in a JSON parseable string
 msgstr "विकासक जो अपने एप्लिकेशन के लिए इस परिणाम सेट को JSON पार्स करने योग्य स्ट्रिंग में प्राप्त करना चाहते हैं, वे इसे हासिल करने के लिए निम्नलिखित कर सकते हैं:"
 
 #: apprise_api/api/templates/details.html:181
-#: apprise_api/api/templates/welcome.html:114
-#: apprise_api/api/templates/welcome.html:362
-#: apprise_api/api/templates/welcome.html:451
-#: apprise_api/api/templates/welcome.html:595
+#: apprise_api/api/templates/welcome.html:111
+#: apprise_api/api/templates/welcome.html:359
+#: apprise_api/api/templates/welcome.html:448
+#: apprise_api/api/templates/welcome.html:590
 msgid "Curl Example"
 msgstr "कर्ल उदाहरण"
 
@@ -1878,53 +1887,53 @@ msgid "Retrieve JSON Formatted Apprise Details"
 msgstr "पुनः प्राप्त करें JSON फॉर्मेटेड Apprise विवरण"
 
 #: apprise_api/api/templates/details.html:191
-#: apprise_api/api/templates/welcome.html:141
-#: apprise_api/api/templates/welcome.html:381
-#: apprise_api/api/templates/welcome.html:460
-#: apprise_api/api/templates/welcome.html:623
+#: apprise_api/api/templates/welcome.html:138
+#: apprise_api/api/templates/welcome.html:378
+#: apprise_api/api/templates/welcome.html:457
+#: apprise_api/api/templates/welcome.html:618
 msgid "Python Example"
 msgstr "Python उदाहरण"
 
 #: apprise_api/api/templates/details.html:196
 #: apprise_api/api/templates/details.html:212
-#: apprise_api/api/templates/welcome.html:185
-#: apprise_api/api/templates/welcome.html:220
-#: apprise_api/api/templates/welcome.html:705
+#: apprise_api/api/templates/welcome.html:182
+#: apprise_api/api/templates/welcome.html:217
+#: apprise_api/api/templates/welcome.html:700
 msgid "The URL"
 msgstr "यह URL"
 
 #: apprise_api/api/templates/details.html:207
-#: apprise_api/api/templates/welcome.html:179
-#: apprise_api/api/templates/welcome.html:401
-#: apprise_api/api/templates/welcome.html:476
-#: apprise_api/api/templates/welcome.html:664
+#: apprise_api/api/templates/welcome.html:176
+#: apprise_api/api/templates/welcome.html:398
+#: apprise_api/api/templates/welcome.html:473
+#: apprise_api/api/templates/welcome.html:659
 msgid "PHP Example"
 msgstr "PHP उदाहरण"
 
 #: apprise_api/api/templates/details.html:215
-#: apprise_api/api/templates/welcome.html:188
-#: apprise_api/api/templates/welcome.html:223
-#: apprise_api/api/templates/welcome.html:409
-#: apprise_api/api/templates/welcome.html:484
-#: apprise_api/api/templates/welcome.html:673
-#: apprise_api/api/templates/welcome.html:708
+#: apprise_api/api/templates/welcome.html:185
+#: apprise_api/api/templates/welcome.html:220
+#: apprise_api/api/templates/welcome.html:406
+#: apprise_api/api/templates/welcome.html:481
+#: apprise_api/api/templates/welcome.html:668
+#: apprise_api/api/templates/welcome.html:703
 msgid "Initiate cURL."
 msgstr "प्रारंभ करें cURL."
 
 #: apprise_api/api/templates/details.html:218
-#: apprise_api/api/templates/welcome.html:207
-#: apprise_api/api/templates/welcome.html:426
-#: apprise_api/api/templates/welcome.html:692
+#: apprise_api/api/templates/welcome.html:204
+#: apprise_api/api/templates/welcome.html:423
+#: apprise_api/api/templates/welcome.html:687
 msgid "Set the content type to application/json"
 msgstr "सामग्री प्रकार application/json पर सेट करें"
 
 #: apprise_api/api/templates/details.html:221
-#: apprise_api/api/templates/welcome.html:210
-#: apprise_api/api/templates/welcome.html:249
-#: apprise_api/api/templates/welcome.html:429
-#: apprise_api/api/templates/welcome.html:490
-#: apprise_api/api/templates/welcome.html:695
-#: apprise_api/api/templates/welcome.html:734
+#: apprise_api/api/templates/welcome.html:207
+#: apprise_api/api/templates/welcome.html:246
+#: apprise_api/api/templates/welcome.html:426
+#: apprise_api/api/templates/welcome.html:487
+#: apprise_api/api/templates/welcome.html:690
+#: apprise_api/api/templates/welcome.html:729
 msgid "Execute the request"
 msgstr "अनुरोध निष्पादित करें"
 
@@ -1933,7 +1942,7 @@ msgid "More details on the JSON format can be found <a href=\"https://appriseit.
 msgstr "JSON प्रारूप पर और विवरण <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">यहाँ</a> पाया जा सकता है।"
 
 #: apprise_api/api/templates/details.html:273
-#: apprise_api/api/templates/welcome.html:816
+#: apprise_api/api/templates/welcome.html:811
 msgid "Copy to clipboard"
 msgstr "क्लिपबोर्ड पर कॉपी करें"
 
@@ -1997,7 +2006,7 @@ msgid ""
 msgstr "जो लोग इस API को केवल अपने प्रोजेक्ट के लिए <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">साइडकार</a> और/या माइक्रोसर्विस के रूप में मानना चाहते हैं, उन्हें केवल निम्नलिखित URL का उपयोग करना होगा।"
 
 #: apprise_api/api/templates/welcome.html:42
-#: apprise_api/api/templates/welcome.html:288
+#: apprise_api/api/templates/welcome.html:285
 msgid "URL"
 msgstr "URL"
 
@@ -2008,8 +2017,8 @@ msgid ""
 msgstr "का उपयोग एक या अधिक निर्दिष्ट Apprise URLs को सूचित करने के लिए किया जाता है। अपने URL(ओं) को बनाने में मदद चाहिए तो <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> देखें।"
 
 #: apprise_api/api/templates/welcome.html:58
-#: apprise_api/api/templates/welcome.html:305
-#: apprise_api/api/templates/welcome.html:539
+#: apprise_api/api/templates/welcome.html:302
+#: apprise_api/api/templates/welcome.html:536
 msgid "Parameter"
 msgstr "पैरामीटर"
 
@@ -2020,7 +2029,7 @@ msgid ""
 msgstr "का उपयोग एक या अधिक Apprise URL(ओं) को परिभाषित करने के लिए किया जाता है। एक URL को अगले से अलग करने के लिए कॉमा और/या स्पेस का उपयोग करें।"
 
 #: apprise_api/api/templates/welcome.html:72
-#: apprise_api/api/templates/welcome.html:546
+#: apprise_api/api/templates/welcome.html:543
 msgid "Defines the message body. This field is required!"
 msgstr "संदेश बॉडी को परिभाषित करता है। यह फ़ील्ड आवश्यक है!"
 
@@ -2036,108 +2045,108 @@ msgid ""
 "                    are:"
 msgstr "यह वैकल्पिक फ़ील्ड सूचना के प्रकार को परिभाषित करती है। संभव विकल्प हैं:"
 
-#: apprise_api/api/templates/welcome.html:90
+#: apprise_api/api/templates/welcome.html:89
 msgid ""
 "this is the default option if a type\n"
 "                          isn't\n"
 "                          specified."
 msgstr "यदि किसी प्रकार का उल्लेख नहीं किया गया है तो यह डिफ़ॉल्ट विकल्प है।"
 
-#: apprise_api/api/templates/welcome.html:118
+#: apprise_api/api/templates/welcome.html:115
 msgid "Notifies an email address"
 msgstr "ईमेल पते को सूचित करता है"
 
-#: apprise_api/api/templates/welcome.html:123
-#: apprise_api/api/templates/welcome.html:162
+#: apprise_api/api/templates/welcome.html:120
+#: apprise_api/api/templates/welcome.html:159
 msgid "Notifies an email address with attachments"
 msgstr "संलग्नक के साथ ईमेल पते को सूचित करता है"
 
-#: apprise_api/api/templates/welcome.html:132
+#: apprise_api/api/templates/welcome.html:129
 msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
 msgstr "एक वेब आधारित फ़ाइल संलग्नक को <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> सर्वर पर भेजें:"
 
-#: apprise_api/api/templates/welcome.html:153
+#: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
 msgstr "अनुरोध"
 
-#: apprise_api/api/templates/welcome.html:191
-#: apprise_api/api/templates/welcome.html:412
-#: apprise_api/api/templates/welcome.html:676
+#: apprise_api/api/templates/welcome.html:188
+#: apprise_api/api/templates/welcome.html:409
+#: apprise_api/api/templates/welcome.html:671
 msgid "The JSON data."
 msgstr "JSON डेटा।"
 
-#: apprise_api/api/templates/welcome.html:198
-#: apprise_api/api/templates/welcome.html:417
-#: apprise_api/api/templates/welcome.html:683
+#: apprise_api/api/templates/welcome.html:195
+#: apprise_api/api/templates/welcome.html:414
+#: apprise_api/api/templates/welcome.html:678
 msgid "Encode the array into JSON."
 msgstr "एरे को JSON में एन्कोड करें।"
 
-#: apprise_api/api/templates/welcome.html:201
-#: apprise_api/api/templates/welcome.html:243
-#: apprise_api/api/templates/welcome.html:420
-#: apprise_api/api/templates/welcome.html:487
-#: apprise_api/api/templates/welcome.html:686
-#: apprise_api/api/templates/welcome.html:728
+#: apprise_api/api/templates/welcome.html:198
+#: apprise_api/api/templates/welcome.html:240
+#: apprise_api/api/templates/welcome.html:417
+#: apprise_api/api/templates/welcome.html:484
+#: apprise_api/api/templates/welcome.html:681
+#: apprise_api/api/templates/welcome.html:723
 msgid "Tell cURL that we want to send a POST request."
 msgstr "cURL को बताएं कि हम POST अनुरोध भेजना चाहते हैं।"
 
-#: apprise_api/api/templates/welcome.html:204
-#: apprise_api/api/templates/welcome.html:423
-#: apprise_api/api/templates/welcome.html:689
+#: apprise_api/api/templates/welcome.html:201
+#: apprise_api/api/templates/welcome.html:420
+#: apprise_api/api/templates/welcome.html:684
 msgid "Attach our encoded JSON string to the POST fields."
 msgstr "हमारे एन्कोडेड JSON स्ट्रिंग को POST फ़ील्ड्स से जोड़ें।"
 
-#: apprise_api/api/templates/welcome.html:213
-#: apprise_api/api/templates/welcome.html:252
-#: apprise_api/api/templates/welcome.html:432
-#: apprise_api/api/templates/welcome.html:493
-#: apprise_api/api/templates/welcome.html:698
-#: apprise_api/api/templates/welcome.html:737
+#: apprise_api/api/templates/welcome.html:210
+#: apprise_api/api/templates/welcome.html:249
+#: apprise_api/api/templates/welcome.html:429
+#: apprise_api/api/templates/welcome.html:490
+#: apprise_api/api/templates/welcome.html:693
+#: apprise_api/api/templates/welcome.html:732
 msgid "Close our handler"
 msgstr "हमारे हैंडलर को बंद करें"
 
-#: apprise_api/api/templates/welcome.html:219
-#: apprise_api/api/templates/welcome.html:704
+#: apprise_api/api/templates/welcome.html:216
+#: apprise_api/api/templates/welcome.html:699
 msgid "Sending an attachment using PHP"
 msgstr "PHP का उपयोग करके एक अटैचमेंट भेजना"
 
-#: apprise_api/api/templates/welcome.html:226
-#: apprise_api/api/templates/welcome.html:711
+#: apprise_api/api/templates/welcome.html:223
+#: apprise_api/api/templates/welcome.html:706
 msgid "Prepare our file attachment"
 msgstr "हमारे फाइल अटैचमेंट की तैयारी करें"
 
-#: apprise_api/api/templates/welcome.html:229
-#: apprise_api/api/templates/welcome.html:714
+#: apprise_api/api/templates/welcome.html:226
+#: apprise_api/api/templates/welcome.html:709
 msgid "Acquire our filename"
 msgstr "हमारे फ़ाइलनाम"
 
-#: apprise_api/api/templates/welcome.html:232
-#: apprise_api/api/templates/welcome.html:717
+#: apprise_api/api/templates/welcome.html:229
+#: apprise_api/api/templates/welcome.html:712
 msgid "Get the attachment MIME type (in this case it is 'image/jpg')"
 msgstr "को प्राप्त करें। संलग्नक MIME प्रकार (इस मामले में यह 'image/jpg' है)"
 
-#: apprise_api/api/templates/welcome.html:235
-#: apprise_api/api/templates/welcome.html:720
+#: apprise_api/api/templates/welcome.html:232
+#: apprise_api/api/templates/welcome.html:715
 msgid "The multipart data."
 msgstr "मल्टीपार्ट डेटा।"
 
-#: apprise_api/api/templates/welcome.html:246
-#: apprise_api/api/templates/welcome.html:731
+#: apprise_api/api/templates/welcome.html:243
+#: apprise_api/api/templates/welcome.html:726
 msgid "Attach the data to the POST fields."
 msgstr "डेटा को POST फ़ील्ड्स में संलग्न करें।"
 
-#: apprise_api/api/templates/welcome.html:266
+#: apprise_api/api/templates/welcome.html:263
 msgid "The administrator of this system has disabled stateless URL support."
 msgstr "इस सिस्टम के व्यवस्थापक ने स्टेटलेस URL समर्थन को अक्षम कर दिया है।"
 
-#: apprise_api/api/templates/welcome.html:274
+#: apprise_api/api/templates/welcome.html:271
 msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
 msgstr "जो लोग लगातार स्टोर का उपयोग करना चाहते हैं वे ऐसा कर सकते हैं। यह खंड एक बार सेट करें और भूल जाएँ प्रकार का है। अपनी कॉन्फ़िगरेशन एक बार सेट करें और बाद में आवश्यकता अनुसार हल्के API कॉल्स के साथ नोटिफिकेशन ट्रिगर करें।"
 
-#: apprise_api/api/templates/welcome.html:279
+#: apprise_api/api/templates/welcome.html:276
 msgid ""
 "All endpoints that expect posted data can be received in either JSON or in it's standard\n"
 "      encoding.\n"
@@ -2145,7 +2154,7 @@ msgid ""
 "      interpreted properly."
 msgstr "सभी एंडपॉइंट्स जो पोस्ट किए गए डेटा की अपेक्षा करते हैं, उन्हें या तो JSON में या इसकी मानक एन्कोडिंग में प्राप्त किया जा सकता है। इसे सही तरीके से व्याख्यायित करने के लिए आपको <code>Content-Type</code> को <code>application/json</code> के रूप में पास करना होगा।"
 
-#: apprise_api/api/templates/welcome.html:298
+#: apprise_api/api/templates/welcome.html:295
 #, python-format
 msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
@@ -2153,19 +2162,19 @@ msgid ""
 "            constructing your URLs."
 msgstr "एक नई Apprise कॉन्फ़िगरेशन या URL का सेट जोड़ने और उन्हें <em>%(key)s</em> की पहचान वाले कॉन्फ़िगरेशन से जोड़ने के लिए उपयोग किया जाता है। यदि आपको अपने URL बनाने में मदद की आवश्यकता है, तो <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> देखें।"
 
-#: apprise_api/api/templates/welcome.html:313
+#: apprise_api/api/templates/welcome.html:310
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                      one URL from the next."
 msgstr "एक या अधिक Apprise URL(s) को परिभाषित करने के लिए उपयोग किया जाता है। अगले URL से एक URL को अलग करने के लिए कॉमा और/या स्पेस का उपयोग करें।"
 
-#: apprise_api/api/templates/welcome.html:320
+#: apprise_api/api/templates/welcome.html:317
 msgid ""
 "Provide the contents of either a YAML or TEXT based Apprise\n"
 "                      configuration."
 msgstr "में YAML या TEXT आधारित Apprise कॉन्फ़िगरेशन की सामग्री प्रदान करें।"
 
-#: apprise_api/api/templates/welcome.html:327
+#: apprise_api/api/templates/welcome.html:324
 msgid ""
 "This field is only required if you've specified the config option. It's purpose\n"
 "                      is\n"
@@ -2173,434 +2182,434 @@ msgid ""
 "                      options are:"
 msgstr "यह फ़ील्ड केवल तभी आवश्यक है जब आपने कॉन्फ़िग विकल्प निर्दिष्ट किया हो। इसका उद्देश्य सर्वर को यह बताना है कि आप किस समर्थित (Apprise) कॉन्फ़िगरेशन प्रकार को भेज रहे हैं। मान्य विकल्प हैं:"
 
-#: apprise_api/api/templates/welcome.html:341
+#: apprise_api/api/templates/welcome.html:338
 msgid ""
 "You must specify either the <code>urls</code> parameter or the\n"
 "                          <code>config</code>."
 msgstr "आपको <code>urls</code> पैरामीटर या <code>config</code> में से किसी एक को निर्दिष्ट करना आवश्यक है।"
 
-#: apprise_api/api/templates/welcome.html:345
+#: apprise_api/api/templates/welcome.html:342
 msgid ""
 "The <code>urls</code> takes priority over the <code>config</code> if both\n"
 "                          were\n"
 "                          specified."
 msgstr "यदि दोनों निर्दिष्ट किए गए हैं, तो <code>urls</code> का प्राथमिकता <code>config</code> पर होगी।"
 
-#: apprise_api/api/templates/welcome.html:350
+#: apprise_api/api/templates/welcome.html:347
 msgid ""
 "The <code>format</code> parameter is only required if the\n"
 "                          <code>config</code>\n"
 "                          parameter was also specified."
 msgstr "<code>format</code> पैरामीटर केवल तभी आवश्यक है जब <code>config</code> पैरामीटर भी निर्दिष्ट किया गया हो।"
 
-#: apprise_api/api/templates/welcome.html:366
+#: apprise_api/api/templates/welcome.html:363
 #, python-format
 msgid "Load a single URL and assign it to: <em>%(key)s</em>"
 msgstr "एकल URL लोड करें और इसे असाइन करें: <em>%(key)s</em>"
 
-#: apprise_api/api/templates/welcome.html:372
+#: apprise_api/api/templates/welcome.html:369
 #, python-format
 msgid "Load a simple TEXT config entry sent to: <em>%(key)s</em>"
 msgstr "एक साधारण TEXT कॉन्फ़िग प्रविष्टि लोड करें जो भेजी गई है: <em>%(key)s</em>"
 
-#: apprise_api/api/templates/welcome.html:390
-#: apprise_api/api/templates/welcome.html:406
-#: apprise_api/api/templates/welcome.html:481
-#: apprise_api/api/templates/welcome.html:652
-#: apprise_api/api/templates/welcome.html:670
+#: apprise_api/api/templates/welcome.html:387
+#: apprise_api/api/templates/welcome.html:403
+#: apprise_api/api/templates/welcome.html:478
+#: apprise_api/api/templates/welcome.html:647
+#: apprise_api/api/templates/welcome.html:665
 #, python-format
 msgid "The URL if the key was <em>%(key)s</em>"
 msgstr "URL यदि कुंजी थी <em>%(key)s</em>"
 
-#: apprise_api/api/templates/welcome.html:446
+#: apprise_api/api/templates/welcome.html:443
 #, python-format
 msgid ""
 "There are no arguments required. If configuration id of <em>%(key)s</em> exists and has data associated with\n"
 "              it, it will be removed."
 msgstr "किसी तर्क की आवश्यकता नहीं है। यदि <em>%(key)s</em> का कॉन्फ़िगरेशन आईडी मौजूद है और इसके साथ डेटा जुड़ा है, तो इसे हटा दिया जाएगा।"
 
-#: apprise_api/api/templates/welcome.html:454
+#: apprise_api/api/templates/welcome.html:451
 #, python-format
 msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
 msgstr "पहले लोड किए गए कॉन्फ़िगरेशन को हटा दें जो <em>%(key)s</em> के आईडी से जुड़ा है।"
 
-#: apprise_api/api/templates/welcome.html:465
+#: apprise_api/api/templates/welcome.html:462
 #, python-format
 msgid "The request if the key was <em>%(key)s</em>"
 msgstr "यदि कुंजी <em>%(key)s</em> थी, तो अनुरोध"
 
-#: apprise_api/api/templates/welcome.html:506
+#: apprise_api/api/templates/welcome.html:503
 #, python-format
 msgid ""
 "This feature can be used by Apprise itself. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
 msgstr "यह सुविधा Apprise द्वारा स्वयं उपयोग की जा सकती है। यह <em>%(key)s</em> द्वारा पहचाने गए कॉन्फ़िगरेशन से संबंधित कॉन्फ़िगरेशन को दूरस्थ रूप से लाने का साधन प्रदान करता है।"
 
-#: apprise_api/api/templates/welcome.html:510
-#: apprise_api/api/templates/welcome.html:524
+#: apprise_api/api/templates/welcome.html:507
+#: apprise_api/api/templates/welcome.html:521
 msgid "Use Apprise to retrieve your configuration:"
 msgstr "अपनी कॉन्फ़िगरेशन प्राप्त करने के लिए Apprise का उपयोग करें:"
 
-#: apprise_api/api/templates/welcome.html:520
+#: apprise_api/api/templates/welcome.html:517
 #, python-format
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
 msgstr "यह <code>%(BASE_URL)s/get/<em>%(key)s</em></code> का उपनाम है, जो ऊपर परिभाषित किया गया है। यह <em>%(key)s</em> द्वारा पहचाने गए कॉन्फ़िगरेशन से संबंधित कॉन्फ़िगरेशन को दूरस्थ रूप से लाने का साधन प्रदान करता है।"
 
-#: apprise_api/api/templates/welcome.html:534
+#: apprise_api/api/templates/welcome.html:531
 #, python-format
 msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
 msgstr "<em>%(key)s</em> द्वारा पहचानी गई कॉन्फ़िगरेशन से संबंधित URL सूचित करता है।"
 
-#: apprise_api/api/templates/welcome.html:551
+#: apprise_api/api/templates/welcome.html:548
 msgid ""
 "The title to include in the notification. This is an optional\n"
 "                      field."
 msgstr "अधिसूचना में शामिल करने के लिए शीर्षक। यह एक वैकल्पिक फ़ील्ड है।"
 
-#: apprise_api/api/templates/welcome.html:558
+#: apprise_api/api/templates/welcome.html:555
 msgid ""
 "This optional field defines the notification type. The possible options\n"
 "                      are:"
 msgstr "यह वैकल्पिक फ़ील्ड अधिसूचना प्रकार को परिभाषित करती है। संभावित विकल्प हैं:"
 
-#: apprise_api/api/templates/welcome.html:564
+#: apprise_api/api/templates/welcome.html:560
 msgid ""
 "this is the default option if a type\n"
 "                            isn't\n"
 "                            specified."
 msgstr "यदि प्रकार निर्दिष्ट नहीं किया गया है, तो यह डिफ़ॉल्ट विकल्प है।"
 
-#: apprise_api/api/templates/welcome.html:586
+#: apprise_api/api/templates/welcome.html:581
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
 msgstr "अपने URL को आगे फ़िल्टर करने के लिए टैगिंग लॉजिक लागू करें। यह एक वैकल्पिक फ़ील्ड है।"
 
-#: apprise_api/api/templates/welcome.html:599
+#: apprise_api/api/templates/welcome.html:594
 msgid "Notifies all URLs assigned to the configuration"
 msgstr "कॉन्फ़िगरेशन को असाइन किए गए सभी URL सूचित करता है"
 
-#: apprise_api/api/templates/welcome.html:607
+#: apprise_api/api/templates/welcome.html:602
 msgid "Sends a notification to our endpoints with an attachment"
 msgstr "एक अटैचमेंट के साथ हमारे एंडपॉइंट को अधिसूचना भेजता है"
 
-#: apprise_api/api/templates/welcome.html:614
+#: apprise_api/api/templates/welcome.html:609
 msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "<em>devops</em> टैग को असाइन किए गए सभी URL सूचित करता है"
 
-#: apprise_api/api/templates/welcome.html:626
+#: apprise_api/api/templates/welcome.html:621
 msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
 msgstr "आदर्श रूप से आपको Apprise लाइब्रेरी का उपयोग करना चाहिए; यह आपका जीवन बहुत आसान बना देगा:"
 
-#: apprise_api/api/templates/welcome.html:630
+#: apprise_api/api/templates/welcome.html:625
 msgid "Create an Apprise instance"
 msgstr "एक Apprise उदाहरण बनाएं"
 
-#: apprise_api/api/templates/welcome.html:633
+#: apprise_api/api/templates/welcome.html:628
 msgid "Add our URL"
 msgstr "हमारा URL जोड़ें"
 
-#: apprise_api/api/templates/welcome.html:636
+#: apprise_api/api/templates/welcome.html:631
 msgid "Send our notification:"
 msgstr "हमारी सूचना भेजें:"
 
-#: apprise_api/api/templates/welcome.html:639
+#: apprise_api/api/templates/welcome.html:634
 msgid "Sending an attachment is just as easy:"
 msgstr "एक अटैचमेंट भेजना भी उतना ही आसान है:"
 
-#: apprise_api/api/templates/welcome.html:642
+#: apprise_api/api/templates/welcome.html:637
 msgid "The legacy (but more compatible and lightweight) way of doing things:"
 msgstr "काम करने का पुराना (लेकिन अधिक संगत और हल्का) तरीका:"
 
-#: apprise_api/api/templates/welcome.html:753
+#: apprise_api/api/templates/welcome.html:748
 msgid "Endpoint Notes"
 msgstr "एंडपॉइंट नोट्स"
 
-#: apprise_api/api/templates/welcome.html:756
+#: apprise_api/api/templates/welcome.html:751
 #, python-format
 msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
 msgstr "वह कॉन्फ़िगरेशन ID (<em>%(key)s</em>) जिसे आप अपने कॉन्फ़िगरेशन से जोड़ने की योजना बना रहे हैं:"
 
-#: apprise_api/api/templates/welcome.html:760
+#: apprise_api/api/templates/welcome.html:755
 msgid ""
 "Cannot have spaces or special characters. A dash (<code>-</code>) and underscore\n"
 "              (<code>_</code>) are the only exceptions to this rule."
 msgstr "इसमें रिक्त स्थान या विशेष वर्ण नहीं हो सकते। एक डैश (<code>-</code>) और अंडरस्कोर (<code>_</code>) इस नियम के केवल अपवाद हैं।"
 
-#: apprise_api/api/templates/welcome.html:763
+#: apprise_api/api/templates/welcome.html:758
 msgid "Must start with at least two alphanumeric characters."
 msgstr "कम से कम दो अल्फ़ान्यूमेरिक अक्षरों से शुरू होना चाहिए।"
 
-#: apprise_api/api/templates/welcome.html:764
+#: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "कुल लंबाई 64 अक्षरों से अधिक नहीं हो सकती।"
 
-#: apprise_api/api/views.py:1164
+#: apprise_api/api/views.py:1157
 msgid "This configuration has been disabled by an administrator"
 msgstr "इस विन्यास को एक प्रशासक द्वारा अक्षम कर दिया गया है"
 
-#: apprise_api/api/views.py:1175 apprise_api/core/middleware/auth.py:73
+#: apprise_api/api/views.py:1168 apprise_api/core/middleware/auth.py:73
 #: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "पहुंच अस्वीकार कर दी गई"
 
-#: apprise_api/api/views.py:1191
+#: apprise_api/api/views.py:1184
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "प्रमाणीकरण मोड अक्षम है (इसे सक्षम करने के लिए APPRISE_AUTH_REQUIRED सेट करें)"
 
-#: apprise_api/api/views.py:1200
+#: apprise_api/api/views.py:1193
 msgid "Persistent configuration storage is disabled"
 msgstr "स्थायी विन्यास संग्रहण अक्षम है"
 
-#: apprise_api/api/views.py:1209
+#: apprise_api/api/views.py:1202
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "एक विन्यास आईडी आवश्यक है (URL पथ या X-Apprise-Config-ID हेडर)"
 
-#: apprise_api/api/views.py:1222
+#: apprise_api/api/views.py:1215
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "प्रदान किया गया X-Apprise-Config-ID हेडर अमान्य है"
 
-#: apprise_api/api/views.py:1292 apprise_api/api/views.py:1911
-#: apprise_api/api/views.py:1991 apprise_api/api/views.py:2331
-#: apprise_api/api/views.py:2501 apprise_api/api/views.py:3652
-#: apprise_api/api/views.py:3808
+#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1904
+#: apprise_api/api/views.py:1984 apprise_api/api/views.py:2324
+#: apprise_api/api/views.py:2494 apprise_api/api/views.py:3649
+#: apprise_api/api/views.py:3805
 msgid "The site has been configured to deny this request"
 msgstr "साइट को इस अनुरोध को अस्वीकार करने के लिए कॉन्फ़िगर किया गया है"
 
-#: apprise_api/api/views.py:1316 apprise_api/api/views.py:3546
-#: apprise_api/api/views.py:3862
+#: apprise_api/api/views.py:1309 apprise_api/api/views.py:3543
+#: apprise_api/api/views.py:3856
 msgid "There was no configuration found"
 msgstr "कोई विन्यास नहीं मिला"
 
-#: apprise_api/api/views.py:1335 apprise_api/api/views.py:3568
+#: apprise_api/api/views.py:1328 apprise_api/api/views.py:3565
 msgid "An error occurred accessing configuration"
 msgstr "विन्यास तक पहुँचने में त्रुटि हुई"
 
-#: apprise_api/api/views.py:1497
+#: apprise_api/api/views.py:1490
 msgid "The login form is only available to the web interface"
 msgstr "लॉगिन फॉर्म केवल वेब इंटरफेस के लिए उपलब्ध है"
 
-#: apprise_api/api/views.py:1555
+#: apprise_api/api/views.py:1548
 msgid "The username, password, or Config ID was not accepted."
 msgstr "उपयोगकर्ता नाम, पासवर्ड, या कॉन्फ़िग आईडी स्वीकार नहीं किया गया।"
 
-#: apprise_api/api/views.py:2016 apprise_api/api/views.py:3206
+#: apprise_api/api/views.py:2009 apprise_api/api/views.py:3203
 msgid "The urls field must be a string or list of strings"
 msgstr "urls फ़ील्ड एक स्ट्रिंग या स्ट्रिंग्स की सूची होनी चाहिए"
 
-#: apprise_api/api/views.py:2024
+#: apprise_api/api/views.py:2017
 msgid "The config field must be a string"
 msgstr "config फ़ील्ड एक स्ट्रिंग होनी चाहिए"
 
-#: apprise_api/api/views.py:2032
+#: apprise_api/api/views.py:2025
 msgid "The format field must be a string"
 msgstr "format फ़ील्ड एक स्ट्रिंग होनी चाहिए"
 
-#: apprise_api/api/views.py:2045
+#: apprise_api/api/views.py:2038
 msgid "Invalid payload structure provided"
 msgstr "अमान्य पेलोड संरचना प्रदान की गई"
 
-#: apprise_api/api/views.py:2073
+#: apprise_api/api/views.py:2066
 msgid "No valid URLs defined"
 msgstr "कोई वैध URLs परिभाषित नहीं हैं"
 
-#: apprise_api/api/views.py:2098
+#: apprise_api/api/views.py:2091
 msgid "The configuration could not be saved"
 msgstr "कॉन्फ़िगरेशन को सहेजा नहीं जा सका"
 
-#: apprise_api/api/views.py:2122
+#: apprise_api/api/views.py:2115
 msgid "The configuration payload is too large"
 msgstr "कॉन्फ़िगरेशन पेलोड बहुत बड़ा है"
 
-#: apprise_api/api/views.py:2146
+#: apprise_api/api/views.py:2139
 msgid "Invalid configuration format specified"
 msgstr "निर्दिष्ट कॉन्फ़िगरेशन प्रारूप अमान्य है"
 
-#: apprise_api/api/views.py:2178
+#: apprise_api/api/views.py:2171
 msgid "The configuration format could not be auto-detected"
 msgstr "कॉन्फ़िगरेशन प्रारूप को स्वचालित रूप से पता नहीं लगाया जा सका"
 
-#: apprise_api/api/views.py:2204
+#: apprise_api/api/views.py:2197
 msgid "No valid URL(s) defined"
 msgstr "कोई मान्य URL निर्दिष्ट नहीं है"
 
-#: apprise_api/api/views.py:2226
+#: apprise_api/api/views.py:2219
 msgid "An error occurred saving configuration"
 msgstr "कॉन्फ़िगरेशन सहेजने में त्रुटि हुई"
 
-#: apprise_api/api/views.py:2243
+#: apprise_api/api/views.py:2236
 msgid "No configuration provided"
 msgstr "कोई कॉन्फ़िगरेशन प्रदान नहीं किया गया"
 
-#: apprise_api/api/views.py:2272
+#: apprise_api/api/views.py:2265
 msgid "Successfully saved configuration"
 msgstr "सफलतापूर्वक संरचना सहेजी गई"
 
-#: apprise_api/api/views.py:2369
+#: apprise_api/api/views.py:2362
 msgid "The configuration store is not currently writable"
 msgstr "वर्तमान में संरचना स्टोर लिखने योग्य नहीं है"
 
-#: apprise_api/api/views.py:2383
+#: apprise_api/api/views.py:2376
 msgid "A valid destination (to), different from the source, is required"
 msgstr "स्रोत से अलग एक वैध गंतव्य (to) आवश्यक है"
 
-#: apprise_api/api/views.py:2410
+#: apprise_api/api/views.py:2403
 msgid "There was no configuration to move"
 msgstr "स्थानांतरित करने के लिए कोई संरचना नहीं थी"
 
-#: apprise_api/api/views.py:2421
+#: apprise_api/api/views.py:2414
 msgid "A configuration already exists at the destination"
 msgstr "गंतव्य पर पहले से ही एक संरचना मौजूद है"
 
-#: apprise_api/api/views.py:2432
+#: apprise_api/api/views.py:2425
 msgid "The configuration could not be moved"
 msgstr "संरचना को स्थानांतरित नहीं किया जा सका"
 
-#: apprise_api/api/views.py:2442
+#: apprise_api/api/views.py:2435
 msgid "Successfully moved configuration"
 msgstr "सफलतापूर्वक कॉन्फ़िगरेशन को स्थानांतरित किया गया"
 
-#: apprise_api/api/views.py:2518
+#: apprise_api/api/views.py:2511
 msgid "The configuration could not be removed"
 msgstr "कॉन्फ़िगरेशन को हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2541
+#: apprise_api/api/views.py:2534
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "कॉन्फ़िगरेशन हटा दिया गया, लेकिन इसकी प्रमाणीकरण को हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2550
+#: apprise_api/api/views.py:2543
 msgid "There was no configuration to remove"
 msgstr "हटाने के लिए कोई कॉन्फ़िगरेशन नहीं था"
 
-#: apprise_api/api/views.py:2573
+#: apprise_api/api/views.py:2566
 msgid "Successfully removed configuration"
 msgstr "सफलतापूर्वक कॉन्फ़िगरेशन हटाया गया"
 
-#: apprise_api/api/views.py:2681
+#: apprise_api/api/views.py:2674
 msgid "Content-Type must be application/json"
 msgstr "Content-Type application/json होना चाहिए"
 
-#: apprise_api/api/views.py:2719
+#: apprise_api/api/views.py:2712
 msgid "Only an administrator may set configuration access"
 msgstr "केवल एक प्रशासक ही कॉन्फ़िगरेशन एक्सेस सेट कर सकता है"
 
-#: apprise_api/api/views.py:2741
+#: apprise_api/api/views.py:2734
 msgid "Valid username and password fields are required"
 msgstr "मान्य उपयोगकर्ता नाम और पासवर्ड फ़ील्ड की आवश्यकता है"
 
-#: apprise_api/api/views.py:2788
+#: apprise_api/api/views.py:2781
 msgid "The current password was not accepted"
 msgstr "वर्तमान पासवर्ड स्वीकार नहीं किया गया"
 
-#: apprise_api/api/views.py:2796
+#: apprise_api/api/views.py:2789
 msgid "The new password must differ from the current password"
 msgstr "नया पासवर्ड वर्तमान पासवर्ड से अलग होना चाहिए"
 
-#: apprise_api/api/views.py:2814
+#: apprise_api/api/views.py:2807
 msgid "The authentication could not be saved"
 msgstr "प्रमाणीकरण सहेजा नहीं जा सका"
 
-#: apprise_api/api/views.py:2824
+#: apprise_api/api/views.py:2817
 msgid "Successfully set authentication"
 msgstr "प्रमाणीकरण सफलतापूर्वक सेट किया गया"
 
-#: apprise_api/api/views.py:2867
+#: apprise_api/api/views.py:2860
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "प्रमाणीकरण हटाने के लिए वैश्विक व्यवस्थापक क्रेडेंशियल्स की आवश्यकता है"
 
-#: apprise_api/api/views.py:2880
+#: apprise_api/api/views.py:2873
 msgid "The authentication could not be removed"
 msgstr "प्रमाणीकरण हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2890
+#: apprise_api/api/views.py:2883
 msgid "Successfully removed authentication"
 msgstr "प्रमाणीकरण सफलतापूर्वक हटा दिया गया"
 
-#: apprise_api/api/views.py:3037
+#: apprise_api/api/views.py:3034
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "सर्वर अस्थायी रूप से नई लाइव अधिसूचना स्ट्रीम शुरू करने में असमर्थ है"
 
-#: apprise_api/api/views.py:3062
+#: apprise_api/api/views.py:3059
 msgid "An error occurred delivering the notification"
 msgstr "अधिसूचना भेजते समय एक त्रुटि हुई"
 
-#: apprise_api/api/views.py:3071
+#: apprise_api/api/views.py:3068
 msgid "One or more notification could not be sent"
 msgstr "एक या अधिक अधिसूचना नहीं भेजी जा सकी"
 
-#: apprise_api/api/views.py:3127
+#: apprise_api/api/views.py:3124
 msgid "The selected notification entry is invalid"
 msgstr "चयनित अधिसूचना प्रविष्टि अमान्य है"
 
-#: apprise_api/api/views.py:3141
+#: apprise_api/api/views.py:3138
 msgid "The selected notification entry is no longer available"
 msgstr "चयनित सूचना प्रविष्टि अब उपलब्ध नहीं है"
 
-#: apprise_api/api/views.py:3166
+#: apprise_api/api/views.py:3163
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "पेलोड फ़ील्ड मैपिंग KEY का उपयोग करके विफल रही: {}"
 
-#: apprise_api/api/views.py:3168
+#: apprise_api/api/views.py:3165
 msgid "Payload field mapping failed"
 msgstr "पेलोड फ़ील्ड मैपिंग विफल रही"
 
-#: apprise_api/api/views.py:3181
+#: apprise_api/api/views.py:3178
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} फ़ील्ड एक स्ट्रिंग होना चाहिए"
 
-#: apprise_api/api/views.py:3193
+#: apprise_api/api/views.py:3190
 msgid "The format field must be a string or null"
 msgstr "फ़ॉर्मेट फ़ील्ड एक स्ट्रिंग या शून्य होना चाहिए"
 
-#: apprise_api/api/views.py:3234
+#: apprise_api/api/views.py:3231
 msgid "Bad FORM Payload provided"
 msgstr "खराब FORM पेलोड प्रदान किया गया"
 
-#: apprise_api/api/views.py:3254
+#: apprise_api/api/views.py:3251
 msgid "The template field must be an object of name/value pairs"
 msgstr "टेम्पलेट फ़ील्ड नाम/मान जोड़े वाले ऑब्जेक्ट होना चाहिए"
 
-#: apprise_api/api/views.py:3284 apprise_api/api/views.py:3303
+#: apprise_api/api/views.py:3281 apprise_api/api/views.py:3300
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "इस कॉन्फ़िगरेशन के लिए 'all' के अलावा एक विशेष टैग आवश्यक है"
 
-#: apprise_api/api/views.py:3296
+#: apprise_api/api/views.py:3293
 msgid "Unsupported characters found in tag definition"
 msgstr "टैग परिभाषा में असमर्थित वर्ण पाए गए"
 
-#: apprise_api/api/views.py:3342
+#: apprise_api/api/views.py:3339
 msgid "Bad Attachment"
 msgstr "खराब संलग्नक"
 
-#: apprise_api/api/views.py:3374
+#: apprise_api/api/views.py:3371
 msgid "An invalid body input format was specified"
 msgstr "एक अमान्य बॉडी इनपुट फ़ॉर्मेट निर्दिष्ट किया गया"
 
-#: apprise_api/api/views.py:3411
+#: apprise_api/api/views.py:3408
 msgid "The recursion limit has been reached"
 msgstr "पुनरावृत्ति सीमा तक पहुँच गई"
 
-#: apprise_api/api/views.py:3423
+#: apprise_api/api/views.py:3420
 msgid "An invalid recursion value was specified"
 msgstr "एक अमान्य पुनरावृत्ति मान निर्दिष्ट किया गया"
 
-#: apprise_api/api/views.py:3443
+#: apprise_api/api/views.py:3440
 msgid "An error occurred preparing the notification"
 msgstr "सूचना"
 
-#: apprise_api/api/views.py:3514 apprise_api/api/views.py:3717
+#: apprise_api/api/views.py:3511 apprise_api/api/views.py:3714
 msgid "Payload lacks minimum requirements"
 msgstr "तैयार करते समय एक त्रुटि हुई। पेलोड में न्यूनतम आवश्यकताएँ नहीं हैं"
 
-#: apprise_api/api/views.py:3678
+#: apprise_api/api/views.py:3675
 msgid "This configuration does not permit stateless notifications"
 msgstr "यह कॉन्फ़िगरेशन स्टेटलेस सूचनाओं की अनुमति नहीं देता"
 
-#: apprise_api/api/views.py:3755
+#: apprise_api/api/views.py:3752
 msgid "There was no valid URLs provided to notify"
 msgstr "सूचित करने के लिए कोई मान्य URL प्रदान नहीं किया गया"
 
@@ -2711,7 +2720,3 @@ msgstr "पृष्ठ नहीं मिला"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "सिस्टम त्रुटि"
-
-#: apprise_api/api/templates/components/qr_password_note.html:7
-msgid "Why?"
-msgstr "क्यों?"
