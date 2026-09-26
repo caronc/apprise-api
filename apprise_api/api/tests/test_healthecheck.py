@@ -32,6 +32,11 @@ from ..utils import healthcheck
 
 
 class HealthCheckTests(SimpleTestCase):
+    def test_current_health_alias_is_browser_only(self):
+        """API clients must continue to provide a key path or header."""
+        response = self.client.get("/status/@", HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 400)
+
     def test_post_not_supported(self):
         """
         Test POST requests
@@ -69,6 +74,8 @@ class HealthCheckTests(SimpleTestCase):
             "config_lock": False,
             "attach_lock": False,
             "stateful_enabled": True,
+            "stateless_enabled": True,
+            "degraded": False,
             "max_attachments": 6,
             "attach_size": 209715200,
             "status": {
@@ -77,6 +84,7 @@ class HealthCheckTests(SimpleTestCase):
                 "can_write_attach": True,
                 "details": ["OK"],
             },
+            "privilege": "admin",
         }
         assert response["Content-Type"].startswith("application/json")
 
@@ -99,6 +107,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": True,
                 "attach_lock": False,
                 "stateful_enabled": True,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 6,
                 "attach_size": 209715200,
                 "status": {
@@ -107,6 +117,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": True,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_STATEFUL_MODE="disabled"):
@@ -128,6 +139,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": False,
                 "attach_lock": False,
                 "stateful_enabled": False,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 6,
                 "attach_size": 209715200,
                 "status": {
@@ -136,6 +149,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": True,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_ATTACH_SIZE=0):
@@ -157,6 +171,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": False,
                 "attach_lock": True,
                 "stateful_enabled": True,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 6,
                 "attach_size": 0,
                 "status": {
@@ -165,6 +181,7 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": False,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
 
         with override_settings(APPRISE_MAX_ATTACHMENTS=0):
@@ -186,6 +203,8 @@ class HealthCheckTests(SimpleTestCase):
                 "config_lock": False,
                 "attach_lock": False,
                 "stateful_enabled": True,
+                "stateless_enabled": True,
+                "degraded": False,
                 "max_attachments": 0,
                 "attach_size": 209715200,
                 "status": {
@@ -194,7 +213,53 @@ class HealthCheckTests(SimpleTestCase):
                     "can_write_attach": True,
                     "details": ["OK"],
                 },
+                "privilege": "admin",
             }
+
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            # Status Check (Form based)
+            response = self.client.get("/status")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.content, b"OK")
+            assert response["Content-Type"].startswith("text/plain")
+
+            # JSON Response
+            response = self.client.get(
+                "/status",
+                content_type="application/json",
+                **{"HTTP_CONTENT_TYPE": "application/json"},
+            )
+            self.assertEqual(response.status_code, 200)
+            content = loads(response.content)
+            assert content == {
+                "config_lock": False,
+                "attach_lock": False,
+                "stateful_enabled": True,
+                "stateless_enabled": False,
+                "degraded": False,
+                "max_attachments": 6,
+                "attach_size": 209715200,
+                "status": {
+                    "persistent_storage": True,
+                    "can_write_config": True,
+                    "can_write_attach": True,
+                    "details": ["OK"],
+                },
+                "privilege": "admin",
+            }
+
+        with override_settings(APPRISE_STATEFUL_MODE=" DISABLED ", APPRISE_STATELESS_MODE=" DISABLED "):
+            # Both notification modes are disabled, so the service is degraded.
+            response = self.client.get(
+                "/status",
+                content_type="application/json",
+                **{"HTTP_CONTENT_TYPE": "application/json"},
+            )
+            self.assertEqual(response.status_code, 200)
+            content = loads(response.content)
+            assert content["stateful_enabled"] is False
+            assert content["stateless_enabled"] is False
+            assert content["degraded"] is True
 
     def test_healthcheck_library(self):
         """

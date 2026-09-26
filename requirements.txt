@@ -10,10 +10,11 @@
 # apprise @ git+https://github.com/caronc/apprise@custom-tag-or-version
 
 ## 3. The below grabs our stable version (generally the best choice):
-apprise == 1.13.1
+apprise == 2.0.0
 
 ## Apprise API Minimum Requirements
-django
+# Language selection relies on a Django internal; raise after testing a new major
+django < 7
 gevent
 ## newer gunicorn releases no longer pull it in as a base dependency
 gunicorn[gevent]

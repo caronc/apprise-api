@@ -209,7 +209,7 @@ def build(version: str, platform: str, release_note: str, out_dir: Path) -> Path
             info = tarfile.TarInfo(name=name)
             info.size = len(data)
             info.mode = 0o644
-            # Deterministic archive: no local timestamp/owner noise.
+            # Fixed metadata keeps TOS 7 packages reproducible across builds.
             info.mtime = 0
             info.uid = info.gid = 0
             info.uname = info.gname = ""

@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 import multiprocessing
 import os
+import secrets
 import time
 
 # This file is launched with the call:
@@ -33,6 +34,10 @@ import time
 # other process in the container (nginx, supervisord, etc.).
 if hasattr(time, "tzset"):
     time.tzset()
+
+# A browser-login key every worker shares when none is configured and
+# /config cannot hold one; made here, before the workers start.
+os.environ.setdefault("APPRISE_WEB_AUTH_RUNTIME_SECRET", secrets.token_urlsafe(48))
 
 raw_env = [
     "LANG={}".format(os.environ.get("LANG", "en_US.UTF-8")),

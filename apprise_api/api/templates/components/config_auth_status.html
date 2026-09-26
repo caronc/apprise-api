@@ -1,0 +1,17 @@
+{% load i18n %}
+
+<span {% if auth_status_id %} id="{{ auth_status_id }}"{% endif %}
+      class="{% firstof auth_status_class 'config-auth-status' %}{% if auth_indicator == 'admin' %} is-unassigned{% elif auth_indicator == 'off' or auth_indicator == 'disabled' %} is-disabled{% else %} is-assigned{% endif %} auth-state-indicator auth-state-{{ auth_indicator }} tooltipped"
+      data-auth-state="{{ auth_indicator }}"
+      data-position="bottom"
+      data-tooltip="{% if auth_indicator == 'admin' %}{% trans "Admin only: no configuration login is assigned." %}{% elif auth_indicator == 'public' %}{% trans "Public: tagged notifications do not require a login." %}{% elif auth_indicator == 'locked' %}{% trans "Locked: configuration content is restricted." %}{% elif auth_indicator == 'user' %}{% trans "User: the configuration has its own login." %}{% elif auth_indicator == 'disabled' %}{% trans "Disabled: only an administrator may use this configuration." %}{% else %}{% trans "No authorization is required." %}{% endif %}"
+      aria-label="{% if auth_indicator == 'admin' %}{% trans "Admin Only" %}{% elif auth_indicator == 'public' %}{% trans "Public" %}{% elif auth_indicator == 'locked' %}{% trans "Locked" %}{% elif auth_indicator == 'user' %}{% trans "User" %}{% elif auth_indicator == 'disabled' %}{% trans "Disabled" %}{% else %}{% trans "No Authorization" %}{% endif %}">
+  <span class="config-auth-icon" aria-hidden="true">
+    <span class="auth-state-lock">
+      {% include "icons/lock.svg" %}
+    </span>
+    <span class="auth-state-unlock">
+      {% include "icons/unlock.svg" %}
+    </span>
+  </span>
+</span>

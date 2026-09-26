@@ -22,9 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import apprise
+from apprise.utils.template import TEMPLATE_NAME_MAXLEN
 from django.conf import settings
 
-from .utils import ConfigCache, gen_unique_config_id
+from .auth import Authentication
+from .utils import (
+    CONFIG_KEY_MAX_LENGTH,
+    ConfigCache,
+    gen_unique_config_id,
+)
 
 
 def stateful_mode(request):
@@ -34,11 +40,29 @@ def stateful_mode(request):
     return {"STATEFUL_MODE": ConfigCache.mode}
 
 
+def stateless_mode(request):
+    """Expose whether stateless notification requests are enabled."""
+    mode = str(settings.APPRISE_STATELESS_MODE).strip().lower()
+    return {"STATELESS_MODE": mode}
+
+
 def config_lock(request):
+    """Tell templates whether this caller receives the locked interface."""
+    key = getattr(request, "apprise_config_key", None) or getattr(
+        request,
+        "apprise_web_auth_key",
+        None,
+    )
+    return {"CONFIG_LOCK": not Authentication.config_lock_allows(request, key)}
+
+
+def template_variables(request):
+    """Share the template-name limit with the page scripts.
+
+    The editor uses the same limit as the server when highlighting `${NAME}`
+    markers, keeping browser and server validation aligned.
     """
-    Returns the state of our global configuration lock
-    """
-    return {"CONFIG_LOCK": settings.APPRISE_CONFIG_LOCK}
+    return {"TEMPLATE_NAME_MAXLEN": TEMPLATE_NAME_MAXLEN}
 
 
 def admin_enabled(request):
@@ -46,6 +70,24 @@ def admin_enabled(request):
     Returns whether we allow the config list to be displayed
     """
     return {"APPRISE_ADMIN": settings.APPRISE_ADMIN}
+
+
+def authentication(request):
+    """Expose the current browser login state to HTML templates."""
+    auth_enabled = settings.APPRISE_AUTH_REQUIRED
+    return {
+        "AUTH_ENABLED": auth_enabled,
+        "AUTH_ADMIN_ENABLED": settings.APPRISE_BASIC_AUTH_TOKEN is not None,
+        "AUTH_PERMISSION": getattr(request, "apprise_auth_permission", "disabled"),
+        "AUTH_USERNAME": getattr(request, "apprise_auth_username", None),
+        # Cookies let browser pages omit the Config ID from the URL.
+        # Explicit keyed URLs still work for cookie-free clients.
+        "COOKIE_CONFIG_URLS": bool(
+            request.COOKIES.get(Authentication.WEB_COOKIE) or (not auth_enabled and request.COOKIES.get("key"))
+        ),
+        "CAN_LIST_CONFIGS": Authentication.can_list_configurations(request),
+        "CAN_MOVE_CONFIG": Authentication.can_move_or_delete(request),
+    }
 
 
 def apprise_metadata(request):
@@ -68,7 +110,12 @@ def default_config_id(request):
     """
     Returns a unique config identifier
     """
-    return {"DEFAULT_CONFIG_ID": request.default_config_id}
+    # Authentication can reject a request before config detection runs.
+    config_id = getattr(request, "default_config_id", settings.APPRISE_DEFAULT_CONFIG_ID)
+    return {
+        "CONFIG_KEY_MAX_LENGTH": CONFIG_KEY_MAX_LENGTH,
+        "DEFAULT_CONFIG_ID": config_id,
+    }
 
 
 def unique_config_id(request):

@@ -25,6 +25,8 @@
 import datetime
 import re
 
+from api.auth import Authentication
+from api.utils import CONFIG_KEY_PATTERN, CONFIG_KEY_REGEX
 from django.conf import settings
 
 
@@ -35,7 +37,7 @@ class DetectConfigMiddleware:
 
     """
 
-    _is_cfg_path = re.compile(r"/cfg/(?P<key>[\w_-]{1,128})")
+    _is_cfg_path = re.compile(r"/(cfg|auth)/(?P<key>{})".format(CONFIG_KEY_REGEX))
 
     def __init__(self, get_response):
         """
@@ -48,19 +50,28 @@ class DetectConfigMiddleware:
         Define our middleware hook
         """
 
-        result = self._is_cfg_path.match(request.path)
-        if not result:
+        # A shared login remains tied to its authenticated Config ID.
+        shared_key = getattr(request, "apprise_web_auth_key", None)
+        if (
+            getattr(request, "apprise_auth_permission", None) == Authentication.ROLE_USER
+            and isinstance(shared_key, str)
+            and CONFIG_KEY_PATTERN.match(shared_key)
+        ):
+            config = shared_key
+        else:
+            # path_info excludes APPRISE_BASE_URL, leaving the route itself.
+            result = self._is_cfg_path.match(request.path_info)
+            config = result.group("key") if result else None
+
+        if config is None:
             # Our current config
             config = request.COOKIES.get("key", settings.APPRISE_DEFAULT_CONFIG_ID)
 
             # Extract our key (fall back to our default if not set)
             config = request.GET.get("key", config).strip()
 
-        else:
-            config = result.group("key")
-
-        if not config:
-            # Fallback to default config
+        if not config or not CONFIG_KEY_PATTERN.match(config):
+            # Invalid browser state never becomes a filename or route value.
             config = settings.APPRISE_DEFAULT_CONFIG_ID
 
         # Set our theme to a cookie
@@ -73,8 +84,24 @@ class DetectConfigMiddleware:
         max_age = 365 * 24 * 60 * 60  # 1 year
         expires = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=max_age)
 
-        # Set our cookie
-        response.set_cookie("key", config, expires=expires)
+        if getattr(request, "clear_config_cookie", False):
+            # Logout must not be undone while the response unwinds through
+            # middleware after the view deletes the browser state.
+            response.delete_cookie("key", path="/", samesite="Lax")
+        else:
+            # Remember the Config ID without exposing it to page scripts.
+            secure = (
+                request.is_secure()
+                or "https://{}".format(request.get_host()).lower() in settings.APPRISE_TRUSTED_ORIGINS
+            )
+            response.set_cookie(
+                "key",
+                getattr(request, "default_config_id", config),
+                expires=expires,
+                httponly=True,
+                secure=secure,
+                samesite="Lax",
+            )
 
         # return our response
         return response

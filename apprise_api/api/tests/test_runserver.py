@@ -1,3 +1,26 @@
+#
+# Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>
+# All rights reserved.
+#
+# This code is licensed under the MIT License.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files(the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions :
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 from importlib import metadata
 import json
 from pathlib import Path
@@ -98,32 +121,40 @@ class RunserverTests(SimpleTestCase):
         with (
             patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=True),
             patch("apprise_api.runserver.install_apprise_pypi") as mock_install_pypi,
+            patch("apprise_api.runserver.compile_all_translations") as mock_compile,
             patch("subprocess.call", return_value=0) as mock_call,
         ):
             assert main([]) == 0
 
         mock_install_pypi.assert_called_once_with()
+        mock_compile.assert_called_once_with()
         assert mock_call.call_args.args[0][-2:] == ["manage.py", "runserver"]
 
     def test_main_does_not_reinstall_pypi_when_already_pypi(self):
         with (
             patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=False),
             patch("apprise_api.runserver.install_apprise_pypi") as mock_install_pypi,
+            patch("apprise_api.runserver.compile_all_translations") as mock_compile,
             patch("subprocess.call", return_value=0),
         ):
             assert main([]) == 0
 
         mock_install_pypi.assert_not_called()
+        # Compiled even when nothing was reinstalled
+        mock_compile.assert_called_once_with()
 
     def test_main_installs_requested_branch(self):
         with (
             patch("apprise_api.runserver.install_apprise_branch") as mock_install_branch,
             patch("apprise_api.runserver.apprise_is_vcs_installed") as mock_is_vcs,
+            patch("apprise_api.runserver.compile_all_translations") as mock_compile,
             patch("subprocess.call", return_value=0) as mock_call,
         ):
             assert main(["--branch=feature/retry", "127.0.0.1:8001"]) == 0
 
         mock_install_branch.assert_called_once_with("feature/retry")
+        # A branch install from git carries no compiled catalogs
+        mock_compile.assert_called_once_with()
         mock_is_vcs.assert_not_called()
         assert mock_call.call_args.args[0][-1] == "127.0.0.1:8001"
 
@@ -132,6 +163,7 @@ class RunserverTests(SimpleTestCase):
             warnings.simplefilter("ignore", RuntimeWarning)
             with (
                 patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=False),
+                patch("apprise_api.apprise_translations.compile_all_translations", return_value=0),
                 patch("subprocess.call", return_value=7),
                 patch("sys.argv", ["apprise_api.runserver"]),
                 self.assertRaises(SystemExit) as ctx,

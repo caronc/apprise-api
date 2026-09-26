@@ -565,6 +565,12 @@ class NotifyPayloadMapper(SimpleTestCase):
         assert err is None
         assert steps == [("key", "items"), ("index", 0)]
 
+        # Decimal conversion is bounded before Python's integer-string limit
+        # can turn an attacker-controlled mapping key into an exception.
+        steps, err = _parse_path("items[" + "9" * 5000 + "]")
+        assert steps is None
+        assert "exceeds the maximum" in err
+
     def test_get_nested(self):
         """
         Test the _get_nested helper directly (steps tuple format)
