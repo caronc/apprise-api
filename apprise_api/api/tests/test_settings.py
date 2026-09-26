@@ -26,6 +26,7 @@ import base64
 import importlib.util
 import logging
 import os
+import tempfile
 from unittest import mock
 
 from core.settings.env import env_bool, env_choice, env_int, env_optional_bool
@@ -41,6 +42,9 @@ _SETTINGS_PATH = os.path.normpath(
 )
 
 
+_TEMP_CONFIG_DIR = tempfile.TemporaryDirectory()
+
+
 def _load_settings(extra_env=None):
     """Execute core/settings/__init__.py as a fresh module in a controlled environment.
 
@@ -49,6 +53,9 @@ def _load_settings(extra_env=None):
     already-cached settings object.
     """
     env = dict(extra_env or {})
+    # Keep a saved browser-login key out of the source tree
+    if "APPRISE_CONFIG_DIR" not in env:
+        env["APPRISE_CONFIG_DIR"] = _TEMP_CONFIG_DIR.name
     spec = importlib.util.spec_from_file_location("_settings_under_test", _SETTINGS_PATH)
     assert spec is not None and spec.loader is not None, "Could not load spec from {}".format(_SETTINGS_PATH)
     mod = importlib.util.module_from_spec(spec)
@@ -429,22 +436,153 @@ class BasicAuthSettingsTests(SimpleTestCase):
         mod = _load_settings({"APPRISE_BASIC_AUTH_REALM": "Home Alerts"})
         self.assertEqual(mod.APPRISE_BASIC_AUTH_REALM, "Home Alerts")
 
-    def test_web_secret_uses_its_own_default(self):
-        """Browser signing has a default independent of Django's key."""
-        mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes"})
-        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.DEFAULT_WEB_AUTH_SECRET)
-        self.assertEqual(mod.APPRISE_WEB_AUTH_MAX_AGE, 24 * 60 * 60)
-        self.assertNotEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.SECRET_KEY)
+    def test_web_secret_is_created_once_and_reused(self):
+        """Without a configured key, a private one is saved and shared."""
+        with tempfile.TemporaryDirectory() as config_dir:
+            env = {"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir}
+            first = _load_settings(env)
+            second = _load_settings(env)
+
+            path = os.path.join(config_dir, first.WEB_AUTH_SECRET_FILENAME)
+            self.assertEqual(first.APPRISE_WEB_AUTH_SECRET, second.APPRISE_WEB_AUTH_SECRET)
+            self.assertGreaterEqual(len(first.APPRISE_WEB_AUTH_SECRET), 64)
+            self.assertEqual(os.stat(path).st_mode & 0o777, 0o600)
+            self.assertEqual(first.APPRISE_WEB_AUTH_MAX_AGE, 24 * 60 * 60)
+            self.assertNotEqual(first.APPRISE_WEB_AUTH_SECRET, first.SECRET_KEY)
+
+            # Nothing is left behind from writing it
+            self.assertEqual(os.listdir(config_dir), [first.WEB_AUTH_SECRET_FILENAME])
+
+    def test_each_server_gets_its_own_web_secret(self):
+        """Two servers never share a browser-login key."""
+        with tempfile.TemporaryDirectory() as one, tempfile.TemporaryDirectory() as two:
+            first = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": one})
+            second = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": two})
+        self.assertNotEqual(first.APPRISE_WEB_AUTH_SECRET, second.APPRISE_WEB_AUTH_SECRET)
+
+    def test_web_secret_is_not_saved_without_authentication(self):
+        """Nothing is written when browser logins are not in use."""
+        with tempfile.TemporaryDirectory() as config_dir:
+            mod = _load_settings({"APPRISE_CONFIG_DIR": config_dir})
+            self.assertTrue(mod.APPRISE_WEB_AUTH_SECRET)
+            self.assertEqual(os.listdir(config_dir), [])
 
     def test_django_key_does_not_change_web_secret(self):
         """Changing Django's key does not change browser signing."""
-        mod = _load_settings(
-            {
-                "APPRISE_AUTH_REQUIRED": "yes",
-                "SECRET_KEY": "private-django-key",
-            }
-        )
-        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, mod.DEFAULT_WEB_AUTH_SECRET)
+        with tempfile.TemporaryDirectory() as config_dir:
+            env = {"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir}
+            before = _load_settings(env)
+            after = _load_settings({**env, "SECRET_KEY": "private-django-key"})
+        self.assertEqual(before.APPRISE_WEB_AUTH_SECRET, after.APPRISE_WEB_AUTH_SECRET)
+
+    def test_unwritable_config_uses_the_shared_runtime_key(self):
+        """If no key can be saved, every worker uses the one gunicorn made."""
+        with tempfile.TemporaryDirectory() as root:
+            # A file where the folder should be cannot hold the key
+            blocked = os.path.join(root, "config")
+            open(blocked, "w").close()
+            with self.assertLogs(level="WARNING") as cm:
+                mod = _load_settings(
+                    {
+                        "APPRISE_AUTH_REQUIRED": "yes",
+                        "APPRISE_CONFIG_DIR": blocked,
+                        "APPRISE_WEB_AUTH_RUNTIME_SECRET": "shared-runtime-key",
+                    }
+                )
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, "shared-runtime-key")
+        self.assertTrue(any("APPRISE_WEB_AUTH_SECRET" in message for message in cm.output))
+
+    def test_unreadable_web_secret_falls_back_with_a_warning(self):
+        """A key path that is not a regular file never stops the server."""
+        with tempfile.TemporaryDirectory() as config_dir:
+            os.mkdir(os.path.join(config_dir, ".web_auth_secret"))
+            with self.assertLogs(level="WARNING") as cm:
+                mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir})
+        self.assertTrue(mod.APPRISE_WEB_AUTH_SECRET)
+        self.assertTrue(any("Ignoring the browser login key" in message for message in cm.output))
+
+    def test_symlinked_web_secret_is_refused(self):
+        """A symlink in place of the key is never followed or trusted."""
+        with tempfile.TemporaryDirectory() as config_dir, tempfile.TemporaryDirectory() as elsewhere:
+            victim = os.path.join(elsewhere, "victim")
+            with open(victim, "w", encoding="utf-8") as handle:
+                handle.write("known-value")
+            os.symlink(victim, os.path.join(config_dir, ".web_auth_secret"))
+
+            with self.assertLogs(level="WARNING"):
+                mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir})
+
+            self.assertNotEqual(mod.APPRISE_WEB_AUTH_SECRET, "known-value")
+            with open(victim, encoding="utf-8") as handle:
+                self.assertEqual(handle.read(), "known-value")
+
+    def test_planted_temporary_symlinks_cannot_redirect_the_write(self):
+        """Guessing the temporary file name gives no way to overwrite a file."""
+        with tempfile.TemporaryDirectory() as config_dir, tempfile.TemporaryDirectory() as elsewhere:
+            victim = os.path.join(elsewhere, "victim")
+            with open(victim, "w", encoding="utf-8") as handle:
+                handle.write("untouched")
+            # Every name derived from this process would have been predictable
+            os.symlink(victim, os.path.join(config_dir, ".web_auth_secret.{}.tmp".format(os.getpid())))
+
+            mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir})
+
+            with open(victim, encoding="utf-8") as handle:
+                self.assertEqual(handle.read(), "untouched")
+            self.assertNotEqual(mod.APPRISE_WEB_AUTH_SECRET, "untouched")
+            self.assertTrue(os.path.isfile(os.path.join(config_dir, ".web_auth_secret")))
+
+    def test_oversized_web_secret_is_refused(self):
+        """Only a small key is ever read into memory."""
+        with tempfile.TemporaryDirectory() as config_dir:
+            with open(os.path.join(config_dir, ".web_auth_secret"), "w", encoding="utf-8") as handle:
+                handle.write("x" * 4096)
+            with self.assertLogs(level="WARNING"):
+                mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir})
+        self.assertNotEqual(mod.APPRISE_WEB_AUTH_SECRET, "x" * 4096)
+
+    def test_named_pipe_in_place_of_the_key_does_not_hang_startup(self):
+        """A pipe where the key should be is refused without waiting."""
+        if not hasattr(os, "mkfifo"):
+            self.skipTest("Named pipes are not available on this platform")
+
+        with tempfile.TemporaryDirectory() as config_dir:
+            os.mkfifo(os.path.join(config_dir, ".web_auth_secret"))
+            with self.assertLogs(level="WARNING"):
+                mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir})
+        self.assertTrue(mod.APPRISE_WEB_AUTH_SECRET)
+
+    def test_empty_web_secret_file_is_not_used(self):
+        """An empty key file is never used to sign logins."""
+        with tempfile.TemporaryDirectory() as config_dir:
+            open(os.path.join(config_dir, ".web_auth_secret"), "w").close()
+            mod = _load_settings(
+                {
+                    "APPRISE_AUTH_REQUIRED": "yes",
+                    "APPRISE_CONFIG_DIR": config_dir,
+                    "APPRISE_WEB_AUTH_RUNTIME_SECRET": "shared-runtime-key",
+                }
+            )
+        self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, "shared-runtime-key")
+
+    def test_worker_that_loses_the_race_uses_the_saved_key(self):
+        """Workers starting together all end up with the same key."""
+        with tempfile.TemporaryDirectory() as config_dir:
+            path = os.path.join(config_dir, ".web_auth_secret")
+            real_link = os.link
+
+            def another_worker_wins(source, target):
+                # Another worker saves its key just before this one does
+                with open(target, "w", encoding="utf-8") as handle:
+                    handle.write("winning-key")
+                return real_link(source, target)
+
+            with mock.patch("os.link", side_effect=another_worker_wins):
+                mod = _load_settings({"APPRISE_AUTH_REQUIRED": "yes", "APPRISE_CONFIG_DIR": config_dir})
+
+            self.assertEqual(mod.APPRISE_WEB_AUTH_SECRET, "winning-key")
+            self.assertEqual(os.listdir(config_dir), [".web_auth_secret"])
+            self.assertTrue(os.path.isfile(path))
 
     def test_web_secret_is_independent(self):
         """A separate web secret does not replace the configuration hash salt."""

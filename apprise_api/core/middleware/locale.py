@@ -7,6 +7,7 @@
 from django.conf import settings
 from django.middleware.locale import LocaleMiddleware
 from django.utils import translation
+from django.utils.cache import patch_vary_headers
 
 # Django's own LocaleMiddleware reads Accept-Language through this module. It
 # caps the header length and caches parsed values, which is why it is used here
@@ -99,3 +100,13 @@ class AcceptLanguageLocaleMiddleware(LocaleMiddleware):
         # Activate translations and expose the choice to templates and views.
         translation.activate(language)
         request.LANGUAGE_CODE = translation.get_language()
+
+    def process_response(self, request, response):
+        """Mark each page as depending on the visitor's cookies.
+
+        The language (and theme) can come from a cookie, so a shared cache or
+        CDN must not hand one visitor's page to another.
+        """
+        response = super().process_response(request, response)
+        patch_vary_headers(response, ("Cookie",))
+        return response

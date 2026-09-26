@@ -15,6 +15,7 @@ plugin/
 .Python
 .bash_history
 env/
+.venv*/
 build/
 develop-eggs/
 dist/
@@ -51,6 +52,10 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage-reports/
 .coverage
 .coverage.*
 .cache
@@ -62,6 +67,9 @@ coverage.json
 
 # Translations
 *.mo
+
+# Browser-login key the server creates beside its configurations
+.web_auth_secret*
 
 # Django stuff:
 *.log

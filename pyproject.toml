@@ -32,7 +32,8 @@ authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
   "apprise == 2.0.0",
-  "django",
+  # Language selection relies on a Django internal; raise after testing a new major
+  "django < 7",
   "gevent",
   "gunicorn[gevent]",
   "requests",
@@ -71,9 +72,6 @@ license-files = ["LICENSE"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["apprise_api*"]
-
-[tool.setuptools.package-data]
-apprise_api = ["locale/*/LC_MESSAGES/*.mo"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "core.settings.pytest"

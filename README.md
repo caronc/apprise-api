@@ -703,7 +703,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_USER` | Optional administrator username used only when `APPRISE_AUTH_REQUIRED=yes`. It requires `APPRISE_PASSWORD`; colons are not allowed.
 | `APPRISE_PASSWORD` | Optional administrator password used only when `APPRISE_AUTH_REQUIRED=yes`. It may be used without a username. Leave it unset to run authentication without an administrator account.
 | `APPRISE_BASIC_AUTH_REALM` | Label shown in Basic Auth prompts. Defaults to `Apprise API`; use a different label for each instance sharing a host.
-| `APPRISE_WEB_AUTH_SECRET` | Optional key used to sign browser logins. It has its own built-in default. Changing it signs users out without moving hash-mode configurations.
+| `APPRISE_WEB_AUTH_SECRET` | Optional key used to sign browser logins. When unset, a random key is created once and saved as `.web_auth_secret` in `APPRISE_CONFIG_DIR`. Changing it signs users out without moving hash-mode configurations.
 | `APPRISE_TRUSTED_ORIGINS` | Origins allowed to make browser writes, separated by commas. Use `scheme://host[:port]`, such as `https://apprise.example.com`. HTTPS deployments should set this because bundled nginx does not forward the original scheme ([issue #275](https://github.com/caronc/apprise-api/issues/275)).
 | `APPRISE_ADMIN` | Shows the configuration list when `APPRISE_STATEFUL_MODE=simple`. Authentication permissions still decide who may use it. Defaults to `yes`; set it to `no` to hide the list.
 | `APPRISE_INTERPRET_EMOJIS` | Override the Apprise `interpret-emojis` setting. This defaults to `none` (not set), but can be enforced to `no` or `yes`.

@@ -17,12 +17,15 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 
 from django.conf import settings  # noqa: E402
 
+# Local environments and build output hold other packages' files; never scan them.
+IGNORED_FOLDERS = (".tox", ".venv*", "bin", "lib", "lib64", "include", "build", "dist", "htmlcov", "var")
 
-def _manage(*arguments):
-    """Run a Django translation command from the repository root."""
+
+def _manage(*arguments, cwd=ROOT):
+    """Run a Django translation command, by default from the repository root."""
     subprocess.run(
         [sys.executable, str(APP_ROOT / "manage.py"), *arguments],
-        cwd=ROOT,
+        cwd=cwd,
         check=True,
     )
 
@@ -32,20 +35,40 @@ def _update_catalogs():
     # English source text does not need its own PO file.
     languages = [code for code, _name in settings.LANGUAGES if code != settings.LANGUAGE_CODE]
     arguments = ["makemessages", "--no-obsolete", "--no-wrap"]
+    for folder in IGNORED_FOLDERS:
+        arguments.extend(("--ignore", folder))
     # Update every catalog from the same source scan.
     for language in languages:
         arguments.extend(("--locale", language))
     _manage(*arguments)
 
 
+# Many translations sit inside JavaScript strings, where a straight quote or
+# backslash can end the string early. Asking for typographic quotes catches
+# that before it ships; it is a quick early warning, not a guarantee. The test
+# suite checks every page's scripts in every language.
+UNSAFE_CHARACTERS = ("'", '"', "`", "\\")
+
+
+def _unsafe_entries(catalog):
+    """Return translations that add a quote or backslash the English lacks."""
+    unsafe = []
+    for entry in catalog.translated_entries():
+        source = entry.msgid + (entry.msgid_plural or "")
+        text = entry.msgstr + "".join(entry.msgstr_plural.values())
+        if any(char in text and char not in source for char in UNSAFE_CHARACTERS):
+            unsafe.append(entry)
+    return unsafe
+
+
 def _catalog_issues(path):
-    """Return missing messages and fuzzy messages from one PO catalog."""
+    """Return missing, fuzzy, and unsafe messages from one PO catalog."""
     catalog = polib.pofile(path)
     # Separate missing text from translations that need review.
     missing = [entry for entry in catalog.untranslated_entries() if not entry.fuzzy]
     fuzzy = list(catalog.fuzzy_entries())
     metadata_fuzzy = bool(catalog.metadata_is_fuzzy)
-    return catalog, missing, fuzzy, metadata_fuzzy
+    return catalog, missing, fuzzy, metadata_fuzzy, _unsafe_entries(catalog)
 
 
 def _label(entry):
@@ -79,9 +102,9 @@ def _report():
             issue_count += 1
             continue
 
-        catalog, missing, fuzzy, metadata_fuzzy = _catalog_issues(path)
+        catalog, missing, fuzzy, metadata_fuzzy, unsafe = _catalog_issues(path)
         # Summarize complete catalogs instead of printing every message.
-        if not missing and not fuzzy and not metadata_fuzzy:
+        if not missing and not fuzzy and not metadata_fuzzy and not unsafe:
             print(f"  - Complete: {len(catalog)} translated messages")
             continue
 
@@ -94,11 +117,14 @@ def _report():
         for entry in fuzzy:
             print(f"  - Fuzzy: {_label(entry)}")
             issue_count += 1
+        for entry in unsafe:
+            print(f"  - Straight quote or backslash (use \u2019 for an apostrophe): {_label(entry)}")
+            issue_count += 1
 
     if issue_count:
-        print(f"\nFound {issue_count} missing or fuzzy translation issue(s).")
+        print(f"\nFound {issue_count} translation issue(s).")
     else:
-        print("\nAll translation catalogs are complete and contain no fuzzy entries.")
+        print("\nAll translation catalogs are complete and contain no fuzzy or unsafe entries.")
     return issue_count
 
 
@@ -127,7 +153,9 @@ def main():
         return 1
 
     if arguments.compile:
-        _manage("compilemessages")
+        # Django compiles every catalog it finds below where it runs, so start
+        # inside the app to reach only Apprise API's own catalogs.
+        _manage("compilemessages", cwd=APP_ROOT)
     return 0
 
 

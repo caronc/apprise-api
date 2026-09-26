@@ -1525,7 +1525,7 @@ components:
 
     MobileQrResponse:
       type: object
-      required: [url, uses_admin_credentials]
+      required: [url, uses_admin_credentials, password_required]
       properties:
         url:
           type: string
@@ -1534,6 +1534,9 @@ components:
         uses_admin_credentials:
           type: boolean
           description: Whether the app must use the administrator login.
+        password_required:
+          type: boolean
+          description: Whether the app must ask for a password, which the URL never includes.
 
     LogResponse:
       type: object

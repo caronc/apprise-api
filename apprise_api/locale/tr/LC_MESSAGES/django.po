@@ -96,7 +96,7 @@ msgstr "Şifre"
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
-msgstr "Konfigürasyon ID'si"
+msgstr "Konfigürasyon ID’si"
 
 #: apprise_api/api/forms.py:110 apprise_api/api/forms.py:217
 msgid "Username cannot contain ':'"
@@ -148,7 +148,7 @@ msgstr "Kullanıcı adını değiştirirken şifre ayarlayın"
 
 #: apprise_api/api/forms.py:263 apprise_api/api/forms.py:448
 msgid "URLs"
-msgstr "URL'ler"
+msgstr "URL’ler"
 
 #: apprise_api/api/forms.py:276
 msgid "Format"
@@ -266,7 +266,7 @@ msgstr "Yük JSON bir nesne olmalıdır"
 #: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:67
 msgid "Show Config ID"
-msgstr "Konfigürasyon ID'si"
+msgstr "Konfigürasyon ID’si"
 
 #: apprise_api/api/templates/auth.html:6
 #: apprise_api/api/templates/auth.html:558
@@ -280,7 +280,7 @@ msgstr "Konfigürasyon ID'si"
 #: apprise_api/api/templates/config_list.html:183
 #: apprise_api/api/templates/login.html:68
 msgid "Hide Config ID"
-msgstr "Göster Konfigürasyon ID'si"
+msgstr "Göster Konfigürasyon ID’si"
 
 #: apprise_api/api/templates/auth.html:8
 #: apprise_api/api/templates/auth.html:487
@@ -326,11 +326,11 @@ msgstr "Konfigürasyon Girişi"
 
 #: apprise_api/api/templates/auth.html:60
 msgid "Update the login for this Config ID."
-msgstr "Bu Konfigürasyon ID'si için girişi güncelleyin."
+msgstr "Bu Konfigürasyon ID’si için girişi güncelleyin."
 
 #: apprise_api/api/templates/auth.html:62
 msgid "Set the login and permissions for this Config ID."
-msgstr "Bu Konfigürasyon ID'si için giriş ve izinleri ayarlayın."
+msgstr "Bu Konfigürasyon ID’si için giriş ve izinleri ayarlayın."
 
 #: apprise_api/api/templates/auth.html:91
 #: apprise_api/api/templates/auth.html:92
@@ -384,12 +384,12 @@ msgstr "Konfigürasyonu Taşı"
 
 #: apprise_api/api/templates/auth.html:194
 msgid "Transfer this configuration to a different Config ID."
-msgstr "Bu konfigürasyonu farklı bir Konfigürasyon ID'sine aktarın."
+msgstr "Bu konfigürasyonu farklı bir Konfigürasyon ID’sine aktarın."
 
 #: apprise_api/api/templates/auth.html:222
 #: apprise_api/api/templates/auth.html:223
 msgid "Randomize Destination Config ID"
-msgstr "Hedef Konfigürasyon ID'sini Rastgeleleştir"
+msgstr "Hedef Konfigürasyon ID’sini Rastgeleleştir"
 
 #: apprise_api/api/templates/auth.html:232
 #: apprise_api/api/templates/auth.html:749
@@ -510,8 +510,8 @@ msgid "Scan with Apprise Mobile"
 msgstr "Apprise Mobile ile Tara"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Scan or save it now; the password cannot be shown again."
-msgstr "Bu QR kodu yeni parolayı içeriyor. Şimdi tarayın veya kaydedin; parola bir daha gösterilemez."
+msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
+msgstr "Bu QR kodu yeni parolayı içeriyor. Şimdi kaydedin veya güvenli bir şekilde paylaşın; parola bir daha gösterilemez."
 
 #: apprise_api/api/templates/auth.html:518
 #: apprise_api/api/templates/base.html:1046
@@ -620,11 +620,11 @@ msgstr "Yapılandırma Kimliği"
 
 #: apprise_api/api/templates/auth.html:728
 msgid "Move To"
-msgstr "'den"
+msgstr "’den"
 
 #: apprise_api/api/templates/auth.html:732
 msgid "To Config ID"
-msgstr "'e Taşı"
+msgstr "’e Taşı"
 
 #: apprise_api/api/templates/auth.html:773
 #: apprise_api/api/templates/auth.html:795
@@ -849,7 +849,7 @@ msgstr "Daha Fazla Detay"
 
 #: apprise_api/api/templates/base.html:447
 msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
-msgstr "Çoğu durumda, burada belirlenen sorunlar genellikle izin sorunlarıyla ilgilidir. <code>PUID</code> ve <code>GUID</code> öğelerini, Apprise'nın dosyalarını okurken ve yazarken kullanmasını istediğiniz izinleri yansıtacak şekilde ayarladığınızdan emin olun. Buna ek olarak, izinlerin haritaladığınız dizinlerde doğru şekilde ayarlandığından emin olmanız gerekebilir."
+msgstr "Çoğu durumda, burada belirlenen sorunlar genellikle izin sorunlarıyla ilgilidir. <code>PUID</code> ve <code>GUID</code> öğelerini, Apprise’nın dosyalarını okurken ve yazarken kullanmasını istediğiniz izinleri yansıtacak şekilde ayarladığınızdan emin olun. Buna ek olarak, izinlerin haritaladığınız dizinlerde doğru şekilde ayarlandığından emin olmanız gerekebilir."
 
 #: apprise_api/api/templates/base.html:450
 msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
@@ -951,16 +951,16 @@ msgstr "Bildirim teslimi devre dışı. Hizmeti devam ettirmek için durumsuz bi
 
 #: apprise_api/api/templates/base.html:1403
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
-msgstr "Yeni bir Konfigürasyon ID'si seçin. Devam etmeden önce bunu düzenleyebilir veya başka bir tane oluşturabilirsiniz."
+msgstr "Yeni bir Konfigürasyon ID’si seçin. Devam etmeden önce bunu düzenleyebilir veya başka bir tane oluşturabilirsiniz."
 
 #: apprise_api/api/templates/base.html:1415
 msgid "New Config ID"
-msgstr "Yeni Konfigürasyon ID'si"
+msgstr "Yeni Konfigürasyon ID’si"
 
 #: apprise_api/api/templates/base.html:1431
 #: apprise_api/api/templates/base.html:1432
 msgid "Generate Another Config ID"
-msgstr "Başka Bir Konfigürasyon ID'si Oluştur"
+msgstr "Başka Bir Konfigürasyon ID’si Oluştur"
 
 #: apprise_api/api/templates/base.html:1437
 msgid "Do you wish to open this configuration?"
@@ -984,7 +984,7 @@ msgstr "Şifreyi Gizle"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:12
 msgid "Changed Config ID Not Applied"
-msgstr "Değiştirilen Konfigürasyon ID'si Uygulanmadı"
+msgstr "Değiştirilen Konfigürasyon ID’si Uygulanmadı"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:13
 msgid "The entered value is not the configuration currently being managed. Apply"
@@ -993,7 +993,7 @@ msgstr "Girilen değer şu anda yönetilen konfigürasyon değildir. Uygula"
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:18
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:19
 msgid "Apply Config ID"
-msgstr "Konfigürasyon ID'sini Uygula"
+msgstr "Konfigürasyon ID’sini Uygula"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:22
 msgid "it to switch configurations or revert"
@@ -1004,7 +1004,7 @@ msgstr "konfigürasyonları değiştirmek veya geri almak için"
 #: apprise_api/api/templates/components/config_id_selector.html:49
 #: apprise_api/api/templates/components/config_id_selector.html:50
 msgid "Revert Config ID"
-msgstr "Konfigürasyon ID'sini Geri Al"
+msgstr "Konfigürasyon ID’sini Geri Al"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:31
 msgid "the change."
@@ -1013,12 +1013,12 @@ msgstr "değişikliği."
 #: apprise_api/api/templates/components/config_id_selector.html:41
 #: apprise_api/api/templates/components/config_id_selector.html:42
 msgid "Open Config ID"
-msgstr "Konfigürasyon ID'sini Aç"
+msgstr "Konfigürasyon ID’sini Aç"
 
 #: apprise_api/api/templates/components/config_id_selector.html:58
 #: apprise_api/api/templates/config_list.html:71
 msgid "Copy Config ID to Clipboard"
-msgstr "Konfigürasyon ID'sini Panoya Kopyala"
+msgstr "Konfigürasyon ID’sini Panoya Kopyala"
 
 #: apprise_api/api/templates/components/legal_footer.html:11
 #, python-format
@@ -1052,7 +1052,7 @@ msgstr "Uzaktan yapılandırmalarınızı gözden geçirin ve her teslimat rapor
 
 #: apprise_api/api/templates/components/mobile_beta_dialog.html:43
 msgid "Get It on Google Play"
-msgstr "Google Play'den edinin"
+msgstr "Google Play’den edinin"
 
 #: apprise_api/api/templates/components/mobile_beta_dialog.html:46
 msgid "Learn More"
@@ -1259,7 +1259,7 @@ msgstr "Apprise Kullanarak CLI"
 
 #: apprise_api/api/templates/config.html:220
 msgid "The following command would cause apprise to directly notify all of your services:"
-msgstr "Aşağıdaki komut, apprise'ın tüm hizmetlerinizi doğrudan bilgilendirmesine neden olur:"
+msgstr "Aşağıdaki komut, apprise’ın tüm hizmetlerinizi doğrudan bilgilendirmesine neden olur:"
 
 #: apprise_api/api/templates/config.html:227
 msgid "Send one or more attachments like this:"
@@ -1269,7 +1269,7 @@ msgstr "Bu şekilde bir veya daha fazla ek gönderin:"
 msgid ""
 "The following command would cause apprise to retrieve the configuration loaded and\n"
 "          send a test notification to all of your added services:"
-msgstr "Aşağıdaki komut, apprise'ın yüklenmiş yapılandırmayı almasına ve eklediğiniz tüm hizmetlere test bildirimi göndermesine neden olur:"
+msgstr "Aşağıdaki komut, apprise’ın yüklenmiş yapılandırmayı almasına ve eklediğiniz tüm hizmetlere test bildirimi göndermesine neden olur:"
 
 #: apprise_api/api/templates/config.html:246
 msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
@@ -1289,7 +1289,7 @@ msgstr "CURL kullanırken"
 
 #: apprise_api/api/templates/config.html:260
 msgid "The following command would cause the Apprise API to notify all of your services:"
-msgstr "Aşağıdaki komut, Apprise API'nizin tüm hizmetlerinize bildirim göndermesine neden olur:"
+msgstr "Aşağıdaki komut, Apprise API’nizin tüm hizmetlerinize bildirim göndermesine neden olur:"
 
 #: apprise_api/api/templates/config.html:270
 msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
@@ -1371,17 +1371,17 @@ msgstr "Göndermeden önce aşağıdaki ayrıştırılmış hedefleri gözden ge
 #: apprise_api/api/templates/config.html:441
 #, python-format
 msgid "Select a tag (🏷️) on any entry to include it in %(notify_chip)s."
-msgstr "Herhangi bir girişte bir etiket (🏷️) seçerek %(notify_chip)s'e dahil edin."
+msgstr "Herhangi bir girişte bir etiket (🏷️) seçerek %(notify_chip)s’e dahil edin."
 
 #: apprise_api/api/templates/config.html:444
 #, python-format
 msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
-msgstr "%(send_icon)s'i kullanarak hızlı bir test çalıştırın ve o giriş için tam hata ayıklama çıktısını inceleyin."
+msgstr "%(send_icon)s’i kullanarak hızlı bir test çalıştırın ve o giriş için tam hata ayıklama çıktısını inceleyin."
 
 #: apprise_api/api/templates/config.html:447
 #, python-format
 msgid "Need more destinations? Add or update them in %(config_chip)s."
-msgstr "Daha fazla hedef mi lazım? Onları %(config_chip)s'de ekleyin veya güncelleyin."
+msgstr "Daha fazla hedef mi lazım? Onları %(config_chip)s’de ekleyin veya güncelleyin."
 
 #: apprise_api/api/templates/config.html:472
 msgid "You can send a notification using the loaded configuration:"
@@ -1746,11 +1746,11 @@ msgstr "Kullanıcı Adı Yok"
 
 #: apprise_api/api/templates/config_list.html:87
 msgid "Move this Configuration ID"
-msgstr "Bu Konfigürasyon ID'sini Taşı"
+msgstr "Bu Konfigürasyon ID’sini Taşı"
 
 #: apprise_api/api/templates/config_list.html:93
 msgid "Delete this Configuration ID"
-msgstr "Bu Konfigürasyon ID'sini Sil"
+msgstr "Bu Konfigürasyon ID’sini Sil"
 
 #: apprise_api/api/templates/config_list.html:101
 msgid "There is no configuration defined."
@@ -1758,7 +1758,7 @@ msgstr "Tanımlı bir konfigürasyon yok."
 
 #: apprise_api/api/templates/config_list.html:114
 msgid "Delete Configuration ID?"
-msgstr "Konfigürasyon ID'si silinsin mi?"
+msgstr "Konfigürasyon ID’si silinsin mi?"
 
 #: apprise_api/api/templates/config_list.html:115
 msgid "This permanently removes this configuration and any login assigned to it."
@@ -1775,7 +1775,7 @@ msgstr "Konfigürasyon silindi."
 
 #: apprise_api/api/templates/config_list.html:155
 msgid "Move Configuration ID"
-msgstr "Konfigürasyon ID'sini Taşı"
+msgstr "Konfigürasyon ID’sini Taşı"
 
 #: apprise_api/api/templates/config_list.html:242
 msgid "Configuration moved."
@@ -1993,7 +1993,7 @@ msgstr "Durumsuz Uç Noktalar"
 msgid ""
 "Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "Bu API'yi yalnızca bir <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\"> yan araç </a> ve/veya projelerine mikro hizmet olarak kullanmak isteyenler, yalnızca aşağıdaki URL'ü kullanmalıdır."
+msgstr "Bu API’yi yalnızca bir <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\"> yan araç </a> ve/veya projelerine mikro hizmet olarak kullanmak isteyenler, yalnızca aşağıdaki URL’ü kullanmalıdır."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:288
@@ -2004,7 +2004,7 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Bir veya daha fazla belirtilmiş Apprise URL'ini bildirmek için kullanılır. <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> ile URL(lerin)izi oluştururken yardıma ihtiyacınız olursa bakın."
+msgstr "Bir veya daha fazla belirtilmiş Apprise URL’ini bildirmek için kullanılır. <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> ile URL(lerin)izi oluştururken yardıma ihtiyacınız olursa bakın."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:305
@@ -2016,7 +2016,7 @@ msgstr "Parametre"
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                    one URL from the next."
-msgstr "Bir veya daha fazla Apprise URL tanımlamak için kullanılır. Bir URL'yi diğerinden ayırmak için virgül ve/veya boşluk kullanın."
+msgstr "Bir veya daha fazla Apprise URL tanımlamak için kullanılır. Bir URL’yi diğerinden ayırmak için virgül ve/veya boşluk kullanın."
 
 #: apprise_api/api/templates/welcome.html:72
 #: apprise_api/api/templates/welcome.html:546
@@ -2238,7 +2238,7 @@ msgstr "tarafından kullanılabilir. Bu, <em>%(key)s</em> id'si ile tanımlanan 
 #: apprise_api/api/templates/welcome.html:510
 #: apprise_api/api/templates/welcome.html:524
 msgid "Use Apprise to retrieve your configuration:"
-msgstr "Yapılandırmanızı almak için Apprise'yi kullanın:"
+msgstr "Yapılandırmanızı almak için Apprise’yi kullanın:"
 
 #: apprise_api/api/templates/welcome.html:520
 #, python-format
@@ -2250,7 +2250,7 @@ msgstr "Bu, yukarıda tanımlanan <code>%(BASE_URL)s/get/<em>%(key)s</em></code>
 #: apprise_api/api/templates/welcome.html:534
 #, python-format
 msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
-msgstr "<em>%(key)s</em> kimliği ile tanımlanan yapılandırmayla ilişkili URL'leri bildirir."
+msgstr "<em>%(key)s</em> kimliği ile tanımlanan yapılandırmayla ilişkili URL’leri bildirir."
 
 #: apprise_api/api/templates/welcome.html:551
 msgid ""
@@ -2275,11 +2275,11 @@ msgstr "Bir tür belirtilmemişse bu varsayılan seçenektir."
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
-msgstr "URL'lerinizi daha fazla filtrelemek için etiketleme mantığını uygulayın. Bu isteğe bağlı bir alandır."
+msgstr "URL’lerinizi daha fazla filtrelemek için etiketleme mantığını uygulayın. Bu isteğe bağlı bir alandır."
 
 #: apprise_api/api/templates/welcome.html:599
 msgid "Notifies all URLs assigned to the configuration"
-msgstr "Yapılandırmaya atanan tüm URL'leri bildirir"
+msgstr "Yapılandırmaya atanan tüm URL’leri bildirir"
 
 #: apprise_api/api/templates/welcome.html:607
 msgid "Sends a notification to our endpoints with an attachment"
@@ -2287,7 +2287,7 @@ msgstr "Ekli bir bildirimle uç noktalarımıza gönderir"
 
 #: apprise_api/api/templates/welcome.html:614
 msgid "Notifies all URLs assigned the <em>devops</em> tag"
-msgstr "<em>devops</em> etiketi atanmış tüm URL'leri bildirir"
+msgstr "<em>devops</em> etiketi atanmış tüm URL’leri bildirir"
 
 #: apprise_api/api/templates/welcome.html:626
 msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
@@ -2383,7 +2383,7 @@ msgstr "Giriş formu yalnızca web arayüzü için kullanılabilir"
 
 #: apprise_api/api/views.py:1555
 msgid "The username, password, or Config ID was not accepted."
-msgstr "Kullanıcı adı, şifre veya Konfigürasyon ID'si kabul edilmedi."
+msgstr "Kullanıcı adı, şifre veya Konfigürasyon ID’si kabul edilmedi."
 
 #: apprise_api/api/views.py:2016 apprise_api/api/views.py:3206
 msgid "The urls field must be a string or list of strings"
@@ -2710,3 +2710,7 @@ msgstr "Sayfa bulunamadı"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "Sistem hatası"
+
+#: apprise_api/api/templates/components/qr_password_note.html:7
+msgid "Why?"
+msgstr "Neden?"

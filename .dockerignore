@@ -1,36 +1,18 @@
-# Keeps the Docker build fast and the image clean. The image only needs
-# requirements.txt and apprise_api/; everything below stays on your machine.
+# The image only needs requirements.txt and apprise_api/, so send nothing else
+# to Docker. New files in the project stay on your machine automatically.
+*
+!requirements.txt
+!apprise_api/
 
-# Version control and local environments
-.git
-.tox
-.venv*
-.local
-bin
-lib
-lib64
-include
-pyvenv.cfg
-
-# Python caches and build output
+# Leftovers inside apprise_api/ that must not reach the image
 **/__pycache__
 **/*.py[cod]
-build
-dist
-*.egg-info
-
-# Test, coverage and lint leftovers
 **/.coverage
 **/.coverage.*
-.coverage-reports
-coverage.xml
-coverage.json
-htmlcov
-.pytest_cache
-.ruff_cache
+**/.web_auth_secret*
+
+# Translations are compiled fresh during the build, never copied in
+**/*.mo
 
 # Local data from running the API outside Docker
 apprise_api/var
-attach
-config
-plugin

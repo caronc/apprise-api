@@ -510,8 +510,8 @@ msgid "Scan with Apprise Mobile"
 msgstr "Quét bằng Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Scan or save it now; the password cannot be shown again."
-msgstr "Mã QR này chứa mật khẩu mới. Quét hoặc lưu ngay bây giờ; mật khẩu sẽ không được hiển thị lần nữa."
+msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
+msgstr "Mã QR này chứa mật khẩu mới. Hãy lưu hoặc chia sẻ mã một cách an toàn ngay bây giờ; mật khẩu sẽ không thể hiển thị lại."
 
 #: apprise_api/api/templates/auth.html:518
 #: apprise_api/api/templates/base.html:1046
@@ -2710,3 +2710,7 @@ msgstr "Không tìm thấy trang"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "Lỗi hệ thống"
+
+#: apprise_api/api/templates/components/qr_password_note.html:7
+msgid "Why?"
+msgstr "Tại sao?"

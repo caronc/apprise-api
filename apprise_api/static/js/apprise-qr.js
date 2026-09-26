@@ -47,6 +47,12 @@
     };
   }
 
+  // The page-language note explaining why a QR code leaves the password out.
+  function passwordNoteHtml() {
+    const source = global.document && global.document.getElementById("apprise-mobile-password-note");
+    return source ? source.innerHTML.trim() : "";
+  }
+
   // Shorten the Config ID while keeping enough context to identify it.
   function redactConfigId(url) {
     const value = String(url || "");
@@ -83,6 +89,41 @@
     return redactConfigId(match[1] + redacted + "@" + match[3]);
   }
 
+  // Draw the password marker inside the white area already reserved for the
+  // logo. This keeps the QR modules untouched and includes the marker when the
+  // canvas is saved or shared as an image.
+  function drawPasswordBadge(ctx, cx, cy, logoSize) {
+    const radius = logoSize * 0.2;
+    const badgeX = cx + logoSize * 0.28;
+    const badgeY = cy - logoSize * 0.28;
+
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(badgeX, badgeY, radius * 1.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#f4a52a";
+    ctx.beginPath();
+    ctx.arc(badgeX, badgeY, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#4a3307";
+    ctx.lineWidth = Math.max(2, logoSize * 0.035);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.arc(badgeX - radius * 0.3, badgeY, radius * 0.22, 0, Math.PI * 2);
+    ctx.moveTo(badgeX - radius * 0.08, badgeY);
+    ctx.lineTo(badgeX + radius * 0.52, badgeY);
+    ctx.moveTo(badgeX + radius * 0.24, badgeY);
+    ctx.lineTo(badgeX + radius * 0.24, badgeY + radius * 0.22);
+    ctx.moveTo(badgeX + radius * 0.46, badgeY);
+    ctx.lineTo(badgeX + radius * 0.46, badgeY + radius * 0.18);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // High error correction leaves room for the center logo. Oversized payloads
   // become rejected promises so every caller can handle them the same way.
   function drawQrToCanvas(canvas, text, options) {
@@ -112,6 +153,27 @@
         }
       }
 
+      // Sized relative to the finished canvas so the logo and key scale with it.
+      const logoSize = Math.round(size * (opts.logoScale || 0.22));
+      const cx = size / 2;
+      const cy = size / 2;
+
+      function clearCenter() {
+        ctx.save();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.round(logoSize * 0.62), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Mark a password-bearing code at once, so it can never be seen, saved,
+      // or scanned without its key, even if the logo is slow or fails to load.
+      if (opts.includesPassword) {
+        clearCenter();
+        drawPasswordBadge(ctx, cx, cy, logoSize);
+      }
+
       if (!opts.logoSrc) {
         return Promise.resolve(canvas);
       }
@@ -119,24 +181,16 @@
       return new Promise(function (resolve) {
         const img = new Image();
         img.onload = function () {
-          // Sized relative to the finished canvas so the badge scales with it.
-          const logoSize = Math.round(size * (opts.logoScale || 0.22));
-          const badgeRadius = Math.round(logoSize * 0.62);
-          const cx = size / 2;
-          const cy = size / 2;
-
-          ctx.save();
-          ctx.fillStyle = "#ffffff";
-          ctx.beginPath();
-          ctx.arc(cx, cy, badgeRadius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-
+          clearCenter();
           ctx.drawImage(img, cx - logoSize / 2, cy - logoSize / 2, logoSize, logoSize);
+          if (opts.includesPassword) {
+            // Keep the key above the logo
+            drawPasswordBadge(ctx, cx, cy, logoSize);
+          }
           resolve(canvas);
         };
         img.onerror = function () {
-          // A missing logo should never block the QR code itself from showing.
+          // A missing logo never blocks the QR code, and the key is already drawn.
           resolve(canvas);
         };
         img.src = opts.logoSrc;
@@ -153,9 +207,6 @@
       '<div class="apprise-qr-popup">' +
         '<div class="apprise-qr-art">' +
           '<canvas id="' + canvasId + '" class="apprise-qr-canvas"></canvas>' +
-          (options.logoSrc
-            ? '<span class="apprise-qr-logo"><img alt=""></span>'
-            : "") +
         "</div>" +
         '<div class="apprise-qr-url-row">' +
           '<code class="apprise-qr-url"></code>' +
@@ -200,17 +251,9 @@
               return;
             }
             const canvas = container.querySelector("#" + canvasId);
-            const logoEl = container.querySelector(".apprise-qr-logo img");
             const urlEl = container.querySelector(".apprise-qr-url");
             const visibilityBtn = container.querySelector(".apprise-qr-visibility");
             const copyBtn = container.querySelector(".apprise-qr-copy");
-            if (logoEl) {
-              logoEl.addEventListener("error", function () {
-                // A missing logo must not leave a blank patch over the QR code.
-                logoEl.parentNode.remove();
-              });
-              logoEl.src = options.logoSrc;
-            }
             if (urlEl) {
               urlEl.textContent = redactMobileUrl(options.url);
             }
@@ -230,8 +273,10 @@
               });
             }
             if (canvas) {
-              // Keep the smooth logo separate from the crisp-edged QR canvas.
-              drawQrToCanvas(canvas, options.url).catch(function () {
+              drawQrToCanvas(canvas, options.url, {
+                logoSrc: options.logoSrc,
+                includesPassword: options.includesPassword
+              }).catch(function () {
                 // Keep an oversized URL copyable when no QR can be drawn.
                 if (canvas.parentNode) {
                   const errorEl = document.createElement("p");
@@ -259,6 +304,7 @@
     drawQrToCanvas: drawQrToCanvas,
     showPopup: showPopup,
     usesAdminCredentials: usesAdminCredentials,
-    adminCredentialsWarning: adminCredentialsWarning
+    adminCredentialsWarning: adminCredentialsWarning,
+    passwordNoteHtml: passwordNoteHtml
   };
 })(window);

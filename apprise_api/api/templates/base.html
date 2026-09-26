@@ -54,6 +54,9 @@
           hidden
           data-title="{% trans "Administrator Credentials" %}"
           data-text="{% trans "This configuration has no assigned user. As a result, the QR code will use the administrator account." %}"></span>
+    <template id="apprise-mobile-password-note">
+      {% include "components/qr_password_note.html" %}
+    </template>
     <div class="content">
       <!-- Title -->
       <div class="nav row nav-color z-depth-2">
@@ -1037,9 +1040,11 @@
             title: '{% trans "Scan with Apprise Mobile" %}',
             url: data.url,
             logoSrc: '{% static "mobile-icon-flat-whitebg.png" %}',
-            note: usesAdminCredentials
-              ? adminWarning.text
-              : '{% trans "Saved passwords are not included. Apprise Mobile will ask for one when required." %}',
+            // Only mention the missing password when the app will ask for one
+            note: [
+              usesAdminCredentials ? adminWarning.text : '',
+              data.password_required ? AppriseQr.passwordNoteHtml() : ''
+            ].filter(Boolean).join(' '),
             warning: usesAdminCredentials,
             warningTitle: adminWarning.title,
             warningIconHtml: `{% include 'icons/status-warning.svg' %}`,

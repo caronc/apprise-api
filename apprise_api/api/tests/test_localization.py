@@ -11,6 +11,7 @@ import re
 import apprise
 from django.conf import settings
 from django.test import RequestFactory, SimpleTestCase, override_settings
+from django.utils import translation
 from django.utils.translation import trans_real
 import polib
 
@@ -242,6 +243,16 @@ class LocalizationTests(SimpleTestCase):
         self.assertContains(response, 'dir="ltr"')
         self.assertContains(response, "La API de Apprise")
 
+    def test_pages_vary_on_cookie_and_header(self):
+        # A shared cache must keep each visitor's chosen language separate.
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = "fr"
+        response = self.client.get("/")
+
+        self.assertEqual(response.headers["Content-Language"], "fr")
+        vary = {value.strip().lower() for value in response.headers["Vary"].split(",")}
+        self.assertIn("cookie", vary)
+        self.assertIn("accept-language", vary)
+
     def test_arabic_uses_rtl_layout(self):
         # Arabic changes the document flow to right-to-left.
         response = self.client.get("/", headers={"accept-language": "ar"})
@@ -272,6 +283,24 @@ class LocalizationTests(SimpleTestCase):
         for field in ("body", "title"):
             with self.subTest(field=field):
                 self.assertRegex(content, rf'<[^>]*name="{field}"[^>]*dir="auto"')
+
+    def test_tab_names_in_help_text_are_translated(self):
+        # Links to other tabs inside help text use the page language too.
+        response = self.client.get("/cfg/langcheck", headers={"accept-language": "fr"})
+        content = response.content.decode()
+
+        with translation.override("fr"):
+            for icon, name in (
+                ("settings", "Configuration"),
+                ("build", "Apprise URL Builder"),
+                ("web", "Review"),
+                ("announcement", "Notifications"),
+            ):
+                label = translation.gettext(name)
+                with self.subTest(tab=name):
+                    self.assertIn(f"{icon}</i> {label}</a>", content)
+                    if label != name:
+                        self.assertNotIn(f"{icon}</i> {name}</a>", content)
 
     def test_selector_uses_two_letter_codes(self):
         # Short labels fit phones; assistive text still uses native names.
@@ -357,6 +386,33 @@ class LocalizationTests(SimpleTestCase):
             wrapped = sorted({v for v in marker.findall(path.read_text()) if v.strip() in RESERVED_API_VALUES})
             with self.subTest(template=path.name):
                 self.assertEqual(wrapped, [], f"{path.name}: an API value must not be translated")
+
+    def test_translations_use_typographic_quotes(self):
+        # An early warning for translators: a straight quote the English lacks
+        # could end a JavaScript string. Rendered pages are checked separately.
+        locale_root = Path(settings.LOCALE_PATHS[0])
+        for catalog in sorted(locale_root.glob("*/LC_MESSAGES/django.po")):
+            unsafe = [
+                entry.msgid
+                for entry in polib.pofile(str(catalog))
+                if any(
+                    char in entry.msgstr + "".join(entry.msgstr_plural.values())
+                    and char not in entry.msgid + (entry.msgid_plural or "")
+                    for char in ("'", '"', "`", "\\")
+                )
+            ]
+            with self.subTest(language=catalog.parent.parent.name):
+                self.assertEqual(unsafe, [])
+
+    def test_french_config_page_script_keeps_its_strings_intact(self):
+        # A French label with an apostrophe must not split its JavaScript string.
+        response = self.client.get("/cfg/langcheck", headers={"accept-language": "fr"})
+        content = response.content.decode()
+
+        with translation.override("fr"):
+            label = translation.gettext("Show Complete URL")
+        self.assertNotEqual(label, "Show Complete URL")
+        self.assertIn(f"showUrlLabel: '{label}',", content)
 
     def test_api_values_are_absent_from_catalogs(self):
         # The last line of defence: nothing translatable may be a wire value.

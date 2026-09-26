@@ -22,8 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import base64
+import contextlib
 import logging
 import os
+import secrets
+import stat
+import tempfile
 
 import apprise
 from core.settings.env import env_bool, env_choice, env_int, env_optional_bool
@@ -419,10 +423,86 @@ else:
     APPRISE_BASIC_AUTH_TOKEN = base64.b64encode(f"{APPRISE_USER or ''}:{APPRISE_PASSWORD}".encode()).decode()
     logging.info("Authentication Mode: Enabled - Administration Account Enabled")
 
-# Browser logins use their own setting and built-in default. This keeps browser
-# sessions independent from the SECRET_KEY used by HASH-mode configurations.
-DEFAULT_WEB_AUTH_SECRET = "Sw`rFTu3~4dq#hua:daY#T5^d;`#Z5:cE~mf.h`ZCKCP:AZMKZ"
-APPRISE_WEB_AUTH_SECRET = os.environ.get("APPRISE_WEB_AUTH_SECRET") or DEFAULT_WEB_AUTH_SECRET
+# Browser logins are signed with their own key, separate from the SECRET_KEY
+# used by HASH-mode configurations.
+WEB_AUTH_SECRET_FILENAME = ".web_auth_secret"
+
+
+# A saved key is a short line of text; anything larger is not ours.
+WEB_AUTH_SECRET_MAX_BYTES = 1024
+
+
+def _read_web_auth_secret(path):
+    """Return the saved browser-login key, or an empty string if it is blank.
+
+    - Symlinks, folders, pipes, and oversized files are refused with an error.
+    - Opening never waits, and at most a small, fixed amount is read.
+    """
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    with os.fdopen(os.open(path, flags), "rb") as handle:
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size > WEB_AUTH_SECRET_MAX_BYTES:
+            raise OSError("{} is not a small, regular file".format(path))
+        return handle.read(WEB_AUTH_SECRET_MAX_BYTES).decode("utf-8").strip()
+
+
+def _web_auth_secret(config_dir):
+    """Return this server's saved browser-login key, creating it on first use.
+
+    - Kept beside the configurations, so every worker and restart shares it.
+    - If it cannot be read or saved, a key made for this run is used instead;
+      logins then end whenever the server restarts.
+    """
+    path = os.path.join(config_dir, WEB_AUTH_SECRET_FILENAME)
+    runtime_secret = os.environ.get("APPRISE_WEB_AUTH_RUNTIME_SECRET") or secrets.token_urlsafe(48)
+    try:
+        saved = _read_web_auth_secret(path)
+        if saved:
+            return saved
+    except FileNotFoundError:
+        pass
+    except (OSError, ValueError) as e:
+        # Something unexpected is in the way; never write through or around it
+        logging.warning(
+            "Ignoring the browser login key %s (%s); logins will end when the "
+            "server restarts. Set APPRISE_WEB_AUTH_SECRET to keep them.",
+            path,
+            e,
+        )
+        return runtime_secret
+
+    try:
+        os.makedirs(config_dir, exist_ok=True)
+        # Write to a private file with an unpredictable name, then link it into
+        # place so workers starting together never replace each other's key.
+        descriptor, temp_path = tempfile.mkstemp(prefix=WEB_AUTH_SECRET_FILENAME + ".", suffix=".tmp", dir=config_dir)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                handle.write(secrets.token_urlsafe(48))
+            # Another worker may have saved its key first; keep that one
+            with contextlib.suppress(FileExistsError):
+                os.link(temp_path, path)
+        finally:
+            os.unlink(temp_path)
+
+        saved = _read_web_auth_secret(path)
+        if saved:
+            return saved
+    except (OSError, ValueError) as e:
+        logging.warning(
+            "Could not save a browser login key in %s (%s); logins will end when "
+            "the server restarts. Set APPRISE_WEB_AUTH_SECRET to keep them.",
+            config_dir,
+            e,
+        )
+
+    # Gunicorn makes the runtime key before starting its workers so they agree
+    return runtime_secret
+
+
+APPRISE_WEB_AUTH_SECRET = os.environ.get("APPRISE_WEB_AUTH_SECRET") or (
+    _web_auth_secret(APPRISE_CONFIG_DIR) if APPRISE_AUTH_REQUIRED else secrets.token_urlsafe(48)
+)
 
 # Active browser sessions renew this 24-hour login window on each request.
 APPRISE_WEB_AUTH_MAX_AGE = 24 * 60 * 60

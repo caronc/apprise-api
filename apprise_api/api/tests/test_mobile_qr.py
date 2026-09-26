@@ -190,6 +190,8 @@ class MobileQrViewTests(SimpleTestCase):
         payload = loads(response.content)
         self.assertTrue(payload["url"].startswith("apprise://"))
         self.assertTrue(payload["url"].endswith("/qr_view_key"))
+        # With no login at all, nothing needs to be typed in the app
+        self.assertFalse(payload["password_required"])
 
     def test_header_selects_config_id(self):
         """The bare route accepts a valid Config ID header."""
@@ -256,6 +258,7 @@ class MobileQrViewTests(SimpleTestCase):
         payload = loads(response.content)
         self.assertEqual(payload["url"], "apprise://:master@testserver/qr_view_key")
         self.assertTrue(payload["uses_admin_credentials"])
+        self.assertTrue(payload["password_required"])
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_assigned_key_request_includes_username_marker(self):
@@ -270,6 +273,7 @@ class MobileQrViewTests(SimpleTestCase):
         payload = loads(response.content)
         self.assertEqual(payload["url"], "apprise://:alice@testserver/{}".format(key))
         self.assertFalse(payload["uses_admin_credentials"])
+        self.assertTrue(payload["password_required"])
 
     @override_settings(
         APPRISE_AUTH_REQUIRED=True,
@@ -289,6 +293,7 @@ class MobileQrViewTests(SimpleTestCase):
         payload = loads(response.content)
         self.assertEqual(payload["url"], "apprise://:alice@testserver/{}".format(key))
         self.assertFalse(payload["uses_admin_credentials"])
+        self.assertTrue(payload["password_required"])
 
     def test_current_alias_without_key_returns_bad_request(self):
         """The cookie-based alias fails cleanly with no remembered configuration."""
@@ -431,6 +436,147 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
         self.assertEqual(
             result.returncode, 0, "Auth page script has a JavaScript syntax error:\n{}".format(result.stderr)
         )
+
+    def test_page_scripts_are_valid_javascript_in_every_language(self):
+        """A translated label must never break a page's embedded scripts."""
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node.js is not available to check JavaScript syntax")
+
+        client = _web_cookie_client(Authentication.ROLE_ADMIN, "master")
+        pages = ("/", "/details", "/cfg/qr_render_admin_key", "/auth/qr_render_admin_key")
+        for code, _name in settings.LANGUAGES:
+            for page in pages:
+                response = client.get(page, headers={"accept": "text/html", "accept-language": code})
+                self.assertEqual(response.status_code, 200)
+
+                # Check every script on the page in one pass; each keeps its own scope
+                scripts = self._script_blocks(response.content.decode())
+                program = "\n".join("{\n" + script + "\n}" for script in scripts)
+                result = subprocess.run(
+                    [node, "--check"],
+                    input=program,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                with self.subTest(language=code, page=page):
+                    self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_password_note_links_to_the_guide_in_the_page_language(self):
+        """The note explaining the missing password links to a matching guide."""
+        client = _web_cookie_client(Authentication.ROLE_ADMIN, "master")
+        guides = {
+            "en": "https://appriseit.com/qa/mobile-qr-password/",
+            "fr": "https://appriseit.com/fr/qa/mobile-qr-password/",
+            # Languages without a translated guide fall back to English
+            "de": "https://appriseit.com/qa/mobile-qr-password/",
+        }
+        for code, guide in guides.items():
+            response = client.get("/cfg/qr_render_admin_key", headers={"accept": "text/html", "accept-language": code})
+            html = response.content.decode()
+            with self.subTest(language=code):
+                # Shared by the header popup and the overview card
+                self.assertIn('<template id="apprise-mobile-password-note">', html)
+                self.assertEqual(html.count(guide), 2)
+
+    def test_overview_card_password_note_starts_hidden(self):
+        """The card only shows the note once the server says a password is needed."""
+        client = _web_cookie_client(Authentication.ROLE_ADMIN, "master")
+        response = client.get("/cfg/qr_render_admin_key", headers={"accept": "text/html"})
+        html = response.content.decode()
+
+        self.assertRegex(html, r"data-mobile-qr-password-note\s+hidden>")
+        self.assertIn("passwordNote.hidden = !data.password_required;", html)
+
+    def test_only_the_password_qr_gets_a_key_badge(self):
+        """The saved canvas embeds a badge only when it contains a password."""
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node.js is not available to check JavaScript behavior")
+
+        qrcode_path = os.path.join(settings.BASE_DIR, "static", "js", "qrcode.min.js")
+        script_path = os.path.join(settings.BASE_DIR, "static", "js", "apprise-qr.js")
+        program = """
+global.window = global;
+eval(require('fs').readFileSync(process.argv[1], 'utf8'));
+eval(require('fs').readFileSync(process.argv[2], 'utf8'));
+
+// Logos load only when the test says so, to check what shows before then
+const pending = [];
+function FakeImage() {}
+Object.defineProperty(FakeImage.prototype, 'src', {
+  set: function () { pending.push(this); }
+});
+global.Image = FakeImage;
+
+function makeFakeCanvas() {
+  const events = [];
+  const ctx = {
+    fillStyle: '', strokeStyle: '', lineWidth: 0, lineCap: '', lineJoin: '',
+    fillRect: function () {},
+    beginPath: function () {},
+    arc: function () {},
+    fill: function () {},
+    save: function () {},
+    restore: function () {},
+    drawImage: function () { events.push('logo'); },
+    moveTo: function () {},
+    lineTo: function () {},
+    stroke: function () { events.push('key'); }
+  };
+  return {events: events, width: 0, height: 0, getContext: function () { return ctx; }};
+}
+
+const check = function (label, actual, expected) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    console.error(label + ': ' + JSON.stringify(actual));
+    process.exit(1);
+  }
+};
+
+const passwordCanvas = makeFakeCanvas();
+const failedLogoCanvas = makeFakeCanvas();
+const ordinaryCanvas = makeFakeCanvas();
+const drawn = [
+  global.AppriseQr.drawQrToCanvas(passwordCanvas, 'apprise://host/key', {
+    logoSrc: 'logo.png', includesPassword: true
+  }),
+  global.AppriseQr.drawQrToCanvas(failedLogoCanvas, 'apprise://host/key', {
+    logoSrc: 'missing.png', includesPassword: true
+  }),
+  global.AppriseQr.drawQrToCanvas(ordinaryCanvas, 'apprise://host/key', {
+    logoSrc: 'logo.png'
+  })
+];
+
+// The key is there before any logo arrives
+check('password code before its logo', passwordCanvas.events, ['key']);
+check('ordinary code before its logo', ordinaryCanvas.events, []);
+
+pending[0].onload();
+pending[1].onerror();
+pending[2].onload();
+Promise.all(drawn).then(function () {
+  check('password code after its logo', passwordCanvas.events, ['key', 'logo', 'key']);
+  check('password code whose logo failed', failedLogoCanvas.events, ['key']);
+  check('ordinary code after its logo', ordinaryCanvas.events, ['logo']);
+  process.exit(0);
+}, function () { process.exit(3); });
+"""
+        result = subprocess.run(
+            [node, "-e", program, qrcode_path, script_path],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        # The popup shown right after a password is saved explains the risk
+        client = _web_cookie_client(Authentication.ROLE_ADMIN, "master")
+        html = client.get("/auth/qr_render_admin_key", headers={"accept": "text/html"}).content.decode()
+        self.assertIn("includesPassword: true,", html)
+        self.assertIn("warningIconHtml: '<i class=\"material-icons\">vpn_key</i>',", html)
 
     def test_qr_icon_include_uses_a_template_literal(self):
         """Keep the multiline QR icon inside a JavaScript template literal."""

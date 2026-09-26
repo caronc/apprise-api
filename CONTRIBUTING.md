@@ -166,6 +166,9 @@ After adding or changing human-readable text, refresh every catalog:
 - Do not translate JSON keys, enum values, status tokens, or other values that
   client code must interpret consistently. A value the API parses, such as
   `success` or `text`, stays English even where the words around it do not.
+- Write apostrophes as `’`, never `'`. Many translations sit inside JavaScript
+  strings, where a straight quote can break the page. The report flags it
+  early, and the tests check every page's scripts in every language.
 - Check both an LTR language and Arabic when changing shared page layout.
 
 ```bash
@@ -191,9 +194,12 @@ tox -e translations -- --compile
 
 Only the `.po` files are kept in git; commit those. The compiled `.mo` files
 are ignored and rebuilt for you by `tox -e runserver`, the test suite, and the
-Docker image build. With `docker compose up` for development, your local
-`apprise_api/` folder is mounted over the image, so run
-`tox -e translations -- --compile` once first or every page shows in English.
+Docker image build. The Docker smoke test in CI checks that the image holds a
+compiled catalog for every language and that a German page shows in German.
+
+With `docker compose up` for development, your local `apprise_api/` folder is
+mounted over the image, so run `tox -e translations -- --compile` once first
+or every page shows in English.
 
 #### Apprise Library Translations
 

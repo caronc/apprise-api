@@ -510,8 +510,8 @@ msgid "Scan with Apprise Mobile"
 msgstr "Scannen mit Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Scan or save it now; the password cannot be shown again."
-msgstr "Dieser QR-Code enthält das neue Passwort. Jetzt scannen oder speichern; das Passwort kann nicht erneut angezeigt werden."
+msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
+msgstr "Dieser QR-Code enthält das neue Passwort. Speichern Sie ihn jetzt oder teilen Sie ihn sicher; das Passwort kann nicht erneut angezeigt werden."
 
 #: apprise_api/api/templates/auth.html:518
 #: apprise_api/api/templates/base.html:1046
@@ -2710,3 +2710,7 @@ msgstr "Seite nicht gefunden"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "Systemfehler"
+
+#: apprise_api/api/templates/components/qr_password_note.html:7
+msgid "Why?"
+msgstr "Warum?"

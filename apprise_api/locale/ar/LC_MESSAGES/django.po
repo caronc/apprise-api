@@ -510,8 +510,8 @@ msgid "Scan with Apprise Mobile"
 msgstr "المسح باستخدام Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Scan or save it now; the password cannot be shown again."
-msgstr "يحتوي رمز الاستجابة السريعة هذا على كلمة المرور الجديدة. امسحه أو احفظه الآن؛ لا يمكن عرض كلمة المرور مرة أخرى."
+msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
+msgstr "يحتوي رمز الاستجابة السريعة هذا على كلمة المرور الجديدة. احفظه أو شاركه بأمان الآن؛ لا يمكن عرض كلمة المرور مرة أخرى."
 
 #: apprise_api/api/templates/auth.html:518
 #: apprise_api/api/templates/base.html:1046
@@ -2134,7 +2134,7 @@ msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
-msgstr "يمكن لأولئك الذين يرغبون في استخدام التخزين المستمر القيام بذلك. هذا القسم هو من نوع 'اضبطه وانسه'. اضبط تكوينك مرة واحدة وقم فقط بتشغيل الإشعارات لاحقًا عند الطلب باستخدام مكالمات API خفيفة الوزن."
+msgstr "يمكن لأولئك الذين يرغبون في استخدام التخزين المستمر القيام بذلك. هذا القسم هو من نوع ’اضبطه وانسه’. اضبط تكوينك مرة واحدة وقم فقط بتشغيل الإشعارات لاحقًا عند الطلب باستخدام مكالمات API خفيفة الوزن."
 
 #: apprise_api/api/templates/welcome.html:279
 msgid ""
@@ -2710,3 +2710,7 @@ msgstr "الصفحة غير موجودة"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "خطأ في النظام"
+
+#: apprise_api/api/templates/components/qr_password_note.html:7
+msgid "Why?"
+msgstr "لماذا؟"

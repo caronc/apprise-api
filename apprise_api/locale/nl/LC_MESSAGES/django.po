@@ -148,7 +148,7 @@ msgstr "Stel een wachtwoord in bij het wijzigen van de gebruikersnaam"
 
 #: apprise_api/api/forms.py:263 apprise_api/api/forms.py:448
 msgid "URLs"
-msgstr "URL's"
+msgstr "URL’s"
 
 #: apprise_api/api/forms.py:276
 msgid "Format"
@@ -510,8 +510,8 @@ msgid "Scan with Apprise Mobile"
 msgstr "Scannen met Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Scan or save it now; the password cannot be shown again."
-msgstr "Deze QR-code bevat het nieuwe wachtwoord. Scan of sla deze nu op; het wachtwoord kan niet opnieuw worden weergegeven."
+msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
+msgstr "Deze QR-code bevat het nieuwe wachtwoord. Sla deze nu op of deel deze veilig; het wachtwoord kan niet opnieuw worden weergegeven."
 
 #: apprise_api/api/templates/auth.html:518
 #: apprise_api/api/templates/base.html:1046
@@ -1730,11 +1730,11 @@ msgstr "Vervang **** door uw wachtwoord voordat u dit voorbeeld gebruikt."
 #: apprise_api/api/templates/config_list.html:16
 #: apprise_api/api/templates/config_list.html:17
 msgid "Show All Config IDs"
-msgstr "Toon alle Config-ID's"
+msgstr "Toon alle Config-ID’s"
 
 #: apprise_api/api/templates/config_list.html:18
 msgid "Hide All Config IDs"
-msgstr "Verberg alle Config-ID's"
+msgstr "Verberg alle Config-ID’s"
 
 #: apprise_api/api/templates/config_list.html:31
 msgid "Manage authentication for this Configuration ID"
@@ -1836,11 +1836,11 @@ msgstr "Categorie"
 
 #: apprise_api/api/templates/details.html:129
 msgid "Insecure Schema(s)"
-msgstr "Onveilig(e) schema('s)"
+msgstr "Onveilig(e) schema(’s)"
 
 #: apprise_api/api/templates/details.html:142
 msgid "Secure Schema(s)"
-msgstr "Veilig(e) schema('s)"
+msgstr "Veilig(e) schema(’s)"
 
 #: apprise_api/api/templates/details.html:154
 msgid "Apprise URL Formatting"
@@ -2004,7 +2004,7 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Wordt gebruikt om een of meer opgegeven Apprise URL's te informeren. Zie de <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> als je hulp nodig hebt bij het construeren van je URL(s)."
+msgstr "Wordt gebruikt om een of meer opgegeven Apprise URL’s te informeren. Zie de <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> als je hulp nodig hebt bij het construeren van je URL(s)."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:305
@@ -2150,7 +2150,7 @@ msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
 "            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "Wordt gebruikt om een nieuwe Apprise-configuratie of een reeks URL's toe te voegen en deze te koppelen aan de configuratie die is geïdentificeerd met de id van <em>%(key)s</em>. Zie de <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> als je hulp nodig hebt bij het samenstellen van je URL's."
+msgstr "Wordt gebruikt om een nieuwe Apprise-configuratie of een reeks URL’s toe te voegen en deze te koppelen aan de configuratie die is geïdentificeerd met de id van <em>%(key)s</em>. Zie de <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> als je hulp nodig hebt bij het samenstellen van je URL’s."
 
 #: apprise_api/api/templates/welcome.html:313
 msgid ""
@@ -2250,7 +2250,7 @@ msgstr "Dit is een alias van <code>%(BASE_URL)s/get/<em>%(key)s</em></code> zoal
 #: apprise_api/api/templates/welcome.html:534
 #, python-format
 msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
-msgstr "Stelt de URL's in kennis die zijn gekoppeld aan de configuratie geïdentificeerd door de id van <em>%(key)s</em>."
+msgstr "Stelt de URL’s in kennis die zijn gekoppeld aan de configuratie geïdentificeerd door de id van <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:551
 msgid ""
@@ -2275,11 +2275,11 @@ msgstr "dit is de standaardoptie als er geen type is opgegeven."
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
-msgstr "Pas taglogica toe om je URL's verder te filteren. Dit is een optioneel veld."
+msgstr "Pas taglogica toe om je URL’s verder te filteren. Dit is een optioneel veld."
 
 #: apprise_api/api/templates/welcome.html:599
 msgid "Notifies all URLs assigned to the configuration"
-msgstr "Stelt alle URL's die aan de configuratie zijn toegewezen in kennis."
+msgstr "Stelt alle URL’s die aan de configuratie zijn toegewezen in kennis."
 
 #: apprise_api/api/templates/welcome.html:607
 msgid "Sends a notification to our endpoints with an attachment"
@@ -2287,7 +2287,7 @@ msgstr "Stuurt een notificatie naar onze eindpunten met een bijlage."
 
 #: apprise_api/api/templates/welcome.html:614
 msgid "Notifies all URLs assigned the <em>devops</em> tag"
-msgstr "Stelt alle URL's in kennis die het <em>devops</em> label hebben."
+msgstr "Stelt alle URL’s in kennis die het <em>devops</em> label hebben."
 
 #: apprise_api/api/templates/welcome.html:626
 msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
@@ -2403,7 +2403,7 @@ msgstr "Ongeldige payloadstructuur geleverd"
 
 #: apprise_api/api/views.py:2073
 msgid "No valid URLs defined"
-msgstr "Geen geldige URL's gedefinieerd"
+msgstr "Geen geldige URL’s gedefinieerd"
 
 #: apprise_api/api/views.py:2098
 msgid "The configuration could not be saved"
@@ -2601,7 +2601,7 @@ msgstr "Deze configuratie staat geen stateless notificaties toe"
 
 #: apprise_api/api/views.py:3755
 msgid "There was no valid URLs provided to notify"
-msgstr "Er zijn geen geldige URL's opgegeven om te informeren"
+msgstr "Er zijn geen geldige URL’s opgegeven om te informeren"
 
 #: apprise_api/core/middleware/csrf.py:78
 msgid "Cross-site request rejected"
@@ -2710,3 +2710,7 @@ msgstr "Pagina niet gevonden"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "Systeemfout"
+
+#: apprise_api/api/templates/components/qr_password_note.html:7
+msgid "Why?"
+msgstr "Waarom?"

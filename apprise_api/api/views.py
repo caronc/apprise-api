@@ -2938,9 +2938,13 @@ class MobileQrView(View):
             return _key_access_denied_response(request, key)
 
         url = _build_apprise_mobile_url(request, key)
-        _, _, uses_admin_credentials = _apprise_mobile_credentials(request, key)
+        _, password_required, uses_admin_credentials = _apprise_mobile_credentials(request, key)
         return JsonResponse(
-            {"url": url, "uses_admin_credentials": uses_admin_credentials},
+            {
+                "url": url,
+                "uses_admin_credentials": uses_admin_credentials,
+                "password_required": password_required,
+            },
             encoder=JSONEncoder,
             safe=False,
             status=ResponseCode.okay,

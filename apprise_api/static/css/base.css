@@ -1920,6 +1920,12 @@ textarea {
   text-align: center;
 }
 
+.mobile-setup-card__password-note {
+  color: var(--mobile-beta-muted);
+  line-height: 1.4;
+  text-align: center;
+}
+
 .mobile-setup-card__footer {
   margin-top: auto !important;
   color: var(--mobile-beta-muted);
@@ -3682,6 +3688,13 @@ Authentication Editor
   object-fit: contain;
 }
 
+.apprise-qr-warning-icon i.material-icons {
+  display: block;
+  color: inherit !important;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
 .apprise-qr-url-row {
   display: flex;
   align-items: flex-start;
@@ -3733,13 +3746,13 @@ Authentication Editor
 
 .apprise-qr-note--warning {
   display: grid;
-  grid-template-columns: 1.35rem minmax(0, 1fr);
-  gap: 0.6rem;
-  align-items: start;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
   width: 100%;
-  padding: 0.65rem 0.75rem;
+  padding: 0.75rem 0.85rem;
   border: 1px solid var(--notify-log-warning-border);
-  border-radius: 0.4rem;
+  border-radius: 0.55rem;
   background: var(--notify-log-warning-bg);
   opacity: 1;
   text-align: left;
@@ -3748,12 +3761,22 @@ Authentication Editor
 
 .apprise-qr-warning-icon,
 .apprise-qr-warning-icon svg {
-  display: block;
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.apprise-qr-warning-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 .apprise-qr-warning-icon svg {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
   fill: none;
   stroke: currentColor;
 }
