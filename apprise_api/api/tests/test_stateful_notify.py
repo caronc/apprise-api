@@ -105,6 +105,36 @@ class StatefulNotifyTests(SimpleTestCase):
         finally:
             ConfigCache.clear(key)
 
+    @patch("requests.request")
+    def test_stateful_notify_ignores_urls(self, mock_post):
+        """A urls field is ignored, and only the saved configuration is notified."""
+        key = "test_stateful_notify_ignores_urls"
+
+        request = Mock()
+        request.content = b"ok"
+        request.status_code = requests.codes.ok
+        mock_post.return_value = request
+
+        N_MGR["json"].enabled = True
+
+        response = self.client.post(f"/add/{key}", {"urls": "json://localhost"})
+        assert response.status_code == 200
+
+        try:
+            for urls in (None, 42, {}, "json://example.com", ["json://example.com"]):
+                mock_post.reset_mock()
+                response = self.client.post(
+                    f"/notify/{key}",
+                    dumps({"body": "test body", "title": "test title", "urls": urls}),
+                    content_type="application/json",
+                )
+                assert response.status_code == 200
+                assert mock_post.call_count == 1
+                assert mock_post.call_args.args[1].startswith("http://localhost")
+
+        finally:
+            ConfigCache.clear(key)
+
     @override_settings(APPRISE_CONFIG_LOCK=True)
     def test_stateful_configuration_with_lock(self):
         """
