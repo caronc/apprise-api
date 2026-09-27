@@ -836,7 +836,18 @@ class StatelessNotifyTests(SimpleTestCase):
         )
 
         # Nothing notified
-        assert response.status_code == 204
+        assert response.status_code == 400
+        assert mock_notify.call_count == 0
+
+        # Missing URLs are reported as bad input, not a success
+        response = self.client.post(
+            "/notify",
+            data=json.dumps(json_data),
+            content_type="application/json",
+            headers={"accept": "application/json"},
+        )
+        assert response.status_code == 400
+        assert response.json() == {"error": "There was no valid URLs provided to notify"}
         assert mock_notify.call_count == 0
 
         # Preare our JSON data
@@ -969,7 +980,7 @@ class StatelessNotifyTests(SimpleTestCase):
             )
 
             # json:// is disabled
-            assert response.status_code == 204
+            assert response.status_code == 400
             assert mock_send.call_count == 0
 
             # What actually took place behind close doors:
@@ -1048,7 +1059,7 @@ class StatelessNotifyTests(SimpleTestCase):
             )
 
             # json:// is disabled
-            assert response.status_code == 204
+            assert response.status_code == 400
             assert mock_send.call_count == 0
 
             # What actually took place behind close doors:

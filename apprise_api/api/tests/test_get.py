@@ -50,6 +50,11 @@ class GetTests(SimpleTestCase):
         response = self.client.post("/get/{}".format(key))
         self.assertEqual(response.status_code, 204)
 
+        # A 204 never carries a body, even when JSON is requested
+        response = self.client.post("/get/{}".format(key), headers={"accept": "application/json"})
+        self.assertEqual(response.status_code, 204)
+        assert response.content == b""
+
         # Add some content
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
         assert response.status_code == 200

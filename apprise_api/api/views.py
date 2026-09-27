@@ -1306,18 +1306,10 @@ def _get_config_response(request, key):
                 request.META["REMOTE_ADDR"],
                 key,
             )
-            msg = _("There was no configuration found")
-            status = ResponseCode.no_content
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {"error": msg},
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
-            )
+
+            # A 204 never carries a body.  Clients such as the Web UI and
+            # Apprise Mobile rely on this status to mean an empty key.
+            return HttpResponse(status=ResponseCode.no_content)
 
         # Something went very wrong; return 500
         logger.error(
@@ -2540,20 +2532,9 @@ class DelView(View):
                 request.META["REMOTE_ADDR"],
                 key,
             )
-            msg = _("There was no configuration to remove")
-            status = ResponseCode.no_content
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {
-                        "error": msg,
-                    },
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
-            )
+            # A 204 never carries a body.  Clients such as the Web UI and
+            # Apprise Mobile rely on this status to mean nothing to remove.
+            return HttpResponse(status=ResponseCode.no_content)
 
         # Removed content
         logger.info(
@@ -3541,19 +3522,12 @@ class StatefulNotifyView(View):
                     key,
                 )
 
-                msg = _("There was no configuration found")
-                status = ResponseCode.no_content
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
+                # Nothing can be sent, so report it as a failure.  A 2xx
+                # here would tell callers the notification went out.
+                return error_response(
+                    request,
+                    _("There was no configuration found"),
+                    ResponseCode.not_found,
                 )
 
             logger.error(
@@ -3749,19 +3723,12 @@ class StatelessNotifyView(View):
                 request.META["REMOTE_ADDR"],
             )
 
-            status = ResponseCode.no_content
-            msg = _("There was no valid URLs provided to notify")
-            return (
-                HttpResponse(msg, status=status, content_type="text/plain")
-                if not json_response
-                else JsonResponse(
-                    {
-                        "error": msg,
-                    },
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=status,
-                )
+            # Nothing can be sent, so report the bad input as a failure.  A
+            # 2xx here would tell callers the notification went out.
+            return error_response(
+                request,
+                _("There was no valid URLs provided to notify"),
+                ResponseCode.bad_request,
             )
 
         return _deliver_notification(
@@ -3847,12 +3814,9 @@ class JsonUrlView(View):
             # format means this key has no saved configuration.
             if format is not None:
                 # no content to return
-                return JsonResponse(
-                    response,
-                    encoder=JSONEncoder,
-                    safe=False,
-                    status=ResponseCode.no_content,
-                )
+                # A 204 never carries a body.  Clients such as the Web UI and
+                # Apprise Mobile rely on this status to mean an empty key.
+                return HttpResponse(status=ResponseCode.no_content)
 
             # Something went very wrong; return 500
             response["error"] = _("There was no configuration found")

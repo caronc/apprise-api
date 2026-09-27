@@ -2067,7 +2067,18 @@ class NotifyTests(SimpleTestCase):
         )
 
         # Nothing notified
-        assert response.status_code == 204
+        assert response.status_code == 404
+        assert mock_notify.call_count == 0
+
+        # A missing configuration is reported as an error, not a success
+        response = self.client.post(
+            "/notify/non-existant-key",
+            data=json.dumps(json_data),
+            content_type="application/json",
+            headers={"accept": "application/json"},
+        )
+        assert response.status_code == 404
+        assert response.json() == {"error": "There was no configuration found"}
         assert mock_notify.call_count == 0
 
         # Test sending a garbage JSON object

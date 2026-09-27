@@ -74,6 +74,7 @@ class JsonUrlsTests(SimpleTestCase):
         # Nothing to return
         response = self.client.get("/json/urls/{}".format(key))
         self.assertEqual(response.status_code, 204)
+        assert response.content == b""
 
         # Add some content
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})

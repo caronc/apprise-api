@@ -631,12 +631,12 @@ data: {"status": "SUCCESS"}
 | HTTP Code | Name                            | Effect |
 | --------- | ------------------------------- | ------ |
 | 200       | OK                              | The request succeeded. |
-| 204       | No Content                      | The requested configuration was absent or empty, or a stateless request had no valid URLs. |
+| 204       | No Content                      | Nothing was found to retrieve or remove (`/get`, `/cfg`, `/json/urls` or `/del`). The response has no body. |
 | 302       | Found                           | The Web interface redirected the browser after a login, logout, or configuration selection. |
-| 400       | Bad Request                     | The request contained an invalid key, payload, field, format, tag, or recursion header. |
+| 400       | Bad Request                     | The request contained an invalid key, payload, field, format, tag, or recursion header, or a stateless `/notify` had no valid URLs to send to. |
 | 401       | Unauthorized                    | Required Basic Auth credentials were missing or invalid. |
 | 403       | Forbidden                       | The server mode or caller's access level denied the operation. |
-| 404       | Not Found                       | The route or requested configuration does not exist. Strict mode returns this for unknown routes. |
+| 404       | Not Found                       | The route or requested configuration does not exist, including a `/notify/{KEY}` with no saved configuration. Strict mode returns this for unknown routes. |
 | 405       | Method Not Allowed              | The route does not support the request method. See the response's `Allow` header. |
 | 406       | Not Acceptable                  | A recursion limit or another server rule rejected the operation. |
 | 409       | Conflict                        | A configuration move targeted an existing Config ID. |

@@ -77,6 +77,12 @@ class DelTests(SimpleTestCase):
         # Test again; key is gone
         response = self.client.post("/del/{}".format(key))
         assert response.status_code == 204
+        assert response.content == b""
+
+        # A 204 never carries a body, even when JSON is requested
+        response = self.client.post("/del/{}".format(key), headers={"accept": "application/json"})
+        assert response.status_code == 204
+        assert response.content == b""
 
     @override_settings(APPRISE_CONFIG_LOCK=True)
     def test_del_with_lock(self):

@@ -296,12 +296,10 @@ paths:
             text/event-stream:
               schema:
                 $ref: '#/components/schemas/StreamEvent'
-        '204':
-          description: No Content (No valid URLs provided).
         '400':
           description: >
-            Bad Request (invalid payload or format, or an invalid
-            X-Apprise-Config-ID).
+            Bad Request (invalid payload or format, an invalid
+            X-Apprise-Config-ID, or no valid URLs to notify).
         '401':
           description: >
             Unauthorized. Administrator credentials were not supplied and
@@ -311,6 +309,10 @@ paths:
           description: >
             Access Denied. APPRISE_STATELESS_MODE is disabled, or the
             supplied configuration uses locked, public, or disabled access.
+        '404':
+          description: >
+            Not Found. X-Apprise-Config-ID was sent without urls and has no
+            saved configuration.
         '406':
           description: Method Not Accepted (Recursion limit reached).
         '424':
@@ -826,8 +828,6 @@ paths:
             text/event-stream:
               schema:
                 $ref: '#/components/schemas/StreamEvent'
-        '204':
-          description: No configuration found for this key.
         '400':
           description: >
             Bad Request (invalid payload or format; public and locked callers
@@ -838,6 +838,8 @@ paths:
           description: >
             Forbidden (persistent storage is disabled, or this configuration
             has disabled access for configuration users).
+        '404':
+          description: No configuration found for this key.
         '406':
           description: Method Not Accepted (Recursion limit reached).
         '424':
