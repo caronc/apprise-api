@@ -3193,8 +3193,9 @@ def _load_notify_content(request, form_class, key=None):
                 ),
             )
 
+        # urls is parsed for stateless notifications only
         urls = content.get("urls")
-        if "urls" in content and not _is_string_or_string_list(urls):
+        if "urls" in form_class.base_fields and "urls" in content and not _is_string_or_string_list(urls):
             return (
                 None,
                 json_response,
