@@ -776,7 +776,7 @@ The Config ID field can open another configuration without exposing its ID in th
 Each Config ID has one access mode. The administrator can recover and manage every configuration.
 
 | Access | Description |
-| --- | --- | --- |
+| --- | --- |
 | `user` | Requires its credentials. Tags are optional. The user may edit or clear their configuration. |
 | `locked` | Requires its credentials plus a specific tag other than `all`. Content is hidden, but the user may change their password and move the Config ID. |
 | `public` | Requires only the Config ID and a specific tag other than `all`. Content stays hidden. Saved credentials, if present, retain the `locked` user abilities. |
