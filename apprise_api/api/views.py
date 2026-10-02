@@ -102,7 +102,7 @@ def _apprise_asset(request, **kwargs):
     # The asset validates the code as it is created and stores it in Apprise's
     # own spelling, so a de-DE request becomes de_DE here. An asset language
     # cannot be changed afterwards, which is why it is passed in here.
-    return apprise.AppriseAsset(language=_request_language(request), **kwargs)
+    return apprise.AppriseAsset(language=_request_language(request), **(settings.APPRISE_ASSET | kwargs))
 
 
 def _apprise_object(request, asset=None):
