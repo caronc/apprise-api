@@ -839,7 +839,7 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
-        # Missing URLs are reported as bad input, not a success
+        # Missing URLs are bad input
         response = self.client.post(
             "/notify",
             data=json.dumps(json_data),

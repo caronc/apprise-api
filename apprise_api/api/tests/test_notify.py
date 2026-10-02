@@ -2070,7 +2070,7 @@ class NotifyTests(SimpleTestCase):
         assert response.status_code == 404
         assert mock_notify.call_count == 0
 
-        # A missing configuration is reported as an error, not a success
+        # A missing configuration is an error
         response = self.client.post(
             "/notify/non-existant-key",
             data=json.dumps(json_data),

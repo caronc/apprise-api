@@ -1307,8 +1307,7 @@ def _get_config_response(request, key):
                 key,
             )
 
-            # A 204 never carries a body.  Clients such as the Web UI and
-            # Apprise Mobile rely on this status to mean an empty key.
+            # A 204 has no body and tells clients that the key is empty.
             return HttpResponse(status=ResponseCode.no_content)
 
         # Something went very wrong; return 500
@@ -2532,8 +2531,7 @@ class DelView(View):
                 request.META["REMOTE_ADDR"],
                 key,
             )
-            # A 204 never carries a body.  Clients such as the Web UI and
-            # Apprise Mobile rely on this status to mean nothing to remove.
+            # A 204 has no body and tells clients there is nothing to remove.
             return HttpResponse(status=ResponseCode.no_content)
 
         # Removed content
@@ -3522,8 +3520,7 @@ class StatefulNotifyView(View):
                     key,
                 )
 
-                # Nothing can be sent, so report it as a failure.  A 2xx
-                # here would tell callers the notification went out.
+                # Report a failure because no notification can be sent.
                 return error_response(
                     request,
                     _("There was no configuration found"),
@@ -3723,8 +3720,7 @@ class StatelessNotifyView(View):
                 request.META["REMOTE_ADDR"],
             )
 
-            # Nothing can be sent, so report the bad input as a failure.  A
-            # 2xx here would tell callers the notification went out.
+            # Report bad input because no notification can be sent.
             return error_response(
                 request,
                 _("There was no valid URLs provided to notify"),
@@ -3814,8 +3810,7 @@ class JsonUrlView(View):
             # format means this key has no saved configuration.
             if format is not None:
                 # no content to return
-                # A 204 never carries a body.  Clients such as the Web UI and
-                # Apprise Mobile rely on this status to mean an empty key.
+                # A 204 has no body and tells clients that the key is empty.
                 return HttpResponse(status=ResponseCode.no_content)
 
             # Something went very wrong; return 500
