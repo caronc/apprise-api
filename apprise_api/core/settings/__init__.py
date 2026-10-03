@@ -45,7 +45,7 @@ APP_AUTHOR = "Chris Caron"
 APP_COPYRIGHT = "Copyright (C) 2026 Chris Caron <lead2gold@gmail.com>"
 APP_LICENSE = "MIT"
 APP_URL = "https://github.com/caronc/apprise-api"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.0.1"
 
 # Mirror the container's TZ environment variable so Django does not
 # override the process timezone with its own default (America/Chicago).

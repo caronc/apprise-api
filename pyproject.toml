@@ -27,11 +27,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apprise-api"
-version = "2.0.0"
+version = "2.0.1"
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
-  "apprise == 2.0.0",
+  "apprise == 2.0.1",
   # Language selection relies on a Django internal; raise after testing a new major
   "django < 7",
   "gevent",

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 21:31+0000\n"
+"POT-Creation-Date: 2026-10-03 19:49+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: vi\n"
@@ -122,7 +122,7 @@ msgstr "Mật khẩu mới"
 msgid "Confirm New Password"
 msgstr "Xác nhận mật khẩu mới"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2743
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
 msgid "The username cannot be changed by a configuration user"
 msgstr "Tên người dùng không thể bị thay đổi bởi người dùng cấu hình"
 
@@ -2370,245 +2370,240 @@ msgstr "Yêu cầu một ID cấu hình (URL đường dẫn hoặc X-Apprise-Co
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "Header X-Apprise-Config-ID được cung cấp không hợp lệ"
 
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1904
-#: apprise_api/api/views.py:1984 apprise_api/api/views.py:2324
-#: apprise_api/api/views.py:2494 apprise_api/api/views.py:3649
-#: apprise_api/api/views.py:3805
+#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
+#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
+#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
+#: apprise_api/api/views.py:3769
 msgid "The site has been configured to deny this request"
 msgstr "Trang web đã được cấu hình để từ chối yêu cầu này"
 
-#: apprise_api/api/views.py:1309 apprise_api/api/views.py:3543
-#: apprise_api/api/views.py:3856
-msgid "There was no configuration found"
-msgstr "Không tìm thấy cấu hình"
-
-#: apprise_api/api/views.py:1328 apprise_api/api/views.py:3565
+#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
 msgid "An error occurred accessing configuration"
 msgstr "Đã xảy ra lỗi khi truy cập cấu hình"
 
-#: apprise_api/api/views.py:1490
+#: apprise_api/api/views.py:1481
 msgid "The login form is only available to the web interface"
 msgstr "Mẫu đăng nhập chỉ khả dụng cho giao diện web"
 
-#: apprise_api/api/views.py:1548
+#: apprise_api/api/views.py:1539
 msgid "The username, password, or Config ID was not accepted."
 msgstr "Tên người dùng, mật khẩu hoặc ID Cấu hình không được chấp nhận."
 
-#: apprise_api/api/views.py:2009 apprise_api/api/views.py:3203
+#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
 msgid "The urls field must be a string or list of strings"
 msgstr "Trường urls phải là một chuỗi hoặc danh sách các chuỗi"
 
-#: apprise_api/api/views.py:2017
+#: apprise_api/api/views.py:2008
 msgid "The config field must be a string"
 msgstr "Trường config phải là một chuỗi"
 
-#: apprise_api/api/views.py:2025
+#: apprise_api/api/views.py:2016
 msgid "The format field must be a string"
 msgstr "Trường format phải là một chuỗi"
 
-#: apprise_api/api/views.py:2038
+#: apprise_api/api/views.py:2029
 msgid "Invalid payload structure provided"
 msgstr "Cấu trúc payload không hợp lệ được cung cấp"
 
-#: apprise_api/api/views.py:2066
+#: apprise_api/api/views.py:2057
 msgid "No valid URLs defined"
 msgstr "Không có URL hợp lệ nào được định nghĩa"
 
-#: apprise_api/api/views.py:2091
+#: apprise_api/api/views.py:2082
 msgid "The configuration could not be saved"
 msgstr "Không thể lưu cấu hình"
 
-#: apprise_api/api/views.py:2115
+#: apprise_api/api/views.py:2106
 msgid "The configuration payload is too large"
 msgstr "Payload cấu hình quá lớn"
 
-#: apprise_api/api/views.py:2139
+#: apprise_api/api/views.py:2130
 msgid "Invalid configuration format specified"
 msgstr "Định dạng cấu hình được chỉ định không hợp lệ"
 
-#: apprise_api/api/views.py:2171
+#: apprise_api/api/views.py:2162
 msgid "The configuration format could not be auto-detected"
 msgstr "Không thể tự động phát hiện định dạng cấu hình"
 
-#: apprise_api/api/views.py:2197
+#: apprise_api/api/views.py:2188
 msgid "No valid URL(s) defined"
 msgstr "Không có URL hợp lệ nào được định nghĩa"
 
-#: apprise_api/api/views.py:2219
+#: apprise_api/api/views.py:2210
 msgid "An error occurred saving configuration"
 msgstr "Đã xảy ra lỗi khi lưu cấu hình"
 
-#: apprise_api/api/views.py:2236
+#: apprise_api/api/views.py:2227
 msgid "No configuration provided"
 msgstr "Không có cấu hình nào được cung cấp"
 
-#: apprise_api/api/views.py:2265
+#: apprise_api/api/views.py:2256
 msgid "Successfully saved configuration"
 msgstr "Đã lưu cấu hình thành công"
 
-#: apprise_api/api/views.py:2362
+#: apprise_api/api/views.py:2353
 msgid "The configuration store is not currently writable"
 msgstr "Kho lưu trữ cấu hình hiện không thể ghi được"
 
-#: apprise_api/api/views.py:2376
+#: apprise_api/api/views.py:2367
 msgid "A valid destination (to), different from the source, is required"
 msgstr "Cần một đích đến hợp lệ (to), khác với nguồn"
 
-#: apprise_api/api/views.py:2403
+#: apprise_api/api/views.py:2394
 msgid "There was no configuration to move"
 msgstr "Không có cấu hình nào để di chuyển"
 
-#: apprise_api/api/views.py:2414
+#: apprise_api/api/views.py:2405
 msgid "A configuration already exists at the destination"
 msgstr "Đã có cấu hình tồn tại tại đích đến"
 
-#: apprise_api/api/views.py:2425
+#: apprise_api/api/views.py:2416
 msgid "The configuration could not be moved"
 msgstr "Cấu hình không thể được di chuyển"
 
-#: apprise_api/api/views.py:2435
+#: apprise_api/api/views.py:2426
 msgid "Successfully moved configuration"
 msgstr "Đã di chuyển cấu hình thành công"
 
-#: apprise_api/api/views.py:2511
+#: apprise_api/api/views.py:2502
 msgid "The configuration could not be removed"
 msgstr "Cấu hình không thể bị xóa"
 
-#: apprise_api/api/views.py:2534
+#: apprise_api/api/views.py:2525
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "Cấu hình đã bị xóa, nhưng xác thực của nó không thể bị xóa"
 
-#: apprise_api/api/views.py:2543
-msgid "There was no configuration to remove"
-msgstr "Không có cấu hình nào để xóa"
-
-#: apprise_api/api/views.py:2566
+#: apprise_api/api/views.py:2545
 msgid "Successfully removed configuration"
 msgstr "Đã xóa cấu hình thành công"
 
-#: apprise_api/api/views.py:2674
+#: apprise_api/api/views.py:2653
 msgid "Content-Type must be application/json"
 msgstr "Content-Type phải là application/json"
 
-#: apprise_api/api/views.py:2712
+#: apprise_api/api/views.py:2691
 msgid "Only an administrator may set configuration access"
 msgstr "Chỉ quản trị viên mới có thể đặt quyền truy cập cấu hình"
 
-#: apprise_api/api/views.py:2734
+#: apprise_api/api/views.py:2713
 msgid "Valid username and password fields are required"
 msgstr "Yêu cầu các trường tên người dùng và mật khẩu hợp lệ"
 
-#: apprise_api/api/views.py:2781
+#: apprise_api/api/views.py:2760
 msgid "The current password was not accepted"
 msgstr "Mật khẩu hiện tại không được chấp nhận"
 
-#: apprise_api/api/views.py:2789
+#: apprise_api/api/views.py:2768
 msgid "The new password must differ from the current password"
 msgstr "Mật khẩu mới phải khác với mật khẩu hiện tại"
 
-#: apprise_api/api/views.py:2807
+#: apprise_api/api/views.py:2786
 msgid "The authentication could not be saved"
 msgstr "Không thể lưu xác thực"
 
-#: apprise_api/api/views.py:2817
+#: apprise_api/api/views.py:2796
 msgid "Successfully set authentication"
 msgstr "Xác thực đã được thiết lập thành công"
 
-#: apprise_api/api/views.py:2860
+#: apprise_api/api/views.py:2839
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "Yêu cầu thông tin đăng nhập quản trị viên toàn cầu để gỡ bỏ xác thực"
 
-#: apprise_api/api/views.py:2873
+#: apprise_api/api/views.py:2852
 msgid "The authentication could not be removed"
 msgstr "Không thể gỡ bỏ xác thực"
 
-#: apprise_api/api/views.py:2883
+#: apprise_api/api/views.py:2862
 msgid "Successfully removed authentication"
 msgstr "Xác thực đã được gỡ bỏ thành công"
 
-#: apprise_api/api/views.py:3034
+#: apprise_api/api/views.py:3013
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "Máy chủ hiện không thể bắt đầu một luồng thông báo trực tiếp mới"
 
-#: apprise_api/api/views.py:3059
+#: apprise_api/api/views.py:3038
 msgid "An error occurred delivering the notification"
 msgstr "Xảy ra lỗi khi gửi thông báo"
 
-#: apprise_api/api/views.py:3068
+#: apprise_api/api/views.py:3047
 msgid "One or more notification could not be sent"
 msgstr "Một hoặc nhiều thông báo không thể được gửi"
 
-#: apprise_api/api/views.py:3124
+#: apprise_api/api/views.py:3103
 msgid "The selected notification entry is invalid"
 msgstr "Mục thông báo đã chọn không hợp lệ"
 
-#: apprise_api/api/views.py:3138
+#: apprise_api/api/views.py:3117
 msgid "The selected notification entry is no longer available"
 msgstr "Mục thông báo đã chọn không còn khả dụng"
 
-#: apprise_api/api/views.py:3163
+#: apprise_api/api/views.py:3142
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "Ánh xạ trường dữ liệu tải không thành công bằng KEY: {}"
 
-#: apprise_api/api/views.py:3165
+#: apprise_api/api/views.py:3144
 msgid "Payload field mapping failed"
 msgstr "Ánh xạ trường dữ liệu tải không thành công"
 
-#: apprise_api/api/views.py:3178
+#: apprise_api/api/views.py:3157
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "Trường {} phải là chuỗi"
 
-#: apprise_api/api/views.py:3190
+#: apprise_api/api/views.py:3169
 msgid "The format field must be a string or null"
 msgstr "Trường định dạng phải là chuỗi hoặc null"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3211
 msgid "Bad FORM Payload provided"
 msgstr "FORM Dữ liệu tải không hợp lệ được cung cấp"
 
-#: apprise_api/api/views.py:3251
+#: apprise_api/api/views.py:3231
 msgid "The template field must be an object of name/value pairs"
 msgstr "Trường mẫu phải là một đối tượng gồm cặp tên/giá trị"
 
-#: apprise_api/api/views.py:3281 apprise_api/api/views.py:3300
+#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "Cấu hình này yêu cầu một thẻ cụ thể khác với 'all'"
 
-#: apprise_api/api/views.py:3293
+#: apprise_api/api/views.py:3273
 msgid "Unsupported characters found in tag definition"
 msgstr "Đã tìm thấy ký tự không được hỗ trợ trong định nghĩa thẻ"
 
-#: apprise_api/api/views.py:3339
+#: apprise_api/api/views.py:3319
 msgid "Bad Attachment"
 msgstr "Tệp đính kèm không hợp lệ"
 
-#: apprise_api/api/views.py:3371
+#: apprise_api/api/views.py:3351
 msgid "An invalid body input format was specified"
 msgstr "Đã chỉ định định dạng nhập thân không hợp lệ"
 
-#: apprise_api/api/views.py:3408
+#: apprise_api/api/views.py:3388
 msgid "The recursion limit has been reached"
 msgstr "Giới hạn đệ quy đã được đạt tới"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3400
 msgid "An invalid recursion value was specified"
 msgstr "Đã chỉ định giá trị đệ quy không hợp lệ"
 
-#: apprise_api/api/views.py:3440
+#: apprise_api/api/views.py:3420
 msgid "An error occurred preparing the notification"
 msgstr "Đã xảy ra lỗi khi chuẩn bị thông báo"
 
-#: apprise_api/api/views.py:3511 apprise_api/api/views.py:3714
+#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
 msgid "Payload lacks minimum requirements"
 msgstr "Dữ liệu không đủ các yêu cầu tối thiểu"
 
-#: apprise_api/api/views.py:3675
+#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+msgid "There was no configuration found"
+msgstr "Không tìm thấy cấu hình"
+
+#: apprise_api/api/views.py:3647
 msgid "This configuration does not permit stateless notifications"
 msgstr "Cấu hình này không cho phép thông báo không trạng thái"
 
-#: apprise_api/api/views.py:3752
+#: apprise_api/api/views.py:3726
 msgid "There was no valid URLs provided to notify"
 msgstr "Không có URL hợp lệ nào được cung cấp để thông báo"
 

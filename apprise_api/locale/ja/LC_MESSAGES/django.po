@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 21:31+0000\n"
+"POT-Creation-Date: 2026-10-03 19:49+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: ja\n"
@@ -122,7 +122,7 @@ msgstr "新しいパスワード"
 msgid "Confirm New Password"
 msgstr "新しいパスワード確認"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2743
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
 msgid "The username cannot be changed by a configuration user"
 msgstr "ユーザー名は設定ユーザーによって変更できません"
 
@@ -2370,245 +2370,240 @@ msgstr "構成IDが必要です（URLパスまたはX-Apprise-Config-IDヘッダ
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "提供されたX-Apprise-Config-IDヘッダーは無効です"
 
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1904
-#: apprise_api/api/views.py:1984 apprise_api/api/views.py:2324
-#: apprise_api/api/views.py:2494 apprise_api/api/views.py:3649
-#: apprise_api/api/views.py:3805
+#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
+#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
+#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
+#: apprise_api/api/views.py:3769
 msgid "The site has been configured to deny this request"
 msgstr "このサイトはこのリクエストを拒否するように設定されています"
 
-#: apprise_api/api/views.py:1309 apprise_api/api/views.py:3543
-#: apprise_api/api/views.py:3856
-msgid "There was no configuration found"
-msgstr "構成が見つかりませんでした"
-
-#: apprise_api/api/views.py:1328 apprise_api/api/views.py:3565
+#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
 msgid "An error occurred accessing configuration"
 msgstr "構成へのアクセス中にエラーが発生しました"
 
-#: apprise_api/api/views.py:1490
+#: apprise_api/api/views.py:1481
 msgid "The login form is only available to the web interface"
 msgstr "ログインフォームはウェブインターフェースでのみ利用可能です"
 
-#: apprise_api/api/views.py:1548
+#: apprise_api/api/views.py:1539
 msgid "The username, password, or Config ID was not accepted."
 msgstr "ユーザー名、パスワード、または構成IDが受け入れられませんでした"
 
-#: apprise_api/api/views.py:2009 apprise_api/api/views.py:3203
+#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
 msgid "The urls field must be a string or list of strings"
 msgstr "urlsフィールドは文字列または文字列のリストでなければなりません"
 
-#: apprise_api/api/views.py:2017
+#: apprise_api/api/views.py:2008
 msgid "The config field must be a string"
 msgstr "configフィールドは文字列でなければなりません"
 
-#: apprise_api/api/views.py:2025
+#: apprise_api/api/views.py:2016
 msgid "The format field must be a string"
 msgstr "formatフィールドは文字列でなければなりません"
 
-#: apprise_api/api/views.py:2038
+#: apprise_api/api/views.py:2029
 msgid "Invalid payload structure provided"
 msgstr "無効なペイロード構造が提供されました"
 
-#: apprise_api/api/views.py:2066
+#: apprise_api/api/views.py:2057
 msgid "No valid URLs defined"
 msgstr "有効なURLが定義されていません"
 
-#: apprise_api/api/views.py:2091
+#: apprise_api/api/views.py:2082
 msgid "The configuration could not be saved"
 msgstr "構成を保存できませんでした"
 
-#: apprise_api/api/views.py:2115
+#: apprise_api/api/views.py:2106
 msgid "The configuration payload is too large"
 msgstr "構成ペイロードが大きすぎます"
 
-#: apprise_api/api/views.py:2139
+#: apprise_api/api/views.py:2130
 msgid "Invalid configuration format specified"
 msgstr "無効な構成形式が指定されました"
 
-#: apprise_api/api/views.py:2171
+#: apprise_api/api/views.py:2162
 msgid "The configuration format could not be auto-detected"
 msgstr "構成形式を自動検出できませんでした"
 
-#: apprise_api/api/views.py:2197
+#: apprise_api/api/views.py:2188
 msgid "No valid URL(s) defined"
 msgstr "有効なURLが定義されていません"
 
-#: apprise_api/api/views.py:2219
+#: apprise_api/api/views.py:2210
 msgid "An error occurred saving configuration"
 msgstr "構成保存中にエラーが発生しました"
 
-#: apprise_api/api/views.py:2236
+#: apprise_api/api/views.py:2227
 msgid "No configuration provided"
 msgstr "構成が提供されていません"
 
-#: apprise_api/api/views.py:2265
+#: apprise_api/api/views.py:2256
 msgid "Successfully saved configuration"
 msgstr "構成を正常に保存しました"
 
-#: apprise_api/api/views.py:2362
+#: apprise_api/api/views.py:2353
 msgid "The configuration store is not currently writable"
 msgstr "構成ストアは現在書き込み可能ではありません"
 
-#: apprise_api/api/views.py:2376
+#: apprise_api/api/views.py:2367
 msgid "A valid destination (to), different from the source, is required"
 msgstr "ソースとは異なる有効な宛先（to）が必要です"
 
-#: apprise_api/api/views.py:2403
+#: apprise_api/api/views.py:2394
 msgid "There was no configuration to move"
 msgstr "移動する構成がありませんでした"
 
-#: apprise_api/api/views.py:2414
+#: apprise_api/api/views.py:2405
 msgid "A configuration already exists at the destination"
 msgstr "宛先にはすでに構成が存在します"
 
-#: apprise_api/api/views.py:2425
+#: apprise_api/api/views.py:2416
 msgid "The configuration could not be moved"
 msgstr "構成を移動できませんでした"
 
-#: apprise_api/api/views.py:2435
+#: apprise_api/api/views.py:2426
 msgid "Successfully moved configuration"
 msgstr "構成を正常に移動しました"
 
-#: apprise_api/api/views.py:2511
+#: apprise_api/api/views.py:2502
 msgid "The configuration could not be removed"
 msgstr "構成を削除できませんでした"
 
-#: apprise_api/api/views.py:2534
+#: apprise_api/api/views.py:2525
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "構成は削除されましたが、その認証情報を削除できませんでした"
 
-#: apprise_api/api/views.py:2543
-msgid "There was no configuration to remove"
-msgstr "削除する構成がありませんでした"
-
-#: apprise_api/api/views.py:2566
+#: apprise_api/api/views.py:2545
 msgid "Successfully removed configuration"
 msgstr "構成を正常に削除しました"
 
-#: apprise_api/api/views.py:2674
+#: apprise_api/api/views.py:2653
 msgid "Content-Type must be application/json"
 msgstr "Content-Typeはapplication/jsonである必要があります"
 
-#: apprise_api/api/views.py:2712
+#: apprise_api/api/views.py:2691
 msgid "Only an administrator may set configuration access"
 msgstr "構成アクセスを設定できるのは管理者のみです"
 
-#: apprise_api/api/views.py:2734
+#: apprise_api/api/views.py:2713
 msgid "Valid username and password fields are required"
 msgstr "有効なユーザー名とパスワードの入力欄が必要です"
 
-#: apprise_api/api/views.py:2781
+#: apprise_api/api/views.py:2760
 msgid "The current password was not accepted"
 msgstr "現在のパスワードは受け入れられませんでした"
 
-#: apprise_api/api/views.py:2789
+#: apprise_api/api/views.py:2768
 msgid "The new password must differ from the current password"
 msgstr "新しいパスワードは現在のパスワードと異なる必要があります"
 
-#: apprise_api/api/views.py:2807
+#: apprise_api/api/views.py:2786
 msgid "The authentication could not be saved"
 msgstr "認証を保存できませんでした"
 
-#: apprise_api/api/views.py:2817
+#: apprise_api/api/views.py:2796
 msgid "Successfully set authentication"
 msgstr "認証の設定に成功しました"
 
-#: apprise_api/api/views.py:2860
+#: apprise_api/api/views.py:2839
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "認証を削除するにはグローバル管理者の資格情報が必要です"
 
-#: apprise_api/api/views.py:2873
+#: apprise_api/api/views.py:2852
 msgid "The authentication could not be removed"
 msgstr "認証を削除できませんでした"
 
-#: apprise_api/api/views.py:2883
+#: apprise_api/api/views.py:2862
 msgid "Successfully removed authentication"
 msgstr "認証の削除に成功しました"
 
-#: apprise_api/api/views.py:3034
+#: apprise_api/api/views.py:3013
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "サーバーが一時的に新しいライブ通知ストリームを開始できません"
 
-#: apprise_api/api/views.py:3059
+#: apprise_api/api/views.py:3038
 msgid "An error occurred delivering the notification"
 msgstr "通知の配信中にエラーが発生しました"
 
-#: apprise_api/api/views.py:3068
+#: apprise_api/api/views.py:3047
 msgid "One or more notification could not be sent"
 msgstr "1件以上の通知を送信できませんでした"
 
-#: apprise_api/api/views.py:3124
+#: apprise_api/api/views.py:3103
 msgid "The selected notification entry is invalid"
 msgstr "選択された通知エントリが無効です"
 
-#: apprise_api/api/views.py:3138
+#: apprise_api/api/views.py:3117
 msgid "The selected notification entry is no longer available"
 msgstr "選択された通知エントリはもう利用できません"
 
-#: apprise_api/api/views.py:3163
+#: apprise_api/api/views.py:3142
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "KEY を使用したペイロードフィールドのマッピングに失敗しました: {}"
 
-#: apprise_api/api/views.py:3165
+#: apprise_api/api/views.py:3144
 msgid "Payload field mapping failed"
 msgstr "ペイロードフィールドのマッピングに失敗しました"
 
-#: apprise_api/api/views.py:3178
+#: apprise_api/api/views.py:3157
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} フィールドは文字列でなければなりません"
 
-#: apprise_api/api/views.py:3190
+#: apprise_api/api/views.py:3169
 msgid "The format field must be a string or null"
 msgstr "format フィールドは文字列または null でなければなりません"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3211
 msgid "Bad FORM Payload provided"
 msgstr "不正な FORM ペイロードが提供されました"
 
-#: apprise_api/api/views.py:3251
+#: apprise_api/api/views.py:3231
 msgid "The template field must be an object of name/value pairs"
 msgstr "template フィールドは名前/値ペアのオブジェクトでなければなりません"
 
-#: apprise_api/api/views.py:3281 apprise_api/api/views.py:3300
+#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "この設定には 'all' 以外の特定のタグが必要です"
 
-#: apprise_api/api/views.py:3293
+#: apprise_api/api/views.py:3273
 msgid "Unsupported characters found in tag definition"
 msgstr "タグ定義にサポートされていない文字が見つかりました"
 
-#: apprise_api/api/views.py:3339
+#: apprise_api/api/views.py:3319
 msgid "Bad Attachment"
 msgstr "不正な添付ファイル"
 
-#: apprise_api/api/views.py:3371
+#: apprise_api/api/views.py:3351
 msgid "An invalid body input format was specified"
 msgstr "無効な本文入力形式が指定されました"
 
-#: apprise_api/api/views.py:3408
+#: apprise_api/api/views.py:3388
 msgid "The recursion limit has been reached"
 msgstr "再帰制限に達しました"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3400
 msgid "An invalid recursion value was specified"
 msgstr "無効な再帰値が指定されました"
 
-#: apprise_api/api/views.py:3440
+#: apprise_api/api/views.py:3420
 msgid "An error occurred preparing the notification"
 msgstr "通知の準備中にエラーが発生しました"
 
-#: apprise_api/api/views.py:3511 apprise_api/api/views.py:3714
+#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
 msgid "Payload lacks minimum requirements"
 msgstr "ペイロードが最小要件を満たしていません"
 
-#: apprise_api/api/views.py:3675
+#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+msgid "There was no configuration found"
+msgstr "構成が見つかりませんでした"
+
+#: apprise_api/api/views.py:3647
 msgid "This configuration does not permit stateless notifications"
 msgstr "この設定ではステートレス通知は許可されていません"
 
-#: apprise_api/api/views.py:3752
+#: apprise_api/api/views.py:3726
 msgid "There was no valid URLs provided to notify"
 msgstr "通知するための有効なURLが提供されていません"
 

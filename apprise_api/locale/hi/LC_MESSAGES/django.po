@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 21:31+0000\n"
+"POT-Creation-Date: 2026-10-03 19:49+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: hi\n"
@@ -122,7 +122,7 @@ msgstr "नया पासवर्ड"
 msgid "Confirm New Password"
 msgstr "नया पासवर्ड पुष्टि करें"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2743
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
 msgid "The username cannot be changed by a configuration user"
 msgstr "उपयोगकर्ता नाम को एक कॉन्फ़िगरेशन उपयोगकर्ता द्वारा बदला नहीं जा सकता"
 
@@ -2371,245 +2371,240 @@ msgstr "एक विन्यास आईडी आवश्यक है (URL
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "प्रदान किया गया X-Apprise-Config-ID हेडर अमान्य है"
 
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1904
-#: apprise_api/api/views.py:1984 apprise_api/api/views.py:2324
-#: apprise_api/api/views.py:2494 apprise_api/api/views.py:3649
-#: apprise_api/api/views.py:3805
+#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
+#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
+#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
+#: apprise_api/api/views.py:3769
 msgid "The site has been configured to deny this request"
 msgstr "साइट को इस अनुरोध को अस्वीकार करने के लिए कॉन्फ़िगर किया गया है"
 
-#: apprise_api/api/views.py:1309 apprise_api/api/views.py:3543
-#: apprise_api/api/views.py:3856
-msgid "There was no configuration found"
-msgstr "कोई विन्यास नहीं मिला"
-
-#: apprise_api/api/views.py:1328 apprise_api/api/views.py:3565
+#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
 msgid "An error occurred accessing configuration"
 msgstr "विन्यास तक पहुँचने में त्रुटि हुई"
 
-#: apprise_api/api/views.py:1490
+#: apprise_api/api/views.py:1481
 msgid "The login form is only available to the web interface"
 msgstr "लॉगिन फॉर्म केवल वेब इंटरफेस के लिए उपलब्ध है"
 
-#: apprise_api/api/views.py:1548
+#: apprise_api/api/views.py:1539
 msgid "The username, password, or Config ID was not accepted."
 msgstr "उपयोगकर्ता नाम, पासवर्ड, या कॉन्फ़िग आईडी स्वीकार नहीं किया गया।"
 
-#: apprise_api/api/views.py:2009 apprise_api/api/views.py:3203
+#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
 msgid "The urls field must be a string or list of strings"
 msgstr "urls फ़ील्ड एक स्ट्रिंग या स्ट्रिंग्स की सूची होनी चाहिए"
 
-#: apprise_api/api/views.py:2017
+#: apprise_api/api/views.py:2008
 msgid "The config field must be a string"
 msgstr "config फ़ील्ड एक स्ट्रिंग होनी चाहिए"
 
-#: apprise_api/api/views.py:2025
+#: apprise_api/api/views.py:2016
 msgid "The format field must be a string"
 msgstr "format फ़ील्ड एक स्ट्रिंग होनी चाहिए"
 
-#: apprise_api/api/views.py:2038
+#: apprise_api/api/views.py:2029
 msgid "Invalid payload structure provided"
 msgstr "अमान्य पेलोड संरचना प्रदान की गई"
 
-#: apprise_api/api/views.py:2066
+#: apprise_api/api/views.py:2057
 msgid "No valid URLs defined"
 msgstr "कोई वैध URLs परिभाषित नहीं हैं"
 
-#: apprise_api/api/views.py:2091
+#: apprise_api/api/views.py:2082
 msgid "The configuration could not be saved"
 msgstr "कॉन्फ़िगरेशन को सहेजा नहीं जा सका"
 
-#: apprise_api/api/views.py:2115
+#: apprise_api/api/views.py:2106
 msgid "The configuration payload is too large"
 msgstr "कॉन्फ़िगरेशन पेलोड बहुत बड़ा है"
 
-#: apprise_api/api/views.py:2139
+#: apprise_api/api/views.py:2130
 msgid "Invalid configuration format specified"
 msgstr "निर्दिष्ट कॉन्फ़िगरेशन प्रारूप अमान्य है"
 
-#: apprise_api/api/views.py:2171
+#: apprise_api/api/views.py:2162
 msgid "The configuration format could not be auto-detected"
 msgstr "कॉन्फ़िगरेशन प्रारूप को स्वचालित रूप से पता नहीं लगाया जा सका"
 
-#: apprise_api/api/views.py:2197
+#: apprise_api/api/views.py:2188
 msgid "No valid URL(s) defined"
 msgstr "कोई मान्य URL निर्दिष्ट नहीं है"
 
-#: apprise_api/api/views.py:2219
+#: apprise_api/api/views.py:2210
 msgid "An error occurred saving configuration"
 msgstr "कॉन्फ़िगरेशन सहेजने में त्रुटि हुई"
 
-#: apprise_api/api/views.py:2236
+#: apprise_api/api/views.py:2227
 msgid "No configuration provided"
 msgstr "कोई कॉन्फ़िगरेशन प्रदान नहीं किया गया"
 
-#: apprise_api/api/views.py:2265
+#: apprise_api/api/views.py:2256
 msgid "Successfully saved configuration"
 msgstr "सफलतापूर्वक संरचना सहेजी गई"
 
-#: apprise_api/api/views.py:2362
+#: apprise_api/api/views.py:2353
 msgid "The configuration store is not currently writable"
 msgstr "वर्तमान में संरचना स्टोर लिखने योग्य नहीं है"
 
-#: apprise_api/api/views.py:2376
+#: apprise_api/api/views.py:2367
 msgid "A valid destination (to), different from the source, is required"
 msgstr "स्रोत से अलग एक वैध गंतव्य (to) आवश्यक है"
 
-#: apprise_api/api/views.py:2403
+#: apprise_api/api/views.py:2394
 msgid "There was no configuration to move"
 msgstr "स्थानांतरित करने के लिए कोई संरचना नहीं थी"
 
-#: apprise_api/api/views.py:2414
+#: apprise_api/api/views.py:2405
 msgid "A configuration already exists at the destination"
 msgstr "गंतव्य पर पहले से ही एक संरचना मौजूद है"
 
-#: apprise_api/api/views.py:2425
+#: apprise_api/api/views.py:2416
 msgid "The configuration could not be moved"
 msgstr "संरचना को स्थानांतरित नहीं किया जा सका"
 
-#: apprise_api/api/views.py:2435
+#: apprise_api/api/views.py:2426
 msgid "Successfully moved configuration"
 msgstr "सफलतापूर्वक कॉन्फ़िगरेशन को स्थानांतरित किया गया"
 
-#: apprise_api/api/views.py:2511
+#: apprise_api/api/views.py:2502
 msgid "The configuration could not be removed"
 msgstr "कॉन्फ़िगरेशन को हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2534
+#: apprise_api/api/views.py:2525
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "कॉन्फ़िगरेशन हटा दिया गया, लेकिन इसकी प्रमाणीकरण को हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2543
-msgid "There was no configuration to remove"
-msgstr "हटाने के लिए कोई कॉन्फ़िगरेशन नहीं था"
-
-#: apprise_api/api/views.py:2566
+#: apprise_api/api/views.py:2545
 msgid "Successfully removed configuration"
 msgstr "सफलतापूर्वक कॉन्फ़िगरेशन हटाया गया"
 
-#: apprise_api/api/views.py:2674
+#: apprise_api/api/views.py:2653
 msgid "Content-Type must be application/json"
 msgstr "Content-Type application/json होना चाहिए"
 
-#: apprise_api/api/views.py:2712
+#: apprise_api/api/views.py:2691
 msgid "Only an administrator may set configuration access"
 msgstr "केवल एक प्रशासक ही कॉन्फ़िगरेशन एक्सेस सेट कर सकता है"
 
-#: apprise_api/api/views.py:2734
+#: apprise_api/api/views.py:2713
 msgid "Valid username and password fields are required"
 msgstr "मान्य उपयोगकर्ता नाम और पासवर्ड फ़ील्ड की आवश्यकता है"
 
-#: apprise_api/api/views.py:2781
+#: apprise_api/api/views.py:2760
 msgid "The current password was not accepted"
 msgstr "वर्तमान पासवर्ड स्वीकार नहीं किया गया"
 
-#: apprise_api/api/views.py:2789
+#: apprise_api/api/views.py:2768
 msgid "The new password must differ from the current password"
 msgstr "नया पासवर्ड वर्तमान पासवर्ड से अलग होना चाहिए"
 
-#: apprise_api/api/views.py:2807
+#: apprise_api/api/views.py:2786
 msgid "The authentication could not be saved"
 msgstr "प्रमाणीकरण सहेजा नहीं जा सका"
 
-#: apprise_api/api/views.py:2817
+#: apprise_api/api/views.py:2796
 msgid "Successfully set authentication"
 msgstr "प्रमाणीकरण सफलतापूर्वक सेट किया गया"
 
-#: apprise_api/api/views.py:2860
+#: apprise_api/api/views.py:2839
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "प्रमाणीकरण हटाने के लिए वैश्विक व्यवस्थापक क्रेडेंशियल्स की आवश्यकता है"
 
-#: apprise_api/api/views.py:2873
+#: apprise_api/api/views.py:2852
 msgid "The authentication could not be removed"
 msgstr "प्रमाणीकरण हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2883
+#: apprise_api/api/views.py:2862
 msgid "Successfully removed authentication"
 msgstr "प्रमाणीकरण सफलतापूर्वक हटा दिया गया"
 
-#: apprise_api/api/views.py:3034
+#: apprise_api/api/views.py:3013
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "सर्वर अस्थायी रूप से नई लाइव अधिसूचना स्ट्रीम शुरू करने में असमर्थ है"
 
-#: apprise_api/api/views.py:3059
+#: apprise_api/api/views.py:3038
 msgid "An error occurred delivering the notification"
 msgstr "अधिसूचना भेजते समय एक त्रुटि हुई"
 
-#: apprise_api/api/views.py:3068
+#: apprise_api/api/views.py:3047
 msgid "One or more notification could not be sent"
 msgstr "एक या अधिक अधिसूचना नहीं भेजी जा सकी"
 
-#: apprise_api/api/views.py:3124
+#: apprise_api/api/views.py:3103
 msgid "The selected notification entry is invalid"
 msgstr "चयनित अधिसूचना प्रविष्टि अमान्य है"
 
-#: apprise_api/api/views.py:3138
+#: apprise_api/api/views.py:3117
 msgid "The selected notification entry is no longer available"
 msgstr "चयनित सूचना प्रविष्टि अब उपलब्ध नहीं है"
 
-#: apprise_api/api/views.py:3163
+#: apprise_api/api/views.py:3142
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "पेलोड फ़ील्ड मैपिंग KEY का उपयोग करके विफल रही: {}"
 
-#: apprise_api/api/views.py:3165
+#: apprise_api/api/views.py:3144
 msgid "Payload field mapping failed"
 msgstr "पेलोड फ़ील्ड मैपिंग विफल रही"
 
-#: apprise_api/api/views.py:3178
+#: apprise_api/api/views.py:3157
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} फ़ील्ड एक स्ट्रिंग होना चाहिए"
 
-#: apprise_api/api/views.py:3190
+#: apprise_api/api/views.py:3169
 msgid "The format field must be a string or null"
 msgstr "फ़ॉर्मेट फ़ील्ड एक स्ट्रिंग या शून्य होना चाहिए"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3211
 msgid "Bad FORM Payload provided"
 msgstr "खराब FORM पेलोड प्रदान किया गया"
 
-#: apprise_api/api/views.py:3251
+#: apprise_api/api/views.py:3231
 msgid "The template field must be an object of name/value pairs"
 msgstr "टेम्पलेट फ़ील्ड नाम/मान जोड़े वाले ऑब्जेक्ट होना चाहिए"
 
-#: apprise_api/api/views.py:3281 apprise_api/api/views.py:3300
+#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "इस कॉन्फ़िगरेशन के लिए 'all' के अलावा एक विशेष टैग आवश्यक है"
 
-#: apprise_api/api/views.py:3293
+#: apprise_api/api/views.py:3273
 msgid "Unsupported characters found in tag definition"
 msgstr "टैग परिभाषा में असमर्थित वर्ण पाए गए"
 
-#: apprise_api/api/views.py:3339
+#: apprise_api/api/views.py:3319
 msgid "Bad Attachment"
 msgstr "खराब संलग्नक"
 
-#: apprise_api/api/views.py:3371
+#: apprise_api/api/views.py:3351
 msgid "An invalid body input format was specified"
 msgstr "एक अमान्य बॉडी इनपुट फ़ॉर्मेट निर्दिष्ट किया गया"
 
-#: apprise_api/api/views.py:3408
+#: apprise_api/api/views.py:3388
 msgid "The recursion limit has been reached"
 msgstr "पुनरावृत्ति सीमा तक पहुँच गई"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3400
 msgid "An invalid recursion value was specified"
 msgstr "एक अमान्य पुनरावृत्ति मान निर्दिष्ट किया गया"
 
-#: apprise_api/api/views.py:3440
+#: apprise_api/api/views.py:3420
 msgid "An error occurred preparing the notification"
 msgstr "सूचना"
 
-#: apprise_api/api/views.py:3511 apprise_api/api/views.py:3714
+#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
 msgid "Payload lacks minimum requirements"
 msgstr "तैयार करते समय एक त्रुटि हुई। पेलोड में न्यूनतम आवश्यकताएँ नहीं हैं"
 
-#: apprise_api/api/views.py:3675
+#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+msgid "There was no configuration found"
+msgstr "कोई विन्यास नहीं मिला"
+
+#: apprise_api/api/views.py:3647
 msgid "This configuration does not permit stateless notifications"
 msgstr "यह कॉन्फ़िगरेशन स्टेटलेस सूचनाओं की अनुमति नहीं देता"
 
-#: apprise_api/api/views.py:3752
+#: apprise_api/api/views.py:3726
 msgid "There was no valid URLs provided to notify"
 msgstr "सूचित करने के लिए कोई मान्य URL प्रदान नहीं किया गया"
 

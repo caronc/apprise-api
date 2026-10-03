@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 21:31+0000\n"
+"POT-Creation-Date: 2026-10-03 19:49+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: ru\n"
@@ -122,7 +122,7 @@ msgstr "Новый пароль"
 msgid "Confirm New Password"
 msgstr "Подтвердите новый пароль"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2743
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
 msgid "The username cannot be changed by a configuration user"
 msgstr "Имя пользователя не может быть изменено пользователем конфигурации"
 
@@ -2370,245 +2370,240 @@ msgstr "Требуется идентификатор конфигурации (
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "Предоставленный заголовок X-Apprise-Config-ID недействителен"
 
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1904
-#: apprise_api/api/views.py:1984 apprise_api/api/views.py:2324
-#: apprise_api/api/views.py:2494 apprise_api/api/views.py:3649
-#: apprise_api/api/views.py:3805
+#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
+#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
+#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
+#: apprise_api/api/views.py:3769
 msgid "The site has been configured to deny this request"
 msgstr "Сайт настроен на отказ в этом запросе"
 
-#: apprise_api/api/views.py:1309 apprise_api/api/views.py:3543
-#: apprise_api/api/views.py:3856
-msgid "There was no configuration found"
-msgstr "Конфигурация не найдена"
-
-#: apprise_api/api/views.py:1328 apprise_api/api/views.py:3565
+#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
 msgid "An error occurred accessing configuration"
 msgstr "Произошла ошибка при доступе к конфигурации"
 
-#: apprise_api/api/views.py:1490
+#: apprise_api/api/views.py:1481
 msgid "The login form is only available to the web interface"
 msgstr "Форма входа доступна только для веб-интерфейса"
 
-#: apprise_api/api/views.py:1548
+#: apprise_api/api/views.py:1539
 msgid "The username, password, or Config ID was not accepted."
 msgstr "Имя пользователя, пароль или идентификатор конфигурации не были приняты."
 
-#: apprise_api/api/views.py:2009 apprise_api/api/views.py:3203
+#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
 msgid "The urls field must be a string or list of strings"
 msgstr "Поле urls должно быть строкой или списком строк"
 
-#: apprise_api/api/views.py:2017
+#: apprise_api/api/views.py:2008
 msgid "The config field must be a string"
 msgstr "Поле config должно быть строкой"
 
-#: apprise_api/api/views.py:2025
+#: apprise_api/api/views.py:2016
 msgid "The format field must be a string"
 msgstr "Поле format должно быть строкой"
 
-#: apprise_api/api/views.py:2038
+#: apprise_api/api/views.py:2029
 msgid "Invalid payload structure provided"
 msgstr "Предоставлена неверная структура полезной нагрузки"
 
-#: apprise_api/api/views.py:2066
+#: apprise_api/api/views.py:2057
 msgid "No valid URLs defined"
 msgstr "Не определены допустимые URL-адреса"
 
-#: apprise_api/api/views.py:2091
+#: apprise_api/api/views.py:2082
 msgid "The configuration could not be saved"
 msgstr "Конфигурацию не удалось сохранить"
 
-#: apprise_api/api/views.py:2115
+#: apprise_api/api/views.py:2106
 msgid "The configuration payload is too large"
 msgstr "Полезная нагрузка конфигурации слишком велика"
 
-#: apprise_api/api/views.py:2139
+#: apprise_api/api/views.py:2130
 msgid "Invalid configuration format specified"
 msgstr "Указан недопустимый формат конфигурации"
 
-#: apprise_api/api/views.py:2171
+#: apprise_api/api/views.py:2162
 msgid "The configuration format could not be auto-detected"
 msgstr "Формат конфигурации не удалось определить автоматически"
 
-#: apprise_api/api/views.py:2197
+#: apprise_api/api/views.py:2188
 msgid "No valid URL(s) defined"
 msgstr "Не определены допустимые URL(ы)"
 
-#: apprise_api/api/views.py:2219
+#: apprise_api/api/views.py:2210
 msgid "An error occurred saving configuration"
 msgstr "Произошла ошибка при сохранении конфигурации"
 
-#: apprise_api/api/views.py:2236
+#: apprise_api/api/views.py:2227
 msgid "No configuration provided"
 msgstr "Конфигурация не предоставлена"
 
-#: apprise_api/api/views.py:2265
+#: apprise_api/api/views.py:2256
 msgid "Successfully saved configuration"
 msgstr "Конфигурация успешно сохранена"
 
-#: apprise_api/api/views.py:2362
+#: apprise_api/api/views.py:2353
 msgid "The configuration store is not currently writable"
 msgstr "Хранилище конфигураций в настоящее время недоступно для записи"
 
-#: apprise_api/api/views.py:2376
+#: apprise_api/api/views.py:2367
 msgid "A valid destination (to), different from the source, is required"
 msgstr "Требуется действительный пункт назначения (to), отличный от источника"
 
-#: apprise_api/api/views.py:2403
+#: apprise_api/api/views.py:2394
 msgid "There was no configuration to move"
 msgstr "Не было конфигурации для перемещения"
 
-#: apprise_api/api/views.py:2414
+#: apprise_api/api/views.py:2405
 msgid "A configuration already exists at the destination"
 msgstr "Конфигурация уже существует в пункте назначения"
 
-#: apprise_api/api/views.py:2425
+#: apprise_api/api/views.py:2416
 msgid "The configuration could not be moved"
 msgstr "Конфигурацию не удалось переместить"
 
-#: apprise_api/api/views.py:2435
+#: apprise_api/api/views.py:2426
 msgid "Successfully moved configuration"
 msgstr "Конфигурация успешно перемещена"
 
-#: apprise_api/api/views.py:2511
+#: apprise_api/api/views.py:2502
 msgid "The configuration could not be removed"
 msgstr "Конфигурацию не удалось удалить"
 
-#: apprise_api/api/views.py:2534
+#: apprise_api/api/views.py:2525
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "Конфигурация была удалена, но её аутентификация не могла быть удалена"
 
-#: apprise_api/api/views.py:2543
-msgid "There was no configuration to remove"
-msgstr "Не было конфигурации для удаления"
-
-#: apprise_api/api/views.py:2566
+#: apprise_api/api/views.py:2545
 msgid "Successfully removed configuration"
 msgstr "Конфигурация успешно удалена"
 
-#: apprise_api/api/views.py:2674
+#: apprise_api/api/views.py:2653
 msgid "Content-Type must be application/json"
 msgstr "Content-Type должен быть application/json"
 
-#: apprise_api/api/views.py:2712
+#: apprise_api/api/views.py:2691
 msgid "Only an administrator may set configuration access"
 msgstr "Только администратор может устанавливать доступ к конфигурации"
 
-#: apprise_api/api/views.py:2734
+#: apprise_api/api/views.py:2713
 msgid "Valid username and password fields are required"
 msgstr "Требуются действительные поля имени пользователя и пароля"
 
-#: apprise_api/api/views.py:2781
+#: apprise_api/api/views.py:2760
 msgid "The current password was not accepted"
 msgstr "Текущий пароль не был принят"
 
-#: apprise_api/api/views.py:2789
+#: apprise_api/api/views.py:2768
 msgid "The new password must differ from the current password"
 msgstr "Новый пароль должен отличаться от текущего"
 
-#: apprise_api/api/views.py:2807
+#: apprise_api/api/views.py:2786
 msgid "The authentication could not be saved"
 msgstr "Аутентификацию не удалось сохранить"
 
-#: apprise_api/api/views.py:2817
+#: apprise_api/api/views.py:2796
 msgid "Successfully set authentication"
 msgstr "Аутентификация успешно установлена"
 
-#: apprise_api/api/views.py:2860
+#: apprise_api/api/views.py:2839
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "Для удаления аутентификации требуются учетные данные глобального администратора"
 
-#: apprise_api/api/views.py:2873
+#: apprise_api/api/views.py:2852
 msgid "The authentication could not be removed"
 msgstr "Аутентификацию не удалось удалить"
 
-#: apprise_api/api/views.py:2883
+#: apprise_api/api/views.py:2862
 msgid "Successfully removed authentication"
 msgstr "Аутентификация успешно удалена"
 
-#: apprise_api/api/views.py:3034
+#: apprise_api/api/views.py:3013
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "Сервер временно не может начать новый поток живых уведомлений"
 
-#: apprise_api/api/views.py:3059
+#: apprise_api/api/views.py:3038
 msgid "An error occurred delivering the notification"
 msgstr "Произошла ошибка при доставке уведомления"
 
-#: apprise_api/api/views.py:3068
+#: apprise_api/api/views.py:3047
 msgid "One or more notification could not be sent"
 msgstr "Одно или несколько уведомлений не удалось отправить"
 
-#: apprise_api/api/views.py:3124
+#: apprise_api/api/views.py:3103
 msgid "The selected notification entry is invalid"
 msgstr "Выбранная запись уведомления недействительна"
 
-#: apprise_api/api/views.py:3138
+#: apprise_api/api/views.py:3117
 msgid "The selected notification entry is no longer available"
 msgstr "Выбранная запись уведомления больше недоступна"
 
-#: apprise_api/api/views.py:3163
+#: apprise_api/api/views.py:3142
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "Сопоставление поля полезной нагрузки не удалось с использованием KEY: {}"
 
-#: apprise_api/api/views.py:3165
+#: apprise_api/api/views.py:3144
 msgid "Payload field mapping failed"
 msgstr "Сопоставление поля полезной нагрузки не удалось"
 
-#: apprise_api/api/views.py:3178
+#: apprise_api/api/views.py:3157
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "Поле {} должно быть строкой"
 
-#: apprise_api/api/views.py:3190
+#: apprise_api/api/views.py:3169
 msgid "The format field must be a string or null"
 msgstr "Поле format должно быть строкой или null"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3211
 msgid "Bad FORM Payload provided"
 msgstr "Предоставлена неправильная полезная нагрузка FORM"
 
-#: apprise_api/api/views.py:3251
+#: apprise_api/api/views.py:3231
 msgid "The template field must be an object of name/value pairs"
 msgstr "Поле шаблона должно быть объектом имен/значений"
 
-#: apprise_api/api/views.py:3281 apprise_api/api/views.py:3300
+#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "Для этой конфигурации требуется конкретный тег, отличный от 'all'"
 
-#: apprise_api/api/views.py:3293
+#: apprise_api/api/views.py:3273
 msgid "Unsupported characters found in tag definition"
 msgstr "В определении тега найдены неподдерживаемые символы"
 
-#: apprise_api/api/views.py:3339
+#: apprise_api/api/views.py:3319
 msgid "Bad Attachment"
 msgstr "Неправильное вложение"
 
-#: apprise_api/api/views.py:3371
+#: apprise_api/api/views.py:3351
 msgid "An invalid body input format was specified"
 msgstr "Указан неверный формат ввода тела"
 
-#: apprise_api/api/views.py:3408
+#: apprise_api/api/views.py:3388
 msgid "The recursion limit has been reached"
 msgstr "Достигнут предел рекурсии"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3400
 msgid "An invalid recursion value was specified"
 msgstr "Указано неверное значение рекурсии"
 
-#: apprise_api/api/views.py:3440
+#: apprise_api/api/views.py:3420
 msgid "An error occurred preparing the notification"
 msgstr "Произошла ошибка при подготовке уведомления"
 
-#: apprise_api/api/views.py:3511 apprise_api/api/views.py:3714
+#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
 msgid "Payload lacks minimum requirements"
 msgstr "Пакет не соответствует минимальным требованиям"
 
-#: apprise_api/api/views.py:3675
+#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+msgid "There was no configuration found"
+msgstr "Конфигурация не найдена"
+
+#: apprise_api/api/views.py:3647
 msgid "This configuration does not permit stateless notifications"
 msgstr "Эта конфигурация не допускает безсостояночные уведомления"
 
-#: apprise_api/api/views.py:3752
+#: apprise_api/api/views.py:3726
 msgid "There was no valid URLs provided to notify"
 msgstr "Не предоставлены действительные URL для уведомления"
 
