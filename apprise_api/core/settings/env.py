@@ -27,6 +27,7 @@ Values are not cached so tests and commands can replace the environment before
 loading the settings module.
 """
 
+import json
 import os
 
 from core.utils import parse_bool
@@ -87,3 +88,30 @@ def env_choice(name, default, choices, *, first_character=False):
 
     expected = ", ".join(normalized_choices)
     raise ImproperlyConfigured(f"{name} must be one of: {expected}.")
+
+
+def env_asset():
+    """Read administrator-provided notification branding and behavior defaults."""
+    try:
+        value = json.loads(os.environ.get("APPRISE_ASSET", "{}"))
+    except (TypeError, ValueError):
+        raise ImproperlyConfigured("APPRISE_ASSET must be a JSON object.") from None
+    if not isinstance(value, dict):
+        raise ImproperlyConfigured("APPRISE_ASSET must be a JSON object.")
+    types = {
+        "app_id": str,
+        "app_desc": str,
+        "app_url": str,
+        "theme": str,
+        "image_url_mask": str,
+        "image_url_logo": str,
+        "image_path_mask": str,
+        "encoding": str,
+        "async_mode": bool,
+        "interpret_escapes": bool,
+        "secure_logging": bool,
+    }
+    for key, setting in value.items():
+        if key not in types or not isinstance(setting, types[key]):
+            raise ImproperlyConfigured(f"APPRISE_ASSET contains an unsupported key or value type: {key}.")
+    return value

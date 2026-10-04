@@ -1421,3 +1421,25 @@ If you're interested in reading more about this and other methods on how to cust
 Want to help make Apprise better?
 * 💡 [Contribute to the Apprise Code Base](https://appriseit.com/contributing/)
 * ❤️ [Sponsorship and Donations](https://appriseit.com/contributing/sponsors/)
+
+### Global notification defaults
+
+Set `APPRISE_ASSET` to a JSON object to apply notification branding and behavior
+across stateful and stateless requests, including saved configurations:
+
+```yaml
+environment:
+  APPRISE_ASSET: '{"app_id":"Operations","app_desc":"Operations alerts","app_url":"https://example.org","interpret_escapes":true}'
+```
+
+Supported string settings are `app_id`, `app_desc`, `app_url`, `theme`,
+`image_url_mask`, `image_url_logo`, `image_path_mask`, and `encoding`.
+Supported boolean settings are `async_mode`, `interpret_escapes`, and
+`secure_logging` (use JSON `true`/`false`, not quoted strings).
+Omitting the variable preserves Apprise defaults. Restart after changing it.
+Malformed JSON, unsupported keys, and incorrect types stop startup.
+
+This configures outgoing notifications, not the website theme. Existing API
+settings for message format, templates, redirects, storage, plugins, and
+request language remain authoritative and cannot be supplied in this object.
+Service-specific URL options continue to follow the Apprise library's rules.
