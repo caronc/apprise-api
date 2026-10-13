@@ -382,7 +382,7 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
         self.assertIn("Click here to reveal QR Code", html)
         self.assertNotIn("data-mobile-qr-toggle", html)
         self.assertNotIn("Mobile Setup QR Code", html)
-        self.assertIn("data-mobile-beta-open", html)
+        self.assertIn("data-mobile-app-open", html)
 
     def test_config_page_qr_script_is_valid_javascript(self):
         """The embedded QR card initialization remains valid JavaScript."""

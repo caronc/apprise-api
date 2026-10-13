@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 03:51+0000\n"
+"POT-Creation-Date: 2026-11-12 03:57+0000\n"
 "PO-Revision-Date: 2026-10-16\n"
 "Last-Translator: Ciro Mota <contato@ciromota.tec.br>\n"
 "Language-Team: pt\n"
@@ -92,7 +92,7 @@ msgstr "Nome de usuário"
 msgid "Password"
 msgstr "Senha"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1409
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1407
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -247,9 +247,9 @@ msgstr "O payload JSON deve ser um objeto"
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
+#: apprise_api/api/templates/base.html:1423
+#: apprise_api/api/templates/base.html:1424
 #: apprise_api/api/templates/base.html:1425
-#: apprise_api/api/templates/base.html:1426
-#: apprise_api/api/templates/base.html:1427
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
@@ -273,7 +273,7 @@ msgstr "Mostrar ID de Configuração"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1428
+#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
 #: apprise_api/api/templates/config_list.html:64
@@ -472,7 +472,7 @@ msgid "Freezes configuration-user access without deleting the configuration or l
 msgstr "Bloqueia o acesso do usuário à configuração, sem excluir a configuração ou o login. Apenas um administrador pode realizar essa ação."
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "Fechar"
 
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "Nome de usuário, senha e ID de Configuração copiados para a área de transferência"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1039
+#: apprise_api/api/templates/base.html:1037
 msgid "Scan with Apprise Mobile"
 msgstr "Escanear com Apprise Mobile"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "Este código QR contém a nova senha. Salve-o ou compartilhe-o de forma segura agora; a senha não poderá ser exibida novamente."
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1050
-#: apprise_api/api/tests/test_localization.py:413
+#: apprise_api/api/templates/base.html:1048
+#: apprise_api/api/tests/test_localization.py:441
 msgid "Show Complete URL"
 msgstr "Mostrar URL Completo"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/templates/base.html:1049
 msgid "Hide Complete URL"
 msgstr "Ocultar URL Completo"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1050
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "Copiar URL para a Área de Transferência"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1051
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "URL do Apprise Mobile copiado para a área de transferência"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1052
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "Esta URL é longa demais para ser codificada em um código QR. Em vez disso, use o botão de copiar acima."
 
@@ -568,7 +568,7 @@ msgstr "Redefinir Acesso do Usuário"
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1116
+#: apprise_api/api/templates/base.html:1114
 #: apprise_api/api/templates/config_list.html:118
 #: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
@@ -663,7 +663,7 @@ msgstr "APPRISE LIBRARY"
 #: apprise_api/api/templates/base.html:86
 #: apprise_api/api/templates/base.html:90
 #: apprise_api/api/templates/base.html:91
-#: apprise_api/api/tests/test_localization.py:348
+#: apprise_api/api/tests/test_localization.py:376
 msgid "Language"
 msgstr "Idioma"
 
@@ -742,7 +742,7 @@ msgid "Configuration Manager"
 msgstr "Gerenciador de Configuração"
 
 #: apprise_api/api/templates/base.html:278
-#: apprise_api/api/templates/base.html:1404
+#: apprise_api/api/templates/base.html:1402
 msgid "New Configuration"
 msgstr "Nova Configuração"
 
@@ -781,191 +781,191 @@ msgstr "Documentação"
 msgid "Apprise URL Builder"
 msgstr "Construtor de URL do Apprise"
 
-#: apprise_api/api/templates/base.html:351
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/base.html:349
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Obter Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:354
+#: apprise_api/api/templates/base.html:352
 msgid "Support Development"
 msgstr "Apoio ao Desenvolvimento"
 
-#: apprise_api/api/templates/base.html:363
+#: apprise_api/api/templates/base.html:361
 msgid "Buy Developer A Coffee"
 msgstr "Pague um café para o desenvolvedor"
 
-#: apprise_api/api/templates/base.html:372
+#: apprise_api/api/templates/base.html:370
 msgid "Sponsor Apprise Development"
 msgstr "Patrocine o desenvolvimento do Apprise"
 
-#: apprise_api/api/templates/base.html:383
+#: apprise_api/api/templates/base.html:381
 msgid "Apprise Health Check Failed"
 msgstr "Falha na verificação de integridade do Apprise"
 
-#: apprise_api/api/templates/base.html:384
+#: apprise_api/api/templates/base.html:382
 msgid "The following issues have been detected with your Apprise instance:"
 msgstr "Foram detectados os seguintes problemas na sua instância do Apprise:"
 
-#: apprise_api/api/templates/base.html:391
+#: apprise_api/api/templates/base.html:389
 msgid "Notification Delivery Disabled"
 msgstr "Entrega de Notificações Desativada"
 
-#: apprise_api/api/templates/base.html:394
+#: apprise_api/api/templates/base.html:392
 msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
 msgstr "Tanto as notificações sem estado quanto o armazenamento persistente estão desativados. Um administrador deve habilitar pelo menos um desses modos para que este servidor possa entregar notificações."
 
-#: apprise_api/api/templates/base.html:402
+#: apprise_api/api/templates/base.html:400
 msgid "Configuration Write Failure"
 msgstr "Falha ao Gravar Configuração"
 
-#: apprise_api/api/templates/base.html:404
+#: apprise_api/api/templates/base.html:402
 msgid "Apprise can not write new configuration information to the directory:"
 msgstr "Apprise não pode gravar novas informações de configuração no diretório:"
 
-#: apprise_api/api/templates/base.html:406
-#: apprise_api/api/templates/base.html:430
+#: apprise_api/api/templates/base.html:404
+#: apprise_api/api/templates/base.html:428
 msgid "Path copied to clipboard"
 msgstr "Caminho copiado para a área de transferência"
 
-#: apprise_api/api/templates/base.html:411
-#: apprise_api/api/templates/base.html:435
+#: apprise_api/api/templates/base.html:409
+#: apprise_api/api/templates/base.html:433
 msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
 msgstr "<em>Nota:</em> Se esse for o comportamento esperado, defina a variável de ambiente mostrada abaixo e recarregue sua instância do Apprise."
 
-#: apprise_api/api/templates/base.html:414
-#: apprise_api/api/templates/base.html:438
+#: apprise_api/api/templates/base.html:412
+#: apprise_api/api/templates/base.html:436
 msgid "Environment variable copied to clipboard"
 msgstr "Variável de ambiente copiada para a área de transferência"
 
-#: apprise_api/api/templates/base.html:424
+#: apprise_api/api/templates/base.html:422
 msgid "Attachment Temporary Storage Write Failure"
 msgstr "Falha ao gravar anexo no armazenamento temporário"
 
-#: apprise_api/api/templates/base.html:427
+#: apprise_api/api/templates/base.html:425
 msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
 msgstr "O Apprise não consegue distribuir anexos (caso sejam fornecidos), pois não possui permissão de escrita no diretório:"
 
-#: apprise_api/api/templates/base.html:445
+#: apprise_api/api/templates/base.html:443
 msgid "More Details"
 msgstr "Mais Detalhes"
 
-#: apprise_api/api/templates/base.html:448
+#: apprise_api/api/templates/base.html:446
 msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
 msgstr "Na maioria dos casos, os problemas identificados aqui estão relacionados a permissões. Certifique-se de definir os valores corretos de <code>PUID</code> e <code>GUID</code> para corresponder às permissões que você deseja que o Apprise utilize ao ler e gravar seus arquivos. Além disso, pode ser necessário garantir que as permissões estejam configuradas corretamente nos diretórios que você mapeou."
 
-#: apprise_api/api/templates/base.html:451
+#: apprise_api/api/templates/base.html:449
 msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
 msgstr "O(s) problema(s) identificado(s) aqui também pode(m) estar relacionado(s) ao SELinux. Talvez seja interessante descartar o SELinux como causa, desativando-o temporariamente por meio do seguinte comando:"
 
-#: apprise_api/api/templates/base.html:454
-#: apprise_api/api/templates/base.html:460
+#: apprise_api/api/templates/base.html:452
+#: apprise_api/api/templates/base.html:458
 #: apprise_api/api/templates/config.html:3395
 msgid "Command copied to clipboard"
 msgstr "Comando copiado para a área de transferência"
 
-#: apprise_api/api/templates/base.html:458
+#: apprise_api/api/templates/base.html:456
 msgid "You can always re-enable it with:"
 msgstr "Você sempre pode reativá-lo com:"
 
-#: apprise_api/api/templates/base.html:725
+#: apprise_api/api/templates/base.html:723
 msgid "Log Out?"
 msgstr "Sair?"
 
-#: apprise_api/api/templates/base.html:726
+#: apprise_api/api/templates/base.html:724
 msgid "Are you sure you wish to log out?"
 msgstr "Você tem certeza de que deseja sair?"
 
-#: apprise_api/api/templates/base.html:728
-#: apprise_api/api/templates/base.html:1446
+#: apprise_api/api/templates/base.html:726
+#: apprise_api/api/templates/base.html:1444
 msgid "Yes"
 msgstr "Sim"
 
-#: apprise_api/api/templates/base.html:729
-#: apprise_api/api/templates/base.html:1447
+#: apprise_api/api/templates/base.html:727
+#: apprise_api/api/templates/base.html:1445
 msgid "No"
 msgstr "Não"
 
-#: apprise_api/api/templates/base.html:878
+#: apprise_api/api/templates/base.html:876
 msgid "Abort Current Task?"
 msgstr "Cancelar tarefa atual?"
 
-#: apprise_api/api/templates/base.html:879
+#: apprise_api/api/templates/base.html:877
 msgid "Are you sure you wish to abort the current task?"
 msgstr "Você tem certeza de que deseja cancelar a tarefa atual?"
 
-#: apprise_api/api/templates/base.html:882
+#: apprise_api/api/templates/base.html:880
 msgid "Abort Task"
 msgstr "Cancelando Tarefa"
 
-#: apprise_api/api/templates/base.html:883
+#: apprise_api/api/templates/base.html:881
 msgid "Keep Running"
 msgstr "Continuar Executando"
 
-#: apprise_api/api/templates/base.html:989
+#: apprise_api/api/templates/base.html:987
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
 #: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "ID da Configuração oculto"
 
-#: apprise_api/api/templates/base.html:1006
+#: apprise_api/api/templates/base.html:1004
 msgid "Config ID copied to clipboard"
 msgstr "ID da Configuração copiado para a área de transferência"
 
-#: apprise_api/api/templates/base.html:1031
-#: apprise_api/api/templates/base.html:1059
+#: apprise_api/api/templates/base.html:1029
+#: apprise_api/api/templates/base.html:1057
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "Não foi possível gerar o código QR do Apprise Mobile."
 
-#: apprise_api/api/templates/base.html:1058
+#: apprise_api/api/templates/base.html:1056
 msgid "Apprise Mobile Quick Config"
 msgstr "Configuração Rápida do Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:1104
-#: apprise_api/api/templates/base.html:1468
+#: apprise_api/api/templates/base.html:1102
+#: apprise_api/api/templates/base.html:1466
 msgid "Enter a valid Config ID before continuing."
 msgstr "Digite um ID de Configuração válido antes de continuar."
 
-#: apprise_api/api/templates/base.html:1111
+#: apprise_api/api/templates/base.html:1109
 msgid "Open Configuration"
 msgstr "Abrir Configuração"
 
-#: apprise_api/api/templates/base.html:1112
+#: apprise_api/api/templates/base.html:1110
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "Isso abre um ID de configuração diferente. Quaisquer alterações não salvas nesta página serão perdidas."
 
-#: apprise_api/api/templates/base.html:1115
+#: apprise_api/api/templates/base.html:1113
 msgid "Continue"
 msgstr "Continuar"
 
-#: apprise_api/api/templates/base.html:1342
-#: apprise_api/api/templates/base.html:1362
+#: apprise_api/api/templates/base.html:1340
+#: apprise_api/api/templates/base.html:1360
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Não foi possível acessar o endpoint de status do Apprise API."
 
-#: apprise_api/api/templates/base.html:1348
+#: apprise_api/api/templates/base.html:1346
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "A entrega de notificações está desativada. Ative notificações sem estado ou armazenamento persistente para retomar o serviço."
 
-#: apprise_api/api/templates/base.html:1407
+#: apprise_api/api/templates/base.html:1405
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "Escolha um novo ID de Configuração. Você pode editá-lo ou gerar outro antes de continuar."
 
-#: apprise_api/api/templates/base.html:1419
+#: apprise_api/api/templates/base.html:1417
 msgid "New Config ID"
 msgstr "Novo ID de Configuração"
 
-#: apprise_api/api/templates/base.html:1435
-#: apprise_api/api/templates/base.html:1436
+#: apprise_api/api/templates/base.html:1433
+#: apprise_api/api/templates/base.html:1434
 msgid "Generate Another Config ID"
 msgstr "Gerar Outro ID de Configuração"
 
-#: apprise_api/api/templates/base.html:1441
+#: apprise_api/api/templates/base.html:1439
 msgid "Do you wish to open this configuration?"
 msgstr "Deseja abrir esta configuração?"
 
-#: apprise_api/api/templates/base.html:1511
+#: apprise_api/api/templates/base.html:1509
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1029,65 +1029,57 @@ msgstr ""
 "\n"
 "Licenciado sob a Licença %(license)s."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "App Android"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "App Android / iOS"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "O Apprise Mobile conecta seu dispositivo Android a este servidor. Envie uma mensagem, uma foto que você acabou de tirar ou qualquer arquivo para um destino, um grupo ou todos os destinos que você configurou."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid "Apprise Mobile connects your Android or iOS device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
+msgstr "Apprise Mobile conecta seu dispositivo Android / iOS a este servidor. Envie uma mensagem, uma foto que você acabou de tirar ou qualquer arquivo para um destino, um grupo ou tudo o que você configurou."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "Envie notificações e anexos do seu telefone."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
 msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
 msgstr "Escaneie o código QR de configuração rápida do Apprise Mobile para adicionar este servidor e carregar uma configuração."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
 msgstr "Revise suas configurações remotas e acompanhe todos os relatórios de entrega."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "Obtenha no Google Play"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "Saiba Mais"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "Visualize o App"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "Painel do Apprise Mobile"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Painel"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "Construtor de URLs da Apprise Mobile"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "Construtor de URL"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Relatório de entrega do Apprise Mobile"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "Relatório de entrega"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "Google Play e o logotipo do Google Play são marcas registradas do Google LLC."
 
 #: apprise_api/api/templates/components/qr_password_note.html:4
 msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
@@ -1242,8 +1234,8 @@ msgstr "Não foi possível carregar o código QR."
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "Precisa do aplicativo? Obtenha o %(mobile_app_link)s para Android."
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr "Precisa do aplicativo? Obtenha o %(mobile_app_link)s para Android / iOS."
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1964,8 +1956,8 @@ msgid "A Configuration ID is required for non-administrative accounts. Global ad
 msgstr "Um ID de Configuração é necessário para contas não administrativas. Administradores globais podem deixá-lo em branco."
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "Gerencie este servidor a partir do seu dispositivo Android."
+msgid "Manage this server from your Android or iOS device."
+msgstr "Gerencie este servidor a partir do seu dispositivo Android / iOS."
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -2346,6 +2338,14 @@ msgstr "Deve começar com pelo menos dois caracteres alfanuméricos."
 #: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Não pode exceder 64 caracteres no comprimento total."
+
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "Obtenha no Google Play"
 
 #: apprise_api/api/views.py:1187
 msgid "This configuration has been disabled by an administrator"

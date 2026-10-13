@@ -21,15 +21,15 @@
 Support Banner
 ========================================= */
 :root {
-  --mobile-beta-bg: #17181c;
-  --mobile-beta-surface: #23262f;
-  --mobile-beta-border: #34383f;
-  --mobile-beta-text: #c1c3c9;
-  --mobile-beta-heading: #edeef3;
-  --mobile-beta-muted: #888c96;
-  --mobile-beta-accent: #2cb6a6;
-  --mobile-beta-accent-soft: #0b3b37;
-  --mobile-beta-primary-text: #071b19;
+  --mobile-app-bg: #17181c;
+  --mobile-app-surface: #23262f;
+  --mobile-app-border: #34383f;
+  --mobile-app-text: #c1c3c9;
+  --mobile-app-heading: #edeef3;
+  --mobile-app-muted: #888c96;
+  --mobile-app-accent: #2cb6a6;
+  --mobile-app-accent-soft: #0b3b37;
+  --mobile-app-primary-text: #071b19;
   --section-heading-start: #153532;
   --section-heading-end: #222832;
   --section-heading-border: #35514f;
@@ -1366,7 +1366,7 @@ Config Editor — textarea border override
 
 /* 6. Template variables use the same accent throughout the interface. */
 .apprise-config-yaml .apprise-config-highlight .hljs-template-variable {
-  color: var(--mobile-beta-accent) !important;
+  color: var(--mobile-app-accent) !important;
   font-weight: 600;
 }
 
@@ -1459,13 +1459,6 @@ Notifications — SweetAlert2
   border-color: #888c96 !important;
   color: #0d0f12 !important;
   background: #6f7582 !important;
-}
-
-.mobile-beta-dialog__steps a.mobile-beta-dialog__primary,
-.mobile-beta-dialog__steps a.mobile-beta-dialog__primary:hover,
-.mobile-beta-dialog__steps a.mobile-beta-dialog__primary:focus {
-  color: #071b19 !important;
-  background: #2cb6a6 !important;
 }
 
 .notify-attachments-list .attachment-chip {

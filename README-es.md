@@ -15,6 +15,15 @@ Apprise API fue diseñado para adaptarse fácilmente a los ecosistemas existente
 [![CodeCov Status](https://codecov.io/github/caronc/apprise-api/branch/master/graph/badge.svg)](https://codecov.io/github/caronc/apprise-api)
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
+## Apprise Mobile
+
+Apprise Mobile es la aplicación complementaria para Android, iPhone y iPad. Envía notificaciones y archivos adjuntos, administra las URL de los servicios y consulta los informes de entrega. Necesita acceso a tu propio servidor Apprise API; no es un servicio de notificaciones independiente.
+
+<a href="https://apps.apple.com/app/id6821633589"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/app-store-es.svg" alt="Descargar en el App Store"></a> <a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/google-play-es.svg" alt="Disponible en Google Play"></a>
+
+Consulta la [documentación de Apprise Mobile](https://appriseit.com/mobile/) y la [guía de configuración](https://appriseit.com/mobile/getting-started/) para conectar tu servidor. La aplicación requiere Android 8.0 o posterior, o iOS 17.2 o posterior en iPhone y iPad.
+
+
 ## Capturas de pantalla
 
 Hay un pequeño incorporado *Administrador de configuración* a los que se puede acceder opcionalmente a través de su navegador web, lo que le permite crear y guardar tantas configuraciones como desee. Cada configuración se diferencia por una `{KEY}` que usted decida:<br/>

@@ -1,0 +1,15 @@
+{% load static %}
+
+<div class="mobile-store-links"
+     dir="ltr"
+     style="--store-columns: minmax(0, {{ apple_ratio }}fr) minmax(0, {{ google_ratio }}fr);
+            --store-width: {{ badge_width }}px">
+  <a href="{{ app_store_url }}" target="_blank" rel="noopener noreferrer">
+    <img src="{% static apple_badge %}" alt="{{ apple_label }}">
+  </a>
+  <a href="{{ google_play_url }}"
+     target="_blank"
+     rel="noopener noreferrer">
+    <img src="{% static google_badge %}" alt="{{ google_label }}">
+  </a>
+</div>
