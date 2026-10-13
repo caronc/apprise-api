@@ -33,9 +33,9 @@ class WelcomePageTests(SimpleTestCase):
     def test_mobile_app_dialog_is_available(self):
         """The shared dialog links to the app and its product page."""
         response = self.client.get("/")
-        self.assertContains(response, 'id="mobile-beta-dialog"')
-        self.assertContains(response, 'class="apprise-dialog mobile-beta-dialog"')
-        self.assertContains(response, 'class="apprise-dialog-close mobile-beta-dialog__close"')
+        self.assertContains(response, 'id="mobile-app-dialog"')
+        self.assertContains(response, 'class="apprise-dialog mobile-app-dialog"')
+        self.assertContains(response, 'class="apprise-dialog-close mobile-app-dialog__close"')
         self.assertContains(response, 'class="nav-divider mobile-nav-divider"', count=2)
         self.assertContains(response, "https://play.google.com/store/apps/details?id=com.appriseit.mobile")
         self.assertContains(response, "https://appriseit.com/mobile/")

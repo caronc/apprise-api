@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-12 22:53+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: zh\n"
@@ -339,7 +339,9 @@ msgstr "解释配置访问模式"
 
 #: apprise_api/api/templates/auth.html:100
 #, python-format
-msgid "Saved %(saved)s access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed."
+msgid ""
+"Saved %(saved)s access is currently enforced as locked by the global "
+"configuration lock. It will return if the global lock is removed."
 msgstr "已保存 %(saved)s 的访问当前由全局配置锁定执行。如果移除全局锁，它将恢复。"
 
 #: apprise_api/api/templates/auth.html:132
@@ -455,23 +457,31 @@ msgid "Description"
 msgstr "描述"
 
 #: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
+msgid ""
+"Uses its own login for normal stateful and stateless notifications and "
+"configuration access."
 msgstr "对正常的有状态和无状态通知及配置访问使用其自身登录。"
 
 #: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
+msgid ""
+"Uses its own login for tagged stateful notifications and password changes. "
+"Configuration content stays hidden."
 msgstr "对带标签的有状态通知和密码更改使用其自身登录。配置内容保持隐藏。"
 
 #: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
+msgid ""
+"Allows tagged stateful notifications without a login. Configuration content "
+"and stateless notifications stay protected."
 msgstr "允许无登录的带标签有状态通知。配置内容和无状态通知保持受保护。"
 
 #: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
+msgid ""
+"Freezes configuration-user access without deleting the configuration or "
+"login. Only an administrator may use it."
 msgstr "冻结配置用户访问，但不删除配置或登录。仅管理员可使用。"
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "关闭"
 
@@ -510,7 +520,9 @@ msgid "Scan with Apprise Mobile"
 msgstr "使用 Apprise Mobile 扫描"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
+msgid ""
+"This QR code contains the new password. Save it or share it securely now; "
+"the password cannot be shown again."
 msgstr "此二维码包含新密码。请立即保存或安全地分享；密码无法再次显示。"
 
 #: apprise_api/api/templates/auth.html:521
@@ -537,7 +549,9 @@ msgstr "Apprise Mobile URL 已复制到剪贴板"
 
 #: apprise_api/api/templates/auth.html:525
 #: apprise_api/api/templates/base.html:1055
-msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
+msgid ""
+"This URL is too long to encode as a QR code. Use the copy button above "
+"instead."
 msgstr "此 URL 太长，无法编码为二维码。请改用上方的复制按钮。"
 
 #: apprise_api/api/templates/auth.html:546
@@ -545,7 +559,9 @@ msgid "Reset Access or Configuration?"
 msgstr "重置访问或配置？"
 
 #: apprise_api/api/templates/auth.html:549
-msgid "This will reset only the user access currently associated with this configuration:"
+msgid ""
+"This will reset only the user access currently associated with this "
+"configuration:"
 msgstr "这只会重置当前与此配置相关联的用户访问："
 
 #: apprise_api/api/templates/auth.html:552
@@ -652,7 +668,9 @@ msgid "Administrator Credentials"
 msgstr "管理员凭据"
 
 #: apprise_api/api/templates/base.html:56
-msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
+msgid ""
+"This configuration has no assigned user. As a result, the QR code will use "
+"the administrator account."
 msgstr "此配置未分配用户。因此，二维码将使用管理员账户。"
 
 #: apprise_api/api/templates/base.html:80
@@ -708,7 +726,9 @@ msgid "Logout"
 msgstr "注销"
 
 #: apprise_api/api/templates/base.html:226
-msgid "If Apprise has been useful to you, please consider supporting its development."
+msgid ""
+"If Apprise has been useful to you, please consider supporting its "
+"development."
 msgstr "如果 Apprise 对你有帮助，请考虑支持其开发。"
 
 #: apprise_api/api/templates/base.html:230
@@ -781,7 +801,7 @@ msgid "Apprise URL Builder"
 msgstr "Apprise URL 构建器"
 
 #: apprise_api/api/templates/base.html:353
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "获取 Apprise Mobile"
@@ -811,7 +831,10 @@ msgid "Notification Delivery Disabled"
 msgstr "通知投递已禁用"
 
 #: apprise_api/api/templates/base.html:396
-msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
+msgid ""
+"Both stateless notifications and persistent storage are disabled. An "
+"administrator must enable at least one mode before this server can deliver "
+"notifications."
 msgstr "无状态通知和持久存储均被禁用。管理员必须启用至少一种模式，然后此服务器才能发送通知。"
 
 #: apprise_api/api/templates/base.html:404
@@ -829,7 +852,9 @@ msgstr "路径已复制到剪贴板"
 
 #: apprise_api/api/templates/base.html:413
 #: apprise_api/api/templates/base.html:437
-msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
+msgid ""
+"<em>Note:</em> If this is the expected behavior, pre-set the environment "
+"variable shown below and reload your Apprise instance."
 msgstr "<em>注意:</em> 如果这是预期的行为，请预先设置以下显示的环境变量并重新加载您的Apprise实例。"
 
 #: apprise_api/api/templates/base.html:416
@@ -842,7 +867,9 @@ msgid "Attachment Temporary Storage Write Failure"
 msgstr "附件临时存储写入失败"
 
 #: apprise_api/api/templates/base.html:429
-msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
+msgid ""
+"Apprise can not circulate attachments (if provided) due to not having write "
+"access to the directory:"
 msgstr "Apprise 无法传递附件（如果提供）因为没有对目录的写入权限:"
 
 #: apprise_api/api/templates/base.html:447
@@ -850,11 +877,21 @@ msgid "More Details"
 msgstr "更多详情"
 
 #: apprise_api/api/templates/base.html:450
-msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
-msgstr "在大多数情况下，此处识别的问题通常与权限问题有关。请确保您设置了正确的 <code>PUID</code> 和 <code>GUID</code>，以反映您希望 Apprise 在读取和写入其文件时使用的权限。除此之外，您可能还需要确保映射到的目录权限设置正确。"
+msgid ""
+"Under most circumstances, the issue(s) identified here are usually related "
+"to permission issues. Make sure you set the correct <code>PUID</code> and "
+"<code>GUID</code> to reflect the permissions you wish Apprise to utilize "
+"when it is reading and writing its files. In addition to this, you may need "
+"to make sure the permissions are set correctly on the directories you mapped"
+" them too."
+msgstr ""
+"在大多数情况下，此处识别的问题通常与权限问题有关。请确保您设置了正确的 <code>PUID</code> 和 "
+"<code>GUID</code>，以反映您希望 Apprise 在读取和写入其文件时使用的权限。除此之外，您可能还需要确保映射到的目录权限设置正确。"
 
 #: apprise_api/api/templates/base.html:453
-msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
+msgid ""
+"The issue(s) identified here can also be associated with SELinux. You may "
+"wish to rule out SELinux by temporarily disabling it with:"
 msgstr "此处识别的问题也可能与 SELinux 相关。您可能希望通过暂时禁用它来排除 SELinux："
 
 #: apprise_api/api/templates/base.html:456
@@ -931,7 +968,9 @@ msgid "Open Configuration"
 msgstr "打开配置"
 
 #: apprise_api/api/templates/base.html:1113
-msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
+msgid ""
+"This opens a different Config ID. Any unsaved changes on this page will be "
+"lost."
 msgstr "这将打开不同的配置ID。此页面上未保存的更改将会丢失。"
 
 #: apprise_api/api/templates/base.html:1116
@@ -944,11 +983,15 @@ msgid "Unable to reach the Apprise API status endpoint."
 msgstr "无法访问Apprise API 状态端点。"
 
 #: apprise_api/api/templates/base.html:1349
-msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
+msgid ""
+"Notification delivery is disabled. Enable stateless notifications or "
+"persistent storage to resume service."
 msgstr "通知发送已禁用。启用无状态通知或持久存储以恢复服务。"
 
 #: apprise_api/api/templates/base.html:1408
-msgid "Choose a new Config ID. You can edit it or generate another before continuing."
+msgid ""
+"Choose a new Config ID. You can edit it or generate another before "
+"continuing."
 msgstr "选择新的配置ID。您可以在继续之前编辑它或生成另一个。"
 
 #: apprise_api/api/templates/base.html:1420
@@ -985,7 +1028,8 @@ msgid "Changed Config ID Not Applied"
 msgstr "已更改配置ID但未应用"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:13
-msgid "The entered value is not the configuration currently being managed. Apply"
+msgid ""
+"The entered value is not the configuration currently being managed. Apply"
 msgstr "输入的值不是当前正在管理的配置。应用"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:18
@@ -1028,68 +1072,67 @@ msgstr ""
 "\n"
 "根据%(license)s许可证授权。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "Android 应用"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "Android / iOS 应用"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "使您的Android设备连接到此服务器。发送消息、刚拍的照片或任何文件到一个目的地、一个群组，或您配置的所有内容。"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid ""
+"Apprise Mobile connects your Android or iOS device to this server. Send a "
+"message, a photo you just took, or any file to one destination, a group, or "
+"everything you have configured."
+msgstr "使您的Android / iOS设备连接到此服务器。发送消息、刚拍的照片或任何文件到一个目的地、一个群组，或您配置的所有内容。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "从手机发送通知和附件。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
-msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
+msgid ""
+"Scan the Apprise Mobile Quick Setup QR code to add this server and load a "
+"configuration."
 msgstr "扫描Apprise Mobile快速设置二维码以添加此服务器并加载配置。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
 msgstr "审查您的远程配置并跟踪每个交付报告。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "在Google Play获取。"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "了解更多信息。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "预览应用。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile仪表板。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "仪表盘"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "Apprise Mobile URL构建器。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "URL 构建器"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile 交付报告"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "发送报告"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "Google Play 和 Google Play 标志是 Google 的商标 LLC。"
-
 #: apprise_api/api/templates/components/qr_password_note.html:4
-msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
+msgid ""
+"Saved passwords are not included. Apprise Mobile will ask for one when "
+"required."
 msgstr "已保存的密码不包括在内。Apprise Mobile将在需要时要求输入密码。"
 
 #: apprise_api/api/templates/components/qr_password_note.html:7
@@ -1143,7 +1186,8 @@ msgid "Apprise configuration ID copied to clipboard"
 msgstr "Apprise 配置 ID 已复制到剪贴板"
 
 #: apprise_api/api/templates/config.html:109
-msgid "For some examples on how to build a development environment around this:"
+msgid ""
+"For some examples on how to build a development environment around this:"
 msgstr "有关如何围绕此构建开发环境的一些示例："
 
 #: apprise_api/api/templates/config.html:109
@@ -1221,7 +1265,9 @@ msgstr "Apprise Mobile 快速设置"
 
 #: apprise_api/api/templates/config.html:162
 #, python-format
-msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
+msgid ""
+"Reveal and scan this code to easily load this configuration into your "
+"%(mobile_app_link)s."
 msgstr "显示并扫描此代码即可轻松将此配置加载到您的%(mobile_app_link)s中。"
 
 #: apprise_api/api/templates/config.html:171
@@ -1241,8 +1287,8 @@ msgstr "二维码无法加载。"
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "需要应用？获取%(mobile_app_link)s用于Android。"
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr "需要应用？获取%(mobile_app_link)s用于Android / iOS。"
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1266,7 +1312,9 @@ msgid "Using The Apprise CLI"
 msgstr "使用 Apprise CLI"
 
 #: apprise_api/api/templates/config.html:230
-msgid "The following command would cause apprise to directly notify all of your services:"
+msgid ""
+"The following command would cause apprise to directly notify all of your "
+"services:"
 msgstr "以下命令将导致 apprise 直接通知您所有的服务："
 
 #: apprise_api/api/templates/config.html:237
@@ -1280,35 +1328,55 @@ msgid ""
 msgstr "以下命令将导致 apprise 检索已加载的配置并向您添加的所有服务发送测试通知："
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "您也可以创建一个 <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise 配置文件</a>，其中某处包含以下行："
+msgid ""
+"You may also create an <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a>"
+" that contains this line somewhere in it:"
+msgstr ""
+"您也可以创建一个 <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Apprise 配置文件</a>，其中某处包含以下行："
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "Apprise 配置 'include' 条目已复制到剪贴板"
 
 #: apprise_api/api/templates/config.html:262
-msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
-msgstr "通过利用 <em>include</em> 指令，它将自动在将来对 <code>apprise</code> 工具的调用中被引用。 所有使用 Apprise 的未来调用现在简化为："
+msgid ""
+"By leveraging the <em>include</em> directive, it will automatically be "
+"referenced for future calls to the <code>apprise</code> tool. All future "
+"calls using Apprise now simplify to:"
+msgstr ""
+"通过利用 <em>include</em> 指令，它将自动在将来对 <code>apprise</code> 工具的调用中被引用。 所有使用 "
+"Apprise 的未来调用现在简化为："
 
 #: apprise_api/api/templates/config.html:268
 msgid "Using CURL"
 msgstr "使用 CURL"
 
 #: apprise_api/api/templates/config.html:270
-msgid "The following command would cause the Apprise API to notify all of your services:"
+msgid ""
+"The following command would cause the Apprise API to notify all of your "
+"services:"
 msgstr "以下命令将使 Apprise API 通知您所有的服务："
 
 #: apprise_api/api/templates/config.html:280
-msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
+msgid ""
+"When sending attachments, <code>curl</code> requires all local files be "
+"prefixed with <code>@</code>. You can an add attachment like this:"
 msgstr "发送附件时，<code>curl</code>要求所有本地文件都必须以<code>@</code>为前缀。你可以这样添加附件："
 
 #: apprise_api/api/templates/config.html:290
-msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
-msgstr "当发送多个附件时，必须为每个附件唯一分配一个新的ID。下面的示例使用了<code>attach1</code>和<code>attach2</code>:"
+msgid ""
+"When sending more than one attachment, you must uniquely assign each "
+"attachment to a new ID.  The example below leverages <code>attach1</code> "
+"and <code>attach2</code>:"
+msgstr ""
+"当发送多个附件时，必须为每个附件唯一分配一个新的ID。下面的示例使用了<code>attach1</code>和<code>attach2</code>:"
 
 #: apprise_api/api/templates/config.html:301
-msgid "Sends a notification to our endpoints with an attachment and no body specified:"
+msgid ""
+"Sends a notification to our endpoints with an attachment and no body "
+"specified:"
 msgstr "向我们的端点发送一个有附件但未指定正文的通知："
 
 #: apprise_api/api/templates/config.html:319
@@ -1347,7 +1415,9 @@ msgstr "您的管理员已禁用您访问配置的权限。"
 
 #: apprise_api/api/templates/config.html:410
 #, python-format
-msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
+msgid ""
+"Once you have successfully loaded <i>at least one Apprise URL</i> on the "
+"%(config_chip)s section, your loaded entries will display here."
 msgstr "一旦您在 %(config_chip)s 部分成功加载了至少一个 <i>Apprise URL</i>，您的已加载条目将显示在此处。"
 
 #: apprise_api/api/templates/config.html:418
@@ -1360,8 +1430,13 @@ msgid "Show only selected notification services"
 msgstr "仅显示已选择的通知服务"
 
 #: apprise_api/api/templates/config.html:431
-msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
-msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> 个通知已选择发送</span>"
+msgid ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> notification(s) selected for "
+"sending</span>"
+msgstr ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> 个通知已选择发送</span>"
 
 #: apprise_api/api/templates/config.html:443
 msgid "Unsaved Configuration Changes"
@@ -1369,7 +1444,10 @@ msgstr "未保存的配置更改"
 
 #: apprise_api/api/templates/config.html:445
 #, python-format
-msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
+msgid ""
+"The entries below were parsed from the configuration that was last saved, so"
+" they may not reflect your recent edits. Save them in the %(config_chip)s "
+"section to see the result here."
 msgstr "下面的条目是从上次保存的配置解析的，因此可能无法反映您的最近编辑。将它们保存在 %(config_chip)s 部分以在此处查看结果。"
 
 #: apprise_api/api/templates/config.html:449
@@ -1383,7 +1461,9 @@ msgstr "在任何条目上选择一个标签（🏷️）以将其包含在 %(no
 
 #: apprise_api/api/templates/config.html:454
 #, python-format
-msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
+msgid ""
+"Use %(send_icon)s to run a quick test and inspect the full debug output for "
+"that entry."
 msgstr "使用 %(send_icon)s 运行快速测试并检查该条目的完整调试输出。"
 
 #: apprise_api/api/templates/config.html:457
@@ -1400,7 +1480,9 @@ msgid "No Notification Targets Selected"
 msgstr "未选择通知目标"
 
 #: apprise_api/api/templates/config.html:495
-msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
+msgid ""
+"Choose at least one tag. The saved destinations stay hidden while "
+"configuration locking is enabled."
 msgstr "至少选择一个标签。在启用配置锁定时，已保存的目的地会保持隐藏。"
 
 #: apprise_api/api/templates/config.html:497
@@ -1423,7 +1505,9 @@ msgid "Template Values"
 msgstr "模板值"
 
 #: apprise_api/api/templates/config.html:539
-msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
+msgid ""
+"Rows with a value are sent; blank values use the server fallback (if "
+"defined)."
 msgstr "有值的行会发送；空白值使用服务器回退（如果已定义）。"
 
 #: apprise_api/api/templates/config.html:545
@@ -1462,7 +1546,8 @@ msgid "Escalation group"
 msgstr "升级组"
 
 #: apprise_api/api/templates/config.html:677
-msgid "Maximum number of retries attempted if the service fails before giving up"
+msgid ""
+"Maximum number of retries attempted if the service fails before giving up"
 msgstr "如果服务失败，放弃前尝试的最大重试次数"
 
 #: apprise_api/api/templates/config.html:688
@@ -1649,7 +1734,8 @@ msgid "Optional Service"
 msgstr "可选服务的支持"
 
 #: apprise_api/api/templates/config.html:2551
-msgid "Optional Service: failures are ignored when determining notification success"
+msgid ""
+"Optional Service: failures are ignored when determining notification success"
 msgstr "可选服务：在确定通知是否成功时忽略失败"
 
 #: apprise_api/api/templates/config.html:2674
@@ -1673,7 +1759,9 @@ msgid "Successfully saved the configuration."
 msgstr "配置已成功保存。"
 
 #: apprise_api/api/templates/config.html:2961
-msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
+msgid ""
+"There was an issue writing the configuration to disk. Check your file "
+"permissions and try again."
 msgstr "将配置写入磁盘时出现问题。请检查您的文件权限并重试。"
 
 #: apprise_api/api/templates/config.html:2968
@@ -1703,11 +1791,14 @@ msgid "Choose at least one tag before sending."
 msgstr "发送前至少选择一个标签。"
 
 #: apprise_api/api/templates/config.html:3274
-msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
+msgid ""
+"No notification targets are selected. Add configuration endpoints or choose "
+"one or more matching tags before sending."
 msgstr "未选择通知目标。发送前请添加配置端点或选择一个或多个匹配的标签。"
 
 #: apprise_api/api/templates/config.html:3289
-msgid "Please provide at least a message body or one attachment before sending."
+msgid ""
+"Please provide at least a message body or one attachment before sending."
 msgstr "发送前请至少提供一条消息正文或一个附件。"
 
 #: apprise_api/api/templates/config.html:3338
@@ -1769,7 +1860,8 @@ msgid "Delete Configuration ID?"
 msgstr "删除配置 ID?"
 
 #: apprise_api/api/templates/config_list.html:115
-msgid "This permanently removes this configuration and any login assigned to it."
+msgid ""
+"This permanently removes this configuration and any login assigned to it."
 msgstr "这将永久删除此配置及分配给它的任何登录。"
 
 #: apprise_api/api/templates/config_list.html:131
@@ -1798,7 +1890,9 @@ msgid ""
 "The following services are supported by this\n"
 "            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "以下服务由此 <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> 实例支持。"
+msgstr ""
+"以下服务由此 <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" "
+"rel=\"noopener noreferrer\">Apprise</a> 实例支持。"
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
@@ -1812,7 +1906,9 @@ msgstr "若要查看仅标识已启用 Apprise 服务的简化列表，请点击
 msgid ""
 "To see a listing that identifies all of Apprise services available to this\n"
 "          version (enabled or not) click <a href=\"%(href)s?all=yes\">here</a>."
-msgstr "要查看列出了该版本可用的所有 Apprise 服务（无论是否启用）的列表，请点击 <a href=\"%(href)s?all=yes\">这里</a>。"
+msgstr ""
+"要查看列出了该版本可用的所有 Apprise 服务（无论是否启用）的列表，请点击 <a "
+"href=\"%(href)s?all=yes\">这里</a>。"
 
 #: apprise_api/api/templates/details.html:30
 msgid "Total plugin(s) supported"
@@ -1869,7 +1965,9 @@ msgid "API Endpoints"
 msgstr "API 端点"
 
 #: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
+msgid ""
+"Developers who wish to receive this result set in a JSON parseable string "
+"for their application can perform the following to achieve this:"
 msgstr "希望以可供其应用程序解析的 JSON 字符串接收此结果集的开发者可以执行以下操作以实现此目的："
 
 #: apprise_api/api/templates/details.html:181
@@ -1936,8 +2034,13 @@ msgid "Execute the request"
 msgstr "执行请求"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "有关 JSON 格式的更多详细信息请参见 <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">这里</a>。"
+msgid ""
+"More details on the JSON format can be found <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">here</a>."
+msgstr ""
+"有关 JSON 格式的更多详细信息请参见 <a href=\"https://appriseit.com/library/inspection/\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">这里</a>。"
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1959,12 +2062,14 @@ msgid "Provide the login credentials required to access the Apprise API."
 msgstr "提供访问 Apprise API 所需的登录凭据。"
 
 #: apprise_api/api/templates/login.html:73
-msgid "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank."
+msgid ""
+"A Configuration ID is required for non-administrative accounts. Global "
+"administrators can leave it blank."
 msgstr "非管理账户需要配置 ID。全局管理员可以留空。"
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "从您的 Android 设备管理此服务器。"
+msgid "Manage this server from your Android or iOS device."
+msgstr "从您的 Android / iOS 设备管理此服务器。"
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -2001,7 +2106,10 @@ msgstr "无状态端点"
 msgid ""
 "Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "那些希望将此 API 仅作为项目的 <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">附加服务 </a> 和/或微服务使用的人，只需使用以下 URL。"
+msgstr ""
+"那些希望将此 API 仅作为项目的 <a href=\"https://docs.microsoft.com/en-"
+"us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">附加服务 </a> 和/或微服务使用的人，只需使用以下 URL。"
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2012,7 +2120,10 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "用于通知一个或多个指定的 Apprise URL。如果您需要有关构建 URL 的帮助，请参阅 <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a>。"
+msgstr ""
+"用于通知一个或多个指定的 Apprise URL。如果您需要有关构建 URL 的帮助，请参阅 <a target=\"_blank\" "
+"href=\"https://appriseit.com/url-builder/\" rel=\"noopener "
+"noreferrer\">Apprise URL Builder</a>。"
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2060,8 +2171,13 @@ msgid "Notifies an email address with attachments"
 msgstr "通知一个带附件的电子邮件地址"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "发送基于网络的文件附件到 <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> 服务器："
+msgid ""
+"Send an web based file attachment to a <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> server:"
+msgstr ""
+"发送基于网络的文件附件到 <a href=\"https://appriseit.com/services/discord/\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> 服务器："
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2150,7 +2266,9 @@ msgid ""
 "      encoding.\n"
 "      You must pass along the <code>Content-Type</code> as <code>application/json</code> in order for it to be\n"
 "      interpreted properly."
-msgstr "所有期望接收已发布数据的端点都可以以 JSON 或其标准编码的形式接收。你必须传递 <code>Content-Type</code> 为 <code>application/json</code>，以便能够正确解析。"
+msgstr ""
+"所有期望接收已发布数据的端点都可以以 JSON 或其标准编码的形式接收。你必须传递 <code>Content-Type</code> 为 "
+"<code>application/json</code>，以便能够正确解析。"
 
 #: apprise_api/api/templates/welcome.html:295
 #, python-format
@@ -2158,7 +2276,10 @@ msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
 "            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "用于添加新的Apprise配置或一组URL，并将它们与由<em>、%(key)s、</em>标识的配置相关联。 如果您需要构建您的URL，请参阅<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">、Apprise、URL构建器</a>。"
+msgstr ""
+"用于添加新的Apprise配置或一组URL，并将它们与由<em>、%(key)s、</em>标识的配置相关联。 如果您需要构建您的URL，请参阅<a "
+"target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener"
+" noreferrer\">、Apprise、URL构建器</a>。"
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
@@ -2228,7 +2349,9 @@ msgstr "无需任何参数。如果 <em>%(key)s</em> 的配置 ID 存在并且�
 
 #: apprise_api/api/templates/welcome.html:451
 #, python-format
-msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
+msgid ""
+"Remove previously loaded configuration associated with the id of "
+"<em>%(key)s</em>"
 msgstr "删除之前加载的与 <em>%(key)s</em> ID 相关的配置"
 
 #: apprise_api/api/templates/welcome.html:462
@@ -2253,11 +2376,15 @@ msgstr "使用 Apprise 来检索您的配置："
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "这是上述定义的 <code>%(BASE_URL)s/get/<em>%(key)s</em></code> 的别名。它提供了一种远程获取与通过 <em>%(key)s</em> 标识的配置相关的配置的方法。"
+msgstr ""
+"这是上述定义的 <code>%(BASE_URL)s/get/<em>%(key)s</em></code> 的别名。它提供了一种远程获取与通过 "
+"<em>%(key)s</em> 标识的配置相关的配置的方法。"
 
 #: apprise_api/api/templates/welcome.html:531
 #, python-format
-msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
+msgid ""
+"Notifies the URLs associated with configuration identified by the id of "
+"<em>%(key)s</em>."
 msgstr "通知与由 <em>%(key)s</em> 标识的配置相关联的 URL。"
 
 #: apprise_api/api/templates/welcome.html:548
@@ -2298,7 +2425,9 @@ msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "通知所有分配了 <em>devops</em> 标签的 URL。"
 
 #: apprise_api/api/templates/welcome.html:621
-msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
+msgid ""
+"Ideally you should leverage the Apprise Library; it will make your life much"
+" easier:"
 msgstr "理想情况下，你应该利用 Apprise 库；它会让你的工作轻松很多："
 
 #: apprise_api/api/templates/welcome.html:625
@@ -2327,7 +2456,9 @@ msgstr "端点说明"
 
 #: apprise_api/api/templates/welcome.html:751
 #, python-format
-msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
+msgid ""
+"The Configuration ID (<em>%(key)s</em>) you plan to associate your "
+"configuration with:"
 msgstr "你计划将配置关联的配置 ID（<em>%(key)s</em>）："
 
 #: apprise_api/api/templates/welcome.html:755
@@ -2344,6 +2475,14 @@ msgstr "必须以至少两个字母数字字符开头。"
 msgid "Cannot exceed 64 characters in total length."
 msgstr "总长度不能超过64个字符。"
 
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "在Google Play获取。"
+
 #: apprise_api/api/views.py:1157
 msgid "This configuration has been disabled by an administrator"
 msgstr "此配置已被管理员禁用"
@@ -2354,7 +2493,8 @@ msgid "Access Denied"
 msgstr "拒绝访问"
 
 #: apprise_api/api/views.py:1184
-msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
+msgid ""
+"Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "身份验证模式已禁用（设置APPRISE_AUTH_REQUIRED以启用）"
 
 #: apprise_api/api/views.py:1193
@@ -2362,7 +2502,8 @@ msgid "Persistent configuration storage is disabled"
 msgstr "持久化配置存储已禁用"
 
 #: apprise_api/api/views.py:1202
-msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
+msgid ""
+"A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "需要配置ID（URL路径或X-Apprise-Config-ID头）"
 
 #: apprise_api/api/views.py:1215
@@ -2485,7 +2626,8 @@ msgid "The configuration could not be removed"
 msgstr "配置无法删除"
 
 #: apprise_api/api/views.py:2525
-msgid "The configuration was removed, but its authentication could not be removed"
+msgid ""
+"The configuration was removed, but its authentication could not be removed"
 msgstr "配置已删除，但其认证信息无法删除"
 
 #: apprise_api/api/views.py:2545
@@ -2533,7 +2675,8 @@ msgid "Successfully removed authentication"
 msgstr "身份验证已成功删除"
 
 #: apprise_api/api/views.py:3013
-msgid "The server is temporarily unable to start a new live notification stream"
+msgid ""
+"The server is temporarily unable to start a new live notification stream"
 msgstr "服务器暂时无法启动新的实时通知流"
 
 #: apprise_api/api/views.py:3038
@@ -2705,7 +2848,9 @@ msgstr "请求过多"
 
 #: apprise_api/error/templates/429.html:20
 #, python-format
-msgid "Too many login attempts were made. Wait %(retry_after)s seconds before trying again."
+msgid ""
+"Too many login attempts were made. Wait %(retry_after)s seconds before "
+"trying again."
 msgstr "登录尝试次数过多。请等待 %(retry_after)s 秒后再试。"
 
 #: apprise_api/error/templates/50x.html:20

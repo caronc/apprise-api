@@ -159,7 +159,7 @@
                       <div class="page-section-heading__copy">
                         <h5>{% trans "Apprise Mobile Quick Setup" %}</h5>
                         <p>
-                          {% blocktrans with mobile_app_link='<a href="#mobile-beta-dialog" data-mobile-beta-open>Apprise Mobile app</a>'|safe %}Reveal and scan this code to easily load this configuration into your {{ mobile_app_link }}.{% endblocktrans %}
+                          {% blocktrans with mobile_app_link='<a href="#mobile-app-dialog" data-mobile-app-open>Apprise Mobile app</a>'|safe %}Reveal and scan this code to easily load this configuration into your {{ mobile_app_link }}.{% endblocktrans %}
                         </p>
                       </div>
                     </div>
@@ -201,7 +201,7 @@
                       </span>
                     </div>
                     <p class="mobile-setup-card__footer">
-                      {% blocktrans with mobile_app_link='<a href="#mobile-beta-dialog" data-mobile-beta-open>Apprise Mobile</a>'|safe %}Need the app? Get {{ mobile_app_link }} for Android.{% endblocktrans %}
+                      {% blocktrans with mobile_app_link='<a href="#mobile-app-dialog" data-mobile-app-open>Apprise Mobile</a>'|safe %}Need the app? Get {{ mobile_app_link }} for Android or iOS.{% endblocktrans %}
                     </p>
                   </aside>
                 </div>
@@ -253,7 +253,7 @@
                     <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
                   </div>
-                  {% blocktrans %}You may also create an <a href="https://appriseit.com/config/#cli" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+                  {% blocktrans %}You may also create an <a href="https://appriseit.com/getting-started/configuration/#cli-usage" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
                   <div class="code-snippet"
                        data-copy-text='include {{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
                        data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'>
