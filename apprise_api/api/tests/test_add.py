@@ -116,20 +116,20 @@ class AddTests(SimpleTestCase):
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
         assert response.status_code == 200
 
-        # No URLs loaded
+        # Content that loads no URLs is still the writer's to keep
         response = self.client.post(
             "/add/{}".format(key),
             {"config": "invalid content", "format": "text"},
         )
-        assert response.status_code == 400
+        assert response.status_code == 200
 
-        # Test a case where we fail to load a valid configuration file
+        # Content that loads nothing is saved all the same
         with patch("apprise.AppriseConfig.add", return_value=False):
             response = self.client.post(
                 "/add/{}".format(key),
                 {"config": "garbage://", "format": "text"},
             )
-        assert response.status_code == 400
+        assert response.status_code == 200
 
         with patch("os.remove", side_effect=OSError):
             # We will fail to remove the device first prior to placing a new
@@ -258,7 +258,7 @@ class AddTests(SimpleTestCase):
         # our key to use
         key = "test_save_config_by_config"
 
-        # Empty Text Configuration
+        # Empty Text Configuration: saved, which empties it
         config = """
 
         """
@@ -266,7 +266,7 @@ class AddTests(SimpleTestCase):
             "/add/{}".format(key),
             {"format": ConfigFormat.TEXT.value, "config": config},
         )
-        assert response.status_code == 400
+        assert response.status_code == 200
 
         # Valid Text Configuration
         config = """
@@ -338,7 +338,7 @@ class AddTests(SimpleTestCase):
         # our key to use
         key = "test_save_auto_detect_config_format"
 
-        # Empty Text Configuration
+        # Empty Text Configuration: saved, which empties it
         config = """
 
         """
@@ -346,7 +346,7 @@ class AddTests(SimpleTestCase):
             "/add/{}".format(key),
             {"format": AUTO_DETECT_CONFIG_KEYWORD, "config": config},
         )
-        assert response.status_code == 400
+        assert response.status_code == 200
 
         # Valid Text Configuration
         config = """
@@ -447,8 +447,8 @@ class AddTests(SimpleTestCase):
             data=json.dumps({"format": ConfigFormat.TEXT.value, "config": at_limit_config}),
             content_type="application/json",
         )
-        # Length check passes; config is invalid apprise content so still 400, not 431
-        assert response.status_code == 400
+        # Length check passes; content with no URLs is still saved, not 431
+        assert response.status_code == 200
 
     def test_config_max_length_enforced_form(self):
         """
@@ -468,15 +468,15 @@ class AddTests(SimpleTestCase):
         )
         assert response.status_code == 400
 
-        # A config within the limit passes form validation (though the content
-        # itself is not valid apprise config, so the save still returns 400).
+        # A config within the limit passes form validation and is saved,
+        # though it holds no URLs.
         within_limit_config = "x" * 10
         response = self.client.post(
             "/add/{}".format(key),
             {"format": ConfigFormat.TEXT.value, "config": within_limit_config},
         )
-        # Passes the length check; invalid apprise content → 400 (not 413/431)
-        assert response.status_code == 400
+        # Passes the length check; saved (not 413/431)
+        assert response.status_code == 200
 
     def test_add_omits_file_time_headers_when_unavailable(self):
         """A save whose timestamps cannot be read still succeeds."""
@@ -624,3 +624,120 @@ class AddTests(SimpleTestCase):
         key = "test_add_no_auth"
         response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
         assert response.status_code == 200
+
+    def test_save_keeps_a_configuration_with_no_urls(self):
+        """Empty or commented-out content is saved and read back as written."""
+        key = "test_save_no_urls"
+        for fmt, config in (
+            (ConfigFormat.TEXT.value, ""),
+            (ConfigFormat.TEXT.value, "# mailto://user:pass@yahoo.ca\n# Nothing set up yet\n"),
+            (ConfigFormat.YAML.value, "# urls:\n#   - mailto://user:pass@yahoo.ca\n"),
+            (AUTO_DETECT_CONFIG_KEYWORD, "   \n"),
+        ):
+            response = self.client.post(
+                "/add/{}".format(key),
+                data=json.dumps({"format": fmt, "config": config}),
+                content_type="application/json",
+            )
+            assert response.status_code == 200, (fmt, config)
+            response = self.client.post("/get/{}".format(key))
+            assert response.status_code == 200, (fmt, config)
+            assert response.content.decode() == config
+
+            # Nothing in it to notify
+            response = self.client.get("/json/urls/{}".format(key))
+            assert response.status_code == 200
+            assert response.json()["urls"] == []
+
+        ConfigCache.clear(key)
+
+    def test_yaml_with_urls_apprise_cannot_use_is_still_saved(self):
+        """Like text, a YAML file keeps entries Apprise can't use."""
+        key = "test_save_yaml_unusable_urls"
+        for config in ("urls:\n  - garbage://\n", "urls: []\n", "version: 1\n# urls:\n"):
+            response = self.client.post(
+                "/add/{}".format(key),
+                data=json.dumps({"format": ConfigFormat.YAML.value, "config": config}),
+                content_type="application/json",
+            )
+            assert response.status_code == 200, config
+            assert ConfigCache.get(key)[0] == config
+
+        ConfigCache.clear(key)
+
+    def test_saving_no_urls_replaces_what_was_there(self):
+        """Emptying a configuration that held URLs leaves none behind."""
+        key = "test_save_no_urls_replaces"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        response = self.client.post("/add/{}".format(key), {"format": ConfigFormat.TEXT.value, "config": ""})
+        assert response.status_code == 200
+        assert ConfigCache.get(key)[0] == ""
+        response = self.client.get("/json/urls/{}".format(key))
+        assert response.json()["urls"] == []
+
+        ConfigCache.clear(key)
+
+    def test_unreadable_content_is_still_refused(self):
+        """Content whose format can't be told is refused and changes nothing."""
+        key = "test_save_unreadable"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        for fmt, config in (
+            (AUTO_DETECT_CONFIG_KEYWORD, "42"),
+            # Apprise would discard each of these YAML files whole
+            (ConfigFormat.YAML.value, "urls: [\n"),
+            (ConfigFormat.YAML.value, "- json://localhost\n"),
+            (ConfigFormat.YAML.value, "version: 99\nurls:\n  - json://localhost\n"),
+        ):
+            response = self.client.post(
+                "/add/{}".format(key),
+                data=json.dumps({"format": fmt, "config": config}),
+                content_type="application/json",
+            )
+            assert response.status_code == 400, (fmt, config)
+        assert "yahoo.ca" in ConfigCache.get(key)[0]
+
+        ConfigCache.clear(key)
+
+    def test_a_form_post_without_a_configuration_saves_nothing(self):
+        """No config field at all is not an empty configuration."""
+        key = "test_save_missing_config_field"
+        response = self.client.post("/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"})
+        assert response.status_code == 200
+
+        response = self.client.post("/add/{}".format(key), {"format": ConfigFormat.TEXT.value})
+        assert response.status_code == 400
+        assert "yahoo.ca" in ConfigCache.get(key)[0]
+
+        ConfigCache.clear(key)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_emptying_a_configuration_keeps_its_login(self):
+        """Its own user or the administrator may empty it; its login stays."""
+        key = "test_save_empty_keeps_login"
+        response = self.client.post(
+            "/add/{}".format(key), {"urls": "mailto://user:pass@yahoo.ca"}, headers=_GOOD_MASTER
+        )
+        assert response.status_code == 200
+        assert ConfigCache.set_auth(key, "alice", "secret") is True
+
+        for headers in ({"authorization": _basic("alice", "secret")}, _GOOD_MASTER):
+            response = self.client.post(
+                "/add/{}".format(key),
+                {"format": ConfigFormat.TEXT.value, "config": ""},
+                headers=headers,
+            )
+            assert response.status_code == 200
+            assert ConfigCache.get(key)[0] == ""
+            assert ConfigCache.verify_auth(key, "alice", "secret") is True
+
+        # Still a configuration (just an empty one), so pruning leftover
+        # logins, however old, never takes this one.
+        ConfigCache.prune_unused_locks(0)
+        assert ConfigCache.verify_auth(key, "alice", "secret") is True
+
+        ConfigCache.clear(key)
+        ConfigCache.clear_auth(key)
