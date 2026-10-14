@@ -548,6 +548,12 @@ li.social-theme-nav .topbar-icon svg {
   stroke: none;
 }
 
+/* The mobile handset is a stroke icon; do not apply the filled social-icon style. */
+li.social-theme-nav .topbar-icon--mobile svg {
+  fill: none;
+  stroke: currentColor;
+}
+
 .auth-account,
 .auth-logout-link {
   display: inline-flex;
@@ -1320,6 +1326,10 @@ textarea {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 1rem;
+  background: linear-gradient(120deg,
+      var(--dialog-header-start) 0%,
+      var(--section-heading-start) 48%,
+      var(--dialog-header-end) 100%);
 }
 
 .mobile-app-dialog__header h4 {
@@ -1340,6 +1350,29 @@ textarea {
   align-items: center;
   min-width: 0;
   gap: 0.85rem;
+}
+
+.mobile-app-dialog__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.75rem;
+  height: 3.75rem;
+  border: 1px solid color-mix(in srgb, var(--mobile-app-accent) 42%, transparent);
+  border-radius: 0.75rem;
+  color: var(--mobile-app-accent);
+  background: linear-gradient(145deg,
+      color-mix(in srgb, var(--mobile-app-accent) 18%, var(--dialog-surface-raised)),
+      var(--dialog-surface-raised));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 38%, transparent),
+    0 0.18rem 0.5rem color-mix(in srgb, var(--mobile-app-accent) 16%, transparent);
+  flex: 0 0 auto;
+}
+
+.mobile-app-dialog__icon svg {
+  display: block;
+  width: 2.15rem;
+  height: 2.15rem;
 }
 
 .mobile-app-dialog__close {
@@ -1537,8 +1570,73 @@ textarea {
   padding: 1rem;
 }
 
-.mobile-app-dialog__content>p:first-child {
-  margin-top: 0;
+.mobile-app-dialog__intro {
+  display: block;
+}
+
+.mobile-app-dialog__intro p {
+  margin: 0;
+}
+
+.mobile-app-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-block: 1rem;
+}
+
+.mobile-app-dialog__actions .mobile-store-links {
+  flex: 0 1 var(--store-width);
+  margin-block: 0;
+}
+
+.mobile-app-dialog__learn-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 40px;
+  height: 40px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--mobile-app-accent);
+  border-radius: 0.6rem;
+  color: var(--mobile-app-accent) !important;
+  background: var(--dialog-surface-raised);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 0.12rem 0.35rem color-mix(in srgb, var(--mobile-app-accent) 14%, transparent);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.mobile-app-dialog__learn-more:visited,
+.mobile-app-dialog__learn-more:hover,
+.mobile-app-dialog__learn-more:focus-visible {
+  color: var(--mobile-app-accent) !important;
+}
+
+.mobile-app-dialog__learn-more:hover,
+.mobile-app-dialog__learn-more:focus-visible {
+  background: var(--mobile-app-accent-soft);
+}
+
+.mobile-app-dialog__learn-more:focus-visible {
+  outline: 2px solid var(--mobile-app-accent);
+  outline-offset: 3px;
+}
+
+.mobile-app-dialog__learn-more span {
+  margin-left: 0.45rem;
+  font-size: 1rem;
+}
+
+[dir="rtl"] .mobile-app-dialog__learn-more span {
+  margin-right: 0.45rem;
+  margin-left: 0;
+  transform: scaleX(-1);
 }
 
 .mobile-app-dialog__highlights {
@@ -1643,6 +1741,22 @@ textarea {
 
   .mobile-app-dialog__screenshots figure {
     flex: 0 0 76vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-app-dialog__actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mobile-app-dialog__actions .mobile-store-links {
+    width: min(100%, var(--store-width));
+    flex: none;
+  }
+
+  .mobile-app-dialog__learn-more {
+    width: 100%;
   }
 }
 
@@ -4092,11 +4206,11 @@ Authentication Editor
   flex-shrink: 0;
 }
 
-.browser-login-mobile-promo__icon .material-icons {
+.browser-login-mobile-promo__icon svg {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  color: var(--mobile-app-accent);
 }
 
 .browser-login-mobile-promo__text {
