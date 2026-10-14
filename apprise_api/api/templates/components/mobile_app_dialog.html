@@ -7,6 +7,9 @@
         aria-describedby="mobile-app-intro">
   <div class="apprise-dialog__header mobile-app-dialog__header">
     <div class="mobile-app-dialog__heading">
+      <span class="mobile-app-dialog__icon" aria-hidden="true">
+        {% include "icons/mobile.svg" %}
+      </span>
       <div>
         <span class="mobile-app-dialog__badge">{% trans "Android / iOS App" %}</span>
         <h4 id="mobile-app-title">{% trans "Get Apprise Mobile" %}</h4>
@@ -23,20 +26,26 @@
     </button>
   </div>
   <div class="mobile-app-dialog__content">
-    <p id="mobile-app-intro">
-      {% trans "Apprise Mobile connects your Android or iOS device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured." %}
-    </p>
+    <div class="mobile-app-dialog__intro">
+      <p id="mobile-app-intro">
+        {% trans "Apprise Mobile connects your Android or iOS device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured." %}
+      </p>
+    </div>
     <ul class="mobile-app-dialog__highlights">
       <li>{% trans "Send notifications and attachments from your phone." %}</li>
       <li>{% trans "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration." %}</li>
       <li>{% trans "Review your remote configurations and follow every delivery report." %}</li>
     </ul>
-    {% mobile_store_links %}
-    <p>
-      <a href="https://appriseit.com/{% if LANGUAGE_CODE == 'fr' %}fr/{% endif %}mobile/"
+    <div class="mobile-app-dialog__actions">
+      {% mobile_store_links %}
+      <a class="mobile-app-dialog__learn-more"
+         href="https://appriseit.com/{% if LANGUAGE_CODE == 'fr' %}fr/{% endif %}mobile/"
          target="_blank"
-         rel="noopener noreferrer">{% trans "Learn More" %}</a>
-    </p>
+         rel="noopener noreferrer">
+        {% trans "Learn More" %}
+        <span aria-hidden="true">→</span>
+      </a>
+    </div>
     <details class="mobile-app-dialog__preview">
       <summary>{% trans "Preview the App" %}</summary>
       <div class="mobile-app-dialog__screenshots">

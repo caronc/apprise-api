@@ -21,7 +21,6 @@
 Support Banner
 ========================================= */
 :root {
-  --mobile-app-bg: #17181c;
   --mobile-app-surface: #23262f;
   --mobile-app-border: #34383f;
   --mobile-app-text: #c1c3c9;
@@ -29,7 +28,6 @@ Support Banner
   --mobile-app-muted: #888c96;
   --mobile-app-accent: #2cb6a6;
   --mobile-app-accent-soft: #0b3b37;
-  --mobile-app-primary-text: #071b19;
   --section-heading-start: #153532;
   --section-heading-end: #222832;
   --section-heading-border: #35514f;

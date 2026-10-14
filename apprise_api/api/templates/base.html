@@ -169,7 +169,7 @@
                  data-position="bottom"
                  data-tooltip="{% trans "Apprise Mobile" %}">
                 <span class="topbar-icon topbar-icon--mobile">
-                  <i class="material-icons" aria-hidden="true">smartphone</i>
+                  {% include "icons/mobile.svg" %}
                 </span>
               </a>
               <span class="nav-divider mobile-nav-divider" aria-hidden="true"></span>
@@ -345,8 +345,8 @@
                   <span class="side-nav-text">{% trans "Apprise URL Builder" %}</span>
                 </a>
                 <a class="side-nav-item" href="#mobile-app-dialog" data-mobile-app-open>
-                  <span class="menu-icon menu-icon--mobile">
-                    <i class="material-icons" aria-hidden="true">smartphone</i>
+                  <span class="menu-icon">
+                    {% include "icons/mobile.svg" %}
                   </span>
                   <span class="side-nav-text">{% trans "Get Apprise Mobile" %}</span>
                 </a>
