@@ -32,6 +32,7 @@ import time
 from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 import apprise
+from apprise.config.base import ConfigBase
 from core.utils import parse_bool, parse_log_level
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
@@ -46,6 +47,7 @@ from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.decorators.gzip import gzip_page
 from error.views import Error421View
+import yaml
 
 from .auth import Authentication
 from .exceptions import (
@@ -1940,6 +1942,30 @@ class ConfigListView(View):
         )
 
 
+def _yaml_refused(content, asset):
+    """Whether Apprise would refuse this YAML configuration as a whole.
+
+    Apprise only reads a configuration when it is used. A YAML syntax error,
+    a document that isn't a mapping, or a broken section (an invalid
+    template, say) makes it discard the whole file, which would otherwise
+    look just like a file with nothing in it; refusing those keeps a typo
+    from replacing a working configuration. An empty file, one of only
+    comments, or one with URLs Apprise can't use is the writer's to keep.
+    """
+    try:
+        document = yaml.safe_load(content)
+    except yaml.YAMLError:
+        return True
+    if document is None:
+        return False
+    if not isinstance(document, dict):
+        return True
+    # Only the file's own sections; its URLs are judged one by one
+    with apprise.LogCapture(level=logging.ERROR) as logs:
+        ConfigBase.config_parse_yaml(yaml.safe_dump({**document, "urls": []}), asset=asset)
+    return bool(logs.getvalue())
+
+
 @method_decorator(never_cache, name="dispatch")
 class AddView(View):
     """
@@ -1983,6 +2009,10 @@ class AddView(View):
             form = AddByConfigForm(request.POST)
             if form.is_valid():
                 content.update(form.cleaned_data)
+                # An empty configuration is saved only when one was sent;
+                # the form reports a missing field as empty too.
+                if "config" not in request.POST:
+                    content.pop("config", None)
 
             form = AddByUrlForm(request.POST)
             if form.is_valid():
@@ -2151,8 +2181,8 @@ class AddView(View):
                 # within the add_config() call
                 fmt = None
 
-            # Load our configuration
-            if not ac_obj.add_config(content["config"], format=fmt):
+            # Load our configuration; empty content has nothing to read
+            if content["config"].strip() and not ac_obj.add_config(content["config"], format=fmt):
                 # The format could not be detected
                 logger.warning(
                     "ADD - %s - The configuration format could not be auto-detected using KEY: %s",
@@ -2174,33 +2204,37 @@ class AddView(View):
                     )
                 )
 
-            # Add our configuration
+            # Add our configuration. One that loads no URLs (everything
+            # commented out, or nothing there yet) is still the writer's to
+            # keep, as is an empty one; only unreadable content is refused.
             a_obj.add(ac_obj)
-
             if not len(a_obj):
-                # No specified URL(s) were loaded due to
-                # mis-configuration on the caller's part
-                logger.warning(
-                    "ADD - %s - No valid URL(s) defined using KEY: %s",
+                if (
+                    len(ac_obj)
+                    and ac_obj[0].config_format == apprise.ConfigFormat.YAML
+                    and _yaml_refused(content["config"], asset)
+                ):
+                    # A typo must never replace a working configuration
+                    logger.warning(
+                        "ADD - %s - The YAML configuration could not be parsed using KEY: %s",
+                        request.META["REMOTE_ADDR"],
+                        key,
+                    )
+                    return error_response(
+                        request,
+                        _("The configuration could not be parsed"),
+                        ResponseCode.bad_request,
+                    )
+                logger.info(
+                    "ADD - %s - Configuration saved with no URL(s) defined using KEY: %s",
                     request.META["REMOTE_ADDR"],
                     key,
                 )
-                msg = _("No valid URL(s) defined")
-                status = ResponseCode.bad_request
-                return (
-                    HttpResponse(msg, status=status, content_type="text/plain")
-                    if not json_response
-                    else JsonResponse(
-                        {
-                            "error": msg,
-                        },
-                        encoder=JSONEncoder,
-                        safe=False,
-                        status=status,
-                    )
-                )
 
-            if not ConfigCache.put(key, content["config"], fmt=ac_obj[0].config_format.value):
+            # Empty content keeps the format asked for (plain text when
+            # auto-detecting); anything else, the format it was read as.
+            stored_format = ac_obj[0].config_format.value if len(ac_obj) else (fmt or apprise.ConfigFormat.TEXT.value)
+            if not ConfigCache.put(key, content["config"], fmt=stored_format):
                 # Something went very wrong; return 500
                 logger.error(
                     "ADD - %s - Configuration could not be saved using KEY: %s",

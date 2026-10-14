@@ -16,6 +16,7 @@ plugin/
 .bash_history
 env/
 .venv*/
+.venv
 build/
 develop-eggs/
 dist/
