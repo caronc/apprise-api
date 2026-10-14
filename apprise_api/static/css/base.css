@@ -4906,7 +4906,7 @@ Authentication Editor
   border: 1px solid var(--select-border) !important;
   border-radius: 7px !important;
   box-sizing: border-box !important;
-  background: var(--config-list-surface);
+  background: var(--select-bg);
   color: var(--select-text);
   font-family: monospace;
 }
@@ -4940,15 +4940,8 @@ Authentication Editor
   min-width: 2.5rem;
   height: 2.75rem;
   padding: 0;
-  border: 1px solid var(--select-border);
+  border: 1px solid;
   border-radius: 7px;
-  color: var(--notify-log-error-border);
-}
-
-.notify-template-remove:hover,
-.notify-template-remove:focus-visible {
-  border-color: var(--notify-log-error-border);
-  background: var(--notify-log-error-bg);
 }
 
 #notify .row,

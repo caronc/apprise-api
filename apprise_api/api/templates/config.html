@@ -303,8 +303,8 @@
                      data-copy-text='curl -X POST{% if AUTH_ENABLED %} -u "{{ auth_username }}:****"{% endif %} -F "tags=all" -F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" http{% if request.is_secure %}s{% endif %}://{{ request.META.HTTP_HOST }}{{ BASE_URL }}/notify/{{ key }}'>
                   <pre><code class="bash">curl -X POST \<br />
                {% if AUTH_ENABLED %}&nbsp;&nbsp;&nbsp;&nbsp;-u &quot;{{ auth_username }}:****&quot; \<br />{% endif %}
-               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tag=all&quot; \ <br />
-               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png&quot; \ <br />
+               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;tag=all&quot; \<br />
+               &nbsp;&nbsp;&nbsp;&nbsp;-F &quot;attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png&quot; \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;{{request.scheme}}://{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/<em data-snippet-config-id>{{key}}</em></code></pre>
                 </div>
               </div>
@@ -1435,7 +1435,7 @@
     remove.className = 'btn-flat notify-template-remove';
     remove.setAttribute('aria-label', '{% trans "Remove Template Value" %}');
     remove.setAttribute('title', '{% trans "Remove Template Value" %}');
-    remove.innerHTML = '<i class="material-icons" aria-hidden="true">close</i>';
+    remove.innerHTML = '<i class="material-icons" aria-hidden="true">delete</i>';
 
     keyInput.addEventListener('input', function () {
       const original = row.dataset.seedName;

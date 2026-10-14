@@ -517,6 +517,12 @@ class ManagerPageTests(SimpleTestCase):
         open_item = content.split('class="collection-item config-list-item"', 1)[1]
         assert open_item.index("config-auth-status") < open_item.index("config-list-user")
         assert open_item.index("config-list-user") < open_item.index("config-list-link")
+        # The auth link has no box of its own, so a tooltip on it would open
+        # in the page corner.  Its hint sits on the access label instead.
+        auth_link = open_item.split('class="config-list-auth-link"', 1)[1].split(">", 1)[0]
+        assert "title=" not in auth_link
+        assert 'class="config-list-access"\n' in open_item
+        assert 'title="Manage authentication for this Configuration ID"' in open_item
 
     def test_manage_cfg_list_json_when_requested(self):
         """

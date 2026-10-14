@@ -667,7 +667,8 @@ input.config-id-input.is-mismatched {
   border-color: #d7dbe2;
 }
 
-.auth-editor-card .auth-remove-button {
+.auth-editor-card .auth-remove-button,
+#notify .notify-template-remove {
   color: #8b2938;
   background-color: #fff1f3 !important;
   border-color: #d58a93;
@@ -678,6 +679,18 @@ input.config-id-input.is-mismatched {
   color: #ffffff;
   background-color: #a83e4d !important;
   border-color: #a83e4d;
+}
+
+/* A small row icon only deepens its tint, as a solid fill is too heavy. */
+#notify .notify-template-remove:hover,
+#notify .notify-template-remove:focus-visible {
+  color: #a83e4d;
+  background-color: #ffe0e5 !important;
+  border-color: #a83e4d;
+}
+
+#notify .notify-template-remove i.material-icons {
+  color: inherit;
 }
 
 .reset-configuration-toggle {

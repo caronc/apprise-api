@@ -746,7 +746,8 @@
         // each element.
         // Two sources of noise to clean up:
         //  1. <br /> / <br> / </br> used as line-break markers in templates.
-        //     Collapse the whole sequence to \n.
+        //     Collapse the whole sequence to \n, along with any whitespace-only
+        //     lines that an empty template condition left behind.
         //  2. Bare newlines with leading whitespace that come from djlint indenting
         //     the content of <pre> blocks.  Templates use &nbsp; for intentional
         //     code indentation, so stripping \n<whitespace> is safe.
@@ -758,7 +759,7 @@
               // indentation stripped (that would destroy YAML structure).
               if (opts.el.id === 'config-highlight') return;
               const normalizedHtml = opts.el.innerHTML
-                .replace(/<\/?br\s*\/?>([ \t]*\n[ \t]*)?/gi, '\n')
+                .replace(/<\/?br\s*\/?>([ \t]*\n[ \t]*)*/gi, '\n')
                 .replace(/\n[ \t]+/g, '\n');
               const plainText = document.createElement('div');
               plainText.innerHTML = normalizedHtml;

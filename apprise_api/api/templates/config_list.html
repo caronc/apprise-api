@@ -26,9 +26,7 @@
     <ul class="collection config-list-collection z-depth-1">
       {% for entry in keys %}
         <li class="collection-item config-list-item">
-          <a class="config-list-auth-link"
-             href="{% url 'auth' entry.key %}"
-             title="{% trans "Manage authentication for this Configuration ID" %}">
+          <a class="config-list-auth-link" href="{% url 'auth' entry.key %}">
             {% if AUTH_ENABLED %}
               {% include "components/config_auth_status.html" with auth_indicator=entry.auth_indicator %}
 
@@ -44,7 +42,8 @@
               {% endif %}
             </span>
             {% if AUTH_ENABLED %}
-              <span class="config-list-access">{{ entry.access }}</span>
+              <span class="config-list-access"
+                    title="{% trans "Manage authentication for this Configuration ID" %}">{{ entry.access }}</span>
             {% endif %}
           </a>
           <a class="config-list-link" href="{% url 'config' entry.key %}">

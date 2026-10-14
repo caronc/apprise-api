@@ -932,17 +932,34 @@ input.config-id-input.is-mismatched {
   border-color: #363942;
 }
 
-.auth-editor-card .auth-remove-button {
+.auth-editor-card .auth-remove-button,
+#notify .notify-template-remove {
   color: #ff9ca6;
   background-color: rgba(117, 38, 48, 0.22) !important;
   border-color: #75404a;
 }
 
 .auth-editor-card .auth-remove-button:hover,
-.auth-editor-card .auth-remove-button:focus-visible {
+.auth-editor-card .auth-remove-button:focus-visible,
+#notify .notify-template-remove:hover,
+#notify .notify-template-remove:focus-visible {
   color: #ffd9dd;
   background-color: rgba(151, 50, 63, 0.4) !important;
   border-color: #b45b68;
+}
+
+#notify .notify-template-remove i.material-icons {
+  color: inherit;
+}
+
+/* Solid colours so a highlighted row's tint does not show through. */
+#notify .notify-template-remove {
+  background-color: #30212a !important;
+}
+
+#notify .notify-template-remove:hover,
+#notify .notify-template-remove:focus-visible {
+  background-color: #4d2730 !important;
 }
 
 .reset-configuration-toggle {
