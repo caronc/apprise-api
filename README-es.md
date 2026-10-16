@@ -107,7 +107,7 @@ Es posible que algunas personas deseen tener solo una solución de sidecar que r
 
 | | de ruta Método | Descripción |
 |------------- | ------ | ----------- |
-| `/notify/` |  PUBLICAR | Envía una o más notificaciones a las direcciones URL identificadas como parte de la carga útil o a las identificadas en la variable de entorno `APPRISE_STATELESS_URLS`. <br/>*Parámetros de carga útil*<br/>📌 **direcciones URL**: Una o más URL que identifiquen a dónde se debe enviar la notificación. Si este campo no se especifica, asume automáticamente el `settings.APPRISE_STATELESS_URLS` valor o `APPRISE_STATELESS_URLS` variable de entorno.<br/>📌 **cuerpo**: El cuerpo de su mensaje. Este es un campo obligatorio.<br/>📌 **título**: Opcionalmente, defina un título para que vaya junto con el *cuerpo*.<br/>📌 **tipo**: define el tipo de mensaje que desea enviar.  Las opciones válidas son `info`, `success`, `warning`y `failure`. Si no *tipo* se especifica a continuación `info` es el valor predeterminado utilizado.<br/>📌 **formato**: Opcionalmente, identifique el formato de texto de los datos que está alimentando Apprise. Las opciones válidas son `text`, `markdown`, `html`. Si no se especifica nada, no se aplica ningún formato y el contenido se transmite sin modificar.
+| `/notify/` |  PUBLICAR | Envía una o más notificaciones a las direcciones URL identificadas como parte de la carga útil o a las identificadas en la variable de entorno `APPRISE_STATELESS_URLS`. <br/>*Parámetros de carga útil*<br/>📌 **direcciones URL**: Una o más URL que identifiquen a dónde se debe enviar la notificación. Si este campo no se especifica, una solicitud con un encabezado `X-Apprise-Config-ID` envía mediante esa configuración guardada; de lo contrario, se usa la variable de entorno `APPRISE_STATELESS_URLS`.<br/>📌 **cuerpo**: El cuerpo de su mensaje. Este es un campo obligatorio.<br/>📌 **título**: Opcionalmente, defina un título para que vaya junto con el *cuerpo*.<br/>📌 **tipo**: define el tipo de mensaje que desea enviar.  Las opciones válidas son `info`, `success`, `warning`y `failure`. Si no *tipo* se especifica a continuación `info` es el valor predeterminado utilizado.<br/>📌 **formato**: Opcionalmente, identifique el formato de texto de los datos que está alimentando Apprise. Las opciones válidas son `text`, `markdown`, `html`. Si no se especifica nada, no se aplica ningún formato y el contenido se transmite sin modificar.
 
 Aquí hay un *apátrida* Ejemplo de cómo se podría enviar una notificación (utilizando `/notify/`):
 
@@ -184,6 +184,57 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/abc123
 ```
+
+### Mensajes de texto plano y encabezados
+
+`/notify` y `/notify/{KEY}` también aceptan el mensaje como el cuerpo completo de la solicitud. El `Content-Type` define su formato:
+
+| Content-Type    | El cuerpo se envía como |
+| --------------- | ----------------------- |
+| `text/plain`    | Texto                   |
+| `text/html`     | HTML                    |
+| `text/markdown` | Markdown                |
+
+Agregue `?format=` para usar otro formato. Las solicitudes con cualquier otro `Content-Type`, o sin ninguno, funcionan como antes.
+
+```bash
+# Notifica las URL sin etiquetas guardadas en 'abc123'
+curl -X POST -H "Content-Type: text/plain" \
+    --data-raw 'Deployment completed' \
+    http://localhost:8000/notify/abc123
+
+# Sin estado: envía a APPRISE_STATELESS_URLS
+curl -X POST -H "Content-Type: text/plain" \
+    --data-raw 'Deployment completed' \
+    http://localhost:8000/notify
+```
+
+Estos encabezados funcionan con cualquier formato de solicitud compatible, incluidos JSON y formularios:
+
+| Encabezado           | Define                                                                  |
+| -------------------- | ----------------------------------------------------------------------- |
+| `X-Apprise-Title`    | El título                                                               |
+| `X-Apprise-Type`     | El tipo: `info`, `success`, `warning` o `failure`                       |
+| `X-Apprise-Tag`      | La expresión de etiquetas                                               |
+| `X-Apprise-Template` | Valores de plantilla como pares codificados en URL, p. ej. `api_key=abc&room=ops` |
+
+```bash
+curl -X POST \
+    -H "Content-Type: text/plain" \
+    -H "X-Apprise-Title: Deployment Status" \
+    -H "X-Apprise-Type: success" \
+    -H "X-Apprise-Tag: devops" \
+    --data-raw 'Deployment completed successfully' \
+    http://localhost:8000/notify/abc123
+```
+
+Cuando el mismo campo se envía más de una vez, se usa el primero que se encuentre:
+
+1. El contenido JSON o de formulario.
+2. El encabezado `X-Apprise-*`.
+3. La cadena de consulta (`?title=`, `?type=`, `?tag=`).
+
+Sin etiqueta, una solicitud con estado notifica solo las URL que no tienen etiqueta, igual que la CLI de Apprise. Las reglas de etiquetas de las configuraciones `locked` y `public` se aplican sin importar de dónde venga la etiqueta.
 
 ### Notas de la API
 

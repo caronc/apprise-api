@@ -192,6 +192,47 @@ class ConfigAccessViewTests(SimpleTestCase):
         self.assertEqual(notify.call_count, 2)
         self.assertIs(notify.call_args_list[0].kwargs["attach"], attachment)
 
+    @override_settings(APPRISE_STATELESS_URLS="json://server-default")
+    def test_stateless_defaults_require_admin(self):
+        """APPRISE_STATELESS_URLS is used only by an administrator when auth is on.
+
+        - A Config ID without urls sends through that saved configuration.
+        - Without a Config ID, a configuration user is refused.
+        """
+        self._seed("access_user", Authentication.ACCESS_USER)
+        self._seed("access_public", Authentication.ACCESS_PUBLIC)
+
+        added = []
+        real_add = apprise.Apprise.add
+
+        def record_add(a_obj, servers, *args, **kwargs):
+            # Plain strings are destination URLs; a loaded configuration is not
+            if isinstance(servers, str):
+                added.append(servers)
+            return real_add(a_obj, servers, *args, **kwargs)
+
+        text = {"content_type": "text/plain", "data": "hello"}
+        with (
+            patch.object(apprise.Apprise, "add", record_add),
+            patch.object(apprise.Apprise, "notify", return_value=True),
+        ):
+            user_scoped = self.client.post("/notify", headers={**_USER, "X-Apprise-Config-ID": "access_user"}, **text)
+            public_scoped = self.client.post(
+                "/notify", headers={"X-Apprise-Config-ID": "access_public", "X-Apprise-Tag": "known"}, **text
+            )
+            user_unscoped = self.client.post("/notify", headers=_USER, **text)
+            anonymous = self.client.post("/notify", **text)
+            assert added == []
+
+            admin = self.client.post("/notify", headers=_MASTER, **text)
+
+        self.assertEqual(user_scoped.status_code, 200)
+        self.assertEqual(public_scoped.status_code, 200)
+        self.assertEqual(user_unscoped.status_code, 401)
+        self.assertEqual(anonymous.status_code, 401)
+        self.assertEqual(admin.status_code, 200)
+        self.assertEqual(added, ["json://server-default"])
+
     def test_stateless_access_requires_admin_or_user_mode_scope(self):
         """Only admin or matching user-mode credentials may send arbitrary URLs."""
         self._seed("access_user", Authentication.ACCESS_USER)

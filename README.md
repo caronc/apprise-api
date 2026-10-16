@@ -314,7 +314,7 @@ Some people may wish to only have a sidecar solution that does require use of an
 
 | Path         | Method | Description |
 |------------- | ------ | ----------- |
-| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the `settings.APPRISE_STATELESS_URLS` value or `APPRISE_STATELESS_URLS` environment variable.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.<br/>This path does not work if `APPRISE_STATELESS_MODE` is set to `disabled`.
+| `/notify/` |  POST  | Sends one or more notifications to the URLs identified as part of the payload, or those identified in the environment variable `APPRISE_STATELESS_URLS`. <br/>*Payload Parameters*<br/>📌 **urls**: One or more URLs identifying where the notification should be sent to. If this field isn't specified, a request with an `X-Apprise-Config-ID` header sends through that saved configuration instead; otherwise the `APPRISE_STATELESS_URLS` environment variable is used.<br/>📌 **body**: Your message body. This is a required field.<br/>📌 **title**: Optionally define a title to go along with the *body*.<br/>📌 **type**: Defines the message type you want to send as.  The valid options are `info`, `success`, `warning`, and `failure`. If no *type* is specified then `info` is the default value used.<br/>📌 **format**: Optionally identify the text format of the data you're feeding Apprise. The valid options are `text`, `markdown`, `html`. If nothing is specified, no format is applied and the content is passed through untouched.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for progress while notification work is still running — see [Live Progress Streaming](#live-progress-streaming) below.<br/>This path does not work if `APPRISE_STATELESS_MODE` is set to `disabled`.
 
 Stateless `/notify` calls do not require `/config`, but they do leverage `/attach` for file uploads (assuming `APPRISE_ATTACH_SIZE` is not set to `0` (zero).  You can optionally use `/plugin` if you have custom Apprise plugins you wish to use.
 
@@ -489,6 +489,57 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
     http://localhost:8000/notify/abc123
 ```
 
+### Plain Text Messages and Headers
+
+`/notify` and `/notify/{KEY}` also accept the message as the whole request body. The `Content-Type` sets its format:
+
+| Content-Type    | The body is sent as |
+| --------------- | ------------------- |
+| `text/plain`    | Text                |
+| `text/html`     | HTML                |
+| `text/markdown` | Markdown            |
+
+Add `?format=` to use a different format. Requests with any other `Content-Type`, or none at all, work as before.
+
+```bash
+# Notify the untagged URLs saved under 'abc123'
+curl -X POST -H "Content-Type: text/plain" \
+    --data-raw 'Deployment completed' \
+    http://localhost:8000/notify/abc123
+
+# Stateless: sends to APPRISE_STATELESS_URLS
+curl -X POST -H "Content-Type: text/plain" \
+    --data-raw 'Deployment completed' \
+    http://localhost:8000/notify
+```
+
+These headers work with every supported request format, including JSON and forms:
+
+| Header               | Sets                                                             |
+| -------------------- | ---------------------------------------------------------------- |
+| `X-Apprise-Title`    | The title                                                        |
+| `X-Apprise-Type`     | The type: `info`, `success`, `warning` or `failure`              |
+| `X-Apprise-Tag`      | The tag expression                                               |
+| `X-Apprise-Template` | Template values as URL-encoded pairs, e.g. `api_key=abc&room=ops` |
+
+```bash
+curl -X POST \
+    -H "Content-Type: text/plain" \
+    -H "X-Apprise-Title: Deployment Status" \
+    -H "X-Apprise-Type: success" \
+    -H "X-Apprise-Tag: devops" \
+    --data-raw 'Deployment completed successfully' \
+    http://localhost:8000/notify/abc123
+```
+
+When the same field is sent more than once, the first one found is used:
+
+1. The JSON or form payload.
+2. The `X-Apprise-*` header.
+3. The query string (`?title=`, `?type=`, `?tag=`).
+
+Without a tag, a stateful request notifies only the URLs that have no tag, just like the Apprise CLI. The tag rules for `locked` and `public` configurations apply wherever the tag comes from.
+
 ### Template Values
 
 A saved YAML configuration can leave a value out of a URL and have it filled in
@@ -646,7 +697,7 @@ data: {"status": "SUCCESS"}
 | 421       | Misdirected Request             | A Web interface page was requested while `APPRISE_API_ONLY=yes`. |
 | 424       | Failed Dependency               | At least one notification failed, no requested tag matched, or the configuration store could not complete a dependent operation. |
 | 429       | Too Many Requests               | Nginx temporarily rate-limited the request. Packaged deployments return `Retry-After: 60`. |
-| 431       | Request Header Fields Too Large | Django rejected a JSON payload above `APPRISE_UPLOAD_MAX_MEMORY_SIZE`. |
+| 431       | Request Header Fields Too Large | Django rejected a JSON payload or plain text message body above `APPRISE_UPLOAD_MAX_MEMORY_SIZE`. |
 | 500       | Internal Server Error           | The server could not save or load data, or encountered an unexpected I/O error. |
 | 502       | Bad Gateway                     | Nginx could not obtain a valid response from the application worker. |
 | 503       | Service Unavailable             | The application worker is temporarily unavailable. |

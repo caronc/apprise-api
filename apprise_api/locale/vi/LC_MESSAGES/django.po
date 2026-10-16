@@ -2370,6 +2370,22 @@ msgstr "Yêu cầu một ID cấu hình (URL đường dẫn hoặc X-Apprise-Co
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "Header X-Apprise-Config-ID được cung cấp không hợp lệ"
 
+#: apprise_api/api/views.py:3203
+msgid "The message body provided is too large"
+msgstr "Nội dung tin nhắn được cung cấp quá lớn"
+
+#: apprise_api/api/views.py:3220
+msgid "The message body could not be read"
+msgstr "Không thể đọc nội dung tin nhắn"
+
+#: apprise_api/api/views.py:3238
+msgid "The message body could not be decoded"
+msgstr "Không thể giải mã nội dung tin nhắn"
+
+#: apprise_api/api/views.py:3404
+msgid "The X-Apprise-Template header is invalid"
+msgstr "Tiêu đề X-Apprise-Template không hợp lệ"
+
 #: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
 #: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
 #: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621

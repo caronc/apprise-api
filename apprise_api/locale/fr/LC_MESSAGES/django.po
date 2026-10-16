@@ -2381,6 +2381,22 @@ msgstr "Un ID de configuration est requis (chemin de l’URL ou en-tête X-Appri
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "L’en-tête X-Apprise-Config-ID fourni est invalide"
 
+#: apprise_api/api/views.py:3203
+msgid "The message body provided is too large"
+msgstr "Le corps du message fourni est trop volumineux"
+
+#: apprise_api/api/views.py:3220
+msgid "The message body could not be read"
+msgstr "Le corps du message n’a pas pu être lu"
+
+#: apprise_api/api/views.py:3238
+msgid "The message body could not be decoded"
+msgstr "Le corps du message n’a pas pu être décodé"
+
+#: apprise_api/api/views.py:3404
+msgid "The X-Apprise-Template header is invalid"
+msgstr "L’en-tête X-Apprise-Template est invalide"
+
 #: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
 #: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
 #: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621

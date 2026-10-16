@@ -2370,6 +2370,22 @@ msgstr "Требуется идентификатор конфигурации (
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "Предоставленный заголовок X-Apprise-Config-ID недействителен"
 
+#: apprise_api/api/views.py:3203
+msgid "The message body provided is too large"
+msgstr "Переданный текст сообщения слишком велик"
+
+#: apprise_api/api/views.py:3220
+msgid "The message body could not be read"
+msgstr "Не удалось прочитать текст сообщения"
+
+#: apprise_api/api/views.py:3238
+msgid "The message body could not be decoded"
+msgstr "Не удалось декодировать текст сообщения"
+
+#: apprise_api/api/views.py:3404
+msgid "The X-Apprise-Template header is invalid"
+msgstr "Заголовок X-Apprise-Template недействителен"
+
 #: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
 #: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
 #: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621

@@ -34,7 +34,7 @@ import requests
 
 from ..forms import NotifyForm
 from ..utils import ConfigCache
-from .helpers import NotifyAttachmentSecurityMixin
+from .helpers import NotifyAttachmentSecurityMixin, notify_result
 
 # Grant access to our Notification Manager Singleton
 N_MGR = apprise.manager_plugins.NotificationManager()
@@ -748,3 +748,101 @@ class StatefulAttachmentSecurityTests(NotifyAttachmentSecurityMixin, SimpleTestC
             f"/notify/{self.key}",
             {"body": "test notification", "attach": payload},
         )
+
+
+@patch("apprise.Apprise.notify")
+class StatefulSimpleNotifyInputTests(SimpleTestCase):
+    """Check raw message bodies and X-Apprise-* headers on saved configurations."""
+
+    key = "stateful_simple_input"
+
+    def setUp(self):
+        """Save a configuration with one tagged and one untagged entry."""
+        response = self.client.post(
+            f"/add/{self.key}",
+            {"config": "urls:\n  - json://localhost\n  - json://localhost:8080:\n      tag: ops\n"},
+        )
+        assert response.status_code == 200
+        self.addCleanup(ConfigCache.clear, self.key)
+
+    def test_plain_text_uses_untagged_entries(self, mock_notify):
+        """Like the CLI, no tag means only untagged entries are notified."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post(f"/notify/{self.key}", data="Deployment completed", content_type="text/plain")
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.args == ("Deployment completed",)
+        assert mock_notify.call_args.kwargs["tag"] is None
+
+    def test_tag_header_selects_entries(self, mock_notify):
+        """X-Apprise-Tag routes a raw body to the tagged entries."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post(
+            f"/notify/{self.key}",
+            data="Deployment completed",
+            content_type="text/plain",
+            headers={"X-Apprise-Tag": "ops", "X-Apprise-Type": "success"},
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["tag"] == ["ops"]
+        assert mock_notify.call_args.kwargs["notify_type"] == "success"
+
+    def test_config_id_header_sends_plain_text(self, mock_notify):
+        """/notify with X-Apprise-Config-ID uses the saved configuration."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post(
+            "/notify",
+            data="Deployment completed",
+            content_type="text/plain",
+            headers={"X-Apprise-Config-ID": self.key, "X-Apprise-Tag": "ops"},
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["tag"] == ["ops"]
+
+    @override_settings(APPRISE_CONFIG_LOCK=True)
+    def test_locked_accepts_tag_header(self, mock_notify):
+        """A tag sent as a header meets the locked configuration tag rule."""
+        mock_notify.return_value = notify_result(True)
+        headers = {"X-Apprise-Web-Auth": "1", "accept": "application/json"}
+
+        response = self.client.post(f"/notify/{self.key}", data="done", content_type="text/plain", headers=headers)
+        assert response.status_code == 400
+        assert "specific tag" in response.json()["error"]
+
+        response = self.client.post(
+            f"/notify/{self.key}",
+            data="done",
+            content_type="text/plain",
+            headers=headers | {"X-Apprise-Tag": "ops"},
+        )
+        assert response.status_code == 200
+
+        # "all" is not a specific tag, wherever it comes from
+        response = self.client.post(
+            f"/notify/{self.key}",
+            data="done",
+            content_type="text/plain",
+            headers=headers | {"X-Apprise-Tag": "all"},
+        )
+        assert response.status_code == 400
+        assert "specific tag" in response.json()["error"]
+
+    def test_plain_text_streams(self, mock_notify):
+        """?stream=yes works with a plain text body."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post(
+            f"/notify/{self.key}?stream=yes",
+            data="Deployment completed",
+            content_type="text/plain",
+        )
+
+        assert response.status_code == 200
+        assert response["Content-Type"] == "text/event-stream"
+        assert "event: result" in b"".join(response.streaming_content).decode("utf-8")
+        assert mock_notify.call_args.args == ("Deployment completed",)

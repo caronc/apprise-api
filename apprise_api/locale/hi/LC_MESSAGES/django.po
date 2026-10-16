@@ -2371,6 +2371,22 @@ msgstr "एक विन्यास आईडी आवश्यक है (URL
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "प्रदान किया गया X-Apprise-Config-ID हेडर अमान्य है"
 
+#: apprise_api/api/views.py:3203
+msgid "The message body provided is too large"
+msgstr "दिया गया संदेश का मुख्य भाग बहुत बड़ा है"
+
+#: apprise_api/api/views.py:3220
+msgid "The message body could not be read"
+msgstr "संदेश का मुख्य भाग पढ़ा नहीं जा सका"
+
+#: apprise_api/api/views.py:3238
+msgid "The message body could not be decoded"
+msgstr "संदेश का मुख्य भाग डिकोड नहीं किया जा सका"
+
+#: apprise_api/api/views.py:3404
+msgid "The X-Apprise-Template header is invalid"
+msgstr "X-Apprise-Template हेडर अमान्य है"
+
 #: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
 #: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
 #: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621

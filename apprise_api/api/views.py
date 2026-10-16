@@ -29,14 +29,15 @@ import struct
 import tempfile
 import threading
 import time
-from urllib.parse import parse_qs, quote, urlencode, urlsplit
+from urllib.parse import parse_qs, parse_qsl, quote, urlencode, urlsplit
 
 import apprise
 from apprise.config.base import ConfigBase
 from core.utils import parse_bool, parse_log_level
 from django.conf import settings
+from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, UnreadablePostError
 from django.shortcuts import redirect, render
 from django.urls import Resolver404, resolve, reverse
 from django.utils.decorators import method_decorator
@@ -119,6 +120,26 @@ def _apprise_object(request, asset=None):
 
 # Used by the Review tab to narrow a quick test to the selected card.
 NOTIFY_ENTRY_INDEX_HEADER = "X-Apprise-Notification-Index"
+
+# With these content types, the whole request body is the message and its
+# media type sets the input format.
+NOTIFY_RAW_BODY_FORMATS = {
+    "text/plain": apprise.NotifyFormat.TEXT.value,
+    "text/html": apprise.NotifyFormat.HTML.value,
+    "text/markdown": apprise.NotifyFormat.MARKDOWN.value,
+}
+
+# Notification fields that may also be sent as request headers.
+NOTIFY_HEADER_FIELDS = (
+    ("title", "X-Apprise-Title"),
+    ("type", "X-Apprise-Type"),
+    ("tag", "X-Apprise-Tag"),
+)
+
+# Template values sent as URL-encoded pairs, e.g. token=abc&room=ops
+NOTIFY_TEMPLATE_HEADER = "X-Apprise-Template"
+NOTIFY_TEMPLATE_MAX_FIELDS = 256
+NOTIFY_INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 
 # Each disk entry starts with its byte length.
 _EVENT_SIZE = struct.Struct("!Q")
@@ -3026,7 +3047,7 @@ def _deliver_notification(request, a_obj, content, attach, json_response, stream
     selected_tag = content.get("tag") or ("all" if key is None else None)
     notify_kwargs = {
         "title": content.get("title", ""),
-        "notify_type": content.get("type", apprise.NotifyType.INFO.value),
+        "notify_type": content.get("type") or apprise.NotifyType.INFO.value,
         "tag": selected_tag,
         "attach": attach,
         "template": content.get("template") or None,
@@ -3163,6 +3184,69 @@ def _load_notify_content(request, form_class, key=None):
     json_payload = MIME_IS_JSON.match(request.content_type or request.headers.get("content-type", "")) is not None
     rules = {name[1:]: value for name, value in request.GET.items() if name.startswith(":")}
 
+    raw_format = NOTIFY_RAW_BODY_FORMATS.get(request.content_type)
+    if raw_format is not None:
+        try:
+            body = request.body.decode(request.encoding or settings.DEFAULT_CHARSET)
+
+        except RequestDataTooBig:
+            logger.warning(
+                "NOTIFY - %s - Message body exceeded %dMB%s",
+                request.META["REMOTE_ADDR"],
+                settings.APPRISE_UPLOAD_MAX_MEMORY_SIZE / 1048576,
+                " using KEY: {}".format(key) if key is not None else "",
+            )
+            # Match the status a JSON payload of the same size receives.
+            return (
+                None,
+                json_response,
+                error_response(
+                    request,
+                    _("The message body provided is too large"),
+                    ResponseCode.fields_too_large,
+                ),
+            )
+
+        except UnreadablePostError:
+            # The client went away before the whole body arrived.
+            logger.warning(
+                "NOTIFY - %s - Message body could not be read%s",
+                request.META["REMOTE_ADDR"],
+                " using KEY: {}".format(key) if key is not None else "",
+            )
+            return (
+                None,
+                json_response,
+                error_response(
+                    request,
+                    _("The message body could not be read"),
+                    ResponseCode.bad_request,
+                ),
+            )
+
+        except (UnicodeError, LookupError):
+            # Bytes that do not fit the charset, or a charset such as rot13
+            # that names a codec but not a text encoding.
+            logger.warning(
+                "NOTIFY - %s - Message body could not be decoded%s",
+                request.META["REMOTE_ADDR"],
+                " using KEY: {}".format(key) if key is not None else "",
+            )
+            return (
+                None,
+                json_response,
+                error_response(
+                    request,
+                    _("The message body could not be decoded"),
+                    ResponseCode.bad_request,
+                ),
+            )
+
+        # A ?format= value still takes priority over the media type.
+        content = {"body": body, "format": request.GET.get("format") or raw_format}
+        invalid = _apply_notify_headers(request, content)
+        return (None, json_response, invalid) if invalid is not None else (content, json_response, None)
+
     if json_payload:
         content, parse_error = parse_json_object_body(request, "NOTIFY", key)
         if parse_error is not None:
@@ -3229,7 +3313,16 @@ def _load_notify_content(request, form_class, key=None):
     else:
         form = form_class(data=data, files=request.FILES)
         content = dict(form.cleaned_data) if form.is_valid() else {}
+        if content and not data.get("type"):
+            # The form fills in "info" on its own; drop it so a header or
+            # query string type can still apply.
+            content.pop("type", None)
+
     if content:
+        invalid = _apply_notify_headers(request, content)
+        if invalid is not None:
+            return None, json_response, invalid
+
         return content, json_response, None
 
     logger.warning(
@@ -3268,6 +3361,64 @@ def _notify_template(request, template):
         )
 
     return (values or None), None
+
+
+def _notify_header(request, name: str) -> str:
+    """Return a header value, reading UTF-8 text that arrived as Latin-1."""
+    value = request.headers.get(name, "").strip()
+    try:
+        # Servers hand header bytes over as Latin-1, so UTF-8 text such as
+        # an accented title shows up garbled until it is decoded again.
+        return value.encode("latin-1").decode("utf-8")
+
+    except UnicodeError:
+        return value
+
+
+def _apply_notify_headers(request, content: dict) -> HttpResponse | None:
+    """Fill in fields the payload left out from ``X-Apprise-*`` headers.
+
+    - A payload field always wins over its header.
+    - A header wins over the matching query string value.
+
+    Return ``None`` on success or an error response.
+    """
+    for name, header in NOTIFY_HEADER_FIELDS:
+        value = _notify_header(request, header)
+        if value and not content.get(name) and not (name == "tag" and content.get("tags")):
+            content[name] = value
+
+    raw_template = _notify_header(request, NOTIFY_TEMPLATE_HEADER)
+    if not raw_template or content.get("template"):
+        return None
+
+    try:
+        if NOTIFY_INVALID_PERCENT_ESCAPE_RE.search(raw_template):
+            raise ValueError("invalid percent escape")
+
+        pairs = parse_qsl(
+            raw_template,
+            keep_blank_values=True,
+            strict_parsing=True,
+            encoding="utf-8",
+            errors="strict",
+            max_num_fields=NOTIFY_TEMPLATE_MAX_FIELDS,
+        )
+        if len({name for name, _value in pairs}) != len(pairs):
+            raise TemplateValueError("duplicate template variable name")
+
+        content["template"] = normalize_template_values(dict(pairs)) or None
+
+    except (UnicodeError, ValueError):
+        # Keep the error independent of saved template names and values.
+        return error_response(
+            request,
+            _("The X-Apprise-Template header is invalid"),
+            ResponseCode.bad_request,
+            field="template",
+        )
+
+    return None
 
 
 def _notify_tag(request, content, key=None, require_specific=False):
@@ -3512,8 +3663,9 @@ class StatefulNotifyView(View):
         _apply_notify_query_overrides(request, content)
 
         # Some basic error checking
-        if (not content.get("body") and not attach) or content.get(
-            "type", apprise.NotifyType.INFO.value
+        # An empty type counts as not sent, so it falls back to "info"
+        if (not content.get("body") and not attach) or (
+            content.get("type") or apprise.NotifyType.INFO.value
         ) not in apprise.NOTIFY_TYPES:
             logger.warning(
                 "NOTIFY - %s - Payload lacks minimum requirements using KEY: %s",
@@ -3708,8 +3860,9 @@ class StatelessNotifyView(View):
         # Some basic error checking
         # A notification requires at minimum a body or at least one valid
         # attachment; either is sufficient to proceed.
-        if (not content.get("body") and not attach) or content.get(
-            "type", apprise.NotifyType.INFO.value
+        # An empty type counts as not sent, so it falls back to "info"
+        if (not content.get("body") and not attach) or (
+            content.get("type") or apprise.NotifyType.INFO.value
         ) not in apprise.NOTIFY_TYPES:
             logger.warning(
                 "NOTIFY - %s - Payload lacks minimum requirements",
