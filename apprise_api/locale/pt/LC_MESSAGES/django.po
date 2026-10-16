@@ -2143,7 +2143,7 @@ msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
-msgstr "msgstr "Quem desejar utilizar o armazenamento persistente pode fazê-lo. Esta funcionalidade segue o princípio de configurar uma única vez e esquecer: basta definir a configuração e, posteriormente, disparar notificações sob demanda por meio de chamadas de API leves."
+msgstr "Quem desejar utilizar o armazenamento persistente pode fazê-lo. Esta funcionalidade segue o princípio de configurar uma única vez e esquecer: basta definir a configuração e, posteriormente, disparar notificações sob demanda por meio de chamadas de API leves."
 
 #: apprise_api/api/templates/welcome.html:276
 msgid ""
