@@ -27,11 +27,13 @@ from unittest import mock
 import apprise
 from django.core.exceptions import RequestDataTooBig
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import UnreadablePostError
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 import requests
 
 from ..forms import NotifyByUrlForm
+from ..views import NOTIFY_TEMPLATE_MAX_FIELDS, _apprise_asset
 from .helpers import NotifyAttachmentSecurityMixin, notify_result
 
 # Grant access to our Notification Manager Singleton
@@ -1314,3 +1316,387 @@ class StatelessAttachmentSecurityTests(NotifyAttachmentSecurityMixin, SimpleTest
             )
 
         return self.client.post("/notify", content)
+
+
+@override_settings(APPRISE_STATELESS_URLS="json://localhost")
+@mock.patch("api.views._apprise_asset", wraps=_apprise_asset)
+@mock.patch("apprise.Apprise.notify")
+class SimpleNotifyInputTests(SimpleTestCase):
+    """Check raw message bodies, X-Apprise-* headers and field precedence."""
+
+    def post_text(self, body, content_type="text/plain", path="/notify", headers=None):
+        """Post a raw message body to the stateless endpoint."""
+        return self.client.post(path, data=body, content_type=content_type, headers=headers or {})
+
+    @staticmethod
+    def body_format(mock_asset):
+        """Return the input format handed to the Apprise asset."""
+        return mock_asset.call_args.kwargs.get("body_format")
+
+    def test_plain_text_body(self, mock_notify, mock_asset):
+        """A text/plain body is sent as-is with the usual defaults."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("Deployment completed")
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.args == ("Deployment completed",)
+        assert mock_notify.call_args.kwargs["title"] == ""
+        assert mock_notify.call_args.kwargs["notify_type"] == apprise.NotifyType.INFO.value
+        assert mock_notify.call_args.kwargs["tag"] == "all"
+        assert self.body_format(mock_asset) == apprise.NotifyFormat.TEXT.value
+
+    def test_media_type_sets_the_format(self, mock_notify, mock_asset):
+        """HTML and Markdown bodies are sent in their own format."""
+        mock_notify.return_value = notify_result(True)
+
+        for content_type, body_format in (
+            ("text/html", apprise.NotifyFormat.HTML.value),
+            ("text/markdown", apprise.NotifyFormat.MARKDOWN.value),
+        ):
+            response = self.post_text("**done**", content_type=content_type)
+            assert response.status_code == 200
+            assert self.body_format(mock_asset) == body_format
+
+    def test_format_query_overrides_media_type(self, mock_notify, mock_asset):
+        """?format= wins over the format implied by the content type."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("# done", path="/notify?format=markdown")
+
+        assert response.status_code == 200
+        assert self.body_format(mock_asset) == apprise.NotifyFormat.MARKDOWN.value
+
+    def test_notification_headers(self, mock_notify, mock_asset):
+        """X-Apprise-Title, X-Apprise-Type and X-Apprise-Tag fill the message."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text(
+            "Deployment completed",
+            headers={
+                "X-Apprise-Title": "Deployment Status",
+                "X-Apprise-Type": "success",
+                "X-Apprise-Tag": "devops",
+            },
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["title"] == "Deployment Status"
+        assert mock_notify.call_args.kwargs["notify_type"] == "success"
+        assert mock_notify.call_args.kwargs["tag"] == ["devops"]
+
+    def test_utf8_header_text_is_decoded(self, mock_notify, mock_asset):
+        """A UTF-8 title that arrives as Latin-1 is read correctly."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text(
+            "fini",
+            headers={"X-Apprise-Title": "Déploiement".encode().decode("latin-1")},
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["title"] == "Déploiement"
+
+    def test_plain_text_query_fields(self, mock_notify, mock_asset):
+        """?title=, ?type= and ?tag= work with a raw body."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("Database connection lost", path="/notify?type=warning&tag=ops&title=DB")
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["title"] == "DB"
+        assert mock_notify.call_args.kwargs["notify_type"] == "warning"
+        assert mock_notify.call_args.kwargs["tag"] == ["ops"]
+
+    def test_headers_win_over_query_string(self, mock_notify, mock_asset):
+        """A header value is used instead of the same query string field."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text(
+            "done",
+            path="/notify?title=query&type=failure&tag=query",
+            headers={"X-Apprise-Title": "header", "X-Apprise-Type": "success", "X-Apprise-Tag": "header"},
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["title"] == "header"
+        assert mock_notify.call_args.kwargs["notify_type"] == "success"
+        assert mock_notify.call_args.kwargs["tag"] == ["header"]
+
+    def test_payload_wins_over_headers(self, mock_notify, mock_asset):
+        """JSON and form fields are kept when headers name the same field."""
+        mock_notify.return_value = notify_result(True)
+        headers = {"X-Apprise-Title": "header", "X-Apprise-Type": "failure", "X-Apprise-Tag": "header"}
+        payload = {"body": "done", "title": "payload", "type": "success", "tags": "payload"}
+
+        for response in (
+            self.client.post("/notify", data=json.dumps(payload), content_type="application/json", headers=headers),
+            self.client.post("/notify", payload, headers=headers),
+        ):
+            assert response.status_code == 200
+            assert mock_notify.call_args.kwargs["title"] == "payload"
+            assert mock_notify.call_args.kwargs["notify_type"] == "success"
+            assert mock_notify.call_args.kwargs["tag"] == ["payload"]
+
+    def test_headers_fill_payload_fields(self, mock_notify, mock_asset):
+        """Headers supply fields a JSON or form payload left out."""
+        mock_notify.return_value = notify_result(True)
+        headers = {"X-Apprise-Title": "header", "X-Apprise-Type": "warning"}
+
+        for response in (
+            self.client.post(
+                "/notify", data=json.dumps({"body": "done"}), content_type="application/json", headers=headers
+            ),
+            self.client.post("/notify", {"body": "done"}, headers=headers),
+        ):
+            assert response.status_code == 200
+            assert mock_notify.call_args.kwargs["title"] == "header"
+            assert mock_notify.call_args.kwargs["notify_type"] == "warning"
+
+    def test_form_uses_query_type(self, mock_notify, mock_asset):
+        """A form post without a type picks up ?type=."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post("/notify?type=warning", {"body": "done"})
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["notify_type"] == "warning"
+
+    def test_template_header_sets_values(self, mock_notify, mock_asset):
+        """X-Apprise-Template supplies URL-encoded template values."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("done", headers={"X-Apprise-Template": "room=ops&token=a%26b"})
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["template"] == {"room": "ops", "token": "a&b"}
+
+    def test_template_payload_wins_over_header(self, mock_notify, mock_asset):
+        """Template values in the payload replace the header values."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post(
+            "/notify",
+            data=json.dumps({"body": "done", "template": {"room": "payload"}}),
+            content_type="application/json",
+            headers={"X-Apprise-Template": "room=header&token=abc"},
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["template"] == {"room": "payload"}
+
+    def test_invalid_template_header(self, mock_notify, mock_asset):
+        """Malformed, duplicated or invalid template names return 400."""
+        for value in (
+            "room",
+            "room=a&room=b",
+            "bad name=x",
+            "room=%ZZ",
+            "room=a%2",
+            "room=%FF",
+        ):
+            response = self.post_text("done", headers={"X-Apprise-Template": value, "Accept": "application/json"})
+            assert response.status_code == 400
+            assert response.json() == {"error": "The X-Apprise-Template header is invalid", "field": "template"}
+
+        mock_notify.assert_not_called()
+
+    def test_template_header_field_limit(self, mock_notify, mock_asset):
+        """An excessive number of template fields returns 400."""
+        value = "&".join(f"field{index}=x" for index in range(NOTIFY_TEMPLATE_MAX_FIELDS + 1))
+
+        response = self.post_text("done", headers={"X-Apprise-Template": value, "Accept": "application/json"})
+
+        assert response.status_code == 400
+        assert response.json() == {"error": "The X-Apprise-Template header is invalid", "field": "template"}
+        mock_notify.assert_not_called()
+
+    def test_invalid_type_header(self, mock_notify, mock_asset):
+        """An unknown X-Apprise-Type value fails like an unknown type field."""
+        response = self.post_text("done", headers={"X-Apprise-Type": "bogus"})
+
+        assert response.status_code == 400
+        mock_notify.assert_not_called()
+
+    def test_body_charset(self, mock_notify, mock_asset):
+        """The charset named in the content type decodes the body."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("Déploiement", content_type="text/plain; charset=latin-1")
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.args == ("Déploiement",)
+
+    def test_undecodable_body(self, mock_notify, mock_asset):
+        """Bytes that do not match the charset return 400."""
+        response = self.post_text(b"\xff\xfe", headers={"Accept": "application/json"})
+
+        assert response.status_code == 400
+        assert response.json() == {"error": "The message body could not be decoded"}
+        mock_notify.assert_not_called()
+
+    def test_empty_plain_text_body(self, mock_notify, mock_asset):
+        """A raw post still needs a message."""
+        response = self.post_text("")
+
+        assert response.status_code == 400
+        mock_notify.assert_not_called()
+
+    @override_settings(APPRISE_STATELESS_URLS="")
+    def test_plain_text_requires_urls(self, mock_notify, mock_asset):
+        """Without default URLs a stateless raw post has nowhere to go."""
+        response = self.post_text("done")
+
+        assert response.status_code == 400
+        mock_notify.assert_not_called()
+
+    def test_non_text_charset(self, mock_notify, mock_asset):
+        """A charset that is not a text encoding returns 400, not a server error.
+
+        - rot13 and base64 name codecs that cannot decode bytes to text.
+        - undefined always fails to decode.
+        """
+        for charset in ("rot13", "base64", "undefined"):
+            response = self.client.generic(
+                "POST",
+                "/notify",
+                data=b"done",
+                content_type=f"text/plain; charset={charset}",
+                headers={"Accept": "application/json"},
+            )
+            assert response.status_code == 400
+            assert response.json() == {"error": "The message body could not be decoded"}
+
+        mock_notify.assert_not_called()
+
+    def test_unreadable_body(self, mock_notify, mock_asset):
+        """A body cut off by a client disconnect returns 400, not a server error."""
+        with mock.patch("django.core.handlers.wsgi.LimitedStream.read", side_effect=UnreadablePostError("gone")):
+            response = self.post_text("done", headers={"Accept": "application/json"})
+
+        assert response.status_code == 400
+        assert response.json() == {"error": "The message body could not be read"}
+        mock_notify.assert_not_called()
+
+    @override_settings(DATA_UPLOAD_MAX_MEMORY_SIZE=10)
+    def test_oversized_plain_text_body(self, mock_notify, mock_asset):
+        """A body over the upload limit returns 431, like an oversized JSON payload."""
+        response = self.post_text("x" * 100, headers={"Accept": "application/json"})
+
+        assert response.status_code == 431
+        assert response.json() == {"error": "The message body provided is too large"}
+        mock_notify.assert_not_called()
+
+    def test_content_type_is_normalized(self, mock_notify, mock_asset):
+        """Mixed-case media types with parameters are still read as plain text."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("done", content_type="Text/Plain; Charset=UTF-8")
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.args == ("done",)
+
+    def test_missing_content_type(self, mock_notify, mock_asset):
+        """A raw body with no Content-Type is still read as a form, which has no body."""
+        response = self.client.generic("POST", "/notify", data=b"done", content_type="")
+
+        assert response.wsgi_request.content_type == ""
+        assert response.status_code == 400
+        mock_notify.assert_not_called()
+
+    def test_plain_text_ignores_field_mapping(self, mock_notify, mock_asset):
+        """?:field= rules do not change or reject a plain text body."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("done", path="/notify?:message=body")
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.args == ("done",)
+
+    def test_blank_headers(self, mock_notify, mock_asset):
+        """Whitespace-only header values leave the query string value in place."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text(
+            "done",
+            path="/notify?title=query&type=warning",
+            headers={"X-Apprise-Title": "   ", "X-Apprise-Type": " ", "X-Apprise-Template": " "},
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["title"] == "query"
+        assert mock_notify.call_args.kwargs["notify_type"] == "warning"
+        assert mock_notify.call_args.kwargs["template"] is None
+
+    def test_invalid_tag_header(self, mock_notify, mock_asset):
+        """A tag header with unsupported characters fails like a tag field."""
+        response = self.post_text("done", headers={"X-Apprise-Tag": "bad!tag", "Accept": "application/json"})
+
+        assert response.status_code == 400
+        assert response.json() == {"error": "Unsupported characters found in tag definition"}
+        mock_notify.assert_not_called()
+
+    def test_template_header_skips_blank_values(self, mock_notify, mock_asset):
+        """A name with no value is left for the configuration or environment to fill."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("done", headers={"X-Apprise-Template": "api_key=&room=ops"})
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["template"] == {"room": "ops"}
+
+    def test_invalid_format_query(self, mock_notify, mock_asset):
+        """An unknown ?format= on a plain text body returns 400."""
+        response = self.post_text("done", path="/notify?format=bogus")
+
+        assert response.status_code == 400
+        mock_notify.assert_not_called()
+
+    def test_empty_json_type_is_info(self, mock_notify, mock_asset):
+        """An empty JSON type counts as not sent and falls back to info."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post(
+            "/notify", data=json.dumps({"body": "done", "type": ""}), content_type="application/json"
+        )
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["notify_type"] == apprise.NotifyType.INFO.value
+
+    def test_blank_form_type_uses_header(self, mock_notify, mock_asset):
+        """An empty form type field leaves room for X-Apprise-Type."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post("/notify", {"body": "done", "type": ""}, headers={"X-Apprise-Type": "failure"})
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["notify_type"] == "failure"
+
+    def test_other_content_types(self, mock_notify, mock_asset):
+        """Unknown content types are not read as a message body."""
+        response = self.post_text("done", content_type="application/octet-stream")
+
+        assert response.status_code == 400
+        mock_notify.assert_not_called()
+
+    def test_latin1_header_text(self, mock_notify, mock_asset):
+        """Header text that is not UTF-8 is used as received."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.post_text("fini", headers={"X-Apprise-Title": "café"})
+
+        assert response.status_code == 200
+        assert mock_notify.call_args.kwargs["title"] == "café"
+
+    def test_json_rejects_invalid_template_header(self, mock_notify, mock_asset):
+        """A bad template header also fails a JSON post without template values."""
+        response = self.client.post(
+            "/notify",
+            data=json.dumps({"body": "done"}),
+            content_type="application/json",
+            headers={"X-Apprise-Template": "room"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["field"] == "template"
+        mock_notify.assert_not_called()

@@ -2370,6 +2370,22 @@ msgstr "구성 ID가 필요합니다 (URL 경로 또는 X-Apprise-Config-ID 헤�
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "제공된 X-Apprise-Config-ID 헤더가 유효하지 않습니다."
 
+#: apprise_api/api/views.py:3203
+msgid "The message body provided is too large"
+msgstr "제공된 메시지 본문이 너무 큽니다"
+
+#: apprise_api/api/views.py:3220
+msgid "The message body could not be read"
+msgstr "메시지 본문을 읽을 수 없습니다"
+
+#: apprise_api/api/views.py:3238
+msgid "The message body could not be decoded"
+msgstr "메시지 본문을 디코딩할 수 없습니다"
+
+#: apprise_api/api/views.py:3404
+msgid "The X-Apprise-Template header is invalid"
+msgstr "X-Apprise-Template 헤더가 잘못되었습니다"
+
 #: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
 #: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
 #: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621

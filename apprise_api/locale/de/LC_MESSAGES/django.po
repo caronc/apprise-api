@@ -2370,6 +2370,22 @@ msgstr "Eine Konfigurations-ID wird benötigt (URL-Pfad oder X-Apprise-Config-ID
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "Der bereitgestellte X-Apprise-Config-ID-Header ist ungültig"
 
+#: apprise_api/api/views.py:3203
+msgid "The message body provided is too large"
+msgstr "Der angegebene Nachrichtentext ist zu groß"
+
+#: apprise_api/api/views.py:3220
+msgid "The message body could not be read"
+msgstr "Der Nachrichtentext konnte nicht gelesen werden"
+
+#: apprise_api/api/views.py:3238
+msgid "The message body could not be decoded"
+msgstr "Der Nachrichtentext konnte nicht dekodiert werden"
+
+#: apprise_api/api/views.py:3404
+msgid "The X-Apprise-Template header is invalid"
+msgstr "Der X-Apprise-Template-Header ist ungültig"
+
 #: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
 #: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
 #: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621

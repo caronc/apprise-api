@@ -2369,6 +2369,22 @@ msgstr "需要配置ID（URL路径或X-Apprise-Config-ID头）"
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "提供的X-Apprise-Config-ID头无效"
 
+#: apprise_api/api/views.py:3203
+msgid "The message body provided is too large"
+msgstr "提供的消息正文过大"
+
+#: apprise_api/api/views.py:3220
+msgid "The message body could not be read"
+msgstr "无法读取消息正文"
+
+#: apprise_api/api/views.py:3238
+msgid "The message body could not be decoded"
+msgstr "无法解码消息正文"
+
+#: apprise_api/api/views.py:3404
+msgid "The X-Apprise-Template header is invalid"
+msgstr "X-Apprise-Template 请求头无效"
+
 #: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
 #: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
 #: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621

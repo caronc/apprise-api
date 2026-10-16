@@ -254,12 +254,20 @@ paths:
         `disabled` cannot authorize stateless destinations. For compatibility
         with Apprise API v2 clients, X-Apprise-Config-ID without `urls` sends
         through the saved configuration instead.
+        A text/plain, text/html, or text/markdown body is the message itself,
+        in that format unless `?format=` names another. Title, type, tag, and
+        template values come from the payload first, then the X-Apprise-*
+        headers, then the query string.
       tags:
         - Stateless
       parameters:
         - $ref: '#/components/parameters/RecursionHeader'
         - $ref: '#/components/parameters/IdHeader'
         - $ref: '#/components/parameters/LogLevelHeader'
+        - $ref: '#/components/parameters/NotifyTitleHeader'
+        - $ref: '#/components/parameters/NotifyTypeHeader'
+        - $ref: '#/components/parameters/NotifyTagHeader'
+        - $ref: '#/components/parameters/NotifyTemplateHeader'
         - $ref: '#/components/parameters/StreamQueryParam'
         - $ref: '#/components/parameters/ConfigIdHeader'
       requestBody:
@@ -274,6 +282,18 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/StatelessNotificationForm'
+          text/plain:
+            schema:
+              type: string
+              description: The whole body is the message, sent as text.
+          text/html:
+            schema:
+              type: string
+              description: The whole body is the message, sent as HTML.
+          text/markdown:
+            schema:
+              type: string
+              description: The whole body is the message, sent as Markdown.
       responses:
         '200':
           description: >
@@ -320,7 +340,7 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '431':
-          description: Request Header Fields Too Large (JSON Payload too big).
+          description: Request Header Fields Too Large (JSON payload or plain text message body too big).
         '503':
           $ref: '#/components/responses/StreamCapacityUnavailable'
 
@@ -788,6 +808,10 @@ paths:
         `disabled` rejects configuration users even when their saved credentials
         are correct. An administrator may use every mode. Public access never
         applies to another endpoint.
+        A text/plain, text/html, or text/markdown body is the message itself,
+        in that format unless `?format=` names another. Title, type, tag, and
+        template values come from the payload first, then the X-Apprise-*
+        headers, then the query string.
       tags:
         - Persistent
       parameters:
@@ -795,6 +819,10 @@ paths:
         - $ref: '#/components/parameters/RecursionHeader'
         - $ref: '#/components/parameters/IdHeader'
         - $ref: '#/components/parameters/LogLevelHeader'
+        - $ref: '#/components/parameters/NotifyTitleHeader'
+        - $ref: '#/components/parameters/NotifyTypeHeader'
+        - $ref: '#/components/parameters/NotifyTagHeader'
+        - $ref: '#/components/parameters/NotifyTemplateHeader'
         - $ref: '#/components/parameters/StreamQueryParam'
       requestBody:
         required: false
@@ -808,6 +836,18 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PersistentNotificationForm'
+          text/plain:
+            schema:
+              type: string
+              description: The whole body is the message, sent as text.
+          text/html:
+            schema:
+              type: string
+              description: The whole body is the message, sent as HTML.
+          text/markdown:
+            schema:
+              type: string
+              description: The whole body is the message, sent as Markdown.
       responses:
         '200':
           description: >
@@ -1403,6 +1443,44 @@ components:
       description: >
         Supplies the key for a route without a {key} path segment. Invalid
         values return 400.
+    NotifyTitleHeader:
+      in: header
+      name: X-Apprise-Title
+      required: false
+      schema:
+        type: string
+      description: >
+        Message title, used when the payload has none. Takes precedence over
+        the `title` query string value.
+    NotifyTypeHeader:
+      in: header
+      name: X-Apprise-Type
+      required: false
+      schema:
+        $ref: '#/components/schemas/NotificationType'
+      description: >
+        Notification type, used when the payload has none. Takes precedence
+        over the `type` query string value.
+    NotifyTagHeader:
+      in: header
+      name: X-Apprise-Tag
+      required: false
+      schema:
+        type: string
+      description: >
+        Tag expression, used when the payload has no `tag` or `tags`. Takes
+        precedence over the `tag` query string value. Tag rules for `locked`
+        and `public` configurations still apply.
+    NotifyTemplateHeader:
+      in: header
+      name: X-Apprise-Template
+      required: false
+      schema:
+        type: string
+        example: room=ops&token=abc123
+      description: >
+        Template values as URL-encoded name=value pairs, used when the payload
+        has no `template` values. A malformed value returns 400.
     StreamQueryParam:
       in: query
       name: stream
@@ -1587,8 +1665,9 @@ components:
         urls:
           type: array
           description: >
-            One or more Apprise URLs. If omitted, the environment
-            variable APPRISE_STATELESS_URLS is used (if set).
+            One or more Apprise URLs. If omitted, a request with
+            X-Apprise-Config-ID sends through that saved configuration
+            instead; otherwise APPRISE_STATELESS_URLS is used (if set).
           items:
             type: string
         body:
