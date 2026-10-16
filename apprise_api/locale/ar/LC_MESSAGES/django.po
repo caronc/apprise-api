@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-12 22:53+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: ar\n"
@@ -340,8 +340,12 @@ msgstr "شرح أوضاع الوصول للتهيئة"
 
 #: apprise_api/api/templates/auth.html:100
 #, python-format
-msgid "Saved %(saved)s access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed."
-msgstr "تم الحفظ %(saved)s الوصول مفروض حاليًا كمقفول بواسطة القفل العالمي للتهيئة. وسيعود إذا تمت إزالة القفل العالمي."
+msgid ""
+"Saved %(saved)s access is currently enforced as locked by the global "
+"configuration lock. It will return if the global lock is removed."
+msgstr ""
+"تم الحفظ %(saved)s الوصول مفروض حاليًا كمقفول بواسطة القفل العالمي للتهيئة. "
+"وسيعود إذا تمت إزالة القفل العالمي."
 
 #: apprise_api/api/templates/auth.html:132
 #: apprise_api/api/templates/config.html:2953
@@ -456,23 +460,39 @@ msgid "Description"
 msgstr "الوصف"
 
 #: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "يستخدم تسجيل الدخول الخاص به للإشعارات والحالة العادية وغير الحالة وتصفح التكوين."
+msgid ""
+"Uses its own login for normal stateful and stateless notifications and "
+"configuration access."
+msgstr ""
+"يستخدم تسجيل الدخول الخاص به للإشعارات والحالة العادية وغير الحالة وتصفح "
+"التكوين."
 
 #: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "يستخدم تسجيل الدخول الخاص به للإشعارات المحددة بالحالة وتغيير كلمات المرور. يبقى محتوى التكوين مخفياً."
+msgid ""
+"Uses its own login for tagged stateful notifications and password changes. "
+"Configuration content stays hidden."
+msgstr ""
+"يستخدم تسجيل الدخول الخاص به للإشعارات المحددة بالحالة وتغيير كلمات المرور. "
+"يبقى محتوى التكوين مخفياً."
 
 #: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "يسمح بالإشعارات المحددة بالحالة بدون تسجيل دخول. يبقى محتوى التكوين والإشعارات غير الحالة محميًا."
+msgid ""
+"Allows tagged stateful notifications without a login. Configuration content "
+"and stateless notifications stay protected."
+msgstr ""
+"يسمح بالإشعارات المحددة بالحالة بدون تسجيل دخول. يبقى محتوى التكوين "
+"والإشعارات غير الحالة محميًا."
 
 #: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "يجمّد وصول مستخدم التكوين بدون حذف التكوين أو تسجيل الدخول. يمكن للمسؤول فقط استخدامه."
+msgid ""
+"Freezes configuration-user access without deleting the configuration or "
+"login. Only an administrator may use it."
+msgstr ""
+"يجمّد وصول مستخدم التكوين بدون حذف التكوين أو تسجيل الدخول. يمكن للمسؤول فقط"
+" استخدامه."
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "إغلاق"
 
@@ -511,8 +531,12 @@ msgid "Scan with Apprise Mobile"
 msgstr "المسح باستخدام Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
-msgstr "يحتوي رمز الاستجابة السريعة هذا على كلمة المرور الجديدة. احفظه أو شاركه بأمان الآن؛ لا يمكن عرض كلمة المرور مرة أخرى."
+msgid ""
+"This QR code contains the new password. Save it or share it securely now; "
+"the password cannot be shown again."
+msgstr ""
+"يحتوي رمز الاستجابة السريعة هذا على كلمة المرور الجديدة. احفظه أو شاركه "
+"بأمان الآن؛ لا يمكن عرض كلمة المرور مرة أخرى."
 
 #: apprise_api/api/templates/auth.html:521
 #: apprise_api/api/templates/base.html:1051
@@ -538,15 +562,21 @@ msgstr "Apprise Mobile URL تم نسخه إلى الحافظة"
 
 #: apprise_api/api/templates/auth.html:525
 #: apprise_api/api/templates/base.html:1055
-msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
-msgstr "هذا URL طويل جدًا لتشفيره كرمز استجابة سريعة. استخدم زر النسخ أعلاه بدلاً من ذلك."
+msgid ""
+"This URL is too long to encode as a QR code. Use the copy button above "
+"instead."
+msgstr ""
+"هذا URL طويل جدًا لتشفيره كرمز استجابة سريعة. استخدم زر النسخ أعلاه بدلاً من"
+" ذلك."
 
 #: apprise_api/api/templates/auth.html:546
 msgid "Reset Access or Configuration?"
 msgstr "إعادة تعيين الوصول أو التكوين؟"
 
 #: apprise_api/api/templates/auth.html:549
-msgid "This will reset only the user access currently associated with this configuration:"
+msgid ""
+"This will reset only the user access currently associated with this "
+"configuration:"
 msgstr "سيؤدي هذا إلى إعادة ضبط وصول المستخدم المرتبط حاليًا بهذا الإعداد:"
 
 #: apprise_api/api/templates/auth.html:552
@@ -653,8 +683,12 @@ msgid "Administrator Credentials"
 msgstr "بيانات اعتماد المسؤول"
 
 #: apprise_api/api/templates/base.html:56
-msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
-msgstr "هذا التكوين ليس لديه مستخدم معين. ونتيجة لذلك، سيستخدم رمز الاستجابة السريعة حساب المسؤول."
+msgid ""
+"This configuration has no assigned user. As a result, the QR code will use "
+"the administrator account."
+msgstr ""
+"هذا التكوين ليس لديه مستخدم معين. ونتيجة لذلك، سيستخدم رمز الاستجابة السريعة"
+" حساب المسؤول."
 
 #: apprise_api/api/templates/base.html:80
 msgid "APPRISE LIBRARY"
@@ -709,7 +743,9 @@ msgid "Logout"
 msgstr "تسجيل الخروج"
 
 #: apprise_api/api/templates/base.html:226
-msgid "If Apprise has been useful to you, please consider supporting its development."
+msgid ""
+"If Apprise has been useful to you, please consider supporting its "
+"development."
 msgstr "إذا كان Apprise مفيدًا لك، يرجى التفكير في دعم تطويره."
 
 #: apprise_api/api/templates/base.html:230
@@ -782,7 +818,7 @@ msgid "Apprise URL Builder"
 msgstr "Apprise URL البناء"
 
 #: apprise_api/api/templates/base.html:353
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "احصل على Apprise Mobile"
@@ -812,8 +848,13 @@ msgid "Notification Delivery Disabled"
 msgstr "تم تعطيل تسليم الإشعارات"
 
 #: apprise_api/api/templates/base.html:396
-msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
-msgstr "كل من الإشعارات عديمة الحالة والتخزين الدائم معطلة. يجب على المشرف تمكين وضع واحد على الأقل قبل أن يتمكن هذا الخادم من تسليم الإشعارات."
+msgid ""
+"Both stateless notifications and persistent storage are disabled. An "
+"administrator must enable at least one mode before this server can deliver "
+"notifications."
+msgstr ""
+"كل من الإشعارات عديمة الحالة والتخزين الدائم معطلة. يجب على المشرف تمكين وضع"
+" واحد على الأقل قبل أن يتمكن هذا الخادم من تسليم الإشعارات."
 
 #: apprise_api/api/templates/base.html:404
 msgid "Configuration Write Failure"
@@ -830,8 +871,12 @@ msgstr "تم نسخ المسار إلى الحافظة"
 
 #: apprise_api/api/templates/base.html:413
 #: apprise_api/api/templates/base.html:437
-msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
-msgstr "<em>ملاحظة:</em> إذا كان هذا هو السلوك المتوقع، قم بتعيين متغير البيئة الموضح أدناه وأعد تحميل مثيل Apprise الخاص بك."
+msgid ""
+"<em>Note:</em> If this is the expected behavior, pre-set the environment "
+"variable shown below and reload your Apprise instance."
+msgstr ""
+"<em>ملاحظة:</em> إذا كان هذا هو السلوك المتوقع، قم بتعيين متغير البيئة "
+"الموضح أدناه وأعد تحميل مثيل Apprise الخاص بك."
 
 #: apprise_api/api/templates/base.html:416
 #: apprise_api/api/templates/base.html:440
@@ -843,20 +888,39 @@ msgid "Attachment Temporary Storage Write Failure"
 msgstr "فشل الكتابة في التخزين المؤقت للمرفقات"
 
 #: apprise_api/api/templates/base.html:429
-msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
-msgstr "Apprise لا يمكنه تداول المرفقات (إذا تم توفيرها) بسبب عدم وجود صلاحية كتابة في الدليل:"
+msgid ""
+"Apprise can not circulate attachments (if provided) due to not having write "
+"access to the directory:"
+msgstr ""
+"Apprise لا يمكنه تداول المرفقات (إذا تم توفيرها) بسبب عدم وجود صلاحية كتابة "
+"في الدليل:"
 
 #: apprise_api/api/templates/base.html:447
 msgid "More Details"
 msgstr "مزيد من التفاصيل"
 
 #: apprise_api/api/templates/base.html:450
-msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
-msgstr "تحت معظم الظروف، تكون المشكلة أو المشكلات المحددة هنا عادةً مرتبطة بمشاكل الأذونات. تأكد من تعيين <code>PUID</code> و <code>GUID</code> بشكل صحيح لتعكس الأذونات التي ترغب أن يستخدمها Apprise عند قراءة وكتابة ملفاته. بالإضافة إلى ذلك، قد تحتاج إلى التأكد من تعيين الأذونات بشكل صحيح على الدلائل التي قمت بتعيينها لها."
+msgid ""
+"Under most circumstances, the issue(s) identified here are usually related "
+"to permission issues. Make sure you set the correct <code>PUID</code> and "
+"<code>GUID</code> to reflect the permissions you wish Apprise to utilize "
+"when it is reading and writing its files. In addition to this, you may need "
+"to make sure the permissions are set correctly on the directories you mapped"
+" them too."
+msgstr ""
+"تحت معظم الظروف، تكون المشكلة أو المشكلات المحددة هنا عادةً مرتبطة بمشاكل "
+"الأذونات. تأكد من تعيين <code>PUID</code> و <code>GUID</code> بشكل صحيح "
+"لتعكس الأذونات التي ترغب أن يستخدمها Apprise عند قراءة وكتابة ملفاته. "
+"بالإضافة إلى ذلك، قد تحتاج إلى التأكد من تعيين الأذونات بشكل صحيح على "
+"الدلائل التي قمت بتعيينها لها."
 
 #: apprise_api/api/templates/base.html:453
-msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
-msgstr "يمكن أن تكون المشكلة أو المشكلات المحددة هنا مرتبطة أيضًا بـSELinux. قد ترغب في استبعاد SELinux عن طريق تعطيله مؤقتًا باستخدام:"
+msgid ""
+"The issue(s) identified here can also be associated with SELinux. You may "
+"wish to rule out SELinux by temporarily disabling it with:"
+msgstr ""
+"يمكن أن تكون المشكلة أو المشكلات المحددة هنا مرتبطة أيضًا بـSELinux. قد ترغب"
+" في استبعاد SELinux عن طريق تعطيله مؤقتًا باستخدام:"
 
 #: apprise_api/api/templates/base.html:456
 #: apprise_api/api/templates/base.html:462
@@ -932,8 +996,11 @@ msgid "Open Configuration"
 msgstr "فتح التكوين"
 
 #: apprise_api/api/templates/base.html:1113
-msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
-msgstr "هذا سيفتح معرف تكوين مختلف. أي تغييرات غير محفوظة على هذه الصفحة ستفقد."
+msgid ""
+"This opens a different Config ID. Any unsaved changes on this page will be "
+"lost."
+msgstr ""
+"هذا سيفتح معرف تكوين مختلف. أي تغييرات غير محفوظة على هذه الصفحة ستفقد."
 
 #: apprise_api/api/templates/base.html:1116
 msgid "Continue"
@@ -945,11 +1012,17 @@ msgid "Unable to reach the Apprise API status endpoint."
 msgstr "تعذر الوصول إلى نقطة نهاية حالة Apprise API."
 
 #: apprise_api/api/templates/base.html:1349
-msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
-msgstr "تم تعطيل تسليم الإشعارات. قم بتمكين الإشعارات عديمة الحالة أو التخزين الدائم لاستئناف الخدمة."
+msgid ""
+"Notification delivery is disabled. Enable stateless notifications or "
+"persistent storage to resume service."
+msgstr ""
+"تم تعطيل تسليم الإشعارات. قم بتمكين الإشعارات عديمة الحالة أو التخزين الدائم"
+" لاستئناف الخدمة."
 
 #: apprise_api/api/templates/base.html:1408
-msgid "Choose a new Config ID. You can edit it or generate another before continuing."
+msgid ""
+"Choose a new Config ID. You can edit it or generate another before "
+"continuing."
 msgstr "اختر معرف إعداد جديد. يمكنك تحريره أو إنشاء آخر قبل المتابعة."
 
 #: apprise_api/api/templates/base.html:1420
@@ -986,7 +1059,8 @@ msgid "Changed Config ID Not Applied"
 msgstr "تم تغيير معرف الإعداد ولم يتم تطبيقه"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:13
-msgid "The entered value is not the configuration currently being managed. Apply"
+msgid ""
+"The entered value is not the configuration currently being managed. Apply"
 msgstr "القيمة المدخلة ليست الإعداد الذي يتم إدارته حاليًا. تطبيق"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:18
@@ -1029,69 +1103,74 @@ msgstr ""
 "\n"
 "مرخص بموجب رخصة %(license)s."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "تطبيق Android"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "تطبيق Android / iOS"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "يقوم Apprise Mobile بتوصيل جهازك Android بهذا الخادم. أرسل رسالة، أو صورة التقطتها للتو، أو أي ملف إلى وجهة واحدة، أو مجموعة، أو كل ما قمت بإعداده."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid ""
+"Apprise Mobile connects your Android or iOS device to this server. Send a "
+"message, a photo you just took, or any file to one destination, a group, or "
+"everything you have configured."
+msgstr ""
+"يقوم Apprise Mobile بتوصيل جهازك Android / iOS بهذا الخادم. أرسل رسالة، أو "
+"صورة التقطتها للتو، أو أي ملف إلى وجهة واحدة، أو مجموعة، أو كل ما قمت "
+"بإعداده."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "أرسل الإشعارات والمرفقات من هاتفك."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
-msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
-msgstr "امسح رمز الاستجابة السريعة Apprise Mobile للإعداد السريع لإضافة هذا الخادم وتحميل الإعدادات."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
+msgid ""
+"Scan the Apprise Mobile Quick Setup QR code to add this server and load a "
+"configuration."
+msgstr ""
+"امسح رمز الاستجابة السريعة Apprise Mobile للإعداد السريع لإضافة هذا الخادم "
+"وتحميل الإعدادات."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
 msgstr "راجع إعداداتك البعيدة وتابع كل تقرير تسليم."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "احصل عليه على Google Play"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "تعرف على المزيد"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "معاينة التطبيق"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "لوحة معلومات Apprise Mobile"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "لوحة التحكم"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "منشئ Apprise Mobile URL"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "منشئ الروابط"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile تقرير التسليم"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "تقرير التسليم"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "جوجل بلاي وشعار جوجل بلاي هي علامات تجارية لشركة جوجل LLC."
-
 #: apprise_api/api/templates/components/qr_password_note.html:4
-msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
-msgstr "كلمات المرور المحفوظة غير مشمولة. Apprise Mobile سيطلب واحدة عند الحاجة."
+msgid ""
+"Saved passwords are not included. Apprise Mobile will ask for one when "
+"required."
+msgstr ""
+"كلمات المرور المحفوظة غير مشمولة. Apprise Mobile سيطلب واحدة عند الحاجة."
 
 #: apprise_api/api/templates/components/qr_password_note.html:7
 msgid "Why?"
@@ -1144,7 +1223,8 @@ msgid "Apprise configuration ID copied to clipboard"
 msgstr "تم نسخ معرف التكوين Apprise إلى الحافظة"
 
 #: apprise_api/api/templates/config.html:109
-msgid "For some examples on how to build a development environment around this:"
+msgid ""
+"For some examples on how to build a development environment around this:"
 msgstr "لبعض الأمثلة حول كيفية بناء بيئة تطوير حول هذا:"
 
 #: apprise_api/api/templates/config.html:109
@@ -1222,8 +1302,11 @@ msgstr "Apprise Mobile الإعداد السريع"
 
 #: apprise_api/api/templates/config.html:162
 #, python-format
-msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
-msgstr "اكشف وامسح هذا الرمز لتحميل هذا التكوين بسهولة إلى %(mobile_app_link)s."
+msgid ""
+"Reveal and scan this code to easily load this configuration into your "
+"%(mobile_app_link)s."
+msgstr ""
+"اكشف وامسح هذا الرمز لتحميل هذا التكوين بسهولة إلى %(mobile_app_link)s."
 
 #: apprise_api/api/templates/config.html:171
 #: apprise_api/api/templates/config.html:172
@@ -1242,8 +1325,8 @@ msgstr "لم يتمكن من تحميل رمز الاستجابة السريعة
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "هل تحتاج التطبيق؟ احصل على %(mobile_app_link)s لـ Android."
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr "هل تحتاج التطبيق؟ احصل على %(mobile_app_link)s لـ Android / iOS."
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1256,7 +1339,10 @@ msgid ""
 "\n"
 "          New configuration can not be set, and existing configuration can not be modified or viewed.\n"
 "          "
-msgstr "في الوقت الحالي، قام مسؤول هذا الخادم بإغلاق جميع الإعدادات. هذا يعني أن الإعدادات التي تم إنشاؤها مسبقًا مخفية بشكل آمن لغرض إرسال الإشعارات فقط. لا يمكن إنشاء إعدادات جديدة، ولا يمكن تعديل أو عرض الإعدادات الموجودة."
+msgstr ""
+"في الوقت الحالي، قام مسؤول هذا الخادم بإغلاق جميع الإعدادات. هذا يعني أن "
+"الإعدادات التي تم إنشاؤها مسبقًا مخفية بشكل آمن لغرض إرسال الإشعارات فقط. لا"
+" يمكن إنشاء إعدادات جديدة، ولا يمكن تعديل أو عرض الإعدادات الموجودة."
 
 #: apprise_api/api/templates/config.html:226
 msgid "Working Remotely With Your Configuration"
@@ -1267,7 +1353,9 @@ msgid "Using The Apprise CLI"
 msgstr "باستخدام الرمز Apprise CLI"
 
 #: apprise_api/api/templates/config.html:230
-msgid "The following command would cause apprise to directly notify all of your services:"
+msgid ""
+"The following command would cause apprise to directly notify all of your "
+"services:"
 msgstr "الأمر التالي سيتسبب في أن يقوم Apprise بإخطار جميع خدماتك مباشرة:"
 
 #: apprise_api/api/templates/config.html:237
@@ -1278,38 +1366,65 @@ msgstr "إرسال مرفق واحد أو أكثر مثل هذا:"
 msgid ""
 "The following command would cause apprise to retrieve the configuration loaded and\n"
 "          send a test notification to all of your added services:"
-msgstr "الأمر التالي سيتسبب في أن يقوم Apprise باسترجاع الإعدادات المحملة وإرسال إشعار تجريبي إلى جميع خدماتك المضافة:"
+msgstr ""
+"الأمر التالي سيتسبب في أن يقوم Apprise باسترجاع الإعدادات المحملة وإرسال "
+"إشعار تجريبي إلى جميع خدماتك المضافة:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "يمكنك أيضًا إنشاء <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">ملف تكوين Apprise</a> يحتوي على هذا السطر في مكان ما داخله:"
+msgid ""
+"You may also create an <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a>"
+" that contains this line somewhere in it:"
+msgstr ""
+"يمكنك أيضًا إنشاء <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">ملف تكوين Apprise</a> يحتوي "
+"على هذا السطر في مكان ما داخله:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "تم نسخ إدخال 'include' لتكوين Apprise إلى الحافظة"
 
 #: apprise_api/api/templates/config.html:262
-msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
-msgstr "من خلال الاستفادة من التوجيه <em>include</em>، سيتم الرجوع إليه تلقائيًا في المكالمات المستقبلية لأداة <code>apprise</code>. جميع المكالمات المستقبلية باستخدام Apprise تُبسط الآن إلى:"
+msgid ""
+"By leveraging the <em>include</em> directive, it will automatically be "
+"referenced for future calls to the <code>apprise</code> tool. All future "
+"calls using Apprise now simplify to:"
+msgstr ""
+"من خلال الاستفادة من التوجيه <em>include</em>، سيتم الرجوع إليه تلقائيًا في "
+"المكالمات المستقبلية لأداة <code>apprise</code>. جميع المكالمات المستقبلية "
+"باستخدام Apprise تُبسط الآن إلى:"
 
 #: apprise_api/api/templates/config.html:268
 msgid "Using CURL"
 msgstr "باستخدام CURL"
 
 #: apprise_api/api/templates/config.html:270
-msgid "The following command would cause the Apprise API to notify all of your services:"
+msgid ""
+"The following command would cause the Apprise API to notify all of your "
+"services:"
 msgstr ". الأمر التالي سيتسبب في أن تقوم Apprise API بإخطار جميع خدماتك:"
 
 #: apprise_api/api/templates/config.html:280
-msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
-msgstr "عند إرسال المرفقات، يتطلب <code>curl</code> أن تكون جميع الملفات المحلية مسبوقة بـ <code>@</code>. يمكنك إضافة مرفق بهذه الطريقة:"
+msgid ""
+"When sending attachments, <code>curl</code> requires all local files be "
+"prefixed with <code>@</code>. You can an add attachment like this:"
+msgstr ""
+"عند إرسال المرفقات، يتطلب <code>curl</code> أن تكون جميع الملفات المحلية "
+"مسبوقة بـ <code>@</code>. يمكنك إضافة مرفق بهذه الطريقة:"
 
 #: apprise_api/api/templates/config.html:290
-msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
-msgstr "عند إرسال أكثر من مرفق واحد، يجب تعيين كل مرفق بشكل فريد إلى معرف جديد. المثال أدناه يستخدم <code>attach1</code> و <code>attach2</code>:"
+msgid ""
+"When sending more than one attachment, you must uniquely assign each "
+"attachment to a new ID.  The example below leverages <code>attach1</code> "
+"and <code>attach2</code>:"
+msgstr ""
+"عند إرسال أكثر من مرفق واحد، يجب تعيين كل مرفق بشكل فريد إلى معرف جديد. "
+"المثال أدناه يستخدم <code>attach1</code> و <code>attach2</code>:"
 
 #: apprise_api/api/templates/config.html:301
-msgid "Sends a notification to our endpoints with an attachment and no body specified:"
+msgid ""
+"Sends a notification to our endpoints with an attachment and no body "
+"specified:"
 msgstr "يرسل إشعارًا إلى نقاط النهاية الخاصة بنا بمرفق دون تحديد محتوى نصي:"
 
 #: apprise_api/api/templates/config.html:319
@@ -1348,8 +1463,12 @@ msgstr "تم تعطيل الوصول إلى إعداداتك بواسطة مسؤ
 
 #: apprise_api/api/templates/config.html:410
 #, python-format
-msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
-msgstr "بمجرد أن تقوم بتحميل <i> بنجاح على الأقل واحدة من Apprise URL</i> في قسم %(config_chip)s، سيتم عرض المدخلات المحملة هنا."
+msgid ""
+"Once you have successfully loaded <i>at least one Apprise URL</i> on the "
+"%(config_chip)s section, your loaded entries will display here."
+msgstr ""
+"بمجرد أن تقوم بتحميل <i> بنجاح على الأقل واحدة من Apprise URL</i> في قسم "
+"%(config_chip)s، سيتم عرض المدخلات المحملة هنا."
 
 #: apprise_api/api/templates/config.html:418
 msgid "Loaded Configuration"
@@ -1361,8 +1480,13 @@ msgid "Show only selected notification services"
 msgstr "عرض خدمات الإشعارات المحددة فقط"
 
 #: apprise_api/api/templates/config.html:431
-msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
-msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> إشعار(ات) تم تحديدها للإرسال</span>"
+msgid ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> notification(s) selected for "
+"sending</span>"
+msgstr ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> إشعار(ات) تم تحديدها للإرسال</span>"
 
 #: apprise_api/api/templates/config.html:443
 msgid "Unsaved Configuration Changes"
@@ -1370,8 +1494,13 @@ msgstr "تغييرات التكوين غير المحفوظة"
 
 #: apprise_api/api/templates/config.html:445
 #, python-format
-msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
-msgstr "تم تحليل المدخلات أدناه من التكوين الذي تم حفظه آخر مرة، لذا قد لا تعكس تعديلاتك الأخيرة. احفظها في قسم %(config_chip)s لرؤية النتيجة هنا."
+msgid ""
+"The entries below were parsed from the configuration that was last saved, so"
+" they may not reflect your recent edits. Save them in the %(config_chip)s "
+"section to see the result here."
+msgstr ""
+"تم تحليل المدخلات أدناه من التكوين الذي تم حفظه آخر مرة، لذا قد لا تعكس "
+"تعديلاتك الأخيرة. احفظها في قسم %(config_chip)s لرؤية النتيجة هنا."
 
 #: apprise_api/api/templates/config.html:449
 msgid "Review the parsed destinations below before sending."
@@ -1384,8 +1513,12 @@ msgstr "اختر وسمًا (🏷️) على أي عنصر لتضمينه في %
 
 #: apprise_api/api/templates/config.html:454
 #, python-format
-msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
-msgstr "استخدم %(send_icon)s لتشغيل اختبار سريع وفحص الخرج الكامل للتصحيح لذلك العنصر."
+msgid ""
+"Use %(send_icon)s to run a quick test and inspect the full debug output for "
+"that entry."
+msgstr ""
+"استخدم %(send_icon)s لتشغيل اختبار سريع وفحص الخرج الكامل للتصحيح لذلك "
+"العنصر."
 
 #: apprise_api/api/templates/config.html:457
 #, python-format
@@ -1401,8 +1534,12 @@ msgid "No Notification Targets Selected"
 msgstr "لم يتم تحديد أي أهداف للإشعار"
 
 #: apprise_api/api/templates/config.html:495
-msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
-msgstr "اختر وسمًا واحدًا على الأقل. تظل الوجهات المحفوظة مخفية أثناء تمكين قفل التكوين."
+msgid ""
+"Choose at least one tag. The saved destinations stay hidden while "
+"configuration locking is enabled."
+msgstr ""
+"اختر وسمًا واحدًا على الأقل. تظل الوجهات المحفوظة مخفية أثناء تمكين قفل "
+"التكوين."
 
 #: apprise_api/api/templates/config.html:497
 #, python-format
@@ -1424,8 +1561,12 @@ msgid "Template Values"
 msgstr "قيم القالب"
 
 #: apprise_api/api/templates/config.html:539
-msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
-msgstr "الصفوف التي تحتوي على قيمة يتم إرسالها؛ القيم الفارغة تستخدم قيمة الخادم الاحتياطية (إذا تم تعريفها)."
+msgid ""
+"Rows with a value are sent; blank values use the server fallback (if "
+"defined)."
+msgstr ""
+"الصفوف التي تحتوي على قيمة يتم إرسالها؛ القيم الفارغة تستخدم قيمة الخادم "
+"الاحتياطية (إذا تم تعريفها)."
 
 #: apprise_api/api/templates/config.html:545
 msgid "Add Value"
@@ -1463,7 +1604,8 @@ msgid "Escalation group"
 msgstr "مجموعة التصعيد"
 
 #: apprise_api/api/templates/config.html:677
-msgid "Maximum number of retries attempted if the service fails before giving up"
+msgid ""
+"Maximum number of retries attempted if the service fails before giving up"
 msgstr "أقصى عدد لمحاولات إعادة المحاولة إذا فشل الخدمة قبل الاستسلام"
 
 #: apprise_api/api/templates/config.html:688
@@ -1569,7 +1711,8 @@ msgstr "الإشعار"
 
 #: apprise_api/api/templates/config.html:1252
 msgid "This test action requires at least one tag on the target entry."
-msgstr "هذا الإجراء التجريبي يتطلب وجود علامة واحدة على الأقل على الإدخال المستهدف."
+msgstr ""
+"هذا الإجراء التجريبي يتطلب وجود علامة واحدة على الأقل على الإدخال المستهدف."
 
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
@@ -1650,7 +1793,8 @@ msgid "Optional Service"
 msgstr "الخدمة الاختيارية"
 
 #: apprise_api/api/templates/config.html:2551
-msgid "Optional Service: failures are ignored when determining notification success"
+msgid ""
+"Optional Service: failures are ignored when determining notification success"
 msgstr "الخدمة الاختيارية: يتم تجاهل الإخفاقات عند تحديد نجاح الإشعار"
 
 #: apprise_api/api/templates/config.html:2674
@@ -1674,8 +1818,12 @@ msgid "Successfully saved the configuration."
 msgstr "تم حفظ الإعدادات بنجاح."
 
 #: apprise_api/api/templates/config.html:2961
-msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
-msgstr "حدثت مشكلة أثناء كتابة الإعدادات على القرص. تحقق من أذونات الملف وحاول مرة أخرى."
+msgid ""
+"There was an issue writing the configuration to disk. Check your file "
+"permissions and try again."
+msgstr ""
+"حدثت مشكلة أثناء كتابة الإعدادات على القرص. تحقق من أذونات الملف وحاول مرة "
+"أخرى."
 
 #: apprise_api/api/templates/config.html:2968
 msgid "Failed to save the specified URL(s). Check your syntax and try again."
@@ -1704,11 +1852,16 @@ msgid "Choose at least one tag before sending."
 msgstr "اختر علامة واحدة على الأقل قبل الإرسال."
 
 #: apprise_api/api/templates/config.html:3274
-msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
-msgstr "لم يتم تحديد أي أهداف للإشعارات. أضف نقاط نهاية للتكوين أو اختر واحدة أو أكثر من العلامات المطابقة قبل الإرسال."
+msgid ""
+"No notification targets are selected. Add configuration endpoints or choose "
+"one or more matching tags before sending."
+msgstr ""
+"لم يتم تحديد أي أهداف للإشعارات. أضف نقاط نهاية للتكوين أو اختر واحدة أو "
+"أكثر من العلامات المطابقة قبل الإرسال."
 
 #: apprise_api/api/templates/config.html:3289
-msgid "Please provide at least a message body or one attachment before sending."
+msgid ""
+"Please provide at least a message body or one attachment before sending."
 msgstr "يرجى توفير نص الرسالة أو مرفق واحد على الأقل قبل الإرسال."
 
 #: apprise_api/api/templates/config.html:3338
@@ -1770,7 +1923,8 @@ msgid "Delete Configuration ID?"
 msgstr "حذف معرف التكوين؟"
 
 #: apprise_api/api/templates/config_list.html:115
-msgid "This permanently removes this configuration and any login assigned to it."
+msgid ""
+"This permanently removes this configuration and any login assigned to it."
 msgstr "هذا يزيل هذا التكوين نهائياً وأي تسجيل دخول مرتبط به."
 
 #: apprise_api/api/templates/config_list.html:131
@@ -1799,21 +1953,28 @@ msgid ""
 "The following services are supported by this\n"
 "            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "الخدمات التالية مدعومة من قبل هذه المثيل <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>."
+msgstr ""
+"الخدمات التالية مدعومة من قبل هذه المثيل <a target=\"_blank\" "
+"href=\"https://github.com/caronc/apprise\" rel=\"noopener "
+"noreferrer\">Apprise</a>."
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
 "To see a simplified listing that only identifies the Apprise services\n"
 "          enabled click <a href=\"%(href)s\">here</a>."
-msgstr "لرؤية قائمة مبسطة تحدد فقط الخدمات المُمكَّنة Apprise انقر على <a href=\"%(href)s\">هنا</a>."
+msgstr ""
+"لرؤية قائمة مبسطة تحدد فقط الخدمات المُمكَّنة Apprise انقر على <a "
+"href=\"%(href)s\">هنا</a>."
 
 #: apprise_api/api/templates/details.html:25
 #, python-format
 msgid ""
 "To see a listing that identifies all of Apprise services available to this\n"
 "          version (enabled or not) click <a href=\"%(href)s?all=yes\">here</a>."
-msgstr "لرؤية قائمة تحدد جميع خدمات Apprise المتاحة لهذا الإصدار (مفعلة أو لا) انقر على <a href=\"%(href)s?all=yes\">هنا</a>."
+msgstr ""
+"لرؤية قائمة تحدد جميع خدمات Apprise المتاحة لهذا الإصدار (مفعلة أو لا) انقر "
+"على <a href=\"%(href)s?all=yes\">هنا</a>."
 
 #: apprise_api/api/templates/details.html:30
 msgid "Total plugin(s) supported"
@@ -1859,7 +2020,8 @@ msgstr "Apprise URL التنسيق"
 msgid ""
 "For more details and additional Apprise\n"
 "                    configuration options available to this service:"
-msgstr "لمزيد من التفاصيل وخيارات Apprise الإعداد الإضافية المتاحة لهذه الخدمة:"
+msgstr ""
+"لمزيد من التفاصيل وخيارات Apprise الإعداد الإضافية المتاحة لهذه الخدمة:"
 
 #: apprise_api/api/templates/details.html:161
 msgid "Click Here"
@@ -1870,8 +2032,12 @@ msgid "API Endpoints"
 msgstr "API نقاط النهاية"
 
 #: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "يمكن للمطورين الذين يرغبون في تلقي مجموعة النتائج هذه في سلسلة قابلة للJSON التحليل لتطبيقاتهم القيام بما يلي لتحقيق ذلك:"
+msgid ""
+"Developers who wish to receive this result set in a JSON parseable string "
+"for their application can perform the following to achieve this:"
+msgstr ""
+"يمكن للمطورين الذين يرغبون في تلقي مجموعة النتائج هذه في سلسلة قابلة للJSON "
+"التحليل لتطبيقاتهم القيام بما يلي لتحقيق ذلك:"
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1937,8 +2103,14 @@ msgid "Execute the request"
 msgstr "تنفيذ الطلب"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "يمكن العثور على مزيد من التفاصيل حول تنسيق JSON <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">هنا</a>."
+msgid ""
+"More details on the JSON format can be found <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">here</a>."
+msgstr ""
+"يمكن العثور على مزيد من التفاصيل حول تنسيق JSON <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">هنا</a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1960,12 +2132,16 @@ msgid "Provide the login credentials required to access the Apprise API."
 msgstr "قدم بيانات تسجيل الدخول المطلوبة للوصول إلى Apprise API."
 
 #: apprise_api/api/templates/login.html:73
-msgid "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank."
-msgstr "معرف التكوين مطلوب للحسابات غير الإدارية. يمكن للمسؤولين العالميين تركه فارغًا."
+msgid ""
+"A Configuration ID is required for non-administrative accounts. Global "
+"administrators can leave it blank."
+msgstr ""
+"معرف التكوين مطلوب للحسابات غير الإدارية. يمكن للمسؤولين العالميين تركه "
+"فارغًا."
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "قم بإدارة هذا الخادم من جهازك Android."
+msgid "Manage this server from your Android or iOS device."
+msgstr "قم بإدارة هذا الخادم من جهازك Android / iOS."
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -2002,7 +2178,12 @@ msgstr "نقاط نهاية بدون حالة"
 msgid ""
 "Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "أولئك الذين يرغبون في التعامل مع هذا API على أنه مجرد <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> و/أو خدمة مصغرة لمشروعهم فقط بحاجة إلى استخدام URL التالية."
+msgstr ""
+"أولئك الذين يرغبون في التعامل مع هذا API على أنه مجرد <a "
+"href=\"https://docs.microsoft.com/en-"
+"us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">sidecar</a> و/أو خدمة مصغرة لمشروعهم فقط بحاجة إلى استخدام URL "
+"التالية."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2013,7 +2194,11 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "يُستخدم لإخطار واحد أو أكثر من عناوين URL محددة Apprise. انظر إلى <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> إذا كنت بحاجة إلى مساعدة في بناء URL الخاص بك."
+msgstr ""
+"يُستخدم لإخطار واحد أو أكثر من عناوين URL محددة Apprise. انظر إلى <a "
+"target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener"
+" noreferrer\">Apprise URL Builder</a> إذا كنت بحاجة إلى مساعدة في بناء URL "
+"الخاص بك."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2025,7 +2210,9 @@ msgstr "المعلمة"
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                    one URL from the next."
-msgstr "تُستخدم لتحديد واحد أو أكثر من Apprise URL(s). استخدم فاصلة و/أو مسافة للفصل بين URL وآخر."
+msgstr ""
+"تُستخدم لتحديد واحد أو أكثر من Apprise URL(s). استخدم فاصلة و/أو مسافة للفصل"
+" بين URL وآخر."
 
 #: apprise_api/api/templates/welcome.html:72
 #: apprise_api/api/templates/welcome.html:543
@@ -2061,8 +2248,14 @@ msgid "Notifies an email address with attachments"
 msgstr "إعلام عنوان بريد إلكتروني بالمرفقات"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "إرسال مرفق ملف عبر الويب إلى خادم <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a>:"
+msgid ""
+"Send an web based file attachment to a <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> server:"
+msgstr ""
+"إرسال مرفق ملف عبر الويب إلى خادم <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a>:"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2143,7 +2336,10 @@ msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
-msgstr "يمكن لأولئك الذين يرغبون في استخدام التخزين المستمر القيام بذلك. هذا القسم هو من نوع ’اضبطه وانسه’. اضبط تكوينك مرة واحدة وقم فقط بتشغيل الإشعارات لاحقًا عند الطلب باستخدام مكالمات API خفيفة الوزن."
+msgstr ""
+"يمكن لأولئك الذين يرغبون في استخدام التخزين المستمر القيام بذلك. هذا القسم "
+"هو من نوع ’اضبطه وانسه’. اضبط تكوينك مرة واحدة وقم فقط بتشغيل الإشعارات "
+"لاحقًا عند الطلب باستخدام مكالمات API خفيفة الوزن."
 
 #: apprise_api/api/templates/welcome.html:276
 msgid ""
@@ -2151,7 +2347,10 @@ msgid ""
 "      encoding.\n"
 "      You must pass along the <code>Content-Type</code> as <code>application/json</code> in order for it to be\n"
 "      interpreted properly."
-msgstr "يمكن استقبال جميع النقاط النهاية التي تتوقع بيانات منشورة إما بصيغة JSON أو في الترميز القياسي الخاص بها. يجب عليك تمرير <code>Content-Type</code> كـ <code>application/json</code> لكي يتم تفسيرها بشكل صحيح."
+msgstr ""
+"يمكن استقبال جميع النقاط النهاية التي تتوقع بيانات منشورة إما بصيغة JSON أو "
+"في الترميز القياسي الخاص بها. يجب عليك تمرير <code>Content-Type</code> كـ "
+"<code>application/json</code> لكي يتم تفسيرها بشكل صحيح."
 
 #: apprise_api/api/templates/welcome.html:295
 #, python-format
@@ -2159,13 +2358,20 @@ msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
 "            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "يُستخدم لإضافة تكوين جديد Apprise أو مجموعة من عناوين URL وربطها بالتكوين المحدد بالمعرف <em>%(key)s</em>. انظر <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> إذا كنت بحاجة إلى مساعدة في إنشاء عناوين URL الخاصة بك."
+msgstr ""
+"يُستخدم لإضافة تكوين جديد Apprise أو مجموعة من عناوين URL وربطها بالتكوين "
+"المحدد بالمعرف <em>%(key)s</em>. انظر <a target=\"_blank\" "
+"href=\"https://appriseit.com/url-builder/\" rel=\"noopener "
+"noreferrer\">Apprise URL Builder</a> إذا كنت بحاجة إلى مساعدة في إنشاء "
+"عناوين URL الخاصة بك."
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                      one URL from the next."
-msgstr "يُستخدم لتحديد واحد أو أكثر من Apprise URL(s). استخدم فاصلة و/أو مسافة لفصل URL واحد عن الآخر."
+msgstr ""
+"يُستخدم لتحديد واحد أو أكثر من Apprise URL(s). استخدم فاصلة و/أو مسافة لفصل "
+"URL واحد عن الآخر."
 
 #: apprise_api/api/templates/welcome.html:317
 msgid ""
@@ -2179,7 +2385,10 @@ msgid ""
 "                      is\n"
 "                      to tell the server which of the supported (Apprise) configuration types you are passing. Valid\n"
 "                      options are:"
-msgstr "هذا الحقل مطلوب فقط إذا قمت بتحديد خيار التكوين. الغرض منه هو إخبار الخادم بأي نوع من أنواع التكوين المدعومة (Apprise) تقوم بتمريره. الخيارات الصحيحة هي:"
+msgstr ""
+"هذا الحقل مطلوب فقط إذا قمت بتحديد خيار التكوين. الغرض منه هو إخبار الخادم "
+"بأي نوع من أنواع التكوين المدعومة (Apprise) تقوم بتمريره. الخيارات الصحيحة "
+"هي:"
 
 #: apprise_api/api/templates/welcome.html:338
 msgid ""
@@ -2192,14 +2401,18 @@ msgid ""
 "The <code>urls</code> takes priority over the <code>config</code> if both\n"
 "                          were\n"
 "                          specified."
-msgstr "إذا تم تحديد كلاهما، فإن <code>urls</code> لها أولوية على <code>config</code>."
+msgstr ""
+"إذا تم تحديد كلاهما، فإن <code>urls</code> لها أولوية على "
+"<code>config</code>."
 
 #: apprise_api/api/templates/welcome.html:347
 msgid ""
 "The <code>format</code> parameter is only required if the\n"
 "                          <code>config</code>\n"
 "                          parameter was also specified."
-msgstr "يتطلب المعامل <code>format</code> فقط إذا تم أيضًا تحديد المعامل <code>config</code>."
+msgstr ""
+"يتطلب المعامل <code>format</code> فقط إذا تم أيضًا تحديد المعامل "
+"<code>config</code>."
 
 #: apprise_api/api/templates/welcome.html:363
 #, python-format
@@ -2225,11 +2438,15 @@ msgstr "URL إذا كانت المفتاح <em>%(key)s</em>"
 msgid ""
 "There are no arguments required. If configuration id of <em>%(key)s</em> exists and has data associated with\n"
 "              it, it will be removed."
-msgstr "لا توجد وسائط مطلوبة. إذا كان معرف التكوين الخاص بـ <em>%(key)s</em> موجودًا وله بيانات مرتبطة به، فسيتم إزالتها."
+msgstr ""
+"لا توجد وسائط مطلوبة. إذا كان معرف التكوين الخاص بـ <em>%(key)s</em> موجودًا"
+" وله بيانات مرتبطة به، فسيتم إزالتها."
 
 #: apprise_api/api/templates/welcome.html:451
 #, python-format
-msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
+msgid ""
+"Remove previously loaded configuration associated with the id of "
+"<em>%(key)s</em>"
 msgstr "إزالة التكوين المحمّل سابقًا المرتبط بمعرّف <em>%(key)s</em>"
 
 #: apprise_api/api/templates/welcome.html:462
@@ -2242,7 +2459,9 @@ msgstr "كان الطلب إذا كانت المفتاح هو <em>%(key)s</em>"
 msgid ""
 "This feature can be used by Apprise itself. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "يمكن استخدام هذه الميزة بواسطة Apprise نفسها. فهي توفر وسيلة لجلب تكوينها عن بُعد المرتبط بالتكوين المحدد من خلال معرف <em>%(key)s</em>."
+msgstr ""
+"يمكن استخدام هذه الميزة بواسطة Apprise نفسها. فهي توفر وسيلة لجلب تكوينها عن"
+" بُعد المرتبط بالتكوين المحدد من خلال معرف <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:507
 #: apprise_api/api/templates/welcome.html:521
@@ -2254,12 +2473,18 @@ msgstr "استخدم Apprise لاسترجاع تكوينك:"
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "هذا هو اسم مستعار لـ <code>%(BASE_URL)s/get/<em>%(key)s</em></code> المحدد أعلاه. فهو يوفر وسيلة لجلب تكوينها عن بُعد المرتبط بالتكوين المحدد من خلال معرف <em>%(key)s</em>."
+msgstr ""
+"هذا هو اسم مستعار لـ <code>%(BASE_URL)s/get/<em>%(key)s</em></code> المحدد "
+"أعلاه. فهو يوفر وسيلة لجلب تكوينها عن بُعد المرتبط بالتكوين المحدد من خلال "
+"معرف <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:531
 #, python-format
-msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
-msgstr "يُخطِر بعناوين URL المرتبطة بالتكوين المحدد بواسطة المعرف <em>%(key)s</em>."
+msgid ""
+"Notifies the URLs associated with configuration identified by the id of "
+"<em>%(key)s</em>."
+msgstr ""
+"يُخطِر بعناوين URL المرتبطة بالتكوين المحدد بواسطة المعرف <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:548
 msgid ""
@@ -2284,7 +2509,9 @@ msgstr "هذا هو الخيار الافتراضي إذا لم يتم تحدي�
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
-msgstr "تطبيق منطق التوسيم لتصفية عناوين URL الخاصة بك بشكل إضافي. هذا الحقل اختياري."
+msgstr ""
+"تطبيق منطق التوسيم لتصفية عناوين URL الخاصة بك بشكل إضافي. هذا الحقل "
+"اختياري."
 
 #: apprise_api/api/templates/welcome.html:594
 msgid "Notifies all URLs assigned to the configuration"
@@ -2299,8 +2526,11 @@ msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "يُخطِر بجميع عناوين URL المخصصة للوسم <em>devops</em>"
 
 #: apprise_api/api/templates/welcome.html:621
-msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
-msgstr "من الناحية المثالية، يجب أن تستفيد من مكتبة Apprise؛ ستجعل حياتك أسهل بكثير:"
+msgid ""
+"Ideally you should leverage the Apprise Library; it will make your life much"
+" easier:"
+msgstr ""
+"من الناحية المثالية، يجب أن تستفيد من مكتبة Apprise؛ ستجعل حياتك أسهل بكثير:"
 
 #: apprise_api/api/templates/welcome.html:625
 msgid "Create an Apprise instance"
@@ -2328,14 +2558,18 @@ msgstr "ملاحظات نقطة النهاية"
 
 #: apprise_api/api/templates/welcome.html:751
 #, python-format
-msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
+msgid ""
+"The Configuration ID (<em>%(key)s</em>) you plan to associate your "
+"configuration with:"
 msgstr "معرف التكوين (<em>%(key)s</em>) الذي تخطط لربط تكوينك به:"
 
 #: apprise_api/api/templates/welcome.html:755
 msgid ""
 "Cannot have spaces or special characters. A dash (<code>-</code>) and underscore\n"
 "              (<code>_</code>) are the only exceptions to this rule."
-msgstr "لا يمكن أن يحتوي على مسافات أو حروف خاصة. الاستثناءات الوحيدة لهذه القاعدة هي الواصلة (<code>-</code>) والشرطة السفلية (<code>_</code>)."
+msgstr ""
+"لا يمكن أن يحتوي على مسافات أو حروف خاصة. الاستثناءات الوحيدة لهذه القاعدة "
+"هي الواصلة (<code>-</code>) والشرطة السفلية (<code>_</code>)."
 
 #: apprise_api/api/templates/welcome.html:758
 msgid "Must start with at least two alphanumeric characters."
@@ -2344,6 +2578,14 @@ msgstr "يجب أن يبدأ بما لا يقل عن حرفين أو رقمين.
 #: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "لا يمكن أن يتجاوز 64 حرفًا في الطول الإجمالي."
+
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "احصل عليه على Google Play"
 
 #: apprise_api/api/views.py:1157
 msgid "This configuration has been disabled by an administrator"
@@ -2355,7 +2597,8 @@ msgid "Access Denied"
 msgstr "تم رفض الوصول"
 
 #: apprise_api/api/views.py:1184
-msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
+msgid ""
+"Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "وضع المصادقة معطل (قم بتعيين APPRISE_AUTH_REQUIRED لتمكينه)"
 
 #: apprise_api/api/views.py:1193
@@ -2363,7 +2606,8 @@ msgid "Persistent configuration storage is disabled"
 msgstr "تم تعطيل تخزين الإعدادات المستمرة"
 
 #: apprise_api/api/views.py:1202
-msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
+msgid ""
+"A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "مطلوب معرف الإعداد (مسار URL أو X-Apprise-Config-ID في العنوان)"
 
 #: apprise_api/api/views.py:1215
@@ -2486,7 +2730,8 @@ msgid "The configuration could not be removed"
 msgstr "لم يكن بالإمكان إزالة الإعداد"
 
 #: apprise_api/api/views.py:2525
-msgid "The configuration was removed, but its authentication could not be removed"
+msgid ""
+"The configuration was removed, but its authentication could not be removed"
 msgstr "تم إزالة الإعداد، ولكن لم يكن بالإمكان إزالة المصادقة الخاصة به"
 
 #: apprise_api/api/views.py:2545
@@ -2534,7 +2779,8 @@ msgid "Successfully removed authentication"
 msgstr "تم إزالة المصادقة بنجاح"
 
 #: apprise_api/api/views.py:3013
-msgid "The server is temporarily unable to start a new live notification stream"
+msgid ""
+"The server is temporarily unable to start a new live notification stream"
 msgstr "الخادم غير قادر مؤقتًا على بدء تدفق إشعارات مباشر جديد"
 
 #: apprise_api/api/views.py:3038
@@ -2706,8 +2952,12 @@ msgstr "عدد كبير جدًا من الطلبات"
 
 #: apprise_api/error/templates/429.html:20
 #, python-format
-msgid "Too many login attempts were made. Wait %(retry_after)s seconds before trying again."
-msgstr "تم إجراء العديد من محاولات تسجيل الدخول. انتظر %(retry_after)s ثانية قبل المحاولة مرة أخرى."
+msgid ""
+"Too many login attempts were made. Wait %(retry_after)s seconds before "
+"trying again."
+msgstr ""
+"تم إجراء العديد من محاولات تسجيل الدخول. انتظر %(retry_after)s ثانية قبل "
+"المحاولة مرة أخرى."
 
 #: apprise_api/error/templates/50x.html:20
 msgid "Service Temporarily Unavailable"

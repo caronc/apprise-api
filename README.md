@@ -6,7 +6,7 @@ Take advantage of [Apprise](https://github.com/caronc/apprise) through your netw
 - An incredibly lightweight gateway to Apprise.
 - A production-ready micro-service at your disposal.
 - A Simple Website to verify and test your configuration with.
-- An [Android app](#apprise-mobile-android) to notify and manage your server from your phone.
+- An [Android and iOS app](#apprise-mobile) to notify and manage your server from your phone.
 
 Apprise API was designed to easily fit into existing (and new) ecosystems that are looking for a simple notification solution.
 
@@ -38,15 +38,13 @@ With configuration in place, you'll be able to use the *Notification* tab to sen
 
 At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
 
-## Apprise Mobile (Android)
+## Apprise Mobile
 
-<a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img align="left" width="84" hspace="16" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/google-play.svg" alt="Get Apprise Mobile on Google Play"></a>
+**Apprise Mobile** is the Android and iOS companion app for Apprise API. Send a message, photo, or file to one destination, a group, or every destination you have configured. The app requires access to your running Apprise API server; it is not a standalone notification service.
 
-**Apprise Mobile** is the Android companion app for Apprise API. Send a message, photo, or file to one destination, a group, or every destination you've configured. The app requires access to *your* running Apprise API server; it is not a standalone notification service.
+<a href="https://apps.apple.com/app/id6821633589"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/app-store-en.svg" alt="Download on the App Store"></a> <a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/google-play-en.svg" alt="Get it on Google Play"></a>
 
-**[Get Apprise Mobile on Google Play](https://play.google.com/store/apps/details?id=com.appriseit.mobile)** — install it on your Android device, then connect it to your Apprise API server.
-
-<br clear="left"/>
+Android requires Android 8.0 or later. iPhone and iPad require iOS 17.2 or later. See the [setup guide](https://appriseit.com/mobile/getting-started/) to connect your server.
 
 <table>
 <tr>
@@ -67,7 +65,6 @@ Once the app is installed, open the *Configuration Manager* in your browser and 
 
 Visit the [Apprise Mobile](https://appriseit.com/mobile/) page for more details, screenshots, and the app's privacy policy and terms.
 
-*Google Play and the Google Play logo are trademarks of Google LLC.*
 
 ## Installation
 
@@ -405,15 +402,15 @@ The `/cfg` list requires `APPRISE_STATEFUL_MODE=simple` and is available by defa
 | `/add/{KEY}` |  POST  | Saves Apprise Configuration (or set of URLs) to the persistent store.<br/>*Payload Parameters*<br/>📌 **urls**: Define one or more Apprise URL(s) here. Use a comma and/or space to separate one URL from the next.<br/>📌 **config**: Provide the contents of either a YAML or TEXT based Apprise configuration.<br/>📌 **format**: This field is only required if you've specified the *config* parameter. Used to tell the server which of the supported (Apprise) configuration types you are passing. Valid options are *text* and *yaml*. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
 | `/del/{KEY}` |  POST  | Removes Apprise Configuration from the persistent store. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
 | `/move/{KEY}` |  POST  | Moves the configuration stored at *{KEY}* to a new Config ID.<br/>*Payload Parameters*<br/>📌 **to**: The destination Config ID. It must not already have a configuration. Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator.
-| `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
-| `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/config/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
+| `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
+| `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).<br/>📌 **template**: Values for a configuration written with `${NAME}` markers. Send a JSON object (`"template": {"api_key": "..."}`) or one form field per name (`template[api_key]=...`).
 | `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists its template names. With `privacy=0`, each name carries its configuration default (or `null`). With `privacy=1`, URL secrets are hidden and every name is `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required and every name is `null`.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
 | `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, `access`, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
-| `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/dev/apprise_details/)
+| `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/library/inspection/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
 As an example, the `/json/urls/{KEY}` response might return something like this:
@@ -475,7 +472,7 @@ curl -X POST \
     http://localhost:8000/notify/abc123
 ```
 
-🏷️ Leveraging *tagging* allows you to associate one or more tags (or categories) with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same *tag* allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://appriseit.com/config/)) that can be saved to the persistent storage previously associated with a `{KEY}`.
+🏷️ Leveraging *tagging* allows you to associate one or more tags (or categories) with your Apprise URLs.  By doing this, notifications only need to be referred to by their easy to remember notify tag name such as `devops`, `admin`, `family`, etc. You can very easily group more than one notification service under the same *tag* allowing you to notify a group of services at once.  This is accomplished through configuration files ([documented here](https://appriseit.com/getting-started/configuration/)) that can be saved to the persistent storage previously associated with a `{KEY}`.
 
 ```bash
 # Send notification(s) to a {KEY} defined as 'abc123'
@@ -768,7 +765,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_ATTACH_REJECT_URL` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always reject.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. `APPRISE_ATTACH_REJECT_URL` is always processed before `APPRISE_ATTACH_ALLOW_URL`. Use a space and/or a comma to identify more then one entry. By default this is set to `127.0.* localhost*`. You can also add the special keyword `internal`, which blocks any destination that resolves to a loopback, private, link-local, or otherwise non-public address -- including LAN devices, so it's off by default.
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
-| `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://appriseit.com/dev/decorator/). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
+| `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://appriseit.com/library/extending/decorator/). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
 | `APPRISE_RECURSION_MAX` | This defines the number of times one Apprise API Server can (recursively) call another.  This is to both support and mitigate abuse through [the `apprise://` schema](https://appriseit.com/services/apprise_api/) for those who choose to use it. When leveraged properly, you can increase this (recursion max) value and successfully load balance the handling of many notification requests through many additional API Servers.  By default this value is set to `1` (one).
 | `APPRISE_WEBHOOK_URL` | Define a Webhook that Apprise should `POST` results to upon each notification call made.  This must be in the format of an `http://` or `https://` URI.  By default no URL is specified and no webhook is actioned.
 | `APPRISE_WORKER_COUNT` | Over-ride the number of workers to run.  by default this is calculated `(2 * CPUS_DETECTED) + 1` [as advised by Gunicorn's website](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Hobby enthusiasts and/or users who are simply setting up Apprise to support their home (light-weight usage) may wish to set this value to `1` to limit the resources the Apprise server prepares for itself.

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-12 22:53+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: vi\n"
@@ -340,8 +340,12 @@ msgstr "Giải Thích Các Chế Độ Truy Cập Cấu Hình"
 
 #: apprise_api/api/templates/auth.html:100
 #, python-format
-msgid "Saved %(saved)s access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed."
-msgstr "Đã Lưu %(saved)s quyền truy cập hiện đang bị khóa theo khóa cấu hình toàn cục. Nó sẽ trở lại nếu khóa toàn cục được gỡ bỏ."
+msgid ""
+"Saved %(saved)s access is currently enforced as locked by the global "
+"configuration lock. It will return if the global lock is removed."
+msgstr ""
+"Đã Lưu %(saved)s quyền truy cập hiện đang bị khóa theo khóa cấu hình toàn "
+"cục. Nó sẽ trở lại nếu khóa toàn cục được gỡ bỏ."
 
 #: apprise_api/api/templates/auth.html:132
 #: apprise_api/api/templates/config.html:2953
@@ -356,7 +360,8 @@ msgstr "Công Cụ Thông Tin Đăng Nhập"
 
 #: apprise_api/api/templates/auth.html:148
 msgid "Generate credentials or reset this Config ID's access."
-msgstr "Tạo thông tin đăng nhập hoặc đặt lại quyền truy cập của ID Cấu hình này."
+msgstr ""
+"Tạo thông tin đăng nhập hoặc đặt lại quyền truy cập của ID Cấu hình này."
 
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
@@ -456,23 +461,39 @@ msgid "Description"
 msgstr "Mô tả"
 
 #: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "Sử dụng đăng nhập riêng cho thông báo trạng thái và không trạng thái bình thường cũng như truy cập cấu hình."
+msgid ""
+"Uses its own login for normal stateful and stateless notifications and "
+"configuration access."
+msgstr ""
+"Sử dụng đăng nhập riêng cho thông báo trạng thái và không trạng thái bình "
+"thường cũng như truy cập cấu hình."
 
 #: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "Sử dụng đăng nhập riêng cho thông báo trạng thái có gắn nhãn và thay đổi mật khẩu. Nội dung cấu hình vẫn được ẩn."
+msgid ""
+"Uses its own login for tagged stateful notifications and password changes. "
+"Configuration content stays hidden."
+msgstr ""
+"Sử dụng đăng nhập riêng cho thông báo trạng thái có gắn nhãn và thay đổi mật"
+" khẩu. Nội dung cấu hình vẫn được ẩn."
 
 #: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "Cho phép thông báo trạng thái có gắn nhãn mà không cần đăng nhập. Nội dung cấu hình và thông báo không trạng thái vẫn được bảo vệ."
+msgid ""
+"Allows tagged stateful notifications without a login. Configuration content "
+"and stateless notifications stay protected."
+msgstr ""
+"Cho phép thông báo trạng thái có gắn nhãn mà không cần đăng nhập. Nội dung "
+"cấu hình và thông báo không trạng thái vẫn được bảo vệ."
 
 #: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "Đóng băng quyền truy cập người dùng cấu hình mà không xóa cấu hình hoặc đăng nhập. Chỉ quản trị viên mới có thể sử dụng."
+msgid ""
+"Freezes configuration-user access without deleting the configuration or "
+"login. Only an administrator may use it."
+msgstr ""
+"Đóng băng quyền truy cập người dùng cấu hình mà không xóa cấu hình hoặc đăng"
+" nhập. Chỉ quản trị viên mới có thể sử dụng."
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "Đóng"
 
@@ -503,7 +524,8 @@ msgstr "Truy cập cấu hình đã được lưu."
 
 #: apprise_api/api/templates/auth.html:500
 msgid "Username, password, and Config ID copied to clipboard"
-msgstr "Tên đăng nhập, mật khẩu và ID Cấu hình đã được sao chép vào bộ nhớ tạm"
+msgstr ""
+"Tên đăng nhập, mật khẩu và ID Cấu hình đã được sao chép vào bộ nhớ tạm"
 
 #: apprise_api/api/templates/auth.html:514
 #: apprise_api/api/templates/base.html:1040
@@ -511,8 +533,12 @@ msgid "Scan with Apprise Mobile"
 msgstr "Quét bằng Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
-msgstr "Mã QR này chứa mật khẩu mới. Hãy lưu hoặc chia sẻ mã một cách an toàn ngay bây giờ; mật khẩu sẽ không thể hiển thị lại."
+msgid ""
+"This QR code contains the new password. Save it or share it securely now; "
+"the password cannot be shown again."
+msgstr ""
+"Mã QR này chứa mật khẩu mới. Hãy lưu hoặc chia sẻ mã một cách an toàn ngay "
+"bây giờ; mật khẩu sẽ không thể hiển thị lại."
 
 #: apprise_api/api/templates/auth.html:521
 #: apprise_api/api/templates/base.html:1051
@@ -538,16 +564,24 @@ msgstr "Apprise Mobile URL đã được sao chép vào bộ nhớ tạm"
 
 #: apprise_api/api/templates/auth.html:525
 #: apprise_api/api/templates/base.html:1055
-msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
-msgstr "URL này quá dài để mã hóa thành mã QR. Hãy sử dụng nút sao chép phía trên thay vì."
+msgid ""
+"This URL is too long to encode as a QR code. Use the copy button above "
+"instead."
+msgstr ""
+"URL này quá dài để mã hóa thành mã QR. Hãy sử dụng nút sao chép phía trên "
+"thay vì."
 
 #: apprise_api/api/templates/auth.html:546
 msgid "Reset Access or Configuration?"
 msgstr "Đặt lại Truy cập hoặc Cấu hình?"
 
 #: apprise_api/api/templates/auth.html:549
-msgid "This will reset only the user access currently associated with this configuration:"
-msgstr "Điều này chỉ sẽ đặt lại quyền truy cập của người dùng hiện đang liên kết với cấu hình này:"
+msgid ""
+"This will reset only the user access currently associated with this "
+"configuration:"
+msgstr ""
+"Điều này chỉ sẽ đặt lại quyền truy cập của người dùng hiện đang liên kết với"
+" cấu hình này:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -601,7 +635,8 @@ msgstr "Quyền truy cập của người dùng và cấu hình đã lưu đã b
 
 #: apprise_api/api/templates/auth.html:651
 msgid "The user access was removed. The saved configuration was kept."
-msgstr "Quyền truy cập của người dùng đã bị xóa. Cấu hình đã lưu được giữ lại."
+msgstr ""
+"Quyền truy cập của người dùng đã bị xóa. Cấu hình đã lưu được giữ lại."
 
 #: apprise_api/api/templates/auth.html:703
 #: apprise_api/api/templates/config_list.html:214
@@ -653,8 +688,12 @@ msgid "Administrator Credentials"
 msgstr "Thông Tin Đăng Nhập Quản Trị"
 
 #: apprise_api/api/templates/base.html:56
-msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
-msgstr "Cấu hình này không có người dùng được chỉ định. Do đó, mã QR sẽ sử dụng tài khoản quản trị."
+msgid ""
+"This configuration has no assigned user. As a result, the QR code will use "
+"the administrator account."
+msgstr ""
+"Cấu hình này không có người dùng được chỉ định. Do đó, mã QR sẽ sử dụng tài "
+"khoản quản trị."
 
 #: apprise_api/api/templates/base.html:80
 msgid "APPRISE LIBRARY"
@@ -709,8 +748,11 @@ msgid "Logout"
 msgstr "Đăng xuất"
 
 #: apprise_api/api/templates/base.html:226
-msgid "If Apprise has been useful to you, please consider supporting its development."
-msgstr "Nếu Apprise hữu ích cho bạn, vui lòng xem xét hỗ trợ phát triển của nó."
+msgid ""
+"If Apprise has been useful to you, please consider supporting its "
+"development."
+msgstr ""
+"Nếu Apprise hữu ích cho bạn, vui lòng xem xét hỗ trợ phát triển của nó."
 
 #: apprise_api/api/templates/base.html:230
 msgid "GitHub Sponsors"
@@ -782,7 +824,7 @@ msgid "Apprise URL Builder"
 msgstr "Apprise URL Trình Tạo"
 
 #: apprise_api/api/templates/base.html:353
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Lấy Apprise Mobile"
@@ -812,8 +854,14 @@ msgid "Notification Delivery Disabled"
 msgstr "Giao tiếp Thông báo Bị Vô hiệu hóa"
 
 #: apprise_api/api/templates/base.html:396
-msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
-msgstr "Cả thông báo vô trạng thái và lưu trữ lâu dài đều bị vô hiệu hóa. Một quản trị viên phải bật ít nhất một chế độ trước khi máy chủ này có thể gửi thông báo."
+msgid ""
+"Both stateless notifications and persistent storage are disabled. An "
+"administrator must enable at least one mode before this server can deliver "
+"notifications."
+msgstr ""
+"Cả thông báo vô trạng thái và lưu trữ lâu dài đều bị vô hiệu hóa. Một quản "
+"trị viên phải bật ít nhất một chế độ trước khi máy chủ này có thể gửi thông "
+"báo."
 
 #: apprise_api/api/templates/base.html:404
 msgid "Configuration Write Failure"
@@ -830,8 +878,12 @@ msgstr "Đã sao chép đường dẫn vào khay nhớ tạm"
 
 #: apprise_api/api/templates/base.html:413
 #: apprise_api/api/templates/base.html:437
-msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
-msgstr "<em>Lưu ý:</em> Nếu đây là hành vi mong đợi, hãy thiết lập biến môi trường được hiển thị bên dưới và tải lại phiên bản Apprise của bạn."
+msgid ""
+"<em>Note:</em> If this is the expected behavior, pre-set the environment "
+"variable shown below and reload your Apprise instance."
+msgstr ""
+"<em>Lưu ý:</em> Nếu đây là hành vi mong đợi, hãy thiết lập biến môi trường "
+"được hiển thị bên dưới và tải lại phiên bản Apprise của bạn."
 
 #: apprise_api/api/templates/base.html:416
 #: apprise_api/api/templates/base.html:440
@@ -843,20 +895,39 @@ msgid "Attachment Temporary Storage Write Failure"
 msgstr "Lỗi Ghi Bộ Nhớ Tạm Thời Đính Kèm"
 
 #: apprise_api/api/templates/base.html:429
-msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
-msgstr "Apprise không thể lưu chuyển các tệp đính kèm (nếu có) do không có quyền ghi vào thư mục:"
+msgid ""
+"Apprise can not circulate attachments (if provided) due to not having write "
+"access to the directory:"
+msgstr ""
+"Apprise không thể lưu chuyển các tệp đính kèm (nếu có) do không có quyền ghi"
+" vào thư mục:"
 
 #: apprise_api/api/templates/base.html:447
 msgid "More Details"
 msgstr "Thêm Chi Tiết"
 
 #: apprise_api/api/templates/base.html:450
-msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
-msgstr "Trong hầu hết các trường hợp, vấn đề được xác định ở đây thường liên quan đến các vấn đề về quyền. Hãy chắc chắn rằng bạn đã đặt <code>PUID</code> và <code>GUID</code> đúng để phản ánh các quyền mà bạn muốn Apprise sử dụng khi nó đọc và ghi các tập tin của mình. Ngoài ra, bạn có thể cần đảm bảo các quyền được thiết lập đúng trên các thư mục mà bạn đã ánh xạ tới."
+msgid ""
+"Under most circumstances, the issue(s) identified here are usually related "
+"to permission issues. Make sure you set the correct <code>PUID</code> and "
+"<code>GUID</code> to reflect the permissions you wish Apprise to utilize "
+"when it is reading and writing its files. In addition to this, you may need "
+"to make sure the permissions are set correctly on the directories you mapped"
+" them too."
+msgstr ""
+"Trong hầu hết các trường hợp, vấn đề được xác định ở đây thường liên quan "
+"đến các vấn đề về quyền. Hãy chắc chắn rằng bạn đã đặt <code>PUID</code> và "
+"<code>GUID</code> đúng để phản ánh các quyền mà bạn muốn Apprise sử dụng khi"
+" nó đọc và ghi các tập tin của mình. Ngoài ra, bạn có thể cần đảm bảo các "
+"quyền được thiết lập đúng trên các thư mục mà bạn đã ánh xạ tới."
 
 #: apprise_api/api/templates/base.html:453
-msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
-msgstr "Các vấn đề được xác định ở đây cũng có thể liên quan đến SELinux. Bạn có thể muốn loại trừ SELinux bằng cách tạm thời vô hiệu hóa nó với:"
+msgid ""
+"The issue(s) identified here can also be associated with SELinux. You may "
+"wish to rule out SELinux by temporarily disabling it with:"
+msgstr ""
+"Các vấn đề được xác định ở đây cũng có thể liên quan đến SELinux. Bạn có thể"
+" muốn loại trừ SELinux bằng cách tạm thời vô hiệu hóa nó với:"
 
 #: apprise_api/api/templates/base.html:456
 #: apprise_api/api/templates/base.html:462
@@ -932,8 +1003,12 @@ msgid "Open Configuration"
 msgstr "Mở Cấu hình"
 
 #: apprise_api/api/templates/base.html:1113
-msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
-msgstr "Điều này mở một ID cấu hình khác. Bất kỳ thay đổi nào chưa lưu trên trang này sẽ bị mất."
+msgid ""
+"This opens a different Config ID. Any unsaved changes on this page will be "
+"lost."
+msgstr ""
+"Điều này mở một ID cấu hình khác. Bất kỳ thay đổi nào chưa lưu trên trang "
+"này sẽ bị mất."
 
 #: apprise_api/api/templates/base.html:1116
 msgid "Continue"
@@ -945,12 +1020,20 @@ msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Không thể kết nối với điểm cuối trạng thái Apprise API."
 
 #: apprise_api/api/templates/base.html:1349
-msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
-msgstr "Việc gửi thông báo đã bị tắt. Bật thông báo không trạng thái hoặc lưu trữ dữ liệu liên tục để tiếp tục dịch vụ."
+msgid ""
+"Notification delivery is disabled. Enable stateless notifications or "
+"persistent storage to resume service."
+msgstr ""
+"Việc gửi thông báo đã bị tắt. Bật thông báo không trạng thái hoặc lưu trữ dữ"
+" liệu liên tục để tiếp tục dịch vụ."
 
 #: apprise_api/api/templates/base.html:1408
-msgid "Choose a new Config ID. You can edit it or generate another before continuing."
-msgstr "Chọn một ID Cấu hình mới. Bạn có thể chỉnh sửa nó hoặc tạo cái khác trước khi tiếp tục."
+msgid ""
+"Choose a new Config ID. You can edit it or generate another before "
+"continuing."
+msgstr ""
+"Chọn một ID Cấu hình mới. Bạn có thể chỉnh sửa nó hoặc tạo cái khác trước "
+"khi tiếp tục."
 
 #: apprise_api/api/templates/base.html:1420
 msgid "New Config ID"
@@ -986,7 +1069,8 @@ msgid "Changed Config ID Not Applied"
 msgstr "Thay đổi ID Cấu hình chưa được áp dụng"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:13
-msgid "The entered value is not the configuration currently being managed. Apply"
+msgid ""
+"The entered value is not the configuration currently being managed. Apply"
 msgstr "Giá trị nhập không phải là cấu hình đang được quản lý. Áp dụng"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:18
@@ -1029,69 +1113,76 @@ msgstr ""
 "\n"
 "Được cấp phép theo giấy phép %(license)s."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "Ứng dụng Android"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "Ứng dụng Android / iOS"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "Apprise Mobile kết nối thiết bị Android của bạn với máy chủ này. Gửi một tin nhắn, một bức ảnh bạn vừa chụp, hoặc bất kỳ tệp nào đến một điểm đến, một nhóm, hoặc tất cả những gì bạn đã cấu hình."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid ""
+"Apprise Mobile connects your Android or iOS device to this server. Send a "
+"message, a photo you just took, or any file to one destination, a group, or "
+"everything you have configured."
+msgstr ""
+"Apprise Mobile kết nối thiết bị Android / iOS của bạn với máy chủ này. Gửi "
+"một tin nhắn, một bức ảnh bạn vừa chụp, hoặc bất kỳ tệp nào đến một điểm "
+"đến, một nhóm, hoặc tất cả những gì bạn đã cấu hình."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "Gửi thông báo và tệp đính kèm từ điện thoại của bạn."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
-msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
-msgstr "Quét mã QR Apprise Mobile Thiết lập Nhanh để thêm máy chủ này và tải cấu hình."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
+msgid ""
+"Scan the Apprise Mobile Quick Setup QR code to add this server and load a "
+"configuration."
+msgstr ""
+"Quét mã QR Apprise Mobile Thiết lập Nhanh để thêm máy chủ này và tải cấu "
+"hình."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
-msgstr "Xem lại các cấu hình từ xa của bạn và theo dõi từng báo cáo giao hàng."
+msgstr ""
+"Xem lại các cấu hình từ xa của bạn và theo dõi từng báo cáo giao hàng."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "Tải về trên Google Play"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "Tìm hiểu thêm"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "Xem trước Ứng dụng"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "Bảng điều khiển Apprise Mobile"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Bảng điều khiển"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "Apprise Mobile URL Builder"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "Trình tạo URL"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile báo cáo giao hàng"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "Báo cáo gửi"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "Google Play và logo Google Play là các thương hiệu của Google LLC."
-
 #: apprise_api/api/templates/components/qr_password_note.html:4
-msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
-msgstr "Mật khẩu đã lưu không được bao gồm. Apprise Mobile sẽ yêu cầu một mật khẩu khi cần."
+msgid ""
+"Saved passwords are not included. Apprise Mobile will ask for one when "
+"required."
+msgstr ""
+"Mật khẩu đã lưu không được bao gồm. Apprise Mobile sẽ yêu cầu một mật khẩu "
+"khi cần."
 
 #: apprise_api/api/templates/components/qr_password_note.html:7
 msgid "Why?"
@@ -1144,8 +1235,10 @@ msgid "Apprise configuration ID copied to clipboard"
 msgstr "Apprise ID cấu hình đã được sao chép vào clipboard"
 
 #: apprise_api/api/templates/config.html:109
-msgid "For some examples on how to build a development environment around this:"
-msgstr "Một số ví dụ về cách xây dựng môi trường phát triển xung quanh điều này:"
+msgid ""
+"For some examples on how to build a development environment around this:"
+msgstr ""
+"Một số ví dụ về cách xây dựng môi trường phát triển xung quanh điều này:"
 
 #: apprise_api/api/templates/config.html:109
 msgid "click here"
@@ -1222,8 +1315,12 @@ msgstr "Apprise Mobile Thiết lập nhanh"
 
 #: apprise_api/api/templates/config.html:162
 #, python-format
-msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
-msgstr "Hiển thị và quét mã này để dễ dàng tải cấu hình này vào %(mobile_app_link)s của bạn."
+msgid ""
+"Reveal and scan this code to easily load this configuration into your "
+"%(mobile_app_link)s."
+msgstr ""
+"Hiển thị và quét mã này để dễ dàng tải cấu hình này vào %(mobile_app_link)s "
+"của bạn."
 
 #: apprise_api/api/templates/config.html:171
 #: apprise_api/api/templates/config.html:172
@@ -1242,8 +1339,8 @@ msgstr "Không thể tải Mã QR."
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "Cần ứng dụng? Nhận %(mobile_app_link)s cho Android."
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr "Cần ứng dụng? Nhận %(mobile_app_link)s cho Android / iOS."
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1256,7 +1353,11 @@ msgid ""
 "\n"
 "          New configuration can not be set, and existing configuration can not be modified or viewed.\n"
 "          "
-msgstr "Vào thời điểm này, quản trị viên của máy chủ này đã khóa tất cả các cấu hình. Điều này có nghĩa là cấu hình đã được tạo sẵn được bảo mật ẩn đi chỉ với mục đích truyền thông báo. Không thể thiết lập cấu hình mới, và cấu hình hiện có không thể được sửa đổi hoặc xem."
+msgstr ""
+"Vào thời điểm này, quản trị viên của máy chủ này đã khóa tất cả các cấu "
+"hình. Điều này có nghĩa là cấu hình đã được tạo sẵn được bảo mật ẩn đi chỉ "
+"với mục đích truyền thông báo. Không thể thiết lập cấu hình mới, và cấu hình"
+" hiện có không thể được sửa đổi hoặc xem."
 
 #: apprise_api/api/templates/config.html:226
 msgid "Working Remotely With Your Configuration"
@@ -1267,8 +1368,12 @@ msgid "Using The Apprise CLI"
 msgstr "Sử dụng Apprise CLI"
 
 #: apprise_api/api/templates/config.html:230
-msgid "The following command would cause apprise to directly notify all of your services:"
-msgstr "Lệnh sau sẽ khiến apprise thông báo trực tiếp đến tất cả các dịch vụ của bạn:"
+msgid ""
+"The following command would cause apprise to directly notify all of your "
+"services:"
+msgstr ""
+"Lệnh sau sẽ khiến apprise thông báo trực tiếp đến tất cả các dịch vụ của "
+"bạn:"
 
 #: apprise_api/api/templates/config.html:237
 msgid "Send one or more attachments like this:"
@@ -1278,39 +1383,70 @@ msgstr "Gửi một hoặc nhiều tệp đính kèm như sau:"
 msgid ""
 "The following command would cause apprise to retrieve the configuration loaded and\n"
 "          send a test notification to all of your added services:"
-msgstr "Lệnh sau sẽ khiến apprise lấy cấu hình đã tải và gửi một thông báo thử nghiệm đến tất cả các dịch vụ mà bạn đã thêm:"
+msgstr ""
+"Lệnh sau sẽ khiến apprise lấy cấu hình đã tải và gửi một thông báo thử "
+"nghiệm đến tất cả các dịch vụ mà bạn đã thêm:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "Bạn cũng có thể tạo một tệp cấu hình <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise</a> chứa dòng này ở đâu đó bên trong:"
+msgid ""
+"You may also create an <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a>"
+" that contains this line somewhere in it:"
+msgstr ""
+"Bạn cũng có thể tạo một tệp cấu hình <a "
+"href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">Apprise</a> chứa dòng này ở đâu đó bên trong:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "Apprise mục 'include' trong cấu hình được sao chép vào clipboard"
 
 #: apprise_api/api/templates/config.html:262
-msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
-msgstr "Bằng cách sử dụng chỉ thị <em>include</em>, nó sẽ được tham chiếu tự động cho các lần gọi trong tương lai đến công cụ <code>apprise</code>. Tất cả các lần gọi trong tương lai sử dụng Apprise bây giờ được đơn giản hóa thành:"
+msgid ""
+"By leveraging the <em>include</em> directive, it will automatically be "
+"referenced for future calls to the <code>apprise</code> tool. All future "
+"calls using Apprise now simplify to:"
+msgstr ""
+"Bằng cách sử dụng chỉ thị <em>include</em>, nó sẽ được tham chiếu tự động "
+"cho các lần gọi trong tương lai đến công cụ <code>apprise</code>. Tất cả các"
+" lần gọi trong tương lai sử dụng Apprise bây giờ được đơn giản hóa thành:"
 
 #: apprise_api/api/templates/config.html:268
 msgid "Using CURL"
 msgstr "Sử dụng CURL"
 
 #: apprise_api/api/templates/config.html:270
-msgid "The following command would cause the Apprise API to notify all of your services:"
-msgstr "Lệnh sau sẽ khiến Apprise API thông báo cho tất cả các dịch vụ của bạn:"
+msgid ""
+"The following command would cause the Apprise API to notify all of your "
+"services:"
+msgstr ""
+"Lệnh sau sẽ khiến Apprise API thông báo cho tất cả các dịch vụ của bạn:"
 
 #: apprise_api/api/templates/config.html:280
-msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
-msgstr "Khi gửi tệp đính kèm, <code>curl</code> yêu cầu tất cả các tệp cục bộ phải có tiền tố <code>@</code>. Bạn có thể thêm tệp đính kèm như sau:"
+msgid ""
+"When sending attachments, <code>curl</code> requires all local files be "
+"prefixed with <code>@</code>. You can an add attachment like this:"
+msgstr ""
+"Khi gửi tệp đính kèm, <code>curl</code> yêu cầu tất cả các tệp cục bộ phải "
+"có tiền tố <code>@</code>. Bạn có thể thêm tệp đính kèm như sau:"
 
 #: apprise_api/api/templates/config.html:290
-msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
-msgstr "Khi gửi nhiều hơn một tệp đính kèm, bạn phải gán duy nhất từng tệp đính kèm cho một ID mới. Ví dụ dưới đây sử dụng <code>attach1</code> và <code>attach2</code>:"
+msgid ""
+"When sending more than one attachment, you must uniquely assign each "
+"attachment to a new ID.  The example below leverages <code>attach1</code> "
+"and <code>attach2</code>:"
+msgstr ""
+"Khi gửi nhiều hơn một tệp đính kèm, bạn phải gán duy nhất từng tệp đính kèm "
+"cho một ID mới. Ví dụ dưới đây sử dụng <code>attach1</code> và "
+"<code>attach2</code>:"
 
 #: apprise_api/api/templates/config.html:301
-msgid "Sends a notification to our endpoints with an attachment and no body specified:"
-msgstr "Gửi thông báo đến các điểm cuối của chúng tôi với một tệp đính kèm nhưng không có nội dung được chỉ định:"
+msgid ""
+"Sends a notification to our endpoints with an attachment and no body "
+"specified:"
+msgstr ""
+"Gửi thông báo đến các điểm cuối của chúng tôi với một tệp đính kèm nhưng "
+"không có nội dung được chỉ định:"
 
 #: apprise_api/api/templates/config.html:319
 msgid "Define your configuration below:"
@@ -1348,8 +1484,12 @@ msgstr "Quyền truy cập vào cấu hình của bạn đã bị quản trị v
 
 #: apprise_api/api/templates/config.html:410
 #, python-format
-msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
-msgstr "Khi bạn đã tải thành công <i> ít nhất một Apprise URL</i> trong phần %(config_chip)s, các mục đã tải của bạn sẽ hiển thị ở đây."
+msgid ""
+"Once you have successfully loaded <i>at least one Apprise URL</i> on the "
+"%(config_chip)s section, your loaded entries will display here."
+msgstr ""
+"Khi bạn đã tải thành công <i> ít nhất một Apprise URL</i> trong phần "
+"%(config_chip)s, các mục đã tải của bạn sẽ hiển thị ở đây."
 
 #: apprise_api/api/templates/config.html:418
 msgid "Loaded Configuration"
@@ -1361,8 +1501,13 @@ msgid "Show only selected notification services"
 msgstr "Chỉ hiển thị các dịch vụ thông báo đã chọn"
 
 #: apprise_api/api/templates/config.html:431
-msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
-msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> thông báo được chọn để gửi</span>"
+msgid ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> notification(s) selected for "
+"sending</span>"
+msgstr ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> thông báo được chọn để gửi</span>"
 
 #: apprise_api/api/templates/config.html:443
 msgid "Unsaved Configuration Changes"
@@ -1370,8 +1515,14 @@ msgstr "Thay đổi Cấu hình Chưa Lưu"
 
 #: apprise_api/api/templates/config.html:445
 #, python-format
-msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
-msgstr "Các mục bên dưới được phân tích từ cấu hình đã lưu lần cuối, vì vậy chúng có thể không phản ánh các chỉnh sửa gần đây của bạn. Lưu chúng trong phần %(config_chip)s để xem kết quả ở đây."
+msgid ""
+"The entries below were parsed from the configuration that was last saved, so"
+" they may not reflect your recent edits. Save them in the %(config_chip)s "
+"section to see the result here."
+msgstr ""
+"Các mục bên dưới được phân tích từ cấu hình đã lưu lần cuối, vì vậy chúng có"
+" thể không phản ánh các chỉnh sửa gần đây của bạn. Lưu chúng trong phần "
+"%(config_chip)s để xem kết quả ở đây."
 
 #: apprise_api/api/templates/config.html:449
 msgid "Review the parsed destinations below before sending."
@@ -1384,8 +1535,12 @@ msgstr "Chọn một thẻ (🏷️) trên bất kỳ mục nào để đưa nó
 
 #: apprise_api/api/templates/config.html:454
 #, python-format
-msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
-msgstr "Sử dụng %(send_icon)s để chạy một bài kiểm tra nhanh và kiểm tra toàn bộ đầu ra gỡ lỗi cho mục đó."
+msgid ""
+"Use %(send_icon)s to run a quick test and inspect the full debug output for "
+"that entry."
+msgstr ""
+"Sử dụng %(send_icon)s để chạy một bài kiểm tra nhanh và kiểm tra toàn bộ đầu"
+" ra gỡ lỗi cho mục đó."
 
 #: apprise_api/api/templates/config.html:457
 #, python-format
@@ -1401,8 +1556,11 @@ msgid "No Notification Targets Selected"
 msgstr "Không có mục tiêu thông báo nào được chọn"
 
 #: apprise_api/api/templates/config.html:495
-msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
-msgstr "Chọn ít nhất một thẻ. Các điểm đến đã lưu sẽ ẩn khi khóa cấu hình được bật."
+msgid ""
+"Choose at least one tag. The saved destinations stay hidden while "
+"configuration locking is enabled."
+msgstr ""
+"Chọn ít nhất một thẻ. Các điểm đến đã lưu sẽ ẩn khi khóa cấu hình được bật."
 
 #: apprise_api/api/templates/config.html:497
 #, python-format
@@ -1424,8 +1582,12 @@ msgid "Template Values"
 msgstr "Giá trị Mẫu"
 
 #: apprise_api/api/templates/config.html:539
-msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
-msgstr "Các hàng có giá trị sẽ được gửi; các giá trị trống sử dụng dự phòng của máy chủ (nếu được định nghĩa)."
+msgid ""
+"Rows with a value are sent; blank values use the server fallback (if "
+"defined)."
+msgstr ""
+"Các hàng có giá trị sẽ được gửi; các giá trị trống sử dụng dự phòng của máy "
+"chủ (nếu được định nghĩa)."
 
 #: apprise_api/api/templates/config.html:545
 msgid "Add Value"
@@ -1463,7 +1625,8 @@ msgid "Escalation group"
 msgstr "Nhóm leo thang"
 
 #: apprise_api/api/templates/config.html:677
-msgid "Maximum number of retries attempted if the service fails before giving up"
+msgid ""
+"Maximum number of retries attempted if the service fails before giving up"
 msgstr "Số lần thử tối đa nếu dịch vụ thất bại trước khi từ bỏ"
 
 #: apprise_api/api/templates/config.html:688
@@ -1650,7 +1813,8 @@ msgid "Optional Service"
 msgstr "Dịch Vụ Tùy Chọn"
 
 #: apprise_api/api/templates/config.html:2551
-msgid "Optional Service: failures are ignored when determining notification success"
+msgid ""
+"Optional Service: failures are ignored when determining notification success"
 msgstr "Dịch vụ tùy chọn: các lỗi bị bỏ qua khi xác định thành công thông báo"
 
 #: apprise_api/api/templates/config.html:2674
@@ -1674,8 +1838,12 @@ msgid "Successfully saved the configuration."
 msgstr "Đã lưu cấu hình thành công."
 
 #: apprise_api/api/templates/config.html:2961
-msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
-msgstr "Có sự cố khi ghi cấu hình vào đĩa. Kiểm tra quyền truy cập tệp của bạn và thử lại."
+msgid ""
+"There was an issue writing the configuration to disk. Check your file "
+"permissions and try again."
+msgstr ""
+"Có sự cố khi ghi cấu hình vào đĩa. Kiểm tra quyền truy cập tệp của bạn và "
+"thử lại."
 
 #: apprise_api/api/templates/config.html:2968
 msgid "Failed to save the specified URL(s). Check your syntax and try again."
@@ -1704,12 +1872,19 @@ msgid "Choose at least one tag before sending."
 msgstr "Chọn ít nhất một thẻ trước khi gửi."
 
 #: apprise_api/api/templates/config.html:3274
-msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
-msgstr "Không có đối tượng thông báo nào được chọn. Thêm các điểm cuối cấu hình hoặc chọn một hoặc nhiều thẻ phù hợp trước khi gửi."
+msgid ""
+"No notification targets are selected. Add configuration endpoints or choose "
+"one or more matching tags before sending."
+msgstr ""
+"Không có đối tượng thông báo nào được chọn. Thêm các điểm cuối cấu hình hoặc"
+" chọn một hoặc nhiều thẻ phù hợp trước khi gửi."
 
 #: apprise_api/api/templates/config.html:3289
-msgid "Please provide at least a message body or one attachment before sending."
-msgstr "Vui lòng cung cấp ít nhất một nội dung tin nhắn hoặc một tệp đính kèm trước khi gửi."
+msgid ""
+"Please provide at least a message body or one attachment before sending."
+msgstr ""
+"Vui lòng cung cấp ít nhất một nội dung tin nhắn hoặc một tệp đính kèm trước "
+"khi gửi."
 
 #: apprise_api/api/templates/config.html:3338
 msgid "Sending notification(s)…"
@@ -1770,8 +1945,11 @@ msgid "Delete Configuration ID?"
 msgstr "Xóa ID Cấu hình?"
 
 #: apprise_api/api/templates/config_list.html:115
-msgid "This permanently removes this configuration and any login assigned to it."
-msgstr "Điều này sẽ xóa vĩnh viễn cấu hình này và bất kỳ đăng nhập nào được gán cho nó."
+msgid ""
+"This permanently removes this configuration and any login assigned to it."
+msgstr ""
+"Điều này sẽ xóa vĩnh viễn cấu hình này và bất kỳ đăng nhập nào được gán cho "
+"nó."
 
 #: apprise_api/api/templates/config_list.html:131
 #: apprise_api/api/templates/config_list.html:142
@@ -1799,21 +1977,28 @@ msgid ""
 "The following services are supported by this\n"
 "            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "Các dịch vụ sau được hỗ trợ bởi phiên bản <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> này."
+msgstr ""
+"Các dịch vụ sau được hỗ trợ bởi phiên bản <a target=\"_blank\" "
+"href=\"https://github.com/caronc/apprise\" rel=\"noopener "
+"noreferrer\">Apprise</a> này."
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
 "To see a simplified listing that only identifies the Apprise services\n"
 "          enabled click <a href=\"%(href)s\">here</a>."
-msgstr "Để xem danh sách đơn giản chỉ xác định các dịch vụ Apprise được bật, hãy nhấp <a href=\"%(href)s\">ở đây</a>."
+msgstr ""
+"Để xem danh sách đơn giản chỉ xác định các dịch vụ Apprise được bật, hãy "
+"nhấp <a href=\"%(href)s\">ở đây</a>."
 
 #: apprise_api/api/templates/details.html:25
 #, python-format
 msgid ""
 "To see a listing that identifies all of Apprise services available to this\n"
 "          version (enabled or not) click <a href=\"%(href)s?all=yes\">here</a>."
-msgstr "Để xem danh sách xác định tất cả các dịch vụ Apprise có sẵn cho phiên bản này (bật hay không) nhấp <a href=\"%(href)s?all=yes\">vào đây</a>."
+msgstr ""
+"Để xem danh sách xác định tất cả các dịch vụ Apprise có sẵn cho phiên bản "
+"này (bật hay không) nhấp <a href=\"%(href)s?all=yes\">vào đây</a>."
 
 #: apprise_api/api/templates/details.html:30
 msgid "Total plugin(s) supported"
@@ -1859,7 +2044,9 @@ msgstr "Apprise URL Định dạng"
 msgid ""
 "For more details and additional Apprise\n"
 "                    configuration options available to this service:"
-msgstr "Để biết thêm chi tiết và các Apprise tùy chọn cấu hình bổ sung có sẵn cho dịch vụ này:"
+msgstr ""
+"Để biết thêm chi tiết và các Apprise tùy chọn cấu hình bổ sung có sẵn cho "
+"dịch vụ này:"
 
 #: apprise_api/api/templates/details.html:161
 msgid "Click Here"
@@ -1870,8 +2057,13 @@ msgid "API Endpoints"
 msgstr "API Các điểm đầu"
 
 #: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "Các nhà phát triển muốn nhận tập hợp kết quả này dưới dạng chuỗi có thể phân tích được JSON cho ứng dụng của họ có thể thực hiện các bước sau để đạt được điều này:"
+msgid ""
+"Developers who wish to receive this result set in a JSON parseable string "
+"for their application can perform the following to achieve this:"
+msgstr ""
+"Các nhà phát triển muốn nhận tập hợp kết quả này dưới dạng chuỗi có thể phân"
+" tích được JSON cho ứng dụng của họ có thể thực hiện các bước sau để đạt "
+"được điều này:"
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1937,8 +2129,14 @@ msgid "Execute the request"
 msgstr "Thực thi yêu cầu"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "Thêm chi tiết về định dạng JSON có thể được tìm thấy <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\"> tại đây </a>."
+msgid ""
+"More details on the JSON format can be found <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">here</a>."
+msgstr ""
+"Thêm chi tiết về định dạng JSON có thể được tìm thấy <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\"> tại đây </a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1960,12 +2158,16 @@ msgid "Provide the login credentials required to access the Apprise API."
 msgstr "Cung cấp thông tin đăng nhập cần thiết để truy cập Apprise API."
 
 #: apprise_api/api/templates/login.html:73
-msgid "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank."
-msgstr "Một ID Cấu hình là bắt buộc đối với các tài khoản không quản trị. Quản trị viên toàn cầu có thể để trống."
+msgid ""
+"A Configuration ID is required for non-administrative accounts. Global "
+"administrators can leave it blank."
+msgstr ""
+"Một ID Cấu hình là bắt buộc đối với các tài khoản không quản trị. Quản trị "
+"viên toàn cầu có thể để trống."
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "Quản lý máy chủ này từ thiết bị Android của bạn."
+msgid "Manage this server from your Android or iOS device."
+msgstr "Quản lý máy chủ này từ thiết bị Android / iOS của bạn."
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -2002,7 +2204,12 @@ msgstr "Các điểm cuối không trạng thái"
 msgid ""
 "Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "Những người muốn coi API này chỉ là một <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> và/hoặc microservice cho dự án của họ chỉ cần sử dụng URL sau đây."
+msgstr ""
+"Những người muốn coi API này chỉ là một <a "
+"href=\"https://docs.microsoft.com/en-"
+"us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">sidecar</a> và/hoặc microservice cho dự án của họ chỉ cần sử "
+"dụng URL sau đây."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2013,7 +2220,11 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Dùng để thông báo tới một hoặc nhiều URL Apprise được chỉ định. Xem <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp để xây dựng URL(của bạn)."
+msgstr ""
+"Dùng để thông báo tới một hoặc nhiều URL Apprise được chỉ định. Xem <a "
+"target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener"
+" noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp để xây dựng "
+"URL(của bạn)."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2025,7 +2236,9 @@ msgstr "Tham số"
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                    one URL from the next."
-msgstr "Dùng để định nghĩa một hoặc nhiều Apprise URL(các). Sử dụng dấu phẩy và/hoặc dấu cách để phân tách URL này với URL tiếp theo."
+msgstr ""
+"Dùng để định nghĩa một hoặc nhiều Apprise URL(các). Sử dụng dấu phẩy và/hoặc"
+" dấu cách để phân tách URL này với URL tiếp theo."
 
 #: apprise_api/api/templates/welcome.html:72
 #: apprise_api/api/templates/welcome.html:543
@@ -2061,8 +2274,14 @@ msgid "Notifies an email address with attachments"
 msgstr "Thông báo đến một địa chỉ email kèm tệp đính kèm"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "Gửi một tệp đính kèm dựa trên web đến một <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> máy chủ:"
+msgid ""
+"Send an web based file attachment to a <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> server:"
+msgstr ""
+"Gửi một tệp đính kèm dựa trên web đến một <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> máy chủ:"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2143,7 +2362,10 @@ msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
-msgstr "Những ai muốn sử dụng bộ lưu trữ lâu dài có thể làm như vậy. Phần này là kiểu thiết lập một lần và quên đi. Thiết lập cấu hình của bạn một lần và chỉ cần kích hoạt thông báo sau đó theo nhu cầu với các lệnh API nhẹ."
+msgstr ""
+"Những ai muốn sử dụng bộ lưu trữ lâu dài có thể làm như vậy. Phần này là "
+"kiểu thiết lập một lần và quên đi. Thiết lập cấu hình của bạn một lần và chỉ"
+" cần kích hoạt thông báo sau đó theo nhu cầu với các lệnh API nhẹ."
 
 #: apprise_api/api/templates/welcome.html:276
 msgid ""
@@ -2151,7 +2373,11 @@ msgid ""
 "      encoding.\n"
 "      You must pass along the <code>Content-Type</code> as <code>application/json</code> in order for it to be\n"
 "      interpreted properly."
-msgstr "Tất cả các điểm cuối mà mong đợi dữ liệu gửi đi có thể được nhận theo cả JSON hoặc theo mã hóa chuẩn của nó. Bạn phải truyền cùng <code>Content-Type</code> dưới dạng <code>application/json</code> để nó được giải thích đúng cách."
+msgstr ""
+"Tất cả các điểm cuối mà mong đợi dữ liệu gửi đi có thể được nhận theo cả "
+"JSON hoặc theo mã hóa chuẩn của nó. Bạn phải truyền cùng <code>Content-"
+"Type</code> dưới dạng <code>application/json</code> để nó được giải thích "
+"đúng cách."
 
 #: apprise_api/api/templates/welcome.html:295
 #, python-format
@@ -2159,13 +2385,20 @@ msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
 "            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "Được sử dụng để thêm một cấu hình Apprise mới hoặc một tập hợp URL và liên kết chúng với cấu hình được xác định bằng id của <em>%(key)s</em>. Xem <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp trong việc xây dựng URL của mình."
+msgstr ""
+"Được sử dụng để thêm một cấu hình Apprise mới hoặc một tập hợp URL và liên "
+"kết chúng với cấu hình được xác định bằng id của <em>%(key)s</em>. Xem <a "
+"target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener"
+" noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp trong việc xây "
+"dựng URL của mình."
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                      one URL from the next."
-msgstr "Được sử dụng để định nghĩa một hoặc nhiều Apprise URL. Sử dụng dấu phẩy và/hoặc dấu cách để tách một URL ra khỏi cái tiếp theo."
+msgstr ""
+"Được sử dụng để định nghĩa một hoặc nhiều Apprise URL. Sử dụng dấu phẩy "
+"và/hoặc dấu cách để tách một URL ra khỏi cái tiếp theo."
 
 #: apprise_api/api/templates/welcome.html:317
 msgid ""
@@ -2179,27 +2412,36 @@ msgid ""
 "                      is\n"
 "                      to tell the server which of the supported (Apprise) configuration types you are passing. Valid\n"
 "                      options are:"
-msgstr "Trường này chỉ bắt buộc nếu bạn đã chỉ định tùy chọn cấu hình. Mục đích của nó là để thông báo cho máy chủ biết loại cấu hình (Apprise) được hỗ trợ mà bạn đang truyền. Các tùy chọn hợp lệ là:"
+msgstr ""
+"Trường này chỉ bắt buộc nếu bạn đã chỉ định tùy chọn cấu hình. Mục đích của "
+"nó là để thông báo cho máy chủ biết loại cấu hình (Apprise) được hỗ trợ mà "
+"bạn đang truyền. Các tùy chọn hợp lệ là:"
 
 #: apprise_api/api/templates/welcome.html:338
 msgid ""
 "You must specify either the <code>urls</code> parameter or the\n"
 "                          <code>config</code>."
-msgstr "Bạn phải chỉ định một trong hai tham số <code>urls</code> hoặc <code>config</code>."
+msgstr ""
+"Bạn phải chỉ định một trong hai tham số <code>urls</code> hoặc "
+"<code>config</code>."
 
 #: apprise_api/api/templates/welcome.html:342
 msgid ""
 "The <code>urls</code> takes priority over the <code>config</code> if both\n"
 "                          were\n"
 "                          specified."
-msgstr "Tham số <code>urls</code> được ưu tiên hơn <code>config</code> nếu cả hai được chỉ định."
+msgstr ""
+"Tham số <code>urls</code> được ưu tiên hơn <code>config</code> nếu cả hai "
+"được chỉ định."
 
 #: apprise_api/api/templates/welcome.html:347
 msgid ""
 "The <code>format</code> parameter is only required if the\n"
 "                          <code>config</code>\n"
 "                          parameter was also specified."
-msgstr "Tham số <code>format</code> chỉ bắt buộc nếu tham số <code>config</code> cũng được chỉ định."
+msgstr ""
+"Tham số <code>format</code> chỉ bắt buộc nếu tham số <code>config</code> "
+"cũng được chỉ định."
 
 #: apprise_api/api/templates/welcome.html:363
 #, python-format
@@ -2225,11 +2467,15 @@ msgstr "URL nếu khóa là <em>%(key)s</em>"
 msgid ""
 "There are no arguments required. If configuration id of <em>%(key)s</em> exists and has data associated with\n"
 "              it, it will be removed."
-msgstr "Không cần tham số nào. Nếu id cấu hình của <em>%(key)s</em> tồn tại và có dữ liệu liên quan, nó sẽ bị xóa."
+msgstr ""
+"Không cần tham số nào. Nếu id cấu hình của <em>%(key)s</em> tồn tại và có dữ"
+" liệu liên quan, nó sẽ bị xóa."
 
 #: apprise_api/api/templates/welcome.html:451
 #, python-format
-msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
+msgid ""
+"Remove previously loaded configuration associated with the id of "
+"<em>%(key)s</em>"
 msgstr "Xóa cấu hình đã tải trước đó liên quan đến id của <em>%(key)s</em>"
 
 #: apprise_api/api/templates/welcome.html:462
@@ -2242,7 +2488,10 @@ msgstr "Yêu cầu nếu khóa là <em>%(key)s</em>"
 msgid ""
 "This feature can be used by Apprise itself. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "Tính năng này có thể được sử dụng bởi chính Apprise. Nó cung cấp một phương thức để lấy từ xa cấu hình của nó liên quan đến cấu hình được xác định thông qua id của <em>%(key)s</em>."
+msgstr ""
+"Tính năng này có thể được sử dụng bởi chính Apprise. Nó cung cấp một phương "
+"thức để lấy từ xa cấu hình của nó liên quan đến cấu hình được xác định thông"
+" qua id của <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:507
 #: apprise_api/api/templates/welcome.html:521
@@ -2254,12 +2503,19 @@ msgstr "Sử dụng Apprise để truy xuất cấu hình của bạn:"
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "Đây là một bí danh của <code>%(BASE_URL)s/get/<em>%(key)s</em></code> được định nghĩa ở trên. Nó cung cấp một phương thức để lấy từ xa cấu hình của nó liên quan đến cấu hình được xác định thông qua id của <em>%(key)s</em>."
+msgstr ""
+"Đây là một bí danh của <code>%(BASE_URL)s/get/<em>%(key)s</em></code> được "
+"định nghĩa ở trên. Nó cung cấp một phương thức để lấy từ xa cấu hình của nó "
+"liên quan đến cấu hình được xác định thông qua id của <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:531
 #, python-format
-msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
-msgstr "Thông báo các URL liên kết với cấu hình được xác định bởi id của <em>%(key)s</em>."
+msgid ""
+"Notifies the URLs associated with configuration identified by the id of "
+"<em>%(key)s</em>."
+msgstr ""
+"Thông báo các URL liên kết với cấu hình được xác định bởi id của "
+"<em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:548
 msgid ""
@@ -2271,7 +2527,8 @@ msgstr "Tiêu đề để bao gồm trong thông báo. Đây là một trường
 msgid ""
 "This optional field defines the notification type. The possible options\n"
 "                      are:"
-msgstr "Trường tùy chọn này xác định loại thông báo. Các tùy chọn có thể có là:"
+msgstr ""
+"Trường tùy chọn này xác định loại thông báo. Các tùy chọn có thể có là:"
 
 #: apprise_api/api/templates/welcome.html:560
 msgid ""
@@ -2284,7 +2541,9 @@ msgstr "đây là tùy chọn mặc định nếu không chỉ định loại."
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
-msgstr "Áp dụng logic gắn thẻ để lọc thêm các URL của bạn. Đây là một trường tùy chọn."
+msgstr ""
+"Áp dụng logic gắn thẻ để lọc thêm các URL của bạn. Đây là một trường tùy "
+"chọn."
 
 #: apprise_api/api/templates/welcome.html:594
 msgid "Notifies all URLs assigned to the configuration"
@@ -2299,8 +2558,12 @@ msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "Thông báo tất cả các URL được gán nhãn <em>devops</em>"
 
 #: apprise_api/api/templates/welcome.html:621
-msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
-msgstr "Lý tưởng nhất là bạn nên tận dụng Thư viện Apprise; nó sẽ giúp cuộc sống của bạn dễ dàng hơn nhiều:"
+msgid ""
+"Ideally you should leverage the Apprise Library; it will make your life much"
+" easier:"
+msgstr ""
+"Lý tưởng nhất là bạn nên tận dụng Thư viện Apprise; nó sẽ giúp cuộc sống của"
+" bạn dễ dàng hơn nhiều:"
 
 #: apprise_api/api/templates/welcome.html:625
 msgid "Create an Apprise instance"
@@ -2328,14 +2591,21 @@ msgstr "Ghi chú điểm cuối"
 
 #: apprise_api/api/templates/welcome.html:751
 #, python-format
-msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
-msgstr "ID Cấu hình (<em>%(key)s</em>) mà bạn dự định liên kết với cấu hình của mình:"
+msgid ""
+"The Configuration ID (<em>%(key)s</em>) you plan to associate your "
+"configuration with:"
+msgstr ""
+"ID Cấu hình (<em>%(key)s</em>) mà bạn dự định liên kết với cấu hình của "
+"mình:"
 
 #: apprise_api/api/templates/welcome.html:755
 msgid ""
 "Cannot have spaces or special characters. A dash (<code>-</code>) and underscore\n"
 "              (<code>_</code>) are the only exceptions to this rule."
-msgstr "Không được có khoảng trắng hoặc ký tự đặc biệt. Dấu gạch ngang (<code>-</code>) và dấu gạch dưới (<code>_</code>) là những ngoại lệ duy nhất cho quy tắc này."
+msgstr ""
+"Không được có khoảng trắng hoặc ký tự đặc biệt. Dấu gạch ngang "
+"(<code>-</code>) và dấu gạch dưới (<code>_</code>) là những ngoại lệ duy "
+"nhất cho quy tắc này."
 
 #: apprise_api/api/templates/welcome.html:758
 msgid "Must start with at least two alphanumeric characters."
@@ -2344,6 +2614,14 @@ msgstr "Phải bắt đầu với ít nhất hai ký tự chữ và số."
 #: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Không vượt quá 64 ký tự tổng cộng."
+
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "Tải về trên Google Play"
 
 #: apprise_api/api/views.py:1157
 msgid "This configuration has been disabled by an administrator"
@@ -2355,7 +2633,8 @@ msgid "Access Denied"
 msgstr "Truy cập bị từ chối"
 
 #: apprise_api/api/views.py:1184
-msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
+msgid ""
+"Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "Chế độ xác thực bị tắt (cài đặt APPRISE_AUTH_REQUIRED để bật)"
 
 #: apprise_api/api/views.py:1193
@@ -2363,8 +2642,10 @@ msgid "Persistent configuration storage is disabled"
 msgstr "Lưu trữ cấu hình liên tục bị vô hiệu hóa"
 
 #: apprise_api/api/views.py:1202
-msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
-msgstr "Yêu cầu một ID cấu hình (URL đường dẫn hoặc X-Apprise-Config-ID header)"
+msgid ""
+"A configuration ID is required (URL path or X-Apprise-Config-ID header)"
+msgstr ""
+"Yêu cầu một ID cấu hình (URL đường dẫn hoặc X-Apprise-Config-ID header)"
 
 #: apprise_api/api/views.py:1215
 msgid "The X-Apprise-Config-ID header provided is invalid"
@@ -2486,7 +2767,8 @@ msgid "The configuration could not be removed"
 msgstr "Cấu hình không thể bị xóa"
 
 #: apprise_api/api/views.py:2525
-msgid "The configuration was removed, but its authentication could not be removed"
+msgid ""
+"The configuration was removed, but its authentication could not be removed"
 msgstr "Cấu hình đã bị xóa, nhưng xác thực của nó không thể bị xóa"
 
 #: apprise_api/api/views.py:2545
@@ -2534,7 +2816,8 @@ msgid "Successfully removed authentication"
 msgstr "Xác thực đã được gỡ bỏ thành công"
 
 #: apprise_api/api/views.py:3013
-msgid "The server is temporarily unable to start a new live notification stream"
+msgid ""
+"The server is temporarily unable to start a new live notification stream"
 msgstr "Máy chủ hiện không thể bắt đầu một luồng thông báo trực tiếp mới"
 
 #: apprise_api/api/views.py:3038
@@ -2685,7 +2968,8 @@ msgstr "URI Quá Dài"
 
 #: apprise_api/error/templates/414.html:18
 msgid "Shorten the request URL or move its data into the request body."
-msgstr "Rút ngắn yêu cầu URL hoặc chuyển dữ liệu của nó vào phần thân của yêu cầu."
+msgstr ""
+"Rút ngắn yêu cầu URL hoặc chuyển dữ liệu của nó vào phần thân của yêu cầu."
 
 #: apprise_api/error/templates/421.html:20
 msgid "Misdirected Request"
@@ -2706,8 +2990,11 @@ msgstr "Quá Nhiều Yêu Cầu"
 
 #: apprise_api/error/templates/429.html:20
 #, python-format
-msgid "Too many login attempts were made. Wait %(retry_after)s seconds before trying again."
-msgstr "Có quá nhiều lần đăng nhập. Chờ %(retry_after)s giây trước khi thử lại."
+msgid ""
+"Too many login attempts were made. Wait %(retry_after)s seconds before "
+"trying again."
+msgstr ""
+"Có quá nhiều lần đăng nhập. Chờ %(retry_after)s giây trước khi thử lại."
 
 #: apprise_api/error/templates/50x.html:20
 msgid "Service Temporarily Unavailable"

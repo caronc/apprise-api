@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-12 22:53+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: id\n"
@@ -340,8 +340,13 @@ msgstr "Jelaskan Mode Akses Konfigurasi"
 
 #: apprise_api/api/templates/auth.html:100
 #, python-format
-msgid "Saved %(saved)s access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed."
-msgstr "Akses %(saved)s yang disimpan saat ini diberlakukan sebagai terkunci oleh penguncian konfigurasi global. Akses ini akan dikembalikan jika penguncian global dihapus."
+msgid ""
+"Saved %(saved)s access is currently enforced as locked by the global "
+"configuration lock. It will return if the global lock is removed."
+msgstr ""
+"Akses %(saved)s yang disimpan saat ini diberlakukan sebagai terkunci oleh "
+"penguncian konfigurasi global. Akses ini akan dikembalikan jika penguncian "
+"global dihapus."
 
 #: apprise_api/api/templates/auth.html:132
 #: apprise_api/api/templates/config.html:2953
@@ -426,7 +431,8 @@ msgstr "Pengguna: konfigurasi memiliki login sendiri."
 #: apprise_api/api/templates/auth.html:288
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "Disabled: only an administrator may use this configuration."
-msgstr "Dinonaktifkan: hanya administrator yang dapat menggunakan konfigurasi ini."
+msgstr ""
+"Dinonaktifkan: hanya administrator yang dapat menggunakan konfigurasi ini."
 
 #: apprise_api/api/templates/auth.html:291
 #: apprise_api/api/templates/components/config_auth_status.html:8
@@ -456,23 +462,39 @@ msgid "Description"
 msgstr "Deskripsi"
 
 #: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "Menggunakan login sendiri untuk notifikasi dan akses konfigurasi stateful dan stateless normal."
+msgid ""
+"Uses its own login for normal stateful and stateless notifications and "
+"configuration access."
+msgstr ""
+"Menggunakan login sendiri untuk notifikasi dan akses konfigurasi stateful "
+"dan stateless normal."
 
 #: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "Menggunakan login sendiri untuk notifikasi stateful bertanda dan perubahan kata sandi. Konten konfigurasi tetap tersembunyi."
+msgid ""
+"Uses its own login for tagged stateful notifications and password changes. "
+"Configuration content stays hidden."
+msgstr ""
+"Menggunakan login sendiri untuk notifikasi stateful bertanda dan perubahan "
+"kata sandi. Konten konfigurasi tetap tersembunyi."
 
 #: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "Mengizinkan notifikasi stateful bertanda tanpa login. Konten konfigurasi dan notifikasi stateless tetap dilindungi."
+msgid ""
+"Allows tagged stateful notifications without a login. Configuration content "
+"and stateless notifications stay protected."
+msgstr ""
+"Mengizinkan notifikasi stateful bertanda tanpa login. Konten konfigurasi dan"
+" notifikasi stateless tetap dilindungi."
 
 #: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "Membekukan akses pengguna konfigurasi tanpa menghapus konfigurasi atau login. Hanya administrator yang dapat menggunakannya."
+msgid ""
+"Freezes configuration-user access without deleting the configuration or "
+"login. Only an administrator may use it."
+msgstr ""
+"Membekukan akses pengguna konfigurasi tanpa menghapus konfigurasi atau "
+"login. Hanya administrator yang dapat menggunakannya."
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "Tutup"
 
@@ -511,8 +533,12 @@ msgid "Scan with Apprise Mobile"
 msgstr "Pindai dengan Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
-msgstr "Kode QR ini berisi kata sandi baru. Simpan atau bagikan dengan aman sekarang; kata sandi tidak dapat ditampilkan lagi."
+msgid ""
+"This QR code contains the new password. Save it or share it securely now; "
+"the password cannot be shown again."
+msgstr ""
+"Kode QR ini berisi kata sandi baru. Simpan atau bagikan dengan aman "
+"sekarang; kata sandi tidak dapat ditampilkan lagi."
 
 #: apprise_api/api/templates/auth.html:521
 #: apprise_api/api/templates/base.html:1051
@@ -538,16 +564,24 @@ msgstr "Apprise Mobile URL disalin ke papan klip"
 
 #: apprise_api/api/templates/auth.html:525
 #: apprise_api/api/templates/base.html:1055
-msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
-msgstr "URL ini terlalu panjang untuk dikodekan sebagai kode QR. Gunakan tombol salin di atas sebagai gantinya."
+msgid ""
+"This URL is too long to encode as a QR code. Use the copy button above "
+"instead."
+msgstr ""
+"URL ini terlalu panjang untuk dikodekan sebagai kode QR. Gunakan tombol "
+"salin di atas sebagai gantinya."
 
 #: apprise_api/api/templates/auth.html:546
 msgid "Reset Access or Configuration?"
 msgstr "Atur Ulang Akses atau Konfigurasi?"
 
 #: apprise_api/api/templates/auth.html:549
-msgid "This will reset only the user access currently associated with this configuration:"
-msgstr "Ini hanya akan mengatur ulang akses pengguna yang saat ini terkait dengan konfigurasi ini:"
+msgid ""
+"This will reset only the user access currently associated with this "
+"configuration:"
+msgstr ""
+"Ini hanya akan mengatur ulang akses pengguna yang saat ini terkait dengan "
+"konfigurasi ini:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -601,7 +635,8 @@ msgstr "Akses pengguna dan konfigurasi yang tersimpan telah dihapus."
 
 #: apprise_api/api/templates/auth.html:651
 msgid "The user access was removed. The saved configuration was kept."
-msgstr "Akses pengguna telah dihapus. Konfigurasi yang disimpan tetap dipertahankan."
+msgstr ""
+"Akses pengguna telah dihapus. Konfigurasi yang disimpan tetap dipertahankan."
 
 #: apprise_api/api/templates/auth.html:703
 #: apprise_api/api/templates/config_list.html:214
@@ -653,8 +688,12 @@ msgid "Administrator Credentials"
 msgstr "Kredensial Administrator"
 
 #: apprise_api/api/templates/base.html:56
-msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
-msgstr "Konfigurasi ini tidak memiliki pengguna yang ditugaskan. Akibatnya, kode QR akan menggunakan akun administrator."
+msgid ""
+"This configuration has no assigned user. As a result, the QR code will use "
+"the administrator account."
+msgstr ""
+"Konfigurasi ini tidak memiliki pengguna yang ditugaskan. Akibatnya, kode QR "
+"akan menggunakan akun administrator."
 
 #: apprise_api/api/templates/base.html:80
 msgid "APPRISE LIBRARY"
@@ -709,8 +748,12 @@ msgid "Logout"
 msgstr "Keluar"
 
 #: apprise_api/api/templates/base.html:226
-msgid "If Apprise has been useful to you, please consider supporting its development."
-msgstr "Jika Apprise telah bermanfaat bagi Anda, harap pertimbangkan untuk mendukung pengembangannya."
+msgid ""
+"If Apprise has been useful to you, please consider supporting its "
+"development."
+msgstr ""
+"Jika Apprise telah bermanfaat bagi Anda, harap pertimbangkan untuk mendukung"
+" pengembangannya."
 
 #: apprise_api/api/templates/base.html:230
 msgid "GitHub Sponsors"
@@ -782,7 +825,7 @@ msgid "Apprise URL Builder"
 msgstr "Apprise URL Pembuat"
 
 #: apprise_api/api/templates/base.html:353
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Dapatkan Apprise Mobile"
@@ -812,8 +855,14 @@ msgid "Notification Delivery Disabled"
 msgstr "Pengiriman Notifikasi Dinonaktifkan"
 
 #: apprise_api/api/templates/base.html:396
-msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
-msgstr "Baik notifikasi tanpa status maupun penyimpanan persisten dinonaktifkan. Seorang administrator harus mengaktifkan setidaknya satu mode sebelum server ini dapat mengirimkan notifikasi."
+msgid ""
+"Both stateless notifications and persistent storage are disabled. An "
+"administrator must enable at least one mode before this server can deliver "
+"notifications."
+msgstr ""
+"Baik notifikasi tanpa status maupun penyimpanan persisten dinonaktifkan. "
+"Seorang administrator harus mengaktifkan setidaknya satu mode sebelum server"
+" ini dapat mengirimkan notifikasi."
 
 #: apprise_api/api/templates/base.html:404
 msgid "Configuration Write Failure"
@@ -830,8 +879,13 @@ msgstr "Jalur disalin ke papan klip"
 
 #: apprise_api/api/templates/base.html:413
 #: apprise_api/api/templates/base.html:437
-msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
-msgstr "<em>Catatan:</em> Jika ini adalah perilaku yang diharapkan, atur sebelumnya variabel lingkungan yang ditunjukkan di bawah ini dan muat ulang instance Apprise Anda."
+msgid ""
+"<em>Note:</em> If this is the expected behavior, pre-set the environment "
+"variable shown below and reload your Apprise instance."
+msgstr ""
+"<em>Catatan:</em> Jika ini adalah perilaku yang diharapkan, atur sebelumnya "
+"variabel lingkungan yang ditunjukkan di bawah ini dan muat ulang instance "
+"Apprise Anda."
 
 #: apprise_api/api/templates/base.html:416
 #: apprise_api/api/templates/base.html:440
@@ -843,20 +897,41 @@ msgid "Attachment Temporary Storage Write Failure"
 msgstr "Kegagalan Menulis Penyimpanan Sementara Lampiran"
 
 #: apprise_api/api/templates/base.html:429
-msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
-msgstr "Apprise tidak dapat mendistribusikan lampiran (jika disediakan) karena tidak memiliki akses menulis ke direktori:"
+msgid ""
+"Apprise can not circulate attachments (if provided) due to not having write "
+"access to the directory:"
+msgstr ""
+"Apprise tidak dapat mendistribusikan lampiran (jika disediakan) karena tidak"
+" memiliki akses menulis ke direktori:"
 
 #: apprise_api/api/templates/base.html:447
 msgid "More Details"
 msgstr "Rincian Lebih Lanjut"
 
 #: apprise_api/api/templates/base.html:450
-msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
-msgstr "Dalam sebagian besar kasus, masalah yang diidentifikasi di sini biasanya terkait dengan masalah izin. Pastikan Anda mengatur <code>PUID</code> dan <code>GUID</code> dengan benar untuk mencerminkan izin yang ingin Anda berikan kepada Apprise saat membaca dan menulis file-nya. Selain itu, Anda mungkin perlu memastikan izin telah diatur dengan benar pada direktori yang Anda peta."
+msgid ""
+"Under most circumstances, the issue(s) identified here are usually related "
+"to permission issues. Make sure you set the correct <code>PUID</code> and "
+"<code>GUID</code> to reflect the permissions you wish Apprise to utilize "
+"when it is reading and writing its files. In addition to this, you may need "
+"to make sure the permissions are set correctly on the directories you mapped"
+" them too."
+msgstr ""
+"Dalam sebagian besar kasus, masalah yang diidentifikasi di sini biasanya "
+"terkait dengan masalah izin. Pastikan Anda mengatur <code>PUID</code> dan "
+"<code>GUID</code> dengan benar untuk mencerminkan izin yang ingin Anda "
+"berikan kepada Apprise saat membaca dan menulis file-nya. Selain itu, Anda "
+"mungkin perlu memastikan izin telah diatur dengan benar pada direktori yang "
+"Anda peta."
 
 #: apprise_api/api/templates/base.html:453
-msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
-msgstr "Masalah yang diidentifikasi di sini juga dapat terkait dengan SELinux. Anda mungkin ingin menyingkirkan SELinux dengan menonaktifkannya sementara menggunakan:"
+msgid ""
+"The issue(s) identified here can also be associated with SELinux. You may "
+"wish to rule out SELinux by temporarily disabling it with:"
+msgstr ""
+"Masalah yang diidentifikasi di sini juga dapat terkait dengan SELinux. Anda "
+"mungkin ingin menyingkirkan SELinux dengan menonaktifkannya sementara "
+"menggunakan:"
 
 #: apprise_api/api/templates/base.html:456
 #: apprise_api/api/templates/base.html:462
@@ -932,8 +1007,12 @@ msgid "Open Configuration"
 msgstr "Buka Konfigurasi"
 
 #: apprise_api/api/templates/base.html:1113
-msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
-msgstr "Ini membuka ID Konfigurasi yang berbeda. Setiap perubahan yang belum disimpan di halaman ini akan hilang."
+msgid ""
+"This opens a different Config ID. Any unsaved changes on this page will be "
+"lost."
+msgstr ""
+"Ini membuka ID Konfigurasi yang berbeda. Setiap perubahan yang belum "
+"disimpan di halaman ini akan hilang."
 
 #: apprise_api/api/templates/base.html:1116
 msgid "Continue"
@@ -945,12 +1024,20 @@ msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Tidak dapat menjangkau titik akhir status Apprise API."
 
 #: apprise_api/api/templates/base.html:1349
-msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
-msgstr "Pengiriman notifikasi dinonaktifkan. Aktifkan notifikasi tanpa status atau penyimpanan persisten untuk melanjutkan layanan."
+msgid ""
+"Notification delivery is disabled. Enable stateless notifications or "
+"persistent storage to resume service."
+msgstr ""
+"Pengiriman notifikasi dinonaktifkan. Aktifkan notifikasi tanpa status atau "
+"penyimpanan persisten untuk melanjutkan layanan."
 
 #: apprise_api/api/templates/base.html:1408
-msgid "Choose a new Config ID. You can edit it or generate another before continuing."
-msgstr "Pilih ID Konfigurasi baru. Anda dapat mengeditnya atau membuat yang lain sebelum melanjutkan."
+msgid ""
+"Choose a new Config ID. You can edit it or generate another before "
+"continuing."
+msgstr ""
+"Pilih ID Konfigurasi baru. Anda dapat mengeditnya atau membuat yang lain "
+"sebelum melanjutkan."
 
 #: apprise_api/api/templates/base.html:1420
 msgid "New Config ID"
@@ -986,8 +1073,10 @@ msgid "Changed Config ID Not Applied"
 msgstr "ID Konfigurasi yang Diubah Tidak Diterapkan"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:13
-msgid "The entered value is not the configuration currently being managed. Apply"
-msgstr "Nilai yang dimasukkan bukan konfigurasi yang saat ini dikelola. Terapkan"
+msgid ""
+"The entered value is not the configuration currently being managed. Apply"
+msgstr ""
+"Nilai yang dimasukkan bukan konfigurasi yang saat ini dikelola. Terapkan"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:18
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:19
@@ -1029,69 +1118,76 @@ msgstr ""
 "\n"
 "Dilindungi lisensi di bawah Lisensi %(license)s."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "Aplikasi Android"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "Aplikasi Android / iOS"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "Apprise Mobile menghubungkan perangkat Android Anda ke server ini. Kirim pesan, foto yang baru saja Anda ambil, atau file apa pun ke satu tujuan, grup, atau semua yang telah Anda konfigurasikan."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid ""
+"Apprise Mobile connects your Android or iOS device to this server. Send a "
+"message, a photo you just took, or any file to one destination, a group, or "
+"everything you have configured."
+msgstr ""
+"Apprise Mobile menghubungkan perangkat Android / iOS Anda ke server ini. "
+"Kirim pesan, foto yang baru saja Anda ambil, atau file apa pun ke satu "
+"tujuan, grup, atau semua yang telah Anda konfigurasikan."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "Kirim notifikasi dan lampiran dari ponsel Anda."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
-msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
-msgstr "Pindai kode QR Quick Setup Apprise Mobile untuk menambahkan server ini dan memuat konfigurasi."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
+msgid ""
+"Scan the Apprise Mobile Quick Setup QR code to add this server and load a "
+"configuration."
+msgstr ""
+"Pindai kode QR Quick Setup Apprise Mobile untuk menambahkan server ini dan "
+"memuat konfigurasi."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
-msgstr "Tinjau konfigurasi jarak jauh Anda dan ikuti setiap laporan pengiriman."
+msgstr ""
+"Tinjau konfigurasi jarak jauh Anda dan ikuti setiap laporan pengiriman."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "Dapatkan di Google Play"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "Pelajari Lebih Lanjut"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "Pratinjau Aplikasi"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "Dasbor Apprise Mobile"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Dasbor"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "Apprise Mobile URL Builder"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "Pembuat URL"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile laporan pengiriman"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "Laporan Pengiriman"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "Google Play dan logo Google Play adalah merek dagang Google LLC."
-
 #: apprise_api/api/templates/components/qr_password_note.html:4
-msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
-msgstr "Kata sandi yang tersimpan tidak termasuk. Apprise Mobile akan meminta kata sandi ketika diperlukan."
+msgid ""
+"Saved passwords are not included. Apprise Mobile will ask for one when "
+"required."
+msgstr ""
+"Kata sandi yang tersimpan tidak termasuk. Apprise Mobile akan meminta kata "
+"sandi ketika diperlukan."
 
 #: apprise_api/api/templates/components/qr_password_note.html:7
 msgid "Why?"
@@ -1144,8 +1240,11 @@ msgid "Apprise configuration ID copied to clipboard"
 msgstr "ID konfigurasi Apprise disalin ke papan klip"
 
 #: apprise_api/api/templates/config.html:109
-msgid "For some examples on how to build a development environment around this:"
-msgstr "Untuk beberapa contoh tentang cara membangun lingkungan pengembangan di sekitar ini:"
+msgid ""
+"For some examples on how to build a development environment around this:"
+msgstr ""
+"Untuk beberapa contoh tentang cara membangun lingkungan pengembangan di "
+"sekitar ini:"
 
 #: apprise_api/api/templates/config.html:109
 msgid "click here"
@@ -1222,8 +1321,12 @@ msgstr "Apprise Mobile Pengaturan Cepat"
 
 #: apprise_api/api/templates/config.html:162
 #, python-format
-msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
-msgstr "Ungkap dan pindai kode ini untuk memuat konfigurasi ini dengan mudah ke %(mobile_app_link)s Anda."
+msgid ""
+"Reveal and scan this code to easily load this configuration into your "
+"%(mobile_app_link)s."
+msgstr ""
+"Ungkap dan pindai kode ini untuk memuat konfigurasi ini dengan mudah ke "
+"%(mobile_app_link)s Anda."
 
 #: apprise_api/api/templates/config.html:171
 #: apprise_api/api/templates/config.html:172
@@ -1242,8 +1345,8 @@ msgstr "Kode QR tidak dapat dimuat."
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "Perlu aplikasi? Dapatkan %(mobile_app_link)s untuk Android."
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr "Perlu aplikasi? Dapatkan %(mobile_app_link)s untuk Android / iOS."
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1256,7 +1359,11 @@ msgid ""
 "\n"
 "          New configuration can not be set, and existing configuration can not be modified or viewed.\n"
 "          "
-msgstr "Saat ini, administrator server ini telah mengunci semua konfigurasi. Ini berarti bahwa konfigurasi yang telah dibuat sebelumnya disembunyikan dengan aman untuk tujuan pengiriman notifikasi saja. Konfigurasi baru tidak dapat diatur, dan konfigurasi yang ada tidak dapat diubah atau dilihat."
+msgstr ""
+"Saat ini, administrator server ini telah mengunci semua konfigurasi. Ini "
+"berarti bahwa konfigurasi yang telah dibuat sebelumnya disembunyikan dengan "
+"aman untuk tujuan pengiriman notifikasi saja. Konfigurasi baru tidak dapat "
+"diatur, dan konfigurasi yang ada tidak dapat diubah atau dilihat."
 
 #: apprise_api/api/templates/config.html:226
 msgid "Working Remotely With Your Configuration"
@@ -1267,8 +1374,12 @@ msgid "Using The Apprise CLI"
 msgstr "Menggunakan Apprise CLI"
 
 #: apprise_api/api/templates/config.html:230
-msgid "The following command would cause apprise to directly notify all of your services:"
-msgstr "Perintah berikut akan menyebabkan apprise langsung memberi notifikasi ke semua layanan Anda:"
+msgid ""
+"The following command would cause apprise to directly notify all of your "
+"services:"
+msgstr ""
+"Perintah berikut akan menyebabkan apprise langsung memberi notifikasi ke "
+"semua layanan Anda:"
 
 #: apprise_api/api/templates/config.html:237
 msgid "Send one or more attachments like this:"
@@ -1278,39 +1389,72 @@ msgstr "Kirim satu atau lebih lampiran seperti ini:"
 msgid ""
 "The following command would cause apprise to retrieve the configuration loaded and\n"
 "          send a test notification to all of your added services:"
-msgstr "Perintah berikut akan menyebabkan apprise mengambil konfigurasi yang dimuat dan mengirim notifikasi uji ke semua layanan yang telah Anda tambahkan:"
+msgstr ""
+"Perintah berikut akan menyebabkan apprise mengambil konfigurasi yang dimuat "
+"dan mengirim notifikasi uji ke semua layanan yang telah Anda tambahkan:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "Anda juga dapat membuat <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">file konfigurasi Apprise</a> yang berisi baris ini di suatu tempat:"
+msgid ""
+"You may also create an <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a>"
+" that contains this line somewhere in it:"
+msgstr ""
+"Anda juga dapat membuat <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">file konfigurasi Apprise</a> "
+"yang berisi baris ini di suatu tempat:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "Apprise entri 'include' konfigurasi disalin ke clipboard"
 
 #: apprise_api/api/templates/config.html:262
-msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
-msgstr "Dengan memanfaatkan direktif <em>include</em>, itu akan secara otomatis direferensikan untuk panggilan berikutnya ke alat <code>apprise</code>. Semua panggilan berikutnya menggunakan Apprise sekarang disederhanakan menjadi:"
+msgid ""
+"By leveraging the <em>include</em> directive, it will automatically be "
+"referenced for future calls to the <code>apprise</code> tool. All future "
+"calls using Apprise now simplify to:"
+msgstr ""
+"Dengan memanfaatkan direktif <em>include</em>, itu akan secara otomatis "
+"direferensikan untuk panggilan berikutnya ke alat <code>apprise</code>. "
+"Semua panggilan berikutnya menggunakan Apprise sekarang disederhanakan "
+"menjadi:"
 
 #: apprise_api/api/templates/config.html:268
 msgid "Using CURL"
 msgstr "Menggunakan CURL"
 
 #: apprise_api/api/templates/config.html:270
-msgid "The following command would cause the Apprise API to notify all of your services:"
-msgstr "Perintah berikut akan menyebabkan Apprise API memberi notifikasi ke semua layanan Anda:"
+msgid ""
+"The following command would cause the Apprise API to notify all of your "
+"services:"
+msgstr ""
+"Perintah berikut akan menyebabkan Apprise API memberi notifikasi ke semua "
+"layanan Anda:"
 
 #: apprise_api/api/templates/config.html:280
-msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
-msgstr "Saat mengirim lampiran, <code>curl</code> mengharuskan semua file lokal diawali dengan <code>@</code>. Anda dapat menambahkan lampiran seperti ini:"
+msgid ""
+"When sending attachments, <code>curl</code> requires all local files be "
+"prefixed with <code>@</code>. You can an add attachment like this:"
+msgstr ""
+"Saat mengirim lampiran, <code>curl</code> mengharuskan semua file lokal "
+"diawali dengan <code>@</code>. Anda dapat menambahkan lampiran seperti ini:"
 
 #: apprise_api/api/templates/config.html:290
-msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
-msgstr "Saat mengirim lebih dari satu lampiran, Anda harus memberi setiap lampiran ID baru yang unik. Contoh di bawah ini menggunakan <code>attach1</code> dan <code>attach2</code>:"
+msgid ""
+"When sending more than one attachment, you must uniquely assign each "
+"attachment to a new ID.  The example below leverages <code>attach1</code> "
+"and <code>attach2</code>:"
+msgstr ""
+"Saat mengirim lebih dari satu lampiran, Anda harus memberi setiap lampiran "
+"ID baru yang unik. Contoh di bawah ini menggunakan <code>attach1</code> dan "
+"<code>attach2</code>:"
 
 #: apprise_api/api/templates/config.html:301
-msgid "Sends a notification to our endpoints with an attachment and no body specified:"
-msgstr "Mengirim notifikasi ke endpoint kami dengan lampiran dan tanpa isi yang ditentukan:"
+msgid ""
+"Sends a notification to our endpoints with an attachment and no body "
+"specified:"
+msgstr ""
+"Mengirim notifikasi ke endpoint kami dengan lampiran dan tanpa isi yang "
+"ditentukan:"
 
 #: apprise_api/api/templates/config.html:319
 msgid "Define your configuration below:"
@@ -1344,12 +1488,17 @@ msgstr "Konfigurasi Anda Terkunci"
 #: apprise_api/api/templates/config.html:396
 #: apprise_api/api/templates/config.html:471
 msgid "Access to your configuration has been disabled by your administrator."
-msgstr "Akses ke konfigurasi Anda telah dinonaktifkan oleh administrator Anda."
+msgstr ""
+"Akses ke konfigurasi Anda telah dinonaktifkan oleh administrator Anda."
 
 #: apprise_api/api/templates/config.html:410
 #, python-format
-msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
-msgstr "Setelah Anda berhasil memuat <i> setidaknya satu Apprise URL</i> di bagian %(config_chip)s, entri yang dimuat akan ditampilkan di sini."
+msgid ""
+"Once you have successfully loaded <i>at least one Apprise URL</i> on the "
+"%(config_chip)s section, your loaded entries will display here."
+msgstr ""
+"Setelah Anda berhasil memuat <i> setidaknya satu Apprise URL</i> di bagian "
+"%(config_chip)s, entri yang dimuat akan ditampilkan di sini."
 
 #: apprise_api/api/templates/config.html:418
 msgid "Loaded Configuration"
@@ -1361,8 +1510,14 @@ msgid "Show only selected notification services"
 msgstr "Tampilkan hanya layanan notifikasi yang dipilih"
 
 #: apprise_api/api/templates/config.html:431
-msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
-msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notifikasi yang dipilih untuk dikirim</span>"
+msgid ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> notification(s) selected for "
+"sending</span>"
+msgstr ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> notifikasi yang dipilih untuk "
+"dikirim</span>"
 
 #: apprise_api/api/templates/config.html:443
 msgid "Unsaved Configuration Changes"
@@ -1370,8 +1525,14 @@ msgstr "Perubahan Konfigurasi yang Belum Disimpan"
 
 #: apprise_api/api/templates/config.html:445
 #, python-format
-msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
-msgstr "Entri di bawah ini diurai dari konfigurasi yang terakhir disimpan, sehingga mungkin tidak mencerminkan suntingan terbaru Anda. Simpanlah di bagian %(config_chip)s untuk melihat hasilnya di sini."
+msgid ""
+"The entries below were parsed from the configuration that was last saved, so"
+" they may not reflect your recent edits. Save them in the %(config_chip)s "
+"section to see the result here."
+msgstr ""
+"Entri di bawah ini diurai dari konfigurasi yang terakhir disimpan, sehingga "
+"mungkin tidak mencerminkan suntingan terbaru Anda. Simpanlah di bagian "
+"%(config_chip)s untuk melihat hasilnya di sini."
 
 #: apprise_api/api/templates/config.html:449
 msgid "Review the parsed destinations below before sending."
@@ -1380,29 +1541,42 @@ msgstr "Tinjau tujuan yang diurai di bawah sebelum mengirim."
 #: apprise_api/api/templates/config.html:451
 #, python-format
 msgid "Select a tag (🏷️) on any entry to include it in %(notify_chip)s."
-msgstr "Pilih tag (🏷️) pada setiap entri untuk memasukkannya ke dalam %(notify_chip)s."
+msgstr ""
+"Pilih tag (🏷️) pada setiap entri untuk memasukkannya ke dalam "
+"%(notify_chip)s."
 
 #: apprise_api/api/templates/config.html:454
 #, python-format
-msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
-msgstr "Gunakan %(send_icon)s untuk menjalankan tes cepat dan memeriksa keluaran debug lengkap untuk entri tersebut."
+msgid ""
+"Use %(send_icon)s to run a quick test and inspect the full debug output for "
+"that entry."
+msgstr ""
+"Gunakan %(send_icon)s untuk menjalankan tes cepat dan memeriksa keluaran "
+"debug lengkap untuk entri tersebut."
 
 #: apprise_api/api/templates/config.html:457
 #, python-format
 msgid "Need more destinations? Add or update them in %(config_chip)s."
-msgstr "Membutuhkan lebih banyak tujuan? Tambahkan atau perbarui dalam %(config_chip)s."
+msgstr ""
+"Membutuhkan lebih banyak tujuan? Tambahkan atau perbarui dalam "
+"%(config_chip)s."
 
 #: apprise_api/api/templates/config.html:482
 msgid "You can send a notification using the loaded configuration:"
-msgstr "Anda dapat mengirim pemberitahuan menggunakan konfigurasi yang dimuat:"
+msgstr ""
+"Anda dapat mengirim pemberitahuan menggunakan konfigurasi yang dimuat:"
 
 #: apprise_api/api/templates/config.html:492
 msgid "No Notification Targets Selected"
 msgstr "Tidak Ada Target Pemberitahuan Dipilih"
 
 #: apprise_api/api/templates/config.html:495
-msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
-msgstr "Pilih setidaknya satu tag. Tujuan yang disimpan tetap tersembunyi saat penguncian konfigurasi diaktifkan."
+msgid ""
+"Choose at least one tag. The saved destinations stay hidden while "
+"configuration locking is enabled."
+msgstr ""
+"Pilih setidaknya satu tag. Tujuan yang disimpan tetap tersembunyi saat "
+"penguncian konfigurasi diaktifkan."
 
 #: apprise_api/api/templates/config.html:497
 #, python-format
@@ -1424,8 +1598,12 @@ msgid "Template Values"
 msgstr "Nilai Template"
 
 #: apprise_api/api/templates/config.html:539
-msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
-msgstr "Baris dengan nilai dikirim; nilai kosong menggunakan cadangan server (jika didefinisikan)."
+msgid ""
+"Rows with a value are sent; blank values use the server fallback (if "
+"defined)."
+msgstr ""
+"Baris dengan nilai dikirim; nilai kosong menggunakan cadangan server (jika "
+"didefinisikan)."
 
 #: apprise_api/api/templates/config.html:545
 msgid "Add Value"
@@ -1463,7 +1641,8 @@ msgid "Escalation group"
 msgstr "Grup Eskalasi"
 
 #: apprise_api/api/templates/config.html:677
-msgid "Maximum number of retries attempted if the service fails before giving up"
+msgid ""
+"Maximum number of retries attempted if the service fails before giving up"
 msgstr "Jumlah maksimum percobaan ulang jika layanan gagal sebelum menyerah"
 
 #: apprise_api/api/templates/config.html:688
@@ -1650,8 +1829,11 @@ msgid "Optional Service"
 msgstr "Layanan Opsional"
 
 #: apprise_api/api/templates/config.html:2551
-msgid "Optional Service: failures are ignored when determining notification success"
-msgstr "Layanan Opsional: kegagalan diabaikan saat menentukan keberhasilan notifikasi"
+msgid ""
+"Optional Service: failures are ignored when determining notification success"
+msgstr ""
+"Layanan Opsional: kegagalan diabaikan saat menentukan keberhasilan "
+"notifikasi"
 
 #: apprise_api/api/templates/config.html:2674
 msgid "Send Test Notification"
@@ -1674,12 +1856,17 @@ msgid "Successfully saved the configuration."
 msgstr "Konfigurasi berhasil disimpan."
 
 #: apprise_api/api/templates/config.html:2961
-msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
-msgstr "Terjadi masalah saat menulis konfigurasi ke disk. Periksa izin file Anda dan coba lagi."
+msgid ""
+"There was an issue writing the configuration to disk. Check your file "
+"permissions and try again."
+msgstr ""
+"Terjadi masalah saat menulis konfigurasi ke disk. Periksa izin file Anda dan"
+" coba lagi."
 
 #: apprise_api/api/templates/config.html:2968
 msgid "Failed to save the specified URL(s). Check your syntax and try again."
-msgstr "Gagal menyimpan URL yang ditentukan. Periksa sintaks Anda dan coba lagi."
+msgstr ""
+"Gagal menyimpan URL yang ditentukan. Periksa sintaks Anda dan coba lagi."
 
 #: apprise_api/api/templates/config.html:2986
 #: apprise_api/api/templates/config.html:2993
@@ -1704,12 +1891,18 @@ msgid "Choose at least one tag before sending."
 msgstr "Pilih setidaknya satu tag sebelum mengirim."
 
 #: apprise_api/api/templates/config.html:3274
-msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
-msgstr "Tidak ada target notifikasi yang dipilih. Tambahkan titik akhir konfigurasi atau pilih satu atau lebih tag yang cocok sebelum mengirim."
+msgid ""
+"No notification targets are selected. Add configuration endpoints or choose "
+"one or more matching tags before sending."
+msgstr ""
+"Tidak ada target notifikasi yang dipilih. Tambahkan titik akhir konfigurasi "
+"atau pilih satu atau lebih tag yang cocok sebelum mengirim."
 
 #: apprise_api/api/templates/config.html:3289
-msgid "Please provide at least a message body or one attachment before sending."
-msgstr "Harap sediakan setidaknya isi pesan atau satu lampiran sebelum mengirim."
+msgid ""
+"Please provide at least a message body or one attachment before sending."
+msgstr ""
+"Harap sediakan setidaknya isi pesan atau satu lampiran sebelum mengirim."
 
 #: apprise_api/api/templates/config.html:3338
 msgid "Sending notification(s)…"
@@ -1770,8 +1963,11 @@ msgid "Delete Configuration ID?"
 msgstr "Hapus ID Konfigurasi?"
 
 #: apprise_api/api/templates/config_list.html:115
-msgid "This permanently removes this configuration and any login assigned to it."
-msgstr "Ini akan menghapus konfigurasi ini secara permanen beserta semua login yang ditetapkan padanya."
+msgid ""
+"This permanently removes this configuration and any login assigned to it."
+msgstr ""
+"Ini akan menghapus konfigurasi ini secara permanen beserta semua login yang "
+"ditetapkan padanya."
 
 #: apprise_api/api/templates/config_list.html:131
 #: apprise_api/api/templates/config_list.html:142
@@ -1799,21 +1995,29 @@ msgid ""
 "The following services are supported by this\n"
 "            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "Layanan berikut didukung oleh instance <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> ini."
+msgstr ""
+"Layanan berikut didukung oleh instance <a target=\"_blank\" "
+"href=\"https://github.com/caronc/apprise\" rel=\"noopener "
+"noreferrer\">Apprise</a> ini."
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
 "To see a simplified listing that only identifies the Apprise services\n"
 "          enabled click <a href=\"%(href)s\">here</a>."
-msgstr "Untuk melihat daftar sederhana yang hanya mengidentifikasi layanan Apprise yang diaktifkan, klik <a href=\"%(href)s\">di sini</a>."
+msgstr ""
+"Untuk melihat daftar sederhana yang hanya mengidentifikasi layanan Apprise "
+"yang diaktifkan, klik <a href=\"%(href)s\">di sini</a>."
 
 #: apprise_api/api/templates/details.html:25
 #, python-format
 msgid ""
 "To see a listing that identifies all of Apprise services available to this\n"
 "          version (enabled or not) click <a href=\"%(href)s?all=yes\">here</a>."
-msgstr "Untuk melihat daftar yang mengidentifikasi semua layanan Apprise yang tersedia untuk versi ini (diaktifkan atau tidak), klik <a href=\"%(href)s?all=yes\">disini</a>."
+msgstr ""
+"Untuk melihat daftar yang mengidentifikasi semua layanan Apprise yang "
+"tersedia untuk versi ini (diaktifkan atau tidak), klik <a "
+"href=\"%(href)s?all=yes\">disini</a>."
 
 #: apprise_api/api/templates/details.html:30
 msgid "Total plugin(s) supported"
@@ -1859,7 +2063,9 @@ msgstr "Apprise URL Format"
 msgid ""
 "For more details and additional Apprise\n"
 "                    configuration options available to this service:"
-msgstr "Untuk detail lebih lanjut dan opsi konfigurasi tambahan Apprise yang tersedia untuk layanan ini:"
+msgstr ""
+"Untuk detail lebih lanjut dan opsi konfigurasi tambahan Apprise yang "
+"tersedia untuk layanan ini:"
 
 #: apprise_api/api/templates/details.html:161
 msgid "Click Here"
@@ -1870,8 +2076,13 @@ msgid "API Endpoints"
 msgstr "API Endpoint"
 
 #: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "Pengembang yang ingin menerima kumpulan hasil ini dalam string yang dapat diurai JSON untuk aplikasi mereka dapat melakukan hal berikut untuk mencapainya:"
+msgid ""
+"Developers who wish to receive this result set in a JSON parseable string "
+"for their application can perform the following to achieve this:"
+msgstr ""
+"Pengembang yang ingin menerima kumpulan hasil ini dalam string yang dapat "
+"diurai JSON untuk aplikasi mereka dapat melakukan hal berikut untuk "
+"mencapainya:"
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1937,8 +2148,14 @@ msgid "Execute the request"
 msgstr "Jalankan permintaan"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "Informasi lebih lanjut tentang format JSON dapat ditemukan <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">di sini</a>."
+msgid ""
+"More details on the JSON format can be found <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">here</a>."
+msgstr ""
+"Informasi lebih lanjut tentang format JSON dapat ditemukan <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">di sini</a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1960,12 +2177,16 @@ msgid "Provide the login credentials required to access the Apprise API."
 msgstr "Berikan kredensial masuk yang diperlukan untuk mengakses Apprise API."
 
 #: apprise_api/api/templates/login.html:73
-msgid "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank."
-msgstr "ID Konfigurasi diperlukan untuk akun non-administratif. Administrator global dapat membiarkannya kosong."
+msgid ""
+"A Configuration ID is required for non-administrative accounts. Global "
+"administrators can leave it blank."
+msgstr ""
+"ID Konfigurasi diperlukan untuk akun non-administratif. Administrator global"
+" dapat membiarkannya kosong."
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "Kelola server ini dari perangkat Android Anda."
+msgid "Manage this server from your Android or iOS device."
+msgstr "Kelola server ini dari perangkat Android / iOS Anda."
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -1992,7 +2213,8 @@ msgstr "Proyek ini dirancang agar sangat ringan."
 msgid ""
 "Configuration can be persistently stored for\n"
 "        retrieval."
-msgstr "Konfigurasi dapat disimpan secara persistem untuk pengambilan kembali."
+msgstr ""
+"Konfigurasi dapat disimpan secara persistem untuk pengambilan kembali."
 
 #: apprise_api/api/templates/welcome.html:31
 msgid "Stateless Endpoints"
@@ -2002,7 +2224,12 @@ msgstr "Titik Akhir Tanpa Status"
 msgid ""
 "Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "Mereka yang ingin memperlakukan API ini sebagai apa pun kecuali <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> dan/atau mikroservis untuk proyek mereka hanya perlu menggunakan URL berikut."
+msgstr ""
+"Mereka yang ingin memperlakukan API ini sebagai apa pun kecuali <a "
+"href=\"https://docs.microsoft.com/en-"
+"us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">sidecar</a> dan/atau mikroservis untuk proyek mereka hanya "
+"perlu menggunakan URL berikut."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2013,7 +2240,11 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Digunakan untuk memberi tahu satu atau lebih URL Apprise yang ditentukan. Lihat <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> jika Anda memerlukan bantuan untuk membangun URL Anda."
+msgstr ""
+"Digunakan untuk memberi tahu satu atau lebih URL Apprise yang ditentukan. "
+"Lihat <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" "
+"rel=\"noopener noreferrer\">Apprise URL Builder</a> jika Anda memerlukan "
+"bantuan untuk membangun URL Anda."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2025,7 +2256,9 @@ msgstr "Parameter"
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                    one URL from the next."
-msgstr "Digunakan untuk mendefinisikan satu atau lebih Apprise URL. Gunakan koma dan/atau spasi untuk memisahkan satu URL dari yang berikutnya."
+msgstr ""
+"Digunakan untuk mendefinisikan satu atau lebih Apprise URL. Gunakan koma "
+"dan/atau spasi untuk memisahkan satu URL dari yang berikutnya."
 
 #: apprise_api/api/templates/welcome.html:72
 #: apprise_api/api/templates/welcome.html:543
@@ -2042,7 +2275,9 @@ msgstr "Judul untuk dimasukkan dalam notifikasi. Ini adalah bidang opsional."
 msgid ""
 "This optional field defines the notification type. The possible options\n"
 "                    are:"
-msgstr "Bidang opsional ini menentukan jenis notifikasi. Pilihan yang mungkin adalah:"
+msgstr ""
+"Bidang opsional ini menentukan jenis notifikasi. Pilihan yang mungkin "
+"adalah:"
 
 #: apprise_api/api/templates/welcome.html:89
 msgid ""
@@ -2061,8 +2296,14 @@ msgid "Notifies an email address with attachments"
 msgstr "Memberitahu alamat email dengan lampiran"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "Mengirim lampiran file berbasis web ke server <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a>:"
+msgid ""
+"Send an web based file attachment to a <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> server:"
+msgstr ""
+"Mengirim lampiran file berbasis web ke server <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a>:"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2136,14 +2377,19 @@ msgstr "Lampirkan data ke bidang POST."
 
 #: apprise_api/api/templates/welcome.html:263
 msgid "The administrator of this system has disabled stateless URL support."
-msgstr "Administrator sistem ini telah menonaktifkan dukungan URL tanpa status."
+msgstr ""
+"Administrator sistem ini telah menonaktifkan dukungan URL tanpa status."
 
 #: apprise_api/api/templates/welcome.html:271
 msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
-msgstr "Orang yang ingin menggunakan penyimpanan persisten dapat melakukannya. Bagian ini adalah jenis pengaturan sekali jalan dan lupakan. Atur konfigurasi Anda sekali dan cukup memicu notifikasi nanti sesuai permintaan dengan panggilan ringan API."
+msgstr ""
+"Orang yang ingin menggunakan penyimpanan persisten dapat melakukannya. "
+"Bagian ini adalah jenis pengaturan sekali jalan dan lupakan. Atur "
+"konfigurasi Anda sekali dan cukup memicu notifikasi nanti sesuai permintaan "
+"dengan panggilan ringan API."
 
 #: apprise_api/api/templates/welcome.html:276
 msgid ""
@@ -2151,7 +2397,11 @@ msgid ""
 "      encoding.\n"
 "      You must pass along the <code>Content-Type</code> as <code>application/json</code> in order for it to be\n"
 "      interpreted properly."
-msgstr "Semua endpoint yang mengharapkan data yang dikirim dapat diterima baik dalam JSON atau dalam encoding standarnya. Anda harus menyertakan <code>Content-Type</code> sebagai <code>application/json</code> agar dapat ditafsirkan dengan benar."
+msgstr ""
+"Semua endpoint yang mengharapkan data yang dikirim dapat diterima baik dalam"
+" JSON atau dalam encoding standarnya. Anda harus menyertakan <code>Content-"
+"Type</code> sebagai <code>application/json</code> agar dapat ditafsirkan "
+"dengan benar."
 
 #: apprise_api/api/templates/welcome.html:295
 #, python-format
@@ -2159,13 +2409,21 @@ msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
 "            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "Digunakan untuk menambahkan konfigurasi Apprise baru atau satu set URL dan mengaitkannya dengan konfigurasi yang diidentifikasi dengan id <em>%(key)s</em>. Lihat <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> jika Anda memerlukan bantuan dalam membuat URL Anda."
+msgstr ""
+"Digunakan untuk menambahkan konfigurasi Apprise baru atau satu set URL dan "
+"mengaitkannya dengan konfigurasi yang diidentifikasi dengan id "
+"<em>%(key)s</em>. Lihat <a target=\"_blank\" "
+"href=\"https://appriseit.com/url-builder/\" rel=\"noopener "
+"noreferrer\">Apprise URL Builder</a> jika Anda memerlukan bantuan dalam "
+"membuat URL Anda."
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                      one URL from the next."
-msgstr "Digunakan untuk mendefinisikan satu atau lebih Apprise URL(s). Gunakan koma dan/atau spasi untuk memisahkan satu URL dari yang berikutnya."
+msgstr ""
+"Digunakan untuk mendefinisikan satu atau lebih Apprise URL(s). Gunakan koma "
+"dan/atau spasi untuk memisahkan satu URL dari yang berikutnya."
 
 #: apprise_api/api/templates/welcome.html:317
 msgid ""
@@ -2179,27 +2437,36 @@ msgid ""
 "                      is\n"
 "                      to tell the server which of the supported (Apprise) configuration types you are passing. Valid\n"
 "                      options are:"
-msgstr "Field ini hanya diperlukan jika Anda telah menentukan opsi konfigurasi. Tujuannya adalah untuk memberi tahu server jenis konfigurasi (Apprise) yang didukung yang Anda kirimkan. Opsi yang valid adalah:"
+msgstr ""
+"Field ini hanya diperlukan jika Anda telah menentukan opsi konfigurasi. "
+"Tujuannya adalah untuk memberi tahu server jenis konfigurasi (Apprise) yang "
+"didukung yang Anda kirimkan. Opsi yang valid adalah:"
 
 #: apprise_api/api/templates/welcome.html:338
 msgid ""
 "You must specify either the <code>urls</code> parameter or the\n"
 "                          <code>config</code>."
-msgstr "Anda harus menentukan salah satu parameter <code>urls</code> atau <code>config</code>."
+msgstr ""
+"Anda harus menentukan salah satu parameter <code>urls</code> atau "
+"<code>config</code>."
 
 #: apprise_api/api/templates/welcome.html:342
 msgid ""
 "The <code>urls</code> takes priority over the <code>config</code> if both\n"
 "                          were\n"
 "                          specified."
-msgstr "Parameter <code>urls</code> memiliki prioritas dibandingkan <code>config</code> jika keduanya ditentukan."
+msgstr ""
+"Parameter <code>urls</code> memiliki prioritas dibandingkan "
+"<code>config</code> jika keduanya ditentukan."
 
 #: apprise_api/api/templates/welcome.html:347
 msgid ""
 "The <code>format</code> parameter is only required if the\n"
 "                          <code>config</code>\n"
 "                          parameter was also specified."
-msgstr "Parameter <code>format</code> hanya diperlukan jika parameter <code>config</code> juga ditentukan."
+msgstr ""
+"Parameter <code>format</code> hanya diperlukan jika parameter "
+"<code>config</code> juga ditentukan."
 
 #: apprise_api/api/templates/welcome.html:363
 #, python-format
@@ -2209,7 +2476,8 @@ msgstr "Muat satu URL dan tetapkan ke: <em>%(key)s</em>"
 #: apprise_api/api/templates/welcome.html:369
 #, python-format
 msgid "Load a simple TEXT config entry sent to: <em>%(key)s</em>"
-msgstr "Muat entri konfigurasi TEXT sederhana yang dikirim ke: <em>%(key)s</em>"
+msgstr ""
+"Muat entri konfigurasi TEXT sederhana yang dikirim ke: <em>%(key)s</em>"
 
 #: apprise_api/api/templates/welcome.html:387
 #: apprise_api/api/templates/welcome.html:403
@@ -2225,12 +2493,18 @@ msgstr "URL jika kunci adalah <em>%(key)s</em>"
 msgid ""
 "There are no arguments required. If configuration id of <em>%(key)s</em> exists and has data associated with\n"
 "              it, it will be removed."
-msgstr "Tidak diperlukan argumen. Jika ID konfigurasi dari <em>%(key)s</em> ada dan memiliki data terkait dengannya, data tersebut akan dihapus."
+msgstr ""
+"Tidak diperlukan argumen. Jika ID konfigurasi dari <em>%(key)s</em> ada dan "
+"memiliki data terkait dengannya, data tersebut akan dihapus."
 
 #: apprise_api/api/templates/welcome.html:451
 #, python-format
-msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
-msgstr "Hapus konfigurasi yang sebelumnya dimuat yang terkait dengan ID dari <em>%(key)s</em>"
+msgid ""
+"Remove previously loaded configuration associated with the id of "
+"<em>%(key)s</em>"
+msgstr ""
+"Hapus konfigurasi yang sebelumnya dimuat yang terkait dengan ID dari "
+"<em>%(key)s</em>"
 
 #: apprise_api/api/templates/welcome.html:462
 #, python-format
@@ -2242,7 +2516,10 @@ msgstr "Permintaan jika kunci adalah <em>%(key)s</em>"
 msgid ""
 "This feature can be used by Apprise itself. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "Fitur ini dapat digunakan oleh Apprise itu sendiri. Ini menyediakan cara untuk mengambil konfigurasi dari jarak jauh yang terkait dengan konfigurasi yang diidentifikasi melalui id <em>%(key)s</em>."
+msgstr ""
+"Fitur ini dapat digunakan oleh Apprise itu sendiri. Ini menyediakan cara "
+"untuk mengambil konfigurasi dari jarak jauh yang terkait dengan konfigurasi "
+"yang diidentifikasi melalui id <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:507
 #: apprise_api/api/templates/welcome.html:521
@@ -2254,24 +2531,34 @@ msgstr "Gunakan Apprise untuk mengambil konfigurasi Anda:"
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "Ini adalah alias dari <code>%(BASE_URL)s/get/<em>%(key)s</em></code> yang didefinisikan di atas. Ini menyediakan cara untuk mengambil konfigurasi dari jarak jauh yang terkait dengan konfigurasi yang diidentifikasi melalui id <em>%(key)s</em>."
+msgstr ""
+"Ini adalah alias dari <code>%(BASE_URL)s/get/<em>%(key)s</em></code> yang "
+"didefinisikan di atas. Ini menyediakan cara untuk mengambil konfigurasi dari"
+" jarak jauh yang terkait dengan konfigurasi yang diidentifikasi melalui id "
+"<em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:531
 #, python-format
-msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
-msgstr "Memberitahukan URL yang terkait dengan konfigurasi yang diidentifikasi oleh id <em>%(key)s</em>."
+msgid ""
+"Notifies the URLs associated with configuration identified by the id of "
+"<em>%(key)s</em>."
+msgstr ""
+"Memberitahukan URL yang terkait dengan konfigurasi yang diidentifikasi oleh "
+"id <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:548
 msgid ""
 "The title to include in the notification. This is an optional\n"
 "                      field."
-msgstr "Judul yang akan disertakan dalam notifikasi. Ini adalah kolom opsional."
+msgstr ""
+"Judul yang akan disertakan dalam notifikasi. Ini adalah kolom opsional."
 
 #: apprise_api/api/templates/welcome.html:555
 msgid ""
 "This optional field defines the notification type. The possible options\n"
 "                      are:"
-msgstr "Kolom opsional ini menentukan jenis notifikasi. Pilihan yang mungkin adalah:"
+msgstr ""
+"Kolom opsional ini menentukan jenis notifikasi. Pilihan yang mungkin adalah:"
 
 #: apprise_api/api/templates/welcome.html:560
 msgid ""
@@ -2284,7 +2571,9 @@ msgstr "ini adalah opsi default jika tipe tidak ditentukan."
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
-msgstr "Terapkan logika penandaan untuk memfilter URL Anda lebih lanjut. Ini adalah kolom opsional."
+msgstr ""
+"Terapkan logika penandaan untuk memfilter URL Anda lebih lanjut. Ini adalah "
+"kolom opsional."
 
 #: apprise_api/api/templates/welcome.html:594
 msgid "Notifies all URLs assigned to the configuration"
@@ -2299,8 +2588,12 @@ msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "Memberitahukan semua URL yang ditetapkan dengan tag <em>devops</em>"
 
 #: apprise_api/api/templates/welcome.html:621
-msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
-msgstr "Idealnya Anda harus memanfaatkan Library Apprise; itu akan membuat hidup Anda jauh lebih mudah:"
+msgid ""
+"Ideally you should leverage the Apprise Library; it will make your life much"
+" easier:"
+msgstr ""
+"Idealnya Anda harus memanfaatkan Library Apprise; itu akan membuat hidup "
+"Anda jauh lebih mudah:"
 
 #: apprise_api/api/templates/welcome.html:625
 msgid "Create an Apprise instance"
@@ -2320,7 +2613,8 @@ msgstr "Mengirim lampiran sama mudahnya:"
 
 #: apprise_api/api/templates/welcome.html:637
 msgid "The legacy (but more compatible and lightweight) way of doing things:"
-msgstr "Cara lama (tetapi lebih kompatibel dan ringan) untuk melakukan semuanya:"
+msgstr ""
+"Cara lama (tetapi lebih kompatibel dan ringan) untuk melakukan semuanya:"
 
 #: apprise_api/api/templates/welcome.html:748
 msgid "Endpoint Notes"
@@ -2328,14 +2622,21 @@ msgstr "Catatan Endpoint"
 
 #: apprise_api/api/templates/welcome.html:751
 #, python-format
-msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
-msgstr "ID Konfigurasi (<em>%(key)s</em>) yang Anda rencanakan untuk mengaitkan dengan konfigurasi Anda:"
+msgid ""
+"The Configuration ID (<em>%(key)s</em>) you plan to associate your "
+"configuration with:"
+msgstr ""
+"ID Konfigurasi (<em>%(key)s</em>) yang Anda rencanakan untuk mengaitkan "
+"dengan konfigurasi Anda:"
 
 #: apprise_api/api/templates/welcome.html:755
 msgid ""
 "Cannot have spaces or special characters. A dash (<code>-</code>) and underscore\n"
 "              (<code>_</code>) are the only exceptions to this rule."
-msgstr "Tidak boleh ada spasi atau karakter khusus. Tanda hubung (<code>-</code>) dan garis bawah (<code>_</code>) adalah satu-satunya pengecualian untuk aturan ini."
+msgstr ""
+"Tidak boleh ada spasi atau karakter khusus. Tanda hubung (<code>-</code>) "
+"dan garis bawah (<code>_</code>) adalah satu-satunya pengecualian untuk "
+"aturan ini."
 
 #: apprise_api/api/templates/welcome.html:758
 msgid "Must start with at least two alphanumeric characters."
@@ -2344,6 +2645,14 @@ msgstr "Harus dimulai dengan setidaknya dua karakter alfanumerik."
 #: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Tidak boleh melebihi 64 karakter secara total."
+
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "Dapatkan di Google Play"
 
 #: apprise_api/api/views.py:1157
 msgid "This configuration has been disabled by an administrator"
@@ -2355,15 +2664,19 @@ msgid "Access Denied"
 msgstr "Akses Ditolak"
 
 #: apprise_api/api/views.py:1184
-msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
-msgstr "Mode otentikasi dinonaktifkan (atur APPRISE_AUTH_REQUIRED untuk mengaktifkannya)"
+msgid ""
+"Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
+msgstr ""
+"Mode otentikasi dinonaktifkan (atur APPRISE_AUTH_REQUIRED untuk "
+"mengaktifkannya)"
 
 #: apprise_api/api/views.py:1193
 msgid "Persistent configuration storage is disabled"
 msgstr "Penyimpanan konfigurasi yang persisten dinonaktifkan"
 
 #: apprise_api/api/views.py:1202
-msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
+msgid ""
+"A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "Diperlukan ID konfigurasi (URL jalur atau X-Apprise-Config-ID header)"
 
 #: apprise_api/api/views.py:1215
@@ -2486,7 +2799,8 @@ msgid "The configuration could not be removed"
 msgstr "Konfigurasi tidak dapat dihapus"
 
 #: apprise_api/api/views.py:2525
-msgid "The configuration was removed, but its authentication could not be removed"
+msgid ""
+"The configuration was removed, but its authentication could not be removed"
 msgstr "Konfigurasi telah dihapus, tetapi autentikasinya tidak dapat dihapus"
 
 #: apprise_api/api/views.py:2545
@@ -2534,7 +2848,8 @@ msgid "Successfully removed authentication"
 msgstr "Otentikasi berhasil dihapus"
 
 #: apprise_api/api/views.py:3013
-msgid "The server is temporarily unable to start a new live notification stream"
+msgid ""
+"The server is temporarily unable to start a new live notification stream"
 msgstr "Server sementara tidak dapat memulai aliran notifikasi langsung baru"
 
 #: apprise_api/api/views.py:3038
@@ -2685,7 +3000,8 @@ msgstr "URI Terlalu Panjang"
 
 #: apprise_api/error/templates/414.html:18
 msgid "Shorten the request URL or move its data into the request body."
-msgstr "Perpendek permintaan URL atau pindahkan datanya ke dalam tubuh permintaan."
+msgstr ""
+"Perpendek permintaan URL atau pindahkan datanya ke dalam tubuh permintaan."
 
 #: apprise_api/error/templates/421.html:20
 msgid "Misdirected Request"
@@ -2706,8 +3022,12 @@ msgstr "Terlalu Banyak Permintaan"
 
 #: apprise_api/error/templates/429.html:20
 #, python-format
-msgid "Too many login attempts were made. Wait %(retry_after)s seconds before trying again."
-msgstr "Terlalu banyak percobaan login telah dilakukan. Tunggu %(retry_after)s detik sebelum mencoba lagi."
+msgid ""
+"Too many login attempts were made. Wait %(retry_after)s seconds before "
+"trying again."
+msgstr ""
+"Terlalu banyak percobaan login telah dilakukan. Tunggu %(retry_after)s detik"
+" sebelum mencoba lagi."
 
 #: apprise_api/error/templates/50x.html:20
 msgid "Service Temporarily Unavailable"

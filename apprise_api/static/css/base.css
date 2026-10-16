@@ -548,6 +548,12 @@ li.social-theme-nav .topbar-icon svg {
   stroke: none;
 }
 
+/* The mobile handset is a stroke icon; do not apply the filled social-icon style. */
+li.social-theme-nav .topbar-icon--mobile svg {
+  fill: none;
+  stroke: currentColor;
+}
+
 .auth-account,
 .auth-logout-link {
   display: inline-flex;
@@ -645,7 +651,7 @@ li.social-theme-nav>a:focus-visible,
 }
 
 .language-selector:focus-visible {
-  border-color: var(--mobile-beta-accent);
+  border-color: var(--mobile-app-accent);
   box-shadow: 0 0 0 3px var(--select-focus-ring);
 }
 
@@ -1303,53 +1309,73 @@ textarea {
 }
 
 /* Apprise Mobile promotion dialog */
-.mobile-beta-dialog {
+.mobile-app-dialog {
   width: min(58rem, calc(100vw - 2rem));
   max-height: min(90vh, 54rem);
   overflow-y: auto;
-  color: var(--mobile-beta-text);
+  color: var(--mobile-app-text);
 }
 
-.mobile-beta-dialog::backdrop {
+.mobile-app-dialog::backdrop {
   background: rgba(5, 8, 10, 0.7);
 }
 
-.mobile-beta-dialog__header {
+.mobile-app-dialog__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 1rem;
+  background: linear-gradient(120deg,
+      var(--dialog-header-start) 0%,
+      var(--section-heading-start) 48%,
+      var(--dialog-header-end) 100%);
 }
 
-.mobile-beta-dialog__header h4 {
+.mobile-app-dialog__header h4 {
   margin: 0.2rem 0 0;
-  color: var(--mobile-beta-heading);
+  color: var(--mobile-app-heading);
 }
 
-.mobile-beta-dialog__badge {
-  color: var(--mobile-beta-accent);
+.mobile-app-dialog__badge {
+  color: var(--mobile-app-accent);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.mobile-beta-dialog__heading {
+.mobile-app-dialog__heading {
   display: flex;
   align-items: center;
   min-width: 0;
   gap: 0.85rem;
 }
 
-.mobile-beta-dialog__play-mark {
-  display: block;
-  width: 3.25rem;
-  height: auto;
+.mobile-app-dialog__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.75rem;
+  height: 3.75rem;
+  border: 1px solid color-mix(in srgb, var(--mobile-app-accent) 42%, transparent);
+  border-radius: 0.75rem;
+  color: var(--mobile-app-accent);
+  background: linear-gradient(145deg,
+      color-mix(in srgb, var(--mobile-app-accent) 18%, var(--dialog-surface-raised)),
+      var(--dialog-surface-raised));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 38%, transparent),
+    0 0.18rem 0.5rem color-mix(in srgb, var(--mobile-app-accent) 16%, transparent);
   flex: 0 0 auto;
 }
 
-.mobile-beta-dialog__close {
+.mobile-app-dialog__icon svg {
+  display: block;
+  width: 2.15rem;
+  height: 2.15rem;
+}
+
+.mobile-app-dialog__close {
   flex: 0 0 auto;
   align-self: flex-start;
 }
@@ -1536,125 +1562,201 @@ textarea {
 
 .apprise-dialog-close:focus-visible,
 .swal2-popup .swal2-close:focus-visible {
-  outline: 2px solid var(--mobile-beta-accent);
+  outline: 2px solid var(--mobile-app-accent);
   outline-offset: 2px;
 }
 
-.mobile-beta-dialog__content {
+.mobile-app-dialog__content {
   padding: 1rem;
 }
 
-.mobile-beta-dialog__content>p:first-child {
-  margin-top: 0;
+.mobile-app-dialog__intro {
+  display: block;
 }
 
-.mobile-beta-dialog__highlights {
+.mobile-app-dialog__intro p {
+  margin: 0;
+}
+
+.mobile-app-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-block: 1rem;
+}
+
+.mobile-app-dialog__actions .mobile-store-links {
+  flex: 0 1 var(--store-width);
+  margin-block: 0;
+}
+
+.mobile-app-dialog__learn-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 40px;
+  height: 40px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--mobile-app-accent);
+  border-radius: 0.6rem;
+  color: var(--mobile-app-accent) !important;
+  background: var(--dialog-surface-raised);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 0.12rem 0.35rem color-mix(in srgb, var(--mobile-app-accent) 14%, transparent);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.mobile-app-dialog__learn-more:visited,
+.mobile-app-dialog__learn-more:hover,
+.mobile-app-dialog__learn-more:focus-visible {
+  color: var(--mobile-app-accent) !important;
+}
+
+.mobile-app-dialog__learn-more:hover,
+.mobile-app-dialog__learn-more:focus-visible {
+  background: var(--mobile-app-accent-soft);
+}
+
+.mobile-app-dialog__learn-more:focus-visible {
+  outline: 2px solid var(--mobile-app-accent);
+  outline-offset: 3px;
+}
+
+.mobile-app-dialog__learn-more span {
+  margin-left: 0.45rem;
+  font-size: 1rem;
+}
+
+[dir="rtl"] .mobile-app-dialog__learn-more span {
+  margin-right: 0.45rem;
+  margin-left: 0;
+  transform: scaleX(-1);
+}
+
+.mobile-app-dialog__highlights {
   padding: 0;
   margin: 0.9rem 0;
   list-style: none;
 }
 
-.mobile-beta-dialog__highlights li {
+.mobile-app-dialog__highlights li {
   position: relative;
   padding-left: 1.4rem;
   margin: 0.4rem 0;
   font-size: 0.92rem;
 }
 
-.mobile-beta-dialog__highlights li::before {
+.mobile-app-dialog__highlights li::before {
   position: absolute;
   top: 0.58em;
   left: 0.3rem;
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
-  background: var(--mobile-beta-accent);
+  background: var(--mobile-app-accent);
   content: "";
 }
 
-.mobile-beta-dialog__cta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
+.mobile-store-links {
+  display: grid;
+  grid-template-columns: var(--store-columns);
   align-items: center;
-  margin: 1rem 0 1.25rem;
+  gap: 12px;
+  width: min(100%, var(--store-width));
+  margin-block: 1rem;
+  padding-block: 0.625rem;
 }
 
-.mobile-beta-dialog__cta a {
+.mobile-store-links a {
   display: inline-flex;
-  min-width: 11rem;
-  min-height: 2.4rem;
   align-items: center;
-  justify-content: center;
-  padding: 0.45rem 1.1rem;
-  border: 1px solid var(--mobile-beta-accent);
-  border-radius: 999px;
-  color: var(--mobile-beta-accent);
-  font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1.2;
+  min-width: 0;
+  min-height: 44px;
+  width: 100%;
 }
 
-.mobile-beta-dialog__cta a.mobile-beta-dialog__primary {
-  color: var(--mobile-beta-primary-text) !important;
-  background: var(--mobile-beta-accent);
+.mobile-store-links a[href] {
+  cursor: pointer;
 }
 
-.mobile-beta-dialog__preview summary {
-  color: var(--mobile-beta-accent);
+.mobile-store-links a:focus-visible {
+  outline: 2px solid var(--mobile-app-accent);
+  outline-offset: 4px;
+}
+
+.mobile-store-links img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.mobile-app-dialog__preview summary {
+  color: var(--mobile-app-accent);
   font-weight: 600;
   cursor: pointer;
 }
 
-.mobile-beta-dialog__screenshots {
+.mobile-app-dialog__screenshots {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin-top: 0.75rem;
 }
 
-.mobile-beta-dialog__screenshots figure {
+.mobile-app-dialog__screenshots figure {
   margin: 0;
   text-align: center;
 }
 
-.mobile-beta-dialog__screenshots img {
+.mobile-app-dialog__screenshots img {
   display: block;
   width: 100%;
   height: auto;
   border-radius: 0.5rem;
 }
 
-.mobile-beta-dialog__screenshots figcaption,
-.mobile-beta-dialog__trademark {
+.mobile-app-dialog__screenshots figcaption {
   margin-top: 0.35rem;
-  color: var(--mobile-beta-muted);
+  color: var(--mobile-app-muted);
   font-size: 0.75rem;
 }
 
-.mobile-beta-dialog__trademark {
-  margin-bottom: 0;
-}
-
-@media (max-width: 700px) {
-  .mobile-beta-dialog__cta a {
-    flex: 1 1 100%;
-  }
-}
-
 @media (max-width: 480px) {
-  .mobile-beta-dialog {
+  .mobile-app-dialog {
     width: calc(100vw - 1rem);
     max-height: calc(100vh - 1rem);
   }
 
-  .mobile-beta-dialog__screenshots {
+  .mobile-app-dialog__screenshots {
     display: flex;
     overflow-x: auto;
   }
 
-  .mobile-beta-dialog__screenshots figure {
+  .mobile-app-dialog__screenshots figure {
     flex: 0 0 76vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-app-dialog__actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mobile-app-dialog__actions .mobile-store-links {
+    width: min(100%, var(--store-width));
+    flex: none;
+  }
+
+  .mobile-app-dialog__learn-more {
+    width: 100%;
   }
 }
 
@@ -1771,7 +1873,7 @@ textarea {
   margin: 0 0 1rem;
   padding: 0.9rem 1.05rem;
   border: 1px solid var(--section-heading-border);
-  border-left: 3px solid var(--mobile-beta-accent);
+  border-left: 3px solid var(--mobile-app-accent);
   border-radius: 0.8rem;
   background: linear-gradient(118deg,
       var(--section-heading-start),
@@ -1821,9 +1923,9 @@ textarea {
 .getting-started-card {
   min-width: 0;
   padding: 1.25rem 1.4rem;
-  border: 1px solid var(--mobile-beta-border);
+  border: 1px solid var(--mobile-app-border);
   border-radius: 1rem;
-  background: var(--mobile-beta-surface);
+  background: var(--mobile-app-surface);
 }
 
 .getting-started-card>h5,
@@ -1852,7 +1954,7 @@ textarea {
 }
 
 .mobile-setup-card__heading p {
-  color: var(--mobile-beta-muted);
+  color: var(--mobile-app-muted);
   line-height: 1.4;
 }
 
@@ -1865,14 +1967,14 @@ textarea {
   width: min(100%, 16rem);
   margin: 0 auto;
   overflow: hidden;
-  border: 1px solid var(--mobile-beta-border);
+  border: 1px solid var(--mobile-app-border);
   border-radius: 0.75rem;
   background: #fff;
   cursor: pointer;
 }
 
 .overview-mobile-qr:focus-visible {
-  outline: 2px solid var(--mobile-beta-accent);
+  outline: 2px solid var(--mobile-app-accent);
   outline-offset: 3px;
 }
 
@@ -1895,8 +1997,8 @@ textarea {
   justify-content: center;
   flex-direction: column;
   gap: 0.35rem;
-  color: var(--mobile-beta-heading);
-  background: color-mix(in srgb, var(--mobile-beta-surface) 62%, transparent);
+  color: var(--mobile-app-heading);
+  background: color-mix(in srgb, var(--mobile-app-surface) 62%, transparent);
   font-size: 0.78rem;
   font-weight: 600;
   text-align: center;
@@ -1907,7 +2009,7 @@ textarea {
 }
 
 .overview-mobile-qr__veil i.material-icons {
-  color: var(--mobile-beta-accent);
+  color: var(--mobile-app-accent);
   font-size: 1.8rem;
 }
 
@@ -1921,14 +2023,14 @@ textarea {
 }
 
 .mobile-setup-card__password-note {
-  color: var(--mobile-beta-muted);
+  color: var(--mobile-app-muted);
   line-height: 1.4;
   text-align: center;
 }
 
 .mobile-setup-card__footer {
   margin-top: auto !important;
-  color: var(--mobile-beta-muted);
+  color: var(--mobile-app-muted);
   font-size: 0.82rem;
   line-height: 1.45;
   text-align: center;
@@ -2688,9 +2790,9 @@ body .tabs .tab.disabled a:hover i {
 #url-list .url-template-var,
 #url-list .url-template-chip,
 .review-template-field label {
-  color: var(--mobile-beta-accent);
-  background: var(--mobile-beta-accent-soft);
-  border: 1px solid var(--mobile-beta-accent);
+  color: var(--mobile-app-accent);
+  background: var(--mobile-app-accent-soft);
+  border: 1px solid var(--mobile-app-accent);
   border-radius: 999px;
   font-family: monospace;
   font-weight: 600;
@@ -2714,9 +2816,9 @@ body .tabs .tab.disabled a:hover i {
   position: absolute;
   inset: -0.29rem 0 -0.35rem;
   z-index: -1;
-  border: 1px solid var(--mobile-beta-accent);
+  border: 1px solid var(--mobile-app-accent);
   border-radius: 999px;
-  background: var(--mobile-beta-accent-soft);
+  background: var(--mobile-app-accent-soft);
 }
 
 /* The small form shown before a test send, asking for the values an
@@ -3317,7 +3419,7 @@ code.config-id.is-concealed {
 
 .config-list-collection .config-list-actions .btn-flat:hover,
 .config-list-collection .config-list-actions .btn-flat:focus-visible {
-  color: var(--mobile-beta-accent) !important;
+  color: var(--mobile-app-accent) !important;
   background: var(--config-list-id-bg);
 }
 
@@ -4083,16 +4185,16 @@ Authentication Editor
   gap: 0.85rem;
   padding: 0.9rem 1.1rem;
   margin: 1.5rem 0 0;
-  border: 1px solid var(--mobile-beta-border);
+  border: 1px solid var(--mobile-app-border);
   border-radius: 1rem;
   text-decoration: none !important;
-  background: var(--mobile-beta-surface);
+  background: var(--mobile-app-surface);
   transition: border-color 0.15s ease;
 }
 
 .browser-login-mobile-promo:hover,
 .browser-login-mobile-promo:focus-visible {
-  border-color: var(--mobile-beta-accent);
+  border-color: var(--mobile-app-accent);
 }
 
 .browser-login-mobile-promo__icon {
@@ -4104,22 +4206,22 @@ Authentication Editor
   flex-shrink: 0;
 }
 
-.browser-login-mobile-promo__icon img {
+.browser-login-mobile-promo__icon svg {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  color: var(--mobile-app-accent);
 }
 
 .browser-login-mobile-promo__text {
   font-size: 0.85rem;
   line-height: 1.35;
-  color: var(--mobile-beta-text);
+  color: var(--mobile-app-text);
 }
 
 .browser-login-mobile-promo__text strong {
   display: block;
-  color: var(--mobile-beta-heading);
+  color: var(--mobile-app-heading);
 }
 
 .auth-login-error {
@@ -4446,14 +4548,14 @@ Authentication Editor
   align-items: center;
   gap: 0.3rem;
   margin: 0.3rem 0.15rem 0;
-  color: var(--mobile-beta-muted);
+  color: var(--mobile-app-muted);
   font-size: 0.78rem;
   line-height: 1.3;
 }
 
 .snippet-password-warning .material-icons {
   flex: 0 0 auto;
-  color: var(--mobile-beta-accent);
+  color: var(--mobile-app-accent);
   font-size: 1rem;
 }
 
@@ -4631,7 +4733,7 @@ Authentication Editor
   display: block;
   margin: 0 0 0.2rem 0;
   transform: none;
-  color: var(--mobile-beta-accent);
+  color: var(--mobile-app-accent);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 400;
@@ -5248,7 +5350,7 @@ Authentication Editor
   height: 0.65rem;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: var(--mobile-beta-accent);
+  background: var(--mobile-app-accent);
 }
 
 .swal2-popup .notify-live-pulse::after {
@@ -5287,7 +5389,7 @@ Authentication Editor
   padding: 0 0.7rem;
   border: 1px solid var(--notify-log-border);
   border-radius: 0.45rem;
-  color: var(--mobile-beta-accent);
+  color: var(--mobile-app-accent);
   background: var(--dialog-surface-raised);
   line-height: 2.25rem;
 }

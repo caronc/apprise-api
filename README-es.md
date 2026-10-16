@@ -15,12 +15,21 @@ Apprise API fue diseñado para adaptarse fácilmente a los ecosistemas existente
 [![CodeCov Status](https://codecov.io/github/caronc/apprise-api/branch/master/graph/badge.svg)](https://codecov.io/github/caronc/apprise-api)
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
+## Apprise Mobile
+
+Apprise Mobile es la aplicación complementaria para Android, iPhone y iPad. Envía notificaciones y archivos adjuntos, administra las URL de los servicios y consulta los informes de entrega. Necesita acceso a tu propio servidor Apprise API; no es un servicio de notificaciones independiente.
+
+<a href="https://apps.apple.com/app/id6821633589"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/app-store-es.svg" alt="Descargar en el App Store"></a> <a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/google-play-es.svg" alt="Disponible en Google Play"></a>
+
+Consulta la [documentación de Apprise Mobile](https://appriseit.com/mobile/) y la [guía de configuración](https://appriseit.com/mobile/getting-started/) para conectar tu servidor. La aplicación requiere Android 8.0 o posterior, o iOS 17.2 o posterior en iPhone y iPad.
+
+
 ## Capturas de pantalla
 
 Hay un pequeño incorporado *Administrador de configuración* a los que se puede acceder opcionalmente a través de su navegador web, lo que le permite crear y guardar tantas configuraciones como desee. Cada configuración se diferencia por una `{KEY}` que usted decida:<br/>
 ![Screenshot of GUI - Using Keys](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
 
-A continuación se muestra una captura de pantalla de cómo puede asignar sus URL de Apprise a su `{KEY}`. Puede definir text o YAML [Configuraciones de Apprise](https://appriseit.com/config/).<br/>
+A continuación se muestra una captura de pantalla de cómo puede asignar sus URL de Apprise a su `{KEY}`. Puede definir text o YAML [Configuraciones de Apprise](https://appriseit.com/getting-started/configuration/).<br/>
 ![Screenshot of GUI - Configuration](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-2.png)
 
 Una vez que haya guardado su configuración, podrá usar el *Notificación* para enviar sus mensajes a uno o más de los servicios que definió en su configuración. Puedes usar la etiqueta `all` para notificar a todos sus servicios, independientemente de la etiqueta que se les haya asignado de otra manera.
@@ -130,7 +139,7 @@ Puede guardar previamente toda la configuración de Apprise y/o el conjunto de U
 |------------- | ------ | ----------- |
 | `/add/{KEY}` |  PUBLICAR | Guarda la configuración de Apprise (o el conjunto de direcciones URL) en el almacén persistente.<br/>*Parámetros de carga útil*<br/>📌 **direcciones URL**: Defina una o más URL de Apprise aquí. Utilice una coma y/o espacio para separar una URL de la siguiente.<br/>📌 **configuración**: Proporcione el contenido de una configuración de Apprise basada en YAML o TEXT.<br/>📌 **formato**: Este campo solo es obligatorio si ha especificado el *configuración* parámetro. Se utiliza para indicar al servidor cuál de los tipos de configuración admitidos (Apprise) está pasando. Las opciones válidas son *Mensaje de texto* y *yaml*.
 | `/del/{KEY}` |  PUBLICAR | Quita la configuración de Apprise del almacén persistente.
-| `/get/{KEY}` |  PUBLICAR | Devuelve la configuración de Apprise del almacén persistente.  Esto se puede utilizar directamente con el *Apprise CLI* y/o el *AppriseConfig()* objeto ([ver aquí para más detalles](https://appriseit.com/config/)).
+| `/get/{KEY}` |  PUBLICAR | Devuelve la configuración de Apprise del almacén persistente.  Esto se puede utilizar directamente con el *Apprise CLI* y/o el *AppriseConfig()* objeto ([ver aquí para más detalles](https://appriseit.com/getting-started/configuration/)).
 | `/notify/{KEY}` |  PUBLICAR | Envía notificaciones a todos los puntos finales que haya configurado previamente asociados a un *{CLAVE}*.<br/>*Parámetros de carga útil*<br/>📌 **cuerpo**: El cuerpo de su mensaje. Este es el *solamente* campo obligatorio.<br/>📌 **título**: Opcionalmente, defina un título para que vaya junto con el *cuerpo*.<br/>📌 **tipo**: define el tipo de mensaje que desea enviar.  Las opciones válidas son `info`, `success`, `warning`y `failure`. Si no *tipo* se especifica a continuación `info` es el valor predeterminado utilizado.<br/>📌 **etiqueta**: Opcionalmente notifique solo a los etiquetados en consecuencia.<br/>📌 **formato**: Opcionalmente, identifique el formato de texto de los datos que está alimentando Apprise. Las opciones válidas son `text`, `markdown`, `html`. Si no se especifica nada, no se aplica ningún formato y el contenido se transmite sin modificar.
 | `/json/urls/{KEY}` |  HAZTE | Devuelve un objeto de respuesta JSON que contiene todas las direcciones URL y etiquetas asociadas a la clave especificada.
 
