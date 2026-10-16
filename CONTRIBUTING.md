@@ -216,6 +216,16 @@ before other languages show up. This is done for you:
 
 Only missing or outdated catalogs are compiled, so starts stay fast.
 
+## API Version
+
+The API release version is defined once in `apprise_api/core/version.py`.
+Update `__version__` there when preparing a release. Python package metadata,
+the web UI, webhook user agents, and the TerraMaster package builder all use
+that value. Keep the module free of imports: Docker and native source installs
+copy or rename `apprise_api/` to `webapp/` without installing the API package.
+The Apprise library version in `requirements.txt` and the project dependencies
+is separate and should be updated independently as needed.
+
 ## Pull Request Guidance
 
 - Prefer small, well-scoped pull requests.

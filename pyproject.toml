@@ -27,7 +27,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apprise-api"
-version = "2.0.1"
+dynamic = ["version"]
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
@@ -68,6 +68,9 @@ dev = [
 
 [tool.setuptools]
 license-files = ["LICENSE"]
+
+[tool.setuptools.dynamic]
+version = {attr = "apprise_api.core.version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
