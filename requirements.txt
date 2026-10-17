@@ -32,6 +32,10 @@ PGPy
 smpplib
 # For xmpp:// support
 slixmpp >= 1.16.0
+# Provides amqp:// support for AMQP 0.9.1
+pika
+# AMQP 1.0 (python-qpid-proton) must be compiled on Linux, so only the
+# Docker image installs it. Add it with: pip install python-qpid-proton
 
 # prometheus metrics
 django-prometheus
