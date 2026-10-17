@@ -32,6 +32,12 @@ PGPy
 smpplib
 # For xmpp:// support
 slixmpp >= 1.16.0
+# Provides amqp:// support for AMQP 0.9.1
+pika
+# Provides amqp:// support for AMQP 1.0. It has no Linux wheel, so the
+# Dockerfile compiles it; it is left out of pyproject.toml so local and
+# CI test runs do not need a compiler.
+python-qpid-proton
 
 # prometheus metrics
 django-prometheus
