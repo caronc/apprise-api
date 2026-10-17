@@ -44,6 +44,8 @@ dependencies = [
   "PGPy",
   "smpplib",
   "slixmpp >= 1.16.0",
+  # Provides amqp:// support for AMQP 0.9.1
+  "pika",
 ]
 
 [project.urls]
