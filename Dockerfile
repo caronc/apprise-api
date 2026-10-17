@@ -14,12 +14,28 @@ ENV APPRISE_ATTACH_DIR=/attach
 ENV APPRISE_PLUGIN_PATHS=/plugin
 ENV TZ=Etc/UTC
 
+FROM base AS builder
+
+COPY ./requirements.txt /etc/requirements.txt
+
+RUN set -eux && \
+    echo "Installing build tools" && \
+        apt-get update -qq && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            build-essential pkg-config libssl-dev git && \
+    echo "Building python wheels" && \
+        pip3 wheel --no-cache-dir -q --wheel-dir /wheels \
+            -r /etc/requirements.txt gunicorn supervisor
+
 FROM base AS runtime
 
 # Install requirements and gunicorn
 COPY ./requirements.txt /etc/requirements.txt
 
-RUN set -eux && \
+# The wheels from the builder are only mounted while installing, so they
+# do not take up space in the final image
+RUN --mount=type=bind,from=builder,source=/wheels,target=/wheels \
+    set -eux && \
     echo "Installing nginx" && \
         apt-get update -qq && \
         DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
@@ -29,7 +45,8 @@ RUN set -eux && \
         apt-get install -y -qq \
             curl sed git && \
     echo "Installing python requirements" && \
-        pip3 install --no-cache-dir -q -r /etc/requirements.txt gunicorn supervisor && \
+        pip3 install --no-cache-dir -q --no-index --find-links /wheels \
+            -r /etc/requirements.txt gunicorn supervisor && \
         pip freeze && \
     echo "Cleaning up" && \
         apt-get --yes autoremove --purge && \
