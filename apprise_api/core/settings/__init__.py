@@ -30,10 +30,13 @@ import stat
 import tempfile
 
 import apprise
-from core.settings.env import env_bool, env_choice, env_int, env_optional_bool
+from core.settings.env import env_asset, env_bool, env_choice, env_int, env_optional_bool
 from core.themes import SiteTheme
 from core.utils import parse_log_level
 from django.core.exceptions import ImproperlyConfigured
+
+# Global notification defaults; request-specific API settings keep precedence.
+APPRISE_ASSET = env_asset()
 
 # Register apprise's custom log levels before Django's dictConfig() runs.
 if not hasattr(logging, "TRACE"):
