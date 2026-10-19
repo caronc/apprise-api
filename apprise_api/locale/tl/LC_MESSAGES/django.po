@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-12 22:53+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: tl\n"
@@ -123,11 +123,15 @@ msgstr "Kumpirmahin ang Bagong Password"
 
 #: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
 msgid "The username cannot be changed by a configuration user"
-msgstr "Ang pangalan ng gumagamit ay hindi maaaring baguhin ng isang configuration user"
+msgstr ""
+"Ang pangalan ng gumagamit ay hindi maaaring baguhin ng isang configuration "
+"user"
 
 #: apprise_api/api/forms.py:234
 msgid "Only an administrator may change configuration access"
-msgstr "Tanging ang isang administrator lamang ang maaaring magbago ng access sa configuration"
+msgstr ""
+"Tanging ang isang administrator lamang ang maaaring magbago ng access sa "
+"configuration"
 
 #: apprise_api/api/forms.py:237
 msgid "A new password is required"
@@ -178,7 +182,8 @@ msgstr "Bagong Configuration ID"
 
 #: apprise_api/api/forms.py:342
 msgid "The configuration ID cannot be changed by a restricted user"
-msgstr "Ang configuration ID ay hindi maaaring baguhin ng isang restricted user"
+msgstr ""
+"Ang configuration ID ay hindi maaaring baguhin ng isang restricted user"
 
 #: apprise_api/api/forms.py:344
 msgid "The destination configuration ID must differ from the source"
@@ -310,7 +315,8 @@ msgstr "Pag-access at Pamamahala ng Konfigurasyon"
 
 #: apprise_api/api/templates/auth.html:29
 msgid "Manage this configuration's login, permissions, and tools."
-msgstr "Pamahalaan ang login, mga pahintulot, at mga tool ng konfigurasyong ito."
+msgstr ""
+"Pamahalaan ang login, mga pahintulot, at mga tool ng konfigurasyong ito."
 
 #: apprise_api/api/templates/auth.html:39
 msgid "Administrator"
@@ -339,8 +345,13 @@ msgstr "Ipaliwanag ang Mga Mode ng Pag-access ng Konfigurasyon"
 
 #: apprise_api/api/templates/auth.html:100
 #, python-format
-msgid "Saved %(saved)s access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed."
-msgstr "Ang naka-save na %(saved)s access ay kasalukuyang ipinatupad bilang naka-lock dahil sa global configuration lock. Babalik ito kung aalisin ang global lock."
+msgid ""
+"Saved %(saved)s access is currently enforced as locked by the global "
+"configuration lock. It will return if the global lock is removed."
+msgstr ""
+"Ang naka-save na %(saved)s access ay kasalukuyang ipinatupad bilang naka-"
+"lock dahil sa global configuration lock. Babalik ito kung aalisin ang global"
+" lock."
 
 #: apprise_api/api/templates/auth.html:132
 #: apprise_api/api/templates/config.html:2953
@@ -410,7 +421,9 @@ msgstr "Para sa admin lamang: walang configuration login na naka-assign."
 #: apprise_api/api/templates/auth.html:276
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "Public: tagged notifications do not require a login."
-msgstr "Pampubliko: ang mga naka-tag na notification ay hindi nangangailangan ng login."
+msgstr ""
+"Pampubliko: ang mga naka-tag na notification ay hindi nangangailangan ng "
+"login."
 
 #: apprise_api/api/templates/auth.html:280
 #: apprise_api/api/templates/components/config_auth_status.html:7
@@ -425,7 +438,9 @@ msgstr "User: ang configuration ay may sariling login."
 #: apprise_api/api/templates/auth.html:288
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "Disabled: only an administrator may use this configuration."
-msgstr "Disabled: tanging isang administrator lamang ang maaaring gumamit ng configuration na ito."
+msgstr ""
+"Disabled: tanging isang administrator lamang ang maaaring gumamit ng "
+"configuration na ito."
 
 #: apprise_api/api/templates/auth.html:291
 #: apprise_api/api/templates/components/config_auth_status.html:8
@@ -455,23 +470,41 @@ msgid "Description"
 msgstr "Paglalarawan"
 
 #: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "Gumagamit ng sariling login para sa karaniwang stateful at stateless na mga notification at pag-access sa configuration."
+msgid ""
+"Uses its own login for normal stateful and stateless notifications and "
+"configuration access."
+msgstr ""
+"Gumagamit ng sariling login para sa karaniwang stateful at stateless na mga "
+"notification at pag-access sa configuration."
 
 #: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "Gumagamit ng sariling login para sa mga tagged stateful na notification at pagbabago ng password. Nanatiling nakatago ang nilalaman ng configuration."
+msgid ""
+"Uses its own login for tagged stateful notifications and password changes. "
+"Configuration content stays hidden."
+msgstr ""
+"Gumagamit ng sariling login para sa mga tagged stateful na notification at "
+"pagbabago ng password. Nanatiling nakatago ang nilalaman ng configuration."
 
 #: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "Pinapayagan ang mga tagged stateful na notification nang walang login. Nanatiling protektado ang nilalaman ng configuration at mga stateless na notification."
+msgid ""
+"Allows tagged stateful notifications without a login. Configuration content "
+"and stateless notifications stay protected."
+msgstr ""
+"Pinapayagan ang mga tagged stateful na notification nang walang login. "
+"Nanatiling protektado ang nilalaman ng configuration at mga stateless na "
+"notification."
 
 #: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "Pinipigilan ang access ng configuration-user nang hindi binubura ang configuration o login. Tanging isang administrador lamang ang maaaring gumamit nito."
+msgid ""
+"Freezes configuration-user access without deleting the configuration or "
+"login. Only an administrator may use it."
+msgstr ""
+"Pinipigilan ang access ng configuration-user nang hindi binubura ang "
+"configuration o login. Tanging isang administrador lamang ang maaaring "
+"gumamit nito."
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "Isara"
 
@@ -510,8 +543,12 @@ msgid "Scan with Apprise Mobile"
 msgstr "I-scan gamit ang Apprise Mobile"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
-msgstr "Naglalaman ang QR code na ito ng bagong password. I-save o ibahagi ito nang ligtas ngayon; hindi na muling maipapakita ang password."
+msgid ""
+"This QR code contains the new password. Save it or share it securely now; "
+"the password cannot be shown again."
+msgstr ""
+"Naglalaman ang QR code na ito ng bagong password. I-save o ibahagi ito nang "
+"ligtas ngayon; hindi na muling maipapakita ang password."
 
 #: apprise_api/api/templates/auth.html:521
 #: apprise_api/api/templates/base.html:1051
@@ -537,16 +574,24 @@ msgstr "Apprise Mobile URL kinopya sa clipboard"
 
 #: apprise_api/api/templates/auth.html:525
 #: apprise_api/api/templates/base.html:1055
-msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
-msgstr "Ang URL na ito ay masyadong mahaba para i-encode bilang QR code. Gamitin ang pindutang kopya sa itaas sa halip."
+msgid ""
+"This URL is too long to encode as a QR code. Use the copy button above "
+"instead."
+msgstr ""
+"Ang URL na ito ay masyadong mahaba para i-encode bilang QR code. Gamitin ang"
+" pindutang kopya sa itaas sa halip."
 
 #: apprise_api/api/templates/auth.html:546
 msgid "Reset Access or Configuration?"
 msgstr "I-reset ba ang Access o Configuration?"
 
 #: apprise_api/api/templates/auth.html:549
-msgid "This will reset only the user access currently associated with this configuration:"
-msgstr "Ito ay magre-reset lamang sa user access na kasalukuyang naka-ugnay sa configuration na ito:"
+msgid ""
+"This will reset only the user access currently associated with this "
+"configuration:"
+msgstr ""
+"Ito ay magre-reset lamang sa user access na kasalukuyang naka-ugnay sa "
+"configuration na ito:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -558,7 +603,9 @@ msgstr "I-reset din ang Configuration"
 
 #: apprise_api/api/templates/auth.html:575
 msgid "Also permanently remove its saved notification configuration."
-msgstr "Alisin din nang permanente ang naka-save na configuration ng notification nito."
+msgstr ""
+"Alisin din nang permanente ang naka-save na configuration ng notification "
+"nito."
 
 #: apprise_api/api/templates/auth.html:582
 #: apprise_api/api/templates/auth.html:597
@@ -600,7 +647,9 @@ msgstr "Tinanggal ang user access at naka-save na configuration."
 
 #: apprise_api/api/templates/auth.html:651
 msgid "The user access was removed. The saved configuration was kept."
-msgstr "Ang access ng user ay tinanggal. Ang naka-save na configuration ay pinanatili."
+msgstr ""
+"Ang access ng user ay tinanggal. Ang naka-save na configuration ay "
+"pinanatili."
 
 #: apprise_api/api/templates/auth.html:703
 #: apprise_api/api/templates/config_list.html:214
@@ -645,15 +694,20 @@ msgstr "Hindi Kinakailangan ang Authentication"
 
 #: apprise_api/api/templates/auth_disabled.html:16
 msgid "No authentication is required for this hosted version of Apprise."
-msgstr "Walang authentication na kinakailangan para sa hosted na bersyon ng Apprise."
+msgstr ""
+"Walang authentication na kinakailangan para sa hosted na bersyon ng Apprise."
 
 #: apprise_api/api/templates/base.html:55
 msgid "Administrator Credentials"
 msgstr "Kredensyal ng Administrator"
 
 #: apprise_api/api/templates/base.html:56
-msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
-msgstr "Walang nakatalagang user para sa configuration na ito. Dahil dito, gagamitin ng QR code ang administrator account."
+msgid ""
+"This configuration has no assigned user. As a result, the QR code will use "
+"the administrator account."
+msgstr ""
+"Walang nakatalagang user para sa configuration na ito. Dahil dito, gagamitin"
+" ng QR code ang administrator account."
 
 #: apprise_api/api/templates/base.html:80
 msgid "APPRISE LIBRARY"
@@ -708,8 +762,12 @@ msgid "Logout"
 msgstr "Mag-logout"
 
 #: apprise_api/api/templates/base.html:226
-msgid "If Apprise has been useful to you, please consider supporting its development."
-msgstr "Kung Apprise ay naging kapaki-pakinabang sa iyo, mangyaring isaalang-alang ang pagsuporta sa pagpapaunlad nito."
+msgid ""
+"If Apprise has been useful to you, please consider supporting its "
+"development."
+msgstr ""
+"Kung Apprise ay naging kapaki-pakinabang sa iyo, mangyaring isaalang-alang "
+"ang pagsuporta sa pagpapaunlad nito."
 
 #: apprise_api/api/templates/base.html:230
 msgid "GitHub Sponsors"
@@ -781,7 +839,7 @@ msgid "Apprise URL Builder"
 msgstr "Apprise URL Tagabuo"
 
 #: apprise_api/api/templates/base.html:353
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Kunin Apprise Mobile"
@@ -811,8 +869,14 @@ msgid "Notification Delivery Disabled"
 msgstr "Na-disable ang Paghahatid ng Notification"
 
 #: apprise_api/api/templates/base.html:396
-msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
-msgstr "Parehong ang stateless na notifications at persistent storage ay na-disable. Dapat paganahin ng isang administrator ang kahit na isang mode bago makapaghatid ng mga notification ang server na ito."
+msgid ""
+"Both stateless notifications and persistent storage are disabled. An "
+"administrator must enable at least one mode before this server can deliver "
+"notifications."
+msgstr ""
+"Parehong ang stateless na notifications at persistent storage ay na-disable."
+" Dapat paganahin ng isang administrator ang kahit na isang mode bago "
+"makapaghatid ng mga notification ang server na ito."
 
 #: apprise_api/api/templates/base.html:404
 msgid "Configuration Write Failure"
@@ -820,7 +884,9 @@ msgstr "Pagkabigo sa Pagsulat ng Configuration"
 
 #: apprise_api/api/templates/base.html:406
 msgid "Apprise can not write new configuration information to the directory:"
-msgstr "Apprise hindi makapagsulat ng bagong impormasyon sa configuration sa direktoryo:"
+msgstr ""
+"Apprise hindi makapagsulat ng bagong impormasyon sa configuration sa "
+"direktoryo:"
 
 #: apprise_api/api/templates/base.html:408
 #: apprise_api/api/templates/base.html:432
@@ -829,8 +895,13 @@ msgstr "Path na kinopya sa clipboard"
 
 #: apprise_api/api/templates/base.html:413
 #: apprise_api/api/templates/base.html:437
-msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
-msgstr "<em>Tandaan:</em> Kung ito ang inaasahang pag-uugali, i-pre-set ang environment variable na ipinapakita sa ibaba at i-reload ang iyong Apprise instance."
+msgid ""
+"<em>Note:</em> If this is the expected behavior, pre-set the environment "
+"variable shown below and reload your Apprise instance."
+msgstr ""
+"<em>Tandaan:</em> Kung ito ang inaasahang pag-uugali, i-pre-set ang "
+"environment variable na ipinapakita sa ibaba at i-reload ang iyong Apprise "
+"instance."
 
 #: apprise_api/api/templates/base.html:416
 #: apprise_api/api/templates/base.html:440
@@ -842,20 +913,41 @@ msgid "Attachment Temporary Storage Write Failure"
 msgstr "Pagkabigo sa Pagsulat ng Pansamantalang Imbakan ng Attachment"
 
 #: apprise_api/api/templates/base.html:429
-msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
-msgstr "Apprise hindi makapagpalaganap ng mga attachment (kung ibinigay) dahil sa kawalan ng write access sa direktoryo:"
+msgid ""
+"Apprise can not circulate attachments (if provided) due to not having write "
+"access to the directory:"
+msgstr ""
+"Apprise hindi makapagpalaganap ng mga attachment (kung ibinigay) dahil sa "
+"kawalan ng write access sa direktoryo:"
 
 #: apprise_api/api/templates/base.html:447
 msgid "More Details"
 msgstr "Karagdagang Detalye"
 
 #: apprise_api/api/templates/base.html:450
-msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
-msgstr "Sa karamihan ng mga pagkakataon, ang isyu o mga isyung natukoy dito ay karaniwang kaugnay sa mga problema sa permiso. Siguraduhing itakda ang tamang <code>PUID</code> at <code>GUID</code> upang ipakita ang mga permiso na nais mong gamitin ng Apprise kapag nagbabasa at nagsusulat ng mga file nito. Bilang karagdagan, maaaring kailanganin mo ring tiyakin na tama ang pagkakaset ng mga permiso sa mga direktoryo na iyong iniuugnay sa kanila."
+msgid ""
+"Under most circumstances, the issue(s) identified here are usually related "
+"to permission issues. Make sure you set the correct <code>PUID</code> and "
+"<code>GUID</code> to reflect the permissions you wish Apprise to utilize "
+"when it is reading and writing its files. In addition to this, you may need "
+"to make sure the permissions are set correctly on the directories you mapped"
+" them too."
+msgstr ""
+"Sa karamihan ng mga pagkakataon, ang isyu o mga isyung natukoy dito ay "
+"karaniwang kaugnay sa mga problema sa permiso. Siguraduhing itakda ang "
+"tamang <code>PUID</code> at <code>GUID</code> upang ipakita ang mga permiso "
+"na nais mong gamitin ng Apprise kapag nagbabasa at nagsusulat ng mga file "
+"nito. Bilang karagdagan, maaaring kailanganin mo ring tiyakin na tama ang "
+"pagkakaset ng mga permiso sa mga direktoryo na iyong iniuugnay sa kanila."
 
 #: apprise_api/api/templates/base.html:453
-msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
-msgstr "Ang isyu o mga isyung natukoy dito ay maaari ring maiugnay sa SELinux. Maaaring gusto mong alisin sa posibilidad ang SELinux sa pamamagitan ng pansamantalang pag-disable nito gamit ang:"
+msgid ""
+"The issue(s) identified here can also be associated with SELinux. You may "
+"wish to rule out SELinux by temporarily disabling it with:"
+msgstr ""
+"Ang isyu o mga isyung natukoy dito ay maaari ring maiugnay sa SELinux. "
+"Maaaring gusto mong alisin sa posibilidad ang SELinux sa pamamagitan ng "
+"pansamantalang pag-disable nito gamit ang:"
 
 #: apprise_api/api/templates/base.html:456
 #: apprise_api/api/templates/base.html:462
@@ -931,8 +1023,12 @@ msgid "Open Configuration"
 msgstr "Buksan ang Configuration"
 
 #: apprise_api/api/templates/base.html:1113
-msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
-msgstr "Binubuksan nito ang ibang Config ID. Anumang hindi pa nasasave na pagbabago sa pahinang ito ay mawawala."
+msgid ""
+"This opens a different Config ID. Any unsaved changes on this page will be "
+"lost."
+msgstr ""
+"Binubuksan nito ang ibang Config ID. Anumang hindi pa nasasave na pagbabago "
+"sa pahinang ito ay mawawala."
 
 #: apprise_api/api/templates/base.html:1116
 msgid "Continue"
@@ -944,12 +1040,20 @@ msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Hindi maabot ang Apprise API status endpoint."
 
 #: apprise_api/api/templates/base.html:1349
-msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
-msgstr "Ang paghahatid ng abiso ay naka-disable. Paganahin ang stateless notifications o persistent storage upang ipagpatuloy ang serbisyo."
+msgid ""
+"Notification delivery is disabled. Enable stateless notifications or "
+"persistent storage to resume service."
+msgstr ""
+"Ang paghahatid ng abiso ay naka-disable. Paganahin ang stateless "
+"notifications o persistent storage upang ipagpatuloy ang serbisyo."
 
 #: apprise_api/api/templates/base.html:1408
-msgid "Choose a new Config ID. You can edit it or generate another before continuing."
-msgstr "Pumili ng bagong Config ID. Maaari mo itong i-edit o gumawa ng bago bago magpatuloy."
+msgid ""
+"Choose a new Config ID. You can edit it or generate another before "
+"continuing."
+msgstr ""
+"Pumili ng bagong Config ID. Maaari mo itong i-edit o gumawa ng bago bago "
+"magpatuloy."
 
 #: apprise_api/api/templates/base.html:1420
 msgid "New Config ID"
@@ -985,8 +1089,11 @@ msgid "Changed Config ID Not Applied"
 msgstr "Binagong Config ID ay Hindi Naipapatupad"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:13
-msgid "The entered value is not the configuration currently being managed. Apply"
-msgstr "Ang ipinasok na halaga ay hindi ang konfigurasyong kasalukuyang pinamamahalaan. Ipatupad"
+msgid ""
+"The entered value is not the configuration currently being managed. Apply"
+msgstr ""
+"Ang ipinasok na halaga ay hindi ang konfigurasyong kasalukuyang "
+"pinamamahalaan. Ipatupad"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:18
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:19
@@ -1028,69 +1135,77 @@ msgstr ""
 "\n"
 "Lisensyado sa ilalim ng Lisensya ng %(license)s."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "Android App"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "Android / iOS App"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "Apprise Mobile ay nagkokonekta ng iyong Android device sa server na ito. Magpadala ng mensahe, litrato na kakakuha mo lang, o anumang file sa isang destinasyon, grupo, o lahat ng iyong na-configure."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid ""
+"Apprise Mobile connects your Android or iOS device to this server. Send a "
+"message, a photo you just took, or any file to one destination, a group, or "
+"everything you have configured."
+msgstr ""
+"Apprise Mobile ay nagkokonekta ng iyong Android / iOS device sa server na "
+"ito. Magpadala ng mensahe, litrato na kakakuha mo lang, o anumang file sa "
+"isang destinasyon, grupo, o lahat ng iyong na-configure."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "Magpadala ng mga notipikasyon at attachments mula sa iyong telepono."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
-msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
-msgstr "I-scan ang Apprise Mobile Quick Setup QR code upang idagdag ang server na ito at i-load ang isang configuration."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
+msgid ""
+"Scan the Apprise Mobile Quick Setup QR code to add this server and load a "
+"configuration."
+msgstr ""
+"I-scan ang Apprise Mobile Quick Setup QR code upang idagdag ang server na "
+"ito at i-load ang isang configuration."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
-msgstr "Suriin ang iyong mga remote configurations at sundan ang bawat delivery report."
+msgstr ""
+"Suriin ang iyong mga remote configurations at sundan ang bawat delivery "
+"report."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "Kunin ito sa Google Play"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "Matuto Pa"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "I-preview ang App"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile dashboard"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "Apprise Mobile URL Tagapagtayo"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "URL Tagapagtayo"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile ulat sa paghahatid"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "Ulat ng Pagpapadala"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "Google Play at ang logo ng Google Play ay mga trademark ng Google LLC."
-
 #: apprise_api/api/templates/components/qr_password_note.html:4
-msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
-msgstr "Hindi kasama ang mga na-save na password. Hihingin ito ng Apprise Mobile kapag kinakailangan."
+msgid ""
+"Saved passwords are not included. Apprise Mobile will ask for one when "
+"required."
+msgstr ""
+"Hindi kasama ang mga na-save na password. Hihingin ito ng Apprise Mobile "
+"kapag kinakailangan."
 
 #: apprise_api/api/templates/components/qr_password_note.html:7
 msgid "Why?"
@@ -1143,8 +1258,11 @@ msgid "Apprise configuration ID copied to clipboard"
 msgstr "Apprise configuration ID na nakopya sa clipboard"
 
 #: apprise_api/api/templates/config.html:109
-msgid "For some examples on how to build a development environment around this:"
-msgstr "Para sa ilang halimbawa kung paano bumuo ng isang development environment sa paligid nito:"
+msgid ""
+"For some examples on how to build a development environment around this:"
+msgstr ""
+"Para sa ilang halimbawa kung paano bumuo ng isang development environment sa"
+" paligid nito:"
 
 #: apprise_api/api/templates/config.html:109
 msgid "click here"
@@ -1221,8 +1339,12 @@ msgstr "Apprise Mobile Mabilis na Setup"
 
 #: apprise_api/api/templates/config.html:162
 #, python-format
-msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
-msgstr "Ipakita at i-scan ang code na ito upang madaling ma-load ang pagsasaayos na ito sa iyong %(mobile_app_link)s."
+msgid ""
+"Reveal and scan this code to easily load this configuration into your "
+"%(mobile_app_link)s."
+msgstr ""
+"Ipakita at i-scan ang code na ito upang madaling ma-load ang pagsasaayos na "
+"ito sa iyong %(mobile_app_link)s."
 
 #: apprise_api/api/templates/config.html:171
 #: apprise_api/api/templates/config.html:172
@@ -1241,8 +1363,9 @@ msgstr "Hindi ma-load ang QR code."
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "Kailangan mo ba ng app? Kunin ang %(mobile_app_link)s para sa Android."
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr ""
+"Kailangan mo ba ng app? Kunin ang %(mobile_app_link)s para sa Android / iOS."
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1255,7 +1378,12 @@ msgid ""
 "\n"
 "          New configuration can not be set, and existing configuration can not be modified or viewed.\n"
 "          "
-msgstr "Sa ngayon, ang administrador ng server na ito ay naka-lockdown sa lahat ng konfigurasyon. Ito ay nangangahulugang ang pre-likha na konfigurasyon ay ligtas na nakatago para sa layunin ng pagpapadala ng abiso lamang. Hindi maaaring itakda ang bagong konfigurasyon, at ang umiiral na konfigurasyon ay hindi maaaring baguhin o tingnan."
+msgstr ""
+"Sa ngayon, ang administrador ng server na ito ay naka-lockdown sa lahat ng "
+"konfigurasyon. Ito ay nangangahulugang ang pre-likha na konfigurasyon ay "
+"ligtas na nakatago para sa layunin ng pagpapadala ng abiso lamang. Hindi "
+"maaaring itakda ang bagong konfigurasyon, at ang umiiral na konfigurasyon ay"
+" hindi maaaring baguhin o tingnan."
 
 #: apprise_api/api/templates/config.html:226
 msgid "Working Remotely With Your Configuration"
@@ -1266,8 +1394,12 @@ msgid "Using The Apprise CLI"
 msgstr "Paggamit ng Apprise CLI"
 
 #: apprise_api/api/templates/config.html:230
-msgid "The following command would cause apprise to directly notify all of your services:"
-msgstr "Ang sumusunod na utos ay magdudulot sa apprise na direktang ipaalam sa lahat ng iyong serbisyo:"
+msgid ""
+"The following command would cause apprise to directly notify all of your "
+"services:"
+msgstr ""
+"Ang sumusunod na utos ay magdudulot sa apprise na direktang ipaalam sa lahat"
+" ng iyong serbisyo:"
 
 #: apprise_api/api/templates/config.html:237
 msgid "Send one or more attachments like this:"
@@ -1277,39 +1409,74 @@ msgstr "Magpadala ng isa o higit pang mga attachment tulad nito:"
 msgid ""
 "The following command would cause apprise to retrieve the configuration loaded and\n"
 "          send a test notification to all of your added services:"
-msgstr "Ang sumusunod na utos ay magdudulot sa apprise na kunin ang na-load na konfigurasyon at magpadala ng isang test na abiso sa lahat ng iyong idinagdag na serbisyo:"
+msgstr ""
+"Ang sumusunod na utos ay magdudulot sa apprise na kunin ang na-load na "
+"konfigurasyon at magpadala ng isang test na abiso sa lahat ng iyong "
+"idinagdag na serbisyo:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "Maaari ka ring lumikha ng <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise file ng configuration</a> na naglalaman ng linyang ito sa kahit saang bahagi nito:"
+msgid ""
+"You may also create an <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a>"
+" that contains this line somewhere in it:"
+msgstr ""
+"Maaari ka ring lumikha ng <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Apprise file ng "
+"configuration</a> na naglalaman ng linyang ito sa kahit saang bahagi nito:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "Apprise configuration 'include' entry na kinopya sa clipboard"
 
 #: apprise_api/api/templates/config.html:262
-msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
-msgstr "Sa pamamagitan ng paggamit ng <em>include</em> na direktiba, awtomatiko itong maiuugnay para sa mga susunod na pagtawag sa <code>apprise</code> tool. Ang lahat ng susunod na pagtawag gamit ang Apprise ay ngayon nagiging mas simple sa:"
+msgid ""
+"By leveraging the <em>include</em> directive, it will automatically be "
+"referenced for future calls to the <code>apprise</code> tool. All future "
+"calls using Apprise now simplify to:"
+msgstr ""
+"Sa pamamagitan ng paggamit ng <em>include</em> na direktiba, awtomatiko "
+"itong maiuugnay para sa mga susunod na pagtawag sa <code>apprise</code> "
+"tool. Ang lahat ng susunod na pagtawag gamit ang Apprise ay ngayon nagiging "
+"mas simple sa:"
 
 #: apprise_api/api/templates/config.html:268
 msgid "Using CURL"
 msgstr "Paggamit ng CURL"
 
 #: apprise_api/api/templates/config.html:270
-msgid "The following command would cause the Apprise API to notify all of your services:"
-msgstr "Ang sumusunod na utos ay magdudulot na ang Apprise API ay magbigay-abiso sa lahat ng iyong serbisyo:"
+msgid ""
+"The following command would cause the Apprise API to notify all of your "
+"services:"
+msgstr ""
+"Ang sumusunod na utos ay magdudulot na ang Apprise API ay magbigay-abiso sa "
+"lahat ng iyong serbisyo:"
 
 #: apprise_api/api/templates/config.html:280
-msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
-msgstr "Kapag nagpapadala ng mga kalakip, kinakailangan ng <code>curl</code> na lahat ng lokal na file ay inuuna ng <code>@</code>. Maaari kang magdagdag ng kalakip tulad nito:"
+msgid ""
+"When sending attachments, <code>curl</code> requires all local files be "
+"prefixed with <code>@</code>. You can an add attachment like this:"
+msgstr ""
+"Kapag nagpapadala ng mga kalakip, kinakailangan ng <code>curl</code> na "
+"lahat ng lokal na file ay inuuna ng <code>@</code>. Maaari kang magdagdag ng"
+" kalakip tulad nito:"
 
 #: apprise_api/api/templates/config.html:290
-msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
-msgstr "Kapag nagpapadala ng higit sa isang kalakip, kailangan mong magtalaga ng natatanging ID sa bawat kalakip. Ang halimbawa sa ibaba ay gumagamit ng <code>attach1</code> at <code>attach2</code>:"
+msgid ""
+"When sending more than one attachment, you must uniquely assign each "
+"attachment to a new ID.  The example below leverages <code>attach1</code> "
+"and <code>attach2</code>:"
+msgstr ""
+"Kapag nagpapadala ng higit sa isang kalakip, kailangan mong magtalaga ng "
+"natatanging ID sa bawat kalakip. Ang halimbawa sa ibaba ay gumagamit ng "
+"<code>attach1</code> at <code>attach2</code>:"
 
 #: apprise_api/api/templates/config.html:301
-msgid "Sends a notification to our endpoints with an attachment and no body specified:"
-msgstr "Nagpapadala ng abiso sa aming mga endpoint ng may kalakip at walang tinukoy na katawan:"
+msgid ""
+"Sends a notification to our endpoints with an attachment and no body "
+"specified:"
+msgstr ""
+"Nagpapadala ng abiso sa aming mga endpoint ng may kalakip at walang tinukoy "
+"na katawan:"
 
 #: apprise_api/api/templates/config.html:319
 msgid "Define your configuration below:"
@@ -1343,12 +1510,18 @@ msgstr "Nakalock ang Iyong Configuration"
 #: apprise_api/api/templates/config.html:396
 #: apprise_api/api/templates/config.html:471
 msgid "Access to your configuration has been disabled by your administrator."
-msgstr "Ang pag-access sa iyong configuration ay na-disable ng iyong administrator."
+msgstr ""
+"Ang pag-access sa iyong configuration ay na-disable ng iyong administrator."
 
 #: apprise_api/api/templates/config.html:410
 #, python-format
-msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
-msgstr "Kapag matagumpay mo nang na-load ang <i> kahit isa Apprise URL</i> sa seksyon ng %(config_chip)s, ang iyong na-load na mga entry ay ipapakita dito."
+msgid ""
+"Once you have successfully loaded <i>at least one Apprise URL</i> on the "
+"%(config_chip)s section, your loaded entries will display here."
+msgstr ""
+"Kapag matagumpay mo nang na-load ang <i> kahit isa Apprise URL</i> sa "
+"seksyon ng %(config_chip)s, ang iyong na-load na mga entry ay ipapakita "
+"dito."
 
 #: apprise_api/api/templates/config.html:418
 msgid "Loaded Configuration"
@@ -1360,8 +1533,14 @@ msgid "Show only selected notification services"
 msgstr "Ipakita lamang ang piniling mga serbisyo ng abiso"
 
 #: apprise_api/api/templates/config.html:431
-msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
-msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> abiso(s) ang pinili para ipadala</span>"
+msgid ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> notification(s) selected for "
+"sending</span>"
+msgstr ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> abiso(s) ang pinili para "
+"ipadala</span>"
 
 #: apprise_api/api/templates/config.html:443
 msgid "Unsaved Configuration Changes"
@@ -1369,8 +1548,14 @@ msgstr "Hindi Nasagawang Mga Pagbabago sa Configuration"
 
 #: apprise_api/api/templates/config.html:445
 #, python-format
-msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
-msgstr "Ang mga entry sa ibaba ay na-parse mula sa configuration na huling na-save, kaya maaaring hindi nito ipakita ang iyong mga kamakailang edit. I-save ang mga ito sa seksyong %(config_chip)s upang makita ang resulta dito."
+msgid ""
+"The entries below were parsed from the configuration that was last saved, so"
+" they may not reflect your recent edits. Save them in the %(config_chip)s "
+"section to see the result here."
+msgstr ""
+"Ang mga entry sa ibaba ay na-parse mula sa configuration na huling na-save, "
+"kaya maaaring hindi nito ipakita ang iyong mga kamakailang edit. I-save ang "
+"mga ito sa seksyong %(config_chip)s upang makita ang resulta dito."
 
 #: apprise_api/api/templates/config.html:449
 msgid "Review the parsed destinations below before sending."
@@ -1379,17 +1564,25 @@ msgstr "Suriin ang mga na-parse na destinasyon sa ibaba bago magpadala."
 #: apprise_api/api/templates/config.html:451
 #, python-format
 msgid "Select a tag (🏷️) on any entry to include it in %(notify_chip)s."
-msgstr "Piliin ang isang tag (🏷️) sa anumang entry upang isama ito sa %(notify_chip)s."
+msgstr ""
+"Piliin ang isang tag (🏷️) sa anumang entry upang isama ito sa "
+"%(notify_chip)s."
 
 #: apprise_api/api/templates/config.html:454
 #, python-format
-msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
-msgstr "Gamitin ang %(send_icon)s upang magsagawa ng mabilis na pagsusuri at inspeksyunin ang buong debug output para sa entry na iyon."
+msgid ""
+"Use %(send_icon)s to run a quick test and inspect the full debug output for "
+"that entry."
+msgstr ""
+"Gamitin ang %(send_icon)s upang magsagawa ng mabilis na pagsusuri at "
+"inspeksyunin ang buong debug output para sa entry na iyon."
 
 #: apprise_api/api/templates/config.html:457
 #, python-format
 msgid "Need more destinations? Add or update them in %(config_chip)s."
-msgstr "Kailangan ng karagdagang destinasyon? Idagdag o i-update ang mga ito sa %(config_chip)s."
+msgstr ""
+"Kailangan ng karagdagang destinasyon? Idagdag o i-update ang mga ito sa "
+"%(config_chip)s."
 
 #: apprise_api/api/templates/config.html:482
 msgid "You can send a notification using the loaded configuration:"
@@ -1400,8 +1593,12 @@ msgid "No Notification Targets Selected"
 msgstr "Walang Napiling Notification Targets"
 
 #: apprise_api/api/templates/config.html:495
-msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
-msgstr "Pumili ng hindi bababa sa isang tag. Mananatiling nakatago ang mga na-save na destinasyon habang naka-enable ang configuration locking."
+msgid ""
+"Choose at least one tag. The saved destinations stay hidden while "
+"configuration locking is enabled."
+msgstr ""
+"Pumili ng hindi bababa sa isang tag. Mananatiling nakatago ang mga na-save "
+"na destinasyon habang naka-enable ang configuration locking."
 
 #: apprise_api/api/templates/config.html:497
 #, python-format
@@ -1423,8 +1620,12 @@ msgid "Template Values"
 msgstr "Mga Halaga ng Template"
 
 #: apprise_api/api/templates/config.html:539
-msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
-msgstr "Ang mga hilera na may halaga ay ipinapadala; ang mga walang laman na halaga ay gumagamit ng fallback ng server (kung tinukoy)."
+msgid ""
+"Rows with a value are sent; blank values use the server fallback (if "
+"defined)."
+msgstr ""
+"Ang mga hilera na may halaga ay ipinapadala; ang mga walang laman na halaga "
+"ay gumagamit ng fallback ng server (kung tinukoy)."
 
 #: apprise_api/api/templates/config.html:545
 msgid "Add Value"
@@ -1451,7 +1652,8 @@ msgstr "Mga Endpoint ng Persistent Store"
 #: apprise_api/api/templates/config.html:588
 #: apprise_api/api/templates/welcome.html:767
 msgid "The administrator of this system has disabled persistent storage."
-msgstr "Ang administrador ng sistemang ito ay nag-disable ng persistent storage."
+msgstr ""
+"Ang administrador ng sistemang ito ay nag-disable ng persistent storage."
 
 #: apprise_api/api/templates/config.html:640
 msgid "Hide QR Code"
@@ -1462,8 +1664,11 @@ msgid "Escalation group"
 msgstr "Grupo ng Eskalasyon"
 
 #: apprise_api/api/templates/config.html:677
-msgid "Maximum number of retries attempted if the service fails before giving up"
-msgstr "Pinakamataas na bilang ng mga pagsubok na gagawin kung mabigo ang serbisyo bago sumuko"
+msgid ""
+"Maximum number of retries attempted if the service fails before giving up"
+msgstr ""
+"Pinakamataas na bilang ng mga pagsubok na gagawin kung mabigo ang serbisyo "
+"bago sumuko"
 
 #: apprise_api/api/templates/config.html:688
 msgid "Unknown Plugin"
@@ -1481,7 +1686,8 @@ msgstr "Hindi masimulan ng server ang live notification stream."
 
 #: apprise_api/api/templates/config.html:791
 msgid "This browser cannot display the live notification stream."
-msgstr "Ang browser na ito ay hindi makakapagpakita ng live notification stream."
+msgstr ""
+"Ang browser na ito ay hindi makakapagpakita ng live notification stream."
 
 #: apprise_api/api/templates/config.html:831
 msgid "The live notification stream ended unexpectedly."
@@ -1568,7 +1774,9 @@ msgstr "Abiso"
 
 #: apprise_api/api/templates/config.html:1252
 msgid "This test action requires at least one tag on the target entry."
-msgstr "Ang aksyon na ito sa pagsubok ay nangangailangan ng hindi bababa sa isang tag sa target na entry."
+msgstr ""
+"Ang aksyon na ito sa pagsubok ay nangangailangan ng hindi bababa sa isang "
+"tag sa target na entry."
 
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
@@ -1622,7 +1830,8 @@ msgstr "URL kinopya sa clipboard"
 
 #: apprise_api/api/templates/config.html:2364
 msgid "💣 An error occurred retrieving the list of loaded Apprise URL(s)"
-msgstr "💣 Nagkaroon ng error sa pagkuha ng listahan ng na-load na Apprise URL(s)"
+msgstr ""
+"💣 Nagkaroon ng error sa pagkuha ng listahan ng na-load na Apprise URL(s)"
 
 #: apprise_api/api/templates/config.html:2398
 msgid "Optional Tag(s)"
@@ -1649,8 +1858,11 @@ msgid "Optional Service"
 msgstr "Opsyonal na Serbisyo"
 
 #: apprise_api/api/templates/config.html:2551
-msgid "Optional Service: failures are ignored when determining notification success"
-msgstr "Opsyonal na Serbisyo: hindi pinapansin ang mga pagkabigo kapag tinutukoy ang tagumpay ng abiso"
+msgid ""
+"Optional Service: failures are ignored when determining notification success"
+msgstr ""
+"Opsyonal na Serbisyo: hindi pinapansin ang mga pagkabigo kapag tinutukoy ang"
+" tagumpay ng abiso"
 
 #: apprise_api/api/templates/config.html:2674
 msgid "Send Test Notification"
@@ -1658,7 +1870,8 @@ msgstr "Magpadala ng Test Notification"
 
 #: apprise_api/api/templates/config.html:2688
 msgid "This notification service is disabled in this Apprise API instance."
-msgstr "Ang serbisyong abiso na ito ay naka-disable sa Apprise API na instance."
+msgstr ""
+"Ang serbisyong abiso na ito ay naka-disable sa Apprise API na instance."
 
 #: apprise_api/api/templates/config.html:2754
 msgid "no-tag"
@@ -1673,12 +1886,17 @@ msgid "Successfully saved the configuration."
 msgstr "Matagumpay na naisave ang configuration."
 
 #: apprise_api/api/templates/config.html:2961
-msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
-msgstr "Nagkaroon ng problema sa pagsulat ng configuration sa disk. Suriin ang iyong file permissions at subukang muli."
+msgid ""
+"There was an issue writing the configuration to disk. Check your file "
+"permissions and try again."
+msgstr ""
+"Nagkaroon ng problema sa pagsulat ng configuration sa disk. Suriin ang iyong"
+" file permissions at subukang muli."
 
 #: apprise_api/api/templates/config.html:2968
 msgid "Failed to save the specified URL(s). Check your syntax and try again."
-msgstr "Nabigo sa pag-save ng tinukoy na URL(s). Suriin ang syntax at subukang muli."
+msgstr ""
+"Nabigo sa pag-save ng tinukoy na URL(s). Suriin ang syntax at subukang muli."
 
 #: apprise_api/api/templates/config.html:2986
 #: apprise_api/api/templates/config.html:2993
@@ -1703,12 +1921,19 @@ msgid "Choose at least one tag before sending."
 msgstr "Pumili ng hindi bababa sa isang tag bago magpadala."
 
 #: apprise_api/api/templates/config.html:3274
-msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
-msgstr "Walang napiling target ng notification. Magdagdag ng mga configuration endpoint o pumili ng isa o higit pang nagmamatch na tag bago magpadala."
+msgid ""
+"No notification targets are selected. Add configuration endpoints or choose "
+"one or more matching tags before sending."
+msgstr ""
+"Walang napiling target ng notification. Magdagdag ng mga configuration "
+"endpoint o pumili ng isa o higit pang nagmamatch na tag bago magpadala."
 
 #: apprise_api/api/templates/config.html:3289
-msgid "Please provide at least a message body or one attachment before sending."
-msgstr "Mangyaring magbigay ng hindi bababa sa isang katawan ng mensahe o isang attachment bago magpadala."
+msgid ""
+"Please provide at least a message body or one attachment before sending."
+msgstr ""
+"Mangyaring magbigay ng hindi bababa sa isang katawan ng mensahe o isang "
+"attachment bago magpadala."
 
 #: apprise_api/api/templates/config.html:3338
 msgid "Sending notification(s)…"
@@ -1769,8 +1994,11 @@ msgid "Delete Configuration ID?"
 msgstr "I-delete ang Configuration ID?"
 
 #: apprise_api/api/templates/config_list.html:115
-msgid "This permanently removes this configuration and any login assigned to it."
-msgstr "Permanentlyong aalisin nito ang configuration na ito at ang anumang login na naka-assign dito."
+msgid ""
+"This permanently removes this configuration and any login assigned to it."
+msgstr ""
+"Permanentlyong aalisin nito ang configuration na ito at ang anumang login na"
+" naka-assign dito."
 
 #: apprise_api/api/templates/config_list.html:131
 #: apprise_api/api/templates/config_list.html:142
@@ -1798,21 +2026,29 @@ msgid ""
 "The following services are supported by this\n"
 "            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "Sinusuportahan ng instance na ito ng <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> ang mga sumusunod na serbisyo."
+msgstr ""
+"Sinusuportahan ng instance na ito ng <a target=\"_blank\" "
+"href=\"https://github.com/caronc/apprise\" rel=\"noopener "
+"noreferrer\">Apprise</a> ang mga sumusunod na serbisyo."
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
 "To see a simplified listing that only identifies the Apprise services\n"
 "          enabled click <a href=\"%(href)s\">here</a>."
-msgstr "Upang makita ang pinasimpleng listahan na nag-iidentipika lamang ng mga Apprise pinagana na serbisyo, i-click ang <a href=\"%(href)s\">dito</a>."
+msgstr ""
+"Upang makita ang pinasimpleng listahan na nag-iidentipika lamang ng mga "
+"Apprise pinagana na serbisyo, i-click ang <a href=\"%(href)s\">dito</a>."
 
 #: apprise_api/api/templates/details.html:25
 #, python-format
 msgid ""
 "To see a listing that identifies all of Apprise services available to this\n"
 "          version (enabled or not) click <a href=\"%(href)s?all=yes\">here</a>."
-msgstr "Upang makita ang isang listahan na nagtatakda ng lahat ng Apprise serbisyo na available sa bersyong ito (pinapagana o hindi) i-click ang <a href=\"%(href)s?all=yes\">dito</a>."
+msgstr ""
+"Upang makita ang isang listahan na nagtatakda ng lahat ng Apprise serbisyo "
+"na available sa bersyong ito (pinapagana o hindi) i-click ang <a "
+"href=\"%(href)s?all=yes\">dito</a>."
 
 #: apprise_api/api/templates/details.html:30
 msgid "Total plugin(s) supported"
@@ -1858,7 +2094,9 @@ msgstr "Apprise URL Pag-format"
 msgid ""
 "For more details and additional Apprise\n"
 "                    configuration options available to this service:"
-msgstr "Para sa karagdagang detalye at karagdagang Apprise opsyon sa pagsasaayos na available para sa serbisyong ito:"
+msgstr ""
+"Para sa karagdagang detalye at karagdagang Apprise opsyon sa pagsasaayos na "
+"available para sa serbisyong ito:"
 
 #: apprise_api/api/templates/details.html:161
 msgid "Click Here"
@@ -1869,8 +2107,13 @@ msgid "API Endpoints"
 msgstr "API Mga Endpoint"
 
 #: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "Ang mga developer na nais makatanggap ng resulta sa anyo ng JSON na string na maipaparse para sa kanilang aplikasyon ay maaaring gawin ang mga sumusunod upang makamit ito:"
+msgid ""
+"Developers who wish to receive this result set in a JSON parseable string "
+"for their application can perform the following to achieve this:"
+msgstr ""
+"Ang mga developer na nais makatanggap ng resulta sa anyo ng JSON na string "
+"na maipaparse para sa kanilang aplikasyon ay maaaring gawin ang mga "
+"sumusunod upang makamit ito:"
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1936,8 +2179,14 @@ msgid "Execute the request"
 msgstr "Isagawa ang kahilingan"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "Higit pang detalye tungkol sa JSON na format ay makikita <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">dito</a>."
+msgid ""
+"More details on the JSON format can be found <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">here</a>."
+msgstr ""
+"Higit pang detalye tungkol sa JSON na format ay makikita <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">dito</a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1956,15 +2205,21 @@ msgstr "Matagumpay na naka-logout."
 
 #: apprise_api/api/templates/login.html:48
 msgid "Provide the login credentials required to access the Apprise API."
-msgstr "Ibigay ang mga kredensyal sa pag-login na kinakailangan upang ma-access ang Apprise API."
+msgstr ""
+"Ibigay ang mga kredensyal sa pag-login na kinakailangan upang ma-access ang "
+"Apprise API."
 
 #: apprise_api/api/templates/login.html:73
-msgid "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank."
-msgstr "Kinakailangan ang Configuration ID para sa mga account na hindi pang-administratibo. Puwedeng iwanang blangko ng mga global administrator."
+msgid ""
+"A Configuration ID is required for non-administrative accounts. Global "
+"administrators can leave it blank."
+msgstr ""
+"Kinakailangan ang Configuration ID para sa mga account na hindi pang-"
+"administratibo. Puwedeng iwanang blangko ng mga global administrator."
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "Pamahalaan ang server na ito mula sa iyong Android na aparato."
+msgid "Manage this server from your Android or iOS device."
+msgstr "Pamahalaan ang server na ito mula sa iyong Android / iOS na aparato."
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -2001,7 +2256,12 @@ msgstr "Stateless Endpoints"
 msgid ""
 "Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "Ang mga nagnanais na ituring ang API na ito bilang wala kundi isang <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> at/o microservice sa kanilang proyekto ay kailangan lamang gamitin ang sumusunod na URL."
+msgstr ""
+"Ang mga nagnanais na ituring ang API na ito bilang wala kundi isang <a "
+"href=\"https://docs.microsoft.com/en-"
+"us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">sidecar</a> at/o microservice sa kanilang proyekto ay kailangan"
+" lamang gamitin ang sumusunod na URL."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2012,7 +2272,11 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Ginagamit upang ipagbigay-alam sa isa o higit pang tinukoy na Apprise URL. Tingnan ang <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> kung kailangan mo ng tulong sa paggawa ng iyong URL(s)."
+msgstr ""
+"Ginagamit upang ipagbigay-alam sa isa o higit pang tinukoy na Apprise URL. "
+"Tingnan ang <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\""
+" rel=\"noopener noreferrer\">Apprise URL Builder</a> kung kailangan mo ng "
+"tulong sa paggawa ng iyong URL(s)."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2024,7 +2288,9 @@ msgstr "Parameter"
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                    one URL from the next."
-msgstr "Ginagamit upang tukuyin ang isa o higit pang Apprise URL(s). Gumamit ng kuwit at/o puwang upang paghiwalayin ang isang URL mula sa susunod."
+msgstr ""
+"Ginagamit upang tukuyin ang isa o higit pang Apprise URL(s). Gumamit ng "
+"kuwit at/o puwang upang paghiwalayin ang isang URL mula sa susunod."
 
 #: apprise_api/api/templates/welcome.html:72
 #: apprise_api/api/templates/welcome.html:543
@@ -2041,7 +2307,9 @@ msgstr "Ang pamagat na isasama sa abiso. Ito ay isang opsyonal na patlang."
 msgid ""
 "This optional field defines the notification type. The possible options\n"
 "                    are:"
-msgstr "Ang opsyonal na patlang na ito ay nagtatakda ng uri ng abiso. Ang mga posibleng pagpipilian ay:"
+msgstr ""
+"Ang opsyonal na patlang na ito ay nagtatakda ng uri ng abiso. Ang mga "
+"posibleng pagpipilian ay:"
 
 #: apprise_api/api/templates/welcome.html:89
 msgid ""
@@ -2060,8 +2328,14 @@ msgid "Notifies an email address with attachments"
 msgstr "Nagpapaalam sa isang email address na may mga attachment"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "Magpadala ng web-based na file attachment sa isang <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
+msgid ""
+"Send an web based file attachment to a <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> server:"
+msgstr ""
+"Magpadala ng web-based na file attachment sa isang <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> server:"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2135,14 +2409,20 @@ msgstr "Ikabit ang data sa mga POST na patlang."
 
 #: apprise_api/api/templates/welcome.html:263
 msgid "The administrator of this system has disabled stateless URL support."
-msgstr "Pinahintulutan ng administrator ng sistemang ito na huwag gumamit ng stateless na URL support."
+msgstr ""
+"Pinahintulutan ng administrator ng sistemang ito na huwag gumamit ng "
+"stateless na URL support."
 
 #: apprise_api/api/templates/welcome.html:271
 msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
-msgstr "Ang mga nagnanais gamitin ang persistent store ay maaari itong gawin. Ang seksyong ito ay isang set it and forget it na klase ng deal. Isaayos ang iyong configuration isang beses at pagkatapos ay mag-trigger lang ng mga notification kapag kailangan gamit ang magaan na API na mga tawag."
+msgstr ""
+"Ang mga nagnanais gamitin ang persistent store ay maaari itong gawin. Ang "
+"seksyong ito ay isang set it and forget it na klase ng deal. Isaayos ang "
+"iyong configuration isang beses at pagkatapos ay mag-trigger lang ng mga "
+"notification kapag kailangan gamit ang magaan na API na mga tawag."
 
 #: apprise_api/api/templates/welcome.html:276
 msgid ""
@@ -2150,7 +2430,11 @@ msgid ""
 "      encoding.\n"
 "      You must pass along the <code>Content-Type</code> as <code>application/json</code> in order for it to be\n"
 "      interpreted properly."
-msgstr "Lahat ng endpoints na inaasahang tatanggap ng posted data ay maaaring matanggap alinman sa JSON o sa karaniwan nitong encoding. Dapat mong ipasa ang <code>Content-Type</code> bilang <code>application/json</code> upang ito ay mai-interpret nang maayos."
+msgstr ""
+"Lahat ng endpoints na inaasahang tatanggap ng posted data ay maaaring "
+"matanggap alinman sa JSON o sa karaniwan nitong encoding. Dapat mong ipasa "
+"ang <code>Content-Type</code> bilang <code>application/json</code> upang ito"
+" ay mai-interpret nang maayos."
 
 #: apprise_api/api/templates/welcome.html:295
 #, python-format
@@ -2158,19 +2442,29 @@ msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
 "            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "Ginagamit upang magdagdag ng bagong Apprise configuration o isang set ng mga URL at iugnay ang mga ito sa configuration na tinukoy ng id na <em>%(key)s</em>. Tingnan ang <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> kung kailangan mo ng tulong sa pagbuo ng iyong mga URL."
+msgstr ""
+"Ginagamit upang magdagdag ng bagong Apprise configuration o isang set ng mga"
+" URL at iugnay ang mga ito sa configuration na tinukoy ng id na "
+"<em>%(key)s</em>. Tingnan ang <a target=\"_blank\" "
+"href=\"https://appriseit.com/url-builder/\" rel=\"noopener "
+"noreferrer\">Apprise URL Builder</a> kung kailangan mo ng tulong sa pagbuo "
+"ng iyong mga URL."
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                      one URL from the next."
-msgstr "Ginagamit upang tukuyin ang isa o higit pang Apprise URL(s). Gumamit ng kuwit at/o espasyo upang paghiwalayin ang isang URL mula sa susunod."
+msgstr ""
+"Ginagamit upang tukuyin ang isa o higit pang Apprise URL(s). Gumamit ng "
+"kuwit at/o espasyo upang paghiwalayin ang isang URL mula sa susunod."
 
 #: apprise_api/api/templates/welcome.html:317
 msgid ""
 "Provide the contents of either a YAML or TEXT based Apprise\n"
 "                      configuration."
-msgstr "Ibigay ang nilalaman ng alinman sa YAML o TEXT batay sa Apprise configuration."
+msgstr ""
+"Ibigay ang nilalaman ng alinman sa YAML o TEXT batay sa Apprise "
+"configuration."
 
 #: apprise_api/api/templates/welcome.html:324
 msgid ""
@@ -2178,27 +2472,36 @@ msgid ""
 "                      is\n"
 "                      to tell the server which of the supported (Apprise) configuration types you are passing. Valid\n"
 "                      options are:"
-msgstr "Kinakailangan lamang ang larangang ito kung tinukoy mo ang opsyon sa config. Ang layunin nito ay sabihin sa server kung alin sa mga suportadong (Apprise) uri ng configuration ang ipapasa mo. Mga wastong opsyon ay:"
+msgstr ""
+"Kinakailangan lamang ang larangang ito kung tinukoy mo ang opsyon sa config."
+" Ang layunin nito ay sabihin sa server kung alin sa mga suportadong "
+"(Apprise) uri ng configuration ang ipapasa mo. Mga wastong opsyon ay:"
 
 #: apprise_api/api/templates/welcome.html:338
 msgid ""
 "You must specify either the <code>urls</code> parameter or the\n"
 "                          <code>config</code>."
-msgstr "Dapat mong tukuyin alinman sa <code>urls</code> na parameter o ang <code>config</code>."
+msgstr ""
+"Dapat mong tukuyin alinman sa <code>urls</code> na parameter o ang "
+"<code>config</code>."
 
 #: apprise_api/api/templates/welcome.html:342
 msgid ""
 "The <code>urls</code> takes priority over the <code>config</code> if both\n"
 "                          were\n"
 "                          specified."
-msgstr "Mas binibigyang-priyoridad ang <code>urls</code> kaysa sa <code>config</code> kung parehong tinukoy."
+msgstr ""
+"Mas binibigyang-priyoridad ang <code>urls</code> kaysa sa "
+"<code>config</code> kung parehong tinukoy."
 
 #: apprise_api/api/templates/welcome.html:347
 msgid ""
 "The <code>format</code> parameter is only required if the\n"
 "                          <code>config</code>\n"
 "                          parameter was also specified."
-msgstr "Ang <code>format</code> na parameter ay kinakailangan lamang kung ang <code>config</code> na parameter ay tinukoy din."
+msgstr ""
+"Ang <code>format</code> na parameter ay kinakailangan lamang kung ang "
+"<code>config</code> na parameter ay tinukoy din."
 
 #: apprise_api/api/templates/welcome.html:363
 #, python-format
@@ -2208,7 +2511,8 @@ msgstr "Mag-load ng isang URL at i-assign ito sa: <em>%(key)s</em>"
 #: apprise_api/api/templates/welcome.html:369
 #, python-format
 msgid "Load a simple TEXT config entry sent to: <em>%(key)s</em>"
-msgstr "Mag-load ng simpleng TEXT entry ng config na ipinadala sa: <em>%(key)s</em>"
+msgstr ""
+"Mag-load ng simpleng TEXT entry ng config na ipinadala sa: <em>%(key)s</em>"
 
 #: apprise_api/api/templates/welcome.html:387
 #: apprise_api/api/templates/welcome.html:403
@@ -2224,12 +2528,18 @@ msgstr "Ang URL kung ang key ay <em>%(key)s</em>"
 msgid ""
 "There are no arguments required. If configuration id of <em>%(key)s</em> exists and has data associated with\n"
 "              it, it will be removed."
-msgstr "Walang kinakailangang argumento. Kung umiiral ang configuration id ng <em>%(key)s</em> at may data na kaugnay nito, ito ay tatanggalin."
+msgstr ""
+"Walang kinakailangang argumento. Kung umiiral ang configuration id ng "
+"<em>%(key)s</em> at may data na kaugnay nito, ito ay tatanggalin."
 
 #: apprise_api/api/templates/welcome.html:451
 #, python-format
-msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
-msgstr "Alisin ang dating na-load na configuration na kaugnay sa id ng <em>%(key)s</em>"
+msgid ""
+"Remove previously loaded configuration associated with the id of "
+"<em>%(key)s</em>"
+msgstr ""
+"Alisin ang dating na-load na configuration na kaugnay sa id ng "
+"<em>%(key)s</em>"
 
 #: apprise_api/api/templates/welcome.html:462
 #, python-format
@@ -2241,7 +2551,10 @@ msgstr "Ang kahilingan kung ang susi ay <em>%(key)s</em>"
 msgid ""
 "This feature can be used by Apprise itself. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "Maaaring gamitin ang tampok na ito ng Apprise mismo. Nagbibigay ito ng paraan upang kumuha nang malayuan ng konfigurasyon nito na kaugnay sa konfigurasyong nakilala sa pamamagitan ng id ng <em>%(key)s</em>."
+msgstr ""
+"Maaaring gamitin ang tampok na ito ng Apprise mismo. Nagbibigay ito ng "
+"paraan upang kumuha nang malayuan ng konfigurasyon nito na kaugnay sa "
+"konfigurasyong nakilala sa pamamagitan ng id ng <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:507
 #: apprise_api/api/templates/welcome.html:521
@@ -2253,12 +2566,20 @@ msgstr "Gamitin ang Apprise upang kunin ang iyong konfigurasyon:"
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "Ito ay isang alias ng <code>%(BASE_URL)s/get/<em>%(key)s</em></code> na tinukoy sa itaas. Nagbibigay ito ng paraan upang kumuha nang malayuan ng konfigurasyong ito na kaugnay sa konfigurasyong nakilala sa pamamagitan ng id ng <em>%(key)s</em>."
+msgstr ""
+"Ito ay isang alias ng <code>%(BASE_URL)s/get/<em>%(key)s</em></code> na "
+"tinukoy sa itaas. Nagbibigay ito ng paraan upang kumuha nang malayuan ng "
+"konfigurasyong ito na kaugnay sa konfigurasyong nakilala sa pamamagitan ng "
+"id ng <em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:531
 #, python-format
-msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
-msgstr "Nagbibigay-abiso sa mga URL na kaugnay ng configuration na tinukoy ng id na <em>%(key)s</em>."
+msgid ""
+"Notifies the URLs associated with configuration identified by the id of "
+"<em>%(key)s</em>."
+msgstr ""
+"Nagbibigay-abiso sa mga URL na kaugnay ng configuration na tinukoy ng id na "
+"<em>%(key)s</em>."
 
 #: apprise_api/api/templates/welcome.html:548
 msgid ""
@@ -2270,7 +2591,9 @@ msgstr "Ang pamagat na isasama sa abiso. Ito ay opsyonal na field."
 msgid ""
 "This optional field defines the notification type. The possible options\n"
 "                      are:"
-msgstr "Ang opsyonal na field na ito ay nagtatakda ng uri ng abiso. Ang mga posibleng opsyon ay:"
+msgstr ""
+"Ang opsyonal na field na ito ay nagtatakda ng uri ng abiso. Ang mga "
+"posibleng opsyon ay:"
 
 #: apprise_api/api/templates/welcome.html:560
 msgid ""
@@ -2283,7 +2606,9 @@ msgstr "ito ang default na opsyon kung ang uri ay hindi tinukoy."
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
-msgstr "Ipatupad ang lohika ng pag-tag upang higit pang salain ang iyong mga URL. Ito ay opsyonal na field."
+msgstr ""
+"Ipatupad ang lohika ng pag-tag upang higit pang salain ang iyong mga URL. "
+"Ito ay opsyonal na field."
 
 #: apprise_api/api/templates/welcome.html:594
 msgid "Notifies all URLs assigned to the configuration"
@@ -2291,15 +2616,20 @@ msgstr "Nagbibigay-abiso sa lahat ng URL na naitalaga sa configuration"
 
 #: apprise_api/api/templates/welcome.html:602
 msgid "Sends a notification to our endpoints with an attachment"
-msgstr "Nagpapadala ng abiso sa aming mga endpoint na may kalakip na attachment"
+msgstr ""
+"Nagpapadala ng abiso sa aming mga endpoint na may kalakip na attachment"
 
 #: apprise_api/api/templates/welcome.html:609
 msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "Nagbibigay-abiso sa lahat ng URL na naitalaga sa <em>devops</em> tag"
 
 #: apprise_api/api/templates/welcome.html:621
-msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
-msgstr "Sa ideal, dapat mong gamitin ang Apprise Library; gagawin nitong mas madali ang iyong buhay:"
+msgid ""
+"Ideally you should leverage the Apprise Library; it will make your life much"
+" easier:"
+msgstr ""
+"Sa ideal, dapat mong gamitin ang Apprise Library; gagawin nitong mas madali "
+"ang iyong buhay:"
 
 #: apprise_api/api/templates/welcome.html:625
 msgid "Create an Apprise instance"
@@ -2319,7 +2649,9 @@ msgstr "Madali rin ang pagpapadala ng attachment:"
 
 #: apprise_api/api/templates/welcome.html:637
 msgid "The legacy (but more compatible and lightweight) way of doing things:"
-msgstr "Ang legacy (ngunit mas compatible at magaan) na paraan ng paggawa ng mga bagay:"
+msgstr ""
+"Ang legacy (ngunit mas compatible at magaan) na paraan ng paggawa ng mga "
+"bagay:"
 
 #: apprise_api/api/templates/welcome.html:748
 msgid "Endpoint Notes"
@@ -2327,14 +2659,21 @@ msgstr "Mga Notes sa Endpoint"
 
 #: apprise_api/api/templates/welcome.html:751
 #, python-format
-msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
-msgstr "Ang Configuration ID (<em>%(key)s</em>) na plano mong iugnay sa iyong configuration:"
+msgid ""
+"The Configuration ID (<em>%(key)s</em>) you plan to associate your "
+"configuration with:"
+msgstr ""
+"Ang Configuration ID (<em>%(key)s</em>) na plano mong iugnay sa iyong "
+"configuration:"
 
 #: apprise_api/api/templates/welcome.html:755
 msgid ""
 "Cannot have spaces or special characters. A dash (<code>-</code>) and underscore\n"
 "              (<code>_</code>) are the only exceptions to this rule."
-msgstr "Hindi maaaring magkaroon ng spaces o special characters. Ang dash (<code>-</code>) at underscore (<code>_</code>) lamang ang mga eksepsiyon sa alituntuning ito."
+msgstr ""
+"Hindi maaaring magkaroon ng spaces o special characters. Ang dash "
+"(<code>-</code>) at underscore (<code>_</code>) lamang ang mga eksepsiyon sa"
+" alituntuning ito."
 
 #: apprise_api/api/templates/welcome.html:758
 msgid "Must start with at least two alphanumeric characters."
@@ -2343,6 +2682,14 @@ msgstr "Dapat magsimula sa hindi bababa sa dalawang alphanumeric na karakter."
 #: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Hindi dapat lalampas sa 64 na karakter sa kabuuang haba."
+
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "Kunin ito sa Google Play"
 
 #: apprise_api/api/views.py:1157
 msgid "This configuration has been disabled by an administrator"
@@ -2354,16 +2701,22 @@ msgid "Access Denied"
 msgstr "Access Denied"
 
 #: apprise_api/api/views.py:1184
-msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
-msgstr "Ang mode ng authentication ay na-disable (itakda ang APPRISE_AUTH_REQUIRED upang paganahin ito)"
+msgid ""
+"Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
+msgstr ""
+"Ang mode ng authentication ay na-disable (itakda ang APPRISE_AUTH_REQUIRED "
+"upang paganahin ito)"
 
 #: apprise_api/api/views.py:1193
 msgid "Persistent configuration storage is disabled"
 msgstr "Ang persistent na storage ng konfigurasyon ay na-disable"
 
 #: apprise_api/api/views.py:1202
-msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
-msgstr "Kinakailangan ang isang configuration ID (URL path o X-Apprise-Config-ID header)"
+msgid ""
+"A configuration ID is required (URL path or X-Apprise-Config-ID header)"
+msgstr ""
+"Kinakailangan ang isang configuration ID (URL path o X-Apprise-Config-ID "
+"header)"
 
 #: apprise_api/api/views.py:1215
 msgid "The X-Apprise-Config-ID header provided is invalid"
@@ -2462,7 +2815,8 @@ msgstr "Ang configuration store ay kasalukuyang hindi masusulat"
 
 #: apprise_api/api/views.py:2367
 msgid "A valid destination (to), different from the source, is required"
-msgstr "Kinakailangan ang isang wastong destinasyon (to), na iba sa pinagmulan"
+msgstr ""
+"Kinakailangan ang isang wastong destinasyon (to), na iba sa pinagmulan"
 
 #: apprise_api/api/views.py:2394
 msgid "There was no configuration to move"
@@ -2485,8 +2839,10 @@ msgid "The configuration could not be removed"
 msgstr "Hindi maalis ang configuration"
 
 #: apprise_api/api/views.py:2525
-msgid "The configuration was removed, but its authentication could not be removed"
-msgstr "Ang configuration ay naalis, ngunit ang authentication nito ay hindi maalis"
+msgid ""
+"The configuration was removed, but its authentication could not be removed"
+msgstr ""
+"Ang configuration ay naalis, ngunit ang authentication nito ay hindi maalis"
 
 #: apprise_api/api/views.py:2545
 msgid "Successfully removed configuration"
@@ -2498,7 +2854,9 @@ msgstr "Ang Content-Type ay dapat application/json"
 
 #: apprise_api/api/views.py:2691
 msgid "Only an administrator may set configuration access"
-msgstr "Tanging ang administrador lamang ang maaaring magtakda ng configuration access"
+msgstr ""
+"Tanging ang administrador lamang ang maaaring magtakda ng configuration "
+"access"
 
 #: apprise_api/api/views.py:2713
 msgid "Valid username and password fields are required"
@@ -2522,7 +2880,9 @@ msgstr "Matagumpay na naitakda ang pagpapatunay"
 
 #: apprise_api/api/views.py:2839
 msgid "Global administrator credentials are required to remove authentication"
-msgstr "Kinakailangan ang kredensyal ng global administrator upang alisin ang pagpapatunay"
+msgstr ""
+"Kinakailangan ang kredensyal ng global administrator upang alisin ang "
+"pagpapatunay"
 
 #: apprise_api/api/views.py:2852
 msgid "The authentication could not be removed"
@@ -2533,8 +2893,11 @@ msgid "Successfully removed authentication"
 msgstr "Matagumpay na natanggal ang pagpapatunay"
 
 #: apprise_api/api/views.py:3013
-msgid "The server is temporarily unable to start a new live notification stream"
-msgstr "Pansamantalang hindi makapagsimula ang server ng bagong live notification stream"
+msgid ""
+"The server is temporarily unable to start a new live notification stream"
+msgstr ""
+"Pansamantalang hindi makapagsimula ang server ng bagong live notification "
+"stream"
 
 #: apprise_api/api/views.py:3038
 msgid "An error occurred delivering the notification"
@@ -2580,7 +2943,9 @@ msgstr "Ang template field ay dapat isang object ng name/value pairs"
 
 #: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
 msgid "A specific tag other than 'all' is required for this configuration"
-msgstr "Isang partikular na tag bukod sa 'lahat' ang kinakailangan para sa konfigurasyong ito"
+msgstr ""
+"Isang partikular na tag bukod sa 'lahat' ang kinakailangan para sa "
+"konfigurasyong ito"
 
 #: apprise_api/api/views.py:3273
 msgid "Unsupported characters found in tag definition"
@@ -2616,7 +2981,8 @@ msgstr "Walang nahanap na konfigurasyon"
 
 #: apprise_api/api/views.py:3647
 msgid "This configuration does not permit stateless notifications"
-msgstr "Ang configuration na ito ay hindi pumapayag sa stateless notifications"
+msgstr ""
+"Ang configuration na ito ay hindi pumapayag sa stateless notifications"
 
 #: apprise_api/api/views.py:3726
 msgid "There was no valid URLs provided to notify"
@@ -2640,7 +3006,8 @@ msgstr "Tinanggihan ang Pahintulot"
 
 #: apprise_api/error/templates/403.html:18
 msgid "Your account does not have permission to access this resource."
-msgstr "Ang iyong account ay walang pahintulot na i-access ang resource na ito."
+msgstr ""
+"Ang iyong account ay walang pahintulot na i-access ang resource na ito."
 
 #: apprise_api/error/templates/404.html:20
 msgid "Page Not Found"
@@ -2676,7 +3043,8 @@ msgstr "Napakalaki ng Nilalaman"
 
 #: apprise_api/error/templates/413.html:18
 msgid "Reduce the request size or attachments, then try again."
-msgstr "Bawasan ang laki ng kahilingan o mga attachment, pagkatapos subukang muli."
+msgstr ""
+"Bawasan ang laki ng kahilingan o mga attachment, pagkatapos subukang muli."
 
 #: apprise_api/error/templates/414.html:16 apprise_api/error/views.py:150
 msgid "URI Too Long"
@@ -2684,7 +3052,9 @@ msgstr "URI Masyadong Mahaba"
 
 #: apprise_api/error/templates/414.html:18
 msgid "Shorten the request URL or move its data into the request body."
-msgstr "Paikliin ang kahilingan URL o ilipat ang mga datos nito sa katawan ng kahilingan."
+msgstr ""
+"Paikliin ang kahilingan URL o ilipat ang mga datos nito sa katawan ng "
+"kahilingan."
 
 #: apprise_api/error/templates/421.html:20
 msgid "Misdirected Request"
@@ -2705,8 +3075,12 @@ msgstr "Sobrang Maraming Kahilingan"
 
 #: apprise_api/error/templates/429.html:20
 #, python-format
-msgid "Too many login attempts were made. Wait %(retry_after)s seconds before trying again."
-msgstr "Sobrang maraming pagsubok sa pag-login ang ginawa. Maghintay ng %(retry_after)s segundo bago subukang muli."
+msgid ""
+"Too many login attempts were made. Wait %(retry_after)s seconds before "
+"trying again."
+msgstr ""
+"Sobrang maraming pagsubok sa pag-login ang ginawa. Maghintay ng "
+"%(retry_after)s segundo bago subukang muli."
 
 #: apprise_api/error/templates/50x.html:20
 msgid "Service Temporarily Unavailable"

@@ -846,10 +846,10 @@ class TemplateTests(SimpleTestCase):
         assert "#url-list .url-template-summary" in css
         assert "#url-list .url-template-var," in css
         assert ".review-template-field label {" in css
-        assert "background: var(--mobile-beta-accent-soft);" in css
+        assert "background: var(--mobile-app-accent-soft);" in css
         assert "#notify .notify-form-section .row>.input-field.col" in css
         assert "#notify .notify-form-section .input-field>label.active" in css
-        assert "color: var(--mobile-beta-accent);" in css
+        assert "color: var(--mobile-app-accent);" in css
         assert "grid-row: 1;" in css
         assert "transform: translateY(-50%);" in css
 
@@ -857,8 +857,8 @@ class TemplateTests(SimpleTestCase):
         dark_css = (Path(settings.BASE_DIR) / "static" / "css" / "theme-dark.css").read_text()
         assert "--select-bg: #f8fafb;" in light_css
         assert "--select-bg: #1c1f26;" in dark_css
-        assert "color: var(--mobile-beta-accent) !important;" in light_css
-        assert "color: var(--mobile-beta-accent) !important;" in dark_css
+        assert "color: var(--mobile-app-accent) !important;" in light_css
+        assert "color: var(--mobile-app-accent) !important;" in dark_css
         assert "background: var(--select-bg);" in css
 
     def test_review_dialog_does_not_track_blank_overrides(self):

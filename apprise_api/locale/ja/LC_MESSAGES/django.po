@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-12 22:53+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: ja\n"
@@ -340,8 +340,11 @@ msgstr "構成アクセスモードの説明"
 
 #: apprise_api/api/templates/auth.html:100
 #, python-format
-msgid "Saved %(saved)s access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed."
-msgstr "保存済み %(saved)s アクセスは現在、グローバル構成ロックによってロックとして強制されています。グローバルロックが解除されると戻ります。"
+msgid ""
+"Saved %(saved)s access is currently enforced as locked by the global "
+"configuration lock. It will return if the global lock is removed."
+msgstr ""
+"保存済み %(saved)s アクセスは現在、グローバル構成ロックによってロックとして強制されています。グローバルロックが解除されると戻ります。"
 
 #: apprise_api/api/templates/auth.html:132
 #: apprise_api/api/templates/config.html:2953
@@ -456,23 +459,31 @@ msgid "Description"
 msgstr "説明"
 
 #: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
+msgid ""
+"Uses its own login for normal stateful and stateless notifications and "
+"configuration access."
 msgstr "通常のステートフルおよびステートレス通知と設定アクセスのために独自のログインを使用します。"
 
 #: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
+msgid ""
+"Uses its own login for tagged stateful notifications and password changes. "
+"Configuration content stays hidden."
 msgstr "タグ付きステートフル通知およびパスワード変更のために独自のログインを使用します。設定内容は非表示のままです。"
 
 #: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
+msgid ""
+"Allows tagged stateful notifications without a login. Configuration content "
+"and stateless notifications stay protected."
 msgstr "ログインなしでタグ付きステートフル通知を許可します。設定内容とステートレス通知は保護されたままです。"
 
 #: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
+msgid ""
+"Freezes configuration-user access without deleting the configuration or "
+"login. Only an administrator may use it."
 msgstr "設定ユーザーアクセスを凍結しますが、設定やログインは削除されません。管理者のみが使用できます。"
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "閉じる"
 
@@ -511,7 +522,9 @@ msgid "Scan with Apprise Mobile"
 msgstr "Apprise Mobile でスキャン"
 
 #: apprise_api/api/templates/auth.html:517
-msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
+msgid ""
+"This QR code contains the new password. Save it or share it securely now; "
+"the password cannot be shown again."
 msgstr "このQRコードには新しいパスワードが含まれています。今すぐ保存するか、安全な方法で共有してください。パスワードは再表示できません。"
 
 #: apprise_api/api/templates/auth.html:521
@@ -538,7 +551,9 @@ msgstr "Apprise Mobile URL がクリップボードにコピーされました"
 
 #: apprise_api/api/templates/auth.html:525
 #: apprise_api/api/templates/base.html:1055
-msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
+msgid ""
+"This URL is too long to encode as a QR code. Use the copy button above "
+"instead."
 msgstr "この URL はQRコードとしてエンコードするには長すぎます。代わりに上のコピー ボタンを使用してください。"
 
 #: apprise_api/api/templates/auth.html:546
@@ -546,7 +561,9 @@ msgid "Reset Access or Configuration?"
 msgstr "アクセスまたは設定をリセットしますか？"
 
 #: apprise_api/api/templates/auth.html:549
-msgid "This will reset only the user access currently associated with this configuration:"
+msgid ""
+"This will reset only the user access currently associated with this "
+"configuration:"
 msgstr "これは、現在この構成に関連付けられているユーザーアクセスのみをリセットします:"
 
 #: apprise_api/api/templates/auth.html:552
@@ -653,7 +670,9 @@ msgid "Administrator Credentials"
 msgstr "管理者資格情報"
 
 #: apprise_api/api/templates/base.html:56
-msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
+msgid ""
+"This configuration has no assigned user. As a result, the QR code will use "
+"the administrator account."
 msgstr "この構成には割り当てられたユーザーがありません。その結果、QRコードは管理者アカウントを使用します。"
 
 #: apprise_api/api/templates/base.html:80
@@ -709,7 +728,9 @@ msgid "Logout"
 msgstr "ログアウト"
 
 #: apprise_api/api/templates/base.html:226
-msgid "If Apprise has been useful to you, please consider supporting its development."
+msgid ""
+"If Apprise has been useful to you, please consider supporting its "
+"development."
 msgstr "もしAppriseが役立った場合、その開発支援をご検討ください。"
 
 #: apprise_api/api/templates/base.html:230
@@ -782,7 +803,7 @@ msgid "Apprise URL Builder"
 msgstr "Apprise URL ビルダー"
 
 #: apprise_api/api/templates/base.html:353
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Apprise Mobile を入手する"
@@ -812,8 +833,12 @@ msgid "Notification Delivery Disabled"
 msgstr "通知配信が無効です"
 
 #: apprise_api/api/templates/base.html:396
-msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
-msgstr "無状態通知と永続ストレージの両方が無効です。このサーバーが通知を配信するためには、管理者が少なくとも1つのモードを有効にする必要があります。"
+msgid ""
+"Both stateless notifications and persistent storage are disabled. An "
+"administrator must enable at least one mode before this server can deliver "
+"notifications."
+msgstr ""
+"無状態通知と永続ストレージの両方が無効です。このサーバーが通知を配信するためには、管理者が少なくとも1つのモードを有効にする必要があります。"
 
 #: apprise_api/api/templates/base.html:404
 msgid "Configuration Write Failure"
@@ -830,8 +855,11 @@ msgstr "クリップボードにパスがコピーされました"
 
 #: apprise_api/api/templates/base.html:413
 #: apprise_api/api/templates/base.html:437
-msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
-msgstr "<em>注意:</em> これが予期された動作である場合、以下に示す環境変数を事前に設定し、Apprise インスタンスを再読み込みしてください。"
+msgid ""
+"<em>Note:</em> If this is the expected behavior, pre-set the environment "
+"variable shown below and reload your Apprise instance."
+msgstr ""
+"<em>注意:</em> これが予期された動作である場合、以下に示す環境変数を事前に設定し、Apprise インスタンスを再読み込みしてください。"
 
 #: apprise_api/api/templates/base.html:416
 #: apprise_api/api/templates/base.html:440
@@ -843,7 +871,9 @@ msgid "Attachment Temporary Storage Write Failure"
 msgstr "添付ファイル一時保存書き込み失敗"
 
 #: apprise_api/api/templates/base.html:429
-msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
+msgid ""
+"Apprise can not circulate attachments (if provided) due to not having write "
+"access to the directory:"
 msgstr "Apprise ディレクトリへの書き込み権限がないため、添付ファイル（提供されている場合）を回覧できません:"
 
 #: apprise_api/api/templates/base.html:447
@@ -851,12 +881,24 @@ msgid "More Details"
 msgstr "詳細"
 
 #: apprise_api/api/templates/base.html:450
-msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
-msgstr "ほとんどの場合、ここで特定された問題は通常、権限の問題に関連しています。<code>PUID</code> および <code>GUID</code> を正しく設定し、Apprise がファイルを読み書きするときに使用する権限を反映させてください。これに加えて、それらをマッピングしたディレクトリで権限が正しく設定されていることを確認する必要がある場合があります。"
+msgid ""
+"Under most circumstances, the issue(s) identified here are usually related "
+"to permission issues. Make sure you set the correct <code>PUID</code> and "
+"<code>GUID</code> to reflect the permissions you wish Apprise to utilize "
+"when it is reading and writing its files. In addition to this, you may need "
+"to make sure the permissions are set correctly on the directories you mapped"
+" them too."
+msgstr ""
+"ほとんどの場合、ここで特定された問題は通常、権限の問題に関連しています。<code>PUID</code> および <code>GUID</code> "
+"を正しく設定し、Apprise "
+"がファイルを読み書きするときに使用する権限を反映させてください。これに加えて、それらをマッピングしたディレクトリで権限が正しく設定されていることを確認する必要がある場合があります。"
 
 #: apprise_api/api/templates/base.html:453
-msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
-msgstr "ここで特定された問題は、SELinux にも関連している可能性があります。SELinux を一時的に無効化して確認することを検討するかもしれません:"
+msgid ""
+"The issue(s) identified here can also be associated with SELinux. You may "
+"wish to rule out SELinux by temporarily disabling it with:"
+msgstr ""
+"ここで特定された問題は、SELinux にも関連している可能性があります。SELinux を一時的に無効化して確認することを検討するかもしれません:"
 
 #: apprise_api/api/templates/base.html:456
 #: apprise_api/api/templates/base.html:462
@@ -932,7 +974,9 @@ msgid "Open Configuration"
 msgstr "設定を開く"
 
 #: apprise_api/api/templates/base.html:1113
-msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
+msgid ""
+"This opens a different Config ID. Any unsaved changes on this page will be "
+"lost."
 msgstr "これは別の設定IDを開きます。このページで保存されていない変更は失われます。"
 
 #: apprise_api/api/templates/base.html:1116
@@ -945,11 +989,15 @@ msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Apprise API のステータスエンドポイントに接続できません。"
 
 #: apprise_api/api/templates/base.html:1349
-msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
+msgid ""
+"Notification delivery is disabled. Enable stateless notifications or "
+"persistent storage to resume service."
 msgstr "通知の配信は無効になっています。サービスを再開するには、ステートレス通知または永続的なストレージを有効にしてください。"
 
 #: apprise_api/api/templates/base.html:1408
-msgid "Choose a new Config ID. You can edit it or generate another before continuing."
+msgid ""
+"Choose a new Config ID. You can edit it or generate another before "
+"continuing."
 msgstr "新しい構成IDを選択してください。続行する前に編集するか、別のものを生成できます。"
 
 #: apprise_api/api/templates/base.html:1420
@@ -986,7 +1034,8 @@ msgid "Changed Config ID Not Applied"
 msgstr "変更された構成IDが適用されていません"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:13
-msgid "The entered value is not the configuration currently being managed. Apply"
+msgid ""
+"The entered value is not the configuration currently being managed. Apply"
 msgstr "入力された値は、現在管理されている構成ではありません。適用"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:18
@@ -1029,68 +1078,69 @@ msgstr ""
 "\n"
 "%(license)s ライセンスの下でライセンスされています。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "Android アプリ"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "Android / iOS アプリ"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "Apprise Mobile は、あなたの Android デバイスをこのサーバーに接続します。メッセージ、撮ったばかりの写真、または任意のファイルを1つの宛先、グループ、または設定したすべての場所に送信できます。"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid ""
+"Apprise Mobile connects your Android or iOS device to this server. Send a "
+"message, a photo you just took, or any file to one destination, a group, or "
+"everything you have configured."
+msgstr ""
+"Apprise Mobile は、あなたの Android / iOS "
+"デバイスをこのサーバーに接続します。メッセージ、撮ったばかりの写真、または任意のファイルを1つの宛先、グループ、または設定したすべての場所に送信できます。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "携帯電話から通知や添付ファイルを送信します。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
-msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
+msgid ""
+"Scan the Apprise Mobile Quick Setup QR code to add this server and load a "
+"configuration."
 msgstr "Apprise Mobile クイックセットアップ QR コードをスキャンしてこのサーバーを追加し、設定を読み込みます。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
 msgstr "リモート設定を確認し、すべての配信レポートを確認します。"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "Google Play で入手"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "詳細はこちら"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "アプリをプレビュー"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile ダッシュボード"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "ダッシュボード"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "Apprise Mobile URL ビルダー"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "URLビルダー"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile 配信レポート"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "配信レポート"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "Google Play および Google Play ロゴは Google の商標です LLC。"
-
 #: apprise_api/api/templates/components/qr_password_note.html:4
-msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
+msgid ""
+"Saved passwords are not included. Apprise Mobile will ask for one when "
+"required."
 msgstr "保存されたパスワードは含まれません。 Apprise Mobile は必要に応じてパスワードを求めます。"
 
 #: apprise_api/api/templates/components/qr_password_note.html:7
@@ -1144,7 +1194,8 @@ msgid "Apprise configuration ID copied to clipboard"
 msgstr "Apprise 設定IDがクリップボードにコピーされました"
 
 #: apprise_api/api/templates/config.html:109
-msgid "For some examples on how to build a development environment around this:"
+msgid ""
+"For some examples on how to build a development environment around this:"
 msgstr "これを中心に開発環境を構築する方法の例については:"
 
 #: apprise_api/api/templates/config.html:109
@@ -1222,7 +1273,9 @@ msgstr "Apprise Mobile クイックセットアップ"
 
 #: apprise_api/api/templates/config.html:162
 #, python-format
-msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
+msgid ""
+"Reveal and scan this code to easily load this configuration into your "
+"%(mobile_app_link)s."
 msgstr "このコードを表示してスキャンすることで、この設定を簡単に%(mobile_app_link)sに読み込むことができます。"
 
 #: apprise_api/api/templates/config.html:171
@@ -1242,8 +1295,8 @@ msgstr "QRコードを読み込めませんでした。"
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "アプリが必要ですか？%(mobile_app_link)sをAndroid用に入手してください。"
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr "アプリが必要ですか？%(mobile_app_link)sをAndroid / iOS用に入手してください。"
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1256,7 +1309,8 @@ msgid ""
 "\n"
 "          New configuration can not be set, and existing configuration can not be modified or viewed.\n"
 "          "
-msgstr "現在、このサーバーの管理者はすべての設定をロックしています。これは、事前に作成された設定が通知送信の目的のみに安全に隠されていることを意味します。新しい設定を設定することはできず、既存の設定を変更したり表示したりすることもできません。"
+msgstr ""
+"現在、このサーバーの管理者はすべての設定をロックしています。これは、事前に作成された設定が通知送信の目的のみに安全に隠されていることを意味します。新しい設定を設定することはできず、既存の設定を変更したり表示したりすることもできません。"
 
 #: apprise_api/api/templates/config.html:226
 msgid "Working Remotely With Your Configuration"
@@ -1267,7 +1321,9 @@ msgid "Using The Apprise CLI"
 msgstr "Apprise CLI を使用して"
 
 #: apprise_api/api/templates/config.html:230
-msgid "The following command would cause apprise to directly notify all of your services:"
+msgid ""
+"The following command would cause apprise to directly notify all of your "
+"services:"
 msgstr "次のコマンドは、apprise がすべてのサービスに直接通知を送信する原因となります:"
 
 #: apprise_api/api/templates/config.html:237
@@ -1281,35 +1337,57 @@ msgid ""
 msgstr "次のコマンドは、apprise が読み込まれた設定を取得し、追加されたすべてのサービスにテスト通知を送信する原因となります:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "また、この行をどこかに含む<a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise構成ファイル</a>を作成することもできます："
+msgid ""
+"You may also create an <a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a>"
+" that contains this line somewhere in it:"
+msgstr ""
+"また、この行をどこかに含む<a href=\"https://appriseit.com/getting-started/configuration/#cli-usage\" target=\"_blank\""
+" rel=\"noopener noreferrer\">Apprise構成ファイル</a>を作成することもできます："
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "Apprise構成「include」エントリをクリップボードにコピー"
 
 #: apprise_api/api/templates/config.html:262
-msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
-msgstr "<em>include</em>ディレクティブを利用することで、将来の<code>apprise</code>ツールの呼び出しで自動的に参照されます。Appriseを使用した将来の呼び出しはすべて以下のように簡略化されます："
+msgid ""
+"By leveraging the <em>include</em> directive, it will automatically be "
+"referenced for future calls to the <code>apprise</code> tool. All future "
+"calls using Apprise now simplify to:"
+msgstr ""
+"<em>include</em>ディレクティブを利用することで、将来の<code>apprise</code>ツールの呼び出しで自動的に参照されます。Appriseを使用した将来の呼び出しはすべて以下のように簡略化されます："
 
 #: apprise_api/api/templates/config.html:268
 msgid "Using CURL"
 msgstr "CURLを使用中"
 
 #: apprise_api/api/templates/config.html:270
-msgid "The following command would cause the Apprise API to notify all of your services:"
+msgid ""
+"The following command would cause the Apprise API to notify all of your "
+"services:"
 msgstr "次のコマンドはApprise APIを使用して、あなたのすべてのサービスに通知することになります："
 
 #: apprise_api/api/templates/config.html:280
-msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
-msgstr "添付ファイルを送信する場合、<code>curl</code> はすべてのローカルファイルに <code>@</code> をプレフィックスとして付ける必要があります。添付ファイルを追加するには、次のように行います:"
+msgid ""
+"When sending attachments, <code>curl</code> requires all local files be "
+"prefixed with <code>@</code>. You can an add attachment like this:"
+msgstr ""
+"添付ファイルを送信する場合、<code>curl</code> はすべてのローカルファイルに <code>@</code> "
+"をプレフィックスとして付ける必要があります。添付ファイルを追加するには、次のように行います:"
 
 #: apprise_api/api/templates/config.html:290
-msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
-msgstr "複数の添付ファイルを送信する場合は、各添付ファイルに新しいIDを一意に割り当てる必要があります。以下の例では、<code>attach1</code> および <code>attach2</code> を活用しています:"
+msgid ""
+"When sending more than one attachment, you must uniquely assign each "
+"attachment to a new ID.  The example below leverages <code>attach1</code> "
+"and <code>attach2</code>:"
+msgstr ""
+"複数の添付ファイルを送信する場合は、各添付ファイルに新しいIDを一意に割り当てる必要があります。以下の例では、<code>attach1</code> "
+"および <code>attach2</code> を活用しています:"
 
 #: apprise_api/api/templates/config.html:301
-msgid "Sends a notification to our endpoints with an attachment and no body specified:"
+msgid ""
+"Sends a notification to our endpoints with an attachment and no body "
+"specified:"
 msgstr "添付ファイルのみを指定して通知をエンドポイントに送信します（本文なし）:"
 
 #: apprise_api/api/templates/config.html:319
@@ -1348,8 +1426,12 @@ msgstr "管理者によって設定へのアクセスは無効化されていま
 
 #: apprise_api/api/templates/config.html:410
 #, python-format
-msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
-msgstr "少なくとも1つの<i>Apprise URL</i>を%(config_chip)sセクションで正常にロードすると、ロードされたエントリがここに表示されます。"
+msgid ""
+"Once you have successfully loaded <i>at least one Apprise URL</i> on the "
+"%(config_chip)s section, your loaded entries will display here."
+msgstr ""
+"少なくとも1つの<i>Apprise "
+"URL</i>を%(config_chip)sセクションで正常にロードすると、ロードされたエントリがここに表示されます。"
 
 #: apprise_api/api/templates/config.html:418
 msgid "Loaded Configuration"
@@ -1361,8 +1443,13 @@ msgid "Show only selected notification services"
 msgstr "選択された通知サービスのみを表示"
 
 #: apprise_api/api/templates/config.html:431
-msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
-msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> 送信する通知が選択されました</span>"
+msgid ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> notification(s) selected for "
+"sending</span>"
+msgstr ""
+"<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\""
+" data-count-format=\"plain\">0</span> 送信する通知が選択されました</span>"
 
 #: apprise_api/api/templates/config.html:443
 msgid "Unsaved Configuration Changes"
@@ -1370,8 +1457,12 @@ msgstr "保存されていない設定変更"
 
 #: apprise_api/api/templates/config.html:445
 #, python-format
-msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
-msgstr "以下のエントリは最後に保存された設定から解析されたものであるため、最近の編集内容が反映されていない場合があります。結果をここで確認するには、%(config_chip)sセクションに保存してください。"
+msgid ""
+"The entries below were parsed from the configuration that was last saved, so"
+" they may not reflect your recent edits. Save them in the %(config_chip)s "
+"section to see the result here."
+msgstr ""
+"以下のエントリは最後に保存された設定から解析されたものであるため、最近の編集内容が反映されていない場合があります。結果をここで確認するには、%(config_chip)sセクションに保存してください。"
 
 #: apprise_api/api/templates/config.html:449
 msgid "Review the parsed destinations below before sending."
@@ -1384,7 +1475,9 @@ msgstr "任意の項目のタグ (🏷️) を選択して、%(notify_chip)s に
 
 #: apprise_api/api/templates/config.html:454
 #, python-format
-msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
+msgid ""
+"Use %(send_icon)s to run a quick test and inspect the full debug output for "
+"that entry."
 msgstr "%(send_icon)s を使用してクイックテストを実行し、その項目の完全なデバッグ出力を確認します。"
 
 #: apprise_api/api/templates/config.html:457
@@ -1401,7 +1494,9 @@ msgid "No Notification Targets Selected"
 msgstr "通知先が選択されていません"
 
 #: apprise_api/api/templates/config.html:495
-msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
+msgid ""
+"Choose at least one tag. The saved destinations stay hidden while "
+"configuration locking is enabled."
 msgstr "少なくとも1つのタグを選択してください。保存された宛先は設定ロックが有効な間は非表示のままです。"
 
 #: apprise_api/api/templates/config.html:497
@@ -1424,7 +1519,9 @@ msgid "Template Values"
 msgstr "テンプレート値"
 
 #: apprise_api/api/templates/config.html:539
-msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
+msgid ""
+"Rows with a value are sent; blank values use the server fallback (if "
+"defined)."
 msgstr "値がある行は送信されます。空白の値はサーバーフォールバックを使用します（定義されている場合）。"
 
 #: apprise_api/api/templates/config.html:545
@@ -1463,7 +1560,8 @@ msgid "Escalation group"
 msgstr "エスカレーショングループ"
 
 #: apprise_api/api/templates/config.html:677
-msgid "Maximum number of retries attempted if the service fails before giving up"
+msgid ""
+"Maximum number of retries attempted if the service fails before giving up"
 msgstr "サービスが失敗した場合に、諦める前に試行される最大再試行回数"
 
 #: apprise_api/api/templates/config.html:688
@@ -1650,7 +1748,8 @@ msgid "Optional Service"
 msgstr "任意サービス のサポートを無効にしています"
 
 #: apprise_api/api/templates/config.html:2551
-msgid "Optional Service: failures are ignored when determining notification success"
+msgid ""
+"Optional Service: failures are ignored when determining notification success"
 msgstr "オプションサービス: 通知成功の判断時に失敗は無視されます"
 
 #: apprise_api/api/templates/config.html:2674
@@ -1674,7 +1773,9 @@ msgid "Successfully saved the configuration."
 msgstr "設定が正常に保存されました。"
 
 #: apprise_api/api/templates/config.html:2961
-msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
+msgid ""
+"There was an issue writing the configuration to disk. Check your file "
+"permissions and try again."
 msgstr "設定をディスクに書き込む際に問題が発生しました。ファイルの権限を確認して、もう一度お試しください。"
 
 #: apprise_api/api/templates/config.html:2968
@@ -1704,11 +1805,14 @@ msgid "Choose at least one tag before sending."
 msgstr "送信する前に少なくとも1つのタグを選択してください。"
 
 #: apprise_api/api/templates/config.html:3274
-msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
+msgid ""
+"No notification targets are selected. Add configuration endpoints or choose "
+"one or more matching tags before sending."
 msgstr "通知先が選択されていません。送信する前に、設定エンドポイントを追加するか、1つ以上の一致するタグを選択してください。"
 
 #: apprise_api/api/templates/config.html:3289
-msgid "Please provide at least a message body or one attachment before sending."
+msgid ""
+"Please provide at least a message body or one attachment before sending."
 msgstr "送信する前に、メッセージ本文または少なくとも1つの添付ファイルを提供してください。"
 
 #: apprise_api/api/templates/config.html:3338
@@ -1770,7 +1874,8 @@ msgid "Delete Configuration ID?"
 msgstr "構成IDを削除しますか?"
 
 #: apprise_api/api/templates/config_list.html:115
-msgid "This permanently removes this configuration and any login assigned to it."
+msgid ""
+"This permanently removes this configuration and any login assigned to it."
 msgstr "これにより、この構成およびそれに割り当てられたログインが永久に削除されます。"
 
 #: apprise_api/api/templates/config_list.html:131
@@ -1799,21 +1904,26 @@ msgid ""
 "The following services are supported by this\n"
 "            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "この <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> インスタンスでは、次のサービスがサポートされています。"
+msgstr ""
+"この <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" "
+"rel=\"noopener noreferrer\">Apprise</a> インスタンスでは、次のサービスがサポートされています。"
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
 "To see a simplified listing that only identifies the Apprise services\n"
 "          enabled click <a href=\"%(href)s\">here</a>."
-msgstr "有効になっている Apprise サービスのみを簡略表示するには、<a href=\"%(href)s\"> こちら </a> をクリックしてください。"
+msgstr ""
+"有効になっている Apprise サービスのみを簡略表示するには、<a href=\"%(href)s\"> こちら </a> をクリックしてください。"
 
 #: apprise_api/api/templates/details.html:25
 #, python-format
 msgid ""
 "To see a listing that identifies all of Apprise services available to this\n"
 "          version (enabled or not) click <a href=\"%(href)s?all=yes\">here</a>."
-msgstr "このバージョンで利用可能なすべてのAppriseサービス（有効か無効かに関わらず）を確認するには、<a href=\"%(href)s?all=yes\">ここをクリック</a>してください。"
+msgstr ""
+"このバージョンで利用可能なすべてのAppriseサービス（有効か無効かに関わらず）を確認するには、<a "
+"href=\"%(href)s?all=yes\">ここをクリック</a>してください。"
 
 #: apprise_api/api/templates/details.html:30
 msgid "Total plugin(s) supported"
@@ -1870,7 +1980,9 @@ msgid "API Endpoints"
 msgstr "API エンドポイント"
 
 #: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
+msgid ""
+"Developers who wish to receive this result set in a JSON parseable string "
+"for their application can perform the following to achieve this:"
 msgstr "アプリケーションで解析可能なJSON文字列としてこの結果セットを受け取りたい開発者は、以下の手順を実行することでこれを達成できます:"
 
 #: apprise_api/api/templates/details.html:181
@@ -1937,8 +2049,13 @@ msgid "Execute the request"
 msgstr "リクエストを実行"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "JSON フォーマットの詳細は<a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">こちら</a>で確認できます。"
+msgid ""
+"More details on the JSON format can be found <a "
+"href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">here</a>."
+msgstr ""
+"JSON フォーマットの詳細は<a href=\"https://appriseit.com/library/inspection/\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">こちら</a>で確認できます。"
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1960,12 +2077,14 @@ msgid "Provide the login credentials required to access the Apprise API."
 msgstr "Apprise API にアクセスするために必要なログイン資格情報を提供してください。"
 
 #: apprise_api/api/templates/login.html:73
-msgid "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank."
+msgid ""
+"A Configuration ID is required for non-administrative accounts. Global "
+"administrators can leave it blank."
 msgstr "非管理アカウントには構成IDが必要です。グローバル管理者は空白のままにできます。"
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "Android デバイスからこのサーバーを管理します。"
+msgid "Manage this server from your Android or iOS device."
+msgstr "Android / iOS デバイスからこのサーバーを管理します。"
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -2002,7 +2121,10 @@ msgstr "ステートレスエンドポイント"
 msgid ""
 "Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "このAPIをプロジェクトの単なる<a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">サイドカー</a>および/またはマイクロサービスとして扱いたい場合は、次のURLを使用するだけで十分です。"
+msgstr ""
+"このAPIをプロジェクトの単なる<a href=\"https://docs.microsoft.com/en-"
+"us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">サイドカー</a>および/またはマイクロサービスとして扱いたい場合は、次のURLを使用するだけで十分です。"
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2013,7 +2135,10 @@ msgstr "URL"
 msgid ""
 "Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "1つ以上の指定されたApprise URLに通知するために使用されます。<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> を参照してください。URLを作成する際に支援が必要な場合に役立ちます。"
+msgstr ""
+"1つ以上の指定されたApprise URLに通知するために使用されます。<a target=\"_blank\" "
+"href=\"https://appriseit.com/url-builder/\" rel=\"noopener "
+"noreferrer\">Apprise URL Builder</a> を参照してください。URLを作成する際に支援が必要な場合に役立ちます。"
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2061,8 +2186,13 @@ msgid "Notifies an email address with attachments"
 msgstr "添付ファイル付きでメールアドレスに通知します"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "ウェブベースのファイル添付を<a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a>サーバーに送信します："
+msgid ""
+"Send an web based file attachment to a <a "
+"href=\"https://appriseit.com/services/discord/\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Discord</a> server:"
+msgstr ""
+"ウェブベースのファイル添付を<a href=\"https://appriseit.com/services/discord/\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Discord</a>サーバーに送信します："
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2143,7 +2273,8 @@ msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
-msgstr "永続ストアを使用したい場合は、使用できます。このセクションは一度設定すればそのまま放置できるタイプのものです。設定を一度行い、その後は軽量なAPIコールで通知を必要に応じてトリガーしてください。"
+msgstr ""
+"永続ストアを使用したい場合は、使用できます。このセクションは一度設定すればそのまま放置できるタイプのものです。設定を一度行い、その後は軽量なAPIコールで通知を必要に応じてトリガーしてください。"
 
 #: apprise_api/api/templates/welcome.html:276
 msgid ""
@@ -2151,7 +2282,9 @@ msgid ""
 "      encoding.\n"
 "      You must pass along the <code>Content-Type</code> as <code>application/json</code> in order for it to be\n"
 "      interpreted properly."
-msgstr "投稿データを受け取ることを期待しているすべてのエンドポイントは、JSON形式でも、標準のエンコーディングでも受信可能です。正しく解釈されるためには、<code>Content-Type</code>を<code>application/json</code>として渡す必要があります。"
+msgstr ""
+"投稿データを受け取ることを期待しているすべてのエンドポイントは、JSON形式でも、標準のエンコーディングでも受信可能です。正しく解釈されるためには、<code>Content-"
+"Type</code>を<code>application/json</code>として渡す必要があります。"
 
 #: apprise_api/api/templates/welcome.html:295
 #, python-format
@@ -2159,7 +2292,10 @@ msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
 "            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "新しいApprise構成またはURLのセットを追加し、それらを<em>%(key)s</em>のIDで識別される構成に関連付けるために使用します。URLの構築方法については、<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a>を参照してください。"
+msgstr ""
+"新しいApprise構成またはURLのセットを追加し、それらを<em>%(key)s</em>のIDで識別される構成に関連付けるために使用します。URLの構築方法については、<a"
+" target=\"_blank\" href=\"https://appriseit.com/url-builder/\" "
+"rel=\"noopener noreferrer\">Apprise URL Builder</a>を参照してください。"
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
@@ -2179,7 +2315,9 @@ msgid ""
 "                      is\n"
 "                      to tell the server which of the supported (Apprise) configuration types you are passing. Valid\n"
 "                      options are:"
-msgstr "このフィールドは、設定オプションを指定した場合にのみ必要です。その目的は、サーバーにどのサポートされている (Apprise) 設定タイプを渡しているかを伝えることです。有効なオプションは次の通りです："
+msgstr ""
+"このフィールドは、設定オプションを指定した場合にのみ必要です。その目的は、サーバーにどのサポートされている (Apprise) "
+"設定タイプを渡しているかを伝えることです。有効なオプションは次の通りです："
 
 #: apprise_api/api/templates/welcome.html:338
 msgid ""
@@ -2229,7 +2367,9 @@ msgstr "引数は必要ありません。<em>%(key)s</em>の構成IDが存在し
 
 #: apprise_api/api/templates/welcome.html:451
 #, python-format
-msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
+msgid ""
+"Remove previously loaded configuration associated with the id of "
+"<em>%(key)s</em>"
 msgstr "<em>%(key)s</em>のIDに関連する以前に読み込まれた構成を削除します。"
 
 #: apprise_api/api/templates/welcome.html:462
@@ -2242,7 +2382,8 @@ msgstr "リクエストはキーが<em>%(key)s</em>の場合です"
 msgid ""
 "This feature can be used by Apprise itself. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "この機能はApprise自身によって使用できます。これは、<em>%(key)s</em>のIDを通じて識別された構成に関連する構成をリモートで取得する手段を提供します。"
+msgstr ""
+"この機能はApprise自身によって使用できます。これは、<em>%(key)s</em>のIDを通じて識別された構成に関連する構成をリモートで取得する手段を提供します。"
 
 #: apprise_api/api/templates/welcome.html:507
 #: apprise_api/api/templates/welcome.html:521
@@ -2254,11 +2395,14 @@ msgstr "Appriseを使用して構成を取得します:"
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
-msgstr "これは上で定義された<code>%(BASE_URL)s/get/<em>%(key)s</em></code>のエイリアスです。これは、<em>%(key)s</em>のIDを通じて識別された構成に関連する構成をリモートで取得する手段を提供します。"
+msgstr ""
+"これは上で定義された<code>%(BASE_URL)s/get/<em>%(key)s</em></code>のエイリアスです。これは、<em>%(key)s</em>のIDを通じて識別された構成に関連する構成をリモートで取得する手段を提供します。"
 
 #: apprise_api/api/templates/welcome.html:531
 #, python-format
-msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
+msgid ""
+"Notifies the URLs associated with configuration identified by the id of "
+"<em>%(key)s</em>."
 msgstr "<em>%(key)s</em> の ID によって識別される設定に関連付けられた URL に通知します。"
 
 #: apprise_api/api/templates/welcome.html:548
@@ -2299,7 +2443,9 @@ msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "<em>devops</em> タグが割り当てられているすべての URL に通知します。"
 
 #: apprise_api/api/templates/welcome.html:621
-msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
+msgid ""
+"Ideally you should leverage the Apprise Library; it will make your life much"
+" easier:"
 msgstr "理想的には、Apprise ライブラリを活用すべきです。これにより、作業がずっと簡単になります："
 
 #: apprise_api/api/templates/welcome.html:625
@@ -2328,14 +2474,18 @@ msgstr "エンドポイントの注意事項"
 
 #: apprise_api/api/templates/welcome.html:751
 #, python-format
-msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
+msgid ""
+"The Configuration ID (<em>%(key)s</em>) you plan to associate your "
+"configuration with:"
 msgstr "設定に関連付ける予定の設定 ID (<em>%(key)s</em>)："
 
 #: apprise_api/api/templates/welcome.html:755
 msgid ""
 "Cannot have spaces or special characters. A dash (<code>-</code>) and underscore\n"
 "              (<code>_</code>) are the only exceptions to this rule."
-msgstr "スペースや特殊文字を含めることはできません。このルールの例外は、ダッシュ (<code>-</code>) とアンダースコア (<code>_</code>) のみです。"
+msgstr ""
+"スペースや特殊文字を含めることはできません。このルールの例外は、ダッシュ (<code>-</code>) とアンダースコア "
+"(<code>_</code>) のみです。"
 
 #: apprise_api/api/templates/welcome.html:758
 msgid "Must start with at least two alphanumeric characters."
@@ -2344,6 +2494,14 @@ msgstr "少なくとも2文字以上の英数字で開始する必要があり�
 #: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "合計64文字を超えることはできません。"
+
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "Google Play で入手"
 
 #: apprise_api/api/views.py:1157
 msgid "This configuration has been disabled by an administrator"
@@ -2355,7 +2513,8 @@ msgid "Access Denied"
 msgstr "アクセスが拒否されました"
 
 #: apprise_api/api/views.py:1184
-msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
+msgid ""
+"Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "認証モードは無効です（有効にするにはAPPRISE_AUTH_REQUIREDを設定してください）"
 
 #: apprise_api/api/views.py:1193
@@ -2363,7 +2522,8 @@ msgid "Persistent configuration storage is disabled"
 msgstr "永続的な構成ストレージは無効になっています"
 
 #: apprise_api/api/views.py:1202
-msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
+msgid ""
+"A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "構成IDが必要です（URLパスまたはX-Apprise-Config-IDヘッダー）"
 
 #: apprise_api/api/views.py:1215
@@ -2486,7 +2646,8 @@ msgid "The configuration could not be removed"
 msgstr "構成を削除できませんでした"
 
 #: apprise_api/api/views.py:2525
-msgid "The configuration was removed, but its authentication could not be removed"
+msgid ""
+"The configuration was removed, but its authentication could not be removed"
 msgstr "構成は削除されましたが、その認証情報を削除できませんでした"
 
 #: apprise_api/api/views.py:2545
@@ -2534,7 +2695,8 @@ msgid "Successfully removed authentication"
 msgstr "認証の削除に成功しました"
 
 #: apprise_api/api/views.py:3013
-msgid "The server is temporarily unable to start a new live notification stream"
+msgid ""
+"The server is temporarily unable to start a new live notification stream"
 msgstr "サーバーが一時的に新しいライブ通知ストリームを開始できません"
 
 #: apprise_api/api/views.py:3038
@@ -2706,7 +2868,9 @@ msgstr "リクエストが多すぎます"
 
 #: apprise_api/error/templates/429.html:20
 #, python-format
-msgid "Too many login attempts were made. Wait %(retry_after)s seconds before trying again."
+msgid ""
+"Too many login attempts were made. Wait %(retry_after)s seconds before "
+"trying again."
 msgstr "ログインの試行が多すぎました。再試行する前に %(retry_after)s 秒待ってください。"
 
 #: apprise_api/error/templates/50x.html:20

@@ -33,10 +33,15 @@ class WelcomePageTests(SimpleTestCase):
     def test_mobile_app_dialog_is_available(self):
         """The shared dialog links to the app and its product page."""
         response = self.client.get("/")
-        self.assertContains(response, 'id="mobile-beta-dialog"')
-        self.assertContains(response, 'class="apprise-dialog mobile-beta-dialog"')
-        self.assertContains(response, 'class="apprise-dialog-close mobile-beta-dialog__close"')
+        self.assertContains(response, 'id="mobile-app-dialog"')
+        self.assertContains(response, 'class="apprise-dialog mobile-app-dialog"')
+        self.assertContains(response, 'class="apprise-dialog-close mobile-app-dialog__close"')
         self.assertContains(response, 'class="nav-divider mobile-nav-divider"', count=2)
+        self.assertContains(response, 'class="topbar-icon topbar-icon--mobile"')
+        self.assertContains(response, 'class="mobile-app-dialog__icon"')
+        self.assertContains(response, 'class="mobile-app-dialog__learn-more"')
+        self.assertContains(response, '<rect width="14" height="20" x="5" y="2" rx="2"', count=3)
+        self.assertNotContains(response, ">smartphone</i>")
         self.assertContains(response, "https://play.google.com/store/apps/details?id=com.appriseit.mobile")
         self.assertContains(response, "https://appriseit.com/mobile/")
         self.assertNotContains(response, "https://groups.google.com/g/apprise-testers/")
