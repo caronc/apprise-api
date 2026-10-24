@@ -162,6 +162,9 @@ def validate_compose(content: str) -> None:
     if "privileged" in content or "network_mode: host" in content:
         raise SystemExit("docker-compose.yml must not use privileged mode or host networking")
 
+    if "${" in content:
+        raise SystemExit("docker-compose.yml must use literal values; the TOS App Center does not expand ${...}")
+
 
 def build(version: str, platform: str, release_note: str, out_dir: Path) -> Path:
     substitutions = {"VERSION": version, "PLATFORM": platform}
