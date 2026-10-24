@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-24 21:24+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: ms\n"
@@ -92,7 +92,7 @@ msgstr "Nama Pengguna"
 msgid "Password"
 msgstr "Kata Laluan"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1410
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1411
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -122,7 +122,7 @@ msgstr "Kata Laluan Baharu"
 msgid "Confirm New Password"
 msgstr "Sahkan Kata Laluan Baharu"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2777
 msgid "The username cannot be changed by a configuration user"
 msgstr "Nama pengguna tidak boleh diubah oleh pengguna konfigurasi"
 
@@ -165,7 +165,7 @@ msgstr "Konfigurasi"
 msgid "From"
 msgstr "Dari"
 
-#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:159
+#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:158
 msgid "Current Configuration ID"
 msgstr "ID Konfigurasi Semasa"
 
@@ -173,7 +173,7 @@ msgstr "ID Konfigurasi Semasa"
 msgid "To"
 msgstr "Ke"
 
-#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:174
+#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:173
 msgid "New Configuration ID"
 msgstr "ID Konfigurasi Baru"
 
@@ -247,24 +247,24 @@ msgstr "Payload JSON mesti merupakan objek"
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
-#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/base.html:1427
 #: apprise_api/api/templates/base.html:1428
+#: apprise_api/api/templates/base.html:1429
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
 #: apprise_api/api/templates/config.html:3474
 #: apprise_api/api/templates/config.html:3475
 #: apprise_api/api/templates/config.html:3490
+#: apprise_api/api/templates/config_list.html:61
 #: apprise_api/api/templates/config_list.html:62
 #: apprise_api/api/templates/config_list.html:63
-#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:164
 #: apprise_api/api/templates/config_list.html:165
 #: apprise_api/api/templates/config_list.html:166
-#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:179
 #: apprise_api/api/templates/config_list.html:180
 #: apprise_api/api/templates/config_list.html:181
-#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:67
 msgid "Show Config ID"
 msgstr "Tunjukkan ID Konfigurasi"
@@ -273,12 +273,12 @@ msgstr "Tunjukkan ID Konfigurasi"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1429
+#: apprise_api/api/templates/base.html:1430
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
-#: apprise_api/api/templates/config_list.html:65
-#: apprise_api/api/templates/config_list.html:168
-#: apprise_api/api/templates/config_list.html:183
+#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:68
 msgid "Hide Config ID"
 msgstr "Sembunyikan ID Konfigurasi"
@@ -394,7 +394,7 @@ msgstr "Rawakkan ID Konfigurasi Destinasi"
 
 #: apprise_api/api/templates/auth.html:232
 #: apprise_api/api/templates/auth.html:752
-#: apprise_api/api/templates/config_list.html:189
+#: apprise_api/api/templates/config_list.html:188
 msgid "Move"
 msgstr "Pindah"
 
@@ -492,8 +492,8 @@ msgstr "Salin Nama Pengguna, Kata Laluan, dan ID Konfigurasi ke Papan Klip"
 #: apprise_api/api/templates/auth.html:484
 #: apprise_api/api/templates/components/config_id_selector.html:67
 #: apprise_api/api/templates/components/config_id_selector.html:68
+#: apprise_api/api/templates/config_list.html:77
 #: apprise_api/api/templates/config_list.html:78
-#: apprise_api/api/templates/config_list.html:79
 msgid "Show Apprise Mobile Quick Config"
 msgstr "Tunjukkan Apprise Mobile Konfigurasi Pantas"
 
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "Nama pengguna, kata laluan, dan ID konfigurasi disalin ke papan klip"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1040
+#: apprise_api/api/templates/base.html:1041
 msgid "Scan with Apprise Mobile"
 msgstr "Imbas dengan Apprise Mobile"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "Kod QR ini mengandungi kata laluan baharu. Simpan atau kongsikannya dengan selamat sekarang; kata laluan tidak boleh dipaparkan lagi."
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/templates/base.html:1052
 #: apprise_api/api/tests/test_localization.py:413
 msgid "Show Complete URL"
 msgstr "Tunjukkan Lengkap URL"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1053
 msgid "Hide Complete URL"
 msgstr "Sembunyi Lengkap URL"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1054
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "Salin URL ke Papan Klip"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1055
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL disalin ke papan klip"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1055
+#: apprise_api/api/templates/base.html:1056
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "URL ini terlalu panjang untuk dienkod sebagai kod QR. Gunakan butang salin di atas sebaliknya."
 
@@ -568,9 +568,9 @@ msgstr "Tetapkan Semula Akses Pengguna"
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1117
-#: apprise_api/api/templates/config_list.html:119
-#: apprise_api/api/templates/config_list.html:190
+#: apprise_api/api/templates/base.html:1118
+#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
 msgstr "Batal"
 
@@ -604,7 +604,7 @@ msgid "The user access was removed. The saved configuration was kept."
 msgstr "Akses pengguna telah dialihkan. Konfigurasi yang disimpan telah disimpan."
 
 #: apprise_api/api/templates/auth.html:703
-#: apprise_api/api/templates/config_list.html:214
+#: apprise_api/api/templates/config_list.html:213
 msgid "A destination configuration ID is required."
 msgstr "ID konfigurasi destinasi diperlukan."
 
@@ -630,8 +630,8 @@ msgstr "Ke ID Konfigurasi"
 
 #: apprise_api/api/templates/auth.html:776
 #: apprise_api/api/templates/auth.html:798
-#: apprise_api/api/templates/config_list.html:227
-#: apprise_api/api/templates/config_list.html:233
+#: apprise_api/api/templates/config_list.html:226
+#: apprise_api/api/templates/config_list.html:232
 msgid "The configuration could not be moved."
 msgstr "Konfigurasi tidak dapat dipindahkan."
 
@@ -742,7 +742,7 @@ msgid "Configuration Manager"
 msgstr "Pengurus Konfigurasi"
 
 #: apprise_api/api/templates/base.html:280
-#: apprise_api/api/templates/base.html:1405
+#: apprise_api/api/templates/base.html:1406
 msgid "New Configuration"
 msgstr "Konfigurasi Baru"
 
@@ -877,95 +877,95 @@ msgid "Are you sure you wish to log out?"
 msgstr "Adakah anda pasti ingin log keluar?"
 
 #: apprise_api/api/templates/base.html:730
-#: apprise_api/api/templates/base.html:1447
+#: apprise_api/api/templates/base.html:1448
 msgid "Yes"
 msgstr "Ya"
 
 #: apprise_api/api/templates/base.html:731
-#: apprise_api/api/templates/base.html:1448
+#: apprise_api/api/templates/base.html:1449
 msgid "No"
 msgstr "Tidak"
 
-#: apprise_api/api/templates/base.html:879
+#: apprise_api/api/templates/base.html:880
 msgid "Abort Current Task?"
 msgstr "Hentikan Tugas Semasa?"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:881
 msgid "Are you sure you wish to abort the current task?"
 msgstr "Adakah anda pasti ingin menghentikan tugas semasa?"
 
-#: apprise_api/api/templates/base.html:883
+#: apprise_api/api/templates/base.html:884
 msgid "Abort Task"
 msgstr "Hentikan Tugas"
 
-#: apprise_api/api/templates/base.html:884
+#: apprise_api/api/templates/base.html:885
 msgid "Keep Running"
 msgstr "Teruskan Menjalankan"
 
-#: apprise_api/api/templates/base.html:990
+#: apprise_api/api/templates/base.html:991
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
-#: apprise_api/api/templates/config_list.html:54
+#: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "ID Konfigurasi disembunyikan"
 
-#: apprise_api/api/templates/base.html:1007
+#: apprise_api/api/templates/base.html:1008
 msgid "Config ID copied to clipboard"
 msgstr "ID Konfigurasi disalin ke papan klip"
 
-#: apprise_api/api/templates/base.html:1032
-#: apprise_api/api/templates/base.html:1060
+#: apprise_api/api/templates/base.html:1033
+#: apprise_api/api/templates/base.html:1061
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "Kod QR Apprise Mobile tidak dapat dijana."
 
-#: apprise_api/api/templates/base.html:1059
+#: apprise_api/api/templates/base.html:1060
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile Konfigurasi Pantas"
 
-#: apprise_api/api/templates/base.html:1105
-#: apprise_api/api/templates/base.html:1469
+#: apprise_api/api/templates/base.html:1106
+#: apprise_api/api/templates/base.html:1470
 msgid "Enter a valid Config ID before continuing."
 msgstr "Masukkan ID Konfigurasi yang sah sebelum meneruskan."
 
-#: apprise_api/api/templates/base.html:1112
+#: apprise_api/api/templates/base.html:1113
 msgid "Open Configuration"
 msgstr "Buka Konfigurasi"
 
-#: apprise_api/api/templates/base.html:1113
+#: apprise_api/api/templates/base.html:1114
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "Ini membuka ID Konfigurasi yang berbeza. Sebarang perubahan yang tidak disimpan pada halaman ini akan hilang."
 
-#: apprise_api/api/templates/base.html:1116
+#: apprise_api/api/templates/base.html:1117
 msgid "Continue"
 msgstr "Teruskan"
 
-#: apprise_api/api/templates/base.html:1343
-#: apprise_api/api/templates/base.html:1363
+#: apprise_api/api/templates/base.html:1344
+#: apprise_api/api/templates/base.html:1364
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Tidak dapat mencapai titik akhir status Apprise API."
 
-#: apprise_api/api/templates/base.html:1349
+#: apprise_api/api/templates/base.html:1350
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "Penyampaian pemberitahuan telah dinyahaktifkan. Aktifkan pemberitahuan tanpa keadaan atau simpanan berterusan untuk menyambung semula perkhidmatan."
 
-#: apprise_api/api/templates/base.html:1408
+#: apprise_api/api/templates/base.html:1409
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "Pilih ID Konfigurasi baru. Anda boleh mengeditnya atau menjana yang lain sebelum meneruskan."
 
-#: apprise_api/api/templates/base.html:1420
+#: apprise_api/api/templates/base.html:1421
 msgid "New Config ID"
 msgstr "ID Konfigurasi Baru"
 
-#: apprise_api/api/templates/base.html:1436
 #: apprise_api/api/templates/base.html:1437
+#: apprise_api/api/templates/base.html:1438
 msgid "Generate Another Config ID"
 msgstr "Jana ID Konfigurasi Lain"
 
-#: apprise_api/api/templates/base.html:1442
+#: apprise_api/api/templates/base.html:1443
 msgid "Do you wish to open this configuration?"
 msgstr "Adakah anda ingin membuka konfigurasi ini?"
 
-#: apprise_api/api/templates/base.html:1512
+#: apprise_api/api/templates/base.html:1513
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1015,7 +1015,7 @@ msgid "Open Config ID"
 msgstr "Buka ID Konfigurasi"
 
 #: apprise_api/api/templates/components/config_id_selector.html:58
-#: apprise_api/api/templates/config_list.html:71
+#: apprise_api/api/templates/config_list.html:70
 msgid "Copy Config ID to Clipboard"
 msgstr "Salin ID Konfigurasi ke Papan Klip"
 
@@ -1683,7 +1683,7 @@ msgstr "Gagal menyimpan URL yang ditentukan. Semak sintaks anda dan cuba lagi."
 
 #: apprise_api/api/templates/config.html:2986
 #: apprise_api/api/templates/config.html:2993
-#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:117
 msgid "Delete"
 msgstr "Padam"
 
@@ -1745,48 +1745,48 @@ msgstr "Papar Semua ID Konfigurasi"
 msgid "Hide All Config IDs"
 msgstr "Sembunyi Semua ID Konfigurasi"
 
-#: apprise_api/api/templates/config_list.html:31
-msgid "Manage authentication for this Configuration ID"
-msgstr "Urus pengesahan untuk ID Konfigurasi ini"
-
-#: apprise_api/api/templates/config_list.html:39
+#: apprise_api/api/templates/config_list.html:37
 msgid "No Username"
 msgstr "Tiada Nama Pengguna"
 
-#: apprise_api/api/templates/config_list.html:87
+#: apprise_api/api/templates/config_list.html:46
+msgid "Manage authentication for this Configuration ID"
+msgstr "Urus pengesahan untuk ID Konfigurasi ini"
+
+#: apprise_api/api/templates/config_list.html:86
 msgid "Move this Configuration ID"
 msgstr "Pindahkan ID Konfigurasi"
 
-#: apprise_api/api/templates/config_list.html:93
+#: apprise_api/api/templates/config_list.html:92
 msgid "Delete this Configuration ID"
 msgstr "Hapus ID Konfigurasi"
 
-#: apprise_api/api/templates/config_list.html:101
+#: apprise_api/api/templates/config_list.html:100
 msgid "There is no configuration defined."
 msgstr "Tiada konfigurasi ditakrifkan."
 
-#: apprise_api/api/templates/config_list.html:114
+#: apprise_api/api/templates/config_list.html:113
 msgid "Delete Configuration ID?"
 msgstr "Hapus ID Konfigurasi?"
 
-#: apprise_api/api/templates/config_list.html:115
+#: apprise_api/api/templates/config_list.html:114
 msgid "This permanently removes this configuration and any login assigned to it."
 msgstr "Ini akan menghapus konfigurasi ini secara kekal dan sebarang log masuk yang ditetapkan kepadanya."
 
-#: apprise_api/api/templates/config_list.html:131
-#: apprise_api/api/templates/config_list.html:142
+#: apprise_api/api/templates/config_list.html:130
+#: apprise_api/api/templates/config_list.html:141
 msgid "The configuration could not be removed."
 msgstr "Konfigurasi tidak dapat dihapuskan."
 
-#: apprise_api/api/templates/config_list.html:134
+#: apprise_api/api/templates/config_list.html:133
 msgid "Configuration deleted."
 msgstr "Konfigurasi telah dihapus."
 
-#: apprise_api/api/templates/config_list.html:155
+#: apprise_api/api/templates/config_list.html:154
 msgid "Move Configuration ID"
 msgstr "Pindahkan ID Konfigurasi"
 
-#: apprise_api/api/templates/config_list.html:242
+#: apprise_api/api/templates/config_list.html:241
 msgid "Configuration moved."
 msgstr "Konfigurasi dipindahkan."
 
@@ -2345,281 +2345,281 @@ msgstr "Mesti bermula dengan sekurang-kurangnya dua aksara alfanumerik."
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Tidak boleh melebihi 64 aksara bagi keseluruhan panjang."
 
-#: apprise_api/api/views.py:1157
+#: apprise_api/api/views.py:1180
 msgid "This configuration has been disabled by an administrator"
 msgstr "Konfigurasi ini telah dilumpuhkan oleh pentadbir"
 
-#: apprise_api/api/views.py:1168 apprise_api/core/middleware/auth.py:73
+#: apprise_api/api/views.py:1191 apprise_api/core/middleware/auth.py:73
 #: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "Akses Ditolak"
 
-#: apprise_api/api/views.py:1184
+#: apprise_api/api/views.py:1207
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "Mod pengesahan dilumpuhkan (tetapkan APPRISE_AUTH_REQUIRED untuk membolehkannya)"
 
-#: apprise_api/api/views.py:1193
+#: apprise_api/api/views.py:1216
 msgid "Persistent configuration storage is disabled"
 msgstr "Penyimpanan konfigurasi berterusan dilumpuhkan"
 
-#: apprise_api/api/views.py:1202
+#: apprise_api/api/views.py:1225
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "ID konfigurasi diperlukan (laluan URL atau pengepala X-Apprise-Config-ID)"
 
-#: apprise_api/api/views.py:1215
+#: apprise_api/api/views.py:1238
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "Pengepala X-Apprise-Config-ID yang disediakan tidak sah"
 
-#: apprise_api/api/views.py:3203
-msgid "The message body provided is too large"
-msgstr "Kandungan mesej yang diberikan terlalu besar"
-
-#: apprise_api/api/views.py:3220
-msgid "The message body could not be read"
-msgstr "Kandungan mesej tidak dapat dibaca"
-
-#: apprise_api/api/views.py:3238
-msgid "The message body could not be decoded"
-msgstr "Kandungan mesej tidak dapat dinyahkod"
-
-#: apprise_api/api/views.py:3404
-msgid "The X-Apprise-Template header is invalid"
-msgstr "Pengepala X-Apprise-Template tidak sah"
-
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
-#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
-#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
-#: apprise_api/api/views.py:3769
+#: apprise_api/api/views.py:1308 apprise_api/api/views.py:1918
+#: apprise_api/api/views.py:2022 apprise_api/api/views.py:2370
+#: apprise_api/api/views.py:2540 apprise_api/api/views.py:3807
+#: apprise_api/api/views.py:3956
 msgid "The site has been configured to deny this request"
 msgstr "Laman telah dikonfigurasi untuk menolak permintaan ini"
 
-#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
+#: apprise_api/api/views.py:1342 apprise_api/api/views.py:3723
 msgid "An error occurred accessing configuration"
 msgstr "Berlaku ralat semasa mengakses konfigurasi"
 
-#: apprise_api/api/views.py:1481
+#: apprise_api/api/views.py:1504
 msgid "The login form is only available to the web interface"
 msgstr "Borang log masuk hanya tersedia untuk antara muka web"
 
-#: apprise_api/api/views.py:1539
+#: apprise_api/api/views.py:1562
 msgid "The username, password, or Config ID was not accepted."
 msgstr "Nama pengguna, kata laluan, atau ID Konfigurasi tidak diterima."
 
-#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
+#: apprise_api/api/views.py:2051 apprise_api/api/views.py:3301
 msgid "The urls field must be a string or list of strings"
 msgstr "Medan URL mesti berupa string atau senarai string"
 
-#: apprise_api/api/views.py:2008
+#: apprise_api/api/views.py:2059
 msgid "The config field must be a string"
 msgstr "Medan konfigurasi mesti berupa string"
 
-#: apprise_api/api/views.py:2016
+#: apprise_api/api/views.py:2067
 msgid "The format field must be a string"
 msgstr "Medan format mesti berupa string"
 
-#: apprise_api/api/views.py:2029
+#: apprise_api/api/views.py:2080
 msgid "Invalid payload structure provided"
 msgstr "Struktur muatan yang diberikan tidak sah"
 
-#: apprise_api/api/views.py:2057
+#: apprise_api/api/views.py:2108
 msgid "No valid URLs defined"
 msgstr "Tiada URL sah ditakrifkan"
 
-#: apprise_api/api/views.py:2082
+#: apprise_api/api/views.py:2133
 msgid "The configuration could not be saved"
 msgstr "Konfigurasi tidak dapat disimpan"
 
-#: apprise_api/api/views.py:2106
+#: apprise_api/api/views.py:2157
 msgid "The configuration payload is too large"
 msgstr "Muatan konfigurasi terlalu besar"
 
-#: apprise_api/api/views.py:2130
+#: apprise_api/api/views.py:2181
 msgid "Invalid configuration format specified"
 msgstr "Format konfigurasi yang ditentukan tidak sah"
 
-#: apprise_api/api/views.py:2162
+#: apprise_api/api/views.py:2213
 msgid "The configuration format could not be auto-detected"
 msgstr "Format konfigurasi tidak dapat dikesan secara automatik"
 
-#: apprise_api/api/views.py:2188
-msgid "No valid URL(s) defined"
-msgstr "Tiada URL yang sah ditakrifkan"
+#: apprise_api/api/views.py:2246
+msgid "The configuration could not be parsed"
+msgstr "Konfigurasi tidak dapat dihuraikan"
 
-#: apprise_api/api/views.py:2210
+#: apprise_api/api/views.py:2265
 msgid "An error occurred saving configuration"
 msgstr "Ralat berlaku semasa menyimpan konfigurasi"
 
-#: apprise_api/api/views.py:2227
+#: apprise_api/api/views.py:2282
 msgid "No configuration provided"
 msgstr "Tiada konfigurasi disediakan"
 
-#: apprise_api/api/views.py:2256
+#: apprise_api/api/views.py:2311
 msgid "Successfully saved configuration"
 msgstr "Berjaya menyimpan konfigurasi"
 
-#: apprise_api/api/views.py:2353
+#: apprise_api/api/views.py:2408
 msgid "The configuration store is not currently writable"
 msgstr "Stor konfigurasi pada masa ini tidak boleh ditulis"
 
-#: apprise_api/api/views.py:2367
+#: apprise_api/api/views.py:2422
 msgid "A valid destination (to), different from the source, is required"
 msgstr "Destinasi sah (ke), berbeza daripada sumber, diperlukan"
 
-#: apprise_api/api/views.py:2394
+#: apprise_api/api/views.py:2449
 msgid "There was no configuration to move"
 msgstr "Tiada konfigurasi untuk dipindahkan"
 
-#: apprise_api/api/views.py:2405
+#: apprise_api/api/views.py:2460
 msgid "A configuration already exists at the destination"
 msgstr "Konfigurasi sudah wujud di destinasi"
 
-#: apprise_api/api/views.py:2416
+#: apprise_api/api/views.py:2471
 msgid "The configuration could not be moved"
 msgstr "Konfigurasi tidak dapat dipindahkan"
 
-#: apprise_api/api/views.py:2426
+#: apprise_api/api/views.py:2481
 msgid "Successfully moved configuration"
 msgstr "Berjaya memindahkan konfigurasi"
 
-#: apprise_api/api/views.py:2502
+#: apprise_api/api/views.py:2557
 msgid "The configuration could not be removed"
 msgstr "Konfigurasi tidak dapat dikeluarkan"
 
-#: apprise_api/api/views.py:2525
+#: apprise_api/api/views.py:2580
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "Konfigurasi telah dikeluarkan, tetapi pengesahannya tidak dapat dikeluarkan"
 
-#: apprise_api/api/views.py:2545
+#: apprise_api/api/views.py:2600
 msgid "Successfully removed configuration"
 msgstr "Berjaya mengeluarkan konfigurasi"
 
-#: apprise_api/api/views.py:2653
+#: apprise_api/api/views.py:2708
 msgid "Content-Type must be application/json"
 msgstr "Content-Type mesti application/json"
 
-#: apprise_api/api/views.py:2691
+#: apprise_api/api/views.py:2746
 msgid "Only an administrator may set configuration access"
 msgstr "Hanya pentadbir boleh menetapkan akses konfigurasi"
 
-#: apprise_api/api/views.py:2713
+#: apprise_api/api/views.py:2768
 msgid "Valid username and password fields are required"
 msgstr "Medan nama pengguna dan kata laluan yang sah diperlukan"
 
-#: apprise_api/api/views.py:2760
+#: apprise_api/api/views.py:2815
 msgid "The current password was not accepted"
 msgstr "Kata laluan semasa tidak diterima"
 
-#: apprise_api/api/views.py:2768
+#: apprise_api/api/views.py:2823
 msgid "The new password must differ from the current password"
 msgstr "Kata laluan baru mesti berbeza daripada kata laluan semasa"
 
-#: apprise_api/api/views.py:2786
+#: apprise_api/api/views.py:2841
 msgid "The authentication could not be saved"
 msgstr "Pengesahan tidak dapat disimpan"
 
-#: apprise_api/api/views.py:2796
+#: apprise_api/api/views.py:2851
 msgid "Successfully set authentication"
 msgstr "Berjaya menetapkan pengesahan"
 
-#: apprise_api/api/views.py:2839
+#: apprise_api/api/views.py:2894
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "Kredensial pentadbir global diperlukan untuk mengalih keluar pengesahan"
 
-#: apprise_api/api/views.py:2852
+#: apprise_api/api/views.py:2907
 msgid "The authentication could not be removed"
 msgstr "Pengesahan tidak dapat dialih keluar"
 
-#: apprise_api/api/views.py:2862
+#: apprise_api/api/views.py:2917
 msgid "Successfully removed authentication"
 msgstr "Pengesahan berjaya dialih keluar"
 
-#: apprise_api/api/views.py:3013
+#: apprise_api/api/views.py:3068
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "Pelayan sementara tidak dapat memulakan aliran pemberitahuan langsung baru"
 
-#: apprise_api/api/views.py:3038
+#: apprise_api/api/views.py:3093
 msgid "An error occurred delivering the notification"
 msgstr "Ralat berlaku semasa menghantar pemberitahuan"
 
-#: apprise_api/api/views.py:3047
+#: apprise_api/api/views.py:3102
 msgid "One or more notification could not be sent"
 msgstr "Satu atau lebih pemberitahuan tidak dapat dihantar"
 
-#: apprise_api/api/views.py:3103
+#: apprise_api/api/views.py:3158
 msgid "The selected notification entry is invalid"
 msgstr "Entri pemberitahuan yang dipilih tidak sah"
 
-#: apprise_api/api/views.py:3117
+#: apprise_api/api/views.py:3172
 msgid "The selected notification entry is no longer available"
 msgstr "Entri notifikasi yang dipilih tidak lagi tersedia"
 
-#: apprise_api/api/views.py:3142
+#: apprise_api/api/views.py:3205
+msgid "The message body provided is too large"
+msgstr "Kandungan mesej yang diberikan terlalu besar"
+
+#: apprise_api/api/views.py:3222
+msgid "The message body could not be read"
+msgstr "Kandungan mesej tidak dapat dibaca"
+
+#: apprise_api/api/views.py:3240
+msgid "The message body could not be decoded"
+msgstr "Kandungan mesej tidak dapat dinyahkod"
+
+#: apprise_api/api/views.py:3260
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "Pemetaan medan muatan gagal menggunakan KEY: {}"
 
-#: apprise_api/api/views.py:3144
+#: apprise_api/api/views.py:3262
 msgid "Payload field mapping failed"
 msgstr "Pemetaan medan muatan gagal"
 
-#: apprise_api/api/views.py:3157
+#: apprise_api/api/views.py:3275
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "Medan {} mesti berupa string"
 
-#: apprise_api/api/views.py:3169
+#: apprise_api/api/views.py:3287
 msgid "The format field must be a string or null"
 msgstr "Medan format mesti berupa string atau null"
 
-#: apprise_api/api/views.py:3211
+#: apprise_api/api/views.py:3338
 msgid "Bad FORM Payload provided"
 msgstr "Muatan FORM yang diberikan tidak sah"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3358
 msgid "The template field must be an object of name/value pairs"
 msgstr "Medan templat mesti berupa objek pasangan nama/nilai"
 
-#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
+#: apprise_api/api/views.py:3416
+msgid "The X-Apprise-Template header is invalid"
+msgstr "Pengepala X-Apprise-Template tidak sah"
+
+#: apprise_api/api/views.py:3446 apprise_api/api/views.py:3465
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "Tag tertentu selain 'all' diperlukan untuk konfigurasi ini"
 
-#: apprise_api/api/views.py:3273
+#: apprise_api/api/views.py:3458
 msgid "Unsupported characters found in tag definition"
 msgstr "Watak yang tidak disokong ditemui dalam definisi tag"
 
-#: apprise_api/api/views.py:3319
+#: apprise_api/api/views.py:3504
 msgid "Bad Attachment"
 msgstr "Lampiran tidak sah"
 
-#: apprise_api/api/views.py:3351
+#: apprise_api/api/views.py:3536
 msgid "An invalid body input format was specified"
 msgstr "Format input badan yang tidak sah telah ditentukan"
 
-#: apprise_api/api/views.py:3388
+#: apprise_api/api/views.py:3573
 msgid "The recursion limit has been reached"
 msgstr "Had rekursi telah dicapai"
 
-#: apprise_api/api/views.py:3400
+#: apprise_api/api/views.py:3585
 msgid "An invalid recursion value was specified"
 msgstr "Nilai rekursi yang tidak sah telah ditentukan"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3605
 msgid "An error occurred preparing the notification"
 msgstr "Ralat berlaku semasa menyediakan pemberitahuan"
 
-#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
+#: apprise_api/api/views.py:3677 apprise_api/api/views.py:3873
 msgid "Payload lacks minimum requirements"
 msgstr "Muatan tidak memenuhi keperluan minimum"
 
-#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+#: apprise_api/api/views.py:3712 apprise_api/api/views.py:4004
 msgid "There was no configuration found"
 msgstr "Tiada konfigurasi ditemui"
 
-#: apprise_api/api/views.py:3647
+#: apprise_api/api/views.py:3833
 msgid "This configuration does not permit stateless notifications"
 msgstr "Konfigurasi ini tidak membenarkan pemberitahuan tanpa status"
 
-#: apprise_api/api/views.py:3726
+#: apprise_api/api/views.py:3913
 msgid "There was no valid URLs provided to notify"
 msgstr "Tiada URL sah yang diberikan untuk memberitahu"
 

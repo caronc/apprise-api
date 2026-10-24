@@ -27,4 +27,4 @@ Keep this module free of imports so packaging tools and source deployments
 can read the version without loading Django or the Apprise library.
 """
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"

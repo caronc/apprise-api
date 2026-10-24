@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-24 21:24+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: nl\n"
@@ -92,7 +92,7 @@ msgstr "Gebruikersnaam"
 msgid "Password"
 msgstr "Wachtwoord"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1410
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1411
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -122,7 +122,7 @@ msgstr "Nieuw wachtwoord"
 msgid "Confirm New Password"
 msgstr "Bevestig nieuw wachtwoord"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2777
 msgid "The username cannot be changed by a configuration user"
 msgstr "De gebruikersnaam kan niet worden gewijzigd door een configuratiegebruiker"
 
@@ -165,7 +165,7 @@ msgstr "Configuratie"
 msgid "From"
 msgstr "Van"
 
-#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:159
+#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:158
 msgid "Current Configuration ID"
 msgstr "Huidige configuratie-ID"
 
@@ -173,7 +173,7 @@ msgstr "Huidige configuratie-ID"
 msgid "To"
 msgstr "Naar"
 
-#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:174
+#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:173
 msgid "New Configuration ID"
 msgstr "Nieuwe Configuratie-ID"
 
@@ -247,24 +247,24 @@ msgstr "De JSON payload moet een object zijn"
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
-#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/base.html:1427
 #: apprise_api/api/templates/base.html:1428
+#: apprise_api/api/templates/base.html:1429
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
 #: apprise_api/api/templates/config.html:3474
 #: apprise_api/api/templates/config.html:3475
 #: apprise_api/api/templates/config.html:3490
+#: apprise_api/api/templates/config_list.html:61
 #: apprise_api/api/templates/config_list.html:62
 #: apprise_api/api/templates/config_list.html:63
-#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:164
 #: apprise_api/api/templates/config_list.html:165
 #: apprise_api/api/templates/config_list.html:166
-#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:179
 #: apprise_api/api/templates/config_list.html:180
 #: apprise_api/api/templates/config_list.html:181
-#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:67
 msgid "Show Config ID"
 msgstr "Toon Configuratie-ID"
@@ -273,12 +273,12 @@ msgstr "Toon Configuratie-ID"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1429
+#: apprise_api/api/templates/base.html:1430
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
-#: apprise_api/api/templates/config_list.html:65
-#: apprise_api/api/templates/config_list.html:168
-#: apprise_api/api/templates/config_list.html:183
+#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:68
 msgid "Hide Config ID"
 msgstr "Verberg Configuratie-ID"
@@ -394,7 +394,7 @@ msgstr "Randomiseer bestemmings-Config-ID"
 
 #: apprise_api/api/templates/auth.html:232
 #: apprise_api/api/templates/auth.html:752
-#: apprise_api/api/templates/config_list.html:189
+#: apprise_api/api/templates/config_list.html:188
 msgid "Move"
 msgstr "Verplaatsen"
 
@@ -492,8 +492,8 @@ msgstr "Kopieer Gebruikersnaam, Wachtwoord en Configuratie-ID naar Klembord"
 #: apprise_api/api/templates/auth.html:484
 #: apprise_api/api/templates/components/config_id_selector.html:67
 #: apprise_api/api/templates/components/config_id_selector.html:68
+#: apprise_api/api/templates/config_list.html:77
 #: apprise_api/api/templates/config_list.html:78
-#: apprise_api/api/templates/config_list.html:79
 msgid "Show Apprise Mobile Quick Config"
 msgstr "Tonen Apprise Mobile Snelle Configuratie"
 
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "Gebruikersnaam, wachtwoord en Configuratie-ID gekopieerd naar klembord"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1040
+#: apprise_api/api/templates/base.html:1041
 msgid "Scan with Apprise Mobile"
 msgstr "Scannen met Apprise Mobile"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "Deze QR-code bevat het nieuwe wachtwoord. Sla deze nu op of deel deze veilig; het wachtwoord kan niet opnieuw worden weergegeven."
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/templates/base.html:1052
 #: apprise_api/api/tests/test_localization.py:413
 msgid "Show Complete URL"
 msgstr "Volledige Weergave URL"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1053
 msgid "Hide Complete URL"
 msgstr "Volledige Verbergen URL"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1054
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "Kopieer URL naar Klembord"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1055
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL gekopieerd naar klembord"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1055
+#: apprise_api/api/templates/base.html:1056
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "Deze URL is te lang om als QR-code te coderen. Gebruik in plaats daarvan de kopieerknop hierboven."
 
@@ -568,9 +568,9 @@ msgstr "Gebruikers toegang resetten"
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1117
-#: apprise_api/api/templates/config_list.html:119
-#: apprise_api/api/templates/config_list.html:190
+#: apprise_api/api/templates/base.html:1118
+#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
 msgstr "Annuleren"
 
@@ -604,7 +604,7 @@ msgid "The user access was removed. The saved configuration was kept."
 msgstr "De gebruikers toegang is verwijderd. De opgeslagen configuratie is behouden."
 
 #: apprise_api/api/templates/auth.html:703
-#: apprise_api/api/templates/config_list.html:214
+#: apprise_api/api/templates/config_list.html:213
 msgid "A destination configuration ID is required."
 msgstr "Een doelconfiguratie-ID is vereist."
 
@@ -630,8 +630,8 @@ msgstr "Naar Configuratie-ID"
 
 #: apprise_api/api/templates/auth.html:776
 #: apprise_api/api/templates/auth.html:798
-#: apprise_api/api/templates/config_list.html:227
-#: apprise_api/api/templates/config_list.html:233
+#: apprise_api/api/templates/config_list.html:226
+#: apprise_api/api/templates/config_list.html:232
 msgid "The configuration could not be moved."
 msgstr "De configuratie kon niet worden verplaatst."
 
@@ -742,7 +742,7 @@ msgid "Configuration Manager"
 msgstr "Configuratiebeheerder"
 
 #: apprise_api/api/templates/base.html:280
-#: apprise_api/api/templates/base.html:1405
+#: apprise_api/api/templates/base.html:1406
 msgid "New Configuration"
 msgstr "Nieuwe configuratie"
 
@@ -877,95 +877,95 @@ msgid "Are you sure you wish to log out?"
 msgstr "Weet u zeker dat u wilt uitloggen?"
 
 #: apprise_api/api/templates/base.html:730
-#: apprise_api/api/templates/base.html:1447
+#: apprise_api/api/templates/base.html:1448
 msgid "Yes"
 msgstr "Ja"
 
 #: apprise_api/api/templates/base.html:731
-#: apprise_api/api/templates/base.html:1448
+#: apprise_api/api/templates/base.html:1449
 msgid "No"
 msgstr "Nee"
 
-#: apprise_api/api/templates/base.html:879
+#: apprise_api/api/templates/base.html:880
 msgid "Abort Current Task?"
 msgstr "Huidige taak afbreken?"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:881
 msgid "Are you sure you wish to abort the current task?"
 msgstr "Weet u zeker dat u de huidige taak wilt afbreken?"
 
-#: apprise_api/api/templates/base.html:883
+#: apprise_api/api/templates/base.html:884
 msgid "Abort Task"
 msgstr "Taak afbreken"
 
-#: apprise_api/api/templates/base.html:884
+#: apprise_api/api/templates/base.html:885
 msgid "Keep Running"
 msgstr "Blijven uitvoeren"
 
-#: apprise_api/api/templates/base.html:990
+#: apprise_api/api/templates/base.html:991
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
-#: apprise_api/api/templates/config_list.html:54
+#: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "Config ID verborgen"
 
-#: apprise_api/api/templates/base.html:1007
+#: apprise_api/api/templates/base.html:1008
 msgid "Config ID copied to clipboard"
 msgstr "Config ID gekopieerd naar klembord"
 
-#: apprise_api/api/templates/base.html:1032
-#: apprise_api/api/templates/base.html:1060
+#: apprise_api/api/templates/base.html:1033
+#: apprise_api/api/templates/base.html:1061
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "De Apprise Mobile QR-code kon niet worden gegenereerd."
 
-#: apprise_api/api/templates/base.html:1059
+#: apprise_api/api/templates/base.html:1060
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile Snelle Config"
 
-#: apprise_api/api/templates/base.html:1105
-#: apprise_api/api/templates/base.html:1469
+#: apprise_api/api/templates/base.html:1106
+#: apprise_api/api/templates/base.html:1470
 msgid "Enter a valid Config ID before continuing."
 msgstr "Voer een geldig Config ID in voordat u doorgaat."
 
-#: apprise_api/api/templates/base.html:1112
+#: apprise_api/api/templates/base.html:1113
 msgid "Open Configuration"
 msgstr "Configuratie openen"
 
-#: apprise_api/api/templates/base.html:1113
+#: apprise_api/api/templates/base.html:1114
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "Dit opent een ander Config ID. Niet-opgeslagen wijzigingen op deze pagina gaan verloren."
 
-#: apprise_api/api/templates/base.html:1116
+#: apprise_api/api/templates/base.html:1117
 msgid "Continue"
 msgstr "Doorgaan"
 
-#: apprise_api/api/templates/base.html:1343
-#: apprise_api/api/templates/base.html:1363
+#: apprise_api/api/templates/base.html:1344
+#: apprise_api/api/templates/base.html:1364
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Kan Apprise API statusendpoint niet bereiken."
 
-#: apprise_api/api/templates/base.html:1349
+#: apprise_api/api/templates/base.html:1350
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "De levering van meldingen is uitgeschakeld. Schakel stateless meldingen of persistente opslag in om de service te hervatten."
 
-#: apprise_api/api/templates/base.html:1408
+#: apprise_api/api/templates/base.html:1409
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "Kies een nieuwe Configuratie-ID. U kunt deze bewerken of een andere genereren voordat u doorgaat."
 
-#: apprise_api/api/templates/base.html:1420
+#: apprise_api/api/templates/base.html:1421
 msgid "New Config ID"
 msgstr "Nieuwe Configuratie-ID"
 
-#: apprise_api/api/templates/base.html:1436
 #: apprise_api/api/templates/base.html:1437
+#: apprise_api/api/templates/base.html:1438
 msgid "Generate Another Config ID"
 msgstr "Genereer een andere Configuratie-ID"
 
-#: apprise_api/api/templates/base.html:1442
+#: apprise_api/api/templates/base.html:1443
 msgid "Do you wish to open this configuration?"
 msgstr "Wilt u deze configuratie openen?"
 
-#: apprise_api/api/templates/base.html:1512
+#: apprise_api/api/templates/base.html:1513
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1015,7 +1015,7 @@ msgid "Open Config ID"
 msgstr "Configuratie-ID openen"
 
 #: apprise_api/api/templates/components/config_id_selector.html:58
-#: apprise_api/api/templates/config_list.html:71
+#: apprise_api/api/templates/config_list.html:70
 msgid "Copy Config ID to Clipboard"
 msgstr "Configuratie-ID naar klembord kopiëren"
 
@@ -1683,7 +1683,7 @@ msgstr "Kon de opgegeven URL(s) niet opslaan. Controleer uw syntaxis en probeer 
 
 #: apprise_api/api/templates/config.html:2986
 #: apprise_api/api/templates/config.html:2993
-#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:117
 msgid "Delete"
 msgstr "Verwijderen"
 
@@ -1745,48 +1745,48 @@ msgstr "Toon alle Config-ID’s"
 msgid "Hide All Config IDs"
 msgstr "Verberg alle Config-ID’s"
 
-#: apprise_api/api/templates/config_list.html:31
-msgid "Manage authentication for this Configuration ID"
-msgstr "Beheer authenticatie voor deze Config-ID"
-
-#: apprise_api/api/templates/config_list.html:39
+#: apprise_api/api/templates/config_list.html:37
 msgid "No Username"
 msgstr "Geen gebruikersnaam"
 
-#: apprise_api/api/templates/config_list.html:87
+#: apprise_api/api/templates/config_list.html:46
+msgid "Manage authentication for this Configuration ID"
+msgstr "Beheer authenticatie voor deze Config-ID"
+
+#: apprise_api/api/templates/config_list.html:86
 msgid "Move this Configuration ID"
 msgstr "Verplaats deze Configuratie-ID"
 
-#: apprise_api/api/templates/config_list.html:93
+#: apprise_api/api/templates/config_list.html:92
 msgid "Delete this Configuration ID"
 msgstr "Verwijder deze Configuratie-ID"
 
-#: apprise_api/api/templates/config_list.html:101
+#: apprise_api/api/templates/config_list.html:100
 msgid "There is no configuration defined."
 msgstr "Er is geen configuratie gedefinieerd."
 
-#: apprise_api/api/templates/config_list.html:114
+#: apprise_api/api/templates/config_list.html:113
 msgid "Delete Configuration ID?"
 msgstr "Configuratie-ID verwijderen?"
 
-#: apprise_api/api/templates/config_list.html:115
+#: apprise_api/api/templates/config_list.html:114
 msgid "This permanently removes this configuration and any login assigned to it."
 msgstr "Dit verwijdert deze configuratie en alle eraan toegewezen logins permanent."
 
-#: apprise_api/api/templates/config_list.html:131
-#: apprise_api/api/templates/config_list.html:142
+#: apprise_api/api/templates/config_list.html:130
+#: apprise_api/api/templates/config_list.html:141
 msgid "The configuration could not be removed."
 msgstr "De configuratie kon niet worden verwijderd."
 
-#: apprise_api/api/templates/config_list.html:134
+#: apprise_api/api/templates/config_list.html:133
 msgid "Configuration deleted."
 msgstr "Configuratie verwijderd."
 
-#: apprise_api/api/templates/config_list.html:155
+#: apprise_api/api/templates/config_list.html:154
 msgid "Move Configuration ID"
 msgstr "Verplaats Configuratie-ID"
 
-#: apprise_api/api/templates/config_list.html:242
+#: apprise_api/api/templates/config_list.html:241
 msgid "Configuration moved."
 msgstr "Configuratie verplaatst."
 
@@ -2345,281 +2345,281 @@ msgstr "Moet beginnen met ten minste twee alfanumerieke tekens."
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Mag in totaal niet langer zijn dan 64 tekens."
 
-#: apprise_api/api/views.py:1157
+#: apprise_api/api/views.py:1180
 msgid "This configuration has been disabled by an administrator"
 msgstr "Deze configuratie is uitgeschakeld door een beheerder"
 
-#: apprise_api/api/views.py:1168 apprise_api/core/middleware/auth.py:73
+#: apprise_api/api/views.py:1191 apprise_api/core/middleware/auth.py:73
 #: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "Toegang geweigerd"
 
-#: apprise_api/api/views.py:1184
+#: apprise_api/api/views.py:1207
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "Authenticatiemodus is uitgeschakeld (stel APPRISE_AUTH_REQUIRED in om deze in te schakelen)"
 
-#: apprise_api/api/views.py:1193
+#: apprise_api/api/views.py:1216
 msgid "Persistent configuration storage is disabled"
 msgstr "Persistente configuratieopslag is uitgeschakeld"
 
-#: apprise_api/api/views.py:1202
+#: apprise_api/api/views.py:1225
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "Een configuratie-ID is vereist (URL pad of X-Apprise-Config-ID header)"
 
-#: apprise_api/api/views.py:1215
+#: apprise_api/api/views.py:1238
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "De opgegeven X-Apprise-Config-ID header is ongeldig"
 
-#: apprise_api/api/views.py:3203
-msgid "The message body provided is too large"
-msgstr "De opgegeven berichttekst is te groot"
-
-#: apprise_api/api/views.py:3220
-msgid "The message body could not be read"
-msgstr "De berichttekst kon niet worden gelezen"
-
-#: apprise_api/api/views.py:3238
-msgid "The message body could not be decoded"
-msgstr "De berichttekst kon niet worden gedecodeerd"
-
-#: apprise_api/api/views.py:3404
-msgid "The X-Apprise-Template header is invalid"
-msgstr "De X-Apprise-Template-header is ongeldig"
-
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
-#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
-#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
-#: apprise_api/api/views.py:3769
+#: apprise_api/api/views.py:1308 apprise_api/api/views.py:1918
+#: apprise_api/api/views.py:2022 apprise_api/api/views.py:2370
+#: apprise_api/api/views.py:2540 apprise_api/api/views.py:3807
+#: apprise_api/api/views.py:3956
 msgid "The site has been configured to deny this request"
 msgstr "De site is zo geconfigureerd dat dit verzoek wordt geweigerd"
 
-#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
+#: apprise_api/api/views.py:1342 apprise_api/api/views.py:3723
 msgid "An error occurred accessing configuration"
 msgstr "Er is een fout opgetreden bij toegang tot de configuratie"
 
-#: apprise_api/api/views.py:1481
+#: apprise_api/api/views.py:1504
 msgid "The login form is only available to the web interface"
 msgstr "Het inlogformulier is alleen beschikbaar voor de webinterface"
 
-#: apprise_api/api/views.py:1539
+#: apprise_api/api/views.py:1562
 msgid "The username, password, or Config ID was not accepted."
 msgstr "De gebruikersnaam, het wachtwoord of de Config ID werd niet geaccepteerd."
 
-#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
+#: apprise_api/api/views.py:2051 apprise_api/api/views.py:3301
 msgid "The urls field must be a string or list of strings"
 msgstr "Het urls-veld moet een string of een lijst van strings zijn"
 
-#: apprise_api/api/views.py:2008
+#: apprise_api/api/views.py:2059
 msgid "The config field must be a string"
 msgstr "Het config-veld moet een string zijn"
 
-#: apprise_api/api/views.py:2016
+#: apprise_api/api/views.py:2067
 msgid "The format field must be a string"
 msgstr "Het format-veld moet een string zijn"
 
-#: apprise_api/api/views.py:2029
+#: apprise_api/api/views.py:2080
 msgid "Invalid payload structure provided"
 msgstr "Ongeldige payloadstructuur geleverd"
 
-#: apprise_api/api/views.py:2057
+#: apprise_api/api/views.py:2108
 msgid "No valid URLs defined"
 msgstr "Geen geldige URL’s gedefinieerd"
 
-#: apprise_api/api/views.py:2082
+#: apprise_api/api/views.py:2133
 msgid "The configuration could not be saved"
 msgstr "De configuratie kon niet worden opgeslagen"
 
-#: apprise_api/api/views.py:2106
+#: apprise_api/api/views.py:2157
 msgid "The configuration payload is too large"
 msgstr "De configuratiepayload is te groot"
 
-#: apprise_api/api/views.py:2130
+#: apprise_api/api/views.py:2181
 msgid "Invalid configuration format specified"
 msgstr "Ongeldig configuratieformat opgegeven"
 
-#: apprise_api/api/views.py:2162
+#: apprise_api/api/views.py:2213
 msgid "The configuration format could not be auto-detected"
 msgstr "Het configuratieformat kon niet automatisch worden gedetecteerd"
 
-#: apprise_api/api/views.py:2188
-msgid "No valid URL(s) defined"
-msgstr "Geen geldige URL(s) gedefinieerd"
+#: apprise_api/api/views.py:2246
+msgid "The configuration could not be parsed"
+msgstr "De configuratie kon niet worden verwerkt"
 
-#: apprise_api/api/views.py:2210
+#: apprise_api/api/views.py:2265
 msgid "An error occurred saving configuration"
 msgstr "Er is een fout opgetreden bij het opslaan van de configuratie"
 
-#: apprise_api/api/views.py:2227
+#: apprise_api/api/views.py:2282
 msgid "No configuration provided"
 msgstr "Geen configuratie opgegeven"
 
-#: apprise_api/api/views.py:2256
+#: apprise_api/api/views.py:2311
 msgid "Successfully saved configuration"
 msgstr "Configuratie succesvol opgeslagen"
 
-#: apprise_api/api/views.py:2353
+#: apprise_api/api/views.py:2408
 msgid "The configuration store is not currently writable"
 msgstr "De configuratiewinkel is momenteel niet schrijfbaar"
 
-#: apprise_api/api/views.py:2367
+#: apprise_api/api/views.py:2422
 msgid "A valid destination (to), different from the source, is required"
 msgstr "Een geldige bestemming (naar), verschillend van de bron, is vereist"
 
-#: apprise_api/api/views.py:2394
+#: apprise_api/api/views.py:2449
 msgid "There was no configuration to move"
 msgstr "Er was geen configuratie om te verplaatsen"
 
-#: apprise_api/api/views.py:2405
+#: apprise_api/api/views.py:2460
 msgid "A configuration already exists at the destination"
 msgstr "Er bestaat al een configuratie op de bestemming"
 
-#: apprise_api/api/views.py:2416
+#: apprise_api/api/views.py:2471
 msgid "The configuration could not be moved"
 msgstr "De configuratie kon niet worden verplaatst"
 
-#: apprise_api/api/views.py:2426
+#: apprise_api/api/views.py:2481
 msgid "Successfully moved configuration"
 msgstr "Configuratie succesvol verplaatst"
 
-#: apprise_api/api/views.py:2502
+#: apprise_api/api/views.py:2557
 msgid "The configuration could not be removed"
 msgstr "De configuratie kon niet worden verwijderd"
 
-#: apprise_api/api/views.py:2525
+#: apprise_api/api/views.py:2580
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "De configuratie is verwijderd, maar de authenticatie ervan kon niet worden verwijderd"
 
-#: apprise_api/api/views.py:2545
+#: apprise_api/api/views.py:2600
 msgid "Successfully removed configuration"
 msgstr "Configuratie succesvol verwijderd"
 
-#: apprise_api/api/views.py:2653
+#: apprise_api/api/views.py:2708
 msgid "Content-Type must be application/json"
 msgstr "Content-Type moet application/json zijn"
 
-#: apprise_api/api/views.py:2691
+#: apprise_api/api/views.py:2746
 msgid "Only an administrator may set configuration access"
 msgstr "Alleen een administrator mag configuratietoegang instellen"
 
-#: apprise_api/api/views.py:2713
+#: apprise_api/api/views.py:2768
 msgid "Valid username and password fields are required"
 msgstr "Geldige gebruikersnaam- en wachtwoordvelden zijn vereist"
 
-#: apprise_api/api/views.py:2760
+#: apprise_api/api/views.py:2815
 msgid "The current password was not accepted"
 msgstr "Het huidige wachtwoord werd niet geaccepteerd"
 
-#: apprise_api/api/views.py:2768
+#: apprise_api/api/views.py:2823
 msgid "The new password must differ from the current password"
 msgstr "Het nieuwe wachtwoord moet verschillen van het huidige wachtwoord"
 
-#: apprise_api/api/views.py:2786
+#: apprise_api/api/views.py:2841
 msgid "The authentication could not be saved"
 msgstr "De authenticatie kon niet worden opgeslagen"
 
-#: apprise_api/api/views.py:2796
+#: apprise_api/api/views.py:2851
 msgid "Successfully set authentication"
 msgstr "Authenticatie succesvol ingesteld"
 
-#: apprise_api/api/views.py:2839
+#: apprise_api/api/views.py:2894
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "Globale beheerdersreferenties zijn vereist om authenticatie te verwijderen"
 
-#: apprise_api/api/views.py:2852
+#: apprise_api/api/views.py:2907
 msgid "The authentication could not be removed"
 msgstr "De authenticatie kon niet worden verwijderd"
 
-#: apprise_api/api/views.py:2862
+#: apprise_api/api/views.py:2917
 msgid "Successfully removed authentication"
 msgstr "Authenticatie succesvol verwijderd"
 
-#: apprise_api/api/views.py:3013
+#: apprise_api/api/views.py:3068
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "De server kan tijdelijk geen nieuwe live meldingsstroom starten"
 
-#: apprise_api/api/views.py:3038
+#: apprise_api/api/views.py:3093
 msgid "An error occurred delivering the notification"
 msgstr "Er is een fout opgetreden bij het verzenden van de melding"
 
-#: apprise_api/api/views.py:3047
+#: apprise_api/api/views.py:3102
 msgid "One or more notification could not be sent"
 msgstr "Een of meer meldingen konden niet worden verzonden"
 
-#: apprise_api/api/views.py:3103
+#: apprise_api/api/views.py:3158
 msgid "The selected notification entry is invalid"
 msgstr "De geselecteerde meldingsinvoer is ongeldig"
 
-#: apprise_api/api/views.py:3117
+#: apprise_api/api/views.py:3172
 msgid "The selected notification entry is no longer available"
 msgstr "De geselecteerde notificatie-invoer is niet langer beschikbaar"
 
-#: apprise_api/api/views.py:3142
+#: apprise_api/api/views.py:3205
+msgid "The message body provided is too large"
+msgstr "De opgegeven berichttekst is te groot"
+
+#: apprise_api/api/views.py:3222
+msgid "The message body could not be read"
+msgstr "De berichttekst kon niet worden gelezen"
+
+#: apprise_api/api/views.py:3240
+msgid "The message body could not be decoded"
+msgstr "De berichttekst kon niet worden gedecodeerd"
+
+#: apprise_api/api/views.py:3260
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "Mapping van payload-velden mislukt met KEY: {}"
 
-#: apprise_api/api/views.py:3144
+#: apprise_api/api/views.py:3262
 msgid "Payload field mapping failed"
 msgstr "Mapping van payload-velden mislukt"
 
-#: apprise_api/api/views.py:3157
+#: apprise_api/api/views.py:3275
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "Het {} veld moet een tekenreeks zijn"
 
-#: apprise_api/api/views.py:3169
+#: apprise_api/api/views.py:3287
 msgid "The format field must be a string or null"
 msgstr "Het formaatveld moet een tekenreeks of null zijn"
 
-#: apprise_api/api/views.py:3211
+#: apprise_api/api/views.py:3338
 msgid "Bad FORM Payload provided"
 msgstr "Ongeldige FORM payload verstrekt"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3358
 msgid "The template field must be an object of name/value pairs"
 msgstr "Het templateveld moet een object van naam/waarde-paren zijn"
 
-#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
+#: apprise_api/api/views.py:3416
+msgid "The X-Apprise-Template header is invalid"
+msgstr "De X-Apprise-Template-header is ongeldig"
+
+#: apprise_api/api/views.py:3446 apprise_api/api/views.py:3465
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "Een specifieke tag anders dan 'all' is vereist voor deze configuratie"
 
-#: apprise_api/api/views.py:3273
+#: apprise_api/api/views.py:3458
 msgid "Unsupported characters found in tag definition"
 msgstr "Ongepaste tekens gevonden in tagdefinitie"
 
-#: apprise_api/api/views.py:3319
+#: apprise_api/api/views.py:3504
 msgid "Bad Attachment"
 msgstr "Ongeldige bijlage"
 
-#: apprise_api/api/views.py:3351
+#: apprise_api/api/views.py:3536
 msgid "An invalid body input format was specified"
 msgstr "Er is een ongeldig body-invoerformaat opgegeven"
 
-#: apprise_api/api/views.py:3388
+#: apprise_api/api/views.py:3573
 msgid "The recursion limit has been reached"
 msgstr "De recursielimiet is bereikt"
 
-#: apprise_api/api/views.py:3400
+#: apprise_api/api/views.py:3585
 msgid "An invalid recursion value was specified"
 msgstr "Er is een ongeldige recursiewaarde opgegeven"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3605
 msgid "An error occurred preparing the notification"
 msgstr "Er is een fout opgetreden bij het voorbereiden van de notificatie"
 
-#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
+#: apprise_api/api/views.py:3677 apprise_api/api/views.py:3873
 msgid "Payload lacks minimum requirements"
 msgstr "Payload mist de minimale vereisten"
 
-#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+#: apprise_api/api/views.py:3712 apprise_api/api/views.py:4004
 msgid "There was no configuration found"
 msgstr "Er is geen configuratie gevonden"
 
-#: apprise_api/api/views.py:3647
+#: apprise_api/api/views.py:3833
 msgid "This configuration does not permit stateless notifications"
 msgstr "Deze configuratie staat geen stateless notificaties toe"
 
-#: apprise_api/api/views.py:3726
+#: apprise_api/api/views.py:3913
 msgid "There was no valid URLs provided to notify"
 msgstr "Er zijn geen geldige URL’s opgegeven om te informeren"
 

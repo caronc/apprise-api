@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-24 21:24+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: th\n"
@@ -92,7 +92,7 @@ msgstr "ชื่อผู้ใช้"
 msgid "Password"
 msgstr "รหัสผ่าน"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1410
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1411
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -122,7 +122,7 @@ msgstr "รหัสผ่านใหม่"
 msgid "Confirm New Password"
 msgstr "ยืนยันรหัสผ่านใหม่"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2777
 msgid "The username cannot be changed by a configuration user"
 msgstr "ชื่อผู้ใช้ไม่สามารถเปลี่ยนแปลงได้โดยผู้ใช้ที่กำหนดค่า"
 
@@ -165,7 +165,7 @@ msgstr "การกำหนดค่า"
 msgid "From"
 msgstr "จาก"
 
-#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:159
+#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:158
 msgid "Current Configuration ID"
 msgstr "รหัสการตั้งค่าปัจจุบัน"
 
@@ -173,7 +173,7 @@ msgstr "รหัสการตั้งค่าปัจจุบัน"
 msgid "To"
 msgstr "ถึง"
 
-#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:174
+#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:173
 msgid "New Configuration ID"
 msgstr "รหัสการกำหนดค่าใหม่"
 
@@ -247,24 +247,24 @@ msgstr "ข้อมูล JSON ต้องเป็นวัตถุ"
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
-#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/base.html:1427
 #: apprise_api/api/templates/base.html:1428
+#: apprise_api/api/templates/base.html:1429
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
 #: apprise_api/api/templates/config.html:3474
 #: apprise_api/api/templates/config.html:3475
 #: apprise_api/api/templates/config.html:3490
+#: apprise_api/api/templates/config_list.html:61
 #: apprise_api/api/templates/config_list.html:62
 #: apprise_api/api/templates/config_list.html:63
-#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:164
 #: apprise_api/api/templates/config_list.html:165
 #: apprise_api/api/templates/config_list.html:166
-#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:179
 #: apprise_api/api/templates/config_list.html:180
 #: apprise_api/api/templates/config_list.html:181
-#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:67
 msgid "Show Config ID"
 msgstr "แสดงรหัสการตั้งค่า"
@@ -273,12 +273,12 @@ msgstr "แสดงรหัสการตั้งค่า"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1429
+#: apprise_api/api/templates/base.html:1430
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
-#: apprise_api/api/templates/config_list.html:65
-#: apprise_api/api/templates/config_list.html:168
-#: apprise_api/api/templates/config_list.html:183
+#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:68
 msgid "Hide Config ID"
 msgstr "ซ่อนรหัสการตั้งค่า"
@@ -394,7 +394,7 @@ msgstr "สุ่ม Config ID ปลายทาง"
 
 #: apprise_api/api/templates/auth.html:232
 #: apprise_api/api/templates/auth.html:752
-#: apprise_api/api/templates/config_list.html:189
+#: apprise_api/api/templates/config_list.html:188
 msgid "Move"
 msgstr "ย้าย"
 
@@ -492,8 +492,8 @@ msgstr "คัดลอกชื่อผู้ใช้ รหัสผ่า�
 #: apprise_api/api/templates/auth.html:484
 #: apprise_api/api/templates/components/config_id_selector.html:67
 #: apprise_api/api/templates/components/config_id_selector.html:68
+#: apprise_api/api/templates/config_list.html:77
 #: apprise_api/api/templates/config_list.html:78
-#: apprise_api/api/templates/config_list.html:79
 msgid "Show Apprise Mobile Quick Config"
 msgstr "แสดง Apprise Mobile การกำหนดค่าอย่างรวดเร็ว"
 
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "ชื่อผู้ใช้ รหัสผ่าน และรหัสการกำหนดค่าถูกคัดลอกไปที่คลิปบอร์ด"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1040
+#: apprise_api/api/templates/base.html:1041
 msgid "Scan with Apprise Mobile"
 msgstr "สแกนด้วย Apprise Mobile"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "รหัส QR นี้มีรหัสผ่านใหม่ บันทึกหรือแชร์อย่างปลอดภัยตอนนี้ รหัสผ่านจะไม่สามารถแสดงได้อีก"
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/templates/base.html:1052
 #: apprise_api/api/tests/test_localization.py:413
 msgid "Show Complete URL"
 msgstr "แสดงทั้งหมด URL"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1053
 msgid "Hide Complete URL"
 msgstr "ซ่อนทั้งหมด URL"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1054
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "คัดลอก URL ไปที่คลิปบอร์ด"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1055
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL ถูกคัดลอกไปที่คลิปบอร์ด"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1055
+#: apprise_api/api/templates/base.html:1056
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "URL นี้ยาวเกินไปที่จะเข้ารหัสเป็นรหัส QR ใช้ปุ่มคัดลอกด้านบนแทน"
 
@@ -568,9 +568,9 @@ msgstr "รีเซ็ตการเข้าถึงผู้ใช้"
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1117
-#: apprise_api/api/templates/config_list.html:119
-#: apprise_api/api/templates/config_list.html:190
+#: apprise_api/api/templates/base.html:1118
+#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
 msgstr "ยกเลิก"
 
@@ -604,7 +604,7 @@ msgid "The user access was removed. The saved configuration was kept."
 msgstr "การเข้าถึงผู้ใช้ถูกลบแล้ว การตั้งค่าที่บันทึกไว้ยังคงอยู่"
 
 #: apprise_api/api/templates/auth.html:703
-#: apprise_api/api/templates/config_list.html:214
+#: apprise_api/api/templates/config_list.html:213
 msgid "A destination configuration ID is required."
 msgstr "ต้องมีรหัสการตั้งค่าปลายทาง"
 
@@ -630,8 +630,8 @@ msgstr "ไปยัง Config ID"
 
 #: apprise_api/api/templates/auth.html:776
 #: apprise_api/api/templates/auth.html:798
-#: apprise_api/api/templates/config_list.html:227
-#: apprise_api/api/templates/config_list.html:233
+#: apprise_api/api/templates/config_list.html:226
+#: apprise_api/api/templates/config_list.html:232
 msgid "The configuration could not be moved."
 msgstr "การกำหนดค่านี้ไม่สามารถย้ายได้"
 
@@ -742,7 +742,7 @@ msgid "Configuration Manager"
 msgstr "ตัวจัดการการกำหนดค่า"
 
 #: apprise_api/api/templates/base.html:280
-#: apprise_api/api/templates/base.html:1405
+#: apprise_api/api/templates/base.html:1406
 msgid "New Configuration"
 msgstr "การกำหนดค่าใหม่"
 
@@ -877,95 +877,95 @@ msgid "Are you sure you wish to log out?"
 msgstr "คุณแน่ใจหรือว่าต้องการออกจากระบบ?"
 
 #: apprise_api/api/templates/base.html:730
-#: apprise_api/api/templates/base.html:1447
+#: apprise_api/api/templates/base.html:1448
 msgid "Yes"
 msgstr "ใช่"
 
 #: apprise_api/api/templates/base.html:731
-#: apprise_api/api/templates/base.html:1448
+#: apprise_api/api/templates/base.html:1449
 msgid "No"
 msgstr "ไม่ใช่"
 
-#: apprise_api/api/templates/base.html:879
+#: apprise_api/api/templates/base.html:880
 msgid "Abort Current Task?"
 msgstr "ยกเลิกงานปัจจุบัน?"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:881
 msgid "Are you sure you wish to abort the current task?"
 msgstr "คุณแน่ใจหรือว่าต้องการยกเลิกงานปัจจุบัน?"
 
-#: apprise_api/api/templates/base.html:883
+#: apprise_api/api/templates/base.html:884
 msgid "Abort Task"
 msgstr "ยกเลิกงาน"
 
-#: apprise_api/api/templates/base.html:884
+#: apprise_api/api/templates/base.html:885
 msgid "Keep Running"
 msgstr "ดำเนินการต่อ"
 
-#: apprise_api/api/templates/base.html:990
+#: apprise_api/api/templates/base.html:991
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
-#: apprise_api/api/templates/config_list.html:54
+#: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "รหัสการตั้งค่า (Config ID) ถูกซ่อน"
 
-#: apprise_api/api/templates/base.html:1007
+#: apprise_api/api/templates/base.html:1008
 msgid "Config ID copied to clipboard"
 msgstr "รหัสการตั้งค่า (Config ID) ถูกคัดลอกไปยังคลิปบอร์ดแล้ว"
 
-#: apprise_api/api/templates/base.html:1032
-#: apprise_api/api/templates/base.html:1060
+#: apprise_api/api/templates/base.html:1033
+#: apprise_api/api/templates/base.html:1061
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "ไม่สามารถสร้างรหัส QR ของ Apprise Mobile ได้"
 
-#: apprise_api/api/templates/base.html:1059
+#: apprise_api/api/templates/base.html:1060
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile การตั้งค่าอย่างรวดเร็ว"
 
-#: apprise_api/api/templates/base.html:1105
-#: apprise_api/api/templates/base.html:1469
+#: apprise_api/api/templates/base.html:1106
+#: apprise_api/api/templates/base.html:1470
 msgid "Enter a valid Config ID before continuing."
 msgstr "ใส่ Config ID ที่ถูกต้องก่อนดำเนินการต่อ"
 
-#: apprise_api/api/templates/base.html:1112
+#: apprise_api/api/templates/base.html:1113
 msgid "Open Configuration"
 msgstr "เปิดการตั้งค่า"
 
-#: apprise_api/api/templates/base.html:1113
+#: apprise_api/api/templates/base.html:1114
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "นี่จะเปิด Config ID ที่แตกต่างออกไป การเปลี่ยนแปลงที่ยังไม่ได้บันทึกในหน้านี้จะสูญหาย"
 
-#: apprise_api/api/templates/base.html:1116
+#: apprise_api/api/templates/base.html:1117
 msgid "Continue"
 msgstr "ดำเนินการต่อ"
 
-#: apprise_api/api/templates/base.html:1343
-#: apprise_api/api/templates/base.html:1363
+#: apprise_api/api/templates/base.html:1344
+#: apprise_api/api/templates/base.html:1364
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "ไม่สามารถเข้าถึงจุดสิ้นสุดสถานะของ Apprise API ได้"
 
-#: apprise_api/api/templates/base.html:1349
+#: apprise_api/api/templates/base.html:1350
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "การจัดส่งการแจ้งเตือนถูกปิดอยู่ เปิดการแจ้งเตือนแบบไม่มีรัฐหรือการจัดเก็บแบบถาวรเพื่อกลับมาบริการใหม่"
 
-#: apprise_api/api/templates/base.html:1408
+#: apprise_api/api/templates/base.html:1409
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "เลือก ID การตั้งค่าใหม่ คุณสามารถแก้ไขหรือตัวสร้างใหม่ก่อนดำเนินการต่อ"
 
-#: apprise_api/api/templates/base.html:1420
+#: apprise_api/api/templates/base.html:1421
 msgid "New Config ID"
 msgstr "ID การตั้งค่าใหม่"
 
-#: apprise_api/api/templates/base.html:1436
 #: apprise_api/api/templates/base.html:1437
+#: apprise_api/api/templates/base.html:1438
 msgid "Generate Another Config ID"
 msgstr "สร้าง ID การตั้งค่าใหม่อีกครั้ง"
 
-#: apprise_api/api/templates/base.html:1442
+#: apprise_api/api/templates/base.html:1443
 msgid "Do you wish to open this configuration?"
 msgstr "คุณต้องการเปิดการตั้งค่านี้หรือไม่?"
 
-#: apprise_api/api/templates/base.html:1512
+#: apprise_api/api/templates/base.html:1513
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1015,7 +1015,7 @@ msgid "Open Config ID"
 msgstr "เปิด ID การตั้งค่า"
 
 #: apprise_api/api/templates/components/config_id_selector.html:58
-#: apprise_api/api/templates/config_list.html:71
+#: apprise_api/api/templates/config_list.html:70
 msgid "Copy Config ID to Clipboard"
 msgstr "คัดลอก ID การตั้งค่าไปที่คลิปบอร์ด"
 
@@ -1683,7 +1683,7 @@ msgstr "ล้มเหลวในการบันทึก URL (s) ที่
 
 #: apprise_api/api/templates/config.html:2986
 #: apprise_api/api/templates/config.html:2993
-#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:117
 msgid "Delete"
 msgstr "ลบ"
 
@@ -1745,48 +1745,48 @@ msgstr "แสดง ID การกำหนดค่าทั้งหมด"
 msgid "Hide All Config IDs"
 msgstr "ซ่อน ID การกำหนดค่าทั้งหมด"
 
-#: apprise_api/api/templates/config_list.html:31
-msgid "Manage authentication for this Configuration ID"
-msgstr "จัดการการตรวจสอบสิทธิ์สำหรับ ID การกำหนดค่านี้"
-
-#: apprise_api/api/templates/config_list.html:39
+#: apprise_api/api/templates/config_list.html:37
 msgid "No Username"
 msgstr "ไม่มีชื่อผู้ใช้"
 
-#: apprise_api/api/templates/config_list.html:87
+#: apprise_api/api/templates/config_list.html:46
+msgid "Manage authentication for this Configuration ID"
+msgstr "จัดการการตรวจสอบสิทธิ์สำหรับ ID การกำหนดค่านี้"
+
+#: apprise_api/api/templates/config_list.html:86
 msgid "Move this Configuration ID"
 msgstr "ย้ายรหัสการตั้งค่านี้"
 
-#: apprise_api/api/templates/config_list.html:93
+#: apprise_api/api/templates/config_list.html:92
 msgid "Delete this Configuration ID"
 msgstr "ลบรหัสการตั้งค่านี้"
 
-#: apprise_api/api/templates/config_list.html:101
+#: apprise_api/api/templates/config_list.html:100
 msgid "There is no configuration defined."
 msgstr "ยังไม่มีการกำหนดค่าที่ระบุ"
 
-#: apprise_api/api/templates/config_list.html:114
+#: apprise_api/api/templates/config_list.html:113
 msgid "Delete Configuration ID?"
 msgstr "ต้องการลบรหัสการตั้งค่าไหม?"
 
-#: apprise_api/api/templates/config_list.html:115
+#: apprise_api/api/templates/config_list.html:114
 msgid "This permanently removes this configuration and any login assigned to it."
 msgstr "การลบนี้จะลบการตั้งค่านี้และการเข้าสู่ระบบใด ๆ ที่กำหนดให้ด้วยอย่างถาวร"
 
-#: apprise_api/api/templates/config_list.html:131
-#: apprise_api/api/templates/config_list.html:142
+#: apprise_api/api/templates/config_list.html:130
+#: apprise_api/api/templates/config_list.html:141
 msgid "The configuration could not be removed."
 msgstr "ไม่สามารถลบการตั้งค่าได้"
 
-#: apprise_api/api/templates/config_list.html:134
+#: apprise_api/api/templates/config_list.html:133
 msgid "Configuration deleted."
 msgstr "ลบการตั้งค่าเรียบร้อยแล้ว"
 
-#: apprise_api/api/templates/config_list.html:155
+#: apprise_api/api/templates/config_list.html:154
 msgid "Move Configuration ID"
 msgstr "ย้ายรหัสการตั้งค่า"
 
-#: apprise_api/api/templates/config_list.html:242
+#: apprise_api/api/templates/config_list.html:241
 msgid "Configuration moved."
 msgstr "การตั้งค่าได้ถูกย้ายแล้ว"
 
@@ -2345,281 +2345,281 @@ msgstr "ต้องเริ่มด้วยตัวอักษรหรื
 msgid "Cannot exceed 64 characters in total length."
 msgstr "ไม่สามารถเกิน 64 ตัวอักษรทั้งหมด"
 
-#: apprise_api/api/views.py:1157
+#: apprise_api/api/views.py:1180
 msgid "This configuration has been disabled by an administrator"
 msgstr "การตั้งค่านี้ถูกปิดใช้งานโดยผู้ดูแลระบบ"
 
-#: apprise_api/api/views.py:1168 apprise_api/core/middleware/auth.py:73
+#: apprise_api/api/views.py:1191 apprise_api/core/middleware/auth.py:73
 #: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "การเข้าถึงถูกปฏิเสธ"
 
-#: apprise_api/api/views.py:1184
+#: apprise_api/api/views.py:1207
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "โหมดการยืนยันตัวตนถูกปิดใช้งาน (ตั้งค่า APPRISE_AUTH_REQUIRED เพื่อเปิดใช้งาน)"
 
-#: apprise_api/api/views.py:1193
+#: apprise_api/api/views.py:1216
 msgid "Persistent configuration storage is disabled"
 msgstr "การเก็บการตั้งค่าแบบถาวรถูกปิดใช้งาน"
 
-#: apprise_api/api/views.py:1202
+#: apprise_api/api/views.py:1225
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "จำเป็นต้องมี ID การตั้งค่า (เส้นทาง URL หรือหัวข้อ X-Apprise-Config-ID)"
 
-#: apprise_api/api/views.py:1215
+#: apprise_api/api/views.py:1238
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "หัวข้อ X-Apprise-Config-ID ที่ให้มาไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:3203
-msgid "The message body provided is too large"
-msgstr "เนื้อหาข้อความที่ให้มามีขนาดใหญ่เกินไป"
-
-#: apprise_api/api/views.py:3220
-msgid "The message body could not be read"
-msgstr "ไม่สามารถอ่านเนื้อหาข้อความได้"
-
-#: apprise_api/api/views.py:3238
-msgid "The message body could not be decoded"
-msgstr "ไม่สามารถถอดรหัสเนื้อหาข้อความได้"
-
-#: apprise_api/api/views.py:3404
-msgid "The X-Apprise-Template header is invalid"
-msgstr "ส่วนหัว X-Apprise-Template ไม่ถูกต้อง"
-
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
-#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
-#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
-#: apprise_api/api/views.py:3769
+#: apprise_api/api/views.py:1308 apprise_api/api/views.py:1918
+#: apprise_api/api/views.py:2022 apprise_api/api/views.py:2370
+#: apprise_api/api/views.py:2540 apprise_api/api/views.py:3807
+#: apprise_api/api/views.py:3956
 msgid "The site has been configured to deny this request"
 msgstr "เว็บไซต์ถูกตั้งค่าเพื่อปฏิเสธคำขอนี้"
 
-#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
+#: apprise_api/api/views.py:1342 apprise_api/api/views.py:3723
 msgid "An error occurred accessing configuration"
 msgstr "เกิดข้อผิดพลาดในการเข้าถึงการตั้งค่า"
 
-#: apprise_api/api/views.py:1481
+#: apprise_api/api/views.py:1504
 msgid "The login form is only available to the web interface"
 msgstr "แบบฟอร์มการเข้าสู่ระบบสามารถใช้ได้เฉพาะกับส่วนต่อประสานเว็บ"
 
-#: apprise_api/api/views.py:1539
+#: apprise_api/api/views.py:1562
 msgid "The username, password, or Config ID was not accepted."
 msgstr "ชื่อผู้ใช้ รหัสผ่าน หรือ ID การกำหนดค่าไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
+#: apprise_api/api/views.py:2051 apprise_api/api/views.py:3301
 msgid "The urls field must be a string or list of strings"
 msgstr "ฟิลด์ urls ต้องเป็นสตริงหรือรายการของสตริง"
 
-#: apprise_api/api/views.py:2008
+#: apprise_api/api/views.py:2059
 msgid "The config field must be a string"
 msgstr "ฟิลด์ config ต้องเป็นสตริง"
 
-#: apprise_api/api/views.py:2016
+#: apprise_api/api/views.py:2067
 msgid "The format field must be a string"
 msgstr "ฟิลด์ format ต้องเป็นสตริง"
 
-#: apprise_api/api/views.py:2029
+#: apprise_api/api/views.py:2080
 msgid "Invalid payload structure provided"
 msgstr "โครงสร้างข้อมูลที่ส่งมาไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:2057
+#: apprise_api/api/views.py:2108
 msgid "No valid URLs defined"
 msgstr "ไม่มี URL ที่ถูกต้องถูกกำหนด"
 
-#: apprise_api/api/views.py:2082
+#: apprise_api/api/views.py:2133
 msgid "The configuration could not be saved"
 msgstr "ไม่สามารถบันทึกการกำหนดค่าได้"
 
-#: apprise_api/api/views.py:2106
+#: apprise_api/api/views.py:2157
 msgid "The configuration payload is too large"
 msgstr "ข้อมูลการกำหนดค่ามีขนาดใหญ่เกินไป"
 
-#: apprise_api/api/views.py:2130
+#: apprise_api/api/views.py:2181
 msgid "Invalid configuration format specified"
 msgstr "กำหนดรูปแบบการกำหนดค่าไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:2162
+#: apprise_api/api/views.py:2213
 msgid "The configuration format could not be auto-detected"
 msgstr "ไม่สามารถตรวจจับรูปแบบการกำหนดค่าโดยอัตโนมัติได้"
 
-#: apprise_api/api/views.py:2188
-msgid "No valid URL(s) defined"
-msgstr "ไม่มี URL ที่ถูกต้องถูกกำหนด"
+#: apprise_api/api/views.py:2246
+msgid "The configuration could not be parsed"
+msgstr "ไม่สามารถแยกวิเคราะห์การกำหนดค่าได้"
 
-#: apprise_api/api/views.py:2210
+#: apprise_api/api/views.py:2265
 msgid "An error occurred saving configuration"
 msgstr "เกิดข้อผิดพลาดในการบันทึกการกำหนดค่า"
 
-#: apprise_api/api/views.py:2227
+#: apprise_api/api/views.py:2282
 msgid "No configuration provided"
 msgstr "ไม่มีการกำหนดค่าที่ถูกส่งมา"
 
-#: apprise_api/api/views.py:2256
+#: apprise_api/api/views.py:2311
 msgid "Successfully saved configuration"
 msgstr "บันทึกการตั้งค่าเรียบร้อยแล้ว"
 
-#: apprise_api/api/views.py:2353
+#: apprise_api/api/views.py:2408
 msgid "The configuration store is not currently writable"
 msgstr "สตอร์การตั้งค่าไม่สามารถเขียนได้ในขณะนี้"
 
-#: apprise_api/api/views.py:2367
+#: apprise_api/api/views.py:2422
 msgid "A valid destination (to), different from the source, is required"
 msgstr "จำเป็นต้องมีปลายทางที่ถูกต้อง (ไปยัง) ซึ่งแตกต่างจากต้นทาง"
 
-#: apprise_api/api/views.py:2394
+#: apprise_api/api/views.py:2449
 msgid "There was no configuration to move"
 msgstr "ไม่มีการตั้งค่าให้ย้าย"
 
-#: apprise_api/api/views.py:2405
+#: apprise_api/api/views.py:2460
 msgid "A configuration already exists at the destination"
 msgstr "มีการตั้งค่าที่ปลายทางอยู่แล้ว"
 
-#: apprise_api/api/views.py:2416
+#: apprise_api/api/views.py:2471
 msgid "The configuration could not be moved"
 msgstr "ไม่สามารถย้ายการตั้งค่าได้"
 
-#: apprise_api/api/views.py:2426
+#: apprise_api/api/views.py:2481
 msgid "Successfully moved configuration"
 msgstr "ย้ายการตั้งค่าเรียบร้อยแล้ว"
 
-#: apprise_api/api/views.py:2502
+#: apprise_api/api/views.py:2557
 msgid "The configuration could not be removed"
 msgstr "ไม่สามารถลบการตั้งค่าได้"
 
-#: apprise_api/api/views.py:2525
+#: apprise_api/api/views.py:2580
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "การตั้งค่าถูกลบแล้ว แต่การตรวจสอบสิทธิ์ของมันไม่สามารถลบได้"
 
-#: apprise_api/api/views.py:2545
+#: apprise_api/api/views.py:2600
 msgid "Successfully removed configuration"
 msgstr "ลบการตั้งค่าเรียบร้อยแล้ว"
 
-#: apprise_api/api/views.py:2653
+#: apprise_api/api/views.py:2708
 msgid "Content-Type must be application/json"
 msgstr "ประเภทเนื้อหาต้องเป็น application/json"
 
-#: apprise_api/api/views.py:2691
+#: apprise_api/api/views.py:2746
 msgid "Only an administrator may set configuration access"
 msgstr "เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถกำหนดการเข้าถึงการตั้งค่าได้"
 
-#: apprise_api/api/views.py:2713
+#: apprise_api/api/views.py:2768
 msgid "Valid username and password fields are required"
 msgstr "ต้องมีช่องชื่อผู้ใช้และรหัสผ่านที่ถูกต้อง"
 
-#: apprise_api/api/views.py:2760
+#: apprise_api/api/views.py:2815
 msgid "The current password was not accepted"
 msgstr "รหัสผ่านปัจจุบันไม่ถูกยอมรับ"
 
-#: apprise_api/api/views.py:2768
+#: apprise_api/api/views.py:2823
 msgid "The new password must differ from the current password"
 msgstr "รหัสผ่านใหม่ต้องแตกต่างจากรหัสผ่านปัจจุบัน"
 
-#: apprise_api/api/views.py:2786
+#: apprise_api/api/views.py:2841
 msgid "The authentication could not be saved"
 msgstr "ไม่สามารถบันทึกการตรวจสอบสิทธิ์ได้"
 
-#: apprise_api/api/views.py:2796
+#: apprise_api/api/views.py:2851
 msgid "Successfully set authentication"
 msgstr "การตั้งค่าการตรวจสอบสิทธิ์สำเร็จ"
 
-#: apprise_api/api/views.py:2839
+#: apprise_api/api/views.py:2894
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "จำเป็นต้องใช้ข้อมูลประจำตัวของผู้ดูแลระบบทั่วโลกเพื่อยกเลิกการตรวจสอบสิทธิ์"
 
-#: apprise_api/api/views.py:2852
+#: apprise_api/api/views.py:2907
 msgid "The authentication could not be removed"
 msgstr "ไม่สามารถยกเลิกการตรวจสอบสิทธิ์ได้"
 
-#: apprise_api/api/views.py:2862
+#: apprise_api/api/views.py:2917
 msgid "Successfully removed authentication"
 msgstr "ยกเลิกการตรวจสอบสิทธิ์สำเร็จ"
 
-#: apprise_api/api/views.py:3013
+#: apprise_api/api/views.py:3068
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "เซิร์ฟเวอร์ไม่สามารถเริ่มสตรีมการแจ้งเตือนสดใหม่ได้ชั่วคราว"
 
-#: apprise_api/api/views.py:3038
+#: apprise_api/api/views.py:3093
 msgid "An error occurred delivering the notification"
 msgstr "เกิดข้อผิดพลาดในการส่งการแจ้งเตือน"
 
-#: apprise_api/api/views.py:3047
+#: apprise_api/api/views.py:3102
 msgid "One or more notification could not be sent"
 msgstr "การแจ้งเตือนหนึ่งรายการหรือมากกว่าไม่สามารถส่งได้"
 
-#: apprise_api/api/views.py:3103
+#: apprise_api/api/views.py:3158
 msgid "The selected notification entry is invalid"
 msgstr "รายการแจ้งเตือนที่เลือกไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:3117
+#: apprise_api/api/views.py:3172
 msgid "The selected notification entry is no longer available"
 msgstr "รายการการแจ้งเตือนที่เลือกไม่พร้อมใช้งานอีกต่อไป"
 
-#: apprise_api/api/views.py:3142
+#: apprise_api/api/views.py:3205
+msgid "The message body provided is too large"
+msgstr "เนื้อหาข้อความที่ให้มามีขนาดใหญ่เกินไป"
+
+#: apprise_api/api/views.py:3222
+msgid "The message body could not be read"
+msgstr "ไม่สามารถอ่านเนื้อหาข้อความได้"
+
+#: apprise_api/api/views.py:3240
+msgid "The message body could not be decoded"
+msgstr "ไม่สามารถถอดรหัสเนื้อหาข้อความได้"
+
+#: apprise_api/api/views.py:3260
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "การแมปฟิลด์เพย์โหลดล้มเหลวโดยใช้ KEY: {}"
 
-#: apprise_api/api/views.py:3144
+#: apprise_api/api/views.py:3262
 msgid "Payload field mapping failed"
 msgstr "การแมปฟิลด์เพย์โหลดล้มเหลว"
 
-#: apprise_api/api/views.py:3157
+#: apprise_api/api/views.py:3275
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "ฟิลด์ {} ต้องเป็นสตริง"
 
-#: apprise_api/api/views.py:3169
+#: apprise_api/api/views.py:3287
 msgid "The format field must be a string or null"
 msgstr "ฟิลด์รูปแบบต้องเป็นสตริงหรือเป็นค่าว่าง"
 
-#: apprise_api/api/views.py:3211
+#: apprise_api/api/views.py:3338
 msgid "Bad FORM Payload provided"
 msgstr "การเพย์โหลด FORM ที่ให้มาไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3358
 msgid "The template field must be an object of name/value pairs"
 msgstr "ฟิลด์เทมเพลตต้องเป็นออบเจ็กต์ที่มีคู่ชื่อ/ค่า"
 
-#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
+#: apprise_api/api/views.py:3416
+msgid "The X-Apprise-Template header is invalid"
+msgstr "ส่วนหัว X-Apprise-Template ไม่ถูกต้อง"
+
+#: apprise_api/api/views.py:3446 apprise_api/api/views.py:3465
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "ต้องมีแท็กเฉพาะที่ไม่ใช่ 'all' สำหรับการกำหนดค่านี้"
 
-#: apprise_api/api/views.py:3273
+#: apprise_api/api/views.py:3458
 msgid "Unsupported characters found in tag definition"
 msgstr "พบอักขระที่ไม่รองรับในคำจำกัดความแท็ก"
 
-#: apprise_api/api/views.py:3319
+#: apprise_api/api/views.py:3504
 msgid "Bad Attachment"
 msgstr "ไฟล์แนบไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:3351
+#: apprise_api/api/views.py:3536
 msgid "An invalid body input format was specified"
 msgstr "ระบุรูปแบบอินพุตเนื้อหาที่ไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:3388
+#: apprise_api/api/views.py:3573
 msgid "The recursion limit has been reached"
 msgstr "ถึงขีดจำกัดการเรียกซ้ำ"
 
-#: apprise_api/api/views.py:3400
+#: apprise_api/api/views.py:3585
 msgid "An invalid recursion value was specified"
 msgstr "ระบุค่าการเรียกซ้ำที่ไม่ถูกต้อง"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3605
 msgid "An error occurred preparing the notification"
 msgstr "เกิดข้อผิดพลาดระหว่างการจัดเตรียมการแจ้งเตือน"
 
-#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
+#: apprise_api/api/views.py:3677 apprise_api/api/views.py:3873
 msgid "Payload lacks minimum requirements"
 msgstr "ข้อมูล Payload ขาดข้อกำหนดขั้นต่ำ"
 
-#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+#: apprise_api/api/views.py:3712 apprise_api/api/views.py:4004
 msgid "There was no configuration found"
 msgstr "ไม่พบการตั้งค่า"
 
-#: apprise_api/api/views.py:3647
+#: apprise_api/api/views.py:3833
 msgid "This configuration does not permit stateless notifications"
 msgstr "การตั้งค่านี้ไม่อนุญาตให้มีการแจ้งเตือนแบบไม่มีสถานะ"
 
-#: apprise_api/api/views.py:3726
+#: apprise_api/api/views.py:3913
 msgid "There was no valid URLs provided to notify"
 msgstr "ไม่มี URL ที่ถูกต้องสำหรับการแจ้งเตือน"
 

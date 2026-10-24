@@ -4,6 +4,7 @@
 import argparse
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -61,6 +62,25 @@ def _unsafe_entries(catalog):
     return unsafe
 
 
+def _syntax_errors(path):
+    """Return msgfmt's complaints about one PO catalog, or an empty list."""
+    # polib skips over some broken lines without saying anything (such as a
+    # translation missing its opening quote). msgfmt is the gettext compiler
+    # and rejects them, so it is the one to trust.
+    msgfmt = shutil.which("msgfmt")
+    if not msgfmt:
+        return ["msgfmt not found; install gettext to check catalog syntax"]
+    result = subprocess.run(
+        [msgfmt, "--check", "--output-file", os.devnull, str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return []
+    return [line for line in result.stderr.splitlines() if line.strip()]
+
+
 def _catalog_issues(path):
     """Return missing, fuzzy, and unsafe messages from one PO catalog."""
     catalog = polib.pofile(path)
@@ -102,6 +122,14 @@ def _report():
             issue_count += 1
             continue
 
+        # A broken file cannot be trusted for the checks below.
+        errors = _syntax_errors(path)
+        if errors:
+            for error in errors:
+                print(f"  - Syntax: {error}")
+            issue_count += 1
+            continue
+
         catalog, missing, fuzzy, metadata_fuzzy, unsafe = _catalog_issues(path)
         # Summarize complete catalogs instead of printing every message.
         if not missing and not fuzzy and not metadata_fuzzy and not unsafe:
@@ -124,7 +152,7 @@ def _report():
     if issue_count:
         print(f"\nFound {issue_count} translation issue(s).")
     else:
-        print("\nAll translation catalogs are complete and contain no fuzzy or unsafe entries.")
+        print("\nAll translation catalogs are valid, complete, and contain no fuzzy or unsafe entries.")
     return issue_count
 
 

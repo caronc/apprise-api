@@ -45,6 +45,7 @@ jobs:
     - name: Install prerequisites
       run: |
         sudo apt-get update
+        sudo apt-get install -y gettext
 
     - name: Install dependencies
       run: |
@@ -53,6 +54,16 @@ jobs:
     - name: Lint with Ruff
       run: |
         ruff check apprise_api scripts
+
+    - name: Check translation catalog syntax
+      # Only broken files fail here; missing or rough translations are
+      # tidied up before a release with `tox -e translations -- --update`.
+      run: |
+        failed=0
+        for catalog in apprise_api/locale/*/LC_MESSAGES/django.po; do
+          msgfmt --check --output-file /dev/null "$catalog" || failed=1
+        done
+        exit $failed
 
     - name: Run tests with coverage
       run: |

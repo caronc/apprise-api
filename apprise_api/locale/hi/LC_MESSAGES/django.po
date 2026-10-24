@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 19:49+0000\n"
+"POT-Creation-Date: 2026-10-24 21:24+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: hi\n"
@@ -92,7 +92,7 @@ msgstr "यूज़रनेम"
 msgid "Password"
 msgstr "पासवर्ड"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1410
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1411
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -122,7 +122,7 @@ msgstr "नया पासवर्ड"
 msgid "Confirm New Password"
 msgstr "नया पासवर्ड पुष्टि करें"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2722
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2777
 msgid "The username cannot be changed by a configuration user"
 msgstr "उपयोगकर्ता नाम को एक कॉन्फ़िगरेशन उपयोगकर्ता द्वारा बदला नहीं जा सकता"
 
@@ -165,7 +165,7 @@ msgstr "कॉन्फ़िगरेशन"
 msgid "From"
 msgstr "से"
 
-#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:159
+#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:158
 msgid "Current Configuration ID"
 msgstr "मौजूदा कॉन्फ़िगरेशन ID"
 
@@ -173,7 +173,7 @@ msgstr "मौजूदा कॉन्फ़िगरेशन ID"
 msgid "To"
 msgstr "तक"
 
-#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:174
+#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:173
 msgid "New Configuration ID"
 msgstr "नया कॉन्फ़िगरेशन आईडी"
 
@@ -247,24 +247,24 @@ msgstr "पेलोड एक ऑब्जेक्ट होना चाह�
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
-#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/base.html:1427
 #: apprise_api/api/templates/base.html:1428
+#: apprise_api/api/templates/base.html:1429
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
 #: apprise_api/api/templates/config.html:3474
 #: apprise_api/api/templates/config.html:3475
 #: apprise_api/api/templates/config.html:3490
+#: apprise_api/api/templates/config_list.html:61
 #: apprise_api/api/templates/config_list.html:62
 #: apprise_api/api/templates/config_list.html:63
-#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:164
 #: apprise_api/api/templates/config_list.html:165
 #: apprise_api/api/templates/config_list.html:166
-#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:179
 #: apprise_api/api/templates/config_list.html:180
 #: apprise_api/api/templates/config_list.html:181
-#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:67
 msgid "Show Config ID"
 msgstr "कॉन्फ़िग ID"
@@ -273,12 +273,12 @@ msgstr "कॉन्फ़िग ID"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1429
+#: apprise_api/api/templates/base.html:1430
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
-#: apprise_api/api/templates/config_list.html:65
-#: apprise_api/api/templates/config_list.html:168
-#: apprise_api/api/templates/config_list.html:183
+#: apprise_api/api/templates/config_list.html:64
+#: apprise_api/api/templates/config_list.html:167
+#: apprise_api/api/templates/config_list.html:182
 #: apprise_api/api/templates/login.html:68
 msgid "Hide Config ID"
 msgstr "दिखाएँ कॉन्फ़िग ID"
@@ -394,7 +394,7 @@ msgstr "गंतव्य Config ID यादृच्छिक करें"
 
 #: apprise_api/api/templates/auth.html:232
 #: apprise_api/api/templates/auth.html:752
-#: apprise_api/api/templates/config_list.html:189
+#: apprise_api/api/templates/config_list.html:188
 msgid "Move"
 msgstr "ले जाएँ"
 
@@ -492,8 +492,8 @@ msgstr "यूज़रनेम, पासवर्ड, और कॉन्फ�
 #: apprise_api/api/templates/auth.html:484
 #: apprise_api/api/templates/components/config_id_selector.html:67
 #: apprise_api/api/templates/components/config_id_selector.html:68
+#: apprise_api/api/templates/config_list.html:77
 #: apprise_api/api/templates/config_list.html:78
-#: apprise_api/api/templates/config_list.html:79
 msgid "Show Apprise Mobile Quick Config"
 msgstr "दिखाएँ Apprise Mobile त्वरित कॉन्फ़िग"
 
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "यूज़रनेम, पासवर्ड, और कॉन्फ़िग आईडी क्लिपबोर्ड पर कॉपी किया गया"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1040
+#: apprise_api/api/templates/base.html:1041
 msgid "Scan with Apprise Mobile"
 msgstr "स्कैन करें Apprise Mobile"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "इस QR कोड में नया पासवर्ड शामिल है। इसे अभी सहेजें या सुरक्षित रूप से साझा करें; पासवर्ड को फिर से नहीं दिखाया जा सकता।"
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/templates/base.html:1052
 #: apprise_api/api/tests/test_localization.py:413
 msgid "Show Complete URL"
 msgstr "पूरा दिखाएँ URL"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1053
 msgid "Hide Complete URL"
 msgstr "पूरा छुपाएँ URL"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1054
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "URL को क्लिपबोर्ड पर कॉपी करें"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1055
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL क्लिपबोर्ड पर कॉपी किया गया"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1055
+#: apprise_api/api/templates/base.html:1056
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "यह URL QR कोड के रूप में एन्कोड करने के लिए बहुत लंबा है। इसके बजाय ऊपर दिया गया कॉपी बटन उपयोग करें।"
 
@@ -568,9 +568,9 @@ msgstr "उपयोगकर्ता एक्सेस रीसेट कर
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1117
-#: apprise_api/api/templates/config_list.html:119
-#: apprise_api/api/templates/config_list.html:190
+#: apprise_api/api/templates/base.html:1118
+#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
 msgstr "रद्द करें"
 
@@ -604,7 +604,7 @@ msgid "The user access was removed. The saved configuration was kept."
 msgstr "उपयोगकर्ता पहुँच हटा दी गई थी। सहेजी गई कॉन्फ़िगरेशन रखी गई थी।"
 
 #: apprise_api/api/templates/auth.html:703
-#: apprise_api/api/templates/config_list.html:214
+#: apprise_api/api/templates/config_list.html:213
 msgid "A destination configuration ID is required."
 msgstr "एक गंतव्य कॉन्फ़िगरेशन आईडी आवश्यक है।"
 
@@ -630,8 +630,8 @@ msgstr "पर कॉन्फ़िग आईडी"
 
 #: apprise_api/api/templates/auth.html:776
 #: apprise_api/api/templates/auth.html:798
-#: apprise_api/api/templates/config_list.html:227
-#: apprise_api/api/templates/config_list.html:233
+#: apprise_api/api/templates/config_list.html:226
+#: apprise_api/api/templates/config_list.html:232
 msgid "The configuration could not be moved."
 msgstr "में स्थानांतरित करें। कॉन्फ़िगरेशन को स्थानांतरित नहीं किया जा सका।"
 
@@ -742,7 +742,7 @@ msgid "Configuration Manager"
 msgstr "कॉन्फ़िगरेशन मैनेजर"
 
 #: apprise_api/api/templates/base.html:280
-#: apprise_api/api/templates/base.html:1405
+#: apprise_api/api/templates/base.html:1406
 msgid "New Configuration"
 msgstr "नया कॉन्फ़िगरेशन"
 
@@ -877,95 +877,95 @@ msgid "Are you sure you wish to log out?"
 msgstr "क्या आप वाकई लॉग आउट करना चाहते हैं?"
 
 #: apprise_api/api/templates/base.html:730
-#: apprise_api/api/templates/base.html:1447
+#: apprise_api/api/templates/base.html:1448
 msgid "Yes"
 msgstr "हां"
 
 #: apprise_api/api/templates/base.html:731
-#: apprise_api/api/templates/base.html:1448
+#: apprise_api/api/templates/base.html:1449
 msgid "No"
 msgstr "नहीं"
 
-#: apprise_api/api/templates/base.html:879
+#: apprise_api/api/templates/base.html:880
 msgid "Abort Current Task?"
 msgstr "वर्तमान कार्य रद्द करना चाहते हैं?"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:881
 msgid "Are you sure you wish to abort the current task?"
 msgstr "क्या आप वाकई वर्तमान कार्य रद्द करना चाहते हैं?"
 
-#: apprise_api/api/templates/base.html:883
+#: apprise_api/api/templates/base.html:884
 msgid "Abort Task"
 msgstr "कार्य रद्द करें"
 
-#: apprise_api/api/templates/base.html:884
+#: apprise_api/api/templates/base.html:885
 msgid "Keep Running"
 msgstr "चलाना जारी रखें"
 
-#: apprise_api/api/templates/base.html:990
+#: apprise_api/api/templates/base.html:991
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
-#: apprise_api/api/templates/config_list.html:54
+#: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "कॉन्फ़िग आईडी छिपी हुई"
 
-#: apprise_api/api/templates/base.html:1007
+#: apprise_api/api/templates/base.html:1008
 msgid "Config ID copied to clipboard"
 msgstr "कॉन्फ़िग आईडी क्लिपबोर्ड में कॉपी की गई"
 
-#: apprise_api/api/templates/base.html:1032
-#: apprise_api/api/templates/base.html:1060
+#: apprise_api/api/templates/base.html:1033
+#: apprise_api/api/templates/base.html:1061
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "Apprise Mobile QR कोड जनरेट नहीं किया जा सका।"
 
-#: apprise_api/api/templates/base.html:1059
+#: apprise_api/api/templates/base.html:1060
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile त्वरित कॉन्फ़िग"
 
-#: apprise_api/api/templates/base.html:1105
-#: apprise_api/api/templates/base.html:1469
+#: apprise_api/api/templates/base.html:1106
+#: apprise_api/api/templates/base.html:1470
 msgid "Enter a valid Config ID before continuing."
 msgstr "जारी रखने से पहले वैध कॉन्फ़िग आईडी दर्ज करें।"
 
-#: apprise_api/api/templates/base.html:1112
+#: apprise_api/api/templates/base.html:1113
 msgid "Open Configuration"
 msgstr "कॉन्फ़िगरेशन खोलें"
 
-#: apprise_api/api/templates/base.html:1113
+#: apprise_api/api/templates/base.html:1114
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "यह अलग कॉन्फ़िग आईडी खोलता है। इस पृष्ठ पर कोई भी असुरक्षित परिवर्तन खो जाएगा।"
 
-#: apprise_api/api/templates/base.html:1116
+#: apprise_api/api/templates/base.html:1117
 msgid "Continue"
 msgstr "जारी रखें"
 
-#: apprise_api/api/templates/base.html:1343
-#: apprise_api/api/templates/base.html:1363
+#: apprise_api/api/templates/base.html:1344
+#: apprise_api/api/templates/base.html:1364
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Apprise API स्थिति एन्डपॉइंट तक पहुँचना असंभव।"
 
-#: apprise_api/api/templates/base.html:1349
+#: apprise_api/api/templates/base.html:1350
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "सूचना वितरण अक्षम है। सेवा फिर से शुरू करने के लिए स्टेटलेस सूचनाओं या स्थायी भंडारण को सक्षम करें।"
 
-#: apprise_api/api/templates/base.html:1408
+#: apprise_api/api/templates/base.html:1409
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "नया कॉन्फ़िग आईडी चुनें। आप इसे संपादित कर सकते हैं या जारी रखने से पहले दूसरा उत्पन्न कर सकते हैं।"
 
-#: apprise_api/api/templates/base.html:1420
+#: apprise_api/api/templates/base.html:1421
 msgid "New Config ID"
 msgstr "नया कॉन्फ़िग आईडी"
 
-#: apprise_api/api/templates/base.html:1436
 #: apprise_api/api/templates/base.html:1437
+#: apprise_api/api/templates/base.html:1438
 msgid "Generate Another Config ID"
 msgstr "एक और कॉन्फ़िग आईडी उत्पन्न करें"
 
-#: apprise_api/api/templates/base.html:1442
+#: apprise_api/api/templates/base.html:1443
 msgid "Do you wish to open this configuration?"
 msgstr "क्या आप इस कॉन्फ़िगरेशन को खोलना चाहते हैं?"
 
-#: apprise_api/api/templates/base.html:1512
+#: apprise_api/api/templates/base.html:1513
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1015,7 +1015,7 @@ msgid "Open Config ID"
 msgstr "कॉन्फ़िग आईडी खोलें"
 
 #: apprise_api/api/templates/components/config_id_selector.html:58
-#: apprise_api/api/templates/config_list.html:71
+#: apprise_api/api/templates/config_list.html:70
 msgid "Copy Config ID to Clipboard"
 msgstr "कॉन्फ़िग आईडी को क्लिपबोर्ड पर कॉपी करें"
 
@@ -1684,7 +1684,7 @@ msgstr "निर्दिष्ट URL(s) को सहेजने में �
 
 #: apprise_api/api/templates/config.html:2986
 #: apprise_api/api/templates/config.html:2993
-#: apprise_api/api/templates/config_list.html:118
+#: apprise_api/api/templates/config_list.html:117
 msgid "Delete"
 msgstr "हटाएँ"
 
@@ -1746,48 +1746,48 @@ msgstr "सभी कॉन्फ़िग आईडी दिखाएँ"
 msgid "Hide All Config IDs"
 msgstr "सभी कॉन्फ़िग आईडी छुपाएँ"
 
-#: apprise_api/api/templates/config_list.html:31
-msgid "Manage authentication for this Configuration ID"
-msgstr "इस कॉन्फ़िगरेशन आईडी के लिए प्रमाणीकरण प्रबंधित करें"
-
-#: apprise_api/api/templates/config_list.html:39
+#: apprise_api/api/templates/config_list.html:37
 msgid "No Username"
 msgstr "कोई उपयोगकर्ता नाम नहीं"
 
-#: apprise_api/api/templates/config_list.html:87
+#: apprise_api/api/templates/config_list.html:46
+msgid "Manage authentication for this Configuration ID"
+msgstr "इस कॉन्फ़िगरेशन आईडी के लिए प्रमाणीकरण प्रबंधित करें"
+
+#: apprise_api/api/templates/config_list.html:86
 msgid "Move this Configuration ID"
 msgstr "इस कॉन्फ़िगरेशन ID"
 
-#: apprise_api/api/templates/config_list.html:93
+#: apprise_api/api/templates/config_list.html:92
 msgid "Delete this Configuration ID"
 msgstr "को स्थानांतरित करें इस कॉन्फ़िगरेशन ID"
 
-#: apprise_api/api/templates/config_list.html:101
+#: apprise_api/api/templates/config_list.html:100
 msgid "There is no configuration defined."
 msgstr "को हटाएँ कोई कॉन्फ़िगरेशन परिभाषित नहीं है।"
 
-#: apprise_api/api/templates/config_list.html:114
+#: apprise_api/api/templates/config_list.html:113
 msgid "Delete Configuration ID?"
 msgstr "कॉन्फ़िगरेशन ID हटाएँ?"
 
-#: apprise_api/api/templates/config_list.html:115
+#: apprise_api/api/templates/config_list.html:114
 msgid "This permanently removes this configuration and any login assigned to it."
 msgstr "यह इस कॉन्फ़िगरेशन और इससे जुड़ी किसी भी लॉगिन को स्थायी रूप से हटा देता है।"
 
-#: apprise_api/api/templates/config_list.html:131
-#: apprise_api/api/templates/config_list.html:142
+#: apprise_api/api/templates/config_list.html:130
+#: apprise_api/api/templates/config_list.html:141
 msgid "The configuration could not be removed."
 msgstr "कॉन्फ़िगरेशन को हटाया नहीं जा सका।"
 
-#: apprise_api/api/templates/config_list.html:134
+#: apprise_api/api/templates/config_list.html:133
 msgid "Configuration deleted."
 msgstr "कॉन्फ़िगरेशन हटा दिया गया।"
 
-#: apprise_api/api/templates/config_list.html:155
+#: apprise_api/api/templates/config_list.html:154
 msgid "Move Configuration ID"
 msgstr "कॉन्फ़िगरेशन ID"
 
-#: apprise_api/api/templates/config_list.html:242
+#: apprise_api/api/templates/config_list.html:241
 msgid "Configuration moved."
 msgstr "को स्थानांतरित करें कॉन्फ़िगरेशन स्थानांतरित किया गया।"
 
@@ -2346,281 +2346,281 @@ msgstr "कम से कम दो अल्फ़ान्यूमेरि�
 msgid "Cannot exceed 64 characters in total length."
 msgstr "कुल लंबाई 64 अक्षरों से अधिक नहीं हो सकती।"
 
-#: apprise_api/api/views.py:1157
+#: apprise_api/api/views.py:1180
 msgid "This configuration has been disabled by an administrator"
 msgstr "इस विन्यास को एक प्रशासक द्वारा अक्षम कर दिया गया है"
 
-#: apprise_api/api/views.py:1168 apprise_api/core/middleware/auth.py:73
+#: apprise_api/api/views.py:1191 apprise_api/core/middleware/auth.py:73
 #: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "पहुंच अस्वीकार कर दी गई"
 
-#: apprise_api/api/views.py:1184
+#: apprise_api/api/views.py:1207
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "प्रमाणीकरण मोड अक्षम है (इसे सक्षम करने के लिए APPRISE_AUTH_REQUIRED सेट करें)"
 
-#: apprise_api/api/views.py:1193
+#: apprise_api/api/views.py:1216
 msgid "Persistent configuration storage is disabled"
 msgstr "स्थायी विन्यास संग्रहण अक्षम है"
 
-#: apprise_api/api/views.py:1202
+#: apprise_api/api/views.py:1225
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "एक विन्यास आईडी आवश्यक है (URL पथ या X-Apprise-Config-ID हेडर)"
 
-#: apprise_api/api/views.py:1215
+#: apprise_api/api/views.py:1238
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "प्रदान किया गया X-Apprise-Config-ID हेडर अमान्य है"
 
-#: apprise_api/api/views.py:3203
-msgid "The message body provided is too large"
-msgstr "दिया गया संदेश का मुख्य भाग बहुत बड़ा है"
-
-#: apprise_api/api/views.py:3220
-msgid "The message body could not be read"
-msgstr "संदेश का मुख्य भाग पढ़ा नहीं जा सका"
-
-#: apprise_api/api/views.py:3238
-msgid "The message body could not be decoded"
-msgstr "संदेश का मुख्य भाग डिकोड नहीं किया जा सका"
-
-#: apprise_api/api/views.py:3404
-msgid "The X-Apprise-Template header is invalid"
-msgstr "X-Apprise-Template हेडर अमान्य है"
-
-#: apprise_api/api/views.py:1285 apprise_api/api/views.py:1895
-#: apprise_api/api/views.py:1975 apprise_api/api/views.py:2315
-#: apprise_api/api/views.py:2485 apprise_api/api/views.py:3621
-#: apprise_api/api/views.py:3769
+#: apprise_api/api/views.py:1308 apprise_api/api/views.py:1918
+#: apprise_api/api/views.py:2022 apprise_api/api/views.py:2370
+#: apprise_api/api/views.py:2540 apprise_api/api/views.py:3807
+#: apprise_api/api/views.py:3956
 msgid "The site has been configured to deny this request"
 msgstr "साइट को इस अनुरोध को अस्वीकार करने के लिए कॉन्फ़िगर किया गया है"
 
-#: apprise_api/api/views.py:1319 apprise_api/api/views.py:3537
+#: apprise_api/api/views.py:1342 apprise_api/api/views.py:3723
 msgid "An error occurred accessing configuration"
 msgstr "विन्यास तक पहुँचने में त्रुटि हुई"
 
-#: apprise_api/api/views.py:1481
+#: apprise_api/api/views.py:1504
 msgid "The login form is only available to the web interface"
 msgstr "लॉगिन फॉर्म केवल वेब इंटरफेस के लिए उपलब्ध है"
 
-#: apprise_api/api/views.py:1539
+#: apprise_api/api/views.py:1562
 msgid "The username, password, or Config ID was not accepted."
 msgstr "उपयोगकर्ता नाम, पासवर्ड, या कॉन्फ़िग आईडी स्वीकार नहीं किया गया।"
 
-#: apprise_api/api/views.py:2000 apprise_api/api/views.py:3183
+#: apprise_api/api/views.py:2051 apprise_api/api/views.py:3301
 msgid "The urls field must be a string or list of strings"
 msgstr "urls फ़ील्ड एक स्ट्रिंग या स्ट्रिंग्स की सूची होनी चाहिए"
 
-#: apprise_api/api/views.py:2008
+#: apprise_api/api/views.py:2059
 msgid "The config field must be a string"
 msgstr "config फ़ील्ड एक स्ट्रिंग होनी चाहिए"
 
-#: apprise_api/api/views.py:2016
+#: apprise_api/api/views.py:2067
 msgid "The format field must be a string"
 msgstr "format फ़ील्ड एक स्ट्रिंग होनी चाहिए"
 
-#: apprise_api/api/views.py:2029
+#: apprise_api/api/views.py:2080
 msgid "Invalid payload structure provided"
 msgstr "अमान्य पेलोड संरचना प्रदान की गई"
 
-#: apprise_api/api/views.py:2057
+#: apprise_api/api/views.py:2108
 msgid "No valid URLs defined"
 msgstr "कोई वैध URLs परिभाषित नहीं हैं"
 
-#: apprise_api/api/views.py:2082
+#: apprise_api/api/views.py:2133
 msgid "The configuration could not be saved"
 msgstr "कॉन्फ़िगरेशन को सहेजा नहीं जा सका"
 
-#: apprise_api/api/views.py:2106
+#: apprise_api/api/views.py:2157
 msgid "The configuration payload is too large"
 msgstr "कॉन्फ़िगरेशन पेलोड बहुत बड़ा है"
 
-#: apprise_api/api/views.py:2130
+#: apprise_api/api/views.py:2181
 msgid "Invalid configuration format specified"
 msgstr "निर्दिष्ट कॉन्फ़िगरेशन प्रारूप अमान्य है"
 
-#: apprise_api/api/views.py:2162
+#: apprise_api/api/views.py:2213
 msgid "The configuration format could not be auto-detected"
 msgstr "कॉन्फ़िगरेशन प्रारूप को स्वचालित रूप से पता नहीं लगाया जा सका"
 
-#: apprise_api/api/views.py:2188
-msgid "No valid URL(s) defined"
-msgstr "कोई मान्य URL निर्दिष्ट नहीं है"
+#: apprise_api/api/views.py:2246
+msgid "The configuration could not be parsed"
+msgstr "कॉन्फ़िगरेशन को पार्स नहीं किया जा सका"
 
-#: apprise_api/api/views.py:2210
+#: apprise_api/api/views.py:2265
 msgid "An error occurred saving configuration"
 msgstr "कॉन्फ़िगरेशन सहेजने में त्रुटि हुई"
 
-#: apprise_api/api/views.py:2227
+#: apprise_api/api/views.py:2282
 msgid "No configuration provided"
 msgstr "कोई कॉन्फ़िगरेशन प्रदान नहीं किया गया"
 
-#: apprise_api/api/views.py:2256
+#: apprise_api/api/views.py:2311
 msgid "Successfully saved configuration"
 msgstr "सफलतापूर्वक संरचना सहेजी गई"
 
-#: apprise_api/api/views.py:2353
+#: apprise_api/api/views.py:2408
 msgid "The configuration store is not currently writable"
 msgstr "वर्तमान में संरचना स्टोर लिखने योग्य नहीं है"
 
-#: apprise_api/api/views.py:2367
+#: apprise_api/api/views.py:2422
 msgid "A valid destination (to), different from the source, is required"
 msgstr "स्रोत से अलग एक वैध गंतव्य (to) आवश्यक है"
 
-#: apprise_api/api/views.py:2394
+#: apprise_api/api/views.py:2449
 msgid "There was no configuration to move"
 msgstr "स्थानांतरित करने के लिए कोई संरचना नहीं थी"
 
-#: apprise_api/api/views.py:2405
+#: apprise_api/api/views.py:2460
 msgid "A configuration already exists at the destination"
 msgstr "गंतव्य पर पहले से ही एक संरचना मौजूद है"
 
-#: apprise_api/api/views.py:2416
+#: apprise_api/api/views.py:2471
 msgid "The configuration could not be moved"
 msgstr "संरचना को स्थानांतरित नहीं किया जा सका"
 
-#: apprise_api/api/views.py:2426
+#: apprise_api/api/views.py:2481
 msgid "Successfully moved configuration"
 msgstr "सफलतापूर्वक कॉन्फ़िगरेशन को स्थानांतरित किया गया"
 
-#: apprise_api/api/views.py:2502
+#: apprise_api/api/views.py:2557
 msgid "The configuration could not be removed"
 msgstr "कॉन्फ़िगरेशन को हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2525
+#: apprise_api/api/views.py:2580
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "कॉन्फ़िगरेशन हटा दिया गया, लेकिन इसकी प्रमाणीकरण को हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2545
+#: apprise_api/api/views.py:2600
 msgid "Successfully removed configuration"
 msgstr "सफलतापूर्वक कॉन्फ़िगरेशन हटाया गया"
 
-#: apprise_api/api/views.py:2653
+#: apprise_api/api/views.py:2708
 msgid "Content-Type must be application/json"
 msgstr "Content-Type application/json होना चाहिए"
 
-#: apprise_api/api/views.py:2691
+#: apprise_api/api/views.py:2746
 msgid "Only an administrator may set configuration access"
 msgstr "केवल एक प्रशासक ही कॉन्फ़िगरेशन एक्सेस सेट कर सकता है"
 
-#: apprise_api/api/views.py:2713
+#: apprise_api/api/views.py:2768
 msgid "Valid username and password fields are required"
 msgstr "मान्य उपयोगकर्ता नाम और पासवर्ड फ़ील्ड की आवश्यकता है"
 
-#: apprise_api/api/views.py:2760
+#: apprise_api/api/views.py:2815
 msgid "The current password was not accepted"
 msgstr "वर्तमान पासवर्ड स्वीकार नहीं किया गया"
 
-#: apprise_api/api/views.py:2768
+#: apprise_api/api/views.py:2823
 msgid "The new password must differ from the current password"
 msgstr "नया पासवर्ड वर्तमान पासवर्ड से अलग होना चाहिए"
 
-#: apprise_api/api/views.py:2786
+#: apprise_api/api/views.py:2841
 msgid "The authentication could not be saved"
 msgstr "प्रमाणीकरण सहेजा नहीं जा सका"
 
-#: apprise_api/api/views.py:2796
+#: apprise_api/api/views.py:2851
 msgid "Successfully set authentication"
 msgstr "प्रमाणीकरण सफलतापूर्वक सेट किया गया"
 
-#: apprise_api/api/views.py:2839
+#: apprise_api/api/views.py:2894
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "प्रमाणीकरण हटाने के लिए वैश्विक व्यवस्थापक क्रेडेंशियल्स की आवश्यकता है"
 
-#: apprise_api/api/views.py:2852
+#: apprise_api/api/views.py:2907
 msgid "The authentication could not be removed"
 msgstr "प्रमाणीकरण हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2862
+#: apprise_api/api/views.py:2917
 msgid "Successfully removed authentication"
 msgstr "प्रमाणीकरण सफलतापूर्वक हटा दिया गया"
 
-#: apprise_api/api/views.py:3013
+#: apprise_api/api/views.py:3068
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "सर्वर अस्थायी रूप से नई लाइव अधिसूचना स्ट्रीम शुरू करने में असमर्थ है"
 
-#: apprise_api/api/views.py:3038
+#: apprise_api/api/views.py:3093
 msgid "An error occurred delivering the notification"
 msgstr "अधिसूचना भेजते समय एक त्रुटि हुई"
 
-#: apprise_api/api/views.py:3047
+#: apprise_api/api/views.py:3102
 msgid "One or more notification could not be sent"
 msgstr "एक या अधिक अधिसूचना नहीं भेजी जा सकी"
 
-#: apprise_api/api/views.py:3103
+#: apprise_api/api/views.py:3158
 msgid "The selected notification entry is invalid"
 msgstr "चयनित अधिसूचना प्रविष्टि अमान्य है"
 
-#: apprise_api/api/views.py:3117
+#: apprise_api/api/views.py:3172
 msgid "The selected notification entry is no longer available"
 msgstr "चयनित सूचना प्रविष्टि अब उपलब्ध नहीं है"
 
-#: apprise_api/api/views.py:3142
+#: apprise_api/api/views.py:3205
+msgid "The message body provided is too large"
+msgstr "दिया गया संदेश का मुख्य भाग बहुत बड़ा है"
+
+#: apprise_api/api/views.py:3222
+msgid "The message body could not be read"
+msgstr "संदेश का मुख्य भाग पढ़ा नहीं जा सका"
+
+#: apprise_api/api/views.py:3240
+msgid "The message body could not be decoded"
+msgstr "संदेश का मुख्य भाग डिकोड नहीं किया जा सका"
+
+#: apprise_api/api/views.py:3260
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "पेलोड फ़ील्ड मैपिंग KEY का उपयोग करके विफल रही: {}"
 
-#: apprise_api/api/views.py:3144
+#: apprise_api/api/views.py:3262
 msgid "Payload field mapping failed"
 msgstr "पेलोड फ़ील्ड मैपिंग विफल रही"
 
-#: apprise_api/api/views.py:3157
+#: apprise_api/api/views.py:3275
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} फ़ील्ड एक स्ट्रिंग होना चाहिए"
 
-#: apprise_api/api/views.py:3169
+#: apprise_api/api/views.py:3287
 msgid "The format field must be a string or null"
 msgstr "फ़ॉर्मेट फ़ील्ड एक स्ट्रिंग या शून्य होना चाहिए"
 
-#: apprise_api/api/views.py:3211
+#: apprise_api/api/views.py:3338
 msgid "Bad FORM Payload provided"
 msgstr "खराब FORM पेलोड प्रदान किया गया"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3358
 msgid "The template field must be an object of name/value pairs"
 msgstr "टेम्पलेट फ़ील्ड नाम/मान जोड़े वाले ऑब्जेक्ट होना चाहिए"
 
-#: apprise_api/api/views.py:3261 apprise_api/api/views.py:3280
+#: apprise_api/api/views.py:3416
+msgid "The X-Apprise-Template header is invalid"
+msgstr "X-Apprise-Template हेडर अमान्य है"
+
+#: apprise_api/api/views.py:3446 apprise_api/api/views.py:3465
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "इस कॉन्फ़िगरेशन के लिए 'all' के अलावा एक विशेष टैग आवश्यक है"
 
-#: apprise_api/api/views.py:3273
+#: apprise_api/api/views.py:3458
 msgid "Unsupported characters found in tag definition"
 msgstr "टैग परिभाषा में असमर्थित वर्ण पाए गए"
 
-#: apprise_api/api/views.py:3319
+#: apprise_api/api/views.py:3504
 msgid "Bad Attachment"
 msgstr "खराब संलग्नक"
 
-#: apprise_api/api/views.py:3351
+#: apprise_api/api/views.py:3536
 msgid "An invalid body input format was specified"
 msgstr "एक अमान्य बॉडी इनपुट फ़ॉर्मेट निर्दिष्ट किया गया"
 
-#: apprise_api/api/views.py:3388
+#: apprise_api/api/views.py:3573
 msgid "The recursion limit has been reached"
 msgstr "पुनरावृत्ति सीमा तक पहुँच गई"
 
-#: apprise_api/api/views.py:3400
+#: apprise_api/api/views.py:3585
 msgid "An invalid recursion value was specified"
 msgstr "एक अमान्य पुनरावृत्ति मान निर्दिष्ट किया गया"
 
-#: apprise_api/api/views.py:3420
+#: apprise_api/api/views.py:3605
 msgid "An error occurred preparing the notification"
 msgstr "सूचना"
 
-#: apprise_api/api/views.py:3491 apprise_api/api/views.py:3686
+#: apprise_api/api/views.py:3677 apprise_api/api/views.py:3873
 msgid "Payload lacks minimum requirements"
 msgstr "तैयार करते समय एक त्रुटि हुई। पेलोड में न्यूनतम आवश्यकताएँ नहीं हैं"
 
-#: apprise_api/api/views.py:3526 apprise_api/api/views.py:3817
+#: apprise_api/api/views.py:3712 apprise_api/api/views.py:4004
 msgid "There was no configuration found"
 msgstr "कोई विन्यास नहीं मिला"
 
-#: apprise_api/api/views.py:3647
+#: apprise_api/api/views.py:3833
 msgid "This configuration does not permit stateless notifications"
 msgstr "यह कॉन्फ़िगरेशन स्टेटलेस सूचनाओं की अनुमति नहीं देता"
 
-#: apprise_api/api/views.py:3726
+#: apprise_api/api/views.py:3913
 msgid "There was no valid URLs provided to notify"
 msgstr "सूचित करने के लिए कोई मान्य URL प्रदान नहीं किया गया"
 
