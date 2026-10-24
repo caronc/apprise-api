@@ -36,6 +36,7 @@ from unittest.mock import patch
 from core.version import __version__
 from django.conf import settings
 from django.test import SimpleTestCase
+import yaml
 
 from ..context_processors import apprise_metadata
 
@@ -85,3 +86,9 @@ class VersionTests(SimpleTestCase):
         repo_root = Path(settings.BASE_DIR).parent
         builder = runpy.run_path(str(repo_root / "packaging" / "terramaster" / "build-package.py"))
         self.assertEqual(builder["detect_version"](), __version__)
+
+    def test_openapi_spec_uses_api_version(self):
+        """The OpenAPI spec reports the same API version."""
+        swagger = Path(settings.BASE_DIR).parent / "swagger.yaml"
+        spec = yaml.safe_load(swagger.read_text(encoding="utf-8"))
+        self.assertEqual(spec["info"]["version"], __version__)
