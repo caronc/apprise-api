@@ -1,6 +1,6 @@
 # TerraMaster TOS 7 Packaging
 ```bash
-# Sets version to whatever pyproject.toml is configured to:
+# Uses the shared version in apprise_api/core/version.py:
 python3 packaging/terramaster/build-package.py
 
 # Explicit Configuration

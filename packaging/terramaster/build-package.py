@@ -45,6 +45,7 @@ import io
 from json import JSONDecodeError, loads
 from pathlib import Path
 import re
+import runpy
 import sys
 import tarfile
 
@@ -84,12 +85,8 @@ REPO_ROOT = PACKAGE_DIR.parent.parent
 
 
 def detect_version() -> str:
-    """Parse version out of pyproject.toml"""
-    text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', text)
-    if not match:
-        raise SystemExit('Could not find version = "..." in pyproject.toml')
-    return match.group(1)
+    """Read the shared API version without importing application dependencies."""
+    return runpy.run_path(str(REPO_ROOT / "apprise_api" / "core" / "version.py"))["__version__"]
 
 
 def to_lf(text: str) -> str:
@@ -230,7 +227,7 @@ def main() -> None:
     parser.add_argument(
         "--version",
         default=None,
-        help="Version to embed (default: read from pyproject.toml)",
+        help="Version to embed (default: read from apprise_api/core/version.py)",
     )
     parser.add_argument(
         "--platform",
