@@ -30,3 +30,15 @@ gh release upload vX.Y.Z \
 
 The Release tag, `config.ini.version`, and the version entered on the TNAS
 Developer Platform must all match exactly.
+
+## Privacy Policy
+
+TerraMaster requires a privacy policy link with each submission. Use:
+
+```text
+https://appriseit.com/api/privacy/
+```
+
+The template values in `docker-compose.yml` must be literal (for example
+`PUID=1000`, not `PUID=${PUID:-1000}`) because the TOS App Center does not
+expand them.

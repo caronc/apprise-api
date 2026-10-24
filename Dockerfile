@@ -41,11 +41,12 @@ RUN --mount=type=bind,from=builder,source=/wheels,target=/wheels \
     set -eux && \
     echo "Installing nginx" && \
         apt-get update -qq && \
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+        DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
             nginx \
             tzdata && \
     echo "Installing tools" && \
-        apt-get install -y -qq \
+        apt-get install -y -qq --no-install-recommends \
             curl sed git && \
     echo "Installing python requirements" && \
         pip3 install --no-cache-dir -q --no-index --find-links /wheels \

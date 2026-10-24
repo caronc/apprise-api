@@ -12,11 +12,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - TZ=${TZ:-Asia/Shanghai}
+      # The TOS App Center does not expand variables, so these values must
+      # be literal.
+      - TZ=Asia/Shanghai
       # The image requires to start as root only to align mounted volumes
       # Permissions set via PUID/PGID then drops to non-root user.
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=1000
+      - PGID=1000
       # Lets the web UI persist and list saved configuration keys
       # managing configuration through the browser.
       - APPRISE_STATEFUL_MODE=simple
