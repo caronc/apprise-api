@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 """The API version must agree across the UI and source-based deployments."""
 
+import logging
 import os
 from pathlib import Path
 import runpy
@@ -52,6 +53,23 @@ class VersionTests(SimpleTestCase):
 
         self.assertContains(response, f"v{__version__}</a>")
         self.assertContains(response, f"css/base.css?v={__version__}")
+
+    def test_page_meta_variables_are_provided(self):
+        """base.html meta tags resolve without VariableDoesNotExist logs."""
+        metadata = apprise_metadata(None)
+        self.assertEqual(metadata["APPRISE_API_DESCRIPTION"], "Apprise API - notification service API")
+        self.assertEqual(metadata["APPRISE_API_KEYWORDS"], "apprise,notifications,api,alerts")
+
+        with self.assertLogs("django.template", level="DEBUG") as logs:
+            # Ensure assertLogs has at least one record to inspect.
+            logging.getLogger("django.template").debug("render start")
+            response = self.client.get("/")
+
+        self.assertContains(response, 'content="Apprise API - notification service API"')
+        self.assertContains(response, 'content="apprise,notifications,api,alerts"')
+        output = "\n".join(logs.output)
+        self.assertNotIn("APPRISE_API_DESCRIPTION", output)
+        self.assertNotIn("APPRISE_API_KEYWORDS", output)
 
     def test_version_survives_renamed_source_deployment(self):
         """Docker and LXC copies can read the version without an installed package."""

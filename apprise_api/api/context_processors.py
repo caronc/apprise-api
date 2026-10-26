@@ -103,6 +103,10 @@ def apprise_metadata(request):
         "APPRISE_API_LICENSE": settings.APP_LICENSE,
         "APPRISE_API_COPYRIGHT": settings.APP_COPYRIGHT,
         "APPRISE_AUTHOR": settings.APP_AUTHOR,
+        # base.html reads these for its meta tags; supplying them avoids a
+        # VariableDoesNotExist debug log on every page render.
+        "APPRISE_API_DESCRIPTION": "Apprise API - notification service API",
+        "APPRISE_API_KEYWORDS": "apprise,notifications,api,alerts",
     }
 
 
