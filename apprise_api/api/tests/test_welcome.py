@@ -30,6 +30,15 @@ class WelcomePageTests(SimpleTestCase):
         assert response.status_code == 200
         self.assertContains(response, "document.querySelectorAll('.api-welcome pre')")
 
+    def test_page_meta_tags(self):
+        """The meta tags render without missing template variable logs."""
+        # A real browser always sends a Host header, but the test client does not.
+        with self.assertNoLogs("django.template", level="DEBUG"):
+            response = self.client.get("/", HTTP_HOST="testserver")
+
+        self.assertContains(response, 'content="Apprise API - notification service API"')
+        self.assertContains(response, 'content="apprise,notifications,api,alerts"')
+
     def test_mobile_app_dialog_is_available(self):
         """The shared dialog links to the app and its product page."""
         response = self.client.get("/")
