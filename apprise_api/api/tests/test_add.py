@@ -691,6 +691,9 @@ class AddTests(SimpleTestCase):
             (ConfigFormat.YAML.value, "urls: [\n"),
             (ConfigFormat.YAML.value, "- json://localhost\n"),
             (ConfigFormat.YAML.value, "version: 99\nurls:\n  - json://localhost\n"),
+            # Nested too deeply to be read, or to be written back out
+            (ConfigFormat.YAML.value, "tag: {}x{}\n".format("[" * 2000, "]" * 2000)),
+            (ConfigFormat.YAML.value, "tag: {}x{}\n".format("[" * 400, "]" * 400)),
         ):
             response = self.client.post(
                 "/add/{}".format(key),

@@ -346,6 +346,10 @@ APPRISE_ATTACH_ALLOW_URLS = os.environ.get("APPRISE_ATTACH_ALLOW_URL", "*").lowe
 # (defined in MB)
 APPRISE_UPLOAD_MAX_MEMORY_SIZE = env_int("APPRISE_UPLOAD_MAX_MEMORY_SIZE", 3, absolute=True) * 1048576
 
+# Django enforces the limit above; without this it falls back to its own
+# 2.5MB default and APPRISE_UPLOAD_MAX_MEMORY_SIZE has no effect
+DATA_UPLOAD_MAX_MEMORY_SIZE = APPRISE_UPLOAD_MAX_MEMORY_SIZE
+
 
 # Live logs use memory first, then one temporary file for a slow client.
 # These same limits are placed on AppriseAsset for completed result logs.
