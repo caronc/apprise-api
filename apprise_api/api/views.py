@@ -1975,15 +1975,21 @@ def _yaml_refused(content, asset):
     """
     try:
         document = yaml.safe_load(content)
-    except yaml.YAMLError:
+    except (RecursionError, yaml.YAMLError):
+        # PyYAML runs out of stack on very deeply nested lists or maps
         return True
     if document is None:
         return False
     if not isinstance(document, dict):
         return True
     # Only the file's own sections; its URLs are judged one by one
+    try:
+        sections = yaml.safe_dump({**document, "urls": []})
+    except RecursionError:
+        # Writing YAML back out gives up at a shallower depth than reading
+        return True
     with apprise.LogCapture(level=logging.ERROR) as logs:
-        ConfigBase.config_parse_yaml(yaml.safe_dump({**document, "urls": []}), asset=asset)
+        ConfigBase.config_parse_yaml(sections, asset=asset)
     return bool(logs.getvalue())
 
 
