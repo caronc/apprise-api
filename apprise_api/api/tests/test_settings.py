@@ -193,6 +193,29 @@ class LogLevelSettingsTests(SimpleTestCase):
         )
 
 
+class UploadSizeSettingsTests(SimpleTestCase):
+    """Validate the request body size limit."""
+
+    def test_django_uses_the_upload_limit(self):
+        """APPRISE_UPLOAD_MAX_MEMORY_SIZE sets the limit Django enforces."""
+        defaults = _load_settings()
+        self.assertEqual(defaults.APPRISE_UPLOAD_MAX_MEMORY_SIZE, 3 * 1048576)
+        self.assertEqual(defaults.DATA_UPLOAD_MAX_MEMORY_SIZE, 3 * 1048576)
+
+        configured = _load_settings({"APPRISE_UPLOAD_MAX_MEMORY_SIZE": "1"})
+        self.assertEqual(configured.DATA_UPLOAD_MAX_MEMORY_SIZE, 1048576)
+
+        # The configuration limit can never exceed the upload limit
+        self.assertEqual(configured.APPRISE_CONFIG_MAX_LENGTH, 512 * 1024)
+        configured = _load_settings(
+            {
+                "APPRISE_UPLOAD_MAX_MEMORY_SIZE": "1",
+                "APPRISE_CONFIG_MAX_LENGTH": "2048",
+            }
+        )
+        self.assertEqual(configured.APPRISE_CONFIG_MAX_LENGTH, 1048576)
+
+
 class StreamSizeSettingsTests(SimpleTestCase):
     """Validate live-stream resource settings."""
 
