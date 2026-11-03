@@ -218,6 +218,11 @@ services:
       - /tmp
 ```
 
+## One-Click Deploy
+
+<a href="https://repocloud.io/details/Apprise-API/"><img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" height="42"></a>
+<a href="https://railway.com/deploy/apprise-api"><img src="https://railway.com/button.svg" alt="Deploy on Railway" height="42"></a>
+
 ## Dockerfile Details
 
 The following architectures are supported: `amd64`, `arm/v7`, and `arm64`. The following tags can be used:
