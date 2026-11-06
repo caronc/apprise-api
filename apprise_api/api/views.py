@@ -105,6 +105,11 @@ def _apprise_asset(request, **kwargs):
     # The asset validates the code as it is created and stores it in Apprise's
     # own spelling, so a de-DE request becomes de_DE here. An asset language
     # cannot be changed afterwards, which is why it is passed in here.
+    # Config UI /add and /json/urls share this helper. Without plugin_paths,
+    # custom schemas only load after a notify worker has already scanned them
+    # (see #383). Default them here so every AppriseAsset sees the same paths
+    # as _notify_asset; callers may still override via kwargs.
+    kwargs.setdefault("plugin_paths", settings.APPRISE_PLUGIN_PATHS)
     return apprise.AppriseAsset(language=_request_language(request), **kwargs)
 
 
