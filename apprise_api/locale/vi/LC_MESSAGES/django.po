@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 21:24+0000\n"
+"POT-Creation-Date: 2026-11-08 03:51+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: vi\n"
@@ -92,7 +92,7 @@ msgstr "Tên đăng nhập"
 msgid "Password"
 msgstr "Mật khẩu"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1411
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1409
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -122,7 +122,7 @@ msgstr "Mật khẩu mới"
 msgid "Confirm New Password"
 msgstr "Xác nhận mật khẩu mới"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2777
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2786
 msgid "The username cannot be changed by a configuration user"
 msgstr "Tên người dùng không thể bị thay đổi bởi người dùng cấu hình"
 
@@ -247,9 +247,9 @@ msgstr "Dữ liệu JSON phải là một đối tượng"
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
+#: apprise_api/api/templates/base.html:1425
+#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/base.html:1427
-#: apprise_api/api/templates/base.html:1428
-#: apprise_api/api/templates/base.html:1429
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
@@ -273,7 +273,7 @@ msgstr "Hiển Thị ID Cấu Hình"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1430
+#: apprise_api/api/templates/base.html:1428
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
 #: apprise_api/api/templates/config_list.html:64
@@ -285,13 +285,13 @@ msgstr "Ẩn ID Cấu Hình"
 
 #: apprise_api/api/templates/auth.html:8
 #: apprise_api/api/templates/auth.html:487
-#: apprise_api/api/templates/base.html:290
+#: apprise_api/api/templates/base.html:288
 msgid "Authentication"
 msgstr "Xác thực"
 
 #: apprise_api/api/templates/auth.html:8
 #: apprise_api/api/templates/auth_disabled.html:6
-#: apprise_api/api/templates/base.html:48
+#: apprise_api/api/templates/base.html:46
 #: apprise_api/api/templates/components/legal_footer.html:7
 #: apprise_api/api/templates/login.html:7
 msgid "Apprise API"
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "Tên đăng nhập, mật khẩu và ID Cấu hình đã được sao chép vào bộ nhớ tạm"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1041
+#: apprise_api/api/templates/base.html:1039
 msgid "Scan with Apprise Mobile"
 msgstr "Quét bằng Apprise Mobile"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "Mã QR này chứa mật khẩu mới. Hãy lưu hoặc chia sẻ mã một cách an toàn ngay bây giờ; mật khẩu sẽ không thể hiển thị lại."
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1050
 #: apprise_api/api/tests/test_localization.py:413
 msgid "Show Complete URL"
 msgstr "Hiển thị Toàn bộ URL"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1051
 msgid "Hide Complete URL"
 msgstr "Ẩn Toàn bộ URL"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1052
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "Sao chép URL vào Bộ nhớ tạm"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1055
+#: apprise_api/api/templates/base.html:1053
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL đã được sao chép vào bộ nhớ tạm"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1056
+#: apprise_api/api/templates/base.html:1054
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "URL này quá dài để mã hóa thành mã QR. Hãy sử dụng nút sao chép phía trên thay vì."
 
@@ -568,7 +568,7 @@ msgstr "Đặt lại quyền truy cập người dùng"
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1118
+#: apprise_api/api/templates/base.html:1116
 #: apprise_api/api/templates/config_list.html:118
 #: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
@@ -648,130 +648,130 @@ msgstr "Không Yêu Cầu Xác Thực"
 msgid "No authentication is required for this hosted version of Apprise."
 msgstr "Không yêu cầu xác thực cho phiên bản lưu trữ này của Apprise."
 
-#: apprise_api/api/templates/base.html:55
+#: apprise_api/api/templates/base.html:53
 msgid "Administrator Credentials"
 msgstr "Thông Tin Đăng Nhập Quản Trị"
 
-#: apprise_api/api/templates/base.html:56
+#: apprise_api/api/templates/base.html:54
 msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
 msgstr "Cấu hình này không có người dùng được chỉ định. Do đó, mã QR sẽ sử dụng tài khoản quản trị."
 
-#: apprise_api/api/templates/base.html:80
+#: apprise_api/api/templates/base.html:78
 msgid "APPRISE LIBRARY"
 msgstr "APPRISE LIBRARY"
 
-#: apprise_api/api/templates/base.html:88
-#: apprise_api/api/templates/base.html:92
-#: apprise_api/api/templates/base.html:93
+#: apprise_api/api/templates/base.html:86
+#: apprise_api/api/templates/base.html:90
+#: apprise_api/api/templates/base.html:91
 #: apprise_api/api/tests/test_localization.py:348
 msgid "Language"
 msgstr "Ngôn ngữ"
 
-#: apprise_api/api/templates/base.html:104
+#: apprise_api/api/templates/base.html:102
 msgid "Apply"
 msgstr "Áp dụng"
 
-#: apprise_api/api/templates/base.html:110
+#: apprise_api/api/templates/base.html:108
 msgid "API HEALTH"
 msgstr "API HEALTH"
 
-#: apprise_api/api/templates/base.html:139
+#: apprise_api/api/templates/base.html:137
 msgid "GitHub"
 msgstr "GitHub"
 
-#: apprise_api/api/templates/base.html:149
+#: apprise_api/api/templates/base.html:147
 msgid "Discord"
 msgstr "Discord"
 
-#: apprise_api/api/templates/base.html:159
+#: apprise_api/api/templates/base.html:157
 msgid "Reddit"
 msgstr "Reddit"
 
-#: apprise_api/api/templates/base.html:168
+#: apprise_api/api/templates/base.html:166
 msgid "Open Apprise Mobile app information"
 msgstr "Mở thông tin ứng dụng Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:170
+#: apprise_api/api/templates/base.html:168
 msgid "Apprise Mobile"
 msgstr "Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:181
+#: apprise_api/api/templates/base.html:179
 msgid "Toggle light / dark theme"
 msgstr "Chuyển đổi giao diện sáng / tối"
 
-#: apprise_api/api/templates/base.html:193
+#: apprise_api/api/templates/base.html:191
 msgid "Open Authentication Settings"
 msgstr "Mở Cài đặt Xác thực"
 
+#: apprise_api/api/templates/base.html:201
 #: apprise_api/api/templates/base.html:203
-#: apprise_api/api/templates/base.html:205
 msgid "Logout"
 msgstr "Đăng xuất"
 
-#: apprise_api/api/templates/base.html:226
+#: apprise_api/api/templates/base.html:224
 msgid "If Apprise has been useful to you, please consider supporting its development."
 msgstr "Nếu Apprise hữu ích cho bạn, vui lòng xem xét hỗ trợ phát triển của nó."
 
-#: apprise_api/api/templates/base.html:230
+#: apprise_api/api/templates/base.html:228
 msgid "GitHub Sponsors"
 msgstr "GitHub Nhà tài trợ"
 
-#: apprise_api/api/templates/base.html:234
+#: apprise_api/api/templates/base.html:232
 msgid "PayPal"
 msgstr "PayPal"
 
-#: apprise_api/api/templates/base.html:238
+#: apprise_api/api/templates/base.html:236
 msgid "Dismiss"
 msgstr "Đóng"
 
-#: apprise_api/api/templates/base.html:248
-#: apprise_api/api/templates/base.html:249
+#: apprise_api/api/templates/base.html:246
+#: apprise_api/api/templates/base.html:247
 msgid "Open Navigation Menu"
 msgstr "Mở Menu Điều hướng"
 
-#: apprise_api/api/templates/base.html:263
+#: apprise_api/api/templates/base.html:261
 msgid "Navigation"
 msgstr "Điều hướng"
 
-#: apprise_api/api/templates/base.html:266
+#: apprise_api/api/templates/base.html:264
 msgid "Site Controls"
 msgstr "Điều khiển Trang"
 
-#: apprise_api/api/templates/base.html:273
+#: apprise_api/api/templates/base.html:271
 msgid "Configuration Manager"
 msgstr "Trình quản lý Cấu hình"
 
-#: apprise_api/api/templates/base.html:280
-#: apprise_api/api/templates/base.html:1406
+#: apprise_api/api/templates/base.html:278
+#: apprise_api/api/templates/base.html:1404
 msgid "New Configuration"
 msgstr "Cấu hình Mới"
 
-#: apprise_api/api/templates/base.html:298
+#: apprise_api/api/templates/base.html:296
 #: apprise_api/api/templates/config_list.html:8
 msgid "Configuration List"
 msgstr "Danh sách Cấu hình"
 
-#: apprise_api/api/templates/base.html:305
+#: apprise_api/api/templates/base.html:303
 msgid "Available Plugins"
 msgstr "Plugin Có sẵn"
 
-#: apprise_api/api/templates/base.html:309
+#: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
 msgstr "Tài liệu & Công cụ"
 
-#: apprise_api/api/templates/base.html:318
+#: apprise_api/api/templates/base.html:316
 msgid "Notification Services"
 msgstr "Dịch vụ Thông báo"
 
-#: apprise_api/api/templates/base.html:327
+#: apprise_api/api/templates/base.html:325
 msgid "Configuration Help"
 msgstr "Trợ giúp Cấu hình"
 
-#: apprise_api/api/templates/base.html:336
+#: apprise_api/api/templates/base.html:334
 msgid "Documentation"
 msgstr "Tài liệu"
 
-#: apprise_api/api/templates/base.html:345
+#: apprise_api/api/templates/base.html:343
 #: apprise_api/api/templates/config.html:8
 #: apprise_api/api/templates/config.html:368
 #: apprise_api/api/templates/config.html:370
@@ -781,191 +781,191 @@ msgstr "Tài liệu"
 msgid "Apprise URL Builder"
 msgstr "Apprise URL Trình Tạo"
 
-#: apprise_api/api/templates/base.html:353
+#: apprise_api/api/templates/base.html:351
 #: apprise_api/api/templates/components/mobile_beta_dialog.html:17
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Lấy Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:356
+#: apprise_api/api/templates/base.html:354
 msgid "Support Development"
 msgstr "Hỗ trợ Phát triển"
 
-#: apprise_api/api/templates/base.html:365
+#: apprise_api/api/templates/base.html:363
 msgid "Buy Developer A Coffee"
 msgstr "Mua một ly cà phê cho Nhà phát triển"
 
-#: apprise_api/api/templates/base.html:374
+#: apprise_api/api/templates/base.html:372
 msgid "Sponsor Apprise Development"
 msgstr "Tài trợ cho Apprise Phát triển"
 
-#: apprise_api/api/templates/base.html:385
+#: apprise_api/api/templates/base.html:383
 msgid "Apprise Health Check Failed"
 msgstr "Apprise Kiểm tra Sức khỏe Thất bại"
 
-#: apprise_api/api/templates/base.html:386
+#: apprise_api/api/templates/base.html:384
 msgid "The following issues have been detected with your Apprise instance:"
 msgstr "Các vấn đề sau đã được phát hiện với phiên bản Apprise của bạn:"
 
-#: apprise_api/api/templates/base.html:393
+#: apprise_api/api/templates/base.html:391
 msgid "Notification Delivery Disabled"
 msgstr "Giao tiếp Thông báo Bị Vô hiệu hóa"
 
-#: apprise_api/api/templates/base.html:396
+#: apprise_api/api/templates/base.html:394
 msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
 msgstr "Cả thông báo vô trạng thái và lưu trữ lâu dài đều bị vô hiệu hóa. Một quản trị viên phải bật ít nhất một chế độ trước khi máy chủ này có thể gửi thông báo."
 
-#: apprise_api/api/templates/base.html:404
+#: apprise_api/api/templates/base.html:402
 msgid "Configuration Write Failure"
 msgstr "Lỗi Ghi Cấu hình"
 
-#: apprise_api/api/templates/base.html:406
+#: apprise_api/api/templates/base.html:404
 msgid "Apprise can not write new configuration information to the directory:"
 msgstr "Apprise không thể ghi thông tin cấu hình mới vào thư mục:"
 
-#: apprise_api/api/templates/base.html:408
-#: apprise_api/api/templates/base.html:432
+#: apprise_api/api/templates/base.html:406
+#: apprise_api/api/templates/base.html:430
 msgid "Path copied to clipboard"
 msgstr "Đã sao chép đường dẫn vào khay nhớ tạm"
 
-#: apprise_api/api/templates/base.html:413
-#: apprise_api/api/templates/base.html:437
+#: apprise_api/api/templates/base.html:411
+#: apprise_api/api/templates/base.html:435
 msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
 msgstr "<em>Lưu ý:</em> Nếu đây là hành vi mong đợi, hãy thiết lập biến môi trường được hiển thị bên dưới và tải lại phiên bản Apprise của bạn."
 
-#: apprise_api/api/templates/base.html:416
-#: apprise_api/api/templates/base.html:440
+#: apprise_api/api/templates/base.html:414
+#: apprise_api/api/templates/base.html:438
 msgid "Environment variable copied to clipboard"
 msgstr "Biến môi trường đã được sao chép vào clipboard"
 
-#: apprise_api/api/templates/base.html:426
+#: apprise_api/api/templates/base.html:424
 msgid "Attachment Temporary Storage Write Failure"
 msgstr "Lỗi Ghi Bộ Nhớ Tạm Thời Đính Kèm"
 
-#: apprise_api/api/templates/base.html:429
+#: apprise_api/api/templates/base.html:427
 msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
 msgstr "Apprise không thể lưu chuyển các tệp đính kèm (nếu có) do không có quyền ghi vào thư mục:"
 
-#: apprise_api/api/templates/base.html:447
+#: apprise_api/api/templates/base.html:445
 msgid "More Details"
 msgstr "Thêm Chi Tiết"
 
-#: apprise_api/api/templates/base.html:450
+#: apprise_api/api/templates/base.html:448
 msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
 msgstr "Trong hầu hết các trường hợp, vấn đề được xác định ở đây thường liên quan đến các vấn đề về quyền. Hãy chắc chắn rằng bạn đã đặt <code>PUID</code> và <code>GUID</code> đúng để phản ánh các quyền mà bạn muốn Apprise sử dụng khi nó đọc và ghi các tập tin của mình. Ngoài ra, bạn có thể cần đảm bảo các quyền được thiết lập đúng trên các thư mục mà bạn đã ánh xạ tới."
 
-#: apprise_api/api/templates/base.html:453
+#: apprise_api/api/templates/base.html:451
 msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
 msgstr "Các vấn đề được xác định ở đây cũng có thể liên quan đến SELinux. Bạn có thể muốn loại trừ SELinux bằng cách tạm thời vô hiệu hóa nó với:"
 
-#: apprise_api/api/templates/base.html:456
-#: apprise_api/api/templates/base.html:462
+#: apprise_api/api/templates/base.html:454
+#: apprise_api/api/templates/base.html:460
 #: apprise_api/api/templates/config.html:3395
 msgid "Command copied to clipboard"
 msgstr "Lệnh đã được sao chép vào khay nhớ tạm"
 
-#: apprise_api/api/templates/base.html:460
+#: apprise_api/api/templates/base.html:458
 msgid "You can always re-enable it with:"
 msgstr "Bạn luôn có thể kích hoạt lại nó với:"
 
-#: apprise_api/api/templates/base.html:727
+#: apprise_api/api/templates/base.html:725
 msgid "Log Out?"
 msgstr "Đăng xuất?"
 
-#: apprise_api/api/templates/base.html:728
+#: apprise_api/api/templates/base.html:726
 msgid "Are you sure you wish to log out?"
 msgstr "Bạn có chắc muốn đăng xuất không?"
 
-#: apprise_api/api/templates/base.html:730
-#: apprise_api/api/templates/base.html:1448
+#: apprise_api/api/templates/base.html:728
+#: apprise_api/api/templates/base.html:1446
 msgid "Yes"
 msgstr "Có"
 
-#: apprise_api/api/templates/base.html:731
-#: apprise_api/api/templates/base.html:1449
+#: apprise_api/api/templates/base.html:729
+#: apprise_api/api/templates/base.html:1447
 msgid "No"
 msgstr "Không"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:878
 msgid "Abort Current Task?"
 msgstr "Hủy tác vụ hiện tại?"
 
-#: apprise_api/api/templates/base.html:881
+#: apprise_api/api/templates/base.html:879
 msgid "Are you sure you wish to abort the current task?"
 msgstr "Bạn có chắc muốn hủy tác vụ hiện tại không?"
 
-#: apprise_api/api/templates/base.html:884
+#: apprise_api/api/templates/base.html:882
 msgid "Abort Task"
 msgstr "Hủy tác vụ"
 
-#: apprise_api/api/templates/base.html:885
+#: apprise_api/api/templates/base.html:883
 msgid "Keep Running"
 msgstr "Tiếp tục chạy"
 
-#: apprise_api/api/templates/base.html:991
+#: apprise_api/api/templates/base.html:989
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
 #: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "ID cấu hình bị ẩn"
 
-#: apprise_api/api/templates/base.html:1008
+#: apprise_api/api/templates/base.html:1006
 msgid "Config ID copied to clipboard"
 msgstr "ID cấu hình đã được sao chép vào bàn phím"
 
-#: apprise_api/api/templates/base.html:1033
-#: apprise_api/api/templates/base.html:1061
+#: apprise_api/api/templates/base.html:1031
+#: apprise_api/api/templates/base.html:1059
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "Mã QR Apprise Mobile không thể được tạo."
 
-#: apprise_api/api/templates/base.html:1060
+#: apprise_api/api/templates/base.html:1058
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile Cấu hình Nhanh"
 
-#: apprise_api/api/templates/base.html:1106
-#: apprise_api/api/templates/base.html:1470
+#: apprise_api/api/templates/base.html:1104
+#: apprise_api/api/templates/base.html:1468
 msgid "Enter a valid Config ID before continuing."
 msgstr "Nhập một ID cấu hình hợp lệ trước khi tiếp tục."
 
-#: apprise_api/api/templates/base.html:1113
+#: apprise_api/api/templates/base.html:1111
 msgid "Open Configuration"
 msgstr "Mở Cấu hình"
 
-#: apprise_api/api/templates/base.html:1114
+#: apprise_api/api/templates/base.html:1112
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "Điều này mở một ID cấu hình khác. Bất kỳ thay đổi nào chưa lưu trên trang này sẽ bị mất."
 
-#: apprise_api/api/templates/base.html:1117
+#: apprise_api/api/templates/base.html:1115
 msgid "Continue"
 msgstr "Tiếp tục"
 
-#: apprise_api/api/templates/base.html:1344
-#: apprise_api/api/templates/base.html:1364
+#: apprise_api/api/templates/base.html:1342
+#: apprise_api/api/templates/base.html:1362
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Không thể kết nối với điểm cuối trạng thái Apprise API."
 
-#: apprise_api/api/templates/base.html:1350
+#: apprise_api/api/templates/base.html:1348
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "Việc gửi thông báo đã bị tắt. Bật thông báo không trạng thái hoặc lưu trữ dữ liệu liên tục để tiếp tục dịch vụ."
 
-#: apprise_api/api/templates/base.html:1409
+#: apprise_api/api/templates/base.html:1407
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "Chọn một ID Cấu hình mới. Bạn có thể chỉnh sửa nó hoặc tạo cái khác trước khi tiếp tục."
 
-#: apprise_api/api/templates/base.html:1421
+#: apprise_api/api/templates/base.html:1419
 msgid "New Config ID"
 msgstr "ID Cấu hình mới"
 
-#: apprise_api/api/templates/base.html:1437
-#: apprise_api/api/templates/base.html:1438
+#: apprise_api/api/templates/base.html:1435
+#: apprise_api/api/templates/base.html:1436
 msgid "Generate Another Config ID"
 msgstr "Tạo ID Cấu hình khác"
 
-#: apprise_api/api/templates/base.html:1443
+#: apprise_api/api/templates/base.html:1441
 msgid "Do you wish to open this configuration?"
 msgstr "Bạn có muốn mở cấu hình này không?"
 
-#: apprise_api/api/templates/base.html:1513
+#: apprise_api/api/templates/base.html:1511
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1281,8 +1281,8 @@ msgid ""
 msgstr "Lệnh sau sẽ khiến apprise lấy cấu hình đã tải và gửi một thông báo thử nghiệm đến tất cả các dịch vụ mà bạn đã thêm:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "Bạn cũng có thể tạo một tệp cấu hình <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise</a> chứa dòng này ở đâu đó bên trong:"
+msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
+msgstr "Bạn cũng có thể tạo một tệp cấu hình <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise</a> chứa dòng này ở đâu đó bên trong:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
@@ -1937,8 +1937,8 @@ msgid "Execute the request"
 msgstr "Thực thi yêu cầu"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "Thêm chi tiết về định dạng JSON có thể được tìm thấy <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\"> tại đây </a>."
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
+msgstr "Thêm chi tiết về định dạng JSON có thể được tìm thấy <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\"> tại đây </a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -2345,281 +2345,281 @@ msgstr "Phải bắt đầu với ít nhất hai ký tự chữ và số."
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Không vượt quá 64 ký tự tổng cộng."
 
-#: apprise_api/api/views.py:1180
+#: apprise_api/api/views.py:1187
 msgid "This configuration has been disabled by an administrator"
 msgstr "Cấu hình này đã bị quản trị viên vô hiệu hóa"
 
-#: apprise_api/api/views.py:1191 apprise_api/core/middleware/auth.py:73
+#: apprise_api/api/views.py:1198 apprise_api/core/middleware/auth.py:73
 #: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "Truy cập bị từ chối"
 
-#: apprise_api/api/views.py:1207
+#: apprise_api/api/views.py:1214
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "Chế độ xác thực bị tắt (cài đặt APPRISE_AUTH_REQUIRED để bật)"
 
-#: apprise_api/api/views.py:1216
+#: apprise_api/api/views.py:1223
 msgid "Persistent configuration storage is disabled"
 msgstr "Lưu trữ cấu hình liên tục bị vô hiệu hóa"
 
-#: apprise_api/api/views.py:1225
+#: apprise_api/api/views.py:1232
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "Yêu cầu một ID cấu hình (URL đường dẫn hoặc X-Apprise-Config-ID header)"
 
-#: apprise_api/api/views.py:1238
+#: apprise_api/api/views.py:1245
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "Header X-Apprise-Config-ID được cung cấp không hợp lệ"
 
-#: apprise_api/api/views.py:1308 apprise_api/api/views.py:1918
-#: apprise_api/api/views.py:2022 apprise_api/api/views.py:2370
-#: apprise_api/api/views.py:2540 apprise_api/api/views.py:3807
-#: apprise_api/api/views.py:3956
+#: apprise_api/api/views.py:1315 apprise_api/api/views.py:1925
+#: apprise_api/api/views.py:2031 apprise_api/api/views.py:2379
+#: apprise_api/api/views.py:2549 apprise_api/api/views.py:3816
+#: apprise_api/api/views.py:3965
 msgid "The site has been configured to deny this request"
 msgstr "Trang web đã được cấu hình để từ chối yêu cầu này"
 
-#: apprise_api/api/views.py:1342 apprise_api/api/views.py:3723
+#: apprise_api/api/views.py:1349 apprise_api/api/views.py:3732
 msgid "An error occurred accessing configuration"
 msgstr "Đã xảy ra lỗi khi truy cập cấu hình"
 
-#: apprise_api/api/views.py:1504
+#: apprise_api/api/views.py:1511
 msgid "The login form is only available to the web interface"
 msgstr "Mẫu đăng nhập chỉ khả dụng cho giao diện web"
 
-#: apprise_api/api/views.py:1562
+#: apprise_api/api/views.py:1569
 msgid "The username, password, or Config ID was not accepted."
 msgstr "Tên người dùng, mật khẩu hoặc ID Cấu hình không được chấp nhận."
 
-#: apprise_api/api/views.py:2051 apprise_api/api/views.py:3301
+#: apprise_api/api/views.py:2060 apprise_api/api/views.py:3310
 msgid "The urls field must be a string or list of strings"
 msgstr "Trường urls phải là một chuỗi hoặc danh sách các chuỗi"
 
-#: apprise_api/api/views.py:2059
+#: apprise_api/api/views.py:2068
 msgid "The config field must be a string"
 msgstr "Trường config phải là một chuỗi"
 
-#: apprise_api/api/views.py:2067
+#: apprise_api/api/views.py:2076
 msgid "The format field must be a string"
 msgstr "Trường format phải là một chuỗi"
 
-#: apprise_api/api/views.py:2080
+#: apprise_api/api/views.py:2089
 msgid "Invalid payload structure provided"
 msgstr "Cấu trúc payload không hợp lệ được cung cấp"
 
-#: apprise_api/api/views.py:2108
+#: apprise_api/api/views.py:2117
 msgid "No valid URLs defined"
 msgstr "Không có URL hợp lệ nào được định nghĩa"
 
-#: apprise_api/api/views.py:2133
+#: apprise_api/api/views.py:2142
 msgid "The configuration could not be saved"
 msgstr "Không thể lưu cấu hình"
 
-#: apprise_api/api/views.py:2157
+#: apprise_api/api/views.py:2166
 msgid "The configuration payload is too large"
 msgstr "Payload cấu hình quá lớn"
 
-#: apprise_api/api/views.py:2181
+#: apprise_api/api/views.py:2190
 msgid "Invalid configuration format specified"
 msgstr "Định dạng cấu hình được chỉ định không hợp lệ"
 
-#: apprise_api/api/views.py:2213
+#: apprise_api/api/views.py:2222
 msgid "The configuration format could not be auto-detected"
 msgstr "Không thể tự động phát hiện định dạng cấu hình"
 
-#: apprise_api/api/views.py:2246
+#: apprise_api/api/views.py:2255
 msgid "The configuration could not be parsed"
 msgstr "Không thể phân tích cấu hình"
 
-#: apprise_api/api/views.py:2265
+#: apprise_api/api/views.py:2274
 msgid "An error occurred saving configuration"
 msgstr "Đã xảy ra lỗi khi lưu cấu hình"
 
-#: apprise_api/api/views.py:2282
+#: apprise_api/api/views.py:2291
 msgid "No configuration provided"
 msgstr "Không có cấu hình nào được cung cấp"
 
-#: apprise_api/api/views.py:2311
+#: apprise_api/api/views.py:2320
 msgid "Successfully saved configuration"
 msgstr "Đã lưu cấu hình thành công"
 
-#: apprise_api/api/views.py:2408
+#: apprise_api/api/views.py:2417
 msgid "The configuration store is not currently writable"
 msgstr "Kho lưu trữ cấu hình hiện không thể ghi được"
 
-#: apprise_api/api/views.py:2422
+#: apprise_api/api/views.py:2431
 msgid "A valid destination (to), different from the source, is required"
 msgstr "Cần một đích đến hợp lệ (to), khác với nguồn"
 
-#: apprise_api/api/views.py:2449
+#: apprise_api/api/views.py:2458
 msgid "There was no configuration to move"
 msgstr "Không có cấu hình nào để di chuyển"
 
-#: apprise_api/api/views.py:2460
+#: apprise_api/api/views.py:2469
 msgid "A configuration already exists at the destination"
 msgstr "Đã có cấu hình tồn tại tại đích đến"
 
-#: apprise_api/api/views.py:2471
+#: apprise_api/api/views.py:2480
 msgid "The configuration could not be moved"
 msgstr "Cấu hình không thể được di chuyển"
 
-#: apprise_api/api/views.py:2481
+#: apprise_api/api/views.py:2490
 msgid "Successfully moved configuration"
 msgstr "Đã di chuyển cấu hình thành công"
 
-#: apprise_api/api/views.py:2557
+#: apprise_api/api/views.py:2566
 msgid "The configuration could not be removed"
 msgstr "Cấu hình không thể bị xóa"
 
-#: apprise_api/api/views.py:2580
+#: apprise_api/api/views.py:2589
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "Cấu hình đã bị xóa, nhưng xác thực của nó không thể bị xóa"
 
-#: apprise_api/api/views.py:2600
+#: apprise_api/api/views.py:2609
 msgid "Successfully removed configuration"
 msgstr "Đã xóa cấu hình thành công"
 
-#: apprise_api/api/views.py:2708
+#: apprise_api/api/views.py:2717
 msgid "Content-Type must be application/json"
 msgstr "Content-Type phải là application/json"
 
-#: apprise_api/api/views.py:2746
+#: apprise_api/api/views.py:2755
 msgid "Only an administrator may set configuration access"
 msgstr "Chỉ quản trị viên mới có thể đặt quyền truy cập cấu hình"
 
-#: apprise_api/api/views.py:2768
+#: apprise_api/api/views.py:2777
 msgid "Valid username and password fields are required"
 msgstr "Yêu cầu các trường tên người dùng và mật khẩu hợp lệ"
 
-#: apprise_api/api/views.py:2815
+#: apprise_api/api/views.py:2824
 msgid "The current password was not accepted"
 msgstr "Mật khẩu hiện tại không được chấp nhận"
 
-#: apprise_api/api/views.py:2823
+#: apprise_api/api/views.py:2832
 msgid "The new password must differ from the current password"
 msgstr "Mật khẩu mới phải khác với mật khẩu hiện tại"
 
-#: apprise_api/api/views.py:2841
+#: apprise_api/api/views.py:2850
 msgid "The authentication could not be saved"
 msgstr "Không thể lưu xác thực"
 
-#: apprise_api/api/views.py:2851
+#: apprise_api/api/views.py:2860
 msgid "Successfully set authentication"
 msgstr "Xác thực đã được thiết lập thành công"
 
-#: apprise_api/api/views.py:2894
+#: apprise_api/api/views.py:2903
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "Yêu cầu thông tin đăng nhập quản trị viên toàn cầu để gỡ bỏ xác thực"
 
-#: apprise_api/api/views.py:2907
+#: apprise_api/api/views.py:2916
 msgid "The authentication could not be removed"
 msgstr "Không thể gỡ bỏ xác thực"
 
-#: apprise_api/api/views.py:2917
+#: apprise_api/api/views.py:2926
 msgid "Successfully removed authentication"
 msgstr "Xác thực đã được gỡ bỏ thành công"
 
-#: apprise_api/api/views.py:3068
+#: apprise_api/api/views.py:3077
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "Máy chủ hiện không thể bắt đầu một luồng thông báo trực tiếp mới"
 
-#: apprise_api/api/views.py:3093
+#: apprise_api/api/views.py:3102
 msgid "An error occurred delivering the notification"
 msgstr "Xảy ra lỗi khi gửi thông báo"
 
-#: apprise_api/api/views.py:3102
+#: apprise_api/api/views.py:3111
 msgid "One or more notification could not be sent"
 msgstr "Một hoặc nhiều thông báo không thể được gửi"
 
-#: apprise_api/api/views.py:3158
+#: apprise_api/api/views.py:3167
 msgid "The selected notification entry is invalid"
 msgstr "Mục thông báo đã chọn không hợp lệ"
 
-#: apprise_api/api/views.py:3172
+#: apprise_api/api/views.py:3181
 msgid "The selected notification entry is no longer available"
 msgstr "Mục thông báo đã chọn không còn khả dụng"
 
-#: apprise_api/api/views.py:3205
+#: apprise_api/api/views.py:3214
 msgid "The message body provided is too large"
 msgstr "Nội dung tin nhắn được cung cấp quá lớn"
 
-#: apprise_api/api/views.py:3222
+#: apprise_api/api/views.py:3231
 msgid "The message body could not be read"
 msgstr "Không thể đọc nội dung tin nhắn"
 
-#: apprise_api/api/views.py:3240
+#: apprise_api/api/views.py:3249
 msgid "The message body could not be decoded"
 msgstr "Không thể giải mã nội dung tin nhắn"
 
-#: apprise_api/api/views.py:3260
+#: apprise_api/api/views.py:3269
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "Ánh xạ trường dữ liệu tải không thành công bằng KEY: {}"
 
-#: apprise_api/api/views.py:3262
+#: apprise_api/api/views.py:3271
 msgid "Payload field mapping failed"
 msgstr "Ánh xạ trường dữ liệu tải không thành công"
 
-#: apprise_api/api/views.py:3275
+#: apprise_api/api/views.py:3284
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "Trường {} phải là chuỗi"
 
-#: apprise_api/api/views.py:3287
+#: apprise_api/api/views.py:3296
 msgid "The format field must be a string or null"
 msgstr "Trường định dạng phải là chuỗi hoặc null"
 
-#: apprise_api/api/views.py:3338
+#: apprise_api/api/views.py:3347
 msgid "Bad FORM Payload provided"
 msgstr "FORM Dữ liệu tải không hợp lệ được cung cấp"
 
-#: apprise_api/api/views.py:3358
+#: apprise_api/api/views.py:3367
 msgid "The template field must be an object of name/value pairs"
 msgstr "Trường mẫu phải là một đối tượng gồm cặp tên/giá trị"
 
-#: apprise_api/api/views.py:3416
+#: apprise_api/api/views.py:3425
 msgid "The X-Apprise-Template header is invalid"
 msgstr "Tiêu đề X-Apprise-Template không hợp lệ"
 
-#: apprise_api/api/views.py:3446 apprise_api/api/views.py:3465
+#: apprise_api/api/views.py:3455 apprise_api/api/views.py:3474
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "Cấu hình này yêu cầu một thẻ cụ thể khác với 'all'"
 
-#: apprise_api/api/views.py:3458
+#: apprise_api/api/views.py:3467
 msgid "Unsupported characters found in tag definition"
 msgstr "Đã tìm thấy ký tự không được hỗ trợ trong định nghĩa thẻ"
 
-#: apprise_api/api/views.py:3504
+#: apprise_api/api/views.py:3513
 msgid "Bad Attachment"
 msgstr "Tệp đính kèm không hợp lệ"
 
-#: apprise_api/api/views.py:3536
+#: apprise_api/api/views.py:3545
 msgid "An invalid body input format was specified"
 msgstr "Đã chỉ định định dạng nhập thân không hợp lệ"
 
-#: apprise_api/api/views.py:3573
+#: apprise_api/api/views.py:3582
 msgid "The recursion limit has been reached"
 msgstr "Giới hạn đệ quy đã được đạt tới"
 
-#: apprise_api/api/views.py:3585
+#: apprise_api/api/views.py:3594
 msgid "An invalid recursion value was specified"
 msgstr "Đã chỉ định giá trị đệ quy không hợp lệ"
 
-#: apprise_api/api/views.py:3605
+#: apprise_api/api/views.py:3614
 msgid "An error occurred preparing the notification"
 msgstr "Đã xảy ra lỗi khi chuẩn bị thông báo"
 
-#: apprise_api/api/views.py:3677 apprise_api/api/views.py:3873
+#: apprise_api/api/views.py:3686 apprise_api/api/views.py:3882
 msgid "Payload lacks minimum requirements"
 msgstr "Dữ liệu không đủ các yêu cầu tối thiểu"
 
-#: apprise_api/api/views.py:3712 apprise_api/api/views.py:4004
+#: apprise_api/api/views.py:3721 apprise_api/api/views.py:4013
 msgid "There was no configuration found"
 msgstr "Không tìm thấy cấu hình"
 
-#: apprise_api/api/views.py:3833
+#: apprise_api/api/views.py:3842
 msgid "This configuration does not permit stateless notifications"
 msgstr "Cấu hình này không cho phép thông báo không trạng thái"
 
-#: apprise_api/api/views.py:3913
+#: apprise_api/api/views.py:3922
 msgid "There was no valid URLs provided to notify"
 msgstr "Không có URL hợp lệ nào được cung cấp để thông báo"
 

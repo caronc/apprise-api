@@ -1,3 +1,3 @@
 # Custom Plugin Directory
 
-Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://appriseit.com/dev/decorator/).
+Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://appriseit.com/library/extending/decorator/).

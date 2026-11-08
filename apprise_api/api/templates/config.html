@@ -253,7 +253,7 @@
                     <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
                   </div>
-                  {% blocktrans %}You may also create an <a href="https://appriseit.com/config/#cli" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+                  {% blocktrans %}You may also create an <a href="https://appriseit.com/cli/usage/#default-configuration-locations" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
                   <div class="code-snippet"
                        data-copy-text='include {{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
                        data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'>

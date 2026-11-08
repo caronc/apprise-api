@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 21:24+0000\n"
+"POT-Creation-Date: 2026-11-08 03:51+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: ko\n"
@@ -92,7 +92,7 @@ msgstr "사용자 이름"
 msgid "Password"
 msgstr "비밀번호"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1411
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1409
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -122,7 +122,7 @@ msgstr "새 비밀번호"
 msgid "Confirm New Password"
 msgstr "새 암호 확인"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2777
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2786
 msgid "The username cannot be changed by a configuration user"
 msgstr "구성 사용자는 사용자 이름을 변경할 수 없습니다"
 
@@ -247,9 +247,9 @@ msgstr "페이로드는 객체여야 합니다"
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
+#: apprise_api/api/templates/base.html:1425
+#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/base.html:1427
-#: apprise_api/api/templates/base.html:1428
-#: apprise_api/api/templates/base.html:1429
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
@@ -273,7 +273,7 @@ msgstr "구성 ID 표시"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1430
+#: apprise_api/api/templates/base.html:1428
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
 #: apprise_api/api/templates/config_list.html:64
@@ -285,13 +285,13 @@ msgstr "구성 ID 숨기기"
 
 #: apprise_api/api/templates/auth.html:8
 #: apprise_api/api/templates/auth.html:487
-#: apprise_api/api/templates/base.html:290
+#: apprise_api/api/templates/base.html:288
 msgid "Authentication"
 msgstr "인증"
 
 #: apprise_api/api/templates/auth.html:8
 #: apprise_api/api/templates/auth_disabled.html:6
-#: apprise_api/api/templates/base.html:48
+#: apprise_api/api/templates/base.html:46
 #: apprise_api/api/templates/components/legal_footer.html:7
 #: apprise_api/api/templates/login.html:7
 msgid "Apprise API"
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "사용자 이름, 비밀번호 및 구성 ID가 클립보드에 복사됨"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1041
+#: apprise_api/api/templates/base.html:1039
 msgid "Scan with Apprise Mobile"
 msgstr "Apprise Mobile로 스캔"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "이 QR 코드에는 새 비밀번호가 포함되어 있습니다. 지금 저장하거나 안전하게 공유하세요. 비밀번호는 다시 표시할 수 없습니다."
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1050
 #: apprise_api/api/tests/test_localization.py:413
 msgid "Show Complete URL"
 msgstr "전체 보기 URL"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1051
 msgid "Hide Complete URL"
 msgstr "전체 숨기기 URL"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1052
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "URL를 클립보드에 복사"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1055
+#: apprise_api/api/templates/base.html:1053
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL가 클립보드에 복사됨"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1056
+#: apprise_api/api/templates/base.html:1054
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "이 URL는 QR 코드로 인코딩하기에는 너무 깁니다. 대신 위의 복사 버튼을 사용하세요."
 
@@ -568,7 +568,7 @@ msgstr "사용자 접근 재설정"
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1118
+#: apprise_api/api/templates/base.html:1116
 #: apprise_api/api/templates/config_list.html:118
 #: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
@@ -648,130 +648,130 @@ msgstr "인증 필요 없음"
 msgid "No authentication is required for this hosted version of Apprise."
 msgstr "이 호스팅된 Apprise 버전에서는 인증이 필요하지 않습니다."
 
-#: apprise_api/api/templates/base.html:55
+#: apprise_api/api/templates/base.html:53
 msgid "Administrator Credentials"
 msgstr "관리자 자격 증명"
 
-#: apprise_api/api/templates/base.html:56
+#: apprise_api/api/templates/base.html:54
 msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
 msgstr "이 구성에는 지정된 사용자가 없습니다. 결과적으로 QR 코드는 관리자 계정을 사용합니다."
 
-#: apprise_api/api/templates/base.html:80
+#: apprise_api/api/templates/base.html:78
 msgid "APPRISE LIBRARY"
 msgstr "APPRISE LIBRARY"
 
-#: apprise_api/api/templates/base.html:88
-#: apprise_api/api/templates/base.html:92
-#: apprise_api/api/templates/base.html:93
+#: apprise_api/api/templates/base.html:86
+#: apprise_api/api/templates/base.html:90
+#: apprise_api/api/templates/base.html:91
 #: apprise_api/api/tests/test_localization.py:348
 msgid "Language"
 msgstr "언어"
 
-#: apprise_api/api/templates/base.html:104
+#: apprise_api/api/templates/base.html:102
 msgid "Apply"
 msgstr "적용"
 
-#: apprise_api/api/templates/base.html:110
+#: apprise_api/api/templates/base.html:108
 msgid "API HEALTH"
 msgstr "API HEALTH"
 
-#: apprise_api/api/templates/base.html:139
+#: apprise_api/api/templates/base.html:137
 msgid "GitHub"
 msgstr "GitHub"
 
-#: apprise_api/api/templates/base.html:149
+#: apprise_api/api/templates/base.html:147
 msgid "Discord"
 msgstr "Discord"
 
-#: apprise_api/api/templates/base.html:159
+#: apprise_api/api/templates/base.html:157
 msgid "Reddit"
 msgstr "Reddit"
 
-#: apprise_api/api/templates/base.html:168
+#: apprise_api/api/templates/base.html:166
 msgid "Open Apprise Mobile app information"
 msgstr "Apprise Mobile 앱 정보 열기"
 
-#: apprise_api/api/templates/base.html:170
+#: apprise_api/api/templates/base.html:168
 msgid "Apprise Mobile"
 msgstr "Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:181
+#: apprise_api/api/templates/base.html:179
 msgid "Toggle light / dark theme"
 msgstr "조명 / 어두운 테마 전환"
 
-#: apprise_api/api/templates/base.html:193
+#: apprise_api/api/templates/base.html:191
 msgid "Open Authentication Settings"
 msgstr "인증 설정 열기"
 
+#: apprise_api/api/templates/base.html:201
 #: apprise_api/api/templates/base.html:203
-#: apprise_api/api/templates/base.html:205
 msgid "Logout"
 msgstr "로그아웃"
 
-#: apprise_api/api/templates/base.html:226
+#: apprise_api/api/templates/base.html:224
 msgid "If Apprise has been useful to you, please consider supporting its development."
 msgstr "Apprise 가 유용했다면, 개발을 지원하는 것을 고려해 주세요."
 
-#: apprise_api/api/templates/base.html:230
+#: apprise_api/api/templates/base.html:228
 msgid "GitHub Sponsors"
 msgstr "GitHub 스폰서"
 
-#: apprise_api/api/templates/base.html:234
+#: apprise_api/api/templates/base.html:232
 msgid "PayPal"
 msgstr "페이팔"
 
-#: apprise_api/api/templates/base.html:238
+#: apprise_api/api/templates/base.html:236
 msgid "Dismiss"
 msgstr "닫기"
 
-#: apprise_api/api/templates/base.html:248
-#: apprise_api/api/templates/base.html:249
+#: apprise_api/api/templates/base.html:246
+#: apprise_api/api/templates/base.html:247
 msgid "Open Navigation Menu"
 msgstr "탐색 메뉴 열기"
 
-#: apprise_api/api/templates/base.html:263
+#: apprise_api/api/templates/base.html:261
 msgid "Navigation"
 msgstr "내비게이션"
 
-#: apprise_api/api/templates/base.html:266
+#: apprise_api/api/templates/base.html:264
 msgid "Site Controls"
 msgstr "사이트 제어"
 
-#: apprise_api/api/templates/base.html:273
+#: apprise_api/api/templates/base.html:271
 msgid "Configuration Manager"
 msgstr "구성 관리자"
 
-#: apprise_api/api/templates/base.html:280
-#: apprise_api/api/templates/base.html:1406
+#: apprise_api/api/templates/base.html:278
+#: apprise_api/api/templates/base.html:1404
 msgid "New Configuration"
 msgstr "새 구성"
 
-#: apprise_api/api/templates/base.html:298
+#: apprise_api/api/templates/base.html:296
 #: apprise_api/api/templates/config_list.html:8
 msgid "Configuration List"
 msgstr "구성 목록"
 
-#: apprise_api/api/templates/base.html:305
+#: apprise_api/api/templates/base.html:303
 msgid "Available Plugins"
 msgstr "사용 가능한 플러그인"
 
-#: apprise_api/api/templates/base.html:309
+#: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
 msgstr "문서 및 도구"
 
-#: apprise_api/api/templates/base.html:318
+#: apprise_api/api/templates/base.html:316
 msgid "Notification Services"
 msgstr "알림 서비스"
 
-#: apprise_api/api/templates/base.html:327
+#: apprise_api/api/templates/base.html:325
 msgid "Configuration Help"
 msgstr "구성 도움말"
 
-#: apprise_api/api/templates/base.html:336
+#: apprise_api/api/templates/base.html:334
 msgid "Documentation"
 msgstr "문서"
 
-#: apprise_api/api/templates/base.html:345
+#: apprise_api/api/templates/base.html:343
 #: apprise_api/api/templates/config.html:8
 #: apprise_api/api/templates/config.html:368
 #: apprise_api/api/templates/config.html:370
@@ -781,191 +781,191 @@ msgstr "문서"
 msgid "Apprise URL Builder"
 msgstr "Apprise URL 빌더"
 
-#: apprise_api/api/templates/base.html:353
+#: apprise_api/api/templates/base.html:351
 #: apprise_api/api/templates/components/mobile_beta_dialog.html:17
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Apprise Mobile 받기"
 
-#: apprise_api/api/templates/base.html:356
+#: apprise_api/api/templates/base.html:354
 msgid "Support Development"
 msgstr "개발 지원"
 
-#: apprise_api/api/templates/base.html:365
+#: apprise_api/api/templates/base.html:363
 msgid "Buy Developer A Coffee"
 msgstr "개발자에게 커피 사주기"
 
-#: apprise_api/api/templates/base.html:374
+#: apprise_api/api/templates/base.html:372
 msgid "Sponsor Apprise Development"
 msgstr "후원 Apprise 개발"
 
-#: apprise_api/api/templates/base.html:385
+#: apprise_api/api/templates/base.html:383
 msgid "Apprise Health Check Failed"
 msgstr "Apprise 상태 점검 실패"
 
-#: apprise_api/api/templates/base.html:386
+#: apprise_api/api/templates/base.html:384
 msgid "The following issues have been detected with your Apprise instance:"
 msgstr "다음 문제가 Apprise 인스턴스에서 감지되었습니다:"
 
-#: apprise_api/api/templates/base.html:393
+#: apprise_api/api/templates/base.html:391
 msgid "Notification Delivery Disabled"
 msgstr "알림 전송 비활성화"
 
-#: apprise_api/api/templates/base.html:396
+#: apprise_api/api/templates/base.html:394
 msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
 msgstr "상태 없는 알림과 영구 저장소가 모두 비활성화되어 있습니다. 이 서버가 알림을 전달하려면 관리자가 적어도 한 가지 모드를 활성화해야 합니다."
 
-#: apprise_api/api/templates/base.html:404
+#: apprise_api/api/templates/base.html:402
 msgid "Configuration Write Failure"
 msgstr "구성 쓰기 실패"
 
-#: apprise_api/api/templates/base.html:406
+#: apprise_api/api/templates/base.html:404
 msgid "Apprise can not write new configuration information to the directory:"
 msgstr "Apprise가 새 구성 정보를 디렉터리에 쓸 수 없습니다:"
 
-#: apprise_api/api/templates/base.html:408
-#: apprise_api/api/templates/base.html:432
+#: apprise_api/api/templates/base.html:406
+#: apprise_api/api/templates/base.html:430
 msgid "Path copied to clipboard"
 msgstr "경로가 클립보드로 복사되었습니다"
 
-#: apprise_api/api/templates/base.html:413
-#: apprise_api/api/templates/base.html:437
+#: apprise_api/api/templates/base.html:411
+#: apprise_api/api/templates/base.html:435
 msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
 msgstr "<em>참고:</em> 이것이 예상된 동작이라면, 아래에 표시된 환경 변수를 미리 설정하고 Apprise 인스턴스를 다시 로드하십시오."
 
-#: apprise_api/api/templates/base.html:416
-#: apprise_api/api/templates/base.html:440
+#: apprise_api/api/templates/base.html:414
+#: apprise_api/api/templates/base.html:438
 msgid "Environment variable copied to clipboard"
 msgstr "환경 변수가 클립보드에 복사되었습니다"
 
-#: apprise_api/api/templates/base.html:426
+#: apprise_api/api/templates/base.html:424
 msgid "Attachment Temporary Storage Write Failure"
 msgstr "첨부 파일 임시 저장 실패"
 
-#: apprise_api/api/templates/base.html:429
+#: apprise_api/api/templates/base.html:427
 msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
 msgstr "Apprise은 디렉토리에 대한 쓰기 권한이 없기 때문에 첨부 파일(제공된 경우)을 순환할 수 없습니다:"
 
-#: apprise_api/api/templates/base.html:447
+#: apprise_api/api/templates/base.html:445
 msgid "More Details"
 msgstr "자세한 내용"
 
-#: apprise_api/api/templates/base.html:450
+#: apprise_api/api/templates/base.html:448
 msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
 msgstr "대부분의 경우, 여기에서 확인된 문제는 일반적으로 권한 문제와 관련이 있습니다. 올바른 <code>PUID</code> 및 <code>GUID</code>를 설정하여 Apprise가 파일을 읽고 쓸 때 사용할 권한을 반영하도록 하십시오. 이와 더불어, 매핑한 디렉토리의 권한이 올바르게 설정되어 있는지도 확인해야 할 수 있습니다."
 
-#: apprise_api/api/templates/base.html:453
+#: apprise_api/api/templates/base.html:451
 msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
 msgstr "여기서 확인된 문제는 SELinux와 관련될 수도 있습니다. SELinux을 일시적으로 비활성화하여 문제를 배제하고자 할 수 있습니다:"
 
-#: apprise_api/api/templates/base.html:456
-#: apprise_api/api/templates/base.html:462
+#: apprise_api/api/templates/base.html:454
+#: apprise_api/api/templates/base.html:460
 #: apprise_api/api/templates/config.html:3395
 msgid "Command copied to clipboard"
 msgstr "명령이 클립보드에 복사되었습니다"
 
-#: apprise_api/api/templates/base.html:460
+#: apprise_api/api/templates/base.html:458
 msgid "You can always re-enable it with:"
 msgstr "언제든지 다시 활성화할 수 있습니다:"
 
-#: apprise_api/api/templates/base.html:727
+#: apprise_api/api/templates/base.html:725
 msgid "Log Out?"
 msgstr "로그 아웃하시겠습니까?"
 
-#: apprise_api/api/templates/base.html:728
+#: apprise_api/api/templates/base.html:726
 msgid "Are you sure you wish to log out?"
 msgstr "로그아웃하시겠습니까?"
 
-#: apprise_api/api/templates/base.html:730
-#: apprise_api/api/templates/base.html:1448
+#: apprise_api/api/templates/base.html:728
+#: apprise_api/api/templates/base.html:1446
 msgid "Yes"
 msgstr "예"
 
-#: apprise_api/api/templates/base.html:731
-#: apprise_api/api/templates/base.html:1449
+#: apprise_api/api/templates/base.html:729
+#: apprise_api/api/templates/base.html:1447
 msgid "No"
 msgstr "아니요"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:878
 msgid "Abort Current Task?"
 msgstr "현재 작업을 중단하시겠습니까?"
 
-#: apprise_api/api/templates/base.html:881
+#: apprise_api/api/templates/base.html:879
 msgid "Are you sure you wish to abort the current task?"
 msgstr "현재 작업을 중단하시겠습니까?"
 
-#: apprise_api/api/templates/base.html:884
+#: apprise_api/api/templates/base.html:882
 msgid "Abort Task"
 msgstr "작업 중단"
 
-#: apprise_api/api/templates/base.html:885
+#: apprise_api/api/templates/base.html:883
 msgid "Keep Running"
 msgstr "계속 실행"
 
-#: apprise_api/api/templates/base.html:991
+#: apprise_api/api/templates/base.html:989
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
 #: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "구성 ID 숨김"
 
-#: apprise_api/api/templates/base.html:1008
+#: apprise_api/api/templates/base.html:1006
 msgid "Config ID copied to clipboard"
 msgstr "구성 ID가 클립보드에 복사됨"
 
-#: apprise_api/api/templates/base.html:1033
-#: apprise_api/api/templates/base.html:1061
+#: apprise_api/api/templates/base.html:1031
+#: apprise_api/api/templates/base.html:1059
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "Apprise Mobile QR 코드를 생성할 수 없습니다."
 
-#: apprise_api/api/templates/base.html:1060
+#: apprise_api/api/templates/base.html:1058
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile 빠른 구성"
 
-#: apprise_api/api/templates/base.html:1106
-#: apprise_api/api/templates/base.html:1470
+#: apprise_api/api/templates/base.html:1104
+#: apprise_api/api/templates/base.html:1468
 msgid "Enter a valid Config ID before continuing."
 msgstr "계속하려면 유효한 구성 ID를 입력하세요."
 
-#: apprise_api/api/templates/base.html:1113
+#: apprise_api/api/templates/base.html:1111
 msgid "Open Configuration"
 msgstr "구성 열기"
 
-#: apprise_api/api/templates/base.html:1114
+#: apprise_api/api/templates/base.html:1112
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "이것은 다른 구성 ID를 엽니다. 이 페이지에서 저장되지 않은 변경 사항은 손실됩니다."
 
-#: apprise_api/api/templates/base.html:1117
+#: apprise_api/api/templates/base.html:1115
 msgid "Continue"
 msgstr "계속"
 
-#: apprise_api/api/templates/base.html:1344
-#: apprise_api/api/templates/base.html:1364
+#: apprise_api/api/templates/base.html:1342
+#: apprise_api/api/templates/base.html:1362
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Apprise API 상태 엔드포인트에 연결할 수 없습니다."
 
-#: apprise_api/api/templates/base.html:1350
+#: apprise_api/api/templates/base.html:1348
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "알림 전송이 비활성화되었습니다. 서비스를 재개하려면 상태 비저장 알림 또는 영구 저장소를 활성화하십시오."
 
-#: apprise_api/api/templates/base.html:1409
+#: apprise_api/api/templates/base.html:1407
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "새 구성 ID를 선택하십시오. 계속하기 전에 수정하거나 다른 것을 생성할 수 있습니다."
 
-#: apprise_api/api/templates/base.html:1421
+#: apprise_api/api/templates/base.html:1419
 msgid "New Config ID"
 msgstr "새 구성 ID"
 
-#: apprise_api/api/templates/base.html:1437
-#: apprise_api/api/templates/base.html:1438
+#: apprise_api/api/templates/base.html:1435
+#: apprise_api/api/templates/base.html:1436
 msgid "Generate Another Config ID"
 msgstr "다른 구성 ID 생성"
 
-#: apprise_api/api/templates/base.html:1443
+#: apprise_api/api/templates/base.html:1441
 msgid "Do you wish to open this configuration?"
 msgstr "이 구성을 열겠습니까?"
 
-#: apprise_api/api/templates/base.html:1513
+#: apprise_api/api/templates/base.html:1511
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1281,8 +1281,8 @@ msgid ""
 msgstr "다음 명령은 apprise가 로드된 구성을 가져와 추가된 모든 서비스에 테스트 알림을 보내도록 합니다:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "또한 다음 줄이 포함된 <a href=\"https://appriseit.com/config/#cli\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise 구성 파일</a>을 생성할 수 있습니다:"
+msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
+msgstr "또한 다음 줄이 포함된 <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise 구성 파일</a>을 생성할 수 있습니다:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
@@ -1937,8 +1937,8 @@ msgid "Execute the request"
 msgstr "요청 실행"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "JSON 형식에 대한 자세한 내용은 <a href=\"https://appriseit.com/dev/apprise_details/\" target=\"_blank\" rel=\"noopener noreferrer\">여기</a>에서 확인할 수 있습니다."
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
+msgstr "JSON 형식에 대한 자세한 내용은 <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">여기</a>에서 확인할 수 있습니다."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -2345,281 +2345,281 @@ msgstr "최소 두 개의 영숫자 문자로 시작해야 합니다."
 msgid "Cannot exceed 64 characters in total length."
 msgstr "총 길이가 64자를 초과할 수 없습니다."
 
-#: apprise_api/api/views.py:1180
+#: apprise_api/api/views.py:1187
 msgid "This configuration has been disabled by an administrator"
 msgstr "이 구성은 관리자가 비활성화했습니다."
 
-#: apprise_api/api/views.py:1191 apprise_api/core/middleware/auth.py:73
+#: apprise_api/api/views.py:1198 apprise_api/core/middleware/auth.py:73
 #: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "접근 거부됨"
 
-#: apprise_api/api/views.py:1207
+#: apprise_api/api/views.py:1214
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "인증 모드가 비활성화되었습니다 (활성화하려면 APPRISE_AUTH_REQUIRED 설정)"
 
-#: apprise_api/api/views.py:1216
+#: apprise_api/api/views.py:1223
 msgid "Persistent configuration storage is disabled"
 msgstr "영구 구성 저장이 비활성화되었습니다."
 
-#: apprise_api/api/views.py:1225
+#: apprise_api/api/views.py:1232
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "구성 ID가 필요합니다 (URL 경로 또는 X-Apprise-Config-ID 헤더)"
 
-#: apprise_api/api/views.py:1238
+#: apprise_api/api/views.py:1245
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "제공된 X-Apprise-Config-ID 헤더가 유효하지 않습니다."
 
-#: apprise_api/api/views.py:1308 apprise_api/api/views.py:1918
-#: apprise_api/api/views.py:2022 apprise_api/api/views.py:2370
-#: apprise_api/api/views.py:2540 apprise_api/api/views.py:3807
-#: apprise_api/api/views.py:3956
+#: apprise_api/api/views.py:1315 apprise_api/api/views.py:1925
+#: apprise_api/api/views.py:2031 apprise_api/api/views.py:2379
+#: apprise_api/api/views.py:2549 apprise_api/api/views.py:3816
+#: apprise_api/api/views.py:3965
 msgid "The site has been configured to deny this request"
 msgstr "사이트가 요청을 거부하도록 설정되었습니다."
 
-#: apprise_api/api/views.py:1342 apprise_api/api/views.py:3723
+#: apprise_api/api/views.py:1349 apprise_api/api/views.py:3732
 msgid "An error occurred accessing configuration"
 msgstr "구성에 접근하는 동안 오류가 발생했습니다."
 
-#: apprise_api/api/views.py:1504
+#: apprise_api/api/views.py:1511
 msgid "The login form is only available to the web interface"
 msgstr "로그인 양식은 웹 인터페이스에서만 사용할 수 있습니다"
 
-#: apprise_api/api/views.py:1562
+#: apprise_api/api/views.py:1569
 msgid "The username, password, or Config ID was not accepted."
 msgstr "사용자 이름, 비밀번호 또는 구성 ID가 수락되지 않았습니다."
 
-#: apprise_api/api/views.py:2051 apprise_api/api/views.py:3301
+#: apprise_api/api/views.py:2060 apprise_api/api/views.py:3310
 msgid "The urls field must be a string or list of strings"
 msgstr "urls 필드는 문자열 또는 문자열 리스트여야 합니다"
 
-#: apprise_api/api/views.py:2059
+#: apprise_api/api/views.py:2068
 msgid "The config field must be a string"
 msgstr "config 필드는 문자열이어야 합니다"
 
-#: apprise_api/api/views.py:2067
+#: apprise_api/api/views.py:2076
 msgid "The format field must be a string"
 msgstr "format 필드는 문자열이어야 합니다"
 
-#: apprise_api/api/views.py:2080
+#: apprise_api/api/views.py:2089
 msgid "Invalid payload structure provided"
 msgstr "잘못된 페이로드 구조가 제공되었습니다"
 
-#: apprise_api/api/views.py:2108
+#: apprise_api/api/views.py:2117
 msgid "No valid URLs defined"
 msgstr "정의된 유효한 URL이 없습니다"
 
-#: apprise_api/api/views.py:2133
+#: apprise_api/api/views.py:2142
 msgid "The configuration could not be saved"
 msgstr "구성을 저장할 수 없습니다"
 
-#: apprise_api/api/views.py:2157
+#: apprise_api/api/views.py:2166
 msgid "The configuration payload is too large"
 msgstr "구성 페이로드가 너무 큽니다"
 
-#: apprise_api/api/views.py:2181
+#: apprise_api/api/views.py:2190
 msgid "Invalid configuration format specified"
 msgstr "잘못된 구성 형식이 지정되었습니다"
 
-#: apprise_api/api/views.py:2213
+#: apprise_api/api/views.py:2222
 msgid "The configuration format could not be auto-detected"
 msgstr "구성 형식을 자동으로 감지할 수 없습니다"
 
-#: apprise_api/api/views.py:2246
+#: apprise_api/api/views.py:2255
 msgid "The configuration could not be parsed"
 msgstr "구성을 구문 분석할 수 없습니다"
 
-#: apprise_api/api/views.py:2265
+#: apprise_api/api/views.py:2274
 msgid "An error occurred saving configuration"
 msgstr "구성 저장 중 오류가 발생했습니다"
 
-#: apprise_api/api/views.py:2282
+#: apprise_api/api/views.py:2291
 msgid "No configuration provided"
 msgstr "제공된 구성이 없습니다"
 
-#: apprise_api/api/views.py:2311
+#: apprise_api/api/views.py:2320
 msgid "Successfully saved configuration"
 msgstr "구성을 성공적으로 저장했습니다"
 
-#: apprise_api/api/views.py:2408
+#: apprise_api/api/views.py:2417
 msgid "The configuration store is not currently writable"
 msgstr "현재 구성 저장소는 쓰기 가능하지 않습니다"
 
-#: apprise_api/api/views.py:2422
+#: apprise_api/api/views.py:2431
 msgid "A valid destination (to), different from the source, is required"
 msgstr "소스와 다른 유효한 대상(to)이 필요합니다"
 
-#: apprise_api/api/views.py:2449
+#: apprise_api/api/views.py:2458
 msgid "There was no configuration to move"
 msgstr "이동할 구성이 없습니다"
 
-#: apprise_api/api/views.py:2460
+#: apprise_api/api/views.py:2469
 msgid "A configuration already exists at the destination"
 msgstr "대상에 이미 구성이 존재합니다"
 
-#: apprise_api/api/views.py:2471
+#: apprise_api/api/views.py:2480
 msgid "The configuration could not be moved"
 msgstr "구성을 이동할 수 없습니다"
 
-#: apprise_api/api/views.py:2481
+#: apprise_api/api/views.py:2490
 msgid "Successfully moved configuration"
 msgstr "구성을 성공적으로 이동했습니다"
 
-#: apprise_api/api/views.py:2557
+#: apprise_api/api/views.py:2566
 msgid "The configuration could not be removed"
 msgstr "구성을 제거할 수 없습니다"
 
-#: apprise_api/api/views.py:2580
+#: apprise_api/api/views.py:2589
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "구성을 제거했지만 인증 정보는 제거할 수 없습니다"
 
-#: apprise_api/api/views.py:2600
+#: apprise_api/api/views.py:2609
 msgid "Successfully removed configuration"
 msgstr "구성을 성공적으로 제거했습니다"
 
-#: apprise_api/api/views.py:2708
+#: apprise_api/api/views.py:2717
 msgid "Content-Type must be application/json"
 msgstr "Content-Type은 application/json이어야 합니다"
 
-#: apprise_api/api/views.py:2746
+#: apprise_api/api/views.py:2755
 msgid "Only an administrator may set configuration access"
 msgstr "구성 접근 권한은 관리자만 설정할 수 있습니다"
 
-#: apprise_api/api/views.py:2768
+#: apprise_api/api/views.py:2777
 msgid "Valid username and password fields are required"
 msgstr "유효한 사용자 이름 및 비밀번호 필드가 필요합니다"
 
-#: apprise_api/api/views.py:2815
+#: apprise_api/api/views.py:2824
 msgid "The current password was not accepted"
 msgstr "현재 비밀번호가 승인되지 않았습니다"
 
-#: apprise_api/api/views.py:2823
+#: apprise_api/api/views.py:2832
 msgid "The new password must differ from the current password"
 msgstr "새 비밀번호는 현재 비밀번호와 달라야 합니다"
 
-#: apprise_api/api/views.py:2841
+#: apprise_api/api/views.py:2850
 msgid "The authentication could not be saved"
 msgstr "인증을 저장할 수 없습니다"
 
-#: apprise_api/api/views.py:2851
+#: apprise_api/api/views.py:2860
 msgid "Successfully set authentication"
 msgstr "인증이 성공적으로 설정되었습니다"
 
-#: apprise_api/api/views.py:2894
+#: apprise_api/api/views.py:2903
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "인증을 제거하려면 글로벌 관리자 자격 증명이 필요합니다"
 
-#: apprise_api/api/views.py:2907
+#: apprise_api/api/views.py:2916
 msgid "The authentication could not be removed"
 msgstr "인증을 제거할 수 없습니다"
 
-#: apprise_api/api/views.py:2917
+#: apprise_api/api/views.py:2926
 msgid "Successfully removed authentication"
 msgstr "인증이 성공적으로 제거되었습니다"
 
-#: apprise_api/api/views.py:3068
+#: apprise_api/api/views.py:3077
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "서버가 일시적으로 새로운 라이브 알림 스트림을 시작할 수 없습니다"
 
-#: apprise_api/api/views.py:3093
+#: apprise_api/api/views.py:3102
 msgid "An error occurred delivering the notification"
 msgstr "알림을 전달하는 중에 오류가 발생했습니다"
 
-#: apprise_api/api/views.py:3102
+#: apprise_api/api/views.py:3111
 msgid "One or more notification could not be sent"
 msgstr "하나 이상의 알림을 보내지 못했습니다"
 
-#: apprise_api/api/views.py:3158
+#: apprise_api/api/views.py:3167
 msgid "The selected notification entry is invalid"
 msgstr "선택한 알림 항목이 유효하지 않습니다"
 
-#: apprise_api/api/views.py:3172
+#: apprise_api/api/views.py:3181
 msgid "The selected notification entry is no longer available"
 msgstr "선택한 알림 항목은 더 이상 사용할 수 없습니다"
 
-#: apprise_api/api/views.py:3205
+#: apprise_api/api/views.py:3214
 msgid "The message body provided is too large"
 msgstr "제공된 메시지 본문이 너무 큽니다"
 
-#: apprise_api/api/views.py:3222
+#: apprise_api/api/views.py:3231
 msgid "The message body could not be read"
 msgstr "메시지 본문을 읽을 수 없습니다"
 
-#: apprise_api/api/views.py:3240
+#: apprise_api/api/views.py:3249
 msgid "The message body could not be decoded"
 msgstr "메시지 본문을 디코딩할 수 없습니다"
 
-#: apprise_api/api/views.py:3260
+#: apprise_api/api/views.py:3269
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "페이로드 필드 매핑이 KEY: {} 을 사용하여 실패했습니다"
 
-#: apprise_api/api/views.py:3262
+#: apprise_api/api/views.py:3271
 msgid "Payload field mapping failed"
 msgstr "페이로드 필드 매핑 실패"
 
-#: apprise_api/api/views.py:3275
+#: apprise_api/api/views.py:3284
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} 필드는 문자열이어야 합니다"
 
-#: apprise_api/api/views.py:3287
+#: apprise_api/api/views.py:3296
 msgid "The format field must be a string or null"
 msgstr "형식 필드는 문자열 또는 null이어야 합니다"
 
-#: apprise_api/api/views.py:3338
+#: apprise_api/api/views.py:3347
 msgid "Bad FORM Payload provided"
 msgstr "잘못된 FORM 페이로드가 제공되었습니다"
 
-#: apprise_api/api/views.py:3358
+#: apprise_api/api/views.py:3367
 msgid "The template field must be an object of name/value pairs"
 msgstr "템플릿 필드는 이름/값 쌍의 객체여야 합니다"
 
-#: apprise_api/api/views.py:3416
+#: apprise_api/api/views.py:3425
 msgid "The X-Apprise-Template header is invalid"
 msgstr "X-Apprise-Template 헤더가 잘못되었습니다"
 
-#: apprise_api/api/views.py:3446 apprise_api/api/views.py:3465
+#: apprise_api/api/views.py:3455 apprise_api/api/views.py:3474
 msgid "A specific tag other than 'all' is required for this configuration"
 msgstr "이 구성에는 'all'이 아닌 특정 태그가 필요합니다"
 
-#: apprise_api/api/views.py:3458
+#: apprise_api/api/views.py:3467
 msgid "Unsupported characters found in tag definition"
 msgstr "태그 정의에서 지원되지 않는 문자가 발견되었습니다"
 
-#: apprise_api/api/views.py:3504
+#: apprise_api/api/views.py:3513
 msgid "Bad Attachment"
 msgstr "잘못된 첨부 파일"
 
-#: apprise_api/api/views.py:3536
+#: apprise_api/api/views.py:3545
 msgid "An invalid body input format was specified"
 msgstr "잘못된 본문 입력 형식이 지정되었습니다"
 
-#: apprise_api/api/views.py:3573
+#: apprise_api/api/views.py:3582
 msgid "The recursion limit has been reached"
 msgstr "재귀 한도에 도달했습니다"
 
-#: apprise_api/api/views.py:3585
+#: apprise_api/api/views.py:3594
 msgid "An invalid recursion value was specified"
 msgstr "잘못된 재귀 값이 지정되었습니다"
 
-#: apprise_api/api/views.py:3605
+#: apprise_api/api/views.py:3614
 msgid "An error occurred preparing the notification"
 msgstr "알림 준비 중 오류가 발생했습니다"
 
-#: apprise_api/api/views.py:3677 apprise_api/api/views.py:3873
+#: apprise_api/api/views.py:3686 apprise_api/api/views.py:3882
 msgid "Payload lacks minimum requirements"
 msgstr "페이로드가 최소 요구 사항을 충족하지 않습니다"
 
-#: apprise_api/api/views.py:3712 apprise_api/api/views.py:4004
+#: apprise_api/api/views.py:3721 apprise_api/api/views.py:4013
 msgid "There was no configuration found"
 msgstr "구성이 없습니다."
 
-#: apprise_api/api/views.py:3833
+#: apprise_api/api/views.py:3842
 msgid "This configuration does not permit stateless notifications"
 msgstr "이 구성은 상태 없는 알림을 허용하지 않습니다"
 
-#: apprise_api/api/views.py:3913
+#: apprise_api/api/views.py:3922
 msgid "There was no valid URLs provided to notify"
 msgstr "알릴 유효한 URL이 제공되지 않았습니다"
 
