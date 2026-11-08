@@ -28,7 +28,7 @@ RUN set -eux && \
     echo "Building python wheels" && \
         pip3 wheel --no-cache-dir -q --wheel-dir /wheels \
             -r /etc/requirements.txt gunicorn supervisor \
-            python-qpid-proton
+            python-qpid-proton pip
 
 FROM base AS runtime
 
@@ -47,8 +47,10 @@ RUN --mount=type=bind,from=builder,source=/wheels,target=/wheels \
             tzdata && \
     echo "Installing tools" && \
         apt-get install -y -qq --no-install-recommends \
-            curl sed git && \
+            curl sed && \
     echo "Installing python requirements" && \
+        pip3 install --no-cache-dir -q --no-index --find-links /wheels \
+            --upgrade pip && \
         pip3 install --no-cache-dir -q --no-index --find-links /wheels \
             -r /etc/requirements.txt gunicorn supervisor \
             python-qpid-proton && \
