@@ -21,35 +21,26 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-"""Custom plugin paths must apply on config UI /add and /json/urls paths (#383)."""
+"""Custom plugins load on the config views, not just the notify views."""
 
 from pathlib import Path
+import tempfile
 import textwrap
 from unittest import mock
 
+from apprise.manager_plugins import NotificationManager
 from django.test import RequestFactory, SimpleTestCase
 from django.test.utils import override_settings
 
 from ..views import _apprise_asset
 
+# Apprise keeps loaded plugins in one shared manager per process
+N_MGR = NotificationManager()
 
-class PluginPathsConfigTests(SimpleTestCase):
-    def _write_plugin(self, directory, schema):
-        Path(directory, f"{schema}.py").write_text(
-            textwrap.dedent(
-                f"""
-                from apprise.decorators import notify
 
-                @notify(on="{schema}")
-                def my_wrapper(body, title, notify_type, *args, **kwargs):
-                    return True
-                """
-            ),
-            encoding="utf-8",
-        )
-
-    def test_apprise_asset_defaults_plugin_paths(self):
-        """Config UI helpers must pass APPRISE_PLUGIN_PATHS into AppriseAsset."""
+class PluginPathsTests(SimpleTestCase):
+    def test_asset_loads_plugin_paths(self):
+        """Every asset is built with the configured plugin paths."""
         request = RequestFactory().get("/")
         captured = {}
 
@@ -57,57 +48,55 @@ class PluginPathsConfigTests(SimpleTestCase):
             def __init__(self, *args, **kwargs):
                 captured.update(kwargs)
 
-        paths = ["/tmp/apprise-plugin-paths-test"]
+        paths = ["/plugin"]
         with (
             override_settings(APPRISE_PLUGIN_PATHS=paths),
             mock.patch("apprise.AppriseAsset", SpyAsset),
         ):
-            _apprise_asset(request, allow_templates=True)
+            _apprise_asset(request)
 
         self.assertEqual(captured.get("plugin_paths"), paths)
-        self.assertTrue(captured.get("allow_templates"))
 
-    def test_custom_plugin_urls_load_via_add_and_json(self):
-        """Saving foobar:// through /add must leave it readable on /json/urls."""
-        import tempfile
+    def test_custom_plugin_review(self):
+        """A saved custom plugin URL shows on Review before any notify call."""
+        schema = "custplug"
 
-        schema = "custplug383"
+        # Forget the test plugin afterwards so later tests start clean
+        self.addCleanup(N_MGR.remove, schema)
+
+        # Each way of saving a configuration through /add
+        payloads = {
+            "urls": {"urls": f"{schema}://"},
+            "config": {"format": "text", "config": f"{schema}://"},
+        }
+
         with tempfile.TemporaryDirectory() as plugin_dir:
-            self._write_plugin(plugin_dir, schema)
-            key = "test_custom_plugin_urls_load_via_add_and_json"
+            # A minimal custom plugin built with the @notify decorator
+            Path(plugin_dir, f"{schema}.py").write_text(
+                textwrap.dedent(
+                    f"""
+                    from apprise.decorators import notify
+
+                    @notify(on="{schema}")
+                    def my_wrapper(body, title, notify_type, *args, **kwargs):
+                        return True
+                    """
+                ),
+                encoding="utf-8",
+            )
+
             with override_settings(APPRISE_PLUGIN_PATHS=[plugin_dir]):
-                response = self.client.post(f"/add/{key}", {"urls": f"{schema}://"})
-                self.assertEqual(response.status_code, 200)
+                for name, payload in payloads.items():
+                    with self.subTest(name):
+                        key = f"test_custom_plugin_review_{name}"
 
-                response = self.client.get(f"/json/urls/{key}")
-                self.assertEqual(response.status_code, 200)
-                payload = response.json()
-                self.assertGreaterEqual(len(payload.get("urls", [])), 1)
-                self.assertTrue(
-                    any(schema in (entry.get("url") or "") for entry in payload["urls"]),
-                    payload,
-                )
+                        # Save the configuration
+                        response = self.client.post(f"/add/{key}", payload)
+                        self.assertEqual(response.status_code, 200)
 
-    def test_custom_plugin_config_text_loads_via_add_and_json(self):
-        """Text configuration referencing a custom schema must parse for Review."""
-        import tempfile
-
-        schema = "custplug383cfg"
-        with tempfile.TemporaryDirectory() as plugin_dir:
-            self._write_plugin(plugin_dir, schema)
-            key = "test_custom_plugin_config_text_loads_via_add_and_json"
-            with override_settings(APPRISE_PLUGIN_PATHS=[plugin_dir]):
-                response = self.client.post(
-                    f"/add/{key}",
-                    {"format": "text", "config": f"{schema}://"},
-                )
-                self.assertEqual(response.status_code, 200)
-
-                response = self.client.get(f"/json/urls/{key}")
-                self.assertEqual(response.status_code, 200)
-                payload = response.json()
-                self.assertGreaterEqual(len(payload.get("urls", [])), 1)
-                self.assertTrue(
-                    any(schema in (entry.get("url") or "") for entry in payload["urls"]),
-                    payload,
-                )
+                        # The Review tab reads its URL list from here
+                        response = self.client.get(f"/json/urls/{key}")
+                        self.assertEqual(response.status_code, 200)
+                        urls = response.json()["urls"]
+                        self.assertEqual(len(urls), 1)
+                        self.assertTrue(urls[0]["url"].startswith(f"{schema}://"))

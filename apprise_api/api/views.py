@@ -29,6 +29,7 @@ import struct
 import tempfile
 import threading
 import time
+from typing import Any
 from urllib.parse import parse_qs, parse_qsl, quote, urlencode, urlsplit
 
 import apprise
@@ -37,7 +38,7 @@ from core.utils import parse_bool, parse_log_level
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, UnreadablePostError
+from django.http import HttpRequest, HttpResponse, JsonResponse, StreamingHttpResponse, UnreadablePostError
 from django.shortcuts import redirect, render
 from django.urls import Resolver404, resolve, reverse
 from django.utils.decorators import method_decorator
@@ -100,16 +101,15 @@ def _request_language(request):
     return getattr(request, "LANGUAGE_CODE", settings.LANGUAGE_CODE)
 
 
-def _apprise_asset(request, **kwargs):
+def _apprise_asset(request: HttpRequest, **kwargs: Any) -> apprise.AppriseAsset:
     """Create an asset carrying the request language for core localization."""
+    # Load custom plugins so every view can read URLs that use them, not
+    # just the notify views.
+    kwargs.setdefault("plugin_paths", settings.APPRISE_PLUGIN_PATHS)
+
     # The asset validates the code as it is created and stores it in Apprise's
     # own spelling, so a de-DE request becomes de_DE here. An asset language
     # cannot be changed afterwards, which is why it is passed in here.
-    # Config UI /add and /json/urls share this helper. Without plugin_paths,
-    # custom schemas only load after a notify worker has already scanned them
-    # (see #383). Default them here so every AppriseAsset sees the same paths
-    # as _notify_asset; callers may still override via kwargs.
-    kwargs.setdefault("plugin_paths", settings.APPRISE_PLUGIN_PATHS)
     return apprise.AppriseAsset(language=_request_language(request), **kwargs)
 
 
