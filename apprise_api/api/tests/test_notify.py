@@ -27,6 +27,7 @@ import json
 import logging
 import queue
 import threading
+import time
 from unittest import mock
 
 from api import views as runtime_views
@@ -279,6 +280,17 @@ class NotifyTests(SimpleTestCase):
             parse_tag_expression("family:")
         with self.assertRaises(AppriseAPIImproperlyConfigured):
             parse_tag_expression("9" * 5000 + ":family")
+
+    def test_tag_expression_with_long_runs_of_spaces_is_quick(self):
+        """Spaces around commas and pipes are trimmed; long runs stay fast."""
+        assert parse_tag_expression(" family ,  friends|  work ") == ["family", "friends", "work"]
+        assert parse_tag_expression("family  friends , work") == [("family", "friends"), "work"]
+
+        # This took minutes when the split pattern matched the spaces itself
+        start = time.monotonic()
+        assert parse_tag_expression("a" + " " * 200000 + "b") == [("a", "b")]
+        assert parse_tag_expression("a" + " " * 200000 + ",b") == ["a", "b"]
+        assert time.monotonic() - start < 2
 
     def test_stream_queue_preserves_spooled_order(self):
         """Slow-reader overflow moves to disk and keeps every event."""

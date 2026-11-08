@@ -81,6 +81,32 @@ jobs:
         files: coverage.xml
         fail_ci_if_error: false
 
+  tests-apprise-master:
+    # Runs the tests against the latest Apprise code to catch upcoming changes
+    # early.
+    name: tests (apprise master)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+    - name: Acquire sources
+      uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version-file: ".python-version"
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt -r dev-requirements.txt
+        pip install --force-reinstall \
+          git+https://github.com/caronc/apprise.git@master
+
+    - name: Run tests
+      run: |
+        pytest apprise_api
+
   docker-smoke-test:
     name: Docker Build/Start Smoke Test
     runs-on: ubuntu-latest

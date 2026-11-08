@@ -514,8 +514,10 @@ class _SpooledEventQueue:
 # We start with a regular expression used to clean up provided tag expressions.
 TAG_VALIDATION_RE = re.compile(r"^[a-z0-9\s| ,_:+&-]+$", re.IGNORECASE)
 
-# Split OR groups only on commas or pipes.
-TAG_OR_DELIM_RE = re.compile(r"\s*[|,]\s*")
+# Split OR groups only on commas or pipes. Spaces around them are stripped
+# from each group afterwards; matching them here is very slow on long runs
+# of spaces.
+TAG_OR_DELIM_RE = re.compile(r"[|,]")
 
 # Split each AND group into individual tags.
 TAG_AND_DELIM_RE = re.compile(r"[\s&+]+")
@@ -1966,24 +1968,26 @@ class ConfigListView(View):
 def _yaml_refused(content, asset):
     """Whether Apprise would refuse this YAML configuration as a whole.
 
-    Apprise only reads a configuration when it is used. A YAML syntax error,
-    a document that isn't a mapping, or a broken section (an invalid
-    template, say) makes it discard the whole file, which would otherwise
-    look just like a file with nothing in it; refusing those keeps a typo
-    from replacing a working configuration. An empty file, one of only
-    comments, or one with URLs Apprise can't use is the writer's to keep.
+    Reject syntax, structure, and section errors that discard the entire file.
+    Empty files and unusable individual URLs remain valid.
     """
     try:
         document = yaml.safe_load(content)
-    except yaml.YAMLError:
+    except (RecursionError, yaml.YAMLError):
+        # PyYAML runs out of stack on very deeply nested lists or maps
         return True
     if document is None:
         return False
     if not isinstance(document, dict):
         return True
     # Only the file's own sections; its URLs are judged one by one
+    try:
+        sections = yaml.safe_dump({**document, "urls": []})
+    except RecursionError:
+        # Writing YAML back out gives up at a shallower depth than reading
+        return True
     with apprise.LogCapture(level=logging.ERROR) as logs:
-        ConfigBase.config_parse_yaml(yaml.safe_dump({**document, "urls": []}), asset=asset)
+        ConfigBase.config_parse_yaml(sections, asset=asset)
     return bool(logs.getvalue())
 
 
