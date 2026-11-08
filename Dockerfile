@@ -47,7 +47,7 @@ RUN --mount=type=bind,from=builder,source=/wheels,target=/wheels \
             tzdata && \
     echo "Installing tools" && \
         apt-get install -y -qq --no-install-recommends \
-            curl sed git && \
+            curl sed && \
     echo "Installing python requirements" && \
         pip3 install --no-cache-dir -q --no-index --find-links /wheels \
             -r /etc/requirements.txt gunicorn supervisor \
