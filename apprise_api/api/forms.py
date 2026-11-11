@@ -368,8 +368,12 @@ class NotifyForm(forms.Form):
 
     title = forms.CharField(
         label=_("Title"),
-        # dir="auto" keeps a message written in Arabic or Hebrew readable
-        widget=forms.TextInput(attrs={"placeholder": _("Optional Title"), "dir": "auto"}),
+        # dir="auto" keeps a message written in Arabic or Hebrew readable. Chrome
+        # takes "Title" for a name prefix (Mr., Ms.) and ignores "off", so an
+        # unknown autocomplete value stops it offering one.
+        widget=forms.TextInput(
+            attrs={"placeholder": _("Optional Title"), "dir": "auto", "autocomplete": "apprise-none"}
+        ),
         max_length=apprise.NotifyBase.title_maxlen,
         required=False,
     )

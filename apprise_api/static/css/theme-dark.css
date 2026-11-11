@@ -931,7 +931,8 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-editor-card .auth-remove-button,
-#notify .notify-template-remove {
+#notify .notify-template-remove,
+#reminders .reminder-action-delete {
   color: #ff9ca6;
   background-color: rgba(117, 38, 48, 0.22) !important;
   border-color: #75404a;
@@ -940,13 +941,16 @@ input.config-id-input.is-mismatched {
 .auth-editor-card .auth-remove-button:hover,
 .auth-editor-card .auth-remove-button:focus-visible,
 #notify .notify-template-remove:hover,
-#notify .notify-template-remove:focus-visible {
+#notify .notify-template-remove:focus-visible,
+#reminders .reminder-action-delete:hover,
+#reminders .reminder-action-delete:focus-visible {
   color: #ffd9dd;
   background-color: rgba(151, 50, 63, 0.4) !important;
   border-color: #b45b68;
 }
 
-#notify .notify-template-remove i.material-icons {
+#notify .notify-template-remove i.material-icons,
+#reminders .reminder-action-delete i.material-icons {
   color: inherit;
 }
 
@@ -1211,6 +1215,111 @@ Buttons & Chips
 
 #notify .chips input::placeholder {
   color: #888c96;
+}
+
+/* The calendar's edit menu matches the other dropdowns. */
+.reminder-menu button {
+  color: #c1c3c9;
+}
+
+.reminder-menu button:hover,
+.reminder-menu button:focus-visible {
+  color: #7de6da;
+  background-color: #34383f;
+  outline: none;
+}
+
+/* Reminder buttons are small tiles in both themes, like Delete and Resume
+   beside them, which keep their own colours. */
+#reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume) {
+  color: #c1c3c9;
+  background-color: #2f333b;
+}
+
+#reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume):hover,
+#reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume):focus-visible {
+  color: #7de6da;
+  background-color: #3a3f48;
+}
+
+#reminders .reminder-action i.material-icons {
+  color: inherit;
+}
+
+/* Each reminder in the calendar gets one of these colours. They are all cool
+   colours led by the theme's teal; red stays for failed sends. */
+#reminders .reminder-color-0 {
+  --reminder-event-bg: #16312e;
+  --reminder-event-hover: #1c3d39;
+  --reminder-event-accent: #2cb6a6;
+}
+
+#reminders .reminder-color-1 {
+  --reminder-event-bg: #1a2f3a;
+  --reminder-event-hover: #213a47;
+  --reminder-event-accent: #4fb3d9;
+}
+
+#reminders .reminder-color-2 {
+  --reminder-event-bg: #1d3125;
+  --reminder-event-hover: #243c2e;
+  --reminder-event-accent: #5cbf7f;
+}
+
+#reminders .reminder-color-3 {
+  --reminder-event-bg: #1f2a3b;
+  --reminder-event-hover: #263449;
+  --reminder-event-accent: #6f9be0;
+}
+
+#reminders .reminder-color-4 {
+  --reminder-event-bg: #2b2638;
+  --reminder-event-hover: #352e45;
+  --reminder-event-accent: #a990d6;
+}
+
+#reminders .reminder-color-5 {
+  --reminder-event-bg: #22303a;
+  --reminder-event-hover: #2a3a46;
+  --reminder-event-accent: #7fa6b8;
+}
+
+/* A paused reminder is grey in the calendar. */
+#reminders .fc .is-paused {
+  --reminder-event-bg: #24262c;
+  --reminder-event-hover: #2a2d34;
+  --reminder-event-accent: #5f6570;
+}
+
+/* The calendar inside the reminder date picker uses this theme's colours. */
+#reminder-picker .air-datepicker {
+  --adp-font-family: inherit;
+  --adp-background-color: var(--dialog-surface);
+  --adp-background-color-hover: #34383f;
+  --adp-background-color-active: #34383f;
+  --adp-color: var(--dialog-text);
+  --adp-color-secondary: var(--notify-log-muted);
+  --adp-accent-color: #2cb6a6;
+  --adp-color-current-date: #2cb6a6;
+  --adp-color-other-month: #68717f;
+  --adp-color-other-month-hover: #68717f;
+  --adp-day-name-color: var(--notify-log-muted);
+  --adp-nav-arrow-color: var(--notify-log-muted);
+  --adp-nav-color-secondary: var(--notify-log-muted);
+  --adp-cell-background-color-hover: #34383f;
+  --adp-cell-background-color-selected: #2cb6a6;
+  --adp-cell-background-color-selected-hover: #2cb6a6;
+  --adp-border-color-inline: transparent;
+  --adp-border-color-inner: var(--dialog-border);
+  --adp-btn-color: #2cb6a6;
+  --adp-btn-background-color-hover: #34383f;
+}
+
+/* Example text in every field reads as a hint, not a value. */
+input::placeholder,
+textarea::placeholder {
+  color: #888c96;
+  opacity: 1;
 }
 
 .url-selected-icon i {
@@ -1517,4 +1626,60 @@ Notifications — SweetAlert2
 
 .swal2-popup .logs .log_TRACE .log_level {
   color: #7faec2;
+}
+
+/* =========================================
+Reminders
+========================================= */
+:root {
+  --reminder-card-bg: #1c1f26;
+  --reminder-card-border: #363942;
+  --reminder-text: #c1c3c9;
+  --reminder-muted: #8f949d;
+  --reminder-accent: #2bb3a3;
+  --reminder-accent-soft: rgba(43, 179, 163, 0.14);
+  --reminder-paused: #e2c26b;
+  --reminder-paused-soft: rgba(226, 194, 107, 0.14);
+  --reminder-failed: #ff9ca6;
+  --reminder-failed-soft: rgba(255, 156, 166, 0.14);
+}
+
+#reminders .reminder-notice {
+  color: var(--toast-warning-text);
+  background-color: var(--toast-warning-bg);
+  border-color: var(--toast-warning-border);
+}
+
+/* FullCalendar reads its colours from these variables. */
+#reminders .fc {
+  --fc-border-color: var(--reminder-card-border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--reminder-card-bg);
+  --fc-list-event-hover-bg-color: var(--reminder-accent-soft);
+  --fc-today-bg-color: var(--reminder-accent-soft);
+  --fc-event-bg-color: var(--reminder-accent);
+  --fc-event-border-color: var(--reminder-accent);
+  --fc-event-text-color: #0d0f12;
+  --fc-button-text-color: #c1c3c9;
+  --fc-button-bg-color: #1c1f26;
+  --fc-button-border-color: #454a55;
+  --fc-button-hover-bg-color: #262a33;
+  --fc-button-hover-border-color: #68717f;
+  --fc-button-active-bg-color: #20403c;
+  --fc-button-active-border-color: #2bb3a3;
+  color: var(--reminder-text);
+}
+
+#notify-reminder .reminder-toggle {
+  color: var(--reminder-text);
+}
+
+#reminder-form,
+#reminders .reminder-view-zone {
+  color-scheme: dark;
+}
+
+#reminder-form input,
+#reminders .reminder-view-zone input {
+  color: var(--reminder-text);
 }

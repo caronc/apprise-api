@@ -77,7 +77,7 @@ class WelcomePageTests(SimpleTestCase):
         self.assertContains(response, "'Accept': 'text/event-stream'")
         self.assertContains(response, "response.body.getReader")
         self.assertContains(response, "event.name === 'log'")
-        self.assertContains(response, "responseTitle: 'Delivery Response'", count=2)
+        self.assertContains(response, "responseTitle: 'Delivery Response'", count=3)
         self.assertContains(response, "event.detail === 0")
         self.assertContains(response, "document.activeElement === control")
 

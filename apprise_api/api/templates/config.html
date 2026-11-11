@@ -26,17 +26,12 @@
       <div class="col s12">
         <ul class="tabs config-overview">
           <li class="tab col s3">
-            <a class="active"
-               href="#overview"
-               aria-label="{% trans "Overview" %}"
-               title="{% trans "Overview" %}"><i class="material-icons">info</i>
+            <a class="active" href="#overview" aria-label="{% trans "Overview" %}"><i class="material-icons">info</i>
               <span class="config-tab-label">{% trans "Overview" %}</span></a>
           </li>
           {# Keep the grid class separate when the disabled class is rendered. #}
           <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
-            <a href="#config"
-               aria-label="{% trans "Configuration" %}"
-               title="{% if not CONFIG_LOCK %}{% trans "Configuration is unlocked" %}{% else %}{% trans "Configuration is locked by the administrator" %}{% endif %}">
+            <a href="#config" aria-label="{% trans "Configuration" %}">
               <i class="material-icons">
                 {% if not CONFIG_LOCK %}
                   settings
@@ -46,9 +41,7 @@
               </i><span class="config-tab-label">{% trans "Configuration" %}</span></a>
             </li>
             <li class="tab {% if CONFIG_LOCK %}disabled {% endif %}col s3">
-              <a href="#review"
-                 aria-label="{% trans "Review" %}"
-                 title="{% if not CONFIG_LOCK %}{% trans "Configuration is unlocked" %}{% else %}{% trans "Configuration is locked by the administrator" %}{% endif %}">
+              <a href="#review" aria-label="{% trans "Review" %}">
                 <i class="material-icons">
                   {% if not CONFIG_LOCK %}
                     web
@@ -58,13 +51,21 @@
                 </i><span class="config-tab-label">{% trans "Review" %}</span></a>
               </li>
               <li class="tab col s3">
-                <a href="#notify"
-                   aria-label="{% trans "Notifications" %}"
-                   title="{% trans "Notifications" %}"><i class="material-icons">announcement</i>
+                <a href="#notify" aria-label="{% trans "Notifications" %}"><i class="material-icons">announcement</i>
                   <span class="config-tab-label">{% trans "Notifications" %}</span>
                   {% if not CONFIG_LOCK %}<span class="card-count"></span>{% endif %}
                 </a>
               </li>
+              {# The Reminders tab, only for callers who may use reminders here. #}
+              {% if reminders_allowed %}
+                <li class="tab col s3">
+                  {# The count matches the reminders in the tab's All view. #}
+                  <a href="#reminders" aria-label="{% trans "Reminders" %}"><i class="material-icons">alarm</i>
+                    <span class="config-tab-label">{% trans "Reminders" %}</span>
+                    <span class="reminder-tab-count"></span>
+                  </a>
+                </li>
+              {% endif %}
             </ul>
           </div>
           <div id="overview" class="col s12">
@@ -115,8 +116,8 @@
               {% endblocktrans %}
                         <div class="code-snippet"
                              data-copy-label='{% trans "Apprise Configuration URL copied to clipboard" %}'
-                             data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
-                          <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/<span data-snippet-config-id>{{ key }}</span></code></pre>
+                             data-copy-text='{{ request.scheme }}://{% if AUTH_ENABLED and auth_username %}{{ auth_username|urlencode }}@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'>
+                          <pre><code class="nohighlight">{{ request.scheme }}://{% if AUTH_ENABLED and auth_username %}{{ auth_username|urlencode }}@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/<span data-snippet-config-id>{{ key }}</span></code></pre>
                         </div>
                       </li>
                       <li>
@@ -504,8 +505,38 @@
                     action="{% url "notify" key %}"
                     autocomplete="off"
                     method="post">
+                {% if reminders_allowed %}
+                  {# Shown at the top of the form while a saved reminder is loaded into it. #}
+                  <div id="notify-reminder-editing"
+                       class="notify-target-guidance notify-reminder-editing"
+                       role="status"
+                       hidden>
+                    <div class="notify-target-guidance-title">
+                      <span class="notify-target-guidance-icon" aria-hidden="true">
+                        {% include "icons/status-info.svg" %}
+                      </span>
+                      <span data-reminder-editing-label
+                            data-reminder-label="{% trans "Editing reminder" %}"
+                            data-occurrence-label="{% trans "Editing one time of" %}">{% trans "Editing reminder" %}</span>
+                    </div>
+                    <div class="notify-reminder-editing-body">
+                      <strong data-reminder-editing-name></strong>
+                      <button type="button"
+                              class="btn-flat notify-template-add notify-reminder-editing-cancel">
+                        <i class="material-icons" aria-hidden="true">close</i>
+                        <span>{% trans "Cancel" %}</span>
+                      </button>
+                    </div>
+                  </div>
+                {% endif %}
                 <section class="notify-form-section notify-delivery-options"
-                         aria-label="{% trans 'Delivery Options' %}">
+                         aria-labelledby="notify-delivery-options-title">
+                  <div class="notify-section-heading">
+                    <div class="notify-section-title">
+                      <i class="material-icons" aria-hidden="true">tune</i>
+                      <h6 id="notify-delivery-options-title">{% trans "Delivery Options" %}</h6>
+                    </div>
+                  </div>
                   <div class="row notify-top-row">
                     <div class="input-field col s6 m2">
                       {{ form_notify.format.label_tag }}
@@ -517,26 +548,22 @@
                       {{ form_notify.type }}
                       {{ form_notify.type.errors }}
                     </div>
-                    <div class="input-field col s12 m4">
+                    <div class="input-field col s12 m8">
                       {{ form_notify.tag.label_tag }}
                       {{ form_notify.tag }}
                       {{ form_notify.tag.errors }}
-                    </div>
-                    <div class="input-field col s12 m4 notify-attachments-field">
-                      {{ form_notify.attachment.label_tag }}
-                      {{ form_notify.attachment }}
-                      {{ form_notify.attachment.errors }}
-                      {# Where we will render the selected files #}
-                      <div class="notify-attachments-list"></div>
                     </div>
                   </div>
                 </section>
                 <section class="notify-form-section notify-template-values"
                          aria-labelledby="notify-template-values-title">
-                  <div class="notify-template-values-heading">
-                    <div>
-                      <h6 id="notify-template-values-title">{% trans "Template Values" %}</h6>
-                      <p>{% trans "Rows with a value are sent; blank values use the server fallback (if defined)." %}</p>
+                  <div class="notify-section-heading">
+                    <div class="notify-section-title">
+                      <i class="material-icons" aria-hidden="true">code</i>
+                      <div>
+                        <h6 id="notify-template-values-title">{% trans "Template Values" %}</h6>
+                        <p>{% trans "Rows with a value are sent; blank values use the server fallback (if defined)." %}</p>
+                      </div>
                     </div>
                     <button id="notify-template-add"
                             class="btn-flat notify-template-add"
@@ -550,7 +577,13 @@
                        aria-live="polite"></div>
                 </section>
                 <section class="notify-form-section notify-message-fields"
-                         aria-label="{% trans 'Message' %}">
+                         aria-labelledby="notify-message-title">
+                  <div class="notify-section-heading">
+                    <div class="notify-section-title">
+                      <i class="material-icons" aria-hidden="true">message</i>
+                      <h6 id="notify-message-title">{% trans "Message" %}</h6>
+                    </div>
+                  </div>
                   <div class="row">
                     <div class="input-field col s12">
                       {{ form_notify.title.label_tag }}
@@ -566,11 +599,55 @@
                     </div>
                   </div>
                 </section>
+                <section class="notify-form-section notify-attachments-section notify-attachments-field"
+                         aria-labelledby="notify-attachments-title">
+                  <div class="notify-section-heading">
+                    <div class="notify-section-title">
+                      <i class="material-icons" aria-hidden="true">attach_file</i>
+                      <div>
+                        <h6 id="notify-attachments-title">{% trans "Attachments" %}</h6>
+                        <p>{% trans "Upload files, or add web addresses that are downloaded each time the message is sent." %}</p>
+                      </div>
+                    </div>
+                    <div class="notify-attachments-buttons">
+                      {# A web address is sent as is, so the file is fetched fresh at send time. #}
+                      <button id="notify-attach-add"
+                              class="btn-flat notify-template-add"
+                              type="button">
+                        <i class="material-icons" aria-hidden="true">link</i>
+                        <span>{% trans "Add URL" %}</span>
+                      </button>
+                    </div>
+                  </div>
+                  {{ form_notify.attachment }}
+                  {{ form_notify.attachment.errors }}
+                  {# One row per web address, added with Add URL. #}
+                  <div id="notify-attach-rows"
+                       class="notify-template-rows notify-attach-rows"
+                       aria-live="polite"></div>
+                  {# Where we will render the selected files #}
+                  <div class="notify-attachments-list"></div>
+                </section>
+                {# When to send the message as a reminder. #}
+                {% if reminders_allowed %}
+                  {% include "components/config_reminders.html" %}
+                {% endif %}
                 <div class="notify-form-actions">
                   <span class="btn btn-clear-form waves-effect waves-light">
                     <span class="btn-text">{% trans "Clear Form" %}</span>
                     <i class="material-icons">restore_page</i>
                   </span>
+                  {# Opens the Reminder section, then saves the reminder; it reads Save Reminder while one is being changed. #}
+                  {% if reminders_allowed %}
+                    <button id="notify-add-reminder"
+                            class="btn waves-effect waves-light"
+                            type="button"
+                            data-add-label="{% trans "Add Reminder" %}"
+                            data-save-label="{% trans "Save Reminder" %}">
+                      <span class="btn-text">{% trans "Add Reminder" %}</span>
+                      <i class="material-icons right">alarm_add</i>
+                    </button>
+                  {% endif %}
                   <button class="btn waves-effect waves-light" type="submit" name="action">
                     {% trans "Send Notification" %}
                     <i class="material-icons right">send</i>
@@ -579,6 +656,9 @@
               </form>
             </div>
           </div>
+          {% if reminders_allowed %}
+            {% include "components/config_reminders_tab.html" %}
+          {% endif %}
         </div>
   {% else %}
     <div class="section">
@@ -590,6 +670,18 @@
   {% endif %}
 {% endblock body %}
 {# djlint:off #}
+{# The calendar and date picker libraries load only where reminders are offered. #}
+{% block head_js_optional %}
+  {{ block.super }}
+  {% if reminders_allowed %}
+    <!--fullcalendar-->
+    <script src="{% static 'js/fullcalendar.global.min.js' %}?v=6.1.22"></script>
+    <script src="{% static 'js/fullcalendar-locales.global.min.js' %}?v=6.1.22"></script>
+    <!--air-datepicker, the calendar inside the reminder date picker-->
+    <link rel="stylesheet" href="{% static 'css/air-datepicker.css' %}?v=3.6.0">
+    <script src="{% static 'js/air-datepicker.js' %}?v=3.6.0"></script>
+  {% endif %}
+{% endblock head_js_optional %}
 {% block jsfooter %}
   {{ block.super }}
   {% if STATEFUL_MODE != 'disabled' %}
@@ -760,312 +852,7 @@
     codeEl.dataset.rawUrl = normalized;
   }
 
-  function notifyStreamUrl(url) {
-    const streamUrl = new URL(url, window.location.href);
-    streamUrl.searchParams.set('stream', '1');
-    return streamUrl.pathname + streamUrl.search;
-  }
-
-  function parseNotifyStreamEvent(block) {
-    let eventName = 'message';
-    const data = [];
-    block.split('\n').forEach(function (line) {
-      if (!line || line.startsWith(':')) return;
-      const separator = line.indexOf(':');
-      const field = separator < 0 ? line : line.slice(0, separator);
-      let value = separator < 0 ? '' : line.slice(separator + 1);
-      if (value.startsWith(' ')) value = value.slice(1);
-      if (field === 'event') eventName = value;
-      if (field === 'data') data.push(value);
-    });
-    if (!data.length) return null;
-    return {name: eventName, data: JSON.parse(data.join('\n'))};
-  }
-
-  async function readNotifyEventStream(response, onEvent) {
-    const contentType = response.headers.get('Content-Type') || '';
-    if (!response.ok || !contentType.toLowerCase().startsWith('text/event-stream')) {
-      throw new Error('{% trans "The server could not start a live notification stream." %}');
-    }
-    if (!response.body || !response.body.getReader) {
-      throw new Error('{% trans "This browser cannot display the live notification stream." %}');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    let finalEvent = null;
-
-    function consume(finalChunk) {
-      buffer += finalChunk;
-      let boundary = buffer.search(/\r?\n\r?\n/);
-      while (boundary >= 0) {
-        const delimiter = buffer.slice(boundary).match(/^\r?\n\r?\n/)[0];
-        const block = buffer.slice(0, boundary).replace(/\r\n/g, '\n');
-        buffer = buffer.slice(boundary + delimiter.length);
-        const event = parseNotifyStreamEvent(block);
-        if (event) {
-          onEvent(event);
-          if (event.name === 'result' || event.name === 'error') {
-            finalEvent = event;
-          }
-        }
-        boundary = buffer.search(/\r?\n\r?\n/);
-      }
-    }
-
-    while (true) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      consume(decoder.decode(chunk.value, {stream: true}));
-    }
-    consume(decoder.decode());
-    if (buffer.trim()) {
-      const event = parseNotifyStreamEvent(buffer.replace(/\r\n/g, '\n'));
-      if (event) {
-        onEvent(event);
-        if (event.name === 'result' || event.name === 'error') finalEvent = event;
-      }
-    }
-    if (!finalEvent) {
-      throw new Error('{% trans "The live notification stream ended unexpectedly." %}');
-    }
-    return finalEvent;
-  }
-
-  function createNotifyLiveFeed(title, sendingText) {
-    const entries = [];
-    let renderFrame = null;
-    const logMarkup =
-      '<div class="notify-log-actions">' +
-        '<button type="button" class="btn-flat notify-log-copy" data-notify-copy-logs>' +
-          '<i class="material-icons" aria-hidden="true">content_copy</i>' +
-          '<span>{% trans "Copy Logs" %}</span>' +
-        '</button>' +
-      '</div>' +
-      '<div class="notify-log-panel" role="log" aria-live="polite" aria-relevant="additions">' +
-        '<ul class="logs notify-live-logs" data-notify-live-logs></ul>' +
-        '<p class="notify-live-empty" data-notify-live-empty>{% trans "Waiting for log activity…" %}</p>' +
-      '</div>';
-    const markup =
-      '<div class="notify-live-feed">' +
-        '<div class="notify-live-status">' +
-          '<span class="notify-live-pulse" aria-hidden="true"></span>' +
-          '<span>' + sendingText + '</span>' +
-          '<span class="notify-live-count" data-notify-live-count></span>' +
-        '</div>' +
-        logMarkup +
-      '</div>';
-
-    function createLogRow(entry) {
-      const row = document.createElement('li');
-      const level = String(entry.level || 'INFO').toUpperCase();
-      row.className = 'notify-log-row log_' + level.replace(/[^A-Z]/g, '');
-
-      const time = document.createElement('time');
-      time.className = 'log_time';
-      time.textContent = entry.asctime || '';
-      row.appendChild(time);
-
-      const badge = document.createElement('span');
-      badge.className = 'log_level';
-      badge.textContent = level;
-      row.appendChild(badge);
-
-      const message = document.createElement('span');
-      message.className = 'log_message';
-      message.textContent = entry.message || '';
-      row.appendChild(message);
-
-      if (entry.service) {
-        const service = document.createElement('span');
-        service.className = 'log_service';
-        service.textContent = entry.service;
-        service.title = '{% trans "Notification service" %}';
-        row.appendChild(service);
-      }
-      return row;
-    }
-
-    // Build one plain-text record per log entry, wrapped for easy pasting.
-    function clipboardText() {
-      const lines = entries.map(function (entry) {
-        const parts = [];
-        // Time is optional for messages added locally after a request fails.
-        if (entry.asctime) parts.push(String(entry.asctime));
-        // Keep the level visible even if a log entry omitted it.
-        parts.push('[' + String(entry.level || 'INFO').toUpperCase() + ']');
-        parts.push(String(entry.message || ''));
-        if (entry.service) {
-          // Name the service when the message came from one.
-          parts.push(`({% trans "Service" %}: ${String(entry.service)})`);
-        }
-        return '- ' + parts.join(' ');
-      });
-      return [
-        '--- {% trans "BEGIN APPRISE NOTIFICATION LOG" %} ---',
-        ...lines,
-        '--- {% trans "END APPRISE NOTIFICATION LOG" %} ---'
-      ].join('\n');
-    }
-
-    function render() {
-      const container = Swal.getHtmlContainer();
-      const list = container ? container.querySelector('[data-notify-live-logs]') : null;
-      if (!list) return;
-      // Append new entries to avoid flicker. A new summary starts with an
-      // empty list, so it still receives every entry.
-      const fragment = document.createDocumentFragment();
-      for (let i = list.children.length; i < entries.length; i += 1) {
-        fragment.appendChild(createLogRow(entries[i]));
-      }
-      if (fragment.childNodes.length) {
-        list.appendChild(fragment);
-      }
-      const empty = container.querySelector('[data-notify-live-empty]');
-      if (empty) empty.hidden = entries.length > 0;
-      const count = container.querySelector('[data-notify-live-count]');
-      if (count) {
-        count.textContent = entries.length === 1
-          ? '1 {% trans "event" %}'
-          : entries.length + ' {% trans "events" %}';
-      }
-      const copy = container.querySelector('[data-notify-copy-logs]');
-      if (copy && copy.dataset.wired !== '1') {
-        // Render can run many times; connect the button only once.
-        copy.dataset.wired = '1';
-        copy.addEventListener('click', function () {
-          // Copy the same entries currently shown in the live log panel.
-          copyToClipboard(
-            clipboardText(), copy, '{% trans "Notification logs copied to clipboard" %}'
-          );
-        });
-      }
-      const panel = list.closest('.notify-log-panel');
-      if (panel) panel.scrollTop = panel.scrollHeight;
-    }
-
-    function scheduleRender() {
-      if (renderFrame !== null) return;
-      renderFrame = window.requestAnimationFrame(function () {
-        renderFrame = null;
-        render();
-      });
-    }
-
-    function cancelRender() {
-      if (renderFrame !== null) {
-        window.cancelAnimationFrame(renderFrame);
-        renderFrame = null;
-      }
-    }
-
-    const task = appriseBeginTask({
-      title: title,
-      html: markup,
-      width: '80em',
-      showLoader: false,
-      didOpen: render
-    });
-
-    return {
-      signal: task.signal,
-      wasAborted: task.wasAborted,
-      add: function (entry) {
-        entries.push(entry);
-        scheduleRender();
-      },
-      finish: function (options) {
-        cancelRender();
-        render();
-        task.complete();
-
-        // Turn the progress dialog into its result without closing or reopening it.
-        const popup = Swal.getPopup();
-        const container = Swal.getHtmlContainer();
-        if (!popup || !container) return;
-
-        popup.classList.remove('apprise-popup--task');
-        popup.classList.add(
-          'apprise-popup--status',
-          'notify-log-popup',
-          'notify-log-popup--' + options.tone
-        );
-
-        const titleElement = popup.querySelector('.swal2-title');
-        if (titleElement) titleElement.textContent = options.title || title;
-
-        const status = container.querySelector('.notify-live-status');
-        if (status) {
-          status.className = 'notify-summary';
-          status.textContent = options.summary;
-        }
-
-        const icon = popup.querySelector('.swal2-icon');
-        if (icon && appriseStatusIconHtml[options.icon]) {
-          icon.className = 'swal2-icon apprise-status-icon swal2-' + options.icon;
-          icon.innerHTML = appriseStatusIconHtml[options.icon];
-          icon.style.display = 'flex';
-        }
-
-        const actions = popup.querySelector('.swal2-actions');
-        const confirmButton = Swal.getConfirmButton();
-        const closeButton = Swal.getCloseButton();
-        if (actions) actions.style.display = 'flex';
-        if (confirmButton) confirmButton.style.display = 'inline-block';
-        if (closeButton) closeButton.style.display = 'flex';
-      },
-      close: function () {
-        cancelRender();
-        task.finish();
-      }
-    };
-  }
-
-  function notifyStreamResultOptions(status, messages) {
-    if (status === 'SUCCESS') {
-      return {tone: 'success', icon: 'success', summary: messages.success};
-    }
-    if (status === 'PARTIAL') {
-      return {tone: 'warning', icon: 'warning', summary: messages.partial};
-    }
-    return {tone: 'error', icon: 'error', summary: messages.failure};
-  }
-
-  async function sendNotifyStream(url, fetchOptions, display) {
-    const feed = createNotifyLiveFeed(display.title, display.sending);
-    try {
-      const response = await appriseFetch(notifyStreamUrl(url), Object.assign({}, fetchOptions, {
-        signal: feed.signal,
-        headers: Object.assign({}, fetchOptions.headers || {}, {'Accept': 'text/event-stream'})
-      }));
-      const finalEvent = await readNotifyEventStream(response, function (event) {
-        if (event.name === 'log') feed.add(event.data);
-      });
-      if (finalEvent.name === 'error') {
-        throw new Error(finalEvent.data.message || display.failure);
-      }
-      const resultOptions = notifyStreamResultOptions(finalEvent.data.status, display);
-      resultOptions.title = display.responseTitle;
-      feed.finish(resultOptions);
-    } catch (error) {
-      if (error.name === 'AbortError' || feed.wasAborted()) {
-        feed.close();
-        return;
-      }
-      feed.add({
-        level: 'ERROR',
-        asctime: '',
-        message: error.message || display.failure
-      });
-      feed.finish({
-        title: display.responseTitle,
-        tone: 'error',
-        icon: 'error',
-        summary: display.failure
-      });
-    }
-  }
+  {% include "components/notify_stream_script.html" %}
 
   // Keep template inputs out of browser and password-manager autofill.
   function disableTemplateAutofill(input) {
@@ -1392,6 +1179,9 @@
     keyInput.className = 'notify-template-key';
     keyInput.type = 'text';
     disableTemplateAutofill(keyInput);
+    // Chrome takes a field labelled "Name" for a person's name and ignores
+    // "off" there, but leaves alone a value it does not know.
+    keyInput.autocomplete = 'apprise-none';
     keyInput.spellcheck = false;
     keyInput.placeholder = 'NAME';
     keyInput.value = name || '';
@@ -1628,6 +1418,11 @@
 
     // Clear attachments buffer and UI
     notifyAttachments = [];
+    // Also forget a loaded reminder's stored files and every web address row.
+    notifyStoredAttachments = [];
+    if (form.querySelector('#notify-attach-rows')) {
+      setNotifyAttachmentUrls([]);
+    }
     const listEl = form.querySelector('.notify-attachments-list');
     if (listEl) {
       renderAttachmentList(listEl);
@@ -1759,7 +1554,8 @@
       return;
     }
 
-    const selector = 'a[href="' + hash + '"]';
+    // A tab may be followed by more, such as #notify/<reminder id>.
+    const selector = 'a[href="' + hash.split('/')[0] + '"]';
     const tabLink = tabsElem.querySelector(selector);
     if (!tabLink) {
       return;
@@ -1772,7 +1568,7 @@
 
     if (configTabsInstance && typeof configTabsInstance.select === 'function') {
       try {
-        configTabsInstance.select(hash.slice(1));
+        configTabsInstance.select(hash.slice(1).split('/')[0]);
         return;
       } catch (e) {
         console.warn('Unable to select tab from hash via Materialize', e);
@@ -1782,6 +1578,14 @@
     tabLink.click();
   }
 
+  // Show the overview when the open tab cannot be used, such as a link to
+  // #reminders for a Config ID that has no configuration yet.
+  function leaveDisabledTab() {
+    if (configTabsInstance && document.querySelector('.tabs.config-overview li.disabled a.active')) {
+      configTabsInstance.select('overview');
+    }
+  }
+
   function initConfigTabs() {
     const tabsElem = document.querySelector('.tabs.config-overview');
     if (!tabsElem) {
@@ -1789,19 +1593,29 @@
     }
 
     if (typeof M !== 'undefined' && M.Tabs) {
+      // Runs each time a tab is shown.
+      const onShow = function (tabContent) {
+        if (!tabContent || !tabContent.id) {
+          return;
+        }
+        // Keep a longer hash for the same tab, such as #notify/<reminder id>.
+        if (window.location.hash.split('/')[0] !== '#' + tabContent.id) {
+          setConfigTabHash('#' + tabContent.id);
+        }
+        if (tabContent.id === 'config' && typeof window.__appriseConfigEditorRefresh === 'function') {
+          window.__appriseConfigEditorRefresh();
+        }
+        if (tabContent.id === 'reminders' && typeof window.__appriseRemindersShown === 'function') {
+          // The calendar can only measure itself once its tab is visible.
+          window.__appriseRemindersShown();
+        }
+      };
       configTabsInstance = M.Tabs.getInstance(tabsElem);
-      if (!configTabsInstance) {
-        configTabsInstance = M.Tabs.init(tabsElem, {
-          onShow: function (tabContent) {
-            if (!tabContent || !tabContent.id) {
-              return;
-            }
-            setConfigTabHash('#' + tabContent.id);
-            if (tabContent.id === 'config' && typeof window.__appriseConfigEditorRefresh === 'function') {
-              window.__appriseConfigEditorRefresh();
-            }
-          }
-        });
+      if (configTabsInstance) {
+        // M.AutoInit already set up the tabs without this handler.
+        configTabsInstance.options.onShow = onShow;
+      } else {
+        configTabsInstance = M.Tabs.init(tabsElem, {onShow: onShow});
       }
     }
 
@@ -2335,8 +2149,9 @@
     {% if not CONFIG_LOCK %}
     // disable the notification tab until we know for certain
     // a notification is possible
-    document.querySelector('.config-overview li a[href="#notify"]')
-      .parentNode.classList.add('disabled');
+    // Reminders need the same configuration, so their tab follows along.
+    document.querySelectorAll('.config-overview li a[href="#notify"], .config-overview li a[href="#reminders"]')
+      .forEach(function (tab) { tab.parentNode.classList.add('disabled'); });
     // Disable any has-config entries
     document.querySelectorAll('.has-config').forEach(function (e) {
       e.style.display = 'none'
@@ -2357,11 +2172,13 @@
       // Take an early exit
       document.querySelector('#url-list-progress').style.display = 'none';
       document.querySelector('#url-list').textContent = ''
+      leaveDisabledTab();
       return;
     } else if (jsonResponse.status != 200) {
       // Take an early exit
       document.querySelector('#url-list-progress').style.display = 'none';
       document.querySelector('#url-list').textContent = '{% trans "💣 An error occurred retrieving the list of loaded Apprise URL(s)" %}'
+      leaveDisabledTab();
       return;
     }
     // Initialize our tags making it easy for an end user to
@@ -2788,8 +2605,8 @@
         e.style.display = null;
       });
       // Remove our restrictions on sending notifications
-      document.querySelector('.config-overview li a[href="#notify"]')
-        .parentNode.classList.remove('disabled');
+      document.querySelectorAll('.config-overview li a[href="#notify"], .config-overview li a[href="#reminders"]')
+        .forEach(function (tab) { tab.parentNode.classList.remove('disabled'); });
       // If the user landed on a hash-targeted tab (e.g. #notify), try again
       // now that the tab may be enabled.
       selectConfigTabFromHash();
@@ -2850,6 +2667,7 @@
       }
     } else {
       document.querySelector('#url-list').textContent = '{% trans "There are no Apprise URL(s) loaded." %}'
+      leaveDisabledTab();
     }
   {% endif %}
     update_count();
@@ -3003,6 +2821,257 @@
   {% endif %}
   // variable for tracking uploaded attachments
   let notifyAttachments = [];
+  // Files already stored with the reminder being changed, as {file, filename, size}.
+  let notifyStoredAttachments = [];
+  // What a web address must look like: http:// or https:// with no spaces.
+  const notifyAttachUrlPattern = /^https?:\/\/\S+$/i;
+
+  // The web addresses to attach, as {url, filename}; each is fetched when the message is sent.
+  function notifyAttachmentUrls() {
+    return Array.from(document.querySelectorAll('#notify-attach-rows .notify-attach-url')).map(function (input) {
+      const entry = {url: input.value.trim()};
+      if (input.dataset.filename) {
+        entry.filename = input.dataset.filename;
+      }
+      return entry;
+    }).filter(function (entry) { return entry.url; });
+  }
+
+  // Whether anything is attached; stored files count only when saving a reminder.
+  function notifyHasAttachments(includeStored) {
+    return notifyAttachments.length > 0 || notifyAttachmentUrls().length > 0
+      || (includeStored && notifyStoredAttachments.length > 0);
+  }
+
+  // Redraw the chips for stored and uploaded files.
+  function renderNotifyAttachments() {
+    const listEl = document.querySelector('#donotify .notify-attachments-list');
+    if (listEl) {
+      renderAttachmentList(listEl);
+    }
+  }
+
+  // Show an error under the web address rows, or under one row's field; null clears them.
+  function notifyAttachmentUrlError(message, input) {
+    // Clear any earlier error first.
+    const section = document.querySelector('#donotify .notify-attachments-section');
+    section.querySelectorAll('.notify-attach-error').forEach(function (note) { note.remove(); });
+    section.querySelectorAll('.notify-attach-url.invalid').forEach(function (field) { field.classList.remove('invalid'); });
+    if (!message) {
+      return;
+    }
+    const note = document.createElement('span');
+    note.className = 'notify-attach-error';
+    note.setAttribute('role', 'alert');
+    note.textContent = message;
+    if (input) {
+      input.classList.add('invalid');
+      input.closest('.notify-attach-row').after(note);
+      input.focus();
+    } else {
+      document.querySelector('#notify-attach-rows').after(note);
+    }
+  }
+
+  // Check each web address looks like one before it is sent or saved.
+  // The server applies its own attachment rules as well.
+  function notifyCheckAttachmentUrls() {
+    const bad = Array.from(document.querySelectorAll('#notify-attach-rows .notify-attach-url')).find(function (input) {
+      return input.value.trim() && !notifyAttachUrlPattern.test(input.value.trim());
+    });
+    notifyAttachmentUrlError(bad ? '{% trans "Bad Attachment" %}' : null, bad);
+    return !bad;
+  }
+
+  // Add URL waits until the last web address row is filled in, like Add Value.
+  function notifyUpdateAttachAdd() {
+    const inputs = document.querySelectorAll('#notify-attach-rows .notify-attach-url');
+    const last = inputs[inputs.length - 1];
+    document.querySelector('#notify-attach-add').disabled = Boolean(last && !last.value.trim());
+  }
+
+  // Add a row for one web address, with buttons to preview and remove it.
+  function addNotifyAttachmentRow(entry) {
+    const container = document.querySelector('#notify-attach-rows');
+    const row = document.createElement('div');
+    row.className = 'notify-template-row notify-attach-row';
+
+    // The address field, with a label that names it for screen readers.
+    const field = document.createElement('div');
+    field.className = 'notify-template-value-field';
+    const id = 'notify-attach-url-' + String(container.children.length) + '-' + String(Date.now());
+    const label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.textContent = '{% trans "Attachment URL" %}';
+    const input = document.createElement('input');
+    input.id = id;
+    input.className = 'notify-attach-url';
+    input.type = 'url';
+    input.placeholder = 'https://';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.value = entry ? entry.url : '';
+    if (entry && entry.filename) {
+      input.dataset.filename = entry.filename;
+    }
+    // Typing clears the error and may allow another row.
+    input.addEventListener('input', function () {
+      notifyAttachmentUrlError(null);
+      notifyUpdateAttachAdd();
+      if (input.value.trim()) {
+        clearNotifyMinimumMissing();
+      }
+    });
+    input.addEventListener('keydown', function (e) {
+      // Enter here must not send the form.
+      if (e.key === 'Enter' && !e.isComposing) {
+        e.preventDefault();
+      }
+    });
+    field.appendChild(label);
+    field.appendChild(input);
+
+    // Preview downloads the address through the server and shows it.
+    const preview = document.createElement('button');
+    preview.type = 'button';
+    preview.className = 'btn-flat notify-attach-preview';
+    preview.setAttribute('aria-label', '{% trans "Preview" %}');
+    preview.setAttribute('title', '{% trans "Preview" %}');
+    preview.innerHTML = '<i class="material-icons" aria-hidden="true">visibility</i>';
+    preview.addEventListener('click', function () {
+      if (notifyCheckAttachmentUrls() && input.value.trim()) {
+        notifyPreviewAttachment(input.value.trim());
+      }
+    });
+
+    // Remove drops the row.
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn-flat notify-template-remove';
+    remove.setAttribute('aria-label', '{% trans "Remove Attachment" %}');
+    remove.setAttribute('title', '{% trans "Remove Attachment" %}');
+    remove.innerHTML = '<i class="material-icons" aria-hidden="true">delete</i>';
+    remove.addEventListener('click', function () {
+      row.remove();
+      notifyAttachmentUrlError(null);
+      notifyUpdateAttachAdd();
+    });
+
+    row.appendChild(field);
+    row.appendChild(preview);
+    row.appendChild(remove);
+    container.appendChild(row);
+    notifyUpdateAttachAdd();
+    return input;
+  }
+
+  // Replace every web address row, such as when a saved reminder is loaded.
+  function setNotifyAttachmentUrls(entries) {
+    document.querySelector('#notify-attach-rows').replaceChildren();
+    notifyAttachmentUrlError(null);
+    (entries || []).forEach(addNotifyAttachmentRow);
+    notifyUpdateAttachAdd();
+  }
+
+  // Download a web address through the server, the same way a send would,
+  // and show what came back: the file, or why it could not be fetched.
+  async function notifyPreviewAttachment(url) {
+    const holder = document.createElement('div');
+    holder.className = 'notify-attach-preview-body';
+    const status = document.createElement('p');
+    status.className = 'notify-attach-preview-status';
+    status.textContent = '{% trans "Loading…" %}';
+    holder.appendChild(status);
+    // A temporary browser address for the downloaded file, freed when the dialog closes.
+    let objectUrl = null;
+    appriseFire({
+      title: '{% trans "Preview" %}',
+      html: holder,
+      width: '48rem',
+      showConfirmButton: false,
+      didClose: function () {
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+        }
+      }
+    });
+    try {
+      const response = await appriseFetch('{% url "attach_preview" key %}', {
+        method: 'POST',
+        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+        body: JSON.stringify({url: url})
+      });
+      // A failed download shows the error, and the log when there is one.
+      if (!response.ok) {
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = {};
+        }
+        status.classList.add('is-error');
+        status.textContent = (data.error || '{% trans "The attachment could not be downloaded" %}') + ' (' + response.status + ')';
+        if (data.logs && data.logs.length) {
+          // What the download reported, such as a 404 or a refused address.
+          const logs = document.createElement('pre');
+          logs.className = 'notify-attach-preview-logs';
+          logs.textContent = data.logs.join('\n');
+          holder.appendChild(logs);
+        }
+        return;
+      }
+      // The file's real type and name come in headers, as the body is always
+      // sent as plain bytes.
+      const type = (response.headers.get('X-Apprise-Content-Type') || 'application/octet-stream').split(';')[0].trim().toLowerCase();
+      let name = 'attachment';
+      try {
+        name = decodeURIComponent(response.headers.get('X-Apprise-Filename') || name);
+      } catch (e) {
+        name = 'attachment';
+      }
+      const blob = new Blob([await response.arrayBuffer()], {type: type});
+      objectUrl = URL.createObjectURL(blob);
+      status.textContent = type + ' · ' + (blob.size / 1024).toLocaleString(undefined, {maximumFractionDigits: 1}) + ' KB';
+
+      // Show it the way its type allows: a picture, a player, text, or a note
+      // that it cannot be shown.
+      let shown = null;
+      if (type.startsWith('image/')) {
+        shown = document.createElement('img');
+        shown.alt = name;
+        shown.src = objectUrl;
+      } else if (type.startsWith('audio/') || type.startsWith('video/')) {
+        shown = document.createElement(type.startsWith('audio/') ? 'audio' : 'video');
+        shown.controls = true;
+        shown.src = objectUrl;
+      } else if (type.startsWith('text/') || /(json|xml)$/.test(type)) {
+        // Text is shown as text, never as a page.
+        shown = document.createElement('pre');
+        shown.textContent = (await blob.slice(0, 20000).text());
+      } else {
+        shown = document.createElement('div');
+        shown.className = 'notify-attach-preview-none';
+        shown.innerHTML = '<i class="material-icons" aria-hidden="true">insert_drive_file</i>';
+        const text = document.createElement('span');
+        text.textContent = '{% trans "This file cannot be shown here." %}';
+        shown.appendChild(text);
+      }
+      shown.classList.add('notify-attach-preview-content');
+      holder.appendChild(shown);
+
+      // A button to save the file.
+      const download = document.createElement('a');
+      download.className = 'btn waves-effect waves-light notify-attach-download';
+      download.href = objectUrl;
+      download.download = name;
+      download.innerHTML = '<i class="material-icons left" aria-hidden="true">file_download</i>';
+      download.appendChild(document.createTextNode('{% trans "Download" %}'));
+      holder.appendChild(download);
+    } catch (e) {
+      status.classList.add('is-error');
+      status.textContent = '{% trans "The attachment could not be downloaded" %}';
+    }
+  }
 
   function markNotifyMinimumMissing() {
     const bodyInput = document.querySelector('#id_body');
@@ -3066,26 +3135,44 @@
 
   function renderAttachmentList(listEl) {
     listEl.innerHTML = '';
-    notifyAttachments.forEach(function (file, index) {
-      const chip = document.createElement('div');
-      chip.className = 'attachment-chip';
-      chip.textContent = file.name;
-
-      const icon = document.createElement('i');
-      icon.className = 'material-icons';
-      icon.textContent = 'close';
-      chip.appendChild(icon);
-
-      chip.addEventListener('click', function (e) {
-        e.preventDefault();
-        notifyAttachments.splice(index, 1);
-        renderAttachmentList(listEl);
-        if (notifyAttachments.length > 0) {
-          clearNotifyMinimumMissing();
+    // Stored reminder files, then uploads; clicking one removes it.
+    // Each group: [its files, its icon, how to name one, its tooltip].
+    const groups = [
+      [notifyStoredAttachments, 'cloud_done', function (entry) { return entry.filename || entry.file; },
+        '{% trans "Stored with the reminder" %}'],
+      [notifyAttachments, 'attach_file', function (file) { return file.name; }, '']
+    ];
+    groups.forEach(function (group) {
+      group[0].forEach(function (entry, index) {
+        const chip = document.createElement('div');
+        chip.className = 'attachment-chip';
+        if (group[3]) {
+          chip.title = group[3];
         }
-      });
 
-      listEl.appendChild(chip);
+        const kind = document.createElement('i');
+        kind.className = 'material-icons attachment-chip-kind';
+        kind.setAttribute('aria-hidden', 'true');
+        kind.textContent = group[1];
+        chip.appendChild(kind);
+        chip.appendChild(document.createTextNode(group[2](entry)));
+
+        const icon = document.createElement('i');
+        icon.className = 'material-icons';
+        icon.textContent = 'close';
+        chip.appendChild(icon);
+
+        chip.addEventListener('click', function (e) {
+          e.preventDefault();
+          group[0].splice(index, 1);
+          renderAttachmentList(listEl);
+          if (notifyHasAttachments(true)) {
+            clearNotifyMinimumMissing();
+          }
+        });
+
+        listEl.appendChild(chip);
+      });
     });
   }
 
@@ -3109,19 +3196,27 @@
 
     const field = input.closest('.notify-attachments-field') || input.parentNode;
     const list = field.querySelector('.notify-attachments-list');
+    const buttons = field.querySelector('.notify-attachments-buttons');
 
     // Create our Browse button
-    const browseBtn = document.createElement('span');
-    browseBtn.setAttribute('class', 'btn btn-file waves-effect waves-light');
+    const browseBtn = document.createElement('button');
+    browseBtn.type = 'button';
+    browseBtn.setAttribute('class', 'btn-flat notify-template-add btn-file');
     browseBtn.textContent = '{% trans "Browse" %}';
 
     const icon = document.createElement('i');
-    icon.setAttribute('class', 'material-icons right');
+    icon.setAttribute('class', 'material-icons');
+    icon.setAttribute('aria-hidden', 'true');
     icon.textContent = 'folder';
-    browseBtn.appendChild(icon);
+    browseBtn.prepend(icon);
 
-    // Insert button before the list
-    list.parentNode.insertBefore(browseBtn, list);
+    // Insert button before the Add URL button
+    buttons.prepend(browseBtn);
+
+    // Add URL adds an empty row and moves to it.
+    document.querySelector('#notify-attach-add').addEventListener('click', function () {
+      addNotifyAttachmentRow(null).focus();
+    });
 
     // Clicking the visible button opens the hidden file input
     browseBtn.addEventListener('click', function (e) {
@@ -3175,7 +3270,7 @@
       bodyInput.dataset.notifyValidationWired = '1';
       bodyInput.addEventListener('input', function () {
         const hasBody = bodyInput.value.trim().length > 0;
-        if (hasBody || notifyAttachments.length > 0) {
+        if (hasBody || notifyHasAttachments(true)) {
           clearNotifyMinimumMissing();
         }
       });
@@ -3279,7 +3374,10 @@
 
       const bodyInput = document.querySelector('#id_body');
       const hasBody = bodyInput ? bodyInput.value.trim().length > 0 : false;
-      const hasAttachment = notifyAttachments.length > 0;
+      if (!notifyCheckAttachmentUrls()) {
+        return false;
+      }
+      const hasAttachment = notifyHasAttachments(false);
 
       // Minimum payload gate: allow body-only OR attachment-only.
       if (!hasBody && !hasAttachment) {
@@ -3325,6 +3423,11 @@
         });
       }
 
+      // Web addresses go as text, so the server downloads them now.
+      notifyAttachmentUrls().forEach(function (entry) {
+        form.append('attach', entry.url);
+      });
+
       // POST to the SSE endpoint and append log events as they arrive.
       sendNotifyStream('{% url "notify" key %}', {
         method: 'POST',
@@ -3343,6 +3446,9 @@
       return false;
     }
   }
+  {% if reminders_allowed %}
+    {% include "components/config_reminders_script.html" %}
+  {% endif %}
   {% endif %}
 {% endblock jsfooter %}
 {# djlint:on #}
@@ -3369,8 +3475,18 @@
   }
   // Hide tag field since we use the pretty Materialize Chip setup instead
   document.querySelector('#id_tag').style.display = 'none';
+  // Set up the Reminders tab and section, where offered.
+  {% if reminders_allowed %}
+  remindersInit();
+  {% endif %}
   // Sync config tabs with URL hash and allow direct hash deep links.
   initConfigTabs();
+  {% if reminders_allowed %}
+  if (window.location.hash === '#reminders') {
+    // Opening the page on this tab does not fire the tab's onShow.
+    window.__appriseRemindersShown();
+  }
+  {% endif %}
   initOverviewMobileQr();
   const reviewSelectedFilter = document.querySelector('#review-selected-filter-toggle');
   if (reviewSelectedFilter) {

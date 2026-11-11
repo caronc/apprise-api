@@ -295,6 +295,17 @@
                       </span>
                       <span class="side-nav-text">{% trans "Configuration List" %}</span>
                     </a>
+                    {# The administrator's list of every reminder, shown while reminders are on. #}
+                    {% if REMINDERS_ENABLED %}
+                      <a class="side-nav-item"
+                         id="reminder-overview"
+                         href="{% url 'reminder_overview' %}">
+                        <span class="menu-icon">
+                          {% include "icons/alarm.svg" %}
+                        </span>
+                        <span class="side-nav-text">{% trans "Reminder List" %}</span>
+                      </a>
+                    {% endif %}
                   {% endif %}
                   <a class="side-nav-item" href="{% url 'details' %}">
                     <span class="menu-icon">
@@ -494,7 +505,11 @@
             const instance = M.Tooltip.getInstance(element);
             if (instance) {
                 instance.options.html = safeText;
-                instance.tooltipEl.innerHTML = safeText;
+                // Only the text holder inside changes; Materialize fills it on every hover.
+                const content = instance.tooltipEl.querySelector('.tooltip-content');
+                if (content) {
+                    content.innerHTML = safeText;
+                }
             } else {
                 M.Tooltip.init(element);
             }
@@ -512,6 +527,9 @@
         // Materialize Init
         M.AutoInit();
 
+        // Keep browsers from suggesting values in the page's fields.
+        appriseNoAutofillAll(document.body);
+
         // Apply the same treatment to controls added or renamed later.
         const tooltipObserver = new MutationObserver(function(records) {
             records.forEach(function(record) {
@@ -519,8 +537,21 @@
                     window.appriseSetTooltip(record.target, record.target.getAttribute('title'));
                     return;
                 }
+                // A control removed while its tooltip is open, such as a button
+                // redrawn after a click, takes its tooltip with it.
+                record.removedNodes.forEach(function(node) {
+                    if (!(node instanceof Element)) return;
+                    [node].concat(Array.from(node.querySelectorAll('.tooltipped'))).forEach(function(element) {
+                        const instance = M.Tooltip.getInstance(element);
+                        if (instance) {
+                            instance.destroy();
+                        }
+                    });
+                });
                 record.addedNodes.forEach(function(node) {
                     if (!(node instanceof Element)) return;
+                    // Fields added later get the same no-suggestions treatment.
+                    appriseNoAutofillAll(node);
                     if (node.hasAttribute('title')) {
                         window.appriseSetTooltip(node, node.getAttribute('title'));
                     }
@@ -777,6 +808,40 @@
 </script>
 {# Script Block 2 #}
 <script>
+  // Stop browsers and password managers from suggesting or filling in a
+  // field, so it only offers what the page puts there. Login fields keep
+  // their suggestions.
+  const appriseCredentialFields = ['username', 'current-password', 'new-password'];
+  function appriseNoAutofill(field) {
+    // Login fields are left alone.
+    const current = field.getAttribute('autocomplete');
+    if (appriseCredentialFields.includes(current)) {
+      return;
+    }
+    // Ask the browser not to suggest, unless the field already set its own value.
+    if (!current || current === 'on') {
+      field.setAttribute('autocomplete', 'off');
+    }
+    // Ask 1Password, Bitwarden, LastPass and Proton Pass to skip it, and
+    // Dashlane to treat it as an ordinary field.
+    ['data-1p-ignore', 'data-bwignore', 'data-lpignore', 'data-protonpass-ignore'].forEach(function (name) {
+      field.setAttribute(name, 'true');
+    });
+    field.setAttribute('data-form-type', 'other');
+  }
+
+  // Every field a person types into, leaving out passwords, boxes and buttons.
+  const appriseTypedFields = 'input:not([type="hidden"]):not([type="password"]):not([type="checkbox"])'
+    + ':not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]), textarea';
+
+  // Apply appriseNoAutofill() to root, when it is such a field, and to every one inside it.
+  function appriseNoAutofillAll(root) {
+    if (root.matches && root.matches(appriseTypedFields)) {
+      appriseNoAutofill(root);
+    }
+    root.querySelectorAll(appriseTypedFields).forEach(appriseNoAutofill);
+  }
+
   const appriseStatusIconHtml = {
     success: `<span class="apprise-status-mark">{% include 'icons/status-ok.svg' %}</span>`,
     error: `<span class="apprise-status-mark">{% include 'icons/status-error.svg' %}</span>`,
@@ -994,6 +1059,51 @@
     });
   }
   appriseWireConfigIdToggles(document);
+
+  // A list-wide eye that shows or hides every Config ID in ``list``. It offers
+  // "hide all" while any is shown, and follows each row's own eye. Returns a
+  // function that refreshes it, for lists that are drawn again later.
+  function appriseWireConfigIdToggleAll(button, list) {
+    if (!button || !list) {
+      return function () {};
+    }
+
+    // Each row's own eye button.
+    function rowToggles() {
+      return Array.from(list.querySelectorAll('.config-id-visibility[data-config-id-toggle]'));
+    }
+
+    // Offer "hide all" while any Config ID is shown, else "show all".
+    function sync() {
+      const hideMode = rowToggles().some(function (toggle) {
+        return toggle.getAttribute('aria-pressed') === 'true';
+      });
+      const label = hideMode ? button.dataset.hideLabel : button.dataset.showLabel;
+      button.setAttribute('aria-pressed', hideMode ? 'true' : 'false');
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      button.querySelector('i').textContent = hideMode ? 'visibility' : 'visibility_off';
+    }
+
+    // Clicking it flips every row that is not already the way it asks for.
+    button.addEventListener('click', function () {
+      const show = button.getAttribute('aria-pressed') !== 'true';
+      rowToggles().forEach(function (toggle) {
+        if ((toggle.getAttribute('aria-pressed') === 'true') !== show) {
+          toggle.click();
+        }
+      });
+      sync();
+    });
+
+    // A row's own eye can change which one it offers.
+    list.addEventListener('click', function (event) {
+      if (event.target.closest('.config-id-visibility[data-config-id-toggle]')) {
+        sync();
+      }
+    });
+    return sync;
+  }
 
   // Copy the complete stored ID, never the concealed or shortened display text.
   function appriseWireConfigIdCopy(root) {

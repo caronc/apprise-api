@@ -1,0 +1,2121 @@
+{% load i18n %}
+
+{% include "components/reminder_shared_script.html" %}
+
+{# djlint:off #}
+
+  // Reminders: notifications saved now and sent later. The message comes
+  // from the Notifications form, and its Reminders section sets when it is sent.
+  const reminderUrls = {
+    list: '{% url "reminder" key %}'.replace(/\/$/, ''),
+    preview: '{% url "reminder_preview" key %}',
+    limits: '{% url "reminder_limits" key %}',
+    holidays: '{% url "reminder_holidays" key %}'
+  };
+
+  // A link to #notify/<id> opens that reminder for editing.
+  const reminderHashPattern = /^#notify\/([0-9a-f]+)$/;
+
+
+  // Every saved reminder of this Config ID, as the server last listed them.
+  let reminderItems = [];
+  // The saved reminder being changed through the Notifications form.
+  let reminderEditing = null;
+  // One time of a repeating reminder being changed: {series, at}.
+  let reminderOccurrence = null;
+  // A day picked on the calendar, used by the next new reminder.
+  let reminderDraftDate = null;
+  // The start the form filled in itself for a new reminder: {date, time}.
+  // Left unchanged, it is cleared when the reminder is made to repeat, so
+  // it starts now; one the user picked is kept.
+  let reminderStartDefault = null;
+  // Custom crons start in the 5-field crontab layout; older ones may not use it.
+  let reminderCustomIsc = true;
+  // The FullCalendar instance, made the first time the Reminders tab opens.
+  let reminderCalendar = null;
+  // Waits a moment after typing before asking the server for upcoming times.
+  let reminderPreviewTimer = null;
+  // Countries with holidays, loaded the first time a holiday is picked.
+  let reminderCountries = null;
+  // The loaded countries, each with its name in the page language.
+  let reminderCountryList = null;
+  // The Seconds choice, kept aside while this user may not repeat that often.
+  let reminderSecondsOption = null;
+
+  // Show the name the server gives a reminder saved without one: its title,
+  // or else the first line of its message.
+  function reminderNamePlaceholder() {
+    const title = document.querySelector('#id_title').value.trim();
+    const body = document.querySelector('#id_body').value.trim();
+    reminderElement('reminder-name').placeholder = (title || body).split('\n')[0].slice(0, 100);
+  }
+
+  // The API address of one reminder, e.g. .../<id>/ or .../<id>/test/.
+  function reminderItemUrl(id, suffix) {
+    return reminderUrls.list + '/' + id + '/' + (suffix || '');
+  }
+
+  // A size in bytes shown in megabytes, e.g. 1.5 MB.
+  // A picked time ("HH:MM" or "HH:MM:SS") with its seconds, as the API stores it.
+  function reminderFullTime(time) {
+    return time.length === 5 ? time + ':00' : time;
+  }
+
+  // Build the "when" the API expects from the chosen schedule.
+  function reminderWhen() {
+    const time = reminderElement('reminder-time').value || '09:00';
+    const when = {tz: reminderElement('reminder-timezone').dataset.value};
+    // Time added to every time of a repeating reminder or holiday, saved in
+    // seconds; left out when none.
+    const drift = reminderRecurring() ? reminderElement('reminder-drift').value.trim() : '';
+    if (drift && drift !== '0') {
+      when.drift = /^-?\d+$/.test(drift) ? Number(drift) * reminderDriftSize() : drift;
+    }
+    if (reminderElement('reminder-send').value === 'holiday') {
+      // Its date and time of day come from the start, sent with it.
+      when.holiday = {
+        country: reminderElement('reminder-country').dataset.value,
+        name: reminderElement('reminder-holiday').value
+      };
+      if (reminderElement('reminder-region').value) {
+        when.holiday.region = reminderElement('reminder-region').value;
+      }
+      return when;
+    }
+    const unit = reminderElement('reminder-unit').value;
+    if (reminderRecurring() && unit === 'custom') {
+      when.cron = reminderElement('reminder-cron').value.trim();
+      if (reminderCustomIsc) {
+        when.isc = true;
+      }
+      return when;
+    }
+    const date = reminderElement('reminder-date').value;
+    // A repeating reminder with no start counts from now; the server fills it in.
+    if (date || !reminderRecurring()) {
+      when.at = (date || reminderToday()) + 'T' + reminderFullTime(time);
+    }
+    if (reminderRecurring()) {
+      // The server works out the cron from this rule, counting the interval from the start.
+      when.every = {unit: unit, interval: parseInt(reminderElement('reminder-interval').value, 10) || 1};
+      if (unit !== 'months' && unit !== 'years') {
+        when.every.days = reminderChecked('reminder-days');
+      }
+      if (unit !== 'years') {
+        when.every.months = reminderChecked('reminder-months').map(Number);
+      }
+    }
+    return when;
+  }
+
+  // Whether the reminder repeats. A holiday that does not is sent once, on
+  // the year its start falls in.
+  function reminderRecurring() {
+    return reminderElement('reminder-recurring').checked;
+  }
+
+  // The values of the ticked toggles in a group, such as the chosen days.
+  function reminderChecked(id) {
+    return Array.from(document.querySelectorAll('#' + id + ' input:checked')).map(function (box) { return box.value; });
+  }
+
+  // When a repeating reminder starts and ends; both are optional.
+  // An "every" rule starts at its own time, so only the others send a start.
+  // A holiday always sends one: its date and time of day.
+  function reminderEnds() {
+    const recurring = reminderRecurring();
+    const holiday = reminderIsHoliday();
+    const date = reminderElement('reminder-date').value;
+    const untilDate = reminderElement('reminder-until-date').value;
+    const counted = reminderElement('reminder-send').value === 'date' && reminderElement('reminder-unit').value !== 'custom';
+    let count = recurring && reminderEditing && reminderEditing.count ? reminderEditing.count : null;
+    if (holiday) {
+      // A holiday sent once has a count of 1: the first one on or after its
+      // start. Made recurring again, that count goes.
+      count = recurring ? (count === 1 ? null : count) : 1;
+    }
+    return {
+      start: (recurring || holiday) && !counted && date ? date + 'T' + reminderFullTime(reminderElement('reminder-time').value || '00:00') : null,
+      until: recurring && untilDate ? untilDate + 'T' + (reminderElement('reminder-until-time').value || '23:59') + ':00' : null,
+      // A run count set through the API is kept while the reminder still repeats.
+      count: count
+    };
+  }
+
+  // Show only the fields the chosen kind of reminder uses.
+  function reminderSyncFields() {
+    const send = reminderElement('reminder-send').value;
+    const repeat = send === 'date' && reminderElement('reminder-recurring').checked;
+    const unit = reminderElement('reminder-unit').value;
+    // Each field lists what it needs: a kind of reminder, repeating, certain units, and so on.
+    const fields = '[data-reminder-send], [data-reminder-repeat], [data-reminder-units], [data-reminder-until]';
+    reminderElement('reminder-form').querySelectorAll(fields).forEach(function (field) {
+      const needs = field.dataset;
+      field.hidden = !(
+        (!('reminderSend' in needs) || needs.reminderSend === send)
+        && (!('reminderRepeat' in needs) || repeat)
+        && (!('reminderUnits' in needs) || needs.reminderUnits.split(' ').includes(unit))
+        && (!('reminderUntil' in needs) || reminderRecurring())
+      );
+    });
+    if (send === 'holiday' && !reminderCountries) {
+      reminderHolidaySetup(null);
+    }
+    // A one-off needs its date and time; a repeating reminder may start now.
+    const label = document.querySelector('label[for="reminder-at"]');
+    // A holiday's start always holds its date and time, so it is never optional.
+    label.textContent = reminderRecurring() && !reminderIsHoliday() ? label.dataset.repeatLabel : label.dataset.onceLabel;
+    if (!reminderRecurring() && !reminderIsHoliday() && !reminderElement('reminder-date').value) {
+      // A one-off needs a time again: the one the form chose, or else today's date.
+      const fallback = reminderStartDefault || {date: reminderToday()};
+      reminderElement('reminder-date').value = fallback.date;
+      if (fallback.time) {
+        reminderElement('reminder-time').value = fallback.time;
+      }
+    }
+    reminderPickerShowValues();
+    // A one-off cannot be set for a day that has already gone by.
+    reminderSchedulePreview();
+  }
+
+  // Switching to a holiday starts a new reminder's time at 09:00, unless the
+  // start was changed, and takes the chosen holiday's date.
+  function reminderSendChanged() {
+    const date = reminderElement('reminder-date');
+    const time = reminderElement('reminder-time');
+    const untouched = reminderStartDefault
+      && date.value === reminderStartDefault.date && time.value === reminderStartDefault.time;
+    if (reminderIsHoliday() && untouched) {
+      time.value = '09:00';
+    }
+    reminderSyncFields();
+    if (reminderIsHoliday() && reminderCountries) {
+      reminderHolidayChosen();
+    }
+  }
+
+  // Making a reminder repeat with the start the form filled in itself clears
+  // that start, so it repeats from now. A start the user picked is kept.
+  function reminderRecurringChanged() {
+    const date = reminderElement('reminder-date');
+    const time = reminderElement('reminder-time');
+    const untouched = reminderStartDefault
+      && date.value === reminderStartDefault.date && time.value === reminderStartDefault.time;
+    // A holiday's start holds the holiday's date, so it is never cleared.
+    if (reminderElement('reminder-recurring').checked && untouched && !reminderIsHoliday()) {
+      date.value = '';
+    }
+    reminderSyncFields();
+  }
+
+  // The length of the chosen drift unit, in seconds.
+  function reminderDriftSize() {
+    return Number(reminderElement('reminder-drift-unit').value) || 1;
+  }
+
+  // Keep the drift's limits in the chosen unit, since dateblock's are in seconds.
+  function reminderDriftLimits() {
+    const input = reminderElement('reminder-drift');
+    const size = reminderDriftSize();
+    input.min = String(Math.ceil(Number(input.dataset.driftMin) / size));
+    input.max = String(Math.floor(Number(input.dataset.driftMax) / size));
+  }
+
+  // Show a drift in seconds in the largest unit it fills exactly.
+  function reminderSetDrift(seconds) {
+    const drift = reminderDriftParts(Number(seconds) || 0);
+    const select = reminderElement('reminder-drift-unit');
+    select.value = String(seconds ? drift.size : 1);
+    select.dataset.size = select.value;
+    reminderRefreshSelect('reminder-drift-unit');
+    reminderDriftLimits();
+    reminderElement('reminder-drift').value = seconds ? String(drift.count) : '';
+  }
+
+  // A new unit keeps the same length of time, e.g. 5 days becomes 432000
+  // seconds. Part of a larger unit rounds up to a whole one: 30 seconds is 1 minute.
+  function reminderDriftUnitChanged() {
+    const select = reminderElement('reminder-drift-unit');
+    const input = reminderElement('reminder-drift');
+    const size = reminderDriftSize();
+    const value = input.value.trim();
+    reminderDriftLimits();
+    if (/^-?\d+$/.test(value) && Number(value)) {
+      const seconds = Number(value) * (Number(select.dataset.size) || 1);
+      const count = Math.sign(seconds) * Math.ceil(Math.abs(seconds) / size);
+      input.value = String(Math.min(Math.max(count, Number(input.min)), Number(input.max)));
+    }
+    select.dataset.size = select.value;
+    reminderSchedulePreview();
+  }
+
+  // Weeks start with only the start date's weekday; other units with every day.
+  function reminderUnitChanged() {
+    // Switching to weeks with every day ticked keeps only the start date's weekday.
+    if (reminderElement('reminder-unit').value === 'weeks' && reminderChecked('reminder-days').length === 7) {
+      const date = reminderElement('reminder-date').value || reminderToday();
+      const weekday = reminderDayNames[new Date(date + 'T12:00:00').getDay()];
+      reminderFillToggles('reminder-days', reminderDayNames, [weekday], reminderDayLabel);
+    }
+    reminderSyncFields();
+  }
+
+  // Show an error under the field it is about, or as a message.
+  // - focus: move to the field, which a preview while typing should not do.
+  // - failure.warning: a warning that does not stop saving, shown without
+  //   the error highlight.
+  function reminderFieldError(failure, focus) {
+    const unit = reminderElement('reminder-unit').value;
+    let when = reminderRecurring() ? 'reminder-unit' : 'reminder-at';
+    if (reminderElement('reminder-send').value === 'holiday') {
+      when = 'reminder-holiday';
+    } else if (reminderRecurring() && unit === 'custom') {
+      when = 'reminder-cron';
+    }
+    if (failure.field === 'attach') {
+      // Attachments have their own section in the Notifications form.
+      notifyAttachmentUrlError(failure.message);
+      return;
+    }
+    const where = {
+      name: 'reminder-name', start: 'reminder-at', until: 'reminder-until-at', drift: 'reminder-drift', when: when,
+      days: 'reminder-days', months: 'reminder-months'
+    }[failure.field];
+    const input = where && reminderElement(where);
+    if (!input || input.closest('[hidden]')) {
+      appriseShowStatusToast(failure.message, Boolean(failure.warning));
+      return;
+    }
+    // The note goes at the end of the field's block, below a dropdown too.
+    const holder = input.closest('.input-field') || input.parentElement;
+    const kind = failure.warning ? 'reminder-field-warning' : 'reminder-field-error';
+    let note = holder.querySelector('.' + kind);
+    if (!note) {
+      note = document.createElement('span');
+      note.className = kind;
+      note.setAttribute('role', failure.warning ? 'status' : 'alert');
+      holder.append(note);
+    }
+    note.textContent = failure.message;
+    if (failure.warning) {
+      return;
+    }
+    const wrapper = input.closest('.select-wrapper');
+    const shown = wrapper ? wrapper.querySelector('input.select-dropdown') : input;
+    // Highlighted the same way as a missing message body.
+    shown.classList.add('invalid');
+    if (focus !== false) {
+      shown.focus();
+    }
+  }
+
+  // An end before the start is a mistake in both fields, so both are marked
+  // and the note goes under the end. Returns whether that is the case.
+  function reminderEndsBeforeStart(focus) {
+    const date = reminderElement('reminder-date').value;
+    const untilDate = reminderElement('reminder-until-date').value;
+    if (!reminderRecurring() || !date || !untilDate) {
+      return false;
+    }
+    // Both read "YYYY-MM-DDTHH:MM:SS", so they compare as text.
+    const start = date + 'T' + reminderFullTime(reminderElement('reminder-time').value || '00:00');
+    const until = untilDate + 'T' + reminderFullTime(reminderElement('reminder-until-time').value || '23:59');
+    if (until >= start) {
+      return false;
+    }
+    reminderElement('reminder-at').classList.add('invalid');
+    reminderFieldError({field: 'until', message: '{% trans "The end date is before the start" %}'}, focus);
+    return true;
+  }
+
+  // Remove every error and warning note and highlight from the Reminder section.
+  function reminderClearFieldErrors() {
+    document.querySelectorAll('#reminder-form .reminder-field-error, #reminder-form .reminder-field-warning').forEach(function (note) {
+      note.remove();
+    });
+    document.querySelectorAll('#reminder-form .invalid').forEach(function (input) { input.classList.remove('invalid'); });
+  }
+
+  // One <option> for a dropdown.
+  function reminderOption(value, text) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = text;
+    return option;
+  }
+
+  // Sort dropdown options by their text, the way the page language orders words.
+  function reminderSortOptions(options) {
+    return options.sort(function (a, b) { return a.textContent.localeCompare(b.textContent, reminderLocale); });
+  }
+
+  // Fetch JSON from the API; anything but a success is thrown as an error.
+  async function reminderGetJson(url) {
+    const response = await appriseFetch(url, {headers: {'Accept': 'application/json'}});
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+    return response.json();
+  }
+
+  // Load the country list once. Country names come from the browser in the page language.
+  function reminderLoadCountries() {
+    if (!reminderCountries) {
+      reminderCountries = reminderGetJson(reminderUrls.holidays).then(function (data) {
+        // Older browsers without Intl.DisplayNames show the country code instead.
+        let names = null;
+        try {
+          names = new Intl.DisplayNames([reminderLocale], {type: 'region'});
+        } catch (e) {
+          names = null;
+        }
+        data.countries.forEach(function (entry) {
+          entry.label = (names && names.of(entry.code)) || entry.code;
+        });
+        data.countries.sort(function (a, b) { return a.label.localeCompare(b.label, reminderLocale); });
+        // Start with the country in the browser's language setting, when it has holidays.
+        const codes = data.countries.map(function (entry) { return entry.code; });
+        const guess = (navigator.languages || [navigator.language]).map(function (tag) {
+          return (tag.split('-')[1] || '').toUpperCase();
+        }).find(function (code) { return codes.includes(code); });
+        reminderCountryList = data.countries;
+        reminderSetCountry(data.countries, guess || codes[0]);
+        return data.countries;
+      }).catch(function (e) {
+        reminderCountries = null;
+        throw e;
+      });
+    }
+    return reminderCountries;
+  }
+
+  // Show a country by its name, keeping its code to save.
+  function reminderSetCountry(countries, code) {
+    const country = countries.find(function (entry) { return entry.code === code; });
+    reminderComboboxSet('reminder-country', code, country ? country.label : code);
+  }
+
+  // Fill the Region dropdown with the chosen country's regions, after "All regions".
+  async function reminderFillRegions(selected) {
+    const countries = await reminderLoadCountries();
+    const code = reminderElement('reminder-country').dataset.value;
+    const country = countries.find(function (entry) { return entry.code === code; });
+    const select = reminderElement('reminder-region');
+    select.replaceChildren(reminderOption('', '{% trans "All regions" %}'), ...reminderSortOptions((country ? country.regions : []).map(function (region) {
+      return reminderOption(region.code, region.name || region.code);
+    })));
+    select.value = selected || '';
+    reminderRefreshSelect('reminder-region');
+  }
+
+  // List the chosen country's holidays over the next year, soonest first.
+  async function reminderFillHolidays(selected) {
+    const select = reminderElement('reminder-holiday');
+    if (!reminderElement('reminder-country').dataset.value) {
+      // Nothing to list until the countries have loaded and one is chosen.
+      return;
+    }
+    const params = new URLSearchParams({country: reminderElement('reminder-country').dataset.value});
+    if (reminderElement('reminder-region').value) {
+      params.set('region', reminderElement('reminder-region').value);
+    }
+    select.replaceChildren();
+    try {
+      // A holiday can fall twice in the coming year; list each name once,
+      // with the date it falls on next.
+      const seen = new Set();
+      (await reminderGetJson(reminderUrls.holidays + '?' + params.toString())).holidays.forEach(function (entry) {
+        if (!seen.has(entry.name)) {
+          seen.add(entry.name);
+          const day = new Intl.DateTimeFormat(reminderLocale, {dateStyle: 'medium', timeZone: 'UTC'})
+            .format(new Date(entry.date + 'T00:00:00Z'));
+          const option = reminderOption(entry.name, entry.label + ' (' + day + ')');
+          // The date it falls on next, which becomes the reminder's start date.
+          option.dataset.date = entry.date;
+          select.append(option);
+        }
+      });
+      // A saved holiday that does not fall in the next year still shows.
+      if (selected && !seen.has(selected)) {
+        select.append(reminderOption(selected, selected));
+      }
+      if (selected) {
+        select.value = selected;
+      }
+    } catch (e) {
+      // The list stays empty, and the preview below reports the problem.
+    }
+    reminderRefreshSelect('reminder-holiday');
+    // A saved reminder keeps the start it already has.
+    reminderHolidayChosen(Boolean(selected) && Boolean(reminderElement('reminder-date').value));
+  }
+
+  // A chosen holiday sets the start's date to the day it falls on next; the
+  // start keeps its time of day, which is when the holiday is sent each year.
+  // - keepDate: leave the start's date as it is, such as for a saved reminder.
+  function reminderHolidayChosen(keepDate) {
+    const option = reminderElement('reminder-holiday').selectedOptions[0];
+    if (keepDate !== true && option && option.dataset.date) {
+      reminderElement('reminder-date').value = option.dataset.date;
+      reminderPickerShowValues();
+    }
+    reminderHolidayStepState();
+    reminderSchedulePreview();
+  }
+
+  // The year buttons: going back stops at the holiday's next date, which is
+  // the earliest that is still to come, and going forward at the last year
+  // a reminder looks ahead to.
+  function reminderHolidayStepState() {
+    const option = reminderElement('reminder-holiday').selectedOptions[0];
+    const earliest = option && option.dataset.date;
+    const next = reminderElement('reminder-holiday-next');
+    reminderElement('reminder-holiday-previous').disabled = !earliest
+      || reminderElement('reminder-date').value <= earliest;
+    next.disabled = !reminderElement('reminder-holiday').value
+      || Number(reminderElement('reminder-date').value.slice(0, 4)) >= Number(next.dataset.lastYear);
+  }
+
+  // Move a holiday's start to the same holiday a year later or earlier. Its
+  // date can change from year to year (Thanksgiving, Easter), so each year's
+  // date is looked up.
+  // - step: 1 for the next year, -1 for the one before.
+  async function reminderHolidayStep(step) {
+    const name = reminderElement('reminder-holiday').value;
+    const current = reminderElement('reminder-date').value;
+    if (!name || !current) {
+      return;
+    }
+    const params = new URLSearchParams({country: reminderElement('reminder-country').dataset.value});
+    if (reminderElement('reminder-region').value) {
+      params.set('region', reminderElement('reminder-region').value);
+    }
+    // A holiday may skip a year, so keep looking, up to the last year a
+    // reminder looks ahead to (the server refuses years already passed).
+    const last = Number(reminderElement('reminder-holiday-next').dataset.lastYear);
+    let year = Number(current.slice(0, 4));
+    while (year + step <= last) {
+      year += step;
+      params.set('year', String(year));
+      let entries;
+      try {
+        entries = (await reminderGetJson(reminderUrls.holidays + '?' + params.toString())).holidays;
+      } catch (e) {
+        // Past the years a holiday can be looked up for.
+        break;
+      }
+      const entry = entries.find(function (each) { return each.name === name; });
+      if (entry) {
+        reminderElement('reminder-date').value = entry.date;
+        reminderPickerShowValues();
+        reminderSchedulePreview();
+        break;
+      }
+    }
+    reminderHolidayStepState();
+  }
+
+  // Fill the holiday fields, choosing what a saved rule uses.
+  async function reminderHolidaySetup(rule) {
+    try {
+      const countries = await reminderLoadCountries();
+      if (rule) {
+        reminderSetCountry(countries, rule.country);
+      }
+      await reminderFillRegions(rule ? rule.region : '');
+      await reminderFillHolidays(rule ? rule.name : '');
+    } catch (e) {
+      // The preview below the fields reports what is wrong.
+      reminderSchedulePreview();
+    }
+  }
+
+  // One upcoming send time, as a small card with its date and time. It is shown
+  // in the form's own Timezone, so it reads the same as the time picked.
+  function reminderUpcomingItem(due, seconds) {
+    const zone = reminderElement('reminder-timezone').dataset.value || reminderViewZone;
+    const item = document.createElement('li');
+    const day = document.createElement('span');
+    const time = document.createElement('span');
+    const moment = new Date(due * 1000);
+    item.className = 'reminder-upcoming-item';
+    day.className = 'reminder-upcoming-date';
+    time.className = 'reminder-upcoming-time';
+    day.textContent = new Intl.DateTimeFormat(reminderLocale, {weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: zone}).format(moment);
+    time.textContent = new Intl.DateTimeFormat(reminderLocale, {timeStyle: seconds ? 'medium' : 'short', timeZone: zone}).format(moment);
+    item.append(day, time);
+    return item;
+  }
+
+  // How many upcoming send times the preview shows.
+  const reminderUpcomingCount = 5;
+
+  // Show the upcoming send times, or put why there are none under the field to fix.
+  // - problem: {field, message} from the server, such as an end date that
+  //   leaves nothing to send.
+  // A repeating reminder that stops before filling the list says so, as its
+  // end date or send count leaves no more times.
+  function reminderShowUpcoming(times, seconds, problem) {
+    const holder = reminderElement('reminder-upcoming-list').closest('.reminder-upcoming');
+    reminderClearFieldErrors();
+    holder.hidden = !times.length;
+    const items = times.map(function (due) {
+      return reminderUpcomingItem(due, seconds);
+    });
+    if (reminderRecurring() && times.length && times.length < reminderUpcomingCount) {
+      const end = document.createElement('li');
+      end.className = 'reminder-upcoming-item is-end';
+      end.innerHTML = '<i class="material-icons" aria-hidden="true">event_busy</i>';
+      end.append(document.createTextNode('{% trans "No more times after this" %}'));
+      items.push(end);
+    }
+    reminderElement('reminder-upcoming-list').replaceChildren(...items);
+    if (problem) {
+      reminderFieldError({field: problem.field || 'when', message: problem.message, warning: problem.warning}, false);
+    }
+  }
+
+  // The preview's query for a schedule: its "when" and its start, end and count.
+  function reminderPreviewParams(source, ends, limit) {
+    const params = new URLSearchParams({limit: String(limit)});
+    const when = JSON.parse(JSON.stringify(source));
+    if (when.holiday) {
+      // The preview reads a holiday rule as separate fields.
+      const rule = when.holiday;
+      when.holiday = rule.name;
+      ['country', 'region', 'time'].forEach(function (field) {
+        if (rule[field]) {
+          when[field] = rule[field];
+        }
+      });
+    }
+    if (when.every) {
+      // The preview reads a repeating rule as separate fields too.
+      const rule = when.every;
+      when.every = rule.unit;
+      when.interval = rule.interval;
+      ['days', 'months'].forEach(function (field) {
+        if (rule[field]) {
+          when[field] = rule[field].join(',');
+        }
+      });
+    }
+    // Every remaining field is sent as is; true becomes "yes".
+    Object.entries(when).forEach(function (entry) {
+      params.set(entry[0], entry[1] === true ? 'yes' : entry[1]);
+    });
+    // Start, end and count are sent only when set.
+    Object.entries(ends).forEach(function (entry) {
+      if (entry[1] !== null && entry[1] !== undefined) {
+        params.set(entry[0], entry[1]);
+      }
+    });
+    return params;
+  }
+
+  // Ask the server for the next few send times as the choices change.
+  function reminderSchedulePreview() {
+    clearTimeout(reminderPreviewTimer);
+    reminderPreviewTimer = setTimeout(async function () {
+      const when = reminderWhen();
+      // An end before the start is shown as is, without asking the server.
+      reminderClearFieldErrors();
+      // A holiday still loading its list has nothing to ask about yet.
+      const noHoliday = reminderIsHoliday() && !reminderElement('reminder-holiday').value;
+      if (noHoliday || reminderEndsBeforeStart(false) || reminderEmptyPick(false)) {
+        reminderElement('reminder-upcoming-list').closest('.reminder-upcoming').hidden = true;
+        return;
+      }
+      const params = reminderPreviewParams(when, reminderEnds(), reminderUpcomingCount);
+      // What to say when nothing would ever be sent.
+      const never = '{% trans "This reminder would never be sent" %}';
+      // Nothing ahead but no error: a one-off whose time has passed, or a
+      // repeating one past its end date. It can still be saved, but is not sent.
+      const passed = reminderRecurring()
+        ? {field: 'until', warning: true, message: '{% trans "The end date has already passed, so this reminder will not be sent." %}'}
+        : {field: 'when', warning: true, message: '{% trans "This time has already passed, so the reminder will not be sent." %}'};
+      try {
+        const response = await appriseFetch(reminderUrls.preview + '?' + params.toString(), {
+          headers: {'Accept': 'application/json'}
+        });
+        if (!response.ok) {
+          reminderShowUpcoming([], false, await appriseResponseFailure(response, never));
+          return;
+        }
+        const data = await response.json();
+        reminderShowUpcoming(data.next, reminderShowsSeconds(when, reminderEnds().start), data.next.length ? null : passed);
+      } catch (e) {
+        reminderShowUpcoming([], false, {message: never});
+      }
+      }, 250);
+  }
+
+  // Every timezone the browser knows, plus the server's and a saved one.
+  function reminderZones(extra) {
+    const zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
+    return Array.from(new Set([extra, reminderServerZone, 'UTC'].concat(zones).filter(Boolean))).sort();
+  }
+
+  // Show the saved timezone in the form, or else the "Show times in" one.
+  function reminderFillTimezones(selected) {
+    const zone = selected || reminderViewZone;
+    reminderComboboxSet('reminder-timezone', zone, zone);
+  }
+
+  // Rebuild a Materialize dropdown after its options or value change.
+  function reminderRefreshSelect(id) {
+    const select = reminderElement(id);
+    const instance = M.FormSelect.getInstance(select);
+    if (instance) {
+      instance.destroy();
+    }
+    M.FormSelect.init(select);
+  }
+
+  // Show what a combobox holds: its label, and the value saved with it.
+  function reminderComboboxSet(id, value, label) {
+    const input = reminderElement(id);
+    input.dataset.value = value;
+    input.dataset.label = label;
+    input.value = label;
+  }
+
+  // A text field that lists matches as you type. The first match is
+  // highlighted, so Enter picks it; Up and Down move between matches.
+  // - options(): every {value, label} it can pick from.
+  // - onPick(value): called after a match is picked.
+  function reminderCombobox(id, options, onPick) {
+    const input = reminderElement(id);
+    const list = reminderElement(id + '-list');
+    // The options shown for what was typed, and which one is highlighted.
+    let matches = [];
+    let active = 0;
+    // Mark the highlighted match, for both the eye and screen readers.
+    function highlight() {
+      Array.from(list.children).forEach(function (item, index) {
+        item.classList.toggle('active', index === active);
+        item.setAttribute('aria-selected', index === active ? 'true' : 'false');
+      });
+      const current = list.children[active];
+      if (current) {
+        input.setAttribute('aria-activedescendant', current.id);
+        // Scroll only the list, never the page, to bring the highlighted entry into view.
+        if (current.offsetTop < list.scrollTop) {
+          list.scrollTop = current.offsetTop;
+        } else if (current.offsetTop + current.offsetHeight > list.scrollTop + list.clientHeight) {
+          list.scrollTop = current.offsetTop + current.offsetHeight - list.clientHeight;
+        }
+      }
+    }
+    // Hide the list of matches.
+    function close() {
+      list.hidden = true;
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+    }
+    // Use the match at this position, then tell the caller.
+    function pick(index) {
+      const option = matches[index];
+      if (option) {
+        reminderComboboxSet(id, option.value, option.label);
+        close();
+        onPick(option.value);
+      }
+    }
+    // Spaces, underscores and slashes all match each other, so "new york" finds America/New_York.
+    function plain(text) {
+      return text.toLowerCase().replace(/[\s_/]+/g, ' ').trim();
+    }
+    // List the options that match the typed text, best matches first.
+    function show(text) {
+      const wanted = plain(text);
+      // Names that start with what was typed come first, then a word inside
+      // that starts with it, then any other match.
+      function rank(option) {
+        const label = plain(option.label);
+        if (!wanted || label.startsWith(wanted) || option.value.toLowerCase() === wanted) {
+          return 0;
+        }
+        if ((' ' + label).includes(' ' + wanted)) {
+          return 1;
+        }
+        return label.includes(wanted) ? 2 : -1;
+      }
+      matches = options().map(function (option) {
+        return {option: option, rank: rank(option)};
+      }).filter(function (entry) {
+        return entry.rank >= 0;
+      }).sort(function (a, b) {
+        return a.rank - b.rank;
+      }).map(function (entry) {
+        return entry.option;
+      // Typing narrows the list; with nothing typed every choice is listed,
+      // so the current one is always there to start on.
+      }).slice(0, wanted ? 100 : undefined);
+      // With nothing typed yet, start on the current choice.
+      active = wanted ? 0 : Math.max(0, matches.findIndex(function (option) { return option.value === input.dataset.value; }));
+      list.replaceChildren(...matches.map(function (option, index) {
+        const item = document.createElement('li');
+        const text = document.createElement('span');
+        item.id = id + '-option-' + index;
+        item.setAttribute('role', 'option');
+        text.textContent = option.label;
+        item.appendChild(text);
+        item.addEventListener('mousedown', function (event) {
+          // Keep the focus here until the pick is made.
+          event.preventDefault();
+          pick(index);
+        });
+        return item;
+      }));
+      list.hidden = !matches.length;
+      input.setAttribute('aria-expanded', matches.length ? 'true' : 'false');
+      highlight();
+    }
+    // Entering the field selects its text and lists every choice.
+    input.addEventListener('focus', function () {
+      input.select();
+      show('');
+    });
+    input.addEventListener('input', function () { show(input.value); });
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (list.hidden) {
+          show(input.value);
+        } else if (matches.length) {
+          active = (active + (event.key === 'ArrowDown' ? 1 : -1) + matches.length) % matches.length;
+          highlight();
+        }
+      } else if (event.key === 'Enter' && !event.isComposing) {
+        event.preventDefault();
+        if (!list.hidden) {
+          pick(active);
+        }
+      } else if (event.key === 'Escape') {
+        close();
+        input.value = input.dataset.label || '';
+      }
+    });
+    // Leaving without a pick puts back the last choice.
+    input.addEventListener('blur', function () {
+      close();
+      input.value = input.dataset.label || '';
+    });
+  }
+
+  // The date picker: quick choices, a calendar and the time, all in one popup.
+  // Each picker field names the hidden fields it fills: data-reminder-date
+  // (YYYY-MM-DD) and data-reminder-time (HH:MM). A field with only a time
+  // gets a time-only picker. An optional field can be cleared. A field with
+  // data-reminder-seconds also picks seconds, kept as HH:MM:SS when not 00.
+  // - element, backdrop, calendar: the popup, the dark layer behind it and
+  //   the Air Datepicker inside it, made the first time it opens.
+  // - field: the picker field it was opened from.
+  // - mode: 'datetime' or 'time'.
+  // - date, hour, minute, second: what is picked so far.
+  const reminderPicker = {element: null, backdrop: null, calendar: null, field: null, mode: 'datetime', date: null, hour: 9, minute: 0, second: 0};
+
+  // Calendar names come from the browser in the page language.
+  function reminderPickerLocale() {
+    const sevens = [0, 1, 2, 3, 4, 5, 6];
+    const twelve = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    // A weekday's name, counting from Sunday (0).
+    function day(index, style) {
+      // 7 January 2024 was a Sunday.
+      return new Intl.DateTimeFormat(reminderLocale, {weekday: style, timeZone: 'UTC'}).format(new Date(Date.UTC(2024, 0, 7 + index)));
+    }
+    // A month's name, counting from January (0).
+    function month(index, style) {
+      return new Intl.DateTimeFormat(reminderLocale, {month: style, timeZone: 'UTC'}).format(new Date(Date.UTC(2024, index, 15)));
+    }
+    // The weekday the page language starts its weeks on; Sunday when the browser cannot tell.
+    let firstDay = 0;
+    try {
+      const info = new Intl.Locale(reminderLocale);
+      const week = typeof info.getWeekInfo === 'function' ? info.getWeekInfo() : info.weekInfo;
+      firstDay = week && week.firstDay ? week.firstDay % 7 : 0;
+    } catch (e) {
+      firstDay = 0;
+    }
+    return {
+      days: sevens.map(function (index) { return day(index, 'long'); }),
+      daysShort: sevens.map(function (index) { return day(index, 'short'); }),
+      daysMin: sevens.map(function (index) { return day(index, 'short'); }),
+      months: twelve.map(function (index) { return month(index, 'long'); }),
+      monthsShort: twelve.map(function (index) { return month(index, 'short'); }),
+      today: '{% trans "Today" %}',
+      clear: '{% trans "Clear" %}',
+      dateFormat: 'yyyy-MM-dd',
+      timeFormat: 'HH:mm',
+      firstDay: firstDay
+    };
+  }
+
+  // A date this many days later, at midnight.
+  function reminderAddDays(date, days) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+  }
+
+  // The quick choices: [icon, label, the date it picks from today].
+  const reminderQuickPicks = [
+    ['today', '{% trans "Today" %}', function (today) { return today; }],
+    ['wb_sunny', '{% trans "Tomorrow" %}', function (today) { return reminderAddDays(today, 1); }],
+    ['weekend', '{% trans "This Weekend" %}', function (today) {
+      return reminderAddDays(today, today.getDay() === 0 ? 0 : 6 - today.getDay());
+    }],
+    ['date_range', '{% trans "Later This Week" %}', function (today) { return reminderAddDays(today, 2); }],
+    ['fast_forward', '{% trans "Next Week" %}', function (today) {
+      return reminderAddDays(today, ((8 - today.getDay()) % 7) || 7);
+    }],
+    ['beach_access', '{% trans "Next Weekend" %}', function (today) {
+      return reminderAddDays(today, (((8 - today.getDay()) % 7) || 7) + 5);
+    }],
+    ['event', '{% trans "End of Month" %}', function (today) {
+      return new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    }],
+    ['event_available', '{% trans "In a Month" %}', function (today) {
+      // The same day next month, or its last day when it is shorter.
+      const last = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+      return new Date(today.getFullYear(), today.getMonth() + 1, Math.min(today.getDate(), last.getDate()));
+    }]
+  ];
+
+  // How a picked value reads in its field and at the bottom of the picker.
+  // Seconds show only when they are not 00.
+  function reminderPickerText(mode, date, hour, minute, second) {
+    const moment = new Date(date ? date.getFullYear() : 2024, date ? date.getMonth() : 0, date ? date.getDate() : 1, hour, minute, second || 0);
+    const parts = {weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'};
+    if (mode === 'time') {
+      return new Intl.DateTimeFormat(reminderLocale, {timeStyle: second ? 'medium' : 'short'}).format(moment);
+    }
+    if (!date) {
+      return '';
+    }
+    const clock = second ? {hour: '2-digit', minute: '2-digit', second: '2-digit'} : {hour: '2-digit', minute: '2-digit'};
+    return new Intl.DateTimeFormat(reminderLocale, Object.assign(clock, parts)).format(moment);
+  }
+
+  // A "YYYY-MM-DD" text as a local date, or null when it is not one.
+  function reminderParseDay(text) {
+    const parts = (text || '').split('-').map(Number);
+    return parts.length === 3 && parts[0] ? new Date(parts[0], parts[1] - 1, parts[2]) : null;
+  }
+
+  // A date as "YYYY-MM-DD".
+  function reminderFormatDay(date) {
+    return date.getFullYear() + '-' + reminderPad(date.getMonth() + 1) + '-' + reminderPad(date.getDate());
+  }
+
+  // The values a picker field holds, read from its hidden fields.
+  function reminderPickerValues(field) {
+    const time = (reminderElement(field.dataset.reminderTime).value || '09:00').split(':').map(Number);
+    return {
+      mode: field.dataset.reminderDate ? 'datetime' : 'time',
+      date: field.dataset.reminderDate ? reminderParseDay(reminderElement(field.dataset.reminderDate).value) : null,
+      hour: time[0],
+      minute: time[1],
+      second: 'reminderSeconds' in field.dataset ? time[2] || 0 : 0
+    };
+  }
+
+  // A start is optional once the reminder repeats; an end always is. A
+  // holiday's start is not, as it holds the holiday's date and time.
+  function reminderPickerOptional(field) {
+    return 'reminderOptional' in field.dataset
+      || (field.id === 'reminder-at' && reminderRecurring() && !reminderIsHoliday());
+  }
+
+  // Whether the reminder is sent on a holiday.
+  function reminderIsHoliday() {
+    return reminderElement('reminder-send').value === 'holiday';
+  }
+
+  // Show what each picker field holds; an empty optional one shows its placeholder.
+  function reminderPickerShowValues() {
+    document.querySelectorAll('#reminder-form .reminder-picker-field').forEach(function (field) {
+      const value = reminderPickerValues(field);
+      field.value = reminderPickerText(value.mode, value.date, value.hour, value.minute, value.second);
+    });
+  }
+
+  // Refresh the picker to match its state.
+  function reminderPickerRender() {
+    const picker = reminderPicker.element;
+    picker.querySelector('.reminder-picker-hour').value = reminderPad(reminderPicker.hour);
+    picker.querySelector('.reminder-picker-minute').value = reminderPad(reminderPicker.minute);
+    picker.querySelector('.reminder-picker-second').value = reminderPad(reminderPicker.second);
+    picker.querySelectorAll('.reminder-picker-presets button').forEach(function (button) {
+      button.classList.toggle('is-active', !reminderPicker.second
+        && button.textContent === reminderPad(reminderPicker.hour) + ':' + reminderPad(reminderPicker.minute));
+    });
+    picker.querySelector('.reminder-picker-value span').textContent = reminderPickerText(
+      reminderPicker.mode, reminderPicker.date, reminderPicker.hour, reminderPicker.minute, reminderPicker.second
+    ) || reminderPicker.field.placeholder;
+  }
+
+  // Pick a date (or none) in the picker and its calendar.
+  function reminderPickerSetDate(date) {
+    reminderPicker.date = date;
+    if (date) {
+      reminderPicker.calendar.selectDate(date, {silent: true});
+      reminderPicker.calendar.setViewDate(date);
+    } else {
+      reminderPicker.calendar.clear({silent: true});
+    }
+    reminderPickerRender();
+  }
+
+  // Build the picker the first time it opens. It sits over the page, in the
+  // middle of the screen, so it never runs off the bottom.
+  function reminderPickerBuild() {
+    // A dark layer behind the picker; clicking it closes the picker.
+    const backdrop = document.createElement('div');
+    backdrop.className = 'reminder-picker-backdrop';
+    backdrop.hidden = true;
+    backdrop.addEventListener('mousedown', function () { reminderPickerClose(true); });
+    document.body.append(backdrop);
+    reminderPicker.backdrop = backdrop;
+    // The popup itself:
+    // - quick choices and the calendar side by side;
+    // - the hour, minute and second spinners with the 09:00, 12:00 and 17:00 presets;
+    // - a footer with the picked value and the Clear and Confirm buttons.
+    const picker = document.createElement('div');
+    picker.id = 'reminder-picker';
+    picker.className = 'reminder-picker';
+    picker.setAttribute('role', 'dialog');
+    picker.setAttribute('aria-modal', 'true');
+    picker.hidden = true;
+    picker.innerHTML = '<div class="reminder-picker-main">'
+      + '<div class="reminder-picker-quick"><span class="reminder-picker-heading"></span></div>'
+      + '<div class="reminder-picker-calendar"></div></div>'
+      + '<div class="reminder-picker-time"><i class="material-icons" aria-hidden="true">schedule</i>'
+      + '<div class="reminder-picker-spin"><button type="button" data-step="1" data-part="hour"><i class="material-icons">keyboard_arrow_up</i></button>'
+      + '<input class="reminder-picker-hour" type="text" inputmode="numeric" maxlength="2" autocomplete="off">'
+      + '<button type="button" data-step="-1" data-part="hour"><i class="material-icons">keyboard_arrow_down</i></button></div>'
+      + '<span class="reminder-picker-colon">:</span>'
+      + '<div class="reminder-picker-spin"><button type="button" data-step="1" data-part="minute"><i class="material-icons">keyboard_arrow_up</i></button>'
+      + '<input class="reminder-picker-minute" type="text" inputmode="numeric" maxlength="2" autocomplete="off">'
+      + '<button type="button" data-step="-1" data-part="minute"><i class="material-icons">keyboard_arrow_down</i></button></div>'
+      + '<span class="reminder-picker-colon reminder-picker-seconds">:</span>'
+      + '<div class="reminder-picker-spin reminder-picker-seconds"><button type="button" data-step="1" data-part="second"><i class="material-icons">keyboard_arrow_up</i></button>'
+      + '<input class="reminder-picker-second" type="text" inputmode="numeric" maxlength="2" autocomplete="off">'
+      + '<button type="button" data-step="-1" data-part="second"><i class="material-icons">keyboard_arrow_down</i></button></div>'
+      + '<div class="reminder-picker-presets"></div></div>'
+      + '<div class="reminder-picker-footer"><span class="reminder-picker-value"><i class="material-icons" aria-hidden="true">event</i><span></span></span>'
+      + '<button type="button" class="btn-flat reminder-picker-clear"></button>'
+      + '<button type="button" class="btn waves-effect waves-light reminder-picker-confirm"></button></div>';
+    // Translated text is added as text, never as HTML.
+    picker.querySelector('.reminder-picker-heading').textContent = '{% trans "Quick Select" %}';
+    picker.querySelector('.reminder-picker-clear').textContent = '{% trans "Clear" %}';
+    picker.querySelector('.reminder-picker-confirm').textContent = '{% trans "Confirm" %}';
+    // The up and down arrows step a part by one, wrapping around (23 -> 0).
+    // They are skipped by Tab, which moves between the number fields instead.
+    picker.querySelectorAll('.reminder-picker-spin button').forEach(function (button) {
+      const label = {hour: '{% trans "Hour" %}', minute: '{% trans "Minute" %}', second: '{% trans "Seconds" %}'}[button.dataset.part];
+      button.setAttribute('aria-label', label + ' ' + (button.dataset.step === '1' ? '+' : '-'));
+      button.tabIndex = -1;
+      button.addEventListener('click', function () {
+        const part = button.dataset.part;
+        const limit = part === 'hour' ? 24 : 60;
+        reminderPicker[part] = (reminderPicker[part] + Number(button.dataset.step) + limit) % limit;
+        reminderPickerRender();
+      });
+    });
+    // The number fields: [selector, part, highest value]. Typing is kept within
+    // range, and the Up and Down keys step the value like the arrows do.
+    [['.reminder-picker-hour', 'hour', 23], ['.reminder-picker-minute', 'minute', 59], ['.reminder-picker-second', 'second', 59]].forEach(function (entry) {
+      const input = picker.querySelector(entry[0]);
+      input.setAttribute('aria-label', {hour: '{% trans "Hour" %}', minute: '{% trans "Minute" %}', second: '{% trans "Seconds" %}'}[entry[1]]);
+      appriseNoAutofill(input);
+      input.addEventListener('focus', function () { input.select(); });
+      input.addEventListener('change', function () {
+        const value = parseInt(input.value, 10);
+        if (!isNaN(value)) {
+          reminderPicker[entry[1]] = Math.min(Math.max(value, 0), entry[2]);
+        }
+        reminderPickerRender();
+      });
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          const limit = entry[2] + 1;
+          reminderPicker[entry[1]] = (reminderPicker[entry[1]] + (event.key === 'ArrowUp' ? 1 : -1) + limit) % limit;
+          reminderPickerRender();
+          input.select();
+        }
+      });
+    });
+    // One-click times of day.
+    ['09:00', '12:00', '17:00'].forEach(function (time) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = time;
+      button.addEventListener('click', function () {
+        reminderPicker.hour = Number(time.slice(0, 2));
+        reminderPicker.minute = Number(time.slice(3));
+        reminderPicker.second = 0;
+        reminderPickerRender();
+      });
+      picker.querySelector('.reminder-picker-presets').append(button);
+    });
+    // One button per quick choice: its icon, its name and the weekday it lands on.
+    const quick = picker.querySelector('.reminder-picker-quick');
+    reminderQuickPicks.forEach(function (entry) {
+      const button = document.createElement('button');
+      const icon = document.createElement('i');
+      const label = document.createElement('span');
+      const day = document.createElement('span');
+      button.type = 'button';
+      icon.className = 'material-icons';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = entry[0];
+      label.textContent = entry[1];
+      day.className = 'reminder-picker-day';
+      button.append(icon, label, day);
+      button.addEventListener('click', function () {
+        const now = new Date();
+        reminderPickerSetDate(entry[2](new Date(now.getFullYear(), now.getMonth(), now.getDate())));
+      });
+      quick.append(button);
+    });
+    // The month calendar, drawn inside the picker rather than as its own popup.
+    reminderPicker.calendar = new AirDatepicker(picker.querySelector('.reminder-picker-calendar'), {
+      inline: true,
+      locale: reminderPickerLocale(),
+      navTitles: {
+        days: 'MMMM <i>yyyy</i>',
+        months: 'yyyy',
+        years: 'yyyy1 - yyyy2'
+      },
+      onSelect: function (selected) {
+        reminderPicker.date = selected.date || null;
+        reminderPickerRender();
+      }
+    });
+    picker.querySelector('.reminder-picker-clear').addEventListener('click', function () {
+      reminderPickerSetDate(null);
+    });
+    picker.querySelector('.reminder-picker-confirm').addEventListener('click', reminderPickerConfirm);
+    // Escape closes without saving; Enter in a number field saves.
+    picker.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        reminderPickerClose(true);
+      } else if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+        event.target.dispatchEvent(new Event('change'));
+        reminderPickerConfirm();
+      }
+    });
+    document.body.append(picker);
+    reminderPicker.element = picker;
+  }
+
+  // Open the picker for a picker field.
+  function reminderPickerOpen(field) {
+    if (typeof AirDatepicker === 'undefined') {
+      return;
+    }
+    if (!reminderPicker.element) {
+      reminderPickerBuild();
+    }
+    // Start from what the field holds now.
+    const picker = reminderPicker.element;
+    const value = reminderPickerValues(field);
+    const optional = reminderPickerOptional(field);
+    reminderPicker.field = field;
+    reminderPicker.mode = value.mode;
+    reminderPicker.hour = value.hour;
+    reminderPicker.minute = value.minute;
+    reminderPicker.second = value.second;
+    // Seconds and Clear show only for the fields that take them, and the
+    // picker is named after the field's label for screen readers. A holiday's
+    // date is the holiday itself, so only its time of day can be picked.
+    picker.dataset.mode = field.id === 'reminder-at' && reminderIsHoliday() ? 'time' : value.mode;
+    picker.querySelectorAll('.reminder-picker-seconds').forEach(function (part) {
+      part.hidden = !('reminderSeconds' in field.dataset);
+    });
+    picker.setAttribute('aria-label', field.closest('.input-field').querySelector('label').textContent.replace(/:\s*$/, ''));
+    picker.querySelector('.reminder-picker-clear').hidden = !optional;
+    // Each quick choice shows the weekday it lands on.
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    picker.querySelectorAll('.reminder-picker-quick button').forEach(function (button, index) {
+      button.querySelector('.reminder-picker-day').textContent = new Intl.DateTimeFormat(reminderLocale, {weekday: 'short'})
+        .format(reminderQuickPicks[index][2](today));
+    });
+    reminderPicker.backdrop.hidden = false;
+    picker.hidden = false;
+    field.setAttribute('aria-expanded', 'true');
+    // An empty optional field opens on nothing picked; a required one on today.
+    reminderPickerSetDate(value.date || (optional ? null : today));
+    // Start the keyboard on the first quick choice, or on the hour for a time only.
+    const first = picker.querySelector(picker.dataset.mode === 'time' ? '.reminder-picker-hour' : '.reminder-picker-quick button');
+    first.focus();
+  }
+
+  // Close the picker without saving.
+  // - refocus: move back to the field it was opened from.
+  function reminderPickerClose(refocus) {
+    if (!reminderPicker.element || reminderPicker.element.hidden) {
+      return;
+    }
+    reminderPicker.element.hidden = true;
+    reminderPicker.backdrop.hidden = true;
+    reminderPicker.field.setAttribute('aria-expanded', 'false');
+    if (refocus) {
+      reminderPicker.field.focus();
+    }
+  }
+
+  // Save the picked value into the hidden fields, then refresh the preview.
+  function reminderPickerConfirm() {
+    const field = reminderPicker.field;
+    if (field.dataset.reminderDate) {
+      // Nothing picked on a required field keeps today.
+      const date = reminderPicker.date || (reminderPickerOptional(field) ? null : new Date());
+      reminderElement(field.dataset.reminderDate).value = date ? reminderFormatDay(date) : '';
+    }
+    reminderElement(field.dataset.reminderTime).value = reminderPad(reminderPicker.hour) + ':' + reminderPad(reminderPicker.minute)
+      + (reminderPicker.second ? ':' + reminderPad(reminderPicker.second) : '');
+    reminderPickerShowValues();
+    reminderPickerClose(true);
+    reminderSchedulePreview();
+  }
+
+  // Picker fields open the picker on a click, Enter, Space or Down.
+  function reminderPickerWire() {
+    document.querySelectorAll('#reminder-form .reminder-picker-field').forEach(function (field) {
+      appriseNoAutofill(field);
+      field.addEventListener('click', function () { reminderPickerOpen(field); });
+      field.addEventListener('keydown', function (event) {
+        if (['Enter', ' ', 'ArrowDown'].includes(event.key)) {
+          event.preventDefault();
+          reminderPickerOpen(field);
+        }
+      });
+    });
+  }
+
+  // Fill a row of checkboxes, such as the weekdays or months a reminder repeats on.
+  function reminderFillToggles(id, values, selected, label) {
+    reminderElement(id).replaceChildren(...values.map(function (value) {
+      const holder = document.createElement('label');
+      const box = document.createElement('input');
+      const text = document.createElement('span');
+      box.type = 'checkbox';
+      box.value = value;
+      box.checked = selected.includes(value);
+      box.addEventListener('change', function () {
+        // At least one stays ticked, as an empty row would never send.
+        if (!reminderChecked(id).length) {
+          box.checked = true;
+        }
+        reminderSchedulePreview();
+      });
+      text.textContent = label(value);
+      holder.append(box, text);
+      return holder;
+    }));
+  }
+
+  // Select all, none, or the opposite of what is chosen in a row of toggles.
+  // - how: "all", "none" or "invert".
+  function reminderPick(id, how) {
+    document.querySelectorAll('#' + id + ' input').forEach(function (box) {
+      box.checked = how === 'all' ? true : (how === 'none' ? false : !box.checked);
+    });
+    reminderSchedulePreview();
+  }
+
+  // A shown row of days or months with nothing chosen would never send, so
+  // it is marked, the same as a field error. Returns whether one is empty.
+  function reminderEmptyPick(focus) {
+    for (const [id, field] of [['reminder-days', 'days'], ['reminder-months', 'months']]) {
+      if (!reminderElement(id).closest('[hidden]') && !reminderChecked(id).length) {
+        reminderFieldError({field: field, message: '{% trans "Choose at least one." %}'}, focus);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Whether the Notifications form has something to send: a body or an attachment.
+  function reminderHasMessage() {
+    const body = document.querySelector('#id_body');
+    return Boolean((body && body.value.trim()) || notifyHasAttachments(true));
+  }
+
+  // Whether the Reminder section is open.
+  function reminderExpanded() {
+    return !reminderElement('reminder-panel').hidden;
+  }
+
+  // Open or close the Reminders section.
+  function reminderExpand(open) {
+    reminderElement('reminder-panel').hidden = !open;
+    reminderElement('reminder-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+    reminderShowEditing();
+  }
+
+  // Fill the schedule fields from the reminder being changed, or for a new one.
+  function reminderPrepare() {
+    if (!reminderElement('reminder-form')) {
+      return;
+    }
+    const reminder = reminderEditing;
+    const occurrence = reminderOccurrence;
+    // A new reminder starts at the next full hour, or 09:00 on a day picked on the calendar.
+    const nextHour = new Date(Date.now() + 3600000);
+    // The schedule split into the form's fields; a single changed time
+    // starts from that time of the series.
+    const state = reminderParse(reminder ? reminder.when : {}, reminder ? reminder.start : null);
+    if (occurrence) {
+      Object.assign(state, reminderLocalParts(occurrence.at, occurrence.series.when.tz));
+    } else if (!reminder) {
+      state.date = reminderDraftDate || reminderDate(nextHour);
+      state.time = reminderDraftDate ? '09:00' : reminderPad(nextHour.getHours()) + ':00';
+    }
+    // Only a new reminder has a start the form chose; a saved one's was set on purpose.
+    reminderStartDefault = !reminder && !occurrence ? {date: state.date, time: state.time} : null;
+    reminderCustomIsc = state.unit !== 'custom' || state.isc;
+    // The name, and whether it is sent on a date or a holiday.
+    reminderElement('reminder-name').value = reminder ? reminder.name : (occurrence ? occurrence.series.name : '');
+    reminderNamePlaceholder();
+    reminderElement('reminder-send').value = state.send;
+    // A holiday repeats every year unless it is sent only once (a count of 1).
+    reminderElement('reminder-recurring').checked = state.send === 'holiday'
+      ? !(reminder && reminder.count === 1)
+      : state.recurring;
+    // A changed time of a repeating reminder is always a one-off.
+    reminderElement('reminder-send').disabled = Boolean(occurrence);
+    reminderElement('reminder-recurring').disabled = Boolean(occurrence);
+    reminderElement('reminder-occurrence-note').hidden = !occurrence;
+    reminderRefreshSelect('reminder-send');
+    reminderClearFieldErrors();
+    // A holiday or crontab keeps its own time of day; its start is separate.
+    const start = reminder && reminder.start ? reminder.start : '';
+    const ownTimes = state.send === 'holiday' || state.unit === 'custom';
+    reminderElement('reminder-date').value = ownTimes && reminder ? start.slice(0, 10) : (state.date || '');
+    // A holiday saved without a start is sent at midnight.
+    const startTime = reminderShortTime(start.slice(11)) || (state.send === 'holiday' ? '00:00' : '09:00');
+    reminderElement('reminder-time').value = ownTimes && reminder ? startTime : state.time;
+    if (reminderSecondsOption) {
+      // Seconds are offered to this user only when their reminder already uses them.
+      if (state.unit === 'seconds') {
+        reminderElement('reminder-unit').prepend(reminderSecondsOption);
+      } else {
+        reminderSecondsOption.remove();
+      }
+    }
+    // How it repeats: every [interval] [unit], its drift, or its crontab entry.
+    reminderElement('reminder-unit').value = state.unit;
+    reminderRefreshSelect('reminder-unit');
+    reminderElement('reminder-interval').value = state.interval;
+    reminderSetDrift(state.drift);
+    reminderElement('reminder-cron').value = state.cron;
+    // When it stops repeating; empty means never.
+    const until = reminder && reminder.until ? reminder.until : '';
+    reminderElement('reminder-until-date').value = until.slice(0, 10);
+    reminderElement('reminder-until-time').value = until.slice(11, 16) || '23:59';
+    // The timezone, the weekday and month toggles, and the holiday fields.
+    reminderPickerShowValues();
+    reminderFillTimezones(reminder ? reminder.when.tz : (occurrence ? occurrence.series.when.tz : null));
+    reminderFillToggles('reminder-days', reminderDayNames, state.days, reminderDayLabel);
+    reminderFillToggles('reminder-months', reminderMonthNumbers.map(String), state.months.map(String), reminderMonthLabel);
+    if (state.send === 'holiday') {
+      reminderHolidaySetup(state.holiday);
+    }
+    // Let Materialize move the labels, then show only the fields in use.
+    M.updateTextFields();
+    reminderSyncFields();
+  }
+
+  // The button beside Send opens the Reminder section, then saves from it.
+  function reminderShowEditing() {
+    const banner = reminderElement('notify-reminder-editing');
+    const button = reminderElement('notify-add-reminder');
+    if (!banner || !button) {
+      return;
+    }
+    const label = banner.querySelector('[data-reminder-editing-label]');
+    banner.hidden = !reminderEditing && !reminderOccurrence;
+    label.textContent = reminderOccurrence ? label.dataset.occurrenceLabel : label.dataset.reminderLabel;
+    banner.querySelector('[data-reminder-editing-name]').textContent = reminderOccurrence
+      ? reminderOccurrence.series.name + ' · ' + reminderFormatTime(reminderOccurrence.at)
+      : (reminderEditing ? reminderEditing.name : '');
+    button.querySelector('.btn-text').textContent = reminderEditing || reminderOccurrence
+      ? button.dataset.saveLabel
+      : button.dataset.addLabel;
+  }
+
+  // Leave the reminder being changed, so the form adds a new one again.
+  function reminderStopEditing() {
+    reminderEditing = null;
+    reminderOccurrence = null;
+    notifyStoredAttachments = [];
+    renderNotifyAttachments();
+    if (reminderHashPattern.test(window.location.hash)) {
+      setConfigTabHash('#notify');
+    }
+    reminderPrepare();
+    reminderShowEditing();
+  }
+
+  // Switch to the Notifications tab.
+  function reminderShowNotify() {
+    if (configTabsInstance) {
+      configTabsInstance.select('notify');
+    }
+  }
+
+  // After saving, show the reminder on the Reminders tab at its first time,
+  // so it is clear it was saved and the form is not sent again by mistake.
+  let reminderRevealing = null;
+  function reminderReveal(reminder) {
+    if (!configTabsInstance || !reminder.next) {
+      return;
+    }
+    reminderRevealing = {id: reminder.id, at: reminder.next};
+    // A calendar built by showing the tab already opens on this date.
+    const built = Boolean(reminderCalendar);
+    configTabsInstance.select('reminders');
+    setConfigTabHash('#reminders');
+    if (built) {
+      // Moving to other dates loads their reminders; staying on the same ones
+      // needs a reload. The row is found as it is drawn, in eventDidMount below.
+      const shown = function () { return reminderCalendar.view.type + reminderCalendar.view.activeStart.getTime(); };
+      const before = shown();
+      reminderCalendar.changeView('listMonth', reminderZoneStamp(reminder.next));
+      if (shown() === before) {
+        reminderCalendar.refetchEvents();
+      }
+    }
+  }
+
+  // Load a saved reminder into the Notifications form to change it.
+  function reminderEdit(reminder) {
+    // Start from an empty form.
+    resetNotifyForm();
+    reminderEditing = reminder;
+    reminderOccurrence = null;
+    // Stored files stay on the server; web addresses stay addresses.
+    notifyStoredAttachments = (reminder.attach || []).filter(function (entry) { return entry.file; });
+    setNotifyAttachmentUrls((reminder.attach || []).filter(function (entry) { return entry.url; }));
+    renderNotifyAttachments();
+    // The message: title, body, type and format.
+    document.querySelector('#id_title').value = reminder.title || '';
+    document.querySelector('#id_body').value = reminder.body || '';
+    [['type', reminder.type], ['format', reminder.format]].forEach(function (entry) {
+      const select = document.querySelector('#donotify select[name="' + entry[0] + '"]');
+      if (select && entry[1] && select.querySelector('option[value="' + entry[1] + '"]')) {
+        select.value = entry[1];
+        M.FormSelect.init(select);
+      }
+    });
+    // Each tag, split on commas, becomes a chip.
+    const chips = M.Chips.getInstance(document.querySelector('#notify .chips'));
+    (reminder.tag || '').split(',').map(function (tag) { return tag.trim(); }).filter(Boolean).forEach(function (tag) {
+      if (chips) {
+        chips.addChip({tag: tag});
+      }
+    });
+    // Its template values fill the matching rows, or new ones. A row filled
+    // this way is no longer one the configuration may refill.
+    Object.entries(reminder.template || {}).forEach(function (entry) {
+      const row = notifyTemplateRowFor(entry[0]) || createNotifyTemplateRow(entry[0], '', false);
+      if (row) {
+        delete row.dataset.automatic;
+        row.querySelector('.notify-template-value').value = entry[1];
+      }
+    });
+    updateNotifyTemplateEmptyState();
+    updateNotifyTemplateControls();
+    // Show the form with the Reminder section open, and keep the address
+    // pointing at this reminder so a reload opens it again.
+    M.updateTextFields();
+    reminderShowNotify();
+    setConfigTabHash('#notify/' + reminder.id);
+    reminderPrepare();
+    reminderExpand(true);
+    document.querySelector('#donotify').scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+
+  // Change one time of a repeating reminder. It is saved as a one-off that
+  // stands in for that time, and the repeating reminder skips it.
+  function reminderEditOccurrence(series, at) {
+    reminderEdit(series);
+    reminderEditing = null;
+    reminderOccurrence = {series: series, at: at};
+    setConfigTabHash('#notify');
+    reminderPrepare();
+    reminderShowEditing();
+  }
+
+  // Copy a reminder into the Notifications form as a new, unsaved one-off at
+  // the time picked, with its message and attachments. It can be made to
+  // repeat before it is added.
+  function reminderClone(reminder, at) {
+    reminderEdit(reminder);
+    reminderEditing = null;
+    reminderOccurrence = null;
+    setConfigTabHash('#notify');
+    reminderPrepare();
+    // The copy starts at the time picked, else the next time, else an hour from now.
+    const parts = reminderLocalParts(at || reminder.next || Math.floor(Date.now() / 1000) + 3600, reminder.when.tz);
+    reminderElement('reminder-name').value = reminder.name;
+    reminderElement('reminder-date').value = parts.date;
+    reminderElement('reminder-time').value = parts.time;
+    reminderFillTimezones(reminder.when.tz);
+    reminderSyncFields();
+    reminderShowEditing();
+    appriseShowStatusToast('{% trans "Copied into a new reminder. Change what you like, then choose Add Reminder." %}', 'info');
+  }
+
+  // Start a new reminder on a day picked on the calendar.
+  function reminderStartNew(date) {
+    reminderDraftDate = date;
+    reminderStopEditing();
+    reminderShowNotify();
+    reminderExpand(true);
+    document.querySelector('#id_body').focus();
+  }
+
+  // Add a new reminder, or save the one being changed, from the Notifications form.
+  async function reminderSave() {
+    // An end before the start cannot be saved.
+    reminderClearFieldErrors();
+    if (reminderEndsBeforeStart(true) || reminderEmptyPick(true)) {
+      return;
+    }
+    const editing = reminderEditing;
+    const occurrence = reminderOccurrence;
+    // Without a name, the server names the reminder after its title or message.
+    const payload = Object.assign({
+      name: reminderElement('reminder-name').value.trim() || null,
+      enabled: editing ? editing.enabled !== false : true,
+      title: document.querySelector('#id_title').value,
+      body: document.querySelector('#id_body').value,
+      type: document.querySelector('#donotify select[name="type"]').value,
+      format: document.querySelector('#donotify select[name="format"]').value || null,
+      tag: document.querySelector('#id_tag').value || null,
+      // The Template Values rows, the same ones Send Notification uses.
+      template: collectNotifyTemplateValues().reduce(function (values, entry) {
+        values[entry.name] = entry.value;
+        return values;
+      }, {}),
+      when: reminderWhen(),
+      attach: notifyStoredAttachments.map(function (entry) { return {file: entry.file}; }).concat(notifyAttachmentUrls()),
+      // Times already deleted from a series stay deleted when it is saved again.
+      skip: editing && editing.skip ? editing.skip : []
+      }, reminderEnds(), occurrence ? {series: occurrence.series.id, occurrence: occurrence.at} : {});
+    // Sent as a form: the reminder as JSON, plus any files picked to upload.
+    const form = new FormData();
+    form.append('reminder', JSON.stringify(payload));
+    notifyAttachments.forEach(function (file) {
+      form.append('attach', file, file.name);
+    });
+    // The button stays off while saving, so one click saves once.
+    const saveButton = reminderElement('notify-add-reminder');
+    saveButton.disabled = true;
+    try {
+      const response = await appriseFetch(editing ? reminderItemUrl(editing.id) : reminderUrls.list + '/', {
+        method: editing ? 'PUT' : 'POST',
+        body: form,
+        headers: {'Accept': 'application/json'}
+      });
+      // A refused reminder shows the error under the field it is about.
+      if (!response.ok) {
+        reminderFieldError(await appriseResponseFailure(response, '{% trans "The reminders could not be saved" %}'));
+        return;
+      }
+      // Saved: clear the form, reload the list and show where it landed.
+      const saved = (await response.json()).reminder;
+      reminderDraftDate = null;
+      resetNotifyForm();
+      reminderStopEditing();
+      appriseShowStatusToast('{% trans "Reminder saved." %}', true);
+      // The calendar is reloaded once, as it moves to the saved reminder.
+      await reminderLoad(false);
+      reminderReveal(saved);
+    } catch (e) {
+      appriseShowStatusToast('{% trans "The reminders could not be saved" %}', false);
+    } finally {
+      saveButton.disabled = false;
+    }
+  }
+
+  // What the buttons on this page's reminder cards do.
+  // - itemUrl(id, suffix): the API address of one reminder.
+  // - onEdit, onClone: open it in the Notifications form.
+  // - onChange(removed): reload after a pause, resume or delete.
+  const reminderPage = {
+    itemUrl: reminderItemUrl,
+    onEdit: function (reminder) { reminderEdit(reminder); },
+    onClone: function (reminder) { reminderClone(reminder); },
+    onChange: function (removed) {
+      if (removed && reminderEditing && reminderEditing.id === removed.id) {
+        reminderStopEditing();
+      }
+      reminderLoad();
+    }
+  };
+
+  // The All view's cards: every reminder, including paused and finished ones
+  // that have no time left on the calendar.
+  const reminderAllList = document.createElement('div');
+  reminderAllList.className = 'reminder-list';
+
+  // What All shows when there are no reminders. It uses the calendar's own
+  // classes, so it looks the same as an empty list, week or month.
+  const reminderAllEmpty = document.createElement('div');
+  reminderAllEmpty.className = 'fc-list reminder-all-empty';
+  const reminderAllEmptyBox = document.createElement('div');
+  reminderAllEmptyBox.className = 'fc-list-empty';
+  const reminderAllEmptyText = document.createElement('div');
+  reminderAllEmptyText.className = 'fc-list-empty-cushion';
+  reminderAllEmptyText.textContent = '{% trans "No reminders have been added yet." %}';
+  reminderAllEmptyBox.append(reminderAllEmptyText);
+  reminderAllEmpty.append(reminderAllEmptyBox);
+
+  function reminderRender() {
+    // The notice above the calendar only shows while there is nothing saved.
+    reminderElement('reminder-empty').hidden = reminderItems.length > 0;
+    document.querySelector('.reminder-tab-count').textContent = '(' + reminderItems.length + ')';
+
+    // All lists one card per reminder, or the empty box when there are none.
+    const cards = reminderItems.map(function (reminder) {
+      return reminderCard(reminder, reminderPage);
+    });
+    reminderAllList.replaceChildren(...(cards.length ? cards : [reminderAllEmpty]));
+  }
+
+  // A UNIX timestamp as the clock time in the "Show times in" timezone
+  // ("YYYY-MM-DDTHH:MM:SS"). The calendar runs in UTC and is given these, so
+  // it lays every time out in that timezone without an extra library.
+  function reminderZoneStamp(epoch) {
+    const parts = {};
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: reminderViewZone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+    }).formatToParts(new Date(epoch * 1000)).forEach(function (part) {
+      parts[part.type] = part.value;
+    });
+    return parts.year + '-' + parts.month + '-' + parts.day + 'T' + parts.hour + ':' + parts.minute + ':' + parts.second;
+  }
+
+  // Show every time on this tab in another timezone, and start new reminders
+  // in it. Picking the browser's own timezone forgets the choice, so it
+  // follows the browser from then on.
+  function reminderSetViewZone(zone) {
+    const own = reminderOwnZone();
+    reminderViewZone = zone;
+    // Show the choice; the reset button is off while it is the browser's own.
+    reminderComboboxSet('reminder-view-zone', zone, zone);
+    reminderElement('reminder-view-zone-reset').disabled = zone === own;
+    // Remember the choice in a cookie for a year, or remove the cookie (a
+    // date in the past) when it is the browser's own timezone again.
+    const expires = new Date();
+    expires.setFullYear(expires.getFullYear() + (zone === own ? -1 : 1));
+    document.cookie = reminderZoneCookie + '=' + encodeURIComponent(zone) + '; path=/; expires=' + expires.toUTCString();
+    reminderRender();
+    if (reminderCalendar) {
+      // A new "now" also moves today to that timezone.
+      reminderCalendar.setOption('now', function () { return reminderZoneStamp(Date.now() / 1000); });
+      reminderCalendar.refetchEvents();
+    }
+  }
+
+  // Each reminder keeps one colour from a small set, in the order they were
+  // added, so neighbouring reminders differ and each one's times are easy to follow.
+  function reminderColor(index) {
+    return 'reminder-color-' + (index % 6);
+  }
+
+  // Whether a repeating reminder has more than one time left to send.
+  async function reminderHasMoreTimes(reminder) {
+    // Ask the preview for two times; a second one means more than one is left.
+    const left = reminder.count ? Math.max(reminder.count - (reminder.runs || 0), 1) : null;
+    const params = reminderPreviewParams(reminder.when, {start: reminder.start, until: reminder.until, count: left}, 2);
+    try {
+      const response = await appriseFetch(reminderUrls.preview + '?' + params.toString(), {headers: {'Accept': 'application/json'}});
+      return response.ok && (await response.json()).next.length > 1;
+    } catch (e) {
+      // Offer both choices when it cannot be told.
+      return true;
+    }
+  }
+
+  // Close any open menu.
+  function reminderMenuClose() {
+    document.querySelectorAll('.reminder-menu').forEach(function (menu) { menu.remove(); });
+  }
+
+  // A small menu of choices below a button. The arrow keys move between the
+  // choices, and Escape or a click elsewhere closes it.
+  function reminderMenu(anchor, choices) {
+    reminderMenuClose();
+    const menu = document.createElement('ul');
+    menu.className = 'dropdown-content reminder-menu';
+    menu.setAttribute('role', 'menu');
+    choices.forEach(function (choice) {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'menuitem');
+      button.innerHTML = '<i class="material-icons" aria-hidden="true">' + choice[0] + '</i>';
+      button.append(document.createTextNode(choice[1]));
+      button.addEventListener('click', function () {
+        reminderMenuClose();
+        choice[2]();
+      });
+      item.append(button);
+      menu.append(item);
+    });
+    // Keyboard: Escape closes, Up and Down move between choices (wrapping around).
+    menu.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        reminderMenuClose();
+        anchor.focus();
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const buttons = Array.from(menu.querySelectorAll('button'));
+        const step = event.key === 'ArrowDown' ? 1 : buttons.length - 1;
+        buttons[(buttons.indexOf(document.activeElement) + step) % buttons.length].focus();
+      }
+    });
+    // Place it just below the button, lined up with its right edge but never
+    // off the left side of the screen.
+    document.body.append(menu);
+    const box = anchor.getBoundingClientRect();
+    menu.style.top = (box.bottom + window.scrollY + 4) + 'px';
+    menu.style.left = Math.max(8, box.right + window.scrollX - menu.offsetWidth) + 'px';
+    menu.querySelector('button').focus();
+    // A click anywhere else closes it. Listening starts on the next tick, so
+    // the click that opened the menu does not close it straight away.
+    const outside = function (event) {
+      if (!menu.contains(event.target)) {
+        reminderMenuClose();
+        document.removeEventListener('mousedown', outside);
+      }
+    };
+    setTimeout(function () { document.addEventListener('mousedown', outside); }, 0);
+  }
+
+  // Edit from the calendar. A repeating reminder with more than one time left
+  // asks whether to change just this time or the whole series; otherwise the
+  // reminder opens straight away.
+  async function reminderEditFromCalendar(reminder, at, button) {
+    if (reminderIsOneOff(reminder.when) || !(await reminderHasMoreTimes(reminder))) {
+      reminderEdit(reminder);
+      return;
+    }
+    reminderMenu(button, [
+      ['event', '{% trans "Edit this time" %}', function () { reminderEditOccurrence(reminder, at); }],
+      ['repeat', '{% trans "Edit the series" %}', function () { reminderEdit(reminder); }]
+    ]);
+  }
+
+  // One time in the calendar's list: the reminder's name, how it repeats, and
+  // buttons to pause it, change just that time, send it now or delete it.
+  function reminderEventRow(event) {
+    // - props.reminder: the saved reminder this time belongs to.
+    // - props.at: this time, as a UNIX timestamp.
+    // - props.past: set when this is its last send rather than an upcoming time.
+    const props = event.extendedProps;
+    const reminder = props.reminder;
+    const row = document.createElement('div');
+    const text = document.createElement('div');
+    const name = document.createElement('strong');
+    const summary = document.createElement('span');
+    row.className = 'reminder-event-row';
+    text.className = 'reminder-event-text';
+    name.textContent = reminder.name;
+    summary.className = 'reminder-event-summary';
+    summary.textContent = reminderSummary(reminder);
+    // The tags show who gets it; with none, only services without a tag do.
+    const tags = (reminder.tag || '').split(',').map(function (tag) { return tag.trim(); }).filter(Boolean);
+    const who = document.createElement('span');
+    who.className = 'reminder-event-summary';
+    who.textContent = '{% trans "Tags" %}: ' + (tags.length ? tags.join(', ') : '{% trans "None (untagged services only)" %}');
+    text.append(name, summary, who);
+    // A one-off that stands in for one time of a repeating reminder names it.
+    const series = reminder.series && reminderItems.find(function (item) { return item.id === reminder.series; });
+    if (series) {
+      const note = document.createElement('span');
+      note.className = 'reminder-event-summary';
+      note.textContent = '{% trans "Series" %}: ' + series.name;
+      text.append(note);
+    }
+    row.append(text);
+    // A label for how the last send went, or that the reminder is paused.
+    if (props.past || reminder.enabled === false) {
+      const status = document.createElement('span');
+      // A send that did not go through stands out in red.
+      status.className = 'reminder-status' + (props.past && !reminder.last.ok ? ' is-failed' : '');
+      status.textContent = props.past
+        ? (reminder.last.reason ? reminderReasons[reminder.last.reason] || reminder.last.reason
+          : (reminder.last.ok ? '{% trans "Sent" %}' : '{% trans "Failed" %}'))
+        : '{% trans "Paused" %}';
+      row.append(status);
+    }
+    if (props.past && !reminder.next) {
+      // A finished reminder is only left here as its last send, so it can still
+      // be reused or removed from this row, the same as from its card.
+      const actions = document.createElement('div');
+      actions.className = 'reminder-card-actions reminder-event-actions';
+      actions.append(
+        reminderButton('edit', '{% trans "Edit" %}', function () { reminderPage.onEdit(reminder); }),
+        reminderButton('content_copy', '{% trans "Clone" %}', function () { reminderPage.onClone(reminder); }),
+        reminderSendButton(reminderItemUrl(reminder.id, 'test/')),
+        reminderButton('delete', '{% trans "Delete" %}', function () {
+          reminderConfirmDelete(reminder, reminderPage, null, true);
+        }, 'reminder-action-delete')
+      );
+      row.append(actions);
+    }
+    // An upcoming time: pause or resume, edit, clone, send now and delete.
+    if (!props.past) {
+      const paused = reminder.enabled === false;
+      const actions = document.createElement('div');
+      actions.className = 'reminder-card-actions reminder-event-actions';
+      // A paused reminder's play button stands out, as it is what brings it back.
+      actions.append(reminderButton(paused ? 'play_arrow' : 'pause', reminderPauseLabel(reminder, paused), async function () {
+        if (await reminderAction(reminderItemUrl(reminder.id), {method: 'PATCH', body: JSON.stringify({enabled: paused})}, '{% trans "Reminder saved." %}')) {
+          reminderLoad();
+        }
+      }, paused ? 'reminder-action-resume' : ''));
+      const edit = reminderButton('edit', '{% trans "Edit" %}', function () {
+        reminderEditFromCalendar(reminder, props.at, edit);
+      });
+      actions.append(edit, reminderButton('content_copy', '{% trans "Clone" %}', function () {
+        reminderClone(reminder, props.at);
+      }));
+      actions.append(
+        reminderSendButton(reminderItemUrl(reminder.id, 'test/')),
+        reminderButton('delete', '{% trans "Delete" %}', async function () {
+          // With one time left, removing it would leave nothing, so the whole reminder goes.
+          const whole = !reminderIsOneOff(reminder.when) && !(await reminderHasMoreTimes(reminder));
+          reminderConfirmDelete(reminder, reminderPage, props.at, whole);
+        }, 'reminder-action-delete')
+      );
+      row.append(actions);
+    }
+    return row;
+  }
+
+  // Everyone but the administrator sees how much of their limits is used,
+  // and an alert while the attachment space is full.
+  async function reminderLoadUsage() {
+    if (!reminderElement('reminder-usage-count')) {
+      return;
+    }
+    try {
+      const response = await appriseFetch(reminderUrls.limits, {headers: {'Accept': 'application/json'}});
+      if (!response.ok) {
+        return;
+      }
+      const limits = (await response.json()).limits;
+      reminderElement('reminder-usage-count').textContent = limits.reminders_used + ' / ' + limits.reminders;
+      reminderElement('reminder-usage-space').textContent = reminderFormatSize(limits.attach_used) + ' / '
+        + reminderFormatSize(limits.attach_size);
+      // Full once nothing more fits; files the administrator added can even
+      // take it over the limit. A quota of 0 with nothing stored just means
+      // uploads are off, which saving explains.
+      const full = limits.attach_used > 0 && limits.attach_used >= limits.attach_size;
+      document.querySelectorAll('.reminder-space-full').forEach(function (alert) { alert.hidden = !full; });
+    } catch (e) {
+      // The list still works without the usage figures.
+    }
+  }
+
+  // Fetch every reminder of this Config ID, then refresh the cards, the
+  // limits and the calendar.
+  // - refreshCalendar: false leaves the calendar for the caller to reload.
+  async function reminderLoad(refreshCalendar) {
+    try {
+      const response = await appriseFetch(reminderUrls.list + '/', {headers: {'Accept': 'application/json'}});
+      if (!response.ok) {
+        const failure = await appriseResponseFailure(response, '{% trans "The reminders could not be read" %}');
+        appriseShowStatusToast(failure.message, false);
+        return;
+      }
+      reminderItems = (await response.json()).reminders;
+      reminderRender();
+    } catch (e) {
+      appriseShowStatusToast('{% trans "The reminders could not be read" %}', false);
+    }
+    reminderLoadUsage();
+    if (reminderCalendar && refreshCalendar !== false) {
+      reminderCalendar.refetchEvents();
+    }
+  }
+
+  // Open the reminder a #notify/<id> link names.
+  // The hash read when the page opened is passed in, since the tabs may have
+  // changed the address by the time the reminders arrive.
+  function reminderFromHash(hash) {
+    const match = reminderHashPattern.exec(typeof hash === 'string' ? hash : window.location.hash);
+    const reminder = match && reminderItems.find(function (item) { return item.id === match[1]; });
+    if (reminder && (!reminderEditing || reminderEditing.id !== reminder.id)) {
+      reminderEdit(reminder);
+    }
+  }
+
+  // The page language as FullCalendar names its translations.
+  function reminderCalendarLocale() {
+    const language = reminderLocale.toLowerCase();
+    // FullCalendar names Chinese by region rather than by script.
+    return {'zh': 'zh-cn', 'zh-hans': 'zh-cn', 'zh-hant': 'zh-tw'}[language] || language;
+  }
+
+  // Build the calendar the first time the Reminders tab is shown; it cannot
+  // measure itself while the tab is hidden.
+  function reminderCalendarInit() {
+    const holder = reminderElement('reminder-calendar');
+    if (!holder || reminderCalendar || typeof FullCalendar === 'undefined') {
+      return;
+    }
+    // All lists every reminder as a card, whether or not it has a time left.
+    const allView = FullCalendar.createPlugin({
+      name: 'reminder-all',
+      views: {
+        reminderAll: {
+          classNames: ['reminder-all-view'],
+          content: function () {
+            return {domNodes: [reminderAllList]};
+          }
+        }
+      }
+    });
+    reminderCalendar = new FullCalendar.Calendar(holder, {
+      plugins: [allView],
+      // The list shows every reminder time with its buttons; week and month give an overview.
+      initialView: 'listMonth',
+      // Opened by saving a reminder: start on the month it is first due.
+      initialDate: reminderRevealing ? reminderZoneStamp(reminderRevealing.at) : undefined,
+      locale: reminderCalendarLocale(),
+      // Times arrive as clock times in the "Show times in" timezone.
+      timeZone: 'UTC',
+      now: function () { return reminderZoneStamp(Date.now() / 1000); },
+      views: {reminderAll: {buttonText: '{% trans "All" %}'}},
+      height: 'auto',
+      // Every view grows to fit, so only the page scrolls. The week shows one
+      // row per hour to keep a whole day short.
+      slotDuration: '01:00:00',
+      defaultTimedEventDuration: '01:00:00',
+      // Reminders always have a time, so the week has no all-day row.
+      allDaySlot: false,
+      headerToolbar: {left: 'today prev,next', center: 'title', right: 'listMonth,timeGridWeek,dayGridMonth,reminderAll'},
+      noEventsContent: '{% trans "No reminders are due in this period." %}',
+      events: async function (info, success, failure) {
+        // Paused reminders keep their times on the calendar, shown greyed out,
+        // so pausing one never makes it hard to find again.
+        // The range is in the shown timezone, so a day either side covers every offset.
+        const params = new URLSearchParams({
+          start: Math.floor(info.start.getTime() / 1000) - 86400,
+          end: Math.floor(info.end.getTime() / 1000) + 86400,
+          disabled: 'show'
+        });
+        try {
+          const response = await appriseFetch(reminderUrls.list + '/?' + params.toString(), {headers: {'Accept': 'application/json'}});
+          if (!response.ok) {
+            throw new Error(response.status);
+          }
+          // Each upcoming time becomes one calendar entry, coloured per reminder.
+          const events = [];
+          // Whether a time falls inside the dates being shown.
+          const inside = function (epoch) {
+            const shown = Date.parse(reminderZoneStamp(epoch) + 'Z');
+            return shown >= info.start.getTime() && shown < info.end.getTime();
+          };
+          (await response.json()).reminders.forEach(function (reminder, index) {
+            const color = reminderColor(index);
+            const classes = reminder.enabled === false ? [color, 'is-paused'] : [color];
+            (reminder.occurrences || []).forEach(function (due) {
+              events.push({title: reminder.name, start: reminderZoneStamp(due), classNames: classes, extendedProps: {reminder: reminder, at: due}});
+            });
+            // The latest send shows too, marked by how it went.
+            if (reminder.last && inside(reminder.last.at)) {
+              events.push({
+                title: reminder.name,
+                start: reminderZoneStamp(reminder.last.at),
+                classNames: [color, 'reminder-event-past', reminder.last.ok ? 'is-ok' : 'is-failed'],
+                extendedProps: {reminder: reminder, at: reminder.last.at, past: true}
+              });
+            }
+          });
+          success(events);
+        } catch (e) {
+          failure(e);
+        }
+      },
+      // Scroll to a reminder just saved and mark it for a moment.
+      eventDidMount: function (arg) {
+        const props = arg.event.extendedProps;
+        // A drift can move a time off the whole minute, so its seconds are shown.
+        const time = !props.past && reminderShowsSeconds(props.reminder.when, props.reminder.start)
+          && arg.el.querySelector('.fc-list-event-time, .fc-event-time');
+        if (time) {
+          // Same style as the times around it: "9:01:30am" in the list, "9:01:30" in the week, "9:01:30a" in the month.
+          const meridiem = arg.view.type.startsWith('list') ? 'short' : arg.view.type.startsWith('timeGrid') ? false : 'narrow';
+          time.textContent = arg.view.calendar.formatDate(arg.event.start, {hour: 'numeric', minute: '2-digit', second: '2-digit', meridiem: meridiem});
+        }
+        // The rest only applies to the reminder just saved.
+        if (!reminderRevealing || props.past || props.reminder.id !== reminderRevealing.id || props.at !== reminderRevealing.at) {
+          return;
+        }
+        reminderRevealing = null;
+        arg.el.classList.add('reminder-event-saved');
+        arg.el.scrollIntoView({behavior: 'smooth', block: 'center'});
+        setTimeout(function () { arg.el.classList.remove('reminder-event-saved'); }, 4000);
+      },
+      // The list rows carry their own buttons; the week and month views keep the plain name.
+      eventContent: function (arg) {
+        if (arg.view.type.startsWith('list')) {
+          return {domNodes: [reminderEventRow(arg.event)]};
+        }
+        // True keeps FullCalendar's own time and name.
+        return true;
+      },
+      // In the week and month views, clicking a time shows that day in the
+      // list, where its buttons are. List rows act only through their buttons.
+      eventClick: function (info) {
+        info.jsEvent.preventDefault();
+        if (info.view.type.startsWith('list')) {
+          return;
+        }
+        const day = info.event.start;
+        reminderCalendar.changeView('listMonth', day);
+        setTimeout(function () {
+          const key = day.getUTCFullYear() + '-' + reminderPad(day.getUTCMonth() + 1) + '-' + reminderPad(day.getUTCDate());
+          const heading = document.querySelector('#reminder-calendar .fc-list-day[data-date="' + key + '"]');
+          if (heading) {
+            heading.scrollIntoView({behavior: 'smooth', block: 'start'});
+          }
+        }, 300);
+      },
+      // Clicking an empty day starts a new reminder on it.
+      dateClick: function (info) {
+        reminderStartNew(info.dateStr.slice(0, 10));
+      }
+    });
+    reminderCalendar.render();
+  }
+
+  // Called by the tabs when the Reminders tab is shown.
+  window.__appriseRemindersShown = function () {
+    reminderCalendarInit();
+    if (reminderCalendar) {
+      reminderCalendar.updateSize();
+    }
+  };
+
+  // Wire up the Reminders tab and the Reminder section, once the page loads.
+  function remindersInit() {
+    // Nothing to do when reminders are not offered to this caller.
+    if (!reminderElement('reminders')) {
+      return;
+    }
+    // Read before the tabs start, as showing a tab sets its own hash.
+    const wanted = window.location.hash;
+    reminderLoad().then(function () {
+      if (reminderHashPattern.test(wanted)) {
+        reminderFromHash(wanted);
+      }
+    });
+    window.addEventListener('hashchange', reminderFromHash);
+    // The "Show times in" timezone and its reset button.
+    reminderComboboxSet('reminder-view-zone', reminderViewZone, reminderViewZone);
+    reminderElement('reminder-view-zone-reset').disabled = reminderViewZone === reminderOwnZone();
+    reminderCombobox('reminder-view-zone', function () {
+      return reminderZones(reminderViewZone).map(function (zone) { return {value: zone, label: zone}; });
+    }, reminderSetViewZone);
+    reminderElement('reminder-view-zone-reset').addEventListener('click', function () {
+      reminderSetViewZone(reminderOwnZone());
+    });
+    // The Reminder heading opens and closes its section.
+    reminderElement('reminder-toggle').addEventListener('click', function () {
+      reminderExpand(!reminderExpanded());
+    });
+    // Fill the form for a new reminder, then refresh it as choices change.
+    reminderSecondsOption = reminderElement('reminder-unit').querySelector('[data-reminder-seconds-locked]');
+    reminderPickerWire();
+    reminderPrepare();
+    reminderElement('reminder-send').addEventListener('change', reminderSendChanged);
+    reminderElement('reminder-recurring').addEventListener('change', reminderRecurringChanged);
+    reminderElement('reminder-unit').addEventListener('change', reminderUnitChanged);
+    reminderElement('reminder-drift-unit').addEventListener('change', reminderDriftUnitChanged);
+    reminderElement('reminder-form').addEventListener('keydown', function (event) {
+      // Enter here must not send the notification.
+      if (event.key === 'Enter' && !event.isComposing && event.target.tagName === 'INPUT') {
+        event.preventDefault();
+      }
+    });
+    reminderCombobox('reminder-timezone', function () {
+      return reminderZones(reminderElement('reminder-timezone').dataset.value).map(function (zone) {
+        return {value: zone, label: zone};
+      });
+    }, function (zone) {
+      // A timezone picked here is also the one "Show times in" uses.
+      reminderSetViewZone(zone);
+      reminderSchedulePreview();
+    });
+    // A new country reloads its regions and holidays.
+    reminderCombobox('reminder-country', function () {
+      return (reminderCountryList || []).map(function (entry) { return {value: entry.code, label: entry.label}; });
+    }, async function () {
+      await reminderFillRegions('');
+      reminderFillHolidays('');
+    });
+    // The name is optional; without one, the title or message is used.
+    ['#id_title', '#id_body'].forEach(function (selector) {
+      document.querySelector(selector).addEventListener('input', reminderNamePlaceholder);
+    });
+    // Any other change asks for the upcoming times again.
+    reminderElement('reminder-region').addEventListener('change', function () { reminderFillHolidays(''); });
+    reminderElement('reminder-holiday').addEventListener('change', reminderHolidayChosen);
+    reminderElement('reminder-holiday-previous').addEventListener('click', function () { reminderHolidayStep(-1); });
+    reminderElement('reminder-holiday-next').addEventListener('click', function () { reminderHolidayStep(1); });
+    document.querySelectorAll('#reminder-form [data-reminder-pick] button').forEach(function (button) {
+      button.addEventListener('click', function () {
+        reminderPick(button.closest('[data-reminder-pick]').dataset.reminderPick, button.dataset.pick);
+      });
+    });
+    ['reminder-interval', 'reminder-drift', 'reminder-cron'].forEach(function (id) {
+      reminderElement(id).addEventListener('input', reminderSchedulePreview);
+      reminderElement(id).addEventListener('change', reminderSchedulePreview);
+    });
+    // Typing again clears the last error.
+    reminderElement('reminder-form').addEventListener('input', reminderClearFieldErrors);
+    // Add Reminder: the first click opens the section; the next one checks
+    // the message and attachments, then saves.
+    reminderElement('notify-add-reminder').addEventListener('click', function () {
+      if (!reminderExpanded()) {
+        reminderExpand(true);
+        reminderElement('reminder-name').focus();
+        return;
+      }
+      commitNotifyTags();
+      if (!notifyCheckAttachmentUrls()) {
+        return;
+      }
+      if (!reminderHasMessage()) {
+        markNotifyMinimumMissing();
+        appriseFire({
+          title: '{% trans "Reminder" %}',
+          html: '{% trans "Please provide at least a message body or one attachment before sending." %}',
+          icon: 'warning'
+        });
+        return;
+      }
+      clearNotifyMinimumMissing();
+      reminderSave();
+    });
+    // Cancel on the "Changing" banner stops changing the saved reminder.
+    document.querySelector('#notify-reminder-editing .notify-reminder-editing-cancel').addEventListener('click', reminderStopEditing);
+    // Clearing the form also stops changing a saved reminder.
+    document.querySelector('#donotify .btn-clear-form').addEventListener('click', reminderStopEditing);
+  }
+{# djlint:on #}

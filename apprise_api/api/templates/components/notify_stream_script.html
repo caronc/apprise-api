@@ -1,0 +1,341 @@
+{% load i18n %}
+
+{# djlint:off #}
+  // Send to a notification endpoint and show its log live in a dialog, then
+  // the result. Used by the Notifications form and the reminder Send Now buttons.
+
+  // The same address with ?stream=1, which asks the server for a live log.
+  function notifyStreamUrl(url) {
+    const streamUrl = new URL(url, window.location.href);
+    streamUrl.searchParams.set('stream', '1');
+    return streamUrl.pathname + streamUrl.search;
+  }
+
+  // Read one server-sent event block:
+  // - "event:" names it ("message" when left out);
+  // - "data:" lines hold its JSON;
+  // - lines starting with ":" are comments and are skipped.
+  // Returns {name, data}, or null when it carried no data.
+  function parseNotifyStreamEvent(block) {
+    let eventName = 'message';
+    const data = [];
+    block.split('\n').forEach(function (line) {
+      if (!line || line.startsWith(':')) return;
+      const separator = line.indexOf(':');
+      const field = separator < 0 ? line : line.slice(0, separator);
+      let value = separator < 0 ? '' : line.slice(separator + 1);
+      if (value.startsWith(' ')) value = value.slice(1);
+      if (field === 'event') eventName = value;
+      if (field === 'data') data.push(value);
+    });
+    if (!data.length) return null;
+    return {name: eventName, data: JSON.parse(data.join('\n'))};
+  }
+
+  // Read the live log as it arrives, passing each event to onEvent.
+  // Returns the final "result" or "error" event; throws when there is none.
+  async function readNotifyEventStream(response, onEvent) {
+    const contentType = response.headers.get('Content-Type') || '';
+    if (!response.ok || !contentType.toLowerCase().startsWith('text/event-stream')) {
+      throw new Error('{% trans "The server could not start a live notification stream." %}');
+    }
+    if (!response.body || !response.body.getReader) {
+      throw new Error('{% trans "This browser cannot display the live notification stream." %}');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let finalEvent = null;
+
+    // Add new text, then hand on every complete event (they end with a blank line).
+    function consume(finalChunk) {
+      buffer += finalChunk;
+      let boundary = buffer.search(/\r?\n\r?\n/);
+      while (boundary >= 0) {
+        const delimiter = buffer.slice(boundary).match(/^\r?\n\r?\n/)[0];
+        const block = buffer.slice(0, boundary).replace(/\r\n/g, '\n');
+        buffer = buffer.slice(boundary + delimiter.length);
+        const event = parseNotifyStreamEvent(block);
+        if (event) {
+          onEvent(event);
+          if (event.name === 'result' || event.name === 'error') {
+            finalEvent = event;
+          }
+        }
+        boundary = buffer.search(/\r?\n\r?\n/);
+      }
+    }
+
+    // Read until the server closes the stream, then handle anything left over.
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      consume(decoder.decode(chunk.value, {stream: true}));
+    }
+    consume(decoder.decode());
+    if (buffer.trim()) {
+      const event = parseNotifyStreamEvent(buffer.replace(/\r\n/g, '\n'));
+      if (event) {
+        onEvent(event);
+        if (event.name === 'result' || event.name === 'error') finalEvent = event;
+      }
+    }
+    if (!finalEvent) {
+      throw new Error('{% trans "The live notification stream ended unexpectedly." %}');
+    }
+    return finalEvent;
+  }
+
+  // Open the dialog that shows the log live while sending. Returns:
+  // - signal, wasAborted: whether the dialog was closed to stop the send.
+  // - add(entry): add one log line.
+  // - finish(options): turn the dialog into the result.
+  // - close(): close it without a result.
+  function createNotifyLiveFeed(title, sendingText) {
+    // Every log line received so far.
+    const entries = [];
+    let renderFrame = null;
+    const logMarkup =
+      '<div class="notify-log-actions">' +
+        '<button type="button" class="btn-flat notify-log-copy" data-notify-copy-logs>' +
+          '<i class="material-icons" aria-hidden="true">content_copy</i>' +
+          '<span>{% trans "Copy Logs" %}</span>' +
+        '</button>' +
+      '</div>' +
+      '<div class="notify-log-panel" role="log" aria-live="polite" aria-relevant="additions">' +
+        '<ul class="logs notify-live-logs" data-notify-live-logs></ul>' +
+        '<p class="notify-live-empty" data-notify-live-empty>{% trans "Waiting for log activity…" %}</p>' +
+      '</div>';
+    const markup =
+      '<div class="notify-live-feed">' +
+        '<div class="notify-live-status">' +
+          '<span class="notify-live-pulse" aria-hidden="true"></span>' +
+          '<span>' + sendingText + '</span>' +
+          '<span class="notify-live-count" data-notify-live-count></span>' +
+        '</div>' +
+        logMarkup +
+      '</div>';
+
+    // One log line: its time, level, message and service.
+    function createLogRow(entry) {
+      const row = document.createElement('li');
+      const level = String(entry.level || 'INFO').toUpperCase();
+      row.className = 'notify-log-row log_' + level.replace(/[^A-Z]/g, '');
+
+      const time = document.createElement('time');
+      time.className = 'log_time';
+      time.textContent = entry.asctime || '';
+      row.appendChild(time);
+
+      const badge = document.createElement('span');
+      badge.className = 'log_level';
+      badge.textContent = level;
+      row.appendChild(badge);
+
+      const message = document.createElement('span');
+      message.className = 'log_message';
+      message.textContent = entry.message || '';
+      row.appendChild(message);
+
+      if (entry.service) {
+        const service = document.createElement('span');
+        service.className = 'log_service';
+        service.textContent = entry.service;
+        service.title = '{% trans "Notification service" %}';
+        row.appendChild(service);
+      }
+      return row;
+    }
+
+    // Build one plain-text record per log entry, wrapped for easy pasting.
+    function clipboardText() {
+      const lines = entries.map(function (entry) {
+        const parts = [];
+        // Time is optional for messages added locally after a request fails.
+        if (entry.asctime) parts.push(String(entry.asctime));
+        // Keep the level visible even if a log entry omitted it.
+        parts.push('[' + String(entry.level || 'INFO').toUpperCase() + ']');
+        parts.push(String(entry.message || ''));
+        if (entry.service) {
+          // Name the service when the message came from one.
+          parts.push(`({% trans "Service" %}: ${String(entry.service)})`);
+        }
+        return '- ' + parts.join(' ');
+      });
+      return [
+        '--- {% trans "BEGIN APPRISE NOTIFICATION LOG" %} ---',
+        ...lines,
+        '--- {% trans "END APPRISE NOTIFICATION LOG" %} ---'
+      ].join('\n');
+    }
+
+    // Show the log lines received so far, with their count, and keep the
+    // newest in view.
+    function render() {
+      const container = Swal.getHtmlContainer();
+      const list = container ? container.querySelector('[data-notify-live-logs]') : null;
+      if (!list) return;
+      // Append new entries to avoid flicker. A new summary starts with an
+      // empty list, so it still receives every entry.
+      const fragment = document.createDocumentFragment();
+      for (let i = list.children.length; i < entries.length; i += 1) {
+        fragment.appendChild(createLogRow(entries[i]));
+      }
+      if (fragment.childNodes.length) {
+        list.appendChild(fragment);
+      }
+      const empty = container.querySelector('[data-notify-live-empty]');
+      if (empty) empty.hidden = entries.length > 0;
+      const count = container.querySelector('[data-notify-live-count]');
+      if (count) {
+        count.textContent = entries.length === 1
+          ? '1 {% trans "event" %}'
+          : entries.length + ' {% trans "events" %}';
+      }
+      const copy = container.querySelector('[data-notify-copy-logs]');
+      if (copy && copy.dataset.wired !== '1') {
+        // Render can run many times; connect the button only once.
+        copy.dataset.wired = '1';
+        copy.addEventListener('click', function () {
+          // Copy the same entries currently shown in the live log panel.
+          appriseCopyToClipboard(clipboardText(), '{% trans "Notification logs copied to clipboard" %}');
+        });
+      }
+      const panel = list.closest('.notify-log-panel');
+      if (panel) panel.scrollTop = panel.scrollHeight;
+    }
+
+    // Draw at most once per screen refresh, however fast lines arrive.
+    function scheduleRender() {
+      if (renderFrame !== null) return;
+      renderFrame = window.requestAnimationFrame(function () {
+        renderFrame = null;
+        render();
+      });
+    }
+
+    // Drop a draw that is waiting.
+    function cancelRender() {
+      if (renderFrame !== null) {
+        window.cancelAnimationFrame(renderFrame);
+        renderFrame = null;
+      }
+    }
+
+    // The dialog; closing it early stops the send.
+    const task = appriseBeginTask({
+      title: title,
+      html: markup,
+      width: '80em',
+      showLoader: false,
+      didOpen: render
+    });
+
+    return {
+      signal: task.signal,
+      wasAborted: task.wasAborted,
+      add: function (entry) {
+        entries.push(entry);
+        scheduleRender();
+      },
+      finish: function (options) {
+        cancelRender();
+        render();
+        task.complete();
+
+        // Turn the progress dialog into its result without closing or reopening it.
+        const popup = Swal.getPopup();
+        const container = Swal.getHtmlContainer();
+        if (!popup || !container) return;
+
+        popup.classList.remove('apprise-popup--task');
+        popup.classList.add(
+          'apprise-popup--status',
+          'notify-log-popup',
+          'notify-log-popup--' + options.tone
+        );
+
+        const titleElement = popup.querySelector('.swal2-title');
+        if (titleElement) titleElement.textContent = options.title || title;
+
+        const status = container.querySelector('.notify-live-status');
+        if (status) {
+          status.className = 'notify-summary';
+          status.textContent = options.summary;
+        }
+
+        const icon = popup.querySelector('.swal2-icon');
+        if (icon && appriseStatusIconHtml[options.icon]) {
+          icon.className = 'swal2-icon apprise-status-icon swal2-' + options.icon;
+          icon.innerHTML = appriseStatusIconHtml[options.icon];
+          icon.style.display = 'flex';
+        }
+
+        const actions = popup.querySelector('.swal2-actions');
+        const confirmButton = Swal.getConfirmButton();
+        const closeButton = Swal.getCloseButton();
+        if (actions) actions.style.display = 'flex';
+        if (confirmButton) confirmButton.style.display = 'inline-block';
+        if (closeButton) closeButton.style.display = 'flex';
+      },
+      close: function () {
+        cancelRender();
+        task.finish();
+      }
+    };
+  }
+
+  // The dialog's look and message for how the send went: all, some or none sent.
+  function notifyStreamResultOptions(status, messages) {
+    if (status === 'SUCCESS') {
+      return {tone: 'success', icon: 'success', summary: messages.success};
+    }
+    if (status === 'PARTIAL') {
+      return {tone: 'warning', icon: 'warning', summary: messages.partial};
+    }
+    return {tone: 'error', icon: 'error', summary: messages.failure};
+  }
+
+  // Send, showing the live log, then the result.
+  // - url, fetchOptions: the request to make.
+  // - display: the dialog's title and its sending, success, partial and
+  //   failure messages.
+  async function sendNotifyStream(url, fetchOptions, display) {
+    const feed = createNotifyLiveFeed(display.title, display.sending);
+    try {
+      const response = await appriseFetch(notifyStreamUrl(url), Object.assign({}, fetchOptions, {
+        signal: feed.signal,
+        headers: Object.assign({}, fetchOptions.headers || {}, {'Accept': 'text/event-stream'})
+      }));
+      // Log events go to the dialog; the last event says how it went.
+      const finalEvent = await readNotifyEventStream(response, function (event) {
+        if (event.name === 'log') feed.add(event.data);
+      });
+      if (finalEvent.name === 'error') {
+        throw new Error(finalEvent.data.message || display.failure);
+      }
+      const resultOptions = notifyStreamResultOptions(finalEvent.data.status, display);
+      resultOptions.title = display.responseTitle;
+      feed.finish(resultOptions);
+    } catch (error) {
+      // Closed by the user: nothing more to show.
+      if (error.name === 'AbortError' || feed.wasAborted()) {
+        feed.close();
+        return;
+      }
+      // Anything else shows the error as the last log line.
+      feed.add({
+        level: 'ERROR',
+        asctime: '',
+        message: error.message || display.failure
+      });
+      feed.finish({
+        title: display.responseTitle,
+        tone: 'error',
+        icon: 'error',
+        summary: display.failure
+      });
+    }
+  }
+{# djlint:on #}

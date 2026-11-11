@@ -1,0 +1,27 @@
+{% load i18n %}
+
+{# Select all, none, or the opposite of what is chosen in one row of toggles. #}
+{# - target: the id of the row, such as "reminder-days". #}
+<span class="reminder-pick-actions" data-reminder-pick="{{ target }}">
+  <button type="button"
+          class="btn-flat"
+          data-pick="all"
+          title="{% trans "Select all" %}"
+          aria-label="{% trans "Select all" %}">
+    <i class="material-icons" aria-hidden="true">done_all</i>
+  </button>
+  <button type="button"
+          class="btn-flat"
+          data-pick="none"
+          title="{% trans "Select none" %}"
+          aria-label="{% trans "Select none" %}">
+    <i class="material-icons" aria-hidden="true">clear</i>
+  </button>
+  <button type="button"
+          class="btn-flat"
+          data-pick="invert"
+          title="{% trans "Invert selection" %}"
+          aria-label="{% trans "Invert selection" %}">
+    <i class="material-icons" aria-hidden="true">swap_horiz</i>
+  </button>
+</span>

@@ -123,6 +123,7 @@ TEMPLATES = [
                 "api.context_processors.unique_config_id",
                 "api.context_processors.stateful_mode",
                 "api.context_processors.stateless_mode",
+                "api.context_processors.reminders",
                 "api.context_processors.config_lock",
                 "api.context_processors.admin_enabled",
                 "api.context_processors.template_variables",
@@ -270,6 +271,45 @@ APPRISE_STORAGE_PRUNE_DAYS = env_int("APPRISE_STORAGE_PRUNE_DAYS", 30, minimum=0
 # Prune unused authentication locks after this age in seconds.
 # The default is 30 days; locks with configuration are always retained.
 APPRISE_AUTH_PRUNE_SECONDS = env_int("APPRISE_AUTH_PRUNE_SECONDS", 30 * 86400, minimum=0)
+
+# Allow reminders: notifications saved now and sent later by a background
+# scheduler.
+APPRISE_REMINDER_ENABLED = env_bool("APPRISE_REMINDER_ENABLED", default=True)
+
+# The number of threads the scheduler uses to send reminders that are due.
+APPRISE_REMINDER_WORKERS = env_int("APPRISE_REMINDER_WORKERS", 4, minimum=1)
+
+# A reminder found overdue by more than this many seconds is skipped
+# instead of being sent late (e.g. after the server was down).
+APPRISE_REMINDER_GRACE = env_int("APPRISE_REMINDER_GRACE", 3600, minimum=0)
+
+# The reminder limits below hold back everyone but the administrator: a
+# Config ID's own user, or anyone when logins are off. The administrator may
+# set other limits for each Config ID.
+
+# The most reminders a Config ID can have.
+APPRISE_REMINDER_MAX = env_int("APPRISE_REMINDER_MAX", 100, minimum=1)
+
+# The fewest seconds apart a reminder may repeat. 0 or 1 lets a reminder
+# repeat every second.
+APPRISE_REMINDER_USER_MIN_INTERVAL = env_int("APPRISE_REMINDER_USER_MIN_INTERVAL", 60, minimum=0)
+
+# The most space, in MB, the attachments stored with a Config ID's reminders
+# may take. Files the administrator adds count too, but are never refused.
+# 0 turns attachments off for reminders, web addresses included.
+APPRISE_REMINDER_ATTACH_QUOTA = env_int("APPRISE_REMINDER_ATTACH_QUOTA", 50, minimum=0) * 1048576
+
+# The most space, in MB, all stored reminder attachments on the server may
+# take together, for everyone but the administrator. 0 sets no limit.
+APPRISE_REMINDER_STORE_MAX = env_int("APPRISE_REMINDER_STORE_MAX", 0, minimum=0) * 1048576
+
+# Pause a Config ID's reminders once it has gone this many days without being
+# used, so a forgotten Config ID does not send them forever. 0 never pauses.
+APPRISE_REMINDER_IDLE_DAYS = env_int("APPRISE_REMINDER_IDLE_DAYS", 0, minimum=0)
+
+# Days a finished reminder (nothing left to send) is kept before prune
+# removes it, along with any attachments only it used.
+APPRISE_REMINDER_PRUNE_DAYS = env_int("APPRISE_REMINDER_PRUNE_DAYS", 7, minimum=0)
 
 # The default URL ID Length
 APPRISE_STORAGE_UID_LENGTH = env_int(

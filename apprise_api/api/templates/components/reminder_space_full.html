@@ -1,0 +1,15 @@
+{% load i18n %}
+
+{# Shown to everyone but the administrator while their reminders' attachment space is full. #}
+{# The page script shows or hides every copy of it at once. #}
+<div class="notify-target-guidance reminder-space-full"
+     role="alert"
+     hidden>
+  <div class="notify-target-guidance-title">
+    <span class="notify-target-guidance-icon" aria-hidden="true">
+      {% include "icons/status-warning.svg" %}
+    </span>
+    <span>{% trans "Attachment Space Full" %}</span>
+  </div>
+  {% trans "Your reminders use all of their attachment space. Remove attachments from them, or ask the administrator for more space, to add new ones. Sending notifications is not affected." %}
+</div>

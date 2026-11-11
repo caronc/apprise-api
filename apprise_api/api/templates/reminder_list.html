@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block body %}
+  {# Every Config ID's reminders, for the administrator. #}
+  <div id="reminders" class="reminder-overview">
+    <div class="page-section-heading">
+      <div class="page-section-heading__copy">
+        <h4>{% trans "Reminder List" %}</h4>
+        <p>{% trans "Every reminder saved on this server, soonest first." %}</p>
+      </div>
+      {# The list-wide button reveals or conceals every Config ID, the same as on the Configuration List. #}
+      <div class="page-section-heading__actions">
+        <button type="button"
+                id="reminder-list-toggle-all"
+                class="btn-flat config-list-toggle-all"
+                aria-pressed="false"
+                aria-label="{% trans "Show All Config IDs" %}"
+                title="{% trans "Show All Config IDs" %}"
+                data-show-label="{% trans "Show All Config IDs" %}"
+                data-hide-label="{% trans "Hide All Config IDs" %}"
+                {% if not reminders %}hidden{% endif %}>
+          <i class="material-icons" aria-hidden="true">visibility_off</i>
+        </button>
+      </div>
+    </div>
+    {# Shown while no Config ID has a reminder. #}
+    <div id="reminder-empty"
+         class="notify-target-guidance reminder-empty"
+         aria-live="polite"
+         {% if reminders %}hidden{% endif %}>
+      <div class="notify-target-guidance-title">
+        <span class="notify-target-guidance-icon" aria-hidden="true">
+          {% include "icons/status-warning.svg" %}
+        </span>
+        <span>{% trans "No Reminders Yet" %}</span>
+      </div>
+      {% url "config_list" as list_url %}
+      {% trans "Configuration List" as list_label %}
+      {% blocktrans with list_chip='<a href="'|add:list_url|add:'" class="tab-chip tab-chip-link"><i class="material-icons">list</i> '|add:list_label|add:'</a>'|safe %}No reminders have been added. Open a configuration from the {{ list_chip }} and use its Notifications section to add one.{% endblocktrans %}
+    </div>
+    {# One card per reminder, drawn by the script below. #}
+    <div id="reminder-list" class="reminder-list" aria-live="polite"></div>
+  </div>
+  {# The reminders as JSON, so the script can draw them without asking the server again. #}
+  {{ reminders|json_script:"reminder-overview-data" }}
+{% endblock body %}
+{# djlint:off #}
+{% block jsfooter %}
+  {% include "components/reminder_shared_script.html" %}
+  {% include "components/notify_stream_script.html" %}
+
+  // Where the list and each Config ID's reminders are; PLACEHOLDER_KEY is
+  // swapped for a real Config ID.
+  const reminderOverviewUrl = '{% url "reminder_overview" %}';
+  const reminderKeyUrl = '{% url "reminder" "PLACEHOLDER_KEY" %}';
+  const reminderConfigUrl = '{% url "config" "PLACEHOLDER_KEY" %}';
+  // Every reminder, each with the key of the Config ID it belongs to.
+  let reminderItems = JSON.parse(reminderElement('reminder-overview-data').textContent);
+
+  // One of the addresses above for a given Config ID.
+  function reminderUrlFor(template, key) {
+    return template.replace('PLACEHOLDER_KEY', encodeURIComponent(key));
+  }
+
+  // The Config ID a reminder belongs to, hidden until shown like the configuration list.
+  function reminderKeyLine(reminder, index) {
+    const line = document.createElement('div');
+    const label = document.createElement('span');
+    const code = document.createElement('code');
+    const toggle = document.createElement('button');
+    line.className = 'reminder-card-line reminder-card-key';
+    label.className = 'reminder-card-label';
+    label.textContent = '{% trans "Config ID" %}: ';
+    code.id = 'reminder-key-' + index;
+    code.className = 'config-id is-concealed';
+    code.dataset.configIdValue = reminder.key;
+    code.setAttribute('aria-label', '{% trans "Config ID hidden" %}');
+    code.textContent = '••••••••';
+    toggle.type = 'button';
+    toggle.className = 'btn-flat btn-small config-id-visibility';
+    toggle.dataset.configIdToggle = '';
+    toggle.dataset.showLabel = '{% trans "Show Config ID" %}';
+    toggle.dataset.hideLabel = '{% trans "Hide Config ID" %}';
+    toggle.setAttribute('aria-controls', code.id);
+    toggle.setAttribute('aria-pressed', 'false');
+    toggle.setAttribute('aria-label', toggle.dataset.showLabel);
+    toggle.title = toggle.dataset.showLabel;
+    toggle.innerHTML = '<i class="material-icons" aria-hidden="true">visibility_off</i>';
+    line.append(label, code, toggle);
+    return line;
+  }
+
+  // What a card's buttons do on this page; see reminderCard().
+  function reminderPageFor(reminder, index) {
+    return {
+      itemUrl: function (id, suffix) {
+        return reminderUrlFor(reminderKeyUrl, reminder.key) + '/' + id + '/' + (suffix || '');
+      },
+      // Changing a reminder happens on its own configuration page.
+      onEdit: function () {
+        window.location.href = reminderUrlFor(reminderConfigUrl, reminder.key)
+          + '#notify/' + encodeURIComponent(reminder.id);
+      },
+      onChange: reminderOverviewLoad,
+      // Extra card lines: its Config ID, and the series it stands in for, if any.
+      lines: function () {
+        const lines = [reminderKeyLine(reminder, index)];
+        const series = reminder.series && reminderItems.find(function (item) {
+          return item.key === reminder.key && item.id === reminder.series;
+        });
+        if (series) {
+          lines.push(reminderLine('{% trans "Series" %}', series.name));
+        }
+        return lines;
+      }
+    };
+  }
+
+  // The eye at the top shows or hides every Config ID at once.
+  const reminderToggleAll = reminderElement('reminder-list-toggle-all');
+  const reminderToggleAllSync = appriseWireConfigIdToggleAll(reminderToggleAll, reminderElement('reminder-list'));
+
+  // Draw every card again, and show the empty notice when there are none.
+  function reminderOverviewRender() {
+    const list = reminderElement('reminder-list');
+    // Cards drawn again keep showing their Config IDs when all were shown.
+    const showAll = reminderToggleAll.getAttribute('aria-pressed') === 'true';
+    list.querySelectorAll('.reminder-card').forEach(function (card) { card.remove(); });
+    document.getElementById('reminder-empty').hidden = reminderItems.length > 0;
+    reminderToggleAll.hidden = reminderItems.length === 0;
+    reminderItems.forEach(function (reminder, index) {
+      const card = reminderCard(reminder, reminderPageFor(reminder, index));
+      appriseWireConfigIdToggles(card);
+      list.append(card);
+      // The eye finds its Config ID on the page, so it is clicked once the card is there.
+      if (showAll) {
+        card.querySelector('[data-config-id-toggle]').click();
+      }
+    });
+    reminderToggleAllSync();
+  }
+
+  // Fetch the list again after a change, then redraw it.
+  async function reminderOverviewLoad() {
+    try {
+      const response = await appriseFetch(reminderOverviewUrl, {headers: {'Accept': 'application/json'}});
+      if (!response.ok) {
+        const failure = await appriseResponseFailure(response, '{% trans "The reminders could not be read" %}');
+        appriseShowStatusToast(failure.message, false);
+        return;
+      }
+      reminderItems = (await response.json()).reminders;
+      reminderOverviewRender();
+    } catch (e) {
+      appriseShowStatusToast('{% trans "The reminders could not be read" %}', false);
+    }
+  }
+
+  // Draw the list the page arrived with.
+  reminderOverviewRender();
+{% endblock jsfooter %}
+{# djlint:on #}

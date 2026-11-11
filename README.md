@@ -405,11 +405,13 @@ The `/cfg` list requires `APPRISE_STATEFUL_MODE=simple` and is available by defa
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).<br/>📌 **template**: Values for a configuration written with `${NAME}` markers. Send a JSON object (`"template": {"api_key": "..."}`) or one form field per name (`template[api_key]=...`).
+| `/attach/{KEY}` |  POST  | Downloads an attachment web address (`{"url": ...}`) the way a send would and returns the file, or a `424` with `logs` saying why it failed. The same attachment rules as `/notify` apply.
 | `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists its template names. With `privacy=0`, each name carries its configuration default (or `null`). With `privacy=1`, URL secrets are hidden and every name is `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required and every name is `null`.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
 | `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, `access`, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
+| `/reminder/{KEY}` |  GET, POST | Lists or adds reminders: notifications saved now and sent later, once, on a repeating schedule or on a public holiday. `/reminder/{KEY}/{ID}` reads (GET), replaces (PUT), changes (PATCH) or removes (DELETE) one, and `/reminder/{KEY}/{ID}/test` (POST) sends it now. Reminders can carry attachments. `/reminder/{KEY}/limits` sets how many reminders and how much attachment space a Config ID gets, and `/reminder/{KEY}/holidays` lists the holidays a reminder can use. `/reminders` lists every Config ID's reminders for the administrator. See [Reminders](https://appriseit.com/api/endpoints/#reminders) for the payload.
 | `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/library/inspection/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
@@ -679,7 +681,7 @@ data: {"status": "SUCCESS"}
 | HTTP Code | Name                            | Effect |
 | --------- | ------------------------------- | ------ |
 | 200       | OK                              | The request succeeded. |
-| 204       | No Content                      | Nothing was found to retrieve or remove (`/get`, `/cfg`, `/json/urls` or `/del`). The response has no body. |
+| 204       | No Content                      | A removal succeeded (`/del`, or `DELETE` on a reminder), or nothing was found to retrieve or remove (`/get`, `/cfg`, `/json/urls` or `/del`). The response has no body. |
 | 302       | Found                           | The Web interface redirected the browser after a login, logout, or configuration selection. |
 | 400       | Bad Request                     | The request contained an invalid key, payload, field, format, tag, or recursion header, or a stateless `/notify` had no valid URLs to send to. |
 | 401       | Unauthorized                    | Required Basic Auth credentials were missing or invalid. |
@@ -736,6 +738,15 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_PRUNE_INTERVAL_SECONDS` | How often the container prunes persistent state and unused authentication locks. Defaults to `86400` (daily).
 | `APPRISE_PRUNE_TIMEOUT_SECONDS` | Maximum time allowed for each automatic prune run. Defaults to `28800` (8 hours) and is shortened automatically when it is not below the prune interval.
 | `APPRISE_PRUNE_ENABLED` | Set to `no` to stop automatic pruning. Manual commands remain available. Defaults to `yes`.
+| `APPRISE_REMINDER_ENABLED` | Set to `no` to turn off reminders (notifications saved now and sent later). Defaults to `yes`.
+| `APPRISE_REMINDER_WORKERS` | The number of reminders that can be sent at the same time. Defaults to `4`.
+| `APPRISE_REMINDER_GRACE` | How many seconds late a reminder may still be sent, for example after a restart. Older ones are skipped. Defaults to `3600` (1 hour).
+| `APPRISE_REMINDER_MAX` | The most reminders a Config ID can have, for everyone but the administrator. Defaults to `100`.
+| `APPRISE_REMINDER_USER_MIN_INTERVAL` | The fewest seconds apart anyone but the administrator may set a reminder to repeat. `0` or `1` sets no limit. Defaults to `60`.
+| `APPRISE_REMINDER_ATTACH_QUOTA` | The most space, in MB, the attachments stored with a Config ID's reminders may take, for everyone but the administrator. `0` turns attachments off for reminders, web addresses included. Defaults to `50`.
+| `APPRISE_REMINDER_STORE_MAX` | The most space, in MB, all stored reminder attachments on the server may take together, for everyone but the administrator. Defaults to `0` (no limit).
+| `APPRISE_REMINDER_IDLE_DAYS` | Pause a Config ID's reminders after this many days without use, so a forgotten Config ID does not send them forever. Defaults to `0` (never pause).
+| `APPRISE_REMINDER_PRUNE_DAYS` | Days a finished reminder (nothing left to send) is kept before prune removes it. Defaults to `7`.
 | `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
 | `APPRISE_ATTACH_SIZE` | Over-ride the attachment size (defined in MB). By default it is set to `200` (Megabytes). You can set this up to a maximum value of `500` which is the restriction in place for NginX (internal hosting ervice) at this time.  If you set this to zero (`0`) then attachments will not be passed along even if provided.
 | `APPRISE_UPLOAD_MAX_MEMORY_SIZE` | Over-ride the in-memory accepted payload size (defined in MB). By default it is set to `3` (Megabytes). There is no reason the HTTP payload (excluding attachments) should exceed this limit.  This value is only configurable for those who have edge cases where there are exceptions to this rule.
@@ -953,12 +964,13 @@ htpasswd apprise_api.htpasswd user2
 ```
 
 ## Pruning
-The packaged container runs one low-priority cleanup cycle each day. It covers both areas below and has a time limit:
+The packaged container runs one low-priority cleanup cycle each day. It covers the areas below and has a time limit:
 
 | Area | What it prunes | Retention setting |
 | ---- | -------------- | ----------------- |
 | Persistent state | Apprise's notification-state storage (`APPRISE_STORAGE_DIR`). | `APPRISE_STORAGE_PRUNE_DAYS` (default `30` days) |
 | Authentication | Per-key locks without configuration. | `APPRISE_AUTH_PRUNE_SECONDS` (default `2592000`, or 30 days) |
+| Reminders | Finished reminders (nothing left to send), then stored attachments no reminder uses. | `APPRISE_REMINDER_PRUNE_DAYS` (default `7` days); attachments kept for 1 hour after upload |
 
 `APPRISE_PRUNE_INTERVAL_SECONDS` controls the daily schedule. Set `APPRISE_PRUNE_ENABLED=no` to disable it, or use `APPRISE_PRUNE_TIMEOUT_SECONDS` to change the 8-hour time limit. Automatic runs are stopped when they exceed this limit, and Supervisor restarts the scheduler if it exits. The combined or individual commands may still run manually:
 ```bash

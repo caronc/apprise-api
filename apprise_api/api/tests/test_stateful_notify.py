@@ -295,7 +295,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
             # Now empty our data
             response = self.client.post("/del/{}".format(key))
-            assert response.status_code == 200
+            assert response.status_code == 204
 
             # A second call; but there is nothing to remove
             response = self.client.post("/del/{}".format(key))
@@ -539,7 +539,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
         # Now empty our data
         response = self.client.post("/del/{}".format(key))
-        assert response.status_code == 200
+        assert response.status_code == 204
 
         # Reset our count
         mock_post.reset_mock()
@@ -635,7 +635,7 @@ class StatefulNotifyTests(SimpleTestCase):
 
         # Now empty our data
         response = self.client.post("/del/{}".format(key))
-        assert response.status_code == 200
+        assert response.status_code == 204
 
         # Reset our count
         mock_post.reset_mock()

@@ -1,0 +1,71 @@
+{% load i18n %}
+
+{# The Reminders tab: every saved reminder, as cards and on a calendar. #}
+<div id="reminders" class="col s12">
+  <div class="section">
+    <div class="page-section-heading">
+      <div class="page-section-heading__copy">
+        <h5>{% trans "Reminders" %}</h5>
+        <p>{% trans "All pre-saved notifications set to be sent at a later time are listed here." %}</p>
+      </div>
+    </div>
+    {# A warning while the background process that sends reminders is not running. #}
+    {% if not reminder_scheduler_running %}
+      <div class="reminder-notice" role="note">
+        {% trans "The scheduler is not running, so reminders are saved but not sent." %}
+      </div>
+    {% endif %}
+    {% if not reminders_admin %}
+      {# A configuration's own user sees how much of their limits is used. #}
+      <p class="reminder-usage">
+        <span>{% trans "Reminders used" %}: <strong id="reminder-usage-count">-</strong></span>
+        <span>{% trans "Attachment space used" %}: <strong id="reminder-usage-space">-</strong></span>
+      </p>
+      {% include "components/reminder_space_full.html" %}
+    {% endif %}
+    {# Shown while there are no reminders, the same way the Notifications tab asks for targets. #}
+    <div id="reminder-empty"
+         class="notify-target-guidance reminder-empty"
+         aria-live="polite"
+         hidden>
+      <div class="notify-target-guidance-title">
+        <span class="notify-target-guidance-icon" aria-hidden="true">
+          {% include "icons/status-warning.svg" %}
+        </span>
+        <span>{% trans "No Reminders Yet" %}</span>
+      </div>
+      {% blocktrans with notify_chip='<a href="#notify" class="tab-chip tab-chip-link"><i class="material-icons">announcement</i> '|add:notify_label|add:'</a>'|safe %}No reminders have been added. Use the {{ notify_chip }} section to add one.{% endblocktrans %}
+    </div>
+    {# Only changes how times on this tab are shown, not when reminders are sent. #}
+    <div class="reminder-view-zone">
+      <label for="reminder-view-zone">{% trans "Show times in" %}:</label>
+      <div class="reminder-view-zone-row">
+        <div class="reminder-combobox">
+          <input id="reminder-view-zone"
+                 type="text"
+                 role="combobox"
+                 aria-autocomplete="list"
+                 aria-expanded="false"
+                 aria-controls="reminder-view-zone-list"
+                 autocomplete="apprise-search"
+                 spellcheck="false">
+          <ul id="reminder-view-zone-list"
+              class="dropdown-content reminder-combobox-list"
+              role="listbox"
+              hidden>
+          </ul>
+        </div>
+        {# Goes back to the timezone this browser is in. #}
+        <button id="reminder-view-zone-reset"
+                type="button"
+                class="btn-flat reminder-view-zone-reset"
+                aria-label="{% trans "Use my timezone" %}"
+                title="{% trans "Use my timezone" %}">
+          <i class="material-icons" aria-hidden="true">my_location</i>
+        </button>
+      </div>
+    </div>
+    {# The calendar is drawn here by the page script the first time this tab opens. #}
+    <div id="reminder-calendar" class="reminder-calendar"></div>
+  </div>
+</div>

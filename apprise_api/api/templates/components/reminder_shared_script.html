@@ -1,0 +1,439 @@
+{% load i18n %}
+
+{# Helpers shared by every page that shows reminders. #}
+{# djlint:off #}
+
+  // The page language (e.g. "en" or "fr") and the server's own timezone.
+  const reminderLocale = '{{ LANGUAGE_CODE|escapejs }}';
+  const reminderServerZone = '{{ config_timezone|escapejs }}';
+
+  // dateblock reads these day names in a cron.
+  const reminderDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Months as cron numbers, January being 1.
+  const reminderMonthNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  // How a reminder that is not an "every" rule reads in its summary.
+  const reminderRepeatLabels = {
+    once: '{% trans "Once" %}',
+    holiday: '{% trans "On a holiday" %}',
+    custom: '{% trans "Custom (crontab)" %}'
+  };
+
+  // How a repeating reminder reads: once per unit, or every few units.
+  const reminderEveryLabels = {
+    seconds: ['{% trans "Every second" %}', '{% trans "Every {} seconds" %}'],
+    minutes: ['{% trans "Every minute" %}', '{% trans "Every {} minutes" %}'],
+    hours: ['{% trans "Every hour" %}', '{% trans "Every {} hours" %}'],
+    days: ['{% trans "Every day" %}', '{% trans "Every {} days" %}'],
+    weeks: ['{% trans "Every week" %}', '{% trans "Every {} weeks" %}'],
+    months: ['{% trans "Every month" %}', '{% trans "Every {} months" %}'],
+    years: ['{% trans "Every year" %}', '{% trans "Every {} years" %}']
+  };
+
+  // Why a reminder was not sent, by the reason the server saved:
+  // - late: the server was down past the time it could still be sent.
+  // - access: its configuration's access is set to disabled.
+  // - idle: its configuration was not used for too long.
+  const reminderReasons = {
+    late: '{% trans "Skipped: it was too late to send" %}',
+    access: '{% trans "Paused: this configuration is disabled" %}',
+    idle: '{% trans "Paused: this configuration was not used for a while" %}'
+  };
+
+  // Shorthand for finding an element by its ID.
+  function reminderElement(id) {
+    return document.getElementById(id);
+  }
+
+  // A number as two digits, e.g. 7 -> "07".
+  function reminderPad(value) {
+    return String(value).padStart(2, '0');
+  }
+
+  // A date as "YYYY-MM-DD" in the browser's timezone.
+  function reminderDate(moment) {
+    return moment.getFullYear() + '-' + reminderPad(moment.getMonth() + 1) + '-' + reminderPad(moment.getDate());
+  }
+
+  // Today as "YYYY-MM-DD".
+  function reminderToday() {
+    return reminderDate(new Date());
+  }
+
+  // The timezone last picked under "Show times in" or for a reminder, saved in
+  // a cookie like the theme. Without one, the browser's is used, or else the
+  // server's. New reminders start with it, and times are shown in it.
+  const reminderZoneCookie = 'apprise_reminder_zone';
+  // The browser's timezone, or the server's when the browser cannot tell.
+  function reminderOwnZone() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || reminderServerZone;
+  }
+  // The timezone in use: the saved cookie when it names a real timezone.
+  let reminderViewZone = (function () {
+    const saved = document.cookie.split('; ').find(function (row) {
+      return row.startsWith(reminderZoneCookie + '=');
+    });
+    if (saved) {
+      const zone = decodeURIComponent(saved.split('=').slice(1).join('='));
+      try {
+        // An unknown name throws here, and the default is used instead.
+        new Intl.DateTimeFormat('en', {timeZone: zone});
+        return zone;
+      } catch (e) {
+        // Fall through to the default.
+      }
+    }
+    return reminderOwnZone();
+  })();
+
+  // Whether a reminder's times need their seconds shown: it repeats within a
+  // minute, starts part way into a minute, or drifts by a part of a minute.
+  // - begins: the reminder's start, which holds a holiday's time of day.
+  function reminderShowsSeconds(when, begins) {
+    const start = (when.holiday ? begins || '' : when.at || '').slice(11);
+    return Boolean(when.every && when.every.unit === 'seconds') || reminderShortTime(start).length > 5
+      || Number(when.drift || 0) % 60 !== 0;
+  }
+
+  // With seconds set, the time shows them too, for reminders that repeat within a minute.
+  function reminderFormatTime(epoch, seconds) {
+    if (!epoch) {
+      return '-';
+    }
+    try {
+      return new Intl.DateTimeFormat(reminderLocale, {dateStyle: 'medium', timeStyle: seconds ? 'medium' : 'short', timeZone: reminderViewZone})
+        .format(new Date(epoch * 1000));
+    } catch (e) {
+      return new Date(epoch * 1000).toLocaleString();
+    }
+  }
+
+  // A time as "HH:MM", or "HH:MM:SS" when it is not on the whole minute.
+  function reminderShortTime(text) {
+    const time = (text || '').slice(0, 8);
+    return time.length === 8 && time.endsWith(':00') ? time.slice(0, 5) : time;
+  }
+
+  // Turn a saved "when" into the dialog's choices.
+  // - begins: the reminder's start, which holds a holiday's time of day; a
+  //   holiday without one is sent at midnight.
+  function reminderParse(when, begins) {
+    // Defaults for a new reminder: sent once, on a date, at 09:00. Should it
+    // be made to repeat, it repeats daily on every weekday and month.
+    const state = {
+      send: 'date', date: '', time: '09:00', recurring: false, unit: 'days', interval: '',
+      days: reminderDayNames.slice(), months: reminderMonthNumbers.slice(), cron: '', isc: true,
+      drift: when.drift ? String(when.drift) : ''
+    };
+    if (when.holiday) {
+      const time = reminderShortTime((begins || '').slice(11)) || '00:00';
+      return Object.assign(state, {send: 'holiday', time: time, holiday: when.holiday});
+    }
+    if (when.cron) {
+      return Object.assign(state, {recurring: true, unit: 'custom', cron: when.cron, isc: Boolean(when.isc)});
+    }
+    // A one-off or an "every" rule: split its start into date and time.
+    const parts = (when.at || '').split('T');
+    Object.assign(state, {date: parts[0], time: reminderShortTime(parts[1] || '09:00')});
+    if (when.every) {
+      Object.assign(state, {
+        recurring: true,
+        unit: when.every.unit,
+        interval: when.every.interval > 1 ? String(when.every.interval) : '',
+        // A weekly rule without days repeats on the start date's weekday.
+        days: when.every.days || (when.every.unit === 'weeks'
+          ? [reminderDayNames[new Date(state.date + 'T12:00:00').getDay()]]
+          : state.days),
+        months: when.every.months || state.months
+      });
+    }
+    return state;
+  }
+
+  // Whether a reminder is sent only once.
+  function reminderIsOneOff(when) {
+    return Boolean(when.at) && !when.every;
+  }
+
+  // Short weekday and month names in the page language.
+  function reminderDayLabel(name) {
+    // 7 January 2024 was a Sunday.
+    return new Intl.DateTimeFormat(reminderLocale, {weekday: 'short', timeZone: 'UTC'})
+      .format(new Date(Date.UTC(2024, 0, 7 + reminderDayNames.indexOf(name))));
+  }
+
+  // A month number (1 to 12) as its short name.
+  function reminderMonthLabel(month) {
+    return new Intl.DateTimeFormat(reminderLocale, {month: 'short', timeZone: 'UTC'})
+      .format(new Date(Date.UTC(2024, month - 1, 1)));
+  }
+
+  // Run one action on a reminder, then show how it went.
+  async function reminderAction(url, options, success) {
+    try {
+      const response = await appriseFetch(url, Object.assign({headers: {'Accept': 'application/json', 'Content-Type': 'application/json'}}, options));
+      if (!response.ok) {
+        const failure = await appriseResponseFailure(response, '{% trans "The reminders could not be saved" %}');
+        appriseShowStatusToast(failure.message, false);
+        return false;
+      }
+      appriseShowStatusToast(success, true);
+      return true;
+    } catch (e) {
+      appriseShowStatusToast('{% trans "The reminders could not be saved" %}', false);
+      return false;
+    }
+  }
+
+  // A small icon button; its label shows as a tooltip and is read by screen readers.
+  function reminderButton(icon, label, handler, extraClass) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn-flat reminder-action' + (extraClass ? ' ' + extraClass : '');
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = '<i class="material-icons" aria-hidden="true">' + icon + '</i>';
+    button.addEventListener('click', handler);
+    return button;
+  }
+
+  // One "Label: value" line on a reminder's card.
+  // A size in bytes as megabytes, e.g. "3.4 MB".
+  function reminderFormatSize(bytes) {
+    return (bytes / 1048576).toLocaleString(reminderLocale, {maximumFractionDigits: 1}) + ' MB';
+  }
+
+  // How many attachments a reminder has, and the space its stored files take
+  // on the server, e.g. "2 · 3.4 MB". Web addresses take no space.
+  function reminderAttachSummary(reminder) {
+    const attach = reminder.attach || [];
+    const size = attach.reduce(function (total, entry) { return total + (entry.file ? entry.size || 0 : 0); }, 0);
+    return attach.length + (size ? ' · ' + reminderFormatSize(size) : '');
+  }
+
+  function reminderLine(label, value) {
+    const line = document.createElement('div');
+    const name = document.createElement('span');
+    line.className = 'reminder-card-line';
+    name.className = 'reminder-card-label';
+    name.textContent = label + ': ';
+    line.append(name, document.createTextNode(value));
+    return line;
+  }
+
+  // Drift units, largest first, with their length in seconds.
+  const reminderDriftUnits = [['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]];
+
+  // A drift in seconds as the largest unit it fills exactly, e.g. 172800 is 2 days.
+  function reminderDriftParts(seconds) {
+    const unit = reminderDriftUnits.find(function (entry) { return seconds % entry[1] === 0; });
+    return {unit: unit[0], size: unit[1], count: seconds / unit[1]};
+  }
+
+  // One line that says how a reminder repeats, its time and its timezone,
+  // such as every week on Mon and Fri at 09:00 in America/Toronto. The parts
+  // are joined with a middle dot.
+  function reminderSummary(reminder) {
+    const when = reminder.when || {};
+    const state = reminderParse(when, reminder.start);
+    // Drift shows beside the timezone with its sign, e.g. "America/Toronto +90s" or "-1w".
+    let zone = when.tz || reminderServerZone;
+    if (when.drift) {
+      const drift = reminderDriftParts(when.drift);
+      zone += ' ' + new Intl.NumberFormat(reminderLocale, {style: 'unit', unit: drift.unit, unitDisplay: 'narrow', signDisplay: 'always'}).format(drift.count);
+    }
+    if (state.send === 'holiday') {
+      return [reminderRepeatLabels.holiday, state.holiday.name, state.time, zone].join(' · ');
+    }
+    if (!state.recurring) {
+      return [reminderRepeatLabels.once, state.time, zone].join(' · ');
+    }
+    if (state.unit === 'custom') {
+      return [reminderRepeatLabels.custom, state.cron, zone].join(' · ');
+    }
+    // An "every" rule: how often, then its weekdays and months when it has them.
+    const interval = parseInt(state.interval, 10) || 1;
+    const every = reminderEveryLabels[state.unit];
+    const parts = [interval > 1 ? every[1].replace('{}', interval) : every[0]];
+    if (when.every.days) {
+      parts.push(when.every.days.map(reminderDayLabel).join(', '));
+    }
+    if (when.every.months) {
+      parts.push(when.every.months.map(reminderMonthLabel).join(', '));
+    }
+    // Seconds, minutes and hours repeat through the day, so their start time says little.
+    if (!['seconds', 'minutes', 'hours'].includes(state.unit)) {
+      parts.push(state.time);
+    }
+    parts.push(zone);
+    return parts.join(' · ');
+  }
+
+  // Pausing a repeating reminder stops every time it has, so its button says so.
+  // A holiday sent once (a count of 1) is not a series.
+  function reminderPauseLabel(reminder, paused) {
+    if (reminderIsOneOff(reminder.when) || reminder.count === 1) {
+      return paused ? '{% trans "Resume" %}' : '{% trans "Pause" %}';
+    }
+    return paused ? '{% trans "Resume Series" %}' : '{% trans "Pause Series" %}';
+  }
+
+  // A small button that sends a reminder now, without changing its schedule.
+  // Send a reminder now, showing each service's log live like Send Notification.
+  function reminderSendButton(url) {
+    return reminderButton('send', '{% trans "Send Now" %}', function () {
+      sendNotifyStream(url, {method: 'POST', headers: {'X-Apprise-Log-Level': 'debug'}}, {
+        title: '{% trans "Notification" %}',
+        responseTitle: '{% trans "Delivery Response" %}',
+        sending: '{% trans "Sending notification(s)…" %}',
+        success: '{% trans "Successfully sent the notification(s)." %}',
+        partial: '{% trans "One or more of the notification(s) were not sent." %}',
+        failure: '{% trans "Failed to send the notification(s)." %}'
+      });
+    });
+  }
+
+  // The date ("YYYY-MM-DD") and time ("HH:MM") a UNIX timestamp falls on in a timezone.
+  function reminderLocalParts(epoch, zone) {
+    const parts = {};
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: zone || reminderServerZone,
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+    }).formatToParts(new Date(epoch * 1000)).forEach(function (part) {
+      parts[part.type] = part.value;
+    });
+    return {date: parts.year + '-' + parts.month + '-' + parts.day, time: reminderShortTime(parts.hour + ':' + parts.minute + ':' + parts.second)};
+  }
+
+  // Ask before removing a reminder, then remove it. A repeating reminder can
+  // lose just one time (at, or else its next time) or the whole series.
+  // - whole: only offer to remove the whole reminder, such as from its card
+  //   or when the time picked is the last one it has left.
+  function reminderConfirmDelete(reminder, page, at, whole) {
+    const when = whole ? null : at || reminder.next;
+    const single = !reminderIsOneOff(reminder.when) && Boolean(when);
+    // A small card names the reminder and the time picked, aligned with the buttons.
+    const holder = document.createElement('div');
+    const card = document.createElement('div');
+    const icon = document.createElement('i');
+    const text = document.createElement('div');
+    const name = document.createElement('strong');
+    const detail = document.createElement('span');
+    holder.className = 'reminder-delete';
+    card.className = 'reminder-delete-card';
+    icon.className = 'material-icons';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = single ? 'repeat' : 'event';
+    name.textContent = reminder.name;
+    detail.textContent = when ? reminderFormatTime(when) : reminderSummary(reminder);
+    text.append(name, detail);
+    card.append(icon, text);
+    holder.append(card);
+    if (single) {
+      const note = document.createElement('p');
+      note.className = 'reminder-delete-note';
+      note.textContent = '{% trans "Delete Entry removes only this time. Delete Series removes the reminder and every time." %}';
+      holder.append(note);
+    }
+    // Delete Entry (confirm) removes one time; Delete or Delete Series (deny)
+    // removes the whole reminder; Cancel does nothing.
+    appriseFire({
+      title: '{% trans "Delete this reminder?" %}',
+      html: holder,
+      customClass: {popup: 'reminder-delete-popup'},
+      icon: 'warning',
+      showCancelButton: true,
+      // The red button removes the most: the reminder, or its whole series.
+      showDenyButton: true,
+      showConfirmButton: single,
+      confirmButtonText: '{% trans "Delete Entry" %}',
+      denyButtonText: single ? '{% trans "Delete Series" %}' : '{% trans "Delete" %}',
+      cancelButtonText: '{% trans "Cancel" %}'
+    }).then(async function (result) {
+      if (result.isConfirmed) {
+        // The repeating reminder skips that one time.
+        const body = JSON.stringify({skip: (reminder.skip || []).concat([when])});
+        if (await reminderAction(page.itemUrl(reminder.id), {method: 'PATCH', body: body}, '{% trans "Reminder saved." %}')) {
+          page.onChange(null);
+        }
+        return;
+      }
+      if (result.isDenied && await reminderAction(page.itemUrl(reminder.id), {method: 'DELETE'}, '{% trans "Reminder removed." %}')) {
+        page.onChange(reminder);
+      }
+    });
+  }
+
+  // Build a reminder's card. The page says what its buttons do:
+  // - itemUrl(id, suffix): where changes to a reminder are sent.
+  // - onEdit(reminder): open the reminder to change it.
+  // - onChange(removed): refresh after a change; removed is the deleted reminder.
+  // - onClone(reminder): copy it into a new reminder; leave out for no Clone button.
+  // - lines(reminder): extra lines to show under the name, if any.
+  function reminderCard(reminder, page) {
+    // The header: the name and whether it is active, paused or finished.
+    const card = document.createElement('article');
+    const header = document.createElement('div');
+    const name = document.createElement('strong');
+    const status = document.createElement('span');
+    const paused = reminder.enabled === false;
+    // Finished: nothing left to send, such as a sent one-off or a series past its end.
+    const finished = !paused && !reminder.next;
+    card.className = 'reminder-card' + (paused ? ' is-paused' : '') + (finished ? ' is-finished' : '');
+    header.className = 'reminder-card-header';
+    name.textContent = reminder.name;
+    status.className = 'reminder-status';
+    status.textContent = paused ? '{% trans "Paused" %}' : (finished ? '{% trans "Finished" %}' : '{% trans "Active" %}');
+    header.append(name, status);
+    // Then any extra lines from the page, how it repeats, when it is next
+    // sent, and how its last send went.
+    card.append(header, ...(page.lines ? page.lines(reminder) : []));
+    card.append(reminderLine('{% trans "Repeat" %}', reminderSummary(reminder)));
+    card.append(reminderLine('{% trans "Next" %}', paused ? '-' : reminderFormatTime(reminder.next, reminderShowsSeconds(reminder.when, reminder.start))));
+    if (reminder.last) {
+      const result = reminder.last.reason
+        ? reminderReasons[reminder.last.reason] || reminder.last.reason
+        : (reminder.last.ok ? '{% trans "Sent" %}' : '{% trans "Failed" %}');
+      card.append(reminderLine('{% trans "Last" %}', reminderFormatTime(reminder.last.at) + ' · ' + result));
+    }
+    if ((reminder.attach || []).length) {
+      card.append(reminderLine('{% trans "Attachments" %}', reminderAttachSummary(reminder)));
+    }
+    // Clicking the card, away from its buttons, opens the reminder to change it.
+    card.classList.add('is-clickable');
+    card.tabIndex = 0;
+    card.addEventListener('click', function (event) {
+      if (!event.target.closest('button, a')) {
+        page.onEdit(reminder);
+      }
+    });
+    card.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' && event.target === card) {
+        page.onEdit(reminder);
+      }
+    });
+    // The buttons: pause or resume (not once finished), edit, clone, send now and delete.
+    const actions = document.createElement('div');
+    actions.className = 'reminder-card-actions';
+    if (!finished) {
+      // A paused reminder's play button stands out, as it is what brings it back.
+      actions.append(reminderButton(paused ? 'play_arrow' : 'pause', reminderPauseLabel(reminder, paused), async function () {
+        if (await reminderAction(page.itemUrl(reminder.id), {method: 'PATCH', body: JSON.stringify({enabled: paused})}, '{% trans "Reminder saved." %}')) {
+          page.onChange(null);
+        }
+      }, paused ? 'reminder-action-resume' : ''));
+    }
+    actions.append(reminderButton('edit', '{% trans "Edit" %}', function () { page.onEdit(reminder); }));
+    if (page.onClone) {
+      actions.append(reminderButton('content_copy', '{% trans "Clone" %}', function () { page.onClone(reminder); }));
+    }
+    actions.append(
+      reminderSendButton(page.itemUrl(reminder.id, 'test/')),
+      // A card stands for the whole reminder, so it is removed whole.
+      reminderButton('delete', '{% trans "Delete" %}', function () { reminderConfirmDelete(reminder, page, null, true); }, 'reminder-action-delete')
+    );
+    card.append(actions);
+    return card;
+  }
+{# djlint:on #}

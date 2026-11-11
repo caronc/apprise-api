@@ -214,6 +214,7 @@ msgid "Attachment"
 msgstr "अटैचमेंट"
 
 #: apprise_api/api/forms.py:391 apprise_api/api/forms.py:400
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
 msgid "Tags"
 msgstr "टैग"
 
@@ -2474,9 +2475,11 @@ msgstr "कॉन्फ़िगरेशन को हटाया नहीं
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "कॉन्फ़िगरेशन हटा दिया गया, लेकिन इसकी प्रमाणीकरण को हटाया नहीं जा सका"
 
-#: apprise_api/api/views.py:2609
-msgid "Successfully removed configuration"
-msgstr "सफलतापूर्वक कॉन्फ़िगरेशन हटाया गया"
+
+#: apprise_api/api/views.py:4922
+msgid "Successfully saved reminder"
+msgstr "रिमाइंडर सफलतापूर्वक सहेजा गया"
+
 
 #: apprise_api/api/views.py:2717
 msgid "Content-Type must be application/json"
@@ -2563,6 +2566,95 @@ msgstr "पेलोड फ़ील्ड मैपिंग विफल र�
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} फ़ील्ड एक स्ट्रिंग होना चाहिए"
+
+#: apprise_api/api/views.py:4239
+#, python-brace-format
+msgid "The {} field is invalid"
+msgstr "{} फ़ील्ड अमान्य है"
+
+#: apprise_api/api/views.py:4276
+#, python-brace-format
+msgid "The {} field is too long"
+msgstr "{} फ़ील्ड बहुत लंबा है"
+
+#: apprise_api/api/views.py:4985
+msgid "The reminder is too large to save"
+msgstr "रिमाइंडर सहेजने के लिए बहुत बड़ा है"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:415 apprise_api/api/views.py:4506
+msgid "This reminder would never be sent"
+msgstr "यह रिमाइंडर कभी नहीं भेजा जाएगा"
+
+#: apprise_api/api/views.py:4493 apprise_api/api/templates/components/config_reminders_script.html:297
+msgid "The end date is before the start"
+msgstr "समाप्ति तिथि शुरुआत से पहले है"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:534
+msgid "The end date has already passed, so this reminder will not be sent."
+msgstr "समाप्ति तिथि पहले ही बीत चुकी है, इसलिए यह रिमाइंडर नहीं भेजा जाएगा।"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:535
+msgid "This time has already passed, so the reminder will not be sent."
+msgstr "यह समय पहले ही बीत चुका है, इसलिए रिमाइंडर नहीं भेजा जाएगा।"
+
+#: apprise_api/api/views.py:4501
+msgid "Nothing would be sent before the end date"
+msgstr "समाप्ति तिथि से पहले कुछ भी नहीं भेजा जाएगा"
+
+#: apprise_api/api/views.py:4567
+#, python-brace-format
+msgid "A reminder cannot repeat more often than every {} seconds"
+msgstr "रिमाइंडर हर {} सेकंड से अधिक बार नहीं दोहराया जा सकता"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
+msgid "Only an administrator may manage reminders for this configuration"
+msgstr "केवल व्यवस्थापक ही इस विन्यास के रिमाइंडर प्रबंधित कर सकता है"
+
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:14
+msgid "The scheduler is not running, so reminders are saved but not sent."
+msgstr "शेड्यूलर नहीं चल रहा है, इसलिए रिमाइंडर सहेजे जाते हैं पर भेजे नहीं जाते।"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1434 apprise_api/api/templates/reminder_list.html:113 apprise_api/api/views.py:4768
+msgid "The reminders could not be read"
+msgstr "रिमाइंडर पढ़े नहीं जा सके"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1168 apprise_api/api/templates/components/reminder_shared_script.html:144 apprise_api/api/views.py:4773
+msgid "The reminders could not be saved"
+msgstr "रिमाइंडर सहेजे नहीं जा सके"
+
+#: apprise_api/api/views.py:4778
+msgid "The reminder was not found"
+msgstr "रिमाइंडर नहीं मिला"
+
+#: apprise_api/api/views.py:4959
+msgid "This configuration already has the most reminders allowed"
+msgstr "इस विन्यास में पहले से ही अनुमत अधिकतम रिमाइंडर हैं"
+
+#: apprise_api/api/views.py:4838
+msgid "There is not enough attachment space left for this configuration"
+msgstr "इस विन्यास के लिए अनुलग्नकों की पर्याप्त जगह नहीं बची है"
+
+#: apprise_api/api/views.py:5081
+msgid "Attachments are turned off for this configuration's reminders"
+msgstr "इस कॉन्फ़िगरेशन के रिमाइंडर के लिए अटैचमेंट बंद हैं"
+
+#: apprise_api/api/views.py:4987
+msgid "There is not enough attachment space left on this server"
+msgstr "इस सर्वर पर अटैचमेंट के लिए पर्याप्त स्थान नहीं बचा है"
+
+#: apprise_api/api/views.py:5362
+msgid "Only an administrator may change the limits of this configuration"
+msgstr "केवल व्यवस्थापक ही इस विन्यास की सीमाएँ बदल सकता है"
+
+#: apprise_api/api/templates/auth.html:918 apprise_api/api/views.py:5388
+msgid "The limits could not be saved"
+msgstr "सीमाएँ सहेजी नहीं जा सकीं"
+
+#: apprise_api/api/scheduler.py:425
+#, python-brace-format
+msgid "Reminders for this configuration were paused because it was not used for {} days"
+msgstr "इस विन्यास के रिमाइंडर रोक दिए गए क्योंकि {} दिनों से इसका उपयोग नहीं हुआ"
 
 #: apprise_api/api/views.py:3296
 msgid "The format field must be a string or null"
@@ -2731,3 +2823,545 @@ msgstr "पृष्ठ नहीं मिला"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "सिस्टम त्रुटि"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:8 apprise_api/api/templates/config.html:62
+msgid "Reminders"
+msgstr "रिमाइंडर"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:9
+msgid "All pre-saved notifications set to be sent at a later time are listed here."
+msgstr "बाद में भेजे जाने के लिए सहेजी गई सभी सूचनाएँ यहाँ सूचीबद्ध हैं।"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:45
+#, python-format
+msgid "No reminders have been added. Use the %(notify_chip)s section to add one."
+msgstr "कोई रिमाइंडर नहीं जोड़ा गया है। एक जोड़ने के लिए %(notify_chip)s अनुभाग का उपयोग करें।"
+
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1212 apprise_api/api/templates/components/config_reminders_tab.html:52
+msgid "Show times in"
+msgstr "समय इसमें दिखाएँ"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:73
+msgid "Use my timezone"
+msgstr "मेरा समय क्षेत्र उपयोग करें"
+
+#: apprise_api/api/templates/components/config_reminders.html:161
+msgid "Drift"
+msgstr "विचलन"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1489
+msgid "All"
+msgstr "सभी"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
+msgid "None (untagged services only)"
+msgstr "कोई नहीं (केवल बिना टैग वाली सेवाएँ)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Finished"
+msgstr "समाप्त"
+
+#: apprise_api/api/templates/reminder_list.html:26
+#, python-format
+msgid "No reminders have been added. Open a configuration from the %(list_chip)s and use its Notifications section to add one."
+msgstr "कोई रिमाइंडर नहीं जोड़ा गया है। %(list_chip)s से कोई कॉन्फ़िगरेशन खोलें और एक जोड़ने के लिए उसके सूचनाएँ अनुभाग का उपयोग करें।"
+
+#: apprise_api/api/templates/components/config_reminders.html:85
+msgid "Starts (optional)"
+msgstr "शुरू (वैकल्पिक)"
+
+#: apprise_api/api/templates/components/config_reminders.html:190
+msgid "Ends (optional)"
+msgstr "समाप्त (वैकल्पिक)"
+
+#: apprise_api/api/templates/components/config_reminders.html:94
+msgid "Now"
+msgstr "अभी"
+
+#: apprise_api/api/templates/components/config_reminders.html:87
+msgid "Date and time"
+msgstr "तारीख और समय"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:747
+msgid "Quick Select"
+msgstr "त्वरित चयन"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:611
+msgid "Today"
+msgstr "आज"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:626
+msgid "Tomorrow"
+msgstr "कल"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:627
+msgid "This Weekend"
+msgstr "इस सप्ताहांत"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:630
+msgid "Later This Week"
+msgstr "इस सप्ताह बाद में"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:631
+msgid "Next Week"
+msgstr "अगले सप्ताह"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:634
+msgid "Next Weekend"
+msgstr "अगले सप्ताहांत"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:637
+msgid "End of Month"
+msgstr "महीने के अंत में"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:640
+msgid "In a Month"
+msgstr "एक महीने में"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:612
+msgid "Clear"
+msgstr "साफ़ करें"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:749
+msgid "Confirm"
+msgstr "पुष्टि करें"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Hour"
+msgstr "घंटा"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Minute"
+msgstr "मिनट"
+
+#: apprise_api/api/templates/components/config_reminders.html:196
+msgid "No end date"
+msgstr "कोई समाप्ति तिथि नहीं"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1498
+msgid "No reminders are due in this period."
+msgstr "इस अवधि में कोई रिमाइंडर नहीं है।"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374
+msgid "No reminders have been added yet."
+msgstr "अभी तक कोई रिमाइंडर नहीं जोड़ा गया है।"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:42 apprise_api/api/templates/reminder_list.html:22
+msgid "No Reminders Yet"
+msgstr "अभी कोई रिमाइंडर नहीं है"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:12
+msgid "Attachment Space Full"
+msgstr "अटैचमेंट स्थान भर गया"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:14
+msgid "Your reminders use all of their attachment space. Remove attachments from them, or ask the administrator for more space, to add new ones. Sending notifications is not affected."
+msgstr "आपके रिमाइंडर अपना पूरा अटैचमेंट स्थान उपयोग कर रहे हैं। नए अटैचमेंट जोड़ने के लिए उनमें से अटैचमेंट हटाएँ, या व्यवस्थापक से अधिक स्थान माँगें। सूचनाएँ भेजना इससे प्रभावित नहीं होता।"
+
+#: apprise_api/api/templates/auth.html:200 apprise_api/api/templates/components/config_reminders_tab.html:29
+msgid "Reminders used"
+msgstr "उपयोग किए गए रिमाइंडर"
+
+#: apprise_api/api/templates/auth.html:201 apprise_api/api/templates/components/config_reminders_tab.html:30
+msgid "Attachment space used"
+msgstr "उपयोग की गई अनुलग्नक जगह"
+
+#: apprise_api/api/templates/auth.html:194
+msgid "Reminder Limits"
+msgstr "रिमाइंडर सीमाएँ"
+
+#: apprise_api/api/templates/auth.html:195
+msgid "How much this Config ID's user may save as reminders."
+msgstr "इस कॉन्फ़िग आईडी का उपयोगकर्ता रिमाइंडर के रूप में कितना सहेज सकता है।"
+
+#: apprise_api/api/templates/auth.html:208
+msgid "Most reminders"
+msgstr "अधिकतम रिमाइंडर"
+
+#: apprise_api/api/templates/auth.html:212
+msgid "Attachment space (MB)"
+msgstr "अनुलग्नक जगह (MB)"
+
+#: apprise_api/api/templates/auth.html:218
+msgid "Save Limits"
+msgstr "सीमाएँ सहेजें"
+
+#: apprise_api/api/templates/auth.html:215
+msgid "Leave a field blank for no limit. An attachment space of 0 turns uploads off."
+msgstr "कोई सीमा न रखने के लिए फ़ील्ड खाली छोड़ें। अनुलग्नक जगह 0 करने पर अपलोड बंद हो जाते हैं।"
+
+#: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
+msgid "Reminder"
+msgstr "रिमाइंडर"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:15
+msgid "Once"
+msgstr "एक बार"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+msgid "Every day"
+msgstr "हर दिन"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+msgid "Every week"
+msgstr "हर सप्ताह"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+msgid "Every month"
+msgstr "हर महीने"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+msgid "Every year"
+msgstr "हर साल"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:16
+msgid "On a holiday"
+msgstr "किसी छुट्टी पर"
+
+#: apprise_api/api/templates/components/config_reminders.html:52
+msgid "Country"
+msgstr "देश"
+
+#: apprise_api/api/templates/components/config_reminders.html:70
+msgid "Region"
+msgstr "क्षेत्र"
+
+#: apprise_api/api/templates/components/config_reminders.html:74
+msgid "Holiday"
+msgstr "छुट्टी"
+
+#: apprise_api/api/templates/components/config_reminders.html:125
+msgid "Previous year"
+msgstr "पिछला वर्ष"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Next year"
+msgstr "अगला वर्ष"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:269
+msgid "All regions"
+msgstr "सभी क्षेत्र"
+
+#: apprise_api/api/templates/components/config_reminders.html:154 apprise_api/api/templates/components/reminder_shared_script.html:17
+msgid "Custom (crontab)"
+msgstr "कस्टम (crontab)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:306
+msgid "Repeat"
+msgstr "दोहराएँ"
+
+#: apprise_api/api/templates/components/config_reminders.html:150
+msgid "Days"
+msgstr "दिन"
+
+#: apprise_api/api/templates/components/config_reminders.html:185
+msgid "Crontab entry"
+msgstr "crontab प्रविष्टि"
+
+#: apprise_api/api/templates/components/config_reminders.html:187
+msgid "Five fields: minute, hour, day of the month, month and day of the week."
+msgstr "पाँच फ़ील्ड: मिनट, घंटा, महीने का दिन, महीना और सप्ताह का दिन।"
+
+#: apprise_api/api/templates/components/config_reminders.html:205
+msgid "Upcoming"
+msgstr "आगामी"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:363
+msgid "No more times after this"
+msgstr "इसके बाद और कोई समय नहीं"
+
+#: apprise_api/api/templates/config.html:624
+msgid "Save Reminder"
+msgstr "रिमाइंडर सहेजें"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:32
+msgid "Skipped: it was too late to send"
+msgstr "छोड़ा गया: भेजने में बहुत देर हो चुकी थी"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:33
+msgid "Paused: this configuration is disabled"
+msgstr "रोका गया: यह विन्यास अक्षम है"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:34
+msgid "Paused: this configuration was not used for a while"
+msgstr "रोका गया: यह विन्यास कुछ समय से उपयोग नहीं हुआ"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
+msgid "Reminder saved."
+msgstr "रिमाइंडर सहेजा गया।"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1364 apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Paused"
+msgstr "रोका गया"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Active"
+msgstr "सक्रिय"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:307
+msgid "Next"
+msgstr "अगला"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Sent"
+msgstr "भेजा गया"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Failed"
+msgstr "विफल"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:312
+msgid "Last"
+msgstr "पिछला"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Resume"
+msgstr "फिर से शुरू करें"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Pause"
+msgstr "रोकें"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Pause Series"
+msgstr "शृंखला रोकें"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Resume Series"
+msgstr "शृंखला फिर से शुरू करें"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1373 apprise_api/api/templates/components/reminder_shared_script.html:338
+msgid "Edit"
+msgstr "संपादित करें"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:210
+msgid "Send Now"
+msgstr "अभी भेजें"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:258
+msgid "Delete this reminder?"
+msgstr "यह रिमाइंडर हटाएँ?"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:278
+msgid "Reminder removed."
+msgstr "रिमाइंडर हटाया गया।"
+
+#: apprise_api/api/templates/auth.html:922
+msgid "Limits saved."
+msgstr "सीमाएँ सहेजी गईं।"
+
+#: apprise_api/api/templates/config.html:623
+msgid "Add Reminder"
+msgstr "रिमाइंडर जोड़ें"
+
+#: apprise_api/api/templates/config.html:518
+msgid "Editing reminder"
+msgstr "रिमाइंडर संपादित किया जा रहा है"
+
+#: apprise_api/api/templates/auth.html:626
+msgid "Keep Reminders"
+msgstr "रिमाइंडर रखें"
+
+#: apprise_api/api/templates/auth.html:627
+msgid "Hand the reminders this user added to the administrator instead of removing them."
+msgstr "इस उपयोगकर्ता के जोड़े गए रिमाइंडर हटाने के बजाय व्यवस्थापक को सौंपें।"
+
+#: apprise_api/api/templates/base.html:305 apprise_api/api/templates/reminder_list.html:10
+msgid "Reminder List"
+msgstr "रिमाइंडर सूची"
+
+#: apprise_api/api/templates/reminder_list.html:11
+msgid "Every reminder saved on this server, soonest first."
+msgstr "इस सर्वर पर सहेजे गए सभी रिमाइंडर, सबसे नज़दीकी पहले।"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1353 apprise_api/api/templates/reminder_list.html:91
+msgid "Series"
+msgstr "शृंखला"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374 apprise_api/api/templates/components/reminder_shared_script.html:340
+msgid "Clone"
+msgstr "क्लोन करें"
+
+#: apprise_api/api/templates/components/config_reminders.html:126
+msgid "Only this one time changes. Use Clone to start a new repeating reminder from it."
+msgstr "केवल यह एक समय बदलता है। इससे नया दोहराने वाला रिमाइंडर शुरू करने के लिए क्लोन का उपयोग करें।"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1122
+msgid "Copied into a new reminder. Change what you like, then choose Add Reminder."
+msgstr "एक नए रिमाइंडर में कॉपी किया गया। जो चाहें बदलें, फिर रिमाइंडर जोड़ें चुनें।"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1323
+msgid "Edit this time"
+msgstr "यह बार संपादित करें"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1324
+msgid "Edit the series"
+msgstr "पूरी शृंखला संपादित करें"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:266
+msgid "Delete Entry"
+msgstr "प्रविष्टि हटाएँ"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:267
+msgid "Delete Series"
+msgstr "शृंखला हटाएँ"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:254
+msgid "Delete Entry removes only this time. Delete Series removes the reminder and every time."
+msgstr "प्रविष्टि हटाएँ केवल यह समय हटाता है। शृंखला हटाएँ रिमाइंडर और उसके सभी समय हटाता है।"
+
+#: apprise_api/api/templates/config.html:519
+msgid "Editing one time of"
+msgstr "एक बार संपादित किया जा रहा है"
+
+#: apprise_api/api/templates/components/config_reminders.html:27
+msgid "Send on"
+msgstr "कब भेजें"
+
+#: apprise_api/api/templates/components/config_reminders.html:29
+msgid "A date"
+msgstr "एक तारीख"
+
+#: apprise_api/api/templates/components/config_reminders.html:30
+msgid "A holiday"
+msgstr "सार्वजनिक अवकाश"
+
+#: apprise_api/api/templates/components/config_reminders.html:122
+msgid "Make recurring"
+msgstr "दोहराएँ"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Every"
+msgstr "हर"
+
+#: apprise_api/api/templates/components/config_reminders.html:147
+msgid "Seconds"
+msgstr "सेकंड"
+
+#: apprise_api/api/templates/components/config_reminders.html:148
+msgid "Minutes"
+msgstr "मिनट"
+
+#: apprise_api/api/templates/components/config_reminders.html:149
+msgid "Hours"
+msgstr "घंटे"
+
+#: apprise_api/api/templates/components/config_reminders.html:151
+msgid "Weeks"
+msgstr "सप्ताह"
+
+#: apprise_api/api/templates/components/config_reminders.html:152
+msgid "Months"
+msgstr "महीने"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:9
+msgid "Select all"
+msgstr "सभी चुनें"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:16
+msgid "Select none"
+msgstr "कोई नहीं चुनें"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:23
+msgid "Invert selection"
+msgstr "चयन उलटें"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1228
+msgid "Choose at least one."
+msgstr "कम से कम एक चुनें।"
+
+#: apprise_api/api/templates/components/config_reminders.html:153
+msgid "Years"
+msgstr "वर्ष"
+
+#: apprise_api/api/templates/config.html:590
+msgid "Attachments"
+msgstr "अनुलग्नक"
+
+#: apprise_api/api/templates/config.html:591
+msgid "Upload files, or add web addresses that are downloaded each time the message is sent."
+msgstr "फ़ाइलें अपलोड करें, या वेब पते जोड़ें जो हर बार संदेश भेजे जाने पर डाउनलोड होते हैं।"
+
+#: apprise_api/api/templates/config.html:3404
+msgid "Stored with the reminder"
+msgstr "रिमाइंडर के साथ सहेजा गया"
+
+#: apprise_api/api/templates/config.html:599
+msgid "Add URL"
+msgstr "URL जोड़ें"
+
+#: apprise_api/api/templates/config.html:3209
+msgid "Preview"
+msgstr "पूर्वावलोकन"
+
+#: apprise_api/api/templates/config.html:3221
+msgid "Remove Attachment"
+msgstr "अनुलग्नक हटाएँ"
+
+#: apprise_api/api/templates/config.html:3253
+msgid "Loading…"
+msgstr "लोड हो रहा है…"
+
+#: apprise_api/api/templates/config.html:3281
+msgid "The attachment could not be downloaded"
+msgstr "अनुलग्नक डाउनलोड नहीं हो सका"
+
+#: apprise_api/api/templates/config.html:3320
+msgid "This file cannot be shown here."
+msgstr "यह फ़ाइल यहाँ नहीं दिखाई जा सकती।"
+
+#: apprise_api/api/templates/config.html:3331
+msgid "Download"
+msgstr "डाउनलोड करें"
+
+#: apprise_api/api/templates/config.html:3178
+msgid "Attachment URL"
+msgstr "अनुलग्नक URL"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+msgid "Every second"
+msgstr "हर सेकंड"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+#, python-brace-format
+msgid "Every {} seconds"
+msgstr "हर {} सेकंड"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+msgid "Every minute"
+msgstr "हर मिनट"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+msgid "Every hour"
+msgstr "हर घंटे"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+#, python-brace-format
+msgid "Every {} minutes"
+msgstr "हर {} मिनट"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+#, python-brace-format
+msgid "Every {} hours"
+msgstr "हर {} घंटे"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+#, python-brace-format
+msgid "Every {} days"
+msgstr "हर {} दिन"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+#, python-brace-format
+msgid "Every {} weeks"
+msgstr "हर {} सप्ताह"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+#, python-brace-format
+msgid "Every {} months"
+msgstr "हर {} महीने"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+#, python-brace-format
+msgid "Every {} years"
+msgstr "हर {} वर्ष"

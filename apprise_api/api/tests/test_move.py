@@ -137,7 +137,7 @@ class MoveTests(SimpleTestCase):
         assert ConfigCache.set_auth("move_reused_dst", "alice", "secret") is True
 
         response = self.client.post("/del/move_reused_dst", headers=_GOOD_MASTER)
-        assert response.status_code == 200
+        assert response.status_code == 204
         assert not self._exists("move_reused_dst")
         assert ConfigCache.get_auth("move_reused_dst") is None
 
