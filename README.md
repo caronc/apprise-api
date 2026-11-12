@@ -6,7 +6,7 @@ Take advantage of [Apprise](https://github.com/caronc/apprise) through your netw
 - An incredibly lightweight gateway to Apprise.
 - A production-ready micro-service at your disposal.
 - A Simple Website to verify and test your configuration with.
-- An [Android app](#apprise-mobile-android) to notify and manage your server from your phone.
+- An [Android and iOS app](#apprise-mobile) to notify and manage your server from your phone.
 
 Apprise API was designed to easily fit into existing (and new) ecosystems that are looking for a simple notification solution.
 
@@ -38,15 +38,13 @@ With configuration in place, you'll be able to use the *Notification* tab to sen
 
 At the end of the day, the GUI just simply offers a user friendly interface to the same API developers can directly interface with if they wish to.
 
-## Apprise Mobile (Android)
+## Apprise Mobile
 
-<a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img align="left" width="84" hspace="16" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/google-play.svg" alt="Get Apprise Mobile on Google Play"></a>
+**Apprise Mobile** is the Android and iOS companion app for Apprise API. Send a message, photo, or file to one destination, a group, or every destination you have configured. The app requires access to your running Apprise API server; it is not a standalone notification service.
 
-**Apprise Mobile** is the Android companion app for Apprise API. Send a message, photo, or file to one destination, a group, or every destination you've configured. The app requires access to *your* running Apprise API server; it is not a standalone notification service.
+<a href="https://apps.apple.com/app/id6821633589"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/app-store-en.svg" alt="Download on the App Store"></a> <a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/google-play-en.svg" alt="Get it on Google Play"></a>
 
-**[Get Apprise Mobile on Google Play](https://play.google.com/store/apps/details?id=com.appriseit.mobile)** — install it on your Android device, then connect it to your Apprise API server.
-
-<br clear="left"/>
+Android requires Android 8.0 or later. iPhone and iPad require iOS 17.2 or later. See the [setup guide](https://appriseit.com/mobile/getting-started/) to connect your server.
 
 <table>
 <tr>
@@ -67,7 +65,6 @@ Once the app is installed, open the *Configuration Manager* in your browser and 
 
 Visit the [Apprise Mobile](https://appriseit.com/mobile/) page for more details, screenshots, and the app's privacy policy and terms.
 
-*Google Play and the Google Play logo are trademarks of Google LLC.*
 
 ## Installation
 

@@ -1,25 +1,23 @@
 {% load static %}
-{% load i18n %}
+{% load i18n mobile_stores %}
 
-<dialog id="mobile-beta-dialog"
-        class="apprise-dialog mobile-beta-dialog"
-        aria-labelledby="mobile-beta-title"
-        aria-describedby="mobile-beta-intro">
-  <div class="apprise-dialog__header mobile-beta-dialog__header">
-    <div class="mobile-beta-dialog__heading">
-      <img class="mobile-beta-dialog__play-mark"
-           src="{% static 'mobile/google-play.svg' %}"
-           alt="Google Play"
-           width="97"
-           height="96">
+<dialog id="mobile-app-dialog"
+        class="apprise-dialog mobile-app-dialog"
+        aria-labelledby="mobile-app-title"
+        aria-describedby="mobile-app-intro">
+  <div class="apprise-dialog__header mobile-app-dialog__header">
+    <div class="mobile-app-dialog__heading">
+      <span class="mobile-app-dialog__icon" aria-hidden="true">
+        {% include "icons/mobile.svg" %}
+      </span>
       <div>
-        <span class="mobile-beta-dialog__badge">{% trans "Android App" %}</span>
-        <h4 id="mobile-beta-title">{% trans "Get Apprise Mobile" %}</h4>
+        <span class="mobile-app-dialog__badge">{% trans "Android / iOS App" %}</span>
+        <h4 id="mobile-app-title">{% trans "Get Apprise Mobile" %}</h4>
       </div>
     </div>
     <button type="button"
-            class="apprise-dialog-close mobile-beta-dialog__close"
-            data-mobile-beta-close
+            class="apprise-dialog-close mobile-app-dialog__close"
+            data-mobile-app-close
             aria-label="{% trans "Close" %}">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M18 6 6 18"></path>
@@ -27,27 +25,30 @@
       </svg>
     </button>
   </div>
-  <div class="mobile-beta-dialog__content">
-    <p id="mobile-beta-intro">
-      {% trans "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured." %}
-    </p>
-    <ul class="mobile-beta-dialog__highlights">
+  <div class="mobile-app-dialog__content">
+    <div class="mobile-app-dialog__intro">
+      <p id="mobile-app-intro">
+        {% trans "Apprise Mobile connects your Android or iOS device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured." %}
+      </p>
+    </div>
+    <ul class="mobile-app-dialog__highlights">
       <li>{% trans "Send notifications and attachments from your phone." %}</li>
       <li>{% trans "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration." %}</li>
       <li>{% trans "Review your remote configurations and follow every delivery report." %}</li>
     </ul>
-    <div class="mobile-beta-dialog__cta">
-      <a class="mobile-beta-dialog__primary"
-         href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"
+    <div class="mobile-app-dialog__actions">
+      {% mobile_store_links %}
+      <a class="mobile-app-dialog__learn-more"
+         href="https://appriseit.com/{% if LANGUAGE_CODE == 'fr' %}fr/{% endif %}mobile/"
          target="_blank"
-         rel="noopener noreferrer">{% trans "Get It on Google Play" %}</a>
-      <a href="https://appriseit.com/mobile/"
-         target="_blank"
-         rel="noopener noreferrer">{% trans "Learn More" %}</a>
+         rel="noopener noreferrer">
+        {% trans "Learn More" %}
+        <span aria-hidden="true">→</span>
+      </a>
     </div>
-    <details class="mobile-beta-dialog__preview">
+    <details class="mobile-app-dialog__preview">
       <summary>{% trans "Preview the App" %}</summary>
-      <div class="mobile-beta-dialog__screenshots">
+      <div class="mobile-app-dialog__screenshots">
         <figure>
           <img src="{% static 'mobile/apprise-mobile-dashboard.png' %}"
                alt="{% trans "Apprise Mobile dashboard" %}"
@@ -74,8 +75,5 @@
         </figure>
       </div>
     </details>
-    <p class="mobile-beta-dialog__trademark">
-      {% trans "Google Play and the Google Play logo are trademarks of Google LLC." %}
-    </p>
   </div>
 </dialog>

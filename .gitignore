@@ -15,8 +15,7 @@ plugin/
 .Python
 .bash_history
 env/
-.venv*/
-.venv
+.venv*
 build/
 develop-eggs/
 dist/

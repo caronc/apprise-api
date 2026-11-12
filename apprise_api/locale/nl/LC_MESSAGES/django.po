@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 03:51+0000\n"
+"POT-Creation-Date: 2026-11-12 03:57+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: nl\n"
@@ -92,7 +92,7 @@ msgstr "Gebruikersnaam"
 msgid "Password"
 msgstr "Wachtwoord"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1409
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1407
 #: apprise_api/api/templates/components/config_id_selector.html:14
 #: apprise_api/api/templates/components/config_id_selector.html:27
 msgid "Config ID"
@@ -247,9 +247,9 @@ msgstr "De JSON payload moet een object zijn"
 #: apprise_api/api/templates/auth.html:741
 #: apprise_api/api/templates/auth.html:742
 #: apprise_api/api/templates/auth.html:743
+#: apprise_api/api/templates/base.html:1423
+#: apprise_api/api/templates/base.html:1424
 #: apprise_api/api/templates/base.html:1425
-#: apprise_api/api/templates/base.html:1426
-#: apprise_api/api/templates/base.html:1427
 #: apprise_api/api/templates/components/config_id_selector.html:33
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
@@ -273,7 +273,7 @@ msgstr "Toon Configuratie-ID"
 #: apprise_api/api/templates/auth.html:561
 #: apprise_api/api/templates/auth.html:725
 #: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1428
+#: apprise_api/api/templates/base.html:1426
 #: apprise_api/api/templates/components/config_id_selector.html:36
 #: apprise_api/api/templates/config.html:3490
 #: apprise_api/api/templates/config_list.html:64
@@ -472,7 +472,7 @@ msgid "Freezes configuration-user access without deleting the configuration or l
 msgstr "Bevries configuratie-gebruikers toegang zonder de configuratie of login te verwijderen. Alleen een beheerder mag dit gebruiken."
 
 #: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:23
+#: apprise_api/api/templates/components/mobile_app_dialog.html:18
 msgid "Close"
 msgstr "Sluiten"
 
@@ -506,7 +506,7 @@ msgid "Username, password, and Config ID copied to clipboard"
 msgstr "Gebruikersnaam, wachtwoord en Configuratie-ID gekopieerd naar klembord"
 
 #: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1039
+#: apprise_api/api/templates/base.html:1037
 msgid "Scan with Apprise Mobile"
 msgstr "Scannen met Apprise Mobile"
 
@@ -515,29 +515,29 @@ msgid "This QR code contains the new password. Save it or share it securely now;
 msgstr "Deze QR-code bevat het nieuwe wachtwoord. Sla deze nu op of deel deze veilig; het wachtwoord kan niet opnieuw worden weergegeven."
 
 #: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1050
-#: apprise_api/api/tests/test_localization.py:413
+#: apprise_api/api/templates/base.html:1048
+#: apprise_api/api/tests/test_localization.py:441
 msgid "Show Complete URL"
 msgstr "Volledige Weergave URL"
 
 #: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/templates/base.html:1049
 msgid "Hide Complete URL"
 msgstr "Volledige Verbergen URL"
 
 #: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/base.html:1050
 #: apprise_api/api/templates/config.html:2596
 msgid "Copy URL to Clipboard"
 msgstr "Kopieer URL naar Klembord"
 
 #: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1053
+#: apprise_api/api/templates/base.html:1051
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL gekopieerd naar klembord"
 
 #: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1054
+#: apprise_api/api/templates/base.html:1052
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "Deze URL is te lang om als QR-code te coderen. Gebruik in plaats daarvan de kopieerknop hierboven."
 
@@ -568,7 +568,7 @@ msgstr "Gebruikers toegang resetten"
 
 #: apprise_api/api/templates/auth.html:583
 #: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1116
+#: apprise_api/api/templates/base.html:1114
 #: apprise_api/api/templates/config_list.html:118
 #: apprise_api/api/templates/config_list.html:189
 msgid "Cancel"
@@ -663,7 +663,7 @@ msgstr "APPRISE LIBRARY"
 #: apprise_api/api/templates/base.html:86
 #: apprise_api/api/templates/base.html:90
 #: apprise_api/api/templates/base.html:91
-#: apprise_api/api/tests/test_localization.py:348
+#: apprise_api/api/tests/test_localization.py:376
 msgid "Language"
 msgstr "Taal"
 
@@ -742,7 +742,7 @@ msgid "Configuration Manager"
 msgstr "Configuratiebeheerder"
 
 #: apprise_api/api/templates/base.html:278
-#: apprise_api/api/templates/base.html:1404
+#: apprise_api/api/templates/base.html:1402
 msgid "New Configuration"
 msgstr "Nieuwe configuratie"
 
@@ -781,191 +781,191 @@ msgstr "Documentatie"
 msgid "Apprise URL Builder"
 msgstr "Apprise URL Builder"
 
-#: apprise_api/api/templates/base.html:351
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:17
+#: apprise_api/api/templates/base.html:349
+#: apprise_api/api/templates/components/mobile_app_dialog.html:12
 #: apprise_api/api/templates/login.html:89
 msgid "Get Apprise Mobile"
 msgstr "Ophalen Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:354
+#: apprise_api/api/templates/base.html:352
 msgid "Support Development"
 msgstr "Ondersteuning Ontwikkeling"
 
-#: apprise_api/api/templates/base.html:363
+#: apprise_api/api/templates/base.html:361
 msgid "Buy Developer A Coffee"
 msgstr "Koop Een Koffie Voor De Ontwikkelaar"
 
-#: apprise_api/api/templates/base.html:372
+#: apprise_api/api/templates/base.html:370
 msgid "Sponsor Apprise Development"
 msgstr "Sponsor Apprise Ontwikkeling"
 
-#: apprise_api/api/templates/base.html:383
+#: apprise_api/api/templates/base.html:381
 msgid "Apprise Health Check Failed"
 msgstr "Apprise Gezondheidscontrole Mislukt"
 
-#: apprise_api/api/templates/base.html:384
+#: apprise_api/api/templates/base.html:382
 msgid "The following issues have been detected with your Apprise instance:"
 msgstr "De volgende problemen zijn gedetecteerd met uw Apprise instantie:"
 
-#: apprise_api/api/templates/base.html:391
+#: apprise_api/api/templates/base.html:389
 msgid "Notification Delivery Disabled"
 msgstr "Bezorging Van Meldingen Uitgeschakeld"
 
-#: apprise_api/api/templates/base.html:394
+#: apprise_api/api/templates/base.html:392
 msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
 msgstr "Zowel stateless meldingen als persistente opslag zijn uitgeschakeld. Een beheerder moet ten minste één modus inschakelen voordat deze server meldingen kan bezorgen."
 
-#: apprise_api/api/templates/base.html:402
+#: apprise_api/api/templates/base.html:400
 msgid "Configuration Write Failure"
 msgstr "Configuratie Schrijf Fout"
 
-#: apprise_api/api/templates/base.html:404
+#: apprise_api/api/templates/base.html:402
 msgid "Apprise can not write new configuration information to the directory:"
 msgstr "Apprise kan geen nieuwe configuratie-informatie naar de map schrijven:"
 
-#: apprise_api/api/templates/base.html:406
-#: apprise_api/api/templates/base.html:430
+#: apprise_api/api/templates/base.html:404
+#: apprise_api/api/templates/base.html:428
 msgid "Path copied to clipboard"
 msgstr "Pad gekopieerd naar klembord"
 
-#: apprise_api/api/templates/base.html:411
-#: apprise_api/api/templates/base.html:435
+#: apprise_api/api/templates/base.html:409
+#: apprise_api/api/templates/base.html:433
 msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
 msgstr "<em>Opmerking:</em> Als dit het verwachte gedrag is, stel dan de onderstaande omgevingsvariabele in en herlaad uw Apprise instantie."
 
-#: apprise_api/api/templates/base.html:414
-#: apprise_api/api/templates/base.html:438
+#: apprise_api/api/templates/base.html:412
+#: apprise_api/api/templates/base.html:436
 msgid "Environment variable copied to clipboard"
 msgstr "Omgevingsvariabele gekopieerd naar klembord"
 
-#: apprise_api/api/templates/base.html:424
+#: apprise_api/api/templates/base.html:422
 msgid "Attachment Temporary Storage Write Failure"
 msgstr "Bijlage Tijdelijke Opslag Schrijf Fout"
 
-#: apprise_api/api/templates/base.html:427
+#: apprise_api/api/templates/base.html:425
 msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
 msgstr "Apprise kan bijlagen (indien aanwezig) niet doorgeven vanwege het ontbreken van schrijfrechten op de map:"
 
-#: apprise_api/api/templates/base.html:445
+#: apprise_api/api/templates/base.html:443
 msgid "More Details"
 msgstr "Meer Details"
 
-#: apprise_api/api/templates/base.html:448
+#: apprise_api/api/templates/base.html:446
 msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
 msgstr "Onder de meeste omstandigheden hebben de hier geïdentificeerde problemen meestal te maken met machtigingsproblemen. Zorg ervoor dat u de juiste <code>PUID</code> en <code>GUID</code> instelt om de machtigingen weer te geven die u wilt dat Apprise gebruikt wanneer het zijn bestanden leest en schrijft. Daarnaast moet u ervoor zorgen dat de machtigingen correct zijn ingesteld op de mappen die u eraan hebt gekoppeld."
 
-#: apprise_api/api/templates/base.html:451
+#: apprise_api/api/templates/base.html:449
 msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
 msgstr "De hier geïdentificeerde probleem(en) kunnen ook verband houden met SELinux. U kunt overwegen om SELinux uit te sluiten door het tijdelijk uit te schakelen met:"
 
-#: apprise_api/api/templates/base.html:454
-#: apprise_api/api/templates/base.html:460
+#: apprise_api/api/templates/base.html:452
+#: apprise_api/api/templates/base.html:458
 #: apprise_api/api/templates/config.html:3395
 msgid "Command copied to clipboard"
 msgstr "Commando naar klembord gekopieerd"
 
-#: apprise_api/api/templates/base.html:458
+#: apprise_api/api/templates/base.html:456
 msgid "You can always re-enable it with:"
 msgstr "U kunt het altijd opnieuw inschakelen met:"
 
-#: apprise_api/api/templates/base.html:725
+#: apprise_api/api/templates/base.html:723
 msgid "Log Out?"
 msgstr "Afmelden?"
 
-#: apprise_api/api/templates/base.html:726
+#: apprise_api/api/templates/base.html:724
 msgid "Are you sure you wish to log out?"
 msgstr "Weet u zeker dat u wilt uitloggen?"
 
-#: apprise_api/api/templates/base.html:728
-#: apprise_api/api/templates/base.html:1446
+#: apprise_api/api/templates/base.html:726
+#: apprise_api/api/templates/base.html:1444
 msgid "Yes"
 msgstr "Ja"
 
-#: apprise_api/api/templates/base.html:729
-#: apprise_api/api/templates/base.html:1447
+#: apprise_api/api/templates/base.html:727
+#: apprise_api/api/templates/base.html:1445
 msgid "No"
 msgstr "Nee"
 
-#: apprise_api/api/templates/base.html:878
+#: apprise_api/api/templates/base.html:876
 msgid "Abort Current Task?"
 msgstr "Huidige taak afbreken?"
 
-#: apprise_api/api/templates/base.html:879
+#: apprise_api/api/templates/base.html:877
 msgid "Are you sure you wish to abort the current task?"
 msgstr "Weet u zeker dat u de huidige taak wilt afbreken?"
 
-#: apprise_api/api/templates/base.html:882
+#: apprise_api/api/templates/base.html:880
 msgid "Abort Task"
 msgstr "Taak afbreken"
 
-#: apprise_api/api/templates/base.html:883
+#: apprise_api/api/templates/base.html:881
 msgid "Keep Running"
 msgstr "Blijven uitvoeren"
 
-#: apprise_api/api/templates/base.html:989
+#: apprise_api/api/templates/base.html:987
 #: apprise_api/api/templates/config.html:3461
 #: apprise_api/api/templates/config.html:3484
 #: apprise_api/api/templates/config_list.html:53
 msgid "Config ID hidden"
 msgstr "Config ID verborgen"
 
-#: apprise_api/api/templates/base.html:1006
+#: apprise_api/api/templates/base.html:1004
 msgid "Config ID copied to clipboard"
 msgstr "Config ID gekopieerd naar klembord"
 
-#: apprise_api/api/templates/base.html:1031
-#: apprise_api/api/templates/base.html:1059
+#: apprise_api/api/templates/base.html:1029
+#: apprise_api/api/templates/base.html:1057
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "De Apprise Mobile QR-code kon niet worden gegenereerd."
 
-#: apprise_api/api/templates/base.html:1058
+#: apprise_api/api/templates/base.html:1056
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile Snelle Config"
 
-#: apprise_api/api/templates/base.html:1104
-#: apprise_api/api/templates/base.html:1468
+#: apprise_api/api/templates/base.html:1102
+#: apprise_api/api/templates/base.html:1466
 msgid "Enter a valid Config ID before continuing."
 msgstr "Voer een geldig Config ID in voordat u doorgaat."
 
-#: apprise_api/api/templates/base.html:1111
+#: apprise_api/api/templates/base.html:1109
 msgid "Open Configuration"
 msgstr "Configuratie openen"
 
-#: apprise_api/api/templates/base.html:1112
+#: apprise_api/api/templates/base.html:1110
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "Dit opent een ander Config ID. Niet-opgeslagen wijzigingen op deze pagina gaan verloren."
 
-#: apprise_api/api/templates/base.html:1115
+#: apprise_api/api/templates/base.html:1113
 msgid "Continue"
 msgstr "Doorgaan"
 
-#: apprise_api/api/templates/base.html:1342
-#: apprise_api/api/templates/base.html:1362
+#: apprise_api/api/templates/base.html:1340
+#: apprise_api/api/templates/base.html:1360
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "Kan Apprise API statusendpoint niet bereiken."
 
-#: apprise_api/api/templates/base.html:1348
+#: apprise_api/api/templates/base.html:1346
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "De levering van meldingen is uitgeschakeld. Schakel stateless meldingen of persistente opslag in om de service te hervatten."
 
-#: apprise_api/api/templates/base.html:1407
+#: apprise_api/api/templates/base.html:1405
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "Kies een nieuwe Configuratie-ID. U kunt deze bewerken of een andere genereren voordat u doorgaat."
 
-#: apprise_api/api/templates/base.html:1419
+#: apprise_api/api/templates/base.html:1417
 msgid "New Config ID"
 msgstr "Nieuwe Configuratie-ID"
 
-#: apprise_api/api/templates/base.html:1435
-#: apprise_api/api/templates/base.html:1436
+#: apprise_api/api/templates/base.html:1433
+#: apprise_api/api/templates/base.html:1434
 msgid "Generate Another Config ID"
 msgstr "Genereer een andere Configuratie-ID"
 
-#: apprise_api/api/templates/base.html:1441
+#: apprise_api/api/templates/base.html:1439
 msgid "Do you wish to open this configuration?"
 msgstr "Wilt u deze configuratie openen?"
 
-#: apprise_api/api/templates/base.html:1511
+#: apprise_api/api/templates/base.html:1509
 #: apprise_api/api/templates/details.html:235
 #: apprise_api/api/templates/details.html:283
 #: apprise_api/api/templates/welcome.html:776
@@ -1029,65 +1029,57 @@ msgstr ""
 "\n"
 "Gelicenseerd onder de %(license)s Licentie."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:16
-msgid "Android App"
-msgstr "Android App"
+#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+msgid "Android / iOS App"
+msgstr "Android / iOS App"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:32
-msgid "Apprise Mobile connects your Android device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
-msgstr "Apprise Mobile verbindt uw Android apparaat met deze server. Stuur een bericht, een foto die u net hebt genomen, of een bestand naar één bestemming, een groep, of alles wat u hebt geconfigureerd."
+#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+msgid "Apprise Mobile connects your Android or iOS device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
+msgstr "Apprise Mobile verbindt uw Android / iOS apparaat met deze server. Stuur een bericht, een foto die u net hebt genomen, of een bestand naar één bestemming, een groep, of alles wat u hebt geconfigureerd."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:35
+#: apprise_api/api/templates/components/mobile_app_dialog.html:30
 msgid "Send notifications and attachments from your phone."
 msgstr "Stuur meldingen en bijlagen vanaf uw telefoon."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:36
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
 msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
 msgstr "Scan de Apprise Mobile Quick Setup QR-code om deze server toe te voegen en een configuratie te laden."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:37
+#: apprise_api/api/templates/components/mobile_app_dialog.html:32
 msgid "Review your remote configurations and follow every delivery report."
 msgstr "Bekijk uw externe configuraties en volg elk bezorgingsrapport."
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:43
-msgid "Get It on Google Play"
-msgstr "Verkrijg het op Google Play"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:46
+#: apprise_api/api/templates/components/mobile_app_dialog.html:38
 msgid "Learn More"
 msgstr "Leer Meer"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:49
+#: apprise_api/api/templates/components/mobile_app_dialog.html:41
 msgid "Preview the App"
 msgstr "Bekijk de App"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile dashboard"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:53
 msgid "Apprise Mobile URL Builder"
 msgstr "Apprise Mobile URL Bouwer"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:57
 msgid "URL Builder"
 msgstr "URL-bouwer"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:69
+#: apprise_api/api/templates/components/mobile_app_dialog.html:61
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile afleveringsrapport"
 
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:73
+#: apprise_api/api/templates/components/mobile_app_dialog.html:65
 msgid "Delivery Report"
 msgstr "Bezorgrapport"
-
-#: apprise_api/api/templates/components/mobile_beta_dialog.html:78
-msgid "Google Play and the Google Play logo are trademarks of Google LLC."
-msgstr "Google Play en het Google Play-logo zijn handelsmerken van Google LLC."
 
 #: apprise_api/api/templates/components/qr_password_note.html:4
 msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
@@ -1242,8 +1234,8 @@ msgstr "De QR-code kon niet worden geladen."
 
 #: apprise_api/api/templates/config.html:204
 #, python-format
-msgid "Need the app? Get %(mobile_app_link)s for Android."
-msgstr "De app nodig? Krijg %(mobile_app_link)s voor Android."
+msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
+msgstr "De app nodig? Krijg %(mobile_app_link)s voor Android / iOS."
 
 #: apprise_api/api/templates/config.html:212
 msgid "Apprise Configuration is Locked"
@@ -1964,8 +1956,8 @@ msgid "A Configuration ID is required for non-administrative accounts. Global ad
 msgstr "Een configuratie-ID is vereist voor niet-administratieve accounts. Globale beheerders kunnen dit leeg laten."
 
 #: apprise_api/api/templates/login.html:90
-msgid "Manage this server from your Android device."
-msgstr "Beheer deze server vanaf uw Android-apparaat."
+msgid "Manage this server from your Android or iOS device."
+msgstr "Beheer deze server vanaf uw Android / iOS-apparaat."
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -2344,6 +2336,14 @@ msgstr "Moet beginnen met ten minste twee alfanumerieke tekens."
 #: apprise_api/api/templates/welcome.html:759
 msgid "Cannot exceed 64 characters in total length."
 msgstr "Mag in totaal niet langer zijn dan 64 tekens."
+
+#: apprise_api/api/templatetags/mobile_stores.py:49
+msgid "App Store"
+msgstr "App Store"
+
+#: apprise_api/api/templatetags/mobile_stores.py:50
+msgid "Get It on Google Play"
+msgstr "Verkrijg het op Google Play"
 
 #: apprise_api/api/views.py:1187
 msgid "This configuration has been disabled by an administrator"

@@ -10,6 +10,7 @@ import re
 
 import apprise
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.utils import translation
 from django.utils.translation import trans_real
@@ -55,6 +56,33 @@ class LocalizationTests(SimpleTestCase):
                 "zh",
             ],
         )
+
+    def test_mobile_badges_cover_every_supported_language(self):
+        from ..templatetags.mobile_stores import BADGE_RATIOS, mobile_store_links
+
+        self.assertEqual(set(BADGE_RATIOS), {code for code, _ in settings.LANGUAGES})
+        for code, _ in settings.LANGUAGES:
+            with self.subTest(language=code), translation.override(code):
+                badges = mobile_store_links()
+                for store in ("apple", "google"):
+                    asset = badges[f"{store}_badge"]
+                    self.assertTrue((Path(settings.BASE_DIR) / "static" / asset).is_file())
+                    self.assertIn(f"-{code}.svg", asset)
+                self.assertRegex(badges["apple_ratio"], r"^\d+\.\d+$")
+                content = render_to_string("components/mobile_app_dialog.html", {"LANGUAGE_CODE": code})
+                self.assertIn(badges["apple_badge"], content)
+                self.assertIn(badges["google_badge"], content)
+                self.assertIn('dir="ltr"', content)
+                self.assertNotIn('href=""', content)
+                self.assertNotIn("mobile/google-play.svg", content)
+                self.assertIn("iOS", content)
+
+    def test_mobile_badges_normalize_regional_languages(self):
+        from ..templatetags.mobile_stores import mobile_store_links
+
+        for code, expected in (("fr-ca", "fr"), ("fil", "tl"), ("in", "id"), ("xx", "en")):
+            with self.subTest(language=code), translation.override(code):
+                self.assertIn(f"-{expected}.svg", mobile_store_links()["apple_badge"])
 
     def test_accept_language_uses_primary_fallback(self):
         # German is installed as ``de``, so ``de-DE`` falls back to it.
