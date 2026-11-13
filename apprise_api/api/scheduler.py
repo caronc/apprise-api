@@ -146,9 +146,23 @@ def prepare_send(reminder_file: str, event: dict) -> tuple[apprise.Apprise, dict
     - Returns ``None`` when the configuration or attachments cannot be used.
     """
     # The configuration is read fresh on every send, so a change to its
-    # services or tags since the reminder was saved is picked up.
-    config, fmt = ConfigCache.reminder_config(reminder_file)
-    if config is None:
+    # services or tags since the reminder was saved is picked up. A reminder
+    # with its own URLs and no tag sends to those alone, the same as /notify;
+    # an empty tag ("") also sends to the configuration's untagged URLs.
+    urls = event.get("urls")
+    tag = event.get("tag")
+    alone = bool(urls) and tag is None
+    if urls and settings.APPRISE_REMINDER_URLS_MAX <= 0:
+        # The server no longer allows URLs in reminders, so they are left
+        # out; a reminder with nothing else fails.
+        logger.warning("REMINDER - Left out the URLs of reminder %s; the server no longer allows them", event.get("id"))
+        if alone:
+            return None
+
+        urls = None
+
+    config, fmt = (None, None) if alone else ConfigCache.reminder_config(reminder_file)
+    if config is None and not alone:
         logger.warning("REMINDER - No configuration found for reminder %s", event.get("id"))
         return None
 
@@ -168,17 +182,25 @@ def prepare_send(reminder_file: str, event: dict) -> tuple[apprise.Apprise, dict
         **notify_asset_kwargs(event.get("format") or None),
     )
     a_obj = apprise.Apprise(asset=asset)
-    ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
-    ac_obj.add_config(config, format=fmt)
-    a_obj.add(ac_obj)
+    if not alone:
+        ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
+        ac_obj.add_config(config, format=fmt)
+        a_obj.add(ac_obj)
+
+    if urls:
+        # A tag only picks services that carry it, so beside one the
+        # reminder's own URLs are marked "always" to be sent to as well.
+        a_obj.add(urls, tag=apprise.common.MATCH_ALWAYS_TAG if tag else None)
 
     # These match what /notify passes to notify().
     return a_obj, {
         "body": event.get("body"),
         "title": event.get("title") or "",
         "notify_type": event.get("type") or apprise.NotifyType.INFO.value,
-        # The tag was checked when saved; this turns it into Apprise's AND/OR form.
-        "tag": parse_tag_expression(event["tag"]) if event.get("tag") else None,
+        # The tag was checked when saved; this turns it into Apprise's AND/OR
+        # form. Without one, only untagged services are sent to, which
+        # includes the reminder's own URLs.
+        "tag": parse_tag_expression(tag) if tag else None,
         "template": event.get("template") or None,
         "attach": attach or None,
     }
@@ -213,8 +235,11 @@ def deliver(reminder_file: str, event: dict, source: str = WEBHOOK_SOURCE) -> bo
     return True
 
 
-def access_allows(reminder_file: str) -> bool:
-    """Return whether the configuration's access setting lets its reminders run."""
+def access_allows(reminder_file: str) -> bool | None:
+    """Return whether the configuration's access setting lets its reminders run.
+
+    - Returns ``None`` when the access record cannot be read.
+    """
     if not settings.APPRISE_AUTH_REQUIRED:
         # Without logins, every configuration is managed by the administrator.
         return True
@@ -224,8 +249,13 @@ def access_allows(reminder_file: str) -> bool:
         return ConfigCache.reminder_access(reminder_file) not in PAUSED_ACCESS
 
     except AuthStorageError:
-        # A damaged record is treated as locked, and locked reminders still run.
-        return True
+        # It may say "disabled", so nothing is sent until it can be read.
+        return None
+
+
+def _needs_config(event: dict) -> bool:
+    """Return whether an event sends through its configuration, not only its own URLs."""
+    return not event.get("urls") or event.get("tag") is not None
 
 
 def _pending(event: dict) -> bool:
@@ -342,16 +372,33 @@ class Scheduler:
         # Read before the files, so a change made during the scan is noticed.
         self.seen = ConfigCache.reminders_changed()
         self.backlog = False
-        for reminder_file in ConfigCache.reminder_files():
+        # Whether something could not be read; if so, look again soon, as a
+        # fix to the disk does not mark the reminders as changed.
+        unread = False
+        files = ConfigCache.reminder_files(complete=True)
+        if files is None:
+            # A directory could not be listed; go through the ones that can.
+            unread = True
+            files = ConfigCache.reminder_files()
+
+        for reminder_file in files:
             events = ConfigCache.read_reminders(reminder_file)
-            if not events or not ConfigCache.reminder_has_config(reminder_file):
-                # With no configuration there is nowhere to send them. Removing a
-                # configuration removes its reminders, so this is rare.
+            has_config = ConfigCache.reminder_has_config(reminder_file) if events else False
+            if events is None or has_config is None:
+                unread = True
+                continue
+
+            if not has_config:
+                # Without a configuration, only reminders sent to their own URLs
+                # alone have somewhere to go; the rest wait for one to be saved.
+                events = [event for event in events if not _needs_config(event)]
+
+            if not events:
                 continue
 
             # Only take the file's lock when something in it is due.
             if any(_pending(event) and event["next"] <= now for event in events):
-                claimed = self.claim(reminder_file, now)
+                claimed = self.claim(reminder_file, now, configured=has_config)
                 if claimed is None:
                     # Try the file again soon rather than straight away.
                     soonest = now + RECHECK if soonest is None else min(soonest, now + RECHECK)
@@ -361,8 +408,14 @@ class Scheduler:
 
             # Keep track of the soonest time among what is left.
             for event in events:
+                if not has_config and _needs_config(event):
+                    continue
+
                 if _pending(event) and (soonest is None or event["next"] < soonest):
                     soonest = event["next"]
+
+        if unread:
+            soonest = now + RECHECK if soonest is None else min(soonest, now + RECHECK)
 
         return soonest
 
@@ -393,8 +446,11 @@ class Scheduler:
             # The pool was full, so the main thread may be waiting for room.
             os.kill(os.getpid(), signal.SIGUSR1)
 
-    def claim(self, reminder_file: str, now: int) -> list[dict] | None:
+    def claim(self, reminder_file: str, now: int, configured: bool = True) -> list[dict] | None:
         """Move each due event in a file on to its next time, then send it.
+
+        - ``configured``: a configuration is saved beside the file. Without
+          one, only events sent to their own URLs alone are handled.
 
         - Moving on before sending means a crash mid-send skips that send
           instead of repeating it.
@@ -402,7 +458,8 @@ class Scheduler:
           repeating one never sends a backlog.
         - Events on a disabled configuration are paused instead.
         - An event with no room in the pool stays due for a later scan.
-        - Returns ``None``, sending nothing, when the file cannot be saved.
+        - Returns ``None``, sending nothing, when the file cannot be saved or
+          its configuration's access cannot be read; it is tried again later.
         """
         # The events to send once the file is saved.
         jobs = []
@@ -416,6 +473,11 @@ class Scheduler:
 
             # Check the configuration's access and use once for the whole file.
             allowed = access_allows(reminder_file)
+            if allowed is None:
+                # Neither sent nor paused, so they go out once it reads again.
+                logger.warning("REMINDER - Held the reminders in %s; its access could not be read", reminder_file)
+                return None
+
             idle = self.idle(reminder_file, now)
             if idle and room <= 0:
                 # The notice needs room in the pool like any send, so pause
@@ -432,8 +494,9 @@ class Scheduler:
 
             after = datetime.fromtimestamp(now, UTC)
             for event in events:
-                # Leave alone anything paused, finished or not due yet.
-                if not _pending(event) or event["next"] > now:
+                # Leave alone anything paused, finished, not due yet, or
+                # waiting for a configuration.
+                if not _pending(event) or event["next"] > now or (not configured and _needs_config(event)):
                     continue
 
                 if not allowed:
@@ -451,12 +514,14 @@ class Scheduler:
                     continue
 
                 # Count this run and move the event on to its next time.
-                event["runs"] = (event.get("runs") or 0) + 1
-                drop_past_skips(event, now)
                 try:
+                    event["runs"] = (event.get("runs") or 0) + 1
+                    drop_past_skips(event, now)
                     event["next"] = next_run(event, after)
 
-                except SCHEDULE_ERRORS as e:
+                # A reminder damaged on disk (such as one edited by hand) is
+                # stopped rather than stopping the scheduler.
+                except (*SCHEDULE_ERRORS, AttributeError, KeyError) as e:
                     logger.warning("REMINDER - Stopped reminder %s; its time is invalid", event.get("id"))
                     logger.debug("Schedule time error: %s", e)
                     event["next"] = None

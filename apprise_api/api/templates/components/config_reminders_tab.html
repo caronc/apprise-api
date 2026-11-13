@@ -67,5 +67,17 @@
     </div>
     {# The calendar is drawn here by the page script the first time this tab opens. #}
     <div id="reminder-calendar" class="reminder-calendar"></div>
+    {# The reminders of the day or hour picked in the week or month view, listed the same way as List. #}
+    <div id="reminder-selection" class="reminder-selection" hidden>
+      <div class="reminder-selection-heading">
+        <span id="reminder-selection-title"></span>
+        <button id="reminder-selection-add"
+                type="button"
+                class="btn-flat notify-template-add">
+          <i class="material-icons left" aria-hidden="true">add</i>{% trans "Add Reminder" %}
+        </button>
+      </div>
+      <div id="reminder-selection-list"></div>
+    </div>
   </div>
 </div>

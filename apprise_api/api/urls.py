@@ -91,6 +91,8 @@ urlpatterns = [
     ),
     re_path(r"^json/urls/?$", views.JsonUrlView.as_view(), name="json_urls_by_header"),
     re_path(r"^attach/{}/?$".format(_KEY), views.AttachPreviewView.as_view(), name="attach_preview"),
+    re_path(r"^resolve/?$", views.ResolveView.as_view(), name="resolve_by_header"),
+    re_path(r"^resolve/{}/?$".format(_KEY), views.ResolveView.as_view(), name="resolve"),
     re_path(r"^reminders/?$", views.ReminderOverviewView.as_view(), name="reminder_overview"),
     re_path(r"^reminder/?$", views.ReminderListView.as_view(), name="reminder_by_header"),
     re_path(r"^reminder/{}/?$".format(_KEY), views.ReminderListView.as_view(), name="reminder"),

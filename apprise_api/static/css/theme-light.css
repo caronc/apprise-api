@@ -1579,6 +1579,7 @@ Reminders
   --fc-neutral-bg-color: var(--reminder-card-bg);
   --fc-list-event-hover-bg-color: var(--reminder-accent-soft);
   --fc-today-bg-color: var(--reminder-accent-soft);
+  --fc-highlight-color: rgba(20, 140, 128, 0.22);
   --fc-event-bg-color: var(--reminder-accent);
   --fc-event-border-color: var(--reminder-accent);
   --fc-event-text-color: #ffffff;

@@ -56,7 +56,9 @@ class WelcomePageTests(SimpleTestCase):
         self.assertNotContains(response, "https://groups.google.com/g/apprise-testers/")
         self.assertNotContains(response, "https://play.google.com/apps/testing/com.appriseit.mobile")
         self.assertContains(response, 'target="_blank"')
-        self.assertContains(response, 'rel="noopener noreferrer"')
+        self.assertContains(response, 'rel="nofollow noopener noreferrer"')
+        # Every link that opens a new tab is marked not to be followed
+        self.assertNotContains(response, 'rel="noopener noreferrer"')
         self.assertContains(response, "window.appriseCloseMobileMenu();")
 
     def test_shared_popup_shell_and_task_abort_are_rendered(self):

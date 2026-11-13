@@ -127,7 +127,7 @@
               {% endblocktrans %}
                         </div>
                         <div>
-                          {% blocktrans with builder_chip='<a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer" class="tab-chip tab-chip-link tab-chip-external"><i class="material-icons">build</i> '|add:builder_label|add:'</a>'|safe %}
+                          {% blocktrans with builder_chip='<a target="_blank" href="https://appriseit.com/url-builder/" rel="nofollow noopener noreferrer" class="tab-chip tab-chip-link tab-chip-external"><i class="material-icons">build</i> '|add:builder_label|add:'</a>'|safe %}
               <i class="material-icons">lightbulb_outline</i>You can always refer to the
               {{ builder_chip }} if you're having troubles assembling your URL(s).
               {% endblocktrans %}
@@ -254,7 +254,7 @@
                     <pre><code class="bash">apprise --body=&quot;Test Message&quot; --tag=all \<br />
                &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
                   </div>
-                  {% blocktrans %}You may also create an <a href="https://appriseit.com/cli/usage/#default-configuration-locations" target="_blank" rel="noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+                  {% blocktrans %}You may also create an <a href="https://appriseit.com/cli/usage/#default-configuration-locations" target="_blank" rel="nofollow noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
                   <div class="code-snippet"
                        data-copy-text='include {{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
                        data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'>
@@ -365,7 +365,7 @@
                         <a href="https://appriseit.com/url-builder/"
                            target="_blank"
                            tabindex="-1"
-                           rel="noopener noreferrer"
+                           rel="nofollow noopener noreferrer"
                            title="{% trans "Apprise URL Builder" %}"
                            class="btn waves-effect waves-light config-url-builder-btn">
                           <span class="config-url-builder-btn-label">{% trans "Apprise URL Builder" %}</span>
@@ -555,6 +555,48 @@
                     </div>
                   </div>
                 </section>
+                {% if stateless_allowed or reminder_urls_allowed %}
+                  {# Apprise URLs to send to directly, as well as the services the Tags pick. #}
+                  {# Each row shows its URL with its passwords hidden until it is selected. #}
+                  <section class="notify-form-section notify-urls-section"
+                           aria-labelledby="notify-urls-title">
+                    <div class="notify-section-heading">
+                      <div class="notify-section-title">
+                        <i class="material-icons" aria-hidden="true">link</i>
+                        <div>
+                          <h6 id="notify-urls-title">{% trans "Apprise URLs" %}</h6>
+                          <p>
+                            {% blocktrans %}Optionally specify Apprise URLs directly to notify. <a href="https://appriseit.com/url-builder/" target="_blank" rel="nofollow noopener noreferrer">Click here</a> to get help constructing your URLs from the Apprise URL Builder.{% endblocktrans %}
+                          </p>
+                          {% if not stateless_allowed %}
+                            {# Send Notification skips them; only a saved reminder uses them. #}
+                            <p>{% trans "Stateless Mode is turned off on this server, so these URLs are only used by reminders." %}</p>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <button id="notify-url-add"
+                              class="btn-flat notify-template-add"
+                              type="button">
+                        <i class="material-icons" aria-hidden="true">add</i>
+                        <span>{% trans "Add URL" %}</span>
+                      </button>
+                    </div>
+                    <div id="notify-url-rows" class="notify-template-rows" aria-live="polite"></div>
+                    {% if not CONFIG_LOCK %}
+                      {# With URLs and no tags, whether the untagged services get it too. #}
+                      {# The same switch as the Review tab's filter. #}
+                      <label id="notify-url-untagged-field" class="notify-url-untagged" hidden>
+                        <span class="review-selected-filter">
+                          <input id="notify-url-untagged" type="checkbox">
+                          <span class="review-selected-filter-track" aria-hidden="true">
+                            <span class="review-selected-filter-knob"></span>
+                          </span>
+                        </span>
+                        <span>{% trans "Also send to untagged services" %}</span>
+                      </label>
+                    {% endif %}
+                  </section>
+                {% endif %}
                 <section class="notify-form-section notify-template-values"
                          aria-labelledby="notify-template-values-title">
                   <div class="notify-section-heading">
@@ -1388,6 +1430,7 @@
 
     // Reset standard fields back to defaults
     form.reset();
+    setNotifyUrls([], false);
 
     // Clear Materialize select UI, if present
     if (window.M) {
@@ -1645,14 +1688,23 @@
   }
 
   function update_count() {
-    const p_count = document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
+    // The services picked on the Review tab, plus the Apprise URLs entered.
+    const cards = document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
+    const p_count = cards + notifyUrlValues().length;
     document.querySelectorAll(".card-count").forEach(function (e) {
       e.textContent = e.dataset.countFormat === 'plain' ? `${p_count}` : `(${p_count})`;
     })
+    // The untagged box shows only while there are URLs and no tags.
+    const untaggedField = document.querySelector('#notify-url-untagged-field');
+    if (untaggedField) {
+      const chipElement = document.querySelector('#notify .chips');
+      const chips = chipElement ? M.Chips.getInstance(chipElement) : null;
+      untaggedField.hidden = !notifyUrlValues().length || Boolean(chips && chips.chipsData.length) || notifyConfigMissing;
+    }
     const reviewFilter = document.querySelector('#review-selected-filter-toggle');
     if (reviewFilter) {
-      reviewFilter.disabled = p_count === 0;
-      if (p_count === 0) {
+      reviewFilter.disabled = cards === 0;
+      if (cards === 0) {
         reviewFilter.checked = false;
       }
       applyReviewSelectedFilter();
@@ -2136,6 +2188,28 @@
     });
   }
 
+  // Finishes once the first load of the services and tags is done.
+  let notifyReady = null;
+  // No configuration is saved, so there are no tags or untagged services.
+  let notifyConfigMissing = false;
+
+  // Without a configuration, Apprise URLs can still be sent to and kept in
+  // reminders, so those tabs stay open with the tags greyed out.
+  function notifyWithoutConfig() {
+    notifyConfigMissing = true;
+    if (!document.querySelector('#notify-url-rows')) {
+      return;
+    }
+    const chipElement = document.querySelector('.chips');
+    M.Chips.init(chipElement, {placeholder: '{% trans "Optional Tag(s)" %}'});
+    chipElement.classList.add('notify-tags-unavailable');
+    chipElement.querySelectorAll('input').forEach(function (input) { input.disabled = true; });
+    document.querySelectorAll('.config-overview li a[href="#notify"], .config-overview li a[href="#reminders"]')
+      .forEach(function (tab) { tab.parentNode.classList.remove('disabled'); });
+    selectConfigTabFromHash();
+    update_count();
+  }
+
   async function main_init() {
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop),
@@ -2147,6 +2221,12 @@
       document.querySelector('#id_body').value = params.body;
     }
     {% if not CONFIG_LOCK %}
+    notifyConfigMissing = false;
+    const tagsField = document.querySelector('.chips');
+    if (tagsField) {
+      tagsField.classList.remove('notify-tags-unavailable');
+      tagsField.querySelectorAll('input').forEach(function (input) { input.disabled = false; });
+    }
     // disable the notification tab until we know for certain
     // a notification is possible
     // Reminders need the same configuration, so their tab follows along.
@@ -2172,6 +2252,7 @@
       // Take an early exit
       document.querySelector('#url-list-progress').style.display = 'none';
       document.querySelector('#url-list').textContent = ''
+      notifyWithoutConfig();
       leaveDisabledTab();
       return;
     } else if (jsonResponse.status != 200) {
@@ -2257,8 +2338,8 @@
           }
           setReviewChipSelected(e, false);
         })
-        if ($this.chipsData.length == 0) {
-          // last item
+        if ($this.chipsData.length == 0 && notifyIncludeUntagged()) {
+          // last item; untagged services are picked unless only URLs are sent to
           document.querySelectorAll(`#url-list li.card-panel:not(.url-item-disabled) .chip.chip-notag`).forEach(function (e) {
             if (!e.classList.contains('selected')) {
               e.classList.add('selected');
@@ -2569,7 +2650,8 @@
           // no tags were defined for this element
           chip.classList.add('chip-notag');
           chip.textContent = '🔖 {% trans "no-tag" %}';
-          if (chipInstance.chipsData.length === 0 && isEnabled) {
+          // With Apprise URLs entered, only when that box asks for them.
+          if (chipInstance.chipsData.length === 0 && isEnabled && notifyIncludeUntagged()) {
             chip.classList.add('selected');
             if (!li.classList.contains('selected')) {
               li.classList.add('selected');
@@ -2973,6 +3055,201 @@
     notifyUpdateAttachAdd();
   }
 
+  // The Apprise URLs the form sends to directly. Each field shows its URL
+  // with its passwords and tokens hidden, so it can be shown to anyone looking.
+  // The full URL is kept here, shown only while the field is being edited,
+  // and is what gets sent or saved.
+  const notifyUrlFull = new WeakMap();
+  let notifyUrlRowId = 0;
+
+  // The full URLs entered, in order, leaving out empty rows.
+  function notifyUrlValues() {
+    return Array.from(document.querySelectorAll('#notify-url-rows .notify-url')).map(function (input) {
+      return (notifyUrlFull.get(input) || '').trim();
+    }).filter(Boolean);
+  }
+
+  // Whether the untagged services are sent to as well: always without URLs,
+  // and with them only when that box is ticked.
+  function notifyIncludeUntagged() {
+    const box = document.querySelector('#notify-url-untagged');
+    return !notifyUrlValues().length || Boolean(box && box.checked && !notifyConfigMissing);
+  }
+
+  // Only the part before :// of a URL, for when the server cannot hide its passwords.
+  function notifyUrlSchema(url) {
+    return url.includes('://') ? url.split('://')[0] + '://...' : '...';
+  }
+
+  // Show why a URL cannot be used under its row; null clears it.
+  function notifyUrlError(input, message) {
+    const row = input.closest('.notify-url-row');
+    const old = row.nextElementSibling;
+    if (old && old.classList.contains('notify-url-error')) {
+      old.remove();
+    }
+    input.classList.toggle('invalid', Boolean(message));
+    if (message) {
+      const note = document.createElement('span');
+      note.className = 'notify-attach-error notify-url-error';
+      note.setAttribute('role', 'alert');
+      note.textContent = message;
+      row.after(note);
+    }
+  }
+
+  // Show each URL with its passwords hidden, asking the server once for them
+  // all; it also says whether each one can be used. A URL that can be used
+  // is kept as the server wrote it out, with every option filled in.
+  async function notifyMaskUrls(inputs) {
+    const pending = inputs.filter(function (input) {
+      if ((notifyUrlFull.get(input) || '').trim()) {
+        return true;
+      }
+      input.value = '';
+      notifyUrlError(input, null);
+      return false;
+    });
+    if (!pending.length) {
+      return;
+    }
+    const sent = pending.map(function (input) { return notifyUrlFull.get(input).trim(); });
+    let answers = null;
+    try {
+      const response = await appriseFetch('{% url "resolve" key %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify({urls: sent})
+      });
+      answers = response.ok ? (await response.json()).urls : null;
+    } catch (e) {
+      answers = null;
+    }
+    pending.forEach(function (input, index) {
+      // Leave a field being edited, or changed since it was asked about.
+      if (document.activeElement === input || (notifyUrlFull.get(input) || '').trim() !== sent[index]) {
+        return;
+      }
+      const answer = answers && answers[index];
+      if (answer && answer.valid) {
+        notifyUrlFull.set(input, answer.url);
+      }
+      input.value = answer && answer.valid ? answer.privacy_url : notifyUrlSchema(sent[index]);
+      notifyUrlError(input, answer && !answer.valid ? answer.error : null);
+    });
+  }
+
+  // Add URL waits until the last row is filled in, like Add Value.
+  function notifyUpdateUrlAdd() {
+    const add = document.querySelector('#notify-url-add');
+    const inputs = document.querySelectorAll('#notify-url-rows .notify-url');
+    const last = inputs[inputs.length - 1];
+    if (add) {
+      add.disabled = Boolean(last && !(notifyUrlFull.get(last) || '').trim());
+    }
+  }
+
+  // Add a row for one Apprise URL, with a button to remove it.
+  function addNotifyUrlRow(url) {
+    const container = document.querySelector('#notify-url-rows');
+    const row = document.createElement('div');
+    row.className = 'notify-template-row notify-url-row';
+
+    // The URL field, with a label that names it for screen readers.
+    const field = document.createElement('div');
+    field.className = 'notify-template-value-field';
+    const id = 'notify-url-' + String(notifyUrlRowId++);
+    const label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.textContent = '{% trans "Apprise URL" %}';
+    const input = document.createElement('input');
+    input.id = id;
+    input.className = 'notify-url';
+    input.type = 'text';
+    input.placeholder = 'schema://';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    appriseNoAutofill(input);
+    notifyUrlFull.set(input, url || '');
+    input.value = url ? notifyUrlSchema(url) : '';
+    // Selecting the field shows the full URL; leaving it hides the passwords again.
+    input.addEventListener('focus', function () {
+      input.value = notifyUrlFull.get(input) || '';
+    });
+    input.addEventListener('blur', function () {
+      notifyMaskUrls([input]);
+    });
+    input.addEventListener('input', function () {
+      notifyUrlFull.set(input, input.value);
+      notifyUrlError(input, null);
+      notifyUpdateUrlAdd();
+      notifySyncUntagged();
+    });
+    input.addEventListener('keydown', function (e) {
+      // Enter here must not send the form.
+      if (e.key === 'Enter' && !e.isComposing) {
+        e.preventDefault();
+      }
+    });
+    field.appendChild(label);
+    field.appendChild(input);
+
+    // Remove drops the row.
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn-flat notify-template-remove';
+    remove.setAttribute('aria-label', '{% trans "Remove URL" %}');
+    remove.setAttribute('title', '{% trans "Remove URL" %}');
+    remove.innerHTML = '<i class="material-icons" aria-hidden="true">delete</i>';
+    remove.addEventListener('click', function () {
+      notifyUrlError(input, null);
+      row.remove();
+      notifyUpdateUrlAdd();
+      notifySyncUntagged();
+    });
+
+    row.appendChild(field);
+    row.appendChild(remove);
+    container.appendChild(row);
+    notifyUpdateUrlAdd();
+    return input;
+  }
+
+  // Replace every URL row, such as when a saved reminder is loaded.
+  // - untagged: tick the box that also sends to untagged services.
+  function setNotifyUrls(urls, untagged) {
+    const container = document.querySelector('#notify-url-rows');
+    if (!container) {
+      return;
+    }
+    container.querySelectorAll('.notify-url').forEach(function (input) { notifyUrlError(input, null); });
+    container.replaceChildren();
+    const box = document.querySelector('#notify-url-untagged');
+    if (box) {
+      box.checked = Boolean(untagged);
+    }
+    notifyMaskUrls((urls || []).map(addNotifyUrlRow));
+    notifyUpdateUrlAdd();
+    notifySyncUntagged();
+  }
+
+  // With no tag chosen, mark the untagged services on the Review tab as
+  // picked or not, then refresh the counts. A chosen tag picks them itself.
+  function notifySyncUntagged() {
+    const chipElement = document.querySelector('#notify .chips');
+    const chips = chipElement ? M.Chips.getInstance(chipElement) : null;
+    if (chips && !chips.chipsData.length) {
+      const on = notifyIncludeUntagged();
+      document.querySelectorAll('#url-list li.card-panel:not(.url-item-disabled) .chip.chip-notag').forEach(function (chip) {
+        chip.classList.toggle('selected', on);
+        const card = chip.closest('li.card-panel');
+        card.classList.toggle('selected', on);
+        updateCardSelectedIcon(card);
+      });
+    }
+    update_count();
+  }
+
   // Download a web address through the server, the same way a send would,
   // and show what came back: the file, or why it could not be fetched.
   async function notifyPreviewAttachment(url) {
@@ -3100,9 +3377,10 @@
     // Locked configurations hide their destinations, so tags select targets.
     const chipElement = document.querySelector('#notify .chips');
     const chipInstance = chipElement ? M.Chips.getInstance(chipElement) : null;
-    return chipInstance ? chipInstance.chipsData.length : 0;
+    return (chipInstance ? chipInstance.chipsData.length : 0) + notifyUrlValues().length;
     {% else %}
-    return document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length;
+    return document.querySelectorAll('#url-list li.card-panel.selected:not(.url-item-disabled)').length
+      + notifyUrlValues().length;
     {% endif %}
   }
 
@@ -3217,6 +3495,16 @@
     document.querySelector('#notify-attach-add').addEventListener('click', function () {
       addNotifyAttachmentRow(null).focus();
     });
+    const urlAdd = document.querySelector('#notify-url-add');
+    if (urlAdd) {
+      urlAdd.addEventListener('click', function () {
+        addNotifyUrlRow('').focus();
+      });
+    }
+    const untaggedBox = document.querySelector('#notify-url-untagged');
+    if (untaggedBox) {
+      untaggedBox.addEventListener('change', notifySyncUntagged);
+    }
 
     // Clicking the visible button opens the hidden file input
     browseBtn.addEventListener('click', function (e) {
@@ -3230,6 +3518,10 @@
         e.preventDefault();
         resetNotifyForm();
         clearNotifyMinimumMissing();
+        // The Reminder section, where offered, fills in a fresh start time and timezone.
+        if (typeof window.__appriseReminderFormCleared === 'function') {
+          window.__appriseReminderFormCleared();
+        }
       });
     }
 
@@ -3377,6 +3669,12 @@
       if (!notifyCheckAttachmentUrls()) {
         return false;
       }
+      // A URL the server could not read is fixed before sending.
+      const badUrl = document.querySelector('#notify-url-rows .notify-url.invalid');
+      if (badUrl) {
+        badUrl.focus();
+        return false;
+      }
       const hasAttachment = notifyHasAttachments(false);
 
       // Minimum payload gate: allow body-only OR attachment-only.
@@ -3396,46 +3694,80 @@
 
       // our Form Handling
       const rawForm = this;
-      const form = new FormData();
+      // The fields of one send; the tag is left out of a send to URLs.
+      function notifyFormData(withTag) {
+        const form = new FormData();
 
-      // Copy all non-file fields into our FormData
-      Array.from(rawForm.elements).forEach(function (el) {
-        if (!el.name || el.type === 'file') {
-          return;
-        }
-        if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) {
-          return;
-        }
-        form.append(el.name, el.value);
-     });
-
-      // Template values share the same form shape as API clients.
-      templateValues.forEach(function (entry) {
-        form.append('template[' + entry.name + ']', entry.value);
-      });
-
-      // Attach files from our notifyAttachments buffer
-      // Each file is sent under the "attachment" field name, which
-      // matches the NotifyForm FileField and what the view expects.
-      if (notifyAttachments.length > 0) {
-        notifyAttachments.forEach(function (file) {
-          form.append('attachment', file, file.name);
+        // Copy all non-file fields into our FormData
+        Array.from(rawForm.elements).forEach(function (el) {
+          if (!el.name || el.type === 'file' || (el.name === 'tag' && !withTag)) {
+            return;
+          }
+          if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) {
+            return;
+          }
+          form.append(el.name, el.value);
         });
+
+        // Template values share the same form shape as API clients.
+        templateValues.forEach(function (entry) {
+          form.append('template[' + entry.name + ']', entry.value);
+        });
+
+        // Attach files from our notifyAttachments buffer
+        // Each file is sent under the "attachment" field name, which
+        // matches the NotifyForm FileField and what the view expects.
+        if (notifyAttachments.length > 0) {
+          notifyAttachments.forEach(function (file) {
+            form.append('attachment', file, file.name);
+          });
+        }
+
+        // Web addresses go as text, so the server downloads them now.
+        notifyAttachmentUrls().forEach(function (entry) {
+          form.append('attach', entry.url);
+        });
+        return form;
       }
 
-      // Web addresses go as text, so the server downloads them now.
-      notifyAttachmentUrls().forEach(function (entry) {
-        form.append('attach', entry.url);
-      });
+      // The services the tags pick go through this Config ID, the same as
+      // /notify/{KEY}; with no tag, that is the untagged ones, unless only
+      // the URLs entered are sent to. Those go through stateless /notify,
+      // with this Config ID only saying who is asking.
+      const urls = notifyUrlValues();
+      const chipElement = document.querySelector('#notify .chips');
+      const chips = chipElement ? M.Chips.getInstance(chipElement) : null;
+      const tagged = Boolean(chips && chips.chipsData.length);
+      const requests = [];
+      if (tagged || {% if CONFIG_LOCK %}!urls.length{% else %}notifyIncludeUntagged(){% endif %}) {
+        requests.push({
+          url: '{% url "notify" key %}',
+          options: {method: 'POST', body: notifyFormData(true), headers: {'X-Apprise-Log-Level': 'info'}}
+        });
+      }
+      {% if stateless_allowed %}
+      if (urls.length) {
+        const form = notifyFormData(false);
+        form.append('urls', urls.join('\n'));
+        requests.push({
+          url: '{% url "s_notify" %}',
+          options: {method: 'POST', body: form, headers: {'X-Apprise-Log-Level': 'info', 'X-Apprise-Config-ID': '{{ key }}'}}
+        });
+      }
+      {% else %}
+      // Without stateless mode the URLs are skipped; with nothing else, say why.
+      if (!requests.length) {
+        appriseFire({
+          title: '{% trans "Notification" %}',
+          html: '{% trans "Stateless Mode is turned off on this server, so these URLs are only used by reminders." %}',
+          icon: 'warning'
+        });
+        return false;
+      }
+      {% endif %}
 
       // POST to the SSE endpoint and append log events as they arrive.
-      sendNotifyStream('{% url "notify" key %}', {
-        method: 'POST',
-        body: form,
-        headers: {
-          'X-Apprise-Log-Level': 'info'
-        }
-      }, {
+      sendNotifyStreams(requests, {
         title: '{% trans "Notification" %}',
         responseTitle: '{% trans "Delivery Response" %}',
         sending: '{% trans "Sending notification(s)…" %}',
@@ -3495,7 +3827,7 @@
     });
   }
   /* Initialize our page */
-  main_init();
+  notifyReady = main_init();
   // Attach copy buttons to code snippets in the overview
   document.querySelectorAll('.code-snippet').forEach(function (snippet) {
     // Avoid adding the button twice if main_init runs again

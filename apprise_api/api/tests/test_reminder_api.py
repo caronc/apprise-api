@@ -27,6 +27,7 @@ import hashlib
 from json import dumps, loads
 import os
 import re
+import sys
 import time
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
@@ -42,7 +43,7 @@ from django.test.utils import override_settings
 
 from ..schedule import HOLIDAY_YEARS
 from ..utils import ConfigCache
-from ..views import REMINDER_DAYS
+from ..views import REMINDER_DAYS, REMINDER_PREVIEW_MAX
 from .helpers import notify_result
 
 
@@ -99,6 +100,37 @@ class ReminderTestCase(SimpleTestCase):
 
 class ReminderCrudTests(ReminderTestCase):
     """Add, list, change and remove reminders."""
+
+    def test_a_new_time_forgets_how_the_last_send_went(self):
+        """Moving a reminder to a new time clears its last result; other changes keep it."""
+        rid = loads(self.add().content)["reminder"]["id"]
+        with ConfigCache.reminder_guard():
+            events = self.stored()
+            events[0]["last"] = {"at": int(time.time()), "ok": False}
+            self.assertTrue(ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), events))
+
+        path = f"/reminder/{self.key}/{rid}/"
+        changed = loads(self.send("patch", path, {"name": "Renamed"}).content)["reminder"]
+        self.assertFalse(changed["last"]["ok"])
+        moved = loads(self.send("patch", path, {"when": {"tz": "Etc/UTC", "cron": "0 0 10"}}).content)["reminder"]
+        self.assertIsNone(moved["last"])
+
+    def test_last_result_can_be_cleared(self):
+        """Sending last as null forgets how the last send went; any other value is refused."""
+        rid = loads(self.add().content)["reminder"]["id"]
+        with ConfigCache.reminder_guard():
+            events = self.stored()
+            events[0]["last"] = {"at": int(time.time()), "ok": False}
+            self.assertTrue(ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), events))
+
+        path = f"/reminder/{self.key}/{rid}/"
+        response = self.send("patch", path, {"last": {"ok": True}})
+        self.assertEqual(loads(response.content)["field"], "last")
+        self.assertFalse(self.stored()[0]["last"]["ok"])
+
+        cleared = loads(self.send("patch", path, {"last": None}).content)["reminder"]
+        self.assertIsNone(cleared["last"])
+        self.assertEqual(cleared["name"], _DAILY["name"])
 
     def test_reminder_round_trip(self):
         """A reminder is added, listed, read, changed and removed."""
@@ -227,9 +259,11 @@ class ReminderCrudTests(ReminderTestCase):
         self.assertEqual(self.send("post", f"/reminder/{self.key}/limits/", {"reminders": 500}).status_code, 403)
 
     def test_missing_configuration(self):
-        """A reminder needs a saved configuration to send through."""
+        """A reminder needs a saved configuration, unless it is sent to its own URLs alone."""
         ConfigCache.clear(self.key)
         self.assertEqual(self.add().status_code, 404)
+        self.assertEqual(self.add({**_DAILY, "urls": ["json://one.example"], "tag": None}).status_code, 404)
+        self.assertEqual(self.add({**_DAILY, "urls": ["json://one.example"]}).status_code, 200)
 
         with patch("api.views.ConfigCache.get", return_value=(None, None)):
             self.assertEqual(self.add().status_code, 500)
@@ -277,11 +311,366 @@ class ReminderCrudTests(ReminderTestCase):
                 self.assertNotIn("reminders_enabled", status)
 
 
+class ReminderUrlTests(ReminderTestCase):
+    """A reminder may send to its own Apprise URLs instead of the configuration's."""
+
+    def test_reminder_keeps_its_own_urls(self):
+        """URLs are taken as one string or a list, and null or empty means none."""
+        added = loads(self.add({**_DAILY, "urls": "json://one.example, json://two.example"}).content)["reminder"]
+        self.assertEqual(added["urls"], ["json://one.example", "json://two.example"])
+
+        path = f"/reminder/{self.key}/{added['id']}/"
+        changed = loads(self.send("patch", path, {"urls": ["json://three.example"]}).content)["reminder"]
+        self.assertEqual(changed["urls"], ["json://three.example"])
+
+        # Left out of a PATCH keeps them; null removes them
+        self.assertEqual(loads(self.send("patch", path, {"name": "x"}).content)["reminder"]["urls"], changed["urls"])
+        self.assertIsNone(loads(self.send("patch", path, {"urls": None}).content)["reminder"]["urls"])
+
+        for empty in ("", " ", []):
+            self.assertIsNone(loads(self.add({**_DAILY, "urls": empty}).content)["reminder"]["urls"])
+
+        # Left out entirely, there are none
+        self.assertIsNone(loads(self.add().content)["reminder"]["urls"])
+
+    def test_url_ids_name_each_url_the_way_json_urls_does(self):
+        """Every read lists one ID per URL, the same ID a configuration gives that URL."""
+        first, second = "json://user:hunter2@one.example?x=1", "json://two.example"
+        added = loads(self.add({**_DAILY, "urls": [first, second]}).content)["reminder"]
+        path = f"/reminder/{self.key}/{added['id']}/"
+        expected = [apprise.Apprise.instantiate(url).url_id() for url in (first, second)]
+
+        self.assertEqual(added["url_ids"], expected)
+        self.assertEqual(loads(self.client.get(path).content)["reminder"]["url_ids"], expected)
+        self.assertEqual(loads(self.client.get(f"{path}?privacy=yes").content)["reminder"]["url_ids"], expected)
+        # Options don't change the ID, as in a configuration
+        self.assertEqual(apprise.Apprise.instantiate("json://user:hunter2@one.example?x=2").url_id(), expected[0])
+        # Never stored: it is worked out on each read
+        self.assertNotIn("url_ids", self.stored()[0])
+
+        # A URL Apprise can't identify still gets one, made from the URL
+        with patch("api.views.apprise.Apprise.instantiate", return_value=None):
+            fallback = loads(self.client.get(path).content)["reminder"]["url_ids"]
+        self.assertEqual(fallback[0], hashlib.sha256(first.encode("utf-8")).hexdigest()[:8])
+
+    def test_urls_can_be_kept_by_their_id(self):
+        """An edit can keep URLs it only knows hidden, by ID, beside new ones."""
+        first, second = "json://user:hunter2@one.example", "json://two.example"
+        added = loads(self.add({**_DAILY, "urls": [first, second]}).content)["reminder"]
+        path = f"/reminder/{self.key}/{added['id']}/"
+        first_id, second_id = added["url_ids"]
+
+        response = self.send("patch", path, {"urls": [f"@{second_id}", "json://three.example"]})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(self.stored()[0]["urls"], [second, "json://three.example"])
+
+        # Kept alone, they are saved again as they are
+        self.assertEqual(self.send("patch", path, {"urls": [f"@{second_id}"]}).status_code, 200)
+        self.assertEqual(self.stored()[0]["urls"], [second])
+
+        # An ID it doesn't hold (here, the URL just dropped) is refused
+        response = self.send("patch", path, {"urls": [f"@{first_id}"]})
+        self.assertEqual((response.status_code, loads(response.content)["field"]), (400, "urls"))
+        response = self.add({**_DAILY, "urls": ["@00000000"]})
+        self.assertEqual((response.status_code, loads(response.content)["field"]), (400, "urls"))
+
+        # A new reminder (a copy, say) may keep URLs another reminder here holds
+        copied = self.add({**_DAILY, "urls": [f"@{second_id}"]})
+        self.assertEqual(copied.status_code, 200, copied.content)
+        self.assertEqual(self.stored()[1]["urls"], [second])
+
+    def test_kept_urls_are_not_checked_again(self):
+        """A URL the reminder already holds stays, even if a newly added one is checked."""
+        kept = "json://one.example"
+        added = loads(self.add({**_DAILY, "urls": [kept]}).content)["reminder"]
+        path = f"/reminder/{self.key}/{added['id']}/"
+
+        checked = []
+        real_add = apprise.Apprise.add
+
+        def add(self, url, *args, **kwargs):
+            checked.append(url)
+            return real_add(self, url, *args, **kwargs)
+
+        with patch("api.views.apprise.Apprise.add", add):
+            response = self.send("patch", path, {"urls": [f"@{added['url_ids'][0]}", "json://two.example"]})
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertIn("json://two.example", checked)
+        self.assertNotIn(kept, checked)
+
+    def test_privacy_hides_url_secrets(self):
+        """With ?privacy=yes, every read and save shows the URLs with their secrets hidden."""
+        secret = "json://user:hunter2@one.example"
+        added = loads(self.add({**_DAILY, "urls": secret}).content)["reminder"]
+        path = f"/reminder/{self.key}/{added['id']}/"
+
+        # Without privacy the URL comes back as saved
+        self.assertEqual(loads(self.client.get(path).content)["reminder"]["urls"], [secret])
+
+        reads = (
+            loads(self.client.get(f"{path}?privacy=yes").content)["reminder"],
+            loads(self.client.get(f"/reminder/{self.key}/?privacy=yes").content)["reminders"][0],
+            loads(self.send("patch", f"{path}?privacy=yes", {"name": "x"}).content)["reminder"],
+        )
+        for reminder in reads:
+            self.assertEqual(len(reminder["urls"]), 1)
+            self.assertNotIn("hunter2", reminder["urls"][0])
+            self.assertTrue(reminder["urls"][0].startswith("json://"))
+
+        # Hiding them for one answer never changes what is stored
+        self.assertEqual(loads(self.client.get(path).content)["reminder"]["urls"], [secret])
+
+        # A URL that no longer loads shows only its schema
+        with patch("api.views.apprise.Apprise.instantiate", return_value=None):
+            self.assertEqual(loads(self.client.get(f"{path}?privacy=yes").content)["reminder"]["urls"], ["json://"])
+
+        # A reminder without URLs is returned as it is
+        self.add()
+        reminders = loads(self.client.get(f"/reminder/{self.key}/?privacy=yes").content)["reminders"]
+        self.assertIsNone(reminders[1]["urls"])
+
+    def test_reminder_urls_are_checked(self):
+        """Unusable URLs, too many or none allowed are refused under the urls field."""
+        for urls in (5, ["json://one.example", 5], "nope://nothing", ["json://one.example", "nope://"]):
+            response = self.add({**_DAILY, "urls": urls})
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(loads(response.content)["field"], "urls")
+
+        with override_settings(APPRISE_REMINDER_URLS_MAX=2):
+            self.assertEqual(self.add({**_DAILY, "urls": "json://a json://b"}).status_code, 200)
+            response = self.add({**_DAILY, "urls": "json://a json://b json://c"})
+            self.assertEqual(loads(response.content)["field"], "urls")
+
+        with override_settings(APPRISE_REMINDER_URLS_MAX=0):
+            response = self.add({**_DAILY, "urls": "json://a"})
+            self.assertEqual(loads(response.content)["field"], "urls")
+            # Nothing to save is still fine
+            self.assertEqual(self.add({**_DAILY, "urls": []}).status_code, 200)
+
+        # Services the server denies are refused too
+        try:
+            with override_settings(APPRISE_DENY_SERVICES="json"):
+                self.assertEqual(loads(self.add({**_DAILY, "urls": "json://a"}).content)["field"], "urls")
+
+        finally:
+            # Denied services stay off until turned back on
+            apprise.manager_plugins.NotificationManager()["json"].enabled = True
+
+    def test_reminder_needs_a_service_to_send_to(self):
+        """A reminder must reach a service through its tag or its own URLs."""
+        # The configuration only has untagged URLs, so a tag picks nothing
+        response = self.add({**_DAILY, "tag": "nope"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(loads(response.content)["field"], "tag")
+
+        # Every URL of this configuration is tagged, so a reminder without a tag picks none
+        self.assertTrue(ConfigCache.put(self.key, "ops=json://localhost", "text"))
+        self.assertEqual(loads(self.add().content)["field"], "urls")
+        self.assertEqual(self.add({**_DAILY, "tag": "ops"}).status_code, 200)
+        added = loads(self.add({**_DAILY, "urls": "json://one.example"}).content)["reminder"]
+
+        # Nor may a change leave it with nothing
+        path = f"/reminder/{self.key}/{added['id']}/"
+        self.assertEqual(loads(self.send("patch", path, {"urls": None}).content)["field"], "urls")
+
+    def test_tag_and_urls_work_together(self):
+        """Tag, urls or both may be given; a null or empty tag beside urls adds the untagged URLs."""
+        self.assertTrue(ConfigCache.put(self.key, "ops=json://localhost", "text"))
+        url = "json://one.example"
+        empty_tags = ({"tag": None}, {"tag": []}, {"tag": [[]]}, {"tag": ["", []]}, {"tags": []}, {"tags": None})
+        no_urls = ({}, {"urls": None}, {"urls": []}, {"urls": ""}, {"urls": ["", " "]})
+        for empty_tag in ({}, *empty_tags):
+            for empty_urls in no_urls:
+                case = {**empty_tag, **empty_urls}
+                # Neither: this configuration has only tagged URLs, so nothing is reached
+                response = self.add({**_DAILY, **case})
+                self.assertEqual(response.status_code, 400, case)
+                self.assertEqual(loads(response.content)["field"], "urls", case)
+
+                # Only a tag
+                event = loads(self.add({**_DAILY, **empty_urls, "tag": ["ops"]}).content)["reminder"]
+                self.assertEqual((event["tag"], event["urls"]), ("ops", None), case)
+
+        # URLs with no tag at all send to them alone
+        event = loads(self.add({**_DAILY, "urls": [url]}).content)["reminder"]
+        self.assertEqual((event["tag"], event["urls"]), (None, [url]))
+
+        # URLs with a null or empty tag also send to the untagged URLs, saved as ""
+        for empty_tag in empty_tags:
+            event = loads(self.add({**_DAILY, **empty_tag, "urls": [url]}).content)["reminder"]
+            self.assertEqual((event["tag"], event["urls"]), ("", [url]), empty_tag)
+
+        # Both, however the tag is given
+        for response in (
+            self.add({**_DAILY, "tag": "ops", "urls": url}),
+            self.add({**_DAILY, "tags": ["ops"], "urls": [url]}),
+            self.add({**_DAILY, "urls": url}, headers={"X-Apprise-Tag": "ops"}),
+            self.send("post", f"/reminder/{self.key}/?tag=ops", {**_DAILY, "urls": url}),
+        ):
+            event = loads(response.content)["reminder"]
+            self.assertEqual((event["tag"], event["urls"]), ("ops", [url]))
+
+        # A PATCH keeps how it was saved unless the tag is sent
+        alone = loads(self.add({**_DAILY, "urls": url}).content)["reminder"]
+        untagged = loads(self.add({**_DAILY, "urls": url, "tag": None}).content)["reminder"]
+        for event, tag in ((alone, None), (untagged, "")):
+            path = f"/reminder/{self.key}/{event['id']}/"
+            self.assertEqual(loads(self.send("patch", path, {"name": "x"}).content)["reminder"]["tag"], tag)
+
+        path = f"/reminder/{self.key}/{alone['id']}/"
+        self.assertEqual(loads(self.send("patch", path, {"tag": []}).content)["reminder"]["tag"], "")
+        self.assertEqual(loads(self.send("patch", path, {"tag": "ops"}).content)["reminder"]["tag"], "ops")
+
+        # Anything else is refused as before
+        for bad, field in (({"tag": 5}, "tag"), ({"tag": [5]}, "tag"), ({"tag": [[5]]}, "tag"), ({"urls": {}}, "urls")):
+            response = self.add({**_DAILY, "urls": url, **bad})
+            self.assertEqual(loads(response.content)["field"], field, bad)
+
+    def test_reminder_urls_do_not_need_stateless_mode(self):
+        """Reminders hold URLs whatever the stateless mode; only the URL limit turns them off."""
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            self.assertEqual(self.add({**_DAILY, "urls": "json://one.example"}).status_code, 200)
+            status = loads(self.client.get("/status", headers={"Accept": "application/json"}).content)
+            self.assertEqual(status["reminder_urls_max"], 100)
+
+        with override_settings(APPRISE_REMINDER_URLS_MAX=0):
+            response = self.add({**_DAILY, "urls": "json://one.example"})
+            self.assertEqual(loads(response.content)["field"], "urls")
+
+    def test_saved_urls_stay_editable_once_turned_off(self):
+        """A reminder keeps the URLs it has when they are turned off, but takes no new ones."""
+        rid = loads(self.add({**_DAILY, "urls": ["json://one.example"]}).content)["reminder"]["id"]
+        path = f"/reminder/{self.key}/{rid}/"
+        with override_settings(APPRISE_REMINDER_URLS_MAX=0):
+            # It can still be paused, changed and saved whole
+            self.assertEqual(self.send("patch", path, {"enabled": False}).status_code, 200)
+            self.assertEqual(self.send("patch", path, {"name": "Renamed"}).status_code, 200)
+            self.assertEqual(self.send("put", path, {**_DAILY, "urls": ["json://one.example"]}).status_code, 200)
+            # A different URL is refused
+            response = self.send("patch", path, {"urls": ["json://two.example"]})
+            self.assertEqual(loads(response.content)["field"], "urls")
+
+        self.assertEqual(self.stored()[0]["urls"], ["json://one.example"])
+
+    def test_targets_are_checked_again_while_saving(self):
+        """A change saved meanwhile cannot leave a reminder with nowhere to send."""
+        self.assertTrue(ConfigCache.put(self.key, "ops=json://localhost", "text"))
+        rid = loads(self.add({**_DAILY, "urls": ["json://one.example"]}).content)["reminder"]["id"]
+
+        # The check before the lock passes, as if another save had not landed yet
+        real = sys.modules["api.views"]._reminder_targets_missing
+        calls = []
+
+        def first_passes(*args):
+            calls.append(args)
+            return None if len(calls) == 1 else real(*args)
+
+        with patch("api.views._reminder_targets_missing", side_effect=first_passes):
+            response = self.send("patch", f"/reminder/{self.key}/{rid}/", {"urls": None})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(self.stored()[0]["urls"], ["json://one.example"])
+
+    def test_a_configuration_gone_meanwhile_is_left_to_the_save(self):
+        """A change made while the configuration cannot be read is not refused for having no services."""
+        rid = loads(self.add().content)["reminder"]["id"]
+        with patch("api.views.ConfigCache.get", return_value=(None, None)):
+            response = self.send("patch", f"/reminder/{self.key}/{rid}/", {"name": "x"})
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_status_reports_how_many_urls_a_reminder_may_hold(self):
+        """/status says how many URLs a reminder may hold, 0 when none."""
+        for limit in (100, 0):
+            with override_settings(APPRISE_REMINDER_URLS_MAX=limit):
+                status = loads(self.client.get("/status", headers={"Accept": "application/json"}).content)
+                self.assertEqual(status["reminder_urls_max"], limit)
+
+        with override_settings(APPRISE_REMINDER_ENABLED=False):
+            status = loads(self.client.get("/status", headers={"Accept": "application/json"}).content)
+            self.assertNotIn("reminder_urls_max", status)
+
+
+class ReminderDefaultTests(ReminderTestCase):
+    """Only the body and when are needed; null is the same as leaving a field out."""
+
+    def test_smallest_reminder(self):
+        """A body and a time are all a reminder needs."""
+        response = self.add({"body": "Hi", "when": {"at": "2099-01-01"}})
+        self.assertEqual(response.status_code, 200)
+        added = loads(response.content)["reminder"]
+        self.assertEqual(added["name"], "Hi")
+        self.assertEqual(added["when"], {"tz": settings.TIME_ZONE, "at": "2099-01-01T00:00:00"})
+
+    def test_null_fields_take_their_defaults(self):
+        """Every field set to null is saved as if it were left out."""
+        nulls = dict.fromkeys(
+            (
+                "name",
+                "title",
+                "type",
+                "format",
+                "tag",
+                "tags",
+                "template",
+                "enabled",
+                "start",
+                "until",
+                "count",
+                "skip",
+                "attach",
+                "urls",
+                "series",
+                "occurrence",
+            )
+        )
+        when = {"at": "2099-01-01", "tz": None, "drift": None, "isc": None, "every": None, "cron": None}
+        response = self.add({**nulls, "body": "Hi", "when": when})
+        self.assertEqual(response.status_code, 200)
+        added = loads(response.content)["reminder"]
+        expected = loads(self.add({"body": "Hi", "when": {"at": "2099-01-01"}}).content)["reminder"]
+        for field in ("id", "created", "updated"):
+            added.pop(field)
+            expected.pop(field)
+
+        self.assertEqual(added, expected)
+
+        # Empty lists and objects are the same as leaving them out
+        empties = {"tag": [], "tags": [], "template": {}, "attach": [], "skip": [], "urls": [], "name": ""}
+        added = loads(self.add({**empties, "body": "Hi", "when": {"at": "2099-01-01"}}).content)["reminder"]
+        for field in ("id", "created", "updated"):
+            added.pop(field)
+
+        self.assertEqual(added, expected)
+        self.assertEqual(added["type"], "info")
+        self.assertEqual(added["format"], settings.APPRISE_DEFAULT_FORMAT)
+        self.assertIs(added["enabled"], True)
+
+        # Inside a repeating rule too
+        every = {"at": "2099-01-01", "every": {"unit": "days", "interval": None, "days": None, "months": None}}
+        self.assertEqual(self.add({"body": "Hi", "when": every}).status_code, 200)
+        every["every"].update({"days": [], "months": []})
+        self.assertEqual(self.add({"body": "Hi", "when": every}).status_code, 200)
+
+    def test_patch_null_puts_back_the_default(self):
+        """A PATCH setting a field to null puts back its default; leaving it out keeps it."""
+        added = loads(self.add({**_DAILY, "until": "2099-01-01", "count": 3, "enabled": False}).content)["reminder"]
+        path = f"/reminder/{self.key}/{added['id']}/"
+        kept = loads(self.send("patch", path, {"title": "x"}).content)["reminder"]
+        self.assertEqual((kept["until"], kept["count"], kept["enabled"]), ("2099-01-01T00:00:00", 3, False))
+
+        reset = loads(self.send("patch", path, {"until": None, "count": None, "enabled": None}).content)["reminder"]
+        self.assertEqual((reset["until"], reset["count"], reset["enabled"]), (None, None, True))
+
+
 class ReminderNotifyFieldTests(ReminderTestCase):
     """Reminders read their message fields the same way /notify does."""
 
     def test_names_and_aliases_match_notify(self):
         """The same field names and aliases as /notify are accepted."""
+        self.assertTrue(ConfigCache.put(self.key, "json://localhost\nme=json://localhost", "text"))
         payload = {"body": "Rent is due\nPay it", "tags": [["home", "bills"], "me"], "when": _DAILY["when"]}
         event = loads(self.add(payload).content)["reminder"]
         # Without a name, the first line of the message names it
@@ -300,6 +689,7 @@ class ReminderNotifyFieldTests(ReminderTestCase):
 
     def test_headers_and_query_fill_in_like_notify(self):
         """X-Apprise-* headers, then the query string, fill in what the payload left out."""
+        self.assertTrue(ConfigCache.put(self.key, "ops=json://localhost", "text"))
         path = f"/reminder/{self.key}/?format=markdown&tag=ops"
         payload = {"body": "Hi", "when": _DAILY["when"]}
         headers = {"X-Apprise-Title": "Heads up", "X-Apprise-Template": "room=ops"}
@@ -469,12 +859,13 @@ class ReminderValidationTests(ReminderTestCase):
             self.assertEqual(loads(response.content)["field"], "when")
 
     def test_repeating_rule_without_a_start_counts_from_now(self):
-        """An every rule with no time starts at its start, or else when it is saved."""
+        """An every rule with no time starts at its start, or else the minute it is saved."""
         every = {**_DAILY, "when": {"tz": "Etc/UTC", "every": {"unit": "days"}}}
         before = int(time.time())
         stored = loads(self.add(every).content)["reminder"]
         anchor = datetime.fromisoformat(stored["when"]["at"]).replace(tzinfo=UTC).timestamp()
-        self.assertLessEqual(abs(anchor - before), 5)
+        self.assertLessEqual(abs(anchor - before), 65)
+        self.assertEqual(datetime.fromisoformat(stored["when"]["at"]).second, 0)
 
         stored = loads(self.add({**every, "start": "2099-03-04 05:06"}).content)["reminder"]
         self.assertEqual(stored["when"]["at"], "2099-03-04T05:06:00")
@@ -498,7 +889,6 @@ class ReminderValidationTests(ReminderTestCase):
             ({"format": 5}, "format"),
             ({"tag": "bad tag!"}, "tag"),
             ({"tag": ["ok", 5]}, "tag"),
-            ({"tag": [[]]}, "tag"),
             ({"tag": 5}, "tag"),
             ({"enabled": "yes"}, "enabled"),
             ({"when": "tomorrow"}, "when"),
@@ -573,6 +963,7 @@ class ReminderValidationTests(ReminderTestCase):
 
     def test_values_are_tidied(self):
         """Lists of tags, empty formats and crontab layouts are stored plainly."""
+        self.assertTrue(ConfigCache.put(self.key, "json://localhost\nops=json://localhost", "text"))
         event = loads(
             self.add(
                 {
@@ -1439,6 +1830,20 @@ class ReminderLimitsTests(ReminderTestCase):
         response = self.client.post(f"/reminder/{self.key}/limits/", data={"reminders": 3}, headers=_MASTER)
         self.assertEqual(response.status_code, 400)
 
+    @override_settings(APPRISE_REMINDER_USER_MIN_INTERVAL=60, TIME_ZONE="America/Toronto")
+    def test_limits_list_the_reminder_rules(self):
+        """The rules a reminder must follow are listed beside the limits."""
+        rules = loads(self.limits(headers=_USER).content)["rules"]
+        self.assertEqual(rules["min_interval"], 60)
+        self.assertEqual((rules["drift_min"], rules["drift_max"]), (DRIFT_MIN, DRIFT_MAX))
+        self.assertEqual(rules["timezone"], "America/Toronto")
+        self.assertEqual(rules["preview_max"], REMINDER_PREVIEW_MAX)
+        self.assertEqual(rules["urls_max"], 100)
+        self.assertGreaterEqual(rules["holiday_last_year"], datetime.now(UTC).year + HOLIDAY_YEARS - 2)
+
+        # The administrator may repeat as often as they like
+        self.assertEqual(loads(self.limits().content)["rules"]["min_interval"], 0)
+
     def test_reminder_count_limit(self):
         """The user is held to the server default, or to the configuration's own limit."""
         with override_settings(APPRISE_REMINDER_MAX=1):
@@ -1779,6 +2184,30 @@ class ReminderIntervalTests(ReminderTestCase):
         self.assertEqual(self.send("patch", path, self.every(2, "minutes"), headers=_USER).status_code, 200)
         self.assertEqual(self.send("patch", path, self.every(20), headers=_USER).status_code, 400)
 
+    def preview(self, interval, headers, rid=None):
+        """Return the preview for a rule repeating every ``interval`` seconds."""
+        query = f"tz=Etc/UTC&at=2099-01-01T09:00:00&every=seconds&interval={interval}"
+        if rid:
+            query += f"&id={rid}"
+        return self.client.get(
+            f"/reminder/{self.key}/preview/?{query}", headers={"Accept": "application/json", **headers}
+        )
+
+    def test_preview_refuses_what_saving_would(self):
+        """The upcoming times already warn about a rule that repeats too often, so nothing fails on save."""
+        response = self.preview(30, _USER)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(loads(response.content)["field"], "when")
+        self.assertEqual(self.preview(60, _USER).status_code, 200)
+        self.assertEqual(self.preview(1, _MASTER).status_code, 200)
+
+        # A user changing the administrator's faster reminder may keep its times.
+        rid = loads(self.add(self.every(10), headers=_MASTER).content)["reminder"]["id"]
+        self.assertEqual(self.preview(10, _USER, rid).status_code, 200)
+        self.assertEqual(self.preview(5, _USER, rid).status_code, 400)
+        # An unknown reminder is no exception.
+        self.assertEqual(self.preview(10, _USER, "0" * 32).status_code, 400)
+
     def test_unusable_times_are_refused(self):
         """A time whose later runs cannot be worked out is refused, and so is a damaged saved one."""
         with patch("api.views.shortest_gap", side_effect=ValueError):
@@ -1875,8 +2304,54 @@ class ReminderPageTests(ReminderTestCase):
             'id="reminder-holiday-next"',
             # It goes as far ahead as a reminder looks for a holiday
             f'data-last-year="{datetime.now(ZoneInfo(settings.TIME_ZONE)).year + HOLIDAY_YEARS - 1}"',
+            # A start saved past those years steps back into them
+            "let year = Math.min(Number(current.slice(0, 4)), last + 1);",
+            # The picker offers the start of the day as well
+            "['00:00', '09:00', '12:00', '17:00']",
+            # Apprise URLs: rows with their secrets hidden, and the untagged box
+            'id="notify-url-rows"',
+            'id="notify-url-untagged"',
+            f"'/resolve/{self.key}'",
+            # Clicking in shows the full URL /resolve wrote out; leaving shows it hidden
+            "notifyUrlFull.set(input, answer.url);",
+            "answer.privacy_url : notifyUrlSchema(sent[index])",
+            # Without a configuration, URLs can still be used and the tags are greyed out
+            "notifyWithoutConfig();",
+            "chipElement.classList.add('notify-tags-unavailable');",
+            # A day or hour picked on the calendar lists its reminders below it,
+            # and a double click starts a new one at that day and hour
+            'id="reminder-selection"',
+            "reminderCalendarPick(info.date, info.view);",
+            "reminderDraftTime || '09:00'",
+            "dayMaxEvents: 4,",
+            # Picking the same day or hour again unpicks it
+            "reminderUnpicked = reminderPicked;",
+            # The last send of a reminder with times to come can be cleared
+            "body: JSON.stringify({last: null})",
+            # The URL Builder opens in a new tab and is not followed
+            'rel="nofollow noopener noreferrer">Click here</a> to get help constructing',
+            # The untagged choice is a switch, like the others on the page
+            '<input id="notify-url-untagged" type="checkbox">',
+            "setNotifyUrls(reminder.urls || [], reminder.tag === '');",
+            "sendNotifyStreams(requests,",
+            "who.textContent + ' · ' + count;",
+            # A linked reminder opens once the services and tags have loaded
+            "reminderLoad().then(function () { return notifyReady; })",
+            "notifyReady = main_init();",
+            "isEnabled && notifyIncludeUntagged()",
+            # Saving goes back to the Reminders tab with the form emptied and closed
+            "// The Reminder section closes too, so the form is left empty.\n      reminderExpand(false);",
+            "reminderRevealing = reminder.next ? {id: reminder.id, at: reminder.next} : null;",
+            # An end's picker counts from the start, with its own quick choices
+            'data-reminder-from="reminder-date"',
+            "A Year Later",
+            "reminder-picker-quick button:not([hidden])",
+            "if (!date && set === 'end' && reminderUpcomingTimes.length) {",
             # A holiday sent once is not a series
             "reminderIsOneOff(reminder.when) || reminder.count === 1",
+            # Clear Form refills the start and timezone once the form is reset
+            "window.__appriseReminderFormCleared = reminderStopEditing;",
+            "window.__appriseReminderFormCleared();",
             # Days and months can be picked all, none or inverted at once
             'data-reminder-pick="reminder-days"',
             'data-reminder-pick="reminder-months"',
@@ -1884,6 +2359,21 @@ class ReminderPageTests(ReminderTestCase):
             "fullcalendar.global.min.js",
         ):
             self.assertIn(marker, html)
+
+        # Without stateless sending, the URL rows are only for reminders
+        note = "Stateless Mode is turned off on this server, so these URLs are only used by reminders."
+        stateless_send = f"'X-Apprise-Config-ID': '{self.key}'"
+        self.assertNotIn(note, html)
+        self.assertIn(stateless_send, html)
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            page = self.page()
+            self.assertIn('id="notify-url-rows"', page)
+            self.assertIn(note, page)
+            self.assertNotIn(stateless_send, page)
+
+            # With reminder URLs turned off as well, there are no rows
+            with override_settings(APPRISE_REMINDER_URLS_MAX=0):
+                self.assertNotIn('id="notify-url-rows"', self.page())
 
         # The schedule sits after the message and before the buttons; the list is on its own tab
         self.assertLess(html.index('id="id_body"'), html.index('id="notify-reminder"'))

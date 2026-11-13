@@ -4922,6 +4922,11 @@ Authentication Editor
   grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem;
 }
 
+/* An Apprise URL row: the URL and its remove button. */
+.notify-template-row.notify-url-row {
+  grid-template-columns: minmax(0, 1fr) 2.5rem;
+}
+
 .notify-attach-preview {
   display: inline-flex;
   align-items: center;
@@ -4938,7 +4943,8 @@ Authentication Editor
   font-size: 1.2rem;
 }
 
-#notify .notify-attach-row input.invalid {
+#notify .notify-attach-row input.invalid,
+#notify .notify-url-row input.invalid {
   border-color: var(--form-error-text) !important;
 }
 
@@ -5005,6 +5011,21 @@ Authentication Editor
   color: var(--form-error-text);
 }
 
+/* Under the Apprise URL rows: whether the untagged services get it too. */
+#notify .notify-url-untagged {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+  color: var(--select-text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+#notify .notify-url-untagged[hidden] {
+  display: none;
+}
+
 .notify-form-section {
   width: 100%;
   min-width: 0;
@@ -5019,6 +5040,26 @@ Authentication Editor
 .notify-delivery-options .notify-top-row,
 .notify-message-fields .row {
   margin-top: 0;
+}
+
+/* Process As and Type keep room for their longest choice (such as MARKDOWN),
+   so Tags moves to its own line before squeezing them. */
+@media (min-width: 601px) {
+  #notify .notify-top-row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  #notify .notify-top-row>.input-field.col {
+    margin-left: 0;
+    flex: 1 0 11rem;
+    max-width: 15rem;
+  }
+
+  #notify .notify-top-row>.input-field.col:last-child {
+    flex: 1 1 20rem;
+    max-width: none;
+  }
 }
 
 #notify .notify-form-section .select-wrapper input.select-dropdown,
@@ -5060,6 +5101,13 @@ Authentication Editor
   min-height: 2.75rem;
   margin: 0;
   padding: 0 0.65rem;
+}
+
+/* Without a configuration there are no tags to pick, so the field is greyed out. */
+#notify .notify-form-section .chips.notify-tags-unavailable,
+#notify label[for="id_tag"]:has(+ .chips.notify-tags-unavailable) {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* The Tags box is also an input-field, whose row padding would push the tags
@@ -5464,6 +5512,14 @@ Authentication Editor
 
   .notify-template-row.notify-attach-row .notify-template-remove {
     grid-column: 3;
+  }
+
+  .notify-template-row.notify-url-row {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+
+  .notify-template-row.notify-url-row .notify-template-remove {
+    grid-column: 2;
   }
 
   /* Three buttons wrap onto two rows rather than squeeze their labels. */
@@ -6152,6 +6208,38 @@ Reminders
 #reminders .reminder-calendar {
   max-width: 100%;
   overflow-x: clip;
+}
+
+/* A reminder time clicked in the week or month view. */
+#reminders .fc .fc-event.is-picked {
+  outline: 2px solid var(--reminder-accent);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--fc-highlight-color);
+}
+
+/* The reminders of the day or hour picked, under the calendar. */
+#reminders .reminder-selection {
+  margin-top: 1rem;
+}
+
+#reminders .reminder-selection[hidden] {
+  display: none;
+}
+
+#reminders .reminder-selection-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--reminder-text);
+  font-weight: 500;
+}
+
+/* Everything listed is on the day in the heading. */
+#reminders .reminder-selection .fc-list-day {
+  display: none;
 }
 
 #reminders .fc .fc-toolbar {
@@ -6986,6 +7074,11 @@ Reminders
 #reminder-picker .reminder-picker-colon {
   font-size: 1.3rem;
   font-weight: 600;
+}
+
+/* An end shows its own quick choices, counted from the start. */
+#reminder-picker .reminder-picker-quick button[hidden] {
+  display: none;
 }
 
 /* Seconds are only offered for the time a reminder is sent. */

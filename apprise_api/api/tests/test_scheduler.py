@@ -561,6 +561,42 @@ def test_deliver_sends_with_stored_configuration(store):
     notify.assert_not_called()
 
 
+def test_send_uses_the_reminders_own_urls(store):
+    """A reminder's own URLs are sent to alone, or with the configuration's its tag picks."""
+    reminder_file = _save(store, "key", [{"id": "a"}])
+    assert store.put("key", "json://plain.example\nops=json://ops.example", apprise.ConfigFormat.TEXT.value)
+
+    def hosts(event):
+        a_obj, kwargs = prepare_send(reminder_file, {"id": "a", "body": "Hi", **event})
+        return sorted(server.host for server in a_obj.find(kwargs["tag"]))
+
+    urls = ["json://one.example", "json://two.example"]
+    assert hosts({"urls": urls}) == ["one.example", "two.example"]
+    # An empty tag adds the configuration's untagged URLs, and a tag its matching ones
+    assert hosts({"urls": urls, "tag": ""}) == ["one.example", "plain.example", "two.example"]
+    assert hosts({"urls": urls, "tag": "ops"}) == ["one.example", "ops.example", "two.example"]
+    # Without them, no tag picks the configuration's untagged URLs, as /notify/{KEY} does
+    assert hosts({}) == ["plain.example"]
+    assert hosts({"tag": "ops"}) == ["ops.example"]
+
+    # The configuration is not needed to send to them
+    store.clear("key")
+    assert hosts({"urls": ["json://one.example"]}) == ["one.example"]
+
+
+def test_send_leaves_out_urls_once_turned_off(store):
+    """A reminder's own URLs are not sent to once the server stops allowing them."""
+    reminder_file = _save(store, "key", [{"id": "a"}])
+    assert store.put("key", "json://plain.example", apprise.ConfigFormat.TEXT.value)
+    urls = ["json://one.example"]
+    with override_settings(APPRISE_REMINDER_URLS_MAX=0):
+        # With nothing else to send to, it is not sent
+        assert prepare_send(reminder_file, {"id": "a", "body": "Hi", "urls": urls}) is None
+        # Otherwise only the configuration's services are
+        a_obj, kwargs = prepare_send(reminder_file, {"id": "a", "body": "Hi", "urls": urls, "tag": ""})
+        assert [server.host for server in a_obj.find(kwargs["tag"])] == ["plain.example"]
+
+
 def test_send_uses_the_configuration_as_it_is_now(store):
     """Each send reads the configuration again, so later tag changes apply."""
     reminder_file = _save(store, "key", [{"id": "a"}])
@@ -593,12 +629,6 @@ def test_scan_hands_out_due_events(store):
             {"id": "done", "next": None},
         ],
     )
-    # Unreadable and empty files are skipped
-    other = store.reminder_path("damaged")
-    os.makedirs(os.path.dirname(other), exist_ok=True)
-    with open(other, "w") as f:
-        f.write("not json")
-
     scheduler = Scheduler(workers=1, grace=60)
     with patch.object(scheduler_module, "deliver", return_value=True) as send:
         assert scheduler.scan() == soon
@@ -610,6 +640,81 @@ def test_scan_hands_out_due_events(store):
     assert events["once"]["runs"] == 1
     assert events["once"]["last"]["ok"] is True
     assert "runs" not in events["off"]
+
+
+def test_scan_looks_again_soon_when_something_cannot_be_read(store):
+    """A file, folder or configuration that cannot be read is looked at again soon."""
+    now = int(time.time())
+    later = now + 3 * scheduler_module.RECHECK
+    _save(store, "key", [{"id": "later", "when": {"at": "2999-01-01T00:00:00"}, "next": later}])
+    scheduler = Scheduler(workers=1, grace=60)
+    try:
+        assert scheduler.scan() == later
+
+        # A damaged reminder file
+        other = store.reminder_path("damaged")
+        os.makedirs(os.path.dirname(other), exist_ok=True)
+        with open(other, "w") as f:
+            f.write("not json")
+
+        assert scheduler.scan() < later
+        os.unlink(other)
+        assert scheduler.scan() == later
+
+        # A configuration whose file cannot be checked
+        with patch.object(store, "reminder_has_config", return_value=None):
+            assert scheduler.scan() < later
+
+        # A folder that cannot be listed; the others are still gone through
+        real = store.reminder_files
+        with patch.object(store, "reminder_files", side_effect=lambda complete=False: None if complete else real()):
+            assert scheduler.scan() < later
+
+    finally:
+        scheduler.pool.shutdown(wait=True)
+
+
+def test_claim_stops_a_damaged_reminder(store):
+    """A reminder damaged on disk is stopped instead of stopping the scheduler."""
+    now = int(time.time())
+    reminder_file = _save(
+        store,
+        "key",
+        [
+            {"id": "when", "when": "garbage", "next": now - 5},
+            {"id": "skip", "when": {"cron": "0 0 9"}, "skip": ["x"], "next": now - 5},
+            {"id": "runs", "when": {"cron": "0 0 9"}, "runs": "x", "next": now - 5},
+        ],
+    )
+    scheduler = Scheduler(workers=1, grace=60)
+    with patch.object(scheduler.pool, "submit"):
+        events = scheduler.claim(reminder_file, now)
+
+    assert [event["next"] for event in events] == [None, None, None]
+
+
+def test_reminders_sent_to_their_own_urls_alone_need_no_configuration(store):
+    """Without a configuration, a reminder with only its own URLs is still sent; others wait."""
+    now = int(time.time())
+    urls = ["json://one.example"]
+    events = [
+        {"id": "own", "urls": urls, "when": {"at": "2000-01-01T00:00:00"}, "next": now - 5},
+        {"id": "own-later", "urls": urls, "when": {"at": "2999-01-01T00:00:00"}, "next": now + 600},
+        {"id": "untagged", "urls": urls, "tag": "", "when": {"at": "2000-01-01T00:00:00"}, "next": now - 5},
+        {"id": "tagged", "tag": "ops", "when": {"at": "2999-01-01T00:00:00"}, "next": now + 60},
+    ]
+    reminder_file = store.reminder_path("key")
+    assert store.write_reminders(reminder_file, events)
+
+    scheduler = Scheduler(workers=1, grace=60)
+    with patch.object(scheduler_module, "deliver", return_value=True) as send:
+        assert scheduler.scan() == now + 600
+        scheduler.pool.shutdown(wait=True)
+
+    assert [call.args[1]["id"] for call in send.call_args_list] == ["own"]
+    saved = {event["id"]: event for event in store.read_reminders(reminder_file)}
+    assert saved["own"]["next"] is None
+    assert saved["untagged"]["next"] == now - 5
 
 
 def test_scan_skips_reminders_without_a_configuration(store):
@@ -699,8 +804,8 @@ def test_claim_pauses_reminders_the_access_setting_forbids(store, record, runs):
         assert "runs" not in event
 
 
-def test_access_allows_without_logins_or_with_a_damaged_record(store):
-    """Reminders run when logins are off, and when the access record is damaged."""
+def test_access_allows_without_logins_but_not_with_a_damaged_record(store):
+    """Reminders run when logins are off; a damaged access record is unknown."""
     reminder_file = _save(store, "key", [{"id": "a"}])
     assert store._write_auth_record("key", ConfigAuthRecord(access="disabled"))
 
@@ -713,8 +818,26 @@ def test_access_allows_without_logins_or_with_a_damaged_record(store):
         with open(os.path.join(path, filename), "w") as f:
             f.write("not json")
 
-        # A damaged record reads as locked, and locked reminders still run
-        assert access_allows(reminder_file) is True
+        # A damaged record might say "disabled"
+        assert access_allows(reminder_file) is None
+
+
+@override_settings(APPRISE_AUTH_REQUIRED=True)
+def test_claim_holds_reminders_while_access_cannot_be_read(store):
+    """Due reminders are neither sent nor paused until the access record reads again."""
+    now = int(time.time())
+    events = [{"id": "a", "when": {"at": "2000-01-01T00:00:00"}, "next": now}]
+    reminder_file = _save(store, "key", events)
+    path, filename = store.auth_path("key")
+    with open(os.path.join(path, filename), "w") as f:
+        f.write("not json")
+
+    scheduler = Scheduler(workers=1, grace=60)
+    with patch.object(scheduler.pool, "submit") as submit:
+        assert scheduler.claim(reminder_file, now) is None
+
+    submit.assert_not_called()
+    assert store.read_reminders(reminder_file) == events
 
 
 def test_claim_rereads_the_file(store):

@@ -1274,8 +1274,8 @@ msgid ""
 msgstr "次のコマンドは、apprise が読み込まれた設定を取得し、追加されたすべてのサービスにテスト通知を送信する原因となります:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "また、この行をどこかに含む<a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise構成ファイル</a>を作成することもできます："
+msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
+msgstr "また、この行をどこかに含む<a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise構成ファイル</a>を作成することもできます："
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
@@ -1790,9 +1790,9 @@ msgstr "Apprise 詳細"
 #: apprise_api/api/templates/details.html:13
 msgid ""
 "The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
+"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "この <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> インスタンスでは、次のサービスがサポートされています。"
+msgstr "この <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> インスタンスでは、次のサービスがサポートされています。"
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
@@ -1930,8 +1930,8 @@ msgid "Execute the request"
 msgstr "リクエストを実行"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "JSON フォーマットの詳細は<a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">こちら</a>で確認できます。"
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">here</a>."
+msgstr "JSON フォーマットの詳細は<a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">こちら</a>で確認できます。"
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1967,13 +1967,13 @@ msgstr "Apprise API"
 #: apprise_api/api/templates/welcome.html:12
 msgid ""
 "\n"
-"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
+"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
 "      all of the most popular notification services available to us today such as: <em>Telegram</em>, <em>Discord</em>,\n"
 "      <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, etc.\n"
 "      This API provides a simple gateway to directly access it via an HTTP interface."
 msgstr ""
 "\n"
-"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> は、今日利用可能なほとんど全ての人気通知サービスに通知を送信することを可能にします。例えば、<em>Telegram</em>、<em>Discord</em>、<em>Slack</em>、<em>Amazon SNS</em>、<em>Gotify</em>、などです。API は、HTTP インターフェースを通じて直接アクセスするためのシンプルなゲートウェイを提供します。"
+"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> は、今日利用可能なほとんど全ての人気通知サービスに通知を送信することを可能にします。例えば、<em>Telegram</em>、<em>Discord</em>、<em>Slack</em>、<em>Amazon SNS</em>、<em>Gotify</em>、などです。API は、HTTP インターフェースを通じて直接アクセスするためのシンプルなゲートウェイを提供します。"
 
 #: apprise_api/api/templates/welcome.html:20
 msgid ""
@@ -1993,9 +1993,9 @@ msgstr "ステートレスエンドポイント"
 
 #: apprise_api/api/templates/welcome.html:35
 msgid ""
-"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
+"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "このAPIをプロジェクトの単なる<a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">サイドカー</a>および/またはマイクロサービスとして扱いたい場合は、次のURLを使用するだけで十分です。"
+msgstr "このAPIをプロジェクトの単なる<a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">サイドカー</a>および/またはマイクロサービスとして扱いたい場合は、次のURLを使用するだけで十分です。"
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2004,9 +2004,9 @@ msgstr "URL"
 
 #: apprise_api/api/templates/welcome.html:52
 msgid ""
-"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "1つ以上の指定されたApprise URLに通知するために使用されます。<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> を参照してください。URLを作成する際に支援が必要な場合に役立ちます。"
+msgstr "1つ以上の指定されたApprise URLに通知するために使用されます。<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> を参照してください。URLを作成する際に支援が必要な場合に役立ちます。"
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2054,8 +2054,8 @@ msgid "Notifies an email address with attachments"
 msgstr "添付ファイル付きでメールアドレスに通知します"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "ウェブベースのファイル添付を<a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a>サーバーに送信します："
+msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> server:"
+msgstr "ウェブベースのファイル添付を<a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a>サーバーに送信します："
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2150,9 +2150,9 @@ msgstr "投稿データを受け取ることを期待しているすべてのエ
 #, python-format
 msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
-"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "新しいApprise構成またはURLのセットを追加し、それらを<em>%(key)s</em>のIDで識別される構成に関連付けるために使用します。URLの構築方法については、<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a>を参照してください。"
+msgstr "新しいApprise構成またはURLのセットを追加し、それらを<em>%(key)s</em>のIDで識別される構成に関連付けるために使用します。URLの構築方法については、<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a>を参照してください。"
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
@@ -2588,6 +2588,44 @@ msgstr "このリマインダーは送信されることがありません"
 msgid "The end date is before the start"
 msgstr "終了日が開始より前です"
 
+#: apprise_api/api/views.py:4587
+msgid "This server does not save URLs with reminders"
+msgstr "このサーバーはリマインダーに URL を保存しません"
+
+#: apprise_api/api/views.py:4590
+msgid "A reminder can hold at most {} URLs"
+msgstr "リマインダーに含められる URL は最大 {} 件です"
+
+#: apprise_api/api/templates/config.html:567
+msgid "Apprise URLs"
+msgstr "Apprise URL"
+
+#: apprise_api/api/templates/config.html:568
+msgid ""
+"Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
+msgstr "通知先の Apprise URL を任意で直接指定できます。Apprise URL Builder で URL の作成を手伝ってもらうには<a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">こちらをクリック</a>してください。"
+
+#: apprise_api/api/templates/config.html:573
+msgid ""
+"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
+msgstr "このサーバーでは Stateless Mode がオフのため、これらの URL はリマインダーでのみ使用されます。"
+
+#: apprise_api/api/templates/config.html:583
+msgid "Also send to untagged services"
+msgstr "タグのないサービスにも送信する"
+
+#: apprise_api/api/templates/config.html:3117
+msgid "Apprise URL"
+msgstr "Apprise URL"
+
+#: apprise_api/api/templates/config.html:3154
+msgid "Remove URL"
+msgstr "URL を削除"
+
+#: apprise_api/api/views.py:4307
+msgid "This URL could not be loaded"
+msgstr "この URL を読み込めませんでした"
+
 #: apprise_api/api/templates/components/config_reminders_script.html:534
 msgid "The end date has already passed, so this reminder will not be sent."
 msgstr "終了日がすでに過ぎているため、このリマインダーは送信されません。"
@@ -2918,6 +2956,26 @@ msgstr "月末"
 msgid "In a Month"
 msgstr "1か月後"
 
+#: apprise_api/api/templates/components/config_reminders_script.html:890
+msgid "Start Date"
+msgstr "開始日"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:891
+msgid "A Day Later"
+msgstr "1日後"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:892
+msgid "A Week Later"
+msgstr "1週間後"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:894
+msgid "A Month Later"
+msgstr "1か月後"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:895
+msgid "A Year Later"
+msgstr "1年後"
+
 #: apprise_api/api/templates/components/config_reminders_script.html:612
 msgid "Clear"
 msgstr "クリア"
@@ -3089,6 +3147,10 @@ msgstr "一時停止: この構成がしばらく使用されていません"
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."
 msgstr "リマインダーを保存しました。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1888
+msgid "Clear this result"
+msgstr "この結果を消去"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1364 apprise_api/api/templates/components/reminder_shared_script.html:303
 msgid "Paused"

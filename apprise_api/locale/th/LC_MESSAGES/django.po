@@ -1274,8 +1274,8 @@ msgid ""
 msgstr "คำสั่งต่อไปนี้จะทำให้ apprise ดึงการกำหนดค่าที่โหลดไว้และส่งการแจ้งเตือนทดสอบไปยังบริการทั้งหมดที่คุณเพิ่ม:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "คุณยังสามารถสร้างไฟล์การกำหนดค่า <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise</a> ที่มีบรรทัดนี้อยู่ในไฟล์:"
+msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
+msgstr "คุณยังสามารถสร้างไฟล์การกำหนดค่า <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise</a> ที่มีบรรทัดนี้อยู่ในไฟล์:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
@@ -1790,9 +1790,9 @@ msgstr "Apprise รายละเอียด"
 #: apprise_api/api/templates/details.html:13
 msgid ""
 "The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
+"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "บริการดังต่อไปนี้รองรับโดยอินสแตนซ์ <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> นี้"
+msgstr "บริการดังต่อไปนี้รองรับโดยอินสแตนซ์ <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> นี้"
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
@@ -1930,8 +1930,8 @@ msgid "Execute the request"
 msgstr "ดำเนินการคำขอ"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "สามารถดูรายละเอียดเพิ่มเติมเกี่ยวกับรูปแบบ JSON ได้ที่ <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">นี่</a>."
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">here</a>."
+msgstr "สามารถดูรายละเอียดเพิ่มเติมเกี่ยวกับรูปแบบ JSON ได้ที่ <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">นี่</a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1967,13 +1967,13 @@ msgstr "Apprise API"
 #: apprise_api/api/templates/welcome.html:12
 msgid ""
 "\n"
-"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
+"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
 "      all of the most popular notification services available to us today such as: <em>Telegram</em>, <em>Discord</em>,\n"
 "      <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, etc.\n"
 "      This API provides a simple gateway to directly access it via an HTTP interface."
 msgstr ""
 "\n"
-"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> ช่วยให้คุณส่งการแจ้งเตือนไปยังบริการแจ้งเตือนยอดนิยมเกือบทั้งหมดที่มีให้เราใช้ในปัจจุบัน เช่น: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, เป็นต้น API นี้ให้เกตเวย์ที่เรียบง่ายในการเข้าถึงโดยตรงผ่านอินเทอร์เฟซ HTTP"
+"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> ช่วยให้คุณส่งการแจ้งเตือนไปยังบริการแจ้งเตือนยอดนิยมเกือบทั้งหมดที่มีให้เราใช้ในปัจจุบัน เช่น: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, เป็นต้น API นี้ให้เกตเวย์ที่เรียบง่ายในการเข้าถึงโดยตรงผ่านอินเทอร์เฟซ HTTP"
 
 #: apprise_api/api/templates/welcome.html:20
 msgid ""
@@ -1993,9 +1993,9 @@ msgstr "จุดสิ้นสุดแบบ Stateless"
 
 #: apprise_api/api/templates/welcome.html:35
 msgid ""
-"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
+"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "ผู้ที่ต้องการที่จะปฏิบัติต่อ API นี้เพียงแค่เป็น <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\"> ซับคาร์ </a> และ/หรือไมโครเซอร์วิสสำหรับโครงการของตนเท่านั้น จำเป็นต้องใช้ URL ต่อไปนี้"
+msgstr "ผู้ที่ต้องการที่จะปฏิบัติต่อ API นี้เพียงแค่เป็น <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\"> ซับคาร์ </a> และ/หรือไมโครเซอร์วิสสำหรับโครงการของตนเท่านั้น จำเป็นต้องใช้ URL ต่อไปนี้"
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2004,9 +2004,9 @@ msgstr "URL"
 
 #: apprise_api/api/templates/welcome.html:52
 msgid ""
-"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "ใช้เพื่อแจ้ง URL ของ Apprise หนึ่งหรือหลายรายการที่ระบุ ดู <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> หากคุณต้องการความช่วยเหลือในการสร้าง URL ของคุณ"
+msgstr "ใช้เพื่อแจ้ง URL ของ Apprise หนึ่งหรือหลายรายการที่ระบุ ดู <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> หากคุณต้องการความช่วยเหลือในการสร้าง URL ของคุณ"
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2054,8 +2054,8 @@ msgid "Notifies an email address with attachments"
 msgstr "แจ้งเตือนที่อยู่อีเมลพร้อมไฟล์แนบ"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "ส่งไฟล์แนบบนเว็บไปยังเซิร์ฟเวอร์ <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> :"
+msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> server:"
+msgstr "ส่งไฟล์แนบบนเว็บไปยังเซิร์ฟเวอร์ <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> :"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2150,9 +2150,9 @@ msgstr "ทุก endpoint ที่คาดหวังข้อมูลท�
 #, python-format
 msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
-"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "ใช้เพื่อเพิ่มการกำหนดค่า Apprise ใหม่หรือชุด URL และเชื่อมโยงกับการกำหนดค่าที่ระบุด้วยรหัสของ <em>%(key)s</em> ดู <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> หากคุณต้องการความช่วยเหลือในการสร้าง URL ของคุณ"
+msgstr "ใช้เพื่อเพิ่มการกำหนดค่า Apprise ใหม่หรือชุด URL และเชื่อมโยงกับการกำหนดค่าที่ระบุด้วยรหัสของ <em>%(key)s</em> ดู <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> หากคุณต้องการความช่วยเหลือในการสร้าง URL ของคุณ"
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
@@ -2588,6 +2588,44 @@ msgstr "การเตือนความจำนี้จะไม่ถู
 msgid "The end date is before the start"
 msgstr "วันที่สิ้นสุดอยู่ก่อนวันที่เริ่ม"
 
+#: apprise_api/api/views.py:4587
+msgid "This server does not save URLs with reminders"
+msgstr "เซิร์ฟเวอร์นี้ไม่บันทึก URL ไว้กับการแจ้งเตือน"
+
+#: apprise_api/api/views.py:4590
+msgid "A reminder can hold at most {} URLs"
+msgstr "การแจ้งเตือนหนึ่งรายการมี URL ได้ไม่เกิน {} รายการ"
+
+#: apprise_api/api/templates/config.html:567
+msgid "Apprise URLs"
+msgstr "URL ของ Apprise"
+
+#: apprise_api/api/templates/config.html:568
+msgid ""
+"Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
+msgstr "ระบุ URL ของ Apprise ที่จะแจ้งเตือนโดยตรงได้ตามต้องการ <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">คลิกที่นี่</a> เพื่อรับความช่วยเหลือในการสร้าง URL จาก Apprise URL Builder"
+
+#: apprise_api/api/templates/config.html:573
+msgid ""
+"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
+msgstr "Stateless Mode ถูกปิดบนเซิร์ฟเวอร์นี้ URL เหล่านี้จึงใช้ได้กับการแจ้งเตือนล่วงหน้าเท่านั้น"
+
+#: apprise_api/api/templates/config.html:583
+msgid "Also send to untagged services"
+msgstr "ส่งไปยังบริการที่ไม่มีแท็กด้วย"
+
+#: apprise_api/api/templates/config.html:3117
+msgid "Apprise URL"
+msgstr "URL ของ Apprise"
+
+#: apprise_api/api/templates/config.html:3154
+msgid "Remove URL"
+msgstr "ลบ URL"
+
+#: apprise_api/api/views.py:4307
+msgid "This URL could not be loaded"
+msgstr "ไม่สามารถโหลด URL นี้ได้"
+
 #: apprise_api/api/templates/components/config_reminders_script.html:534
 msgid "The end date has already passed, so this reminder will not be sent."
 msgstr "วันที่สิ้นสุดผ่านไปแล้ว จึงจะไม่ส่งการเตือนความจำนี้"
@@ -2918,6 +2956,26 @@ msgstr "สิ้นเดือน"
 msgid "In a Month"
 msgstr "อีกหนึ่งเดือน"
 
+#: apprise_api/api/templates/components/config_reminders_script.html:890
+msgid "Start Date"
+msgstr "วันที่เริ่ม"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:891
+msgid "A Day Later"
+msgstr "หนึ่งวันถัดไป"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:892
+msgid "A Week Later"
+msgstr "หนึ่งสัปดาห์ถัดไป"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:894
+msgid "A Month Later"
+msgstr "หนึ่งเดือนถัดไป"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:895
+msgid "A Year Later"
+msgstr "หนึ่งปีถัดไป"
+
 #: apprise_api/api/templates/components/config_reminders_script.html:612
 msgid "Clear"
 msgstr "ล้าง"
@@ -3089,6 +3147,10 @@ msgstr "หยุดชั่วคราว: การตั้งค่าน�
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."
 msgstr "บันทึกการเตือนความจำแล้ว"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1888
+msgid "Clear this result"
+msgstr "ล้างผลลัพธ์นี้"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1364 apprise_api/api/templates/components/reminder_shared_script.html:303
 msgid "Paused"

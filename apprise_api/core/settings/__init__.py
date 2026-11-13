@@ -283,6 +283,10 @@ APPRISE_REMINDER_WORKERS = env_int("APPRISE_REMINDER_WORKERS", 4, minimum=1)
 # instead of being sent late (e.g. after the server was down).
 APPRISE_REMINDER_GRACE = env_int("APPRISE_REMINDER_GRACE", 3600, minimum=0)
 
+# The most Apprise URLs one reminder may hold, besides its Config ID's own,
+# for everyone. 0 turns URLs in reminders off.
+APPRISE_REMINDER_URLS_MAX = env_int("APPRISE_REMINDER_URLS_MAX", 100, minimum=0)
+
 # The reminder limits below hold back everyone but the administrator: a
 # Config ID's own user, or anyone when logins are off. The administrator may
 # set other limits for each Config ID.

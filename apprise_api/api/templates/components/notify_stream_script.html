@@ -302,20 +302,37 @@
   // - display: the dialog's title and its sending, success, partial and
   //   failure messages.
   async function sendNotifyStream(url, fetchOptions, display) {
+    return sendNotifyStreams([{url: url, options: fetchOptions}], display);
+  }
+
+  // Send several requests one after another, showing every log in the same
+  // dialog, then how they went together.
+  // - requests: each {url, options} to make.
+  // - display: as for sendNotifyStream().
+  async function sendNotifyStreams(requests, display) {
     const feed = createNotifyLiveFeed(display.title, display.sending);
     try {
-      const response = await appriseFetch(notifyStreamUrl(url), Object.assign({}, fetchOptions, {
-        signal: feed.signal,
-        headers: Object.assign({}, fetchOptions.headers || {}, {'Accept': 'text/event-stream'})
-      }));
-      // Log events go to the dialog; the last event says how it went.
-      const finalEvent = await readNotifyEventStream(response, function (event) {
-        if (event.name === 'log') feed.add(event.data);
-      });
-      if (finalEvent.name === 'error') {
-        throw new Error(finalEvent.data.message || display.failure);
+      const statuses = [];
+      for (const request of requests) {
+        const response = await appriseFetch(notifyStreamUrl(request.url), Object.assign({}, request.options, {
+          signal: feed.signal,
+          headers: Object.assign({}, request.options.headers || {}, {'Accept': 'text/event-stream'})
+        }));
+        // Log events go to the dialog; the last event says how it went.
+        const finalEvent = await readNotifyEventStream(response, function (event) {
+          if (event.name === 'log') feed.add(event.data);
+        });
+        if (finalEvent.name === 'error') {
+          throw new Error(finalEvent.data.message || display.failure);
+        }
+        statuses.push(finalEvent.data.status);
       }
-      const resultOptions = notifyStreamResultOptions(finalEvent.data.status, display);
+      // All sent is a success, none sent a failure, and anything else partial.
+      let status = statuses.every(function (each) { return each === 'SUCCESS'; }) ? 'SUCCESS' : 'PARTIAL';
+      if (!statuses.some(function (each) { return each === 'SUCCESS' || each === 'PARTIAL'; })) {
+        status = statuses[statuses.length - 1];
+      }
+      const resultOptions = notifyStreamResultOptions(status, display);
       resultOptions.title = display.responseTitle;
       feed.finish(resultOptions);
     } catch (error) {

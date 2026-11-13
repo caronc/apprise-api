@@ -39,6 +39,7 @@ import re
 import shutil
 import signal
 import socket
+import stat
 import tempfile
 import time
 from typing import Any
@@ -230,6 +231,22 @@ TEMPLATE_FIELD_PREFIX = "template["
 
 class TemplateValueError(ValueError):
     """Raised when a supplied set of template values cannot be used."""
+
+
+def _file_exists(path: str) -> bool | None:
+    """Return whether a file is there.
+
+    - Returns ``None`` when that cannot be told, e.g. a network share that is
+      not answering, so nothing is removed on a guess.
+    """
+    try:
+        return stat.S_ISREG(os.stat(path).st_mode)
+
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+
+    except OSError:
+        return None
 
 
 def _reminder_file_names(events: list) -> set[str]:
@@ -967,7 +984,7 @@ class AppriseConfigCache:
             # Do nothing
             return False
 
-        if os.path.exists(self.reminder_path(key) + REMOVING_SUFFIX):
+        if _file_exists(self.reminder_path(key) + REMOVING_SUFFIX) is not False:
             # A removal of this Config ID stopped part way; finish it first.
             with self.reminder_guard():
                 if not self._finish_removal(key):
@@ -1143,11 +1160,11 @@ class AppriseConfigCache:
         with self.reminder_guard():
             # Reminders an earlier failure left aside are settled first, so
             # moving these aside never overwrites them; if that fails, stop.
-            if os.path.exists(aside):
+            if _file_exists(aside) is not False:
                 dropped = set()
                 settled = self._settle_aside(aside, dropped)
                 self.drop_unused_reminder_files(dropped)
-                if not settled and os.path.exists(aside):
+                if not settled and _file_exists(aside) is not False:
                     logger.warning("Could not remove KEY: %s; reminders left aside earlier are still there", key)
                     return False
 
@@ -1243,7 +1260,13 @@ class AppriseConfigCache:
 
         finished = aside.endswith(REMOVED_SUFFIX)
         reminder_file = aside[: -len(REMOVED_SUFFIX if finished else REMOVING_SUFFIX)]
-        if not finished and self.reminder_has_config(reminder_file):
+        configured = False if finished else self.reminder_has_config(reminder_file)
+        if configured is None:
+            # Removing them on a guess could lose them; try again later.
+            logger.warning("Could not tell whether %s is still configured; left %s for later", reminder_file, aside)
+            return False
+
+        if configured:
             # Keep any saved since, then add back the ones set aside.
             current = self.read_reminders(reminder_file)
             if current is None:
@@ -1269,20 +1292,25 @@ class AppriseConfigCache:
 
         - Reminders left aside while no configuration is saved belong to the
           one removed, so they are marked finished and never come back.
-        - Ones whose configuration is still there are put back beside it;
-          recovery tries again if that fails.
-        - Returns ``False`` when they could not be marked. Hold ``reminder_guard()``.
+        - Ones whose configuration is still there are put back beside it.
+        - Returns ``False`` when they could not be marked or put back, or when
+          the files could not be checked. Hold ``reminder_guard()``.
         """
         reminder_file = self.reminder_path(key)
         aside = reminder_file + REMOVING_SUFFIX
-        if not os.path.exists(aside):
+        waiting = _file_exists(aside)
+        if waiting is False:
             # Nothing left aside.
             return True
 
-        if self.reminder_has_config(reminder_file):
+        configured = None if waiting is None else self.reminder_has_config(reminder_file)
+        if configured is None:
+            logger.warning("Could not check an earlier removal of KEY: %s", key)
+            return False
+
+        if configured:
             # The removal failed, so its reminders go back and are sent again.
-            self._settle_aside(aside, set())
-            return True
+            return self._settle_aside(aside, set())
 
         done = reminder_file + REMOVED_SUFFIX
         try:
@@ -1398,9 +1426,9 @@ class AppriseConfigCache:
             return (self.root, key)
 
     def keys(self):
-        """Return stored keys, including keys with only an access record.
+        """Return stored keys, including keys with only an access record or reminders.
 
-        Access-only keys are listed because they are still occupied and must
+        Those keys are listed because they are still occupied and must
         remain visible to administrators.
         """
         keys = set()
@@ -1410,10 +1438,13 @@ class AppriseConfigCache:
         lock_suffix = ".lock"
         for filename in os.listdir(self.root):
             if filename.startswith("."):
-                # Recover keys only from the hidden lock filename format.
-                # Other hidden files do not belong to the configuration list.
+                # Recover keys only from the hidden lock and reminder filename
+                # formats. Other hidden files do not belong to the configuration list.
                 if filename.endswith(lock_suffix) and len(filename) > len(lock_suffix) + 1:
                     keys.add(filename[1 : -len(lock_suffix)])
+                # Reminders sent only to their own URLs need no configuration.
+                elif filename.endswith(REMINDER_SUFFIX) and len(filename) > len(REMINDER_SUFFIX) + 1:
+                    keys.add(filename[1 : -len(REMINDER_SUFFIX)])
                 continue
             path = os.path.join(self.root, filename)
             if os.path.isfile(path):
@@ -1793,9 +1824,11 @@ class AppriseConfigCache:
                 if age < older_than_seconds:
                     continue
 
+                # Reminders count too: one sent only to its own URLs needs no
+                # configuration, and its access record still decides if it runs.
                 has_content = any(
                     os.path.isfile(os.path.join(directory, "{}.{}".format(name, ext))) for ext in content_extensions
-                )
+                ) or os.path.isfile(os.path.join(directory, ".{}{}".format(name, REMINDER_SUFFIX)))
                 if has_content:
                     continue
 
@@ -1910,8 +1943,10 @@ class AppriseConfigCache:
             guard = self._acquire_auth_guard(from_key)
             # Keep reminder updates from writing to the old key mid-move.
             with self.reminder_guard():
-                # A removal of the new key that stopped part way is finished first.
-                result = self._move(from_key, to_key) if self._finish_removal(to_key) else MoveResult.FAILED
+                # A removal of either key that stopped part way is finished
+                # first, so the reminders left aside move with their configuration.
+                settled = self._finish_removal(from_key) and self._finish_removal(to_key)
+                result = self._move(from_key, to_key) if settled else MoveResult.FAILED
 
             if result == MoveResult.MOVED and os.path.isfile(self.reminder_path(to_key)):
                 # The scheduler must find the reminders under its new name.
@@ -2035,11 +2070,13 @@ class AppriseConfigCache:
         """Return the hidden file that holds a Config ID's reminders."""
         return self._sidecar_path(key, REMINDER_SUFFIX)
 
-    def reminder_files(self, suffix: str = REMINDER_SUFFIX) -> list[str]:
+    def reminder_files(self, suffix: str = REMINDER_SUFFIX, complete: bool = False) -> list[str] | None:
         """Return every reminder file in the configuration directory.
 
         - ``suffix``: the ending to look for; reminders being removed end in
           REMINDER_SUFFIX + REMOVING_SUFFIX.
+        - ``complete``: return ``None`` when a directory could not be listed,
+          rather than leaving its files out.
         """
         if self.mode == AppriseStoreMode.DISABLED:
             return []
@@ -2056,8 +2093,11 @@ class AppriseConfigCache:
                         if HASH_PREFIX_RE.match(entry.name) and entry.is_dir(follow_symlinks=False)
                     ]
 
-            except OSError:
+            except FileNotFoundError:
                 return []
+
+            except OSError:
+                return None if complete else []
 
         # Gather the hidden reminder files from each directory.
         files = []
@@ -2068,6 +2108,8 @@ class AppriseConfigCache:
             except OSError as e:
                 logger.warning("Could not list reminders in %s", directory)
                 logger.debug("Reminder listing error: %s", e)
+                if complete:
+                    return None
                 continue
 
             # A match looks like ".<name>.reminders", with a name of at least one character.
@@ -2080,8 +2122,11 @@ class AppriseConfigCache:
         # Sorted, so the files are always read in the same order.
         return sorted(files)
 
-    def reminder_has_config(self, reminder_file: str) -> bool:
-        """Return whether a configuration is saved beside a reminder file."""
+    def reminder_has_config(self, reminder_file: str) -> bool | None:
+        """Return whether a configuration is saved beside a reminder file.
+
+        - Returns ``None`` when that cannot be told.
+        """
         # ".<name>.reminders" -> "<name>"
         path, name = os.path.split(reminder_file)
         name = name[1 : -len(REMINDER_SUFFIX)]
@@ -2091,7 +2136,12 @@ class AppriseConfigCache:
             extensions = (apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value)
         else:  # AppriseStoreMode.SIMPLE
             extensions = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
-        return any(os.path.isfile(os.path.join(path, "{}.{}".format(name, ext))) for ext in extensions)
+        found = [_file_exists(os.path.join(path, "{}.{}".format(name, ext))) for ext in extensions]
+        if True in found:
+            return True
+
+        # One that could not be checked may be the configuration.
+        return None if None in found else False
 
     def reminder_config(self, reminder_file: str) -> tuple[str | None, str | None]:
         """Read the configuration stored beside a reminder file.
@@ -2500,13 +2550,19 @@ class AppriseConfigCache:
     def _used_reminder_files(self) -> set[str] | None:
         """Return the name of every stored file any reminder uses.
 
-        - Returns ``None`` when a reminder file cannot be read, since it might
-          use any of them.
+        - Returns ``None`` when a reminder file cannot be listed or read,
+          since it might use any of them.
         - Hold ``reminder_guard()`` while calling.
         """
-        used = set()
         # Reminders left aside by an unfinished removal may still come back.
-        for reminder_file in self.reminder_files() + self.reminder_files(REMINDER_SUFFIX + REMOVING_SUFFIX):
+        suffixes = (REMINDER_SUFFIX, REMINDER_SUFFIX + REMOVING_SUFFIX)
+        listed = [self.reminder_files(suffix, complete=True) for suffix in suffixes]
+        if None in listed:
+            logger.warning("Kept every reminder attachment; the reminder files could not all be listed")
+            return None
+
+        used = set()
+        for reminder_file in listed[0] + listed[1]:
             events = self.read_reminders(reminder_file)
             if events is None:
                 logger.warning("Kept every reminder attachment; %s could not be read", reminder_file)

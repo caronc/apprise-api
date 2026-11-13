@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 from collections import deque
 from datetime import UTC, datetime, timedelta
+import hashlib
 import json
 import logging
 import queue
@@ -37,6 +38,7 @@ from zoneinfo import ZoneInfo
 
 import apprise
 from apprise.config.base import ConfigBase
+from apprise.utils.parse import parse_urls
 from core.utils import parse_bool, parse_log_level
 from dateblock import DRIFT_MAX, DRIFT_MIN
 from django.conf import settings
@@ -1702,6 +1704,8 @@ def _health_check_response(request, key=None):
                     {
                         "reminders_enabled": reminders_allowed(request, key),
                         "scheduler_running": ConfigCache.scheduler_running(),
+                        # The most Apprise URLs a reminder may hold; 0 when it may hold none.
+                        "reminder_urls_max": settings.APPRISE_REMINDER_URLS_MAX,
                     }
                     if reminders_enabled()
                     else {}
@@ -1878,6 +1882,10 @@ class ConfigView(View):
                 "config_timezone": settings.TIME_ZONE,
                 # Reminders show only when the API would let this caller use them.
                 "reminders_allowed": reminders_allowed(request, key),
+                # The Apprise URLs rows show for callers who may send to URLs of their
+                # own, or keep them in reminders.
+                "stateless_allowed": stateless_allowed(request, key),
+                "reminder_urls_allowed": reminders_allowed(request, key) and settings.APPRISE_REMINDER_URLS_MAX > 0,
                 # Only the signed-in administrator is free of the reminder limits.
                 "reminders_admin": request.apprise_auth_permission == Authentication.ROLE_ADMIN,
                 # Seconds are offered only when repeating more often than every minute is allowed.
@@ -2734,6 +2742,10 @@ class AuthView(View):
                 "shared_user": shared_user,
                 # The reminder limits show only where reminders can be used.
                 "reminders_allowed": reminders_allowed(request, key),
+                # The Apprise URLs rows show for callers who may send to URLs of their
+                # own, or keep them in reminders.
+                "stateless_allowed": stateless_allowed(request, key),
+                "reminder_urls_allowed": reminders_allowed(request, key) and settings.APPRISE_REMINDER_URLS_MAX > 0,
                 "form_auth": AuthForm(
                     initial={"access": selected_access, "username": username},
                     shared=shared_user,
@@ -3895,20 +3907,9 @@ class StatelessNotifyView(View):
                 )
             )
 
-        if settings.APPRISE_AUTH_REQUIRED and not getattr(request, "globally_authenticated", False):
-            if config_key is None or not Authentication.key_ok(request, config_key):
-                return _key_access_denied_response(request, config_key or "stateless")
-
-            auth_state = Authentication.config_state(config_key, request)
-            # A successful non-administrator key check identifies the caller as
-            # that configuration's user. Only normal ``user`` access grants the
-            # additional privilege of sending arbitrary stateless URLs.
-            if auth_state.access != Authentication.ACCESS_USER:
-                return error_response(
-                    request,
-                    _("This configuration does not permit stateless notifications"),
-                    ResponseCode.no_access,
-                )
+        refused = _stateless_refusal(request, config_key)
+        if refused is not None:
+            return refused
 
         if not content.get("urls") and settings.APPRISE_STATELESS_URLS:
             # fallback to settings.APPRISE_STATELESS_URLS if no urls were
@@ -4172,6 +4173,171 @@ def _saved_config_missing(request, key: str) -> HttpResponse | None:
     return error_response(request, _("An error occurred accessing configuration"), ResponseCode.internal_server_error)
 
 
+def _reminder_targets_missing(request, key: str, event: dict) -> HttpResponse | None:
+    """Return the error to send when a reminder would reach no service.
+
+    - It reaches its own ``urls``, plus the configuration's URLs its tag
+      picks (the untagged ones when it has no tag), the same as when sent.
+    - Returns ``None`` when it reaches at least one.
+    """
+    if event.get("urls"):
+        # Its own URLs are always sent to.
+        return None
+
+    config, config_format = ConfigCache.get(key)
+    if config is None:
+        # Reported by _saved_config_missing().
+        return None
+
+    # Loaded the way the scheduler loads it, with the same allowed services.
+    apply_global_filters()
+    asset = apprise.AppriseAsset(plugin_paths=settings.APPRISE_PLUGIN_PATHS)
+    a_obj = apprise.Apprise(asset=asset)
+    ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
+    ac_obj.add_config(config, format=config_format)
+    a_obj.add(ac_obj)
+    tag = parse_tag_expression(event["tag"]) if event.get("tag") else None
+    if next(iter(a_obj.find(tag)), None) is not None:
+        return None
+
+    return error_response(
+        request,
+        _(
+            "No notification targets are selected. Add configuration endpoints or choose one or more matching tags "
+            "before sending."
+        ),
+        ResponseCode.bad_request,
+        field="tag" if event.get("tag") else "urls",
+    )
+
+
+def _stateless_refusal(request, key: str | None) -> HttpResponse | None:
+    """Return why this caller may not send to Apprise URLs of their own, or ``None``.
+
+    - Stateless mode itself is checked by the caller.
+    - With logins required, only the administrator, or the user of a Config
+      ID whose access is ``user``, may.
+    """
+    if not settings.APPRISE_AUTH_REQUIRED or getattr(request, "globally_authenticated", False):
+        return None
+
+    if key is None or not Authentication.key_ok(request, key):
+        return _key_access_denied_response(request, key or "stateless")
+
+    # A successful non-administrator key check identifies the caller as
+    # that configuration's user. Only normal ``user`` access grants the
+    # additional privilege of sending arbitrary stateless URLs.
+    if Authentication.config_state(key, request).access != Authentication.ACCESS_USER:
+        return error_response(
+            request,
+            _("This configuration does not permit stateless notifications"),
+            ResponseCode.no_access,
+        )
+
+    return None
+
+
+def stateless_allowed(request, key: str | None) -> bool:
+    """Return whether this caller may send to Apprise URLs of their own."""
+    return settings.APPRISE_STATELESS_MODE != "disabled" and _stateless_refusal(request, key) is None
+
+
+# The most Apprise URLs one /resolve request may check.
+RESOLVE_URLS_MAX = 100
+
+
+@method_decorator(never_cache, name="dispatch")
+class ResolveView(View):
+    """Check Apprise URLs and return them in full and with their secrets hidden."""
+
+    def post(self, request, key=None):
+        """Return each URL's service, whether it loads, and the URL as Apprise reads it.
+
+        - The JSON body holds ``urls``: one string (split on spaces and
+          commas) or a list, where each entry is one URL.
+        - The answer lists them in the same order. ``url`` is the full URL
+          with every option written out, and ``privacy_url`` is the same URL
+          with its secrets hidden, safe to show to anyone looking.
+        - Needs a Config ID (in the URL or X-Apprise-Config-ID) the caller
+          may use. On a ``public`` or ``disabled`` configuration only the
+          administrator may, so it never answers anyone who has not signed in.
+        - It works whatever the stateful and stateless modes are. Nothing is
+          contacted; the URLs are only read.
+        """
+        # A malformed X-Apprise-Config-ID header is refused outright; the
+        # header wins over the key in the URL.
+        if config_key_header_present_but_invalid(request):
+            return _invalid_key_response(request)
+
+        key = resolve_config_key(request, key or "")
+        if not key:
+            return _missing_key_response(request)
+
+        if not Authentication.key_ok(request, key):
+            return _key_access_denied_response(request, key)
+
+        state = Authentication.config_state(key, request)
+        admin = getattr(request, "apprise_auth_permission", None) == Authentication.ROLE_ADMIN
+        if not admin and (state.public or state.disabled):
+            return error_response(
+                request, _("The site has been configured to deny this request"), ResponseCode.no_access
+            )
+
+        # Only a JSON body is read.
+        if request.content_type != "application/json":
+            return error_response(request, _("Content-Type must be application/json"), ResponseCode.bad_request)
+
+        content, invalid = parse_json_object_body(request, "RESOLVE", key)
+        if invalid is not None:
+            return invalid
+
+        urls = content.get("urls")
+        if not _is_string_or_string_list(urls):
+            return error_response(
+                request, _("The urls field must be a string or list of strings"), ResponseCode.bad_request, field="urls"
+            )
+
+        # A list keeps one entry per URL, so each answer lines up with what was sent.
+        entries = parse_urls(urls) if isinstance(urls, str) else [url.strip() for url in urls]
+        if len(entries) > RESOLVE_URLS_MAX:
+            return error_response(
+                request, _("The {} field is too long").format("urls"), ResponseCode.bad_request, field="urls"
+            )
+
+        # Read the way a send reads them, with the same allowed services.
+        apply_global_filters()
+        asset = apprise.AppriseAsset(plugin_paths=settings.APPRISE_PLUGIN_PATHS)
+        resolved = []
+        for url in entries:
+            plugin = apprise.Apprise.instantiate(url, asset=asset) if url else None
+            if plugin is None:
+                # The URL comes back as it was sent; its hidden form is only
+                # the schema, as the rest may hold a secret.
+                resolved.append(
+                    {
+                        "url": url,
+                        "privacy_url": url.split("://", 1)[0] + "://" if "://" in url else "",
+                        "service": None,
+                        "valid": False,
+                        "error": str(_("This URL could not be loaded")),
+                    }
+                )
+                continue
+
+            resolved.append(
+                {
+                    "url": plugin.url(),
+                    "privacy_url": plugin.url(privacy=True),
+                    "service": str(plugin.service_name),
+                    # The ID /json/urls gives the same URL in a configuration.
+                    "id": plugin.url_id(),
+                    "valid": True,
+                }
+            )
+
+        return JsonResponse({"urls": resolved}, encoder=JSONEncoder, safe=False, status=ResponseCode.okay)
+
+
 @method_decorator(never_cache, name="dispatch")
 class AttachPreviewView(View):
     """Download an attachment web address the way a send would, so it can be checked."""
@@ -4263,6 +4429,7 @@ REMINDER_FIELDS = (
     "count",
     "skip",
     "attach",
+    "urls",
 )
 
 # The longest reminder name.
@@ -4436,6 +4603,10 @@ def _clean_reminder_time(content: dict) -> dict:
       ``hh:mm:ss``); it is stored on the holiday's next date.
     """
     when = content.get("when")
+    if isinstance(when, dict):
+        # A part set to null is the same as one left out.
+        when = {part: value for part, value in when.items() if value is not None}
+
     clock = None
     if isinstance(when, dict) and "holiday" in when:
         try:
@@ -4459,9 +4630,9 @@ def _clean_reminder_time(content: dict) -> dict:
     # Whether the caller gave a time to start from, rather than "now".
     given = bool(start) or (isinstance(when, dict) and "at" in when)
 
-    # An "every" rule on its own starts at ``start``, or at this moment.
+    # An "every" rule on its own starts at ``start``, or at the start of this minute.
     if isinstance(when, dict) and "every" in when and not any(kind in when for kind in ("at", "cron", "holiday")):
-        when = {**when, "at": start or datetime.now(zone).replace(tzinfo=None).isoformat(timespec="seconds")}
+        when = {**when, "at": start or datetime.now(zone).replace(second=0, microsecond=0, tzinfo=None).isoformat()}
 
     kinds = [kind for kind in ("at", "cron", "holiday") if isinstance(when, dict) and kind in when]
     if len(kinds) != 1:
@@ -4555,12 +4726,108 @@ def _clean_reminder_time(content: dict) -> dict:
     }
 
 
-def _clean_reminder(content: dict, attached: bool = False) -> dict:
+def _clean_reminder_urls(urls: Any, kept: list[str] | None = None, known: list[str] | None = None) -> list[str] | None:
+    """Check the Apprise URLs a reminder sends to instead of its configuration's.
+
+    - Read the same way as /notify: one string of URLs (split on spaces and
+      commas) or a list of them.
+    - Each must load in Apprise, and there may be at most
+      APPRISE_REMINDER_URLS_MAX of them (0 turns them off).
+    - ``kept``: the URLs the reminder holds now. Saved again unchanged, they
+      are not checked, so a reminder can still be changed or paused after
+      the server stops allowing them.
+    - ``known``: URLs that ``@<id>`` may name (see ``url_ids`` in a
+      reminder read), so a caller that only sees hidden URLs can keep some
+      and drop or add others. Defaults to ``kept``. URLs named that way, or
+      already ``kept``, are not checked again; any URL written out is.
+    """
+    if not _is_string_or_string_list(urls):
+        raise ReminderFieldError(_("The urls field must be a string or list of strings"), "urls")
+
+    known = known if known is not None else (kept or [])
+    entries, named = _expand_kept_urls(parse_urls(urls), known)
+    if not entries:
+        return None
+
+    if entries == kept:
+        return entries
+
+    limit = settings.APPRISE_REMINDER_URLS_MAX
+    if limit <= 0:
+        raise ReminderFieldError(_("This server does not save URLs with reminders"), "urls")
+
+    if len(entries) > limit:
+        raise ReminderFieldError(_("A reminder can hold at most {} URLs").format(limit), "urls")
+
+    # Checked against the server's allowed and denied services, as when sent.
+    # URLs it already held are not checked again, only new ones.
+    apply_global_filters()
+    a_obj = apprise.Apprise(asset=apprise.AppriseAsset(plugin_paths=settings.APPRISE_PLUGIN_PATHS))
+    unchecked = set(named) | set(kept or [])
+    if not all(a_obj.add(url) for url in entries if url not in unchecked):
+        raise _invalid_reminder_field("urls")
+
+    return entries
+
+
+def _reminder_url_id(url: str) -> str:
+    """Return the ID of one of a reminder's own Apprise URLs.
+
+    It is the ID /json/urls gives the same URL in a configuration, so a
+    caller can tell which of its configuration's URLs a reminder holds. A
+    URL Apprise can't identify (or no longer loads) gets one made from the
+    URL itself, so every URL can still be kept by ID.
+    """
+    plugin = apprise.Apprise.instantiate(url)
+    url_id = plugin.url_id() if plugin is not None else None
+    return url_id or hashlib.sha256(url.encode("utf-8")).hexdigest()[:8]
+
+
+def _expand_kept_urls(entries: list[str], known: list[str]) -> tuple[list[str], list[str]]:
+    """Replace each ``@<id>`` in ``entries`` with the known URL(s) of that ID.
+
+    - Returns the URLs to save, and which of them were named by ID.
+    - An ID none of ``known`` has is refused as an invalid ``urls`` field.
+    """
+    if not any(entry.startswith("@") for entry in entries):
+        return entries, []
+
+    by_id: dict[str, list[str]] = {}
+    for url in known:
+        by_id.setdefault(_reminder_url_id(url), []).append(url)
+
+    expanded: list[str] = []
+    named: list[str] = []
+    for entry in entries:
+        found = by_id.get(entry[1:]) if entry.startswith("@") else [entry]
+        if not found:
+            raise _invalid_reminder_field("urls")
+
+        if entry.startswith("@"):
+            named.extend(found)
+        expanded.extend(url for url in found if url not in expanded)
+
+    return expanded, named
+
+
+def _clean_reminder(
+    content: dict,
+    attached: bool = False,
+    kept_urls: list[str] | None = None,
+    known_urls: list[str] | None = None,
+) -> dict:
     """Check the reminder fields a caller sent and return them ready to store.
 
     - ``attached``: attachments were sent, so the body may be empty.
+    - ``kept_urls``: the Apprise URLs the reminder holds now, if any.
+    - ``known_urls``: URLs ``urls`` may name by ``@<id>``; see ``_clean_reminder_urls()``.
     - ``attach`` is checked separately by ``_reminder_attachments()``.
+    - A field set to null is the same as one left out, so it takes its default.
     """
+    # With its own URLs, a tag given as null or empty also sends to the
+    # configuration's untagged URLs, the way /notify/{KEY} does without a tag.
+    untagged = "tag" in content
+    content = {field: value for field, value in content.items() if value is not None}
     # The title and body are text, and a body is needed unless files are attached.
     for field in ("title", "body"):
         if not isinstance(content.get(field, ""), str):
@@ -4598,11 +4865,13 @@ def _clean_reminder(content: dict, attached: bool = False) -> dict:
     if isinstance(tag, list):
         # A list means any of its entries, the same as commas. An entry that is
         # itself a list needs all of its tags, the same as /notify.
+        # Empty entries are left out, so [] and [[]] are the same as no tag.
         groups = [item if isinstance(item, list) else [item] for item in tag]
-        if not all(group and all(isinstance(word, str) for word in group) for group in groups):
+        groups = [group for group in groups if group]
+        if not all(isinstance(word, str) for group in groups for word in group):
             raise ReminderFieldError(_("Unsupported characters found in tag definition"), "tag")
 
-        tag = ", ".join(" ".join(group) for group in groups)
+        tag = ", ".join(" ".join(group) for group in groups) or None
 
     if tag is not None:
         _check_reminder_length("tag", tag)
@@ -4631,7 +4900,7 @@ def _clean_reminder(content: dict, attached: bool = False) -> dict:
     if not isinstance(enabled, bool):
         raise _invalid_reminder_field("enabled")
 
-    return {
+    cleaned = {
         "name": name.strip(),
         "enabled": enabled,
         "title": content.get("title", ""),
@@ -4640,8 +4909,24 @@ def _clean_reminder(content: dict, attached: bool = False) -> dict:
         "format": body_format,
         "tag": tag,
         "template": template,
+        "urls": _clean_reminder_urls(content.get("urls", []), kept_urls, known_urls),
         **_clean_reminder_time(content),
     }
+
+    if cleaned["urls"] and untagged and not cleaned["tag"]:
+        # Saved as an empty tag, unlike a reminder sending to its URLs alone.
+        cleaned["tag"] = ""
+
+    return cleaned
+
+
+def _stored_fields(stored: dict) -> dict:
+    """Return the fields a caller may set from a saved reminder, for a PATCH to change.
+
+    A field saved as null was never set, so it is left out rather than read
+    as one sent as null.
+    """
+    return {field: stored[field] for field in REMINDER_FIELDS if stored.get(field) is not None}
 
 
 def _reminder_occurrences(event: dict, start: int, end: int, paused: bool = False) -> list[int]:
@@ -4836,10 +5121,12 @@ def _reminder_notify_fields(request, content: dict) -> HttpResponse | None:
       the payload left out.
     - Returns ``None``, or the response to send back for a bad header.
     """
-    # Fold the other names into the one stored; the main name wins when both are sent.
-    tags = content.pop("tags", None)
-    if not content.get("tag") and tags:
-        content["tag"] = tags
+    # Fold the other names into the one stored; the main name wins when both
+    # are sent. An empty ``tags`` still counts as a tag given.
+    if "tags" in content:
+        tags = content.pop("tags")
+        if tags or "tag" not in content:
+            content["tag"] = content.get("tag") or tags
 
     for alias in ("attachment", "attachments"):
         attachments = content.pop(alias, None)
@@ -5280,6 +5567,38 @@ def _reminder_response(name, value):
     return JsonResponse({name: value}, encoder=JSONEncoder, safe=False, status=ResponseCode.okay)
 
 
+def _private_url(url: str) -> str:
+    """Return an Apprise URL with its secrets hidden, the way /json/urls shows it.
+
+    A URL that no longer loads (for example its service was turned off since)
+    shows only its schema.
+    """
+    plugin = apprise.Apprise.instantiate(url)
+    return url.split("://", 1)[0] + "://" if plugin is None else plugin.url(privacy=True)
+
+
+def _reminder_privacy(request, events: list[dict]) -> list[dict]:
+    """Add each reminder's URL IDs, and hide its URLs' secrets when ``?privacy=`` asks for it.
+
+    - ``url_ids`` lists one ID per URL, in the same order (see
+      ``_reminder_url_id()``), so a caller can match them with its
+      configuration's URLs and keep them on an edit as ``@<id>``.
+    - Each reminder is copied first, so a stored one is never changed.
+    """
+    private = parse_bool(request.GET.get("privacy"), default=False)
+    shown = []
+    for event in events:
+        urls = event.get("urls")
+        if not urls:
+            shown.append(event)
+            continue
+
+        ids = {"url_ids": [_reminder_url_id(url) for url in urls]}
+        shown.append({**event, **ids, **({"urls": [_private_url(url) for url in urls]} if private else {})})
+
+    return shown
+
+
 def _reminder_saved(request, event: dict) -> HttpResponse:
     """Answer a saved reminder the way /add answers a saved configuration.
 
@@ -5287,7 +5606,7 @@ def _reminder_saved(request, event: dict) -> HttpResponse:
     - The ``X-Apprise-Reminder-ID`` header names the reminder either way.
     """
     response = (
-        _reminder_response("reminder", event)
+        _reminder_response("reminder", _reminder_privacy(request, [event])[0])
         if is_json_response(request)
         else HttpResponse(_("Successfully saved reminder"), status=ResponseCode.okay, content_type="text/plain")
     )
@@ -5334,7 +5653,7 @@ class ReminderListView(View):
             for event in events:
                 event["occurrences"] = _reminder_occurrences(event, *window, paused=paused)
 
-        return _reminder_response("reminders", events)
+        return _reminder_response("reminders", _reminder_privacy(request, events))
 
     def post(self, request, key=None):
         """Add a reminder and return it with its new ID and next due time."""
@@ -5352,12 +5671,17 @@ class ReminderListView(View):
         # - ``runs``/``last``: how often it has been sent, and the last result.
         # - ``next``: when it is next due (a UNIX timestamp).
         now = int(time.time())
+        # Like its files, a new reminder may keep by ID URLs this
+        # configuration's reminders already hold: a copy, or one standing in
+        # for a time of a series.
+        held = ConfigCache.read_reminders(ConfigCache.reminder_path(key)) or []
+        known = [url for stored in held for url in stored.get("urls") or []]
         try:
             event = {
                 "id": uuid4().hex,
                 # Removing the configuration's user also removes what they added.
                 "owner": "user" if request.apprise_auth_permission == Authentication.ROLE_USER else "admin",
-                **_clean_reminder(content, attached=bool(content.get("attach") or files)),
+                **_clean_reminder(content, attached=bool(content.get("attach") or files), known_urls=known),
                 "runs": 0,
                 "last": None,
                 "created": now,
@@ -5367,7 +5691,7 @@ class ReminderListView(View):
             _check_reminder_gap(request, event, now)
 
             # A one-off may replace one time of a repeating reminder.
-            if "series" in content or "occurrence" in content:
+            if content.get("series") is not None or content.get("occurrence") is not None:
                 # Only a one-off can stand in for one time of a repeating reminder.
                 if not isinstance(content.get("series"), str) or not is_one_off(event["when"]):
                     raise _invalid_reminder_field("series")
@@ -5377,8 +5701,12 @@ class ReminderListView(View):
         except ReminderFieldError as e:
             return error_response(request, e.message, ResponseCode.bad_request, field=e.field)
 
-        # A reminder needs a saved configuration to send through.
-        missing = _saved_config_missing(request, key)
+        # A reminder needs at least one service to send to, and a saved
+        # configuration unless it is sent to its own URLs alone.
+        alone = bool(event["urls"]) and event.get("tag") is None
+        missing = (None if alone else _saved_config_missing(request, key)) or _reminder_targets_missing(
+            request, key, event
+        )
         if missing is not None:
             return missing
 
@@ -5510,7 +5838,11 @@ class ReminderView(View):
             return _reminders_unreadable(request)
 
         event = _find_reminder(events, rid)
-        return _reminder_missing(request) if event is None else _reminder_response("reminder", event)
+        return (
+            _reminder_missing(request)
+            if event is None
+            else _reminder_response("reminder", _reminder_privacy(request, [event])[0])
+        )
 
     def put(self, request, key, rid):
         """Replace every field a caller may set."""
@@ -5552,16 +5884,20 @@ class ReminderView(View):
         # once it is read under the lock.
         changes = content
         if merge:
-            content = {**{field: stored[field] for field in REMINDER_FIELDS if field in stored}, **changes}
+            content = {**_stored_fields(stored), **changes}
 
         # The files it had may be kept.
         attach, uploads, invalid = _reminder_attachments(request, content, stored.get("attach") or [], files)
         if invalid is not None:
             return invalid
 
-        _event, refused = self._changed(request, events, stored, content, attach, limits, now)
+        changed, refused = self._changed(request, events, stored, content, attach, limits, now)
         if refused is None:
-            refused = _server_room(request, limits, uploads) or _store_reminder_uploads(request, uploads)
+            refused = (
+                _reminder_targets_missing(request, key, changed)
+                or _server_room(request, limits, uploads)
+                or _store_reminder_uploads(request, uploads)
+            )
 
         if refused is not None:
             return refused
@@ -5569,7 +5905,15 @@ class ReminderView(View):
         # Then hold the lock while reading, checking and saving again.
         with ConfigCache.reminder_guard():
             event, refused = self._commit(
-                request, reminder_file, rid, changes if merge else content, (attach, uploads), limits, now, merge=merge
+                request,
+                key,
+                reminder_file,
+                rid,
+                changes if merge else content,
+                (attach, uploads),
+                limits,
+                now,
+                merge=merge,
             )
             if refused is not None:
                 # Nothing was saved, so files only this request stored can go.
@@ -5580,7 +5924,7 @@ class ReminderView(View):
         return _reminder_saved(request, event)
 
     @classmethod
-    def _commit(cls, request, reminder_file, rid, content, attachments, limits, now, merge=False):
+    def _commit(cls, request, key, reminder_file, rid, content, attachments, limits, now, merge=False):
         """Check a change again and save it. Hold the reminder lock while calling.
 
         - ``content``: every field for PUT, or only the fields sent for PATCH.
@@ -5604,12 +5948,14 @@ class ReminderView(View):
                 # has now, plus any uploaded here (always the last ones prepared).
                 attach = (stored.get("attach") or []) + attach[len(attach) - len(uploads) :]
 
-            content = {**{field: stored[field] for field in REMINDER_FIELDS if field in stored}, **content}
+            content = {**_stored_fields(stored), **content}
 
         event, refused = cls._changed(request, events, stored, content, attach, limits, now)
-        # Put back any file uploaded here that another save removed meanwhile.
+        # A change saved meanwhile may have left it nowhere to send. Put back
+        # any file uploaded here that another save removed meanwhile.
         refused = (
             refused
+            or _reminder_targets_missing(request, key, event)
             or _store_reminder_uploads(request, uploads, missing_only=True)
             or _server_room(request, limits, uploads, stored=True)
         )
@@ -5640,7 +5986,7 @@ class ReminderView(View):
         - Returns ``(event, None)``, or ``(None, response)`` to send back.
         """
         try:
-            cleaned = _clean_reminder(content, attached=bool(attach))
+            cleaned = _clean_reminder(content, attached=bool(attach), kept_urls=stored.get("urls"))
             # Times that one-offs stand in for always stay skipped.
             replaced = (e["occurrence"] for e in events if e.get("series") == stored["id"] and e["occurrence"] > now)
             cleaned["skip"] = sorted({*cleaned["skip"], *replaced})
@@ -5653,8 +5999,17 @@ class ReminderView(View):
 
             if cleaned["when"] != stored.get("when") or cleaned["start"] != stored.get("start"):
                 # A new time or start starts the run count again, so a holiday
-                # sent once can be moved to another year.
+                # sent once can be moved to another year. How the last send
+                # went belongs to the old time, so it is forgotten too.
                 event["runs"] = 0
+                event["last"] = None
+
+            if "last" in content:
+                # Only null is taken: it forgets how the last send went.
+                if content["last"] is not None:
+                    raise _invalid_reminder_field("last")
+
+                event["last"] = None
 
             # Work out the next time again when the timing changed or it was
             # just resumed; otherwise keep the one already planned.
@@ -5770,6 +6125,9 @@ class ReminderPreviewView(View):
         - A holiday also reads ``country`` and ``region``; ``start`` sets its time of day.
         - ``every`` (a unit) repeats from ``at``, with ``interval``, and
           ``months`` and ``days`` as comma-separated lists.
+        - A rule that repeats more often than the caller may set is refused,
+          exactly as saving it would be. ``id`` names the reminder being
+          changed, which may keep times that repeat more often.
         """
         key, invalid = _reminder_gate(request, key)
         if invalid is not None:
@@ -5829,6 +6187,11 @@ class ReminderPreviewView(View):
             now = datetime.now(UTC)
             cleaned = _clean_reminder_time(content)
             times = upcoming(cleaned, now, limit)
+            # Too short a gap between times is refused the same way a save refuses it.
+            stored = None
+            if query.get("id"):
+                stored = _find_reminder(ConfigCache.read_reminders(ConfigCache.reminder_path(key)) or [], query["id"])
+            _check_reminder_gap(request, cleaned, int(now.timestamp()), stored)
             # Nothing ahead is an error, unless its time or end date has passed.
             if not times and not is_one_off(cleaned["when"]) and not until_passed(cleaned, now):
                 raise _never_sent(cleaned, now)
@@ -5947,7 +6310,29 @@ class ReminderLimitsView(View):
         if events is None:
             return _reminders_unreadable(request)
 
-        return _reminder_response("limits", _limits_summary(limits, events))
+        # The rules a reminder must follow ride along, so an app can check a
+        # reminder before saving it:
+        # - ``min_interval``: the fewest seconds apart it may repeat (0 is no limit).
+        # - ``drift_min`` / ``drift_max``: the drift range, in seconds.
+        # - ``holiday_last_year``: the last year a holiday can be looked up.
+        # - ``timezone``: the zone used when a reminder names none.
+        # - ``preview_max``: the most times one preview can list.
+        # - ``urls_max``: the most ``urls`` a reminder can hold (0 is none).
+        rules = {
+            "min_interval": reminder_gap_limit(request),
+            "drift_min": DRIFT_MIN,
+            "drift_max": DRIFT_MAX,
+            "holiday_last_year": datetime.now(ZoneInfo(settings.TIME_ZONE)).year + HOLIDAY_YEARS - 1,
+            "timezone": settings.TIME_ZONE,
+            "preview_max": REMINDER_PREVIEW_MAX,
+            "urls_max": settings.APPRISE_REMINDER_URLS_MAX,
+        }
+        return JsonResponse(
+            {"limits": _limits_summary(limits, events), "rules": rules},
+            encoder=JSONEncoder,
+            safe=False,
+            status=ResponseCode.okay,
+        )
 
     def post(self, request, key):
         """Save new limits; only the administrator may change them.

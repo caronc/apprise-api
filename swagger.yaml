@@ -1057,6 +1057,60 @@ paths:
                     items:
                       type: string
 
+  /resolve/{key}:
+    post:
+      operationId: Persistent_ResolveUrls
+      summary: Checks Apprise URLs and returns them in full and with their secrets hidden.
+      description: >
+        Returns each URL's service, whether it can be loaded, the URL in full
+        with every option written out, and the same URL with its secrets
+        hidden, the way /json/urls?privacy=1 shows them. Works whatever the
+        stateful and stateless modes are; on a `public` or `disabled`
+        configuration only the administrator may use it. Nothing is contacted.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [urls]
+              properties:
+                urls:
+                  description: >
+                    One string of URLs (split on spaces and commas), or a list
+                    where each entry is one URL. At most 100.
+                  oneOf:
+                    - type: string
+                    - type: array
+                      maxItems: 100
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Each URL, in the order sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveResponse'
+        '400':
+          description: >
+            Bad Request (not a JSON object, `urls` missing, of the wrong type
+            or too long, or the Config ID missing or invalid).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (the configuration is `public` or `disabled`, and the
+            caller is not the administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
   /reminder/{key}:
     get:
       operationId: Reminders_List
@@ -1070,6 +1124,7 @@ paths:
         - $ref: '#/components/parameters/ReminderWindowStart'
         - $ref: '#/components/parameters/ReminderWindowEnd'
         - $ref: '#/components/parameters/ReminderShowDisabled'
+        - $ref: '#/components/parameters/ReminderPrivacy'
       responses:
         '200':
           description: Every reminder saved for this configuration.
@@ -1118,6 +1173,7 @@ paths:
         - basicAuth: []
       parameters:
         - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderPrivacy'
         - $ref: '#/components/parameters/NotifyTitleHeader'
         - $ref: '#/components/parameters/NotifyTypeHeader'
         - $ref: '#/components/parameters/NotifyTagHeader'
@@ -1210,6 +1266,15 @@ paths:
             minimum: 1
             maximum: 999
           description: How many units apart the sends are. Defaults to 1.
+        - in: query
+          name: id
+          schema:
+            type: string
+          description: >-
+            The reminder being changed, if any. A rule that repeats more often
+            than the caller may set is refused (400, field `when`), exactly as
+            saving it would be; the reminder named here may keep times it
+            already repeats at.
         - in: query
           name: months
           schema:
@@ -1400,10 +1465,12 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [limits]
+                required: [limits, rules]
                 properties:
                   limits:
                     $ref: '#/components/schemas/ReminderLimits'
+                  rules:
+                    $ref: '#/components/schemas/ReminderRules'
         '401':
           description: Unauthorized.
         '404':
@@ -1476,6 +1543,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ReminderKey'
         - $ref: '#/components/parameters/ReminderId'
+        - $ref: '#/components/parameters/ReminderPrivacy'
       responses:
         '200':
           description: The reminder.
@@ -1515,6 +1583,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ReminderKey'
         - $ref: '#/components/parameters/ReminderId'
+        - $ref: '#/components/parameters/ReminderPrivacy'
         - $ref: '#/components/parameters/NotifyTitleHeader'
         - $ref: '#/components/parameters/NotifyTypeHeader'
         - $ref: '#/components/parameters/NotifyTagHeader'
@@ -1578,6 +1647,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ReminderKey'
         - $ref: '#/components/parameters/ReminderId'
+        - $ref: '#/components/parameters/ReminderPrivacy'
         - $ref: '#/components/parameters/NotifyTitleHeader'
         - $ref: '#/components/parameters/NotifyTypeHeader'
         - $ref: '#/components/parameters/NotifyTagHeader'
@@ -2193,6 +2263,57 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
+  /resolve/:
+    post:
+      operationId: Persistent_ResolveUrlsByHeader
+      summary: Header-based equivalent of POST /resolve/{key}.
+      description: >
+        Identical to POST /resolve/{key}, key via X-Apprise-Config-ID instead
+        of the URL. 400 if that header is missing or invalid.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [urls]
+              properties:
+                urls:
+                  description: >
+                    One string of URLs (split on spaces and commas), or a list
+                    where each entry is one URL. At most 100.
+                  oneOf:
+                    - type: string
+                    - type: array
+                      maxItems: 100
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Each URL, in the order sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveResponse'
+        '400':
+          description: >
+            Bad Request (not a JSON object, `urls` missing, of the wrong type
+            or too long, or the Config ID missing or invalid).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (the configuration is `public` or `disabled`, and the
+            caller is not the administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
   /qr/:
     get:
       operationId: Persistent_GetMobileQrUrlByHeader
@@ -2298,6 +2419,15 @@ components:
       schema:
         type: integer
       description: The UNIX timestamp that ends the `start` window.
+    ReminderPrivacy:
+      in: query
+      name: privacy
+      schema:
+        type: boolean
+        default: false
+      description: >
+        Show each reminder's own `urls` with their secrets hidden, the way
+        /json/urls shows them with `privacy=1`. What is stored is not changed.
     ReminderShowDisabled:
       in: query
       name: disabled
@@ -2512,6 +2642,11 @@ components:
           description: >-
             Whether the scheduler that sends reminders is running. Present only
             with `reminders_enabled`.
+        reminder_urls_max:
+          type: integer
+          description: >-
+            The most `urls` a reminder can hold; 0 when it can hold none.
+            Present only with `reminders_enabled`.
         privilege:
           type: string
           enum: [admin, user]
@@ -2520,12 +2655,46 @@ components:
             against a single configuration; `admin` covers an unrestricted
             credential and a server with authentication turned off.
 
+    ResolveResponse:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                description: >
+                  The URL in full, secrets included, with every option written
+                  out; as it was sent when it cannot be loaded.
+              privacy_url:
+                type: string
+                description: >
+                  The URL with its secrets hidden; only its schema (such as
+                  `json://`) when it cannot be loaded.
+              service:
+                type: string
+                nullable: true
+                description: The service's name, or null when it cannot be loaded.
+              id:
+                type: string
+                nullable: true
+                description: >
+                  The ID /json/urls gives the same URL in a configuration; only
+                  when `valid` is true.
+              valid:
+                type: boolean
+              error:
+                type: string
+                description: Why it cannot be loaded; only when `valid` is false.
+
     ReminderWhen:
       type: object
       description: >
         Holds exactly one of `at`, `cron` or `holiday`. Add `every` to `at` to
         repeat from that time; `every` without `at` starts at `start`, or else
-        when it is saved. Dates and times are `YYYY-MM-DD` with an optional
+        at the start of the minute it is saved in. Dates and times are `YYYY-MM-DD` with an optional
         `hh`, `hh:mm` or `hh:mm:ss` (a missing time is midnight), and are
         returned as `YYYY-MM-DDThh:mm:ss`.
       properties:
@@ -2612,7 +2781,12 @@ components:
 
     ReminderFields:
       type: object
-      description: Every field a reminder takes. A PATCH sends only the ones it changes.
+      description: >
+        Every field a reminder takes. Only `body` (or an attachment) and `when`
+        are needed; any other field, including those inside `when`, may be
+        left out or set to null to take its default; an empty list counts as
+        left out. A PATCH sends only the
+        fields it changes, and one set to null goes back to its default.
       properties:
         name:
           type: string
@@ -2623,6 +2797,12 @@ components:
         enabled:
           type: boolean
           default: true
+        last:
+          type: object
+          nullable: true
+          description: >
+            Only null is taken, on a PUT or PATCH: it clears how the last send
+            went. Moving a reminder to a new time clears it as well.
         title:
           type: string
           maxLength: 250
@@ -2651,6 +2831,30 @@ components:
                   - type: array
                     items:
                       type: string
+        urls:
+          description: >
+            Apprise URLs to send to, read the same way as /notify (one string,
+            split on spaces and commas, or a list); every one is sent to. With
+            no `tag` key they are sent to alone, as with /notify. With a `tag`,
+            the configuration's URLs it picks are sent to as well; with `tag`
+            set to null or empty, the configuration's untagged URLs are, and
+            the tag is saved as "". Each must load, and there may be at most
+            APPRISE_REMINDER_URLS_MAX (`reminder_urls_max` in /status), whatever
+            the stateless mode. While it is 0, URLs a reminder already holds
+            can be saved again unchanged but are not sent to. A reminder
+            that would reach no service is refused. One sent to its own URLs
+            alone needs no saved configuration. On a change, `@<id>` keeps a
+            URL the reminder already holds by its ID (from `url_ids`), so a
+            caller that only has its URLs with secrets hidden can keep some,
+            drop others and add new ones; an ID it doesn't hold is refused. A
+            new reminder (a copy, or one standing in for a time of a series)
+            may name that way any URL this configuration's reminders hold.
+          nullable: true
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
         template:
           type: object
           nullable: true
@@ -2774,6 +2978,32 @@ components:
           type: integer
           description: Bytes used, counting a file shared by several reminders once.
 
+    ReminderRules:
+      type: object
+      description: The rules a reminder must follow, so an app can check one before saving it.
+      properties:
+        min_interval:
+          type: integer
+          description: The fewest seconds apart the caller may set a reminder to repeat. 0 is no limit.
+        drift_min:
+          type: integer
+          description: The lowest drift allowed, in seconds.
+        drift_max:
+          type: integer
+          description: The highest drift allowed, in seconds.
+        holiday_last_year:
+          type: integer
+          description: The last year a holiday can be looked up.
+        timezone:
+          type: string
+          description: The time zone used when a reminder names none.
+        preview_max:
+          type: integer
+          description: The most times one preview can list.
+        urls_max:
+          type: integer
+          description: The most `urls` a reminder can hold; 0 when it can hold none.
+
     Reminder:
       allOf:
         - $ref: '#/components/schemas/ReminderInput'
@@ -2786,6 +3016,15 @@ components:
               type: string
               enum: [admin, user]
               description: Who added it; `user` is the configuration's own login.
+            url_ids:
+              type: array
+              items:
+                type: string
+              description: >
+                One ID per entry in `urls`, in the same order: the ID /json/urls
+                gives the same URL in a configuration (its options aside), so a
+                caller can tell which of its URLs a reminder holds, and keep one
+                on a change as `@<id>`. Only present when it holds URLs.
             runs:
               type: integer
               description: How many times it has been due.
