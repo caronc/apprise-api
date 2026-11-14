@@ -305,7 +305,7 @@ APPRISE_REMINDER_ATTACH_QUOTA = env_int("APPRISE_REMINDER_ATTACH_QUOTA", 50, min
 
 # The most space, in MB, all stored reminder attachments on the server may
 # take together, for everyone but the administrator. 0 sets no limit.
-APPRISE_REMINDER_STORE_MAX = env_int("APPRISE_REMINDER_STORE_MAX", 0, minimum=0) * 1048576
+APPRISE_REMINDER_STORE_MAX = env_int("APPRISE_REMINDER_STORE_MAX", 1024, minimum=0) * 1048576
 
 # Pause a Config ID's reminders once it has gone this many days without being
 # used, so a forgotten Config ID does not send them forever. 0 never pauses.
@@ -384,6 +384,12 @@ APPRISE_ATTACH_DENY_URLS = os.environ.get("APPRISE_ATTACH_REJECT_URL", "127.0.* 
 
 # The Allow list which is processed after the Deny list above
 APPRISE_ATTACH_ALLOW_URLS = os.environ.get("APPRISE_ATTACH_ALLOW_URL", "*").lower()
+
+# Let the attachment preview (/attach) download from the local network
+# (loopback, private, link-local and other non-public addresses). It is off
+# by default, so a preview can't be used to read devices behind the server.
+# Sends still follow the allow and deny lists above.
+APPRISE_ATTACH_PREVIEW_INTERNAL = env_bool("APPRISE_ATTACH_PREVIEW_INTERNAL")
 
 
 # The maximum size in bytes that a request body may be before raising an error

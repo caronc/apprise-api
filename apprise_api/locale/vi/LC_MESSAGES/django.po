@@ -351,14 +351,6 @@ msgstr "Đã Lưu %(saved)s quyền truy cập hiện đang bị khóa theo khó
 msgid "Save"
 msgstr "Lưu"
 
-#: apprise_api/api/templates/auth.html:147
-msgid "Credential Tools"
-msgstr "Công Cụ Thông Tin Đăng Nhập"
-
-#: apprise_api/api/templates/auth.html:148
-msgid "Generate credentials or reset this Config ID's access."
-msgstr "Tạo thông tin đăng nhập hoặc đặt lại quyền truy cập của ID Cấu hình này."
-
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Tạo Thông Tin Đăng Nhập Mới"
@@ -370,10 +362,6 @@ msgstr "Các Trường Cần Ngẫu Nhiên Hóa"
 #: apprise_api/api/templates/auth.html:168
 msgid "Randomize the Selected Fields"
 msgstr "Ngẫu Nhiên Hóa Các Trường Được Chọn"
-
-#: apprise_api/api/templates/auth.html:172
-msgid "Randomize Selected"
-msgstr "Ngẫu Nhiên Hóa Đã Chọn"
 
 #: apprise_api/api/templates/auth.html:181
 msgid "Reset Access"
@@ -456,21 +444,34 @@ msgstr "Chế độ"
 msgid "Description"
 msgstr "Mô tả"
 
-#: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "Sử dụng đăng nhập riêng cho thông báo trạng thái và không trạng thái bình thường cũng như truy cập cấu hình."
+#: apprise_api/api/templates/auth.html:370
+msgid "Uses its own login to send notifications and to view and edit the configuration."
+msgstr "Dùng thông tin đăng nhập riêng để gửi thông báo và để xem, chỉnh sửa cấu hình."
 
-#: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "Sử dụng đăng nhập riêng cho thông báo trạng thái có gắn nhãn và thay đổi mật khẩu. Nội dung cấu hình vẫn được ẩn."
+#: apprise_api/api/templates/auth.html:370
+msgid "Its user also manages the reminders."
+msgstr "Người dùng của nó cũng quản lý các lời nhắc."
 
-#: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "Cho phép thông báo trạng thái có gắn nhãn mà không cần đăng nhập. Nội dung cấu hình và thông báo không trạng thái vẫn được bảo vệ."
+#: apprise_api/api/templates/auth.html:371
+msgid "Uses its own login to send tagged notifications and change its password. The configuration stays hidden."
+msgstr "Dùng thông tin đăng nhập riêng để gửi thông báo có gắn nhãn và đổi mật khẩu. Cấu hình vẫn được ẩn."
 
-#: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "Đóng băng quyền truy cập người dùng cấu hình mà không xóa cấu hình hoặc đăng nhập. Chỉ quản trị viên mới có thể sử dụng."
+#: apprise_api/api/templates/auth.html:371
+#: apprise_api/api/templates/auth.html:372
+msgid "Only an administrator manages reminders, and they still run."
+msgstr "Chỉ quản trị viên quản lý lời nhắc, và chúng vẫn được gửi."
+
+#: apprise_api/api/templates/auth.html:372
+msgid "Anyone may send tagged notifications without a login. The configuration and stateless notifications stay protected."
+msgstr "Ai cũng có thể gửi thông báo có gắn nhãn mà không cần đăng nhập. Cấu hình và thông báo không trạng thái vẫn được bảo vệ."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Only an administrator may use it. The configuration and login are kept."
+msgstr "Chỉ quản trị viên mới dùng được. Cấu hình và thông tin đăng nhập được giữ lại."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Its reminders are kept, but none run or can be changed."
+msgstr "Các lời nhắc của nó được giữ lại, nhưng không lời nhắc nào chạy hoặc có thể thay đổi."
 
 #: apprise_api/api/templates/auth.html:337
 #: apprise_api/api/templates/components/mobile_app_dialog.html:18
@@ -753,8 +754,8 @@ msgid "Configuration List"
 msgstr "Danh sách Cấu hình"
 
 #: apprise_api/api/templates/base.html:303
-msgid "Available Plugins"
-msgstr "Plugin Có sẵn"
+msgid "Available Services"
+msgstr "Dịch vụ có sẵn"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -1505,13 +1506,9 @@ msgstr "BEGIN APPRISE NOTIFICATION LOG"
 msgid "END APPRISE NOTIFICATION LOG"
 msgstr "END APPRISE NOTIFICATION LOG"
 
-#: apprise_api/api/templates/config.html:930
-msgid "event"
-msgstr "sự kiện"
-
-#: apprise_api/api/templates/config.html:931
-msgid "events"
-msgstr "các sự kiện"
+#: apprise_api/api/templates/components/notify_stream_script.html:193
+msgid "Events: {}"
+msgstr "Sự kiện: {}"
 
 #: apprise_api/api/templates/config.html:940
 msgid "Notification logs copied to clipboard"
@@ -1787,13 +1784,6 @@ msgstr "Cấu hình đã được di chuyển."
 msgid "Apprise Details"
 msgstr "Apprise Chi tiết"
 
-#: apprise_api/api/templates/details.html:13
-msgid ""
-"The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
-"            instance."
-msgstr "Các dịch vụ sau được hỗ trợ bởi phiên bản <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> này."
-
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
@@ -1820,51 +1810,25 @@ msgstr "Hướng dẫn cài đặt"
 msgid "Service Website"
 msgstr "Trang web dịch vụ"
 
-#: apprise_api/api/templates/details.html:114
-msgid ""
-"\n"
-"                  <strong>Note:</strong> This service is unavailable due to the\n"
-"                  service being disabled by the administrator or the required\n"
-"                  libraries needed to drive it is not installed or functioning\n"
-"                  correctly.\n"
-"                "
-msgstr ""
-"\n"
-"<strong>Lưu ý:</strong> Dịch vụ này không khả dụng do dịch vụ bị quản trị viên tắt hoặc các thư viện cần thiết để điều khiển nó chưa được cài đặt hoặc không hoạt động đúng cách."
+#: apprise_api/api/templates/details.html:135
+msgid "Service Unavailable"
+msgstr "Dịch vụ không khả dụng"
 
-#: apprise_api/api/templates/details.html:124
-msgid "Category"
-msgstr "Danh mục"
+#: apprise_api/api/templates/details.html:138
+msgid "The administrator has turned this service off on this server."
+msgstr "Quản trị viên đã tắt dịch vụ này trên máy chủ này."
 
-#: apprise_api/api/templates/details.html:129
-msgid "Insecure Schema(s)"
-msgstr "Lược đồ không an toàn"
+#: apprise_api/api/templates/details.html:140
+msgid "This service is missing the necessary dependencies to function on this server."
+msgstr "Dịch vụ này thiếu các thành phần phụ thuộc cần thiết để hoạt động trên máy chủ này."
 
-#: apprise_api/api/templates/details.html:142
-msgid "Secure Schema(s)"
-msgstr "Lược đồ an toàn"
+#: apprise_api/api/templates/details.html:143
+msgid "Required packages:"
+msgstr "Các gói bắt buộc:"
 
-#: apprise_api/api/templates/details.html:154
-msgid "Apprise URL Formatting"
-msgstr "Apprise URL Định dạng"
-
-#: apprise_api/api/templates/details.html:159
-msgid ""
-"For more details and additional Apprise\n"
-"                    configuration options available to this service:"
-msgstr "Để biết thêm chi tiết và các Apprise tùy chọn cấu hình bổ sung có sẵn cho dịch vụ này:"
-
-#: apprise_api/api/templates/details.html:161
-msgid "Click Here"
-msgstr "Nhấp vào đây"
-
-#: apprise_api/api/templates/details.html:173
-msgid "API Endpoints"
-msgstr "API Các điểm đầu"
-
-#: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "Các nhà phát triển muốn nhận tập hợp kết quả này dưới dạng chuỗi có thể phân tích được JSON cho ứng dụng của họ có thể thực hiện các bước sau để đạt được điều này:"
+#: apprise_api/api/templates/details.html:147
+msgid "You can still build its URL online."
+msgstr "Bạn vẫn có thể tạo URL của dịch vụ này trực tuyến."
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1873,10 +1837,6 @@ msgstr "Các nhà phát triển muốn nhận tập hợp kết quả này dư�
 #: apprise_api/api/templates/welcome.html:590
 msgid "Curl Example"
 msgstr "Ví dụ Curl"
-
-#: apprise_api/api/templates/details.html:184
-msgid "Retrieve JSON Formatted Apprise Details"
-msgstr "Lấy JSON Định dạng Apprise Chi tiết"
 
 #: apprise_api/api/templates/details.html:191
 #: apprise_api/api/templates/welcome.html:138
@@ -2605,11 +2565,6 @@ msgid ""
 "Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
 msgstr "Tùy chọn chỉ định trực tiếp các URL Apprise để thông báo. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Nhấp vào đây</a> để được trợ giúp tạo URL từ Apprise URL Builder."
 
-#: apprise_api/api/templates/config.html:573
-msgid ""
-"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
-msgstr "Stateless Mode đang tắt trên máy chủ này, nên các URL này chỉ được dùng cho lời nhắc."
-
 #: apprise_api/api/templates/config.html:583
 msgid "Also send to untagged services"
 msgstr "Gửi cả tới các dịch vụ không có thẻ"
@@ -2625,6 +2580,14 @@ msgstr "Xóa URL"
 #: apprise_api/api/views.py:4307
 msgid "This URL could not be loaded"
 msgstr "Không thể tải URL này"
+
+#: apprise_api/api/templates/details.html:555
+msgid "This value is not in the form this service expects."
+msgstr "Giá trị này không đúng dạng mà dịch vụ này yêu cầu."
+
+#: apprise_api/api/templates/details.html:770
+msgid "This URL could not be loaded. Check the highlighted fields."
+msgstr "Không thể tải URL này. Hãy kiểm tra các trường được đánh dấu."
 
 #: apprise_api/api/templates/components/config_reminders_script.html:534
 msgid "The end date has already passed, so this reminder will not be sent."
@@ -2646,6 +2609,10 @@ msgstr "Lời nhắc không thể lặp lại thường xuyên hơn mỗi {} gi�
 #: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
 msgid "Only an administrator may manage reminders for this configuration"
 msgstr "Chỉ quản trị viên mới có thể quản lý lời nhắc của cấu hình này"
+
+#: apprise_api/api/views.py:5475
+msgid "Reminders are turned off while this configuration is disabled"
+msgstr "Lời nhắc bị tắt trong khi cấu hình này bị vô hiệu hóa"
 
 
 #: apprise_api/api/templates/components/config_reminders_tab.html:14
@@ -3045,8 +3012,8 @@ msgid "Save Limits"
 msgstr "Lưu giới hạn"
 
 #: apprise_api/api/templates/auth.html:215
-msgid "Leave a field blank for no limit. An attachment space of 0 turns uploads off."
-msgstr "Để trống một trường để không giới hạn. Dung lượng đính kèm bằng 0 sẽ tắt tải tệp lên."
+msgid "Leave a field blank to use the server default. An attachment space of 0 turns uploads off."
+msgstr "Để trống một trường để dùng giá trị mặc định của máy chủ. Dung lượng đính kèm bằng 0 sẽ tắt tải tệp lên."
 
 #: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
 msgid "Reminder"
@@ -3135,10 +3102,6 @@ msgstr "Lưu lời nhắc"
 #: apprise_api/api/templates/components/reminder_shared_script.html:32
 msgid "Skipped: it was too late to send"
 msgstr "Đã bỏ qua: đã quá muộn để gửi"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:33
-msgid "Paused: this configuration is disabled"
-msgstr "Đã tạm dừng: cấu hình này đã bị tắt"
 
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
@@ -3368,6 +3331,30 @@ msgstr "Đang tải…"
 msgid "The attachment could not be downloaded"
 msgstr "Không thể tải tệp đính kèm xuống"
 
+#: apprise_api/api/templates/config.html:3198
+msgid "Local network access is turned off"
+msgstr "Quyền truy cập mạng cục bộ đang tắt"
+
+#: apprise_api/api/templates/config.html:3199
+msgid "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed."
+msgstr "Quản trị viên của Apprise API này đã tắt tải xuống từ mạng cục bộ, nên không thể xem trước địa chỉ này."
+
+#: apprise_api/api/templates/config.html:3202
+msgid "This address is blocked"
+msgstr "Địa chỉ này bị chặn"
+
+#: apprise_api/api/templates/config.html:3203
+msgid "The attachment rules of this Apprise API do not allow downloads from this address."
+msgstr "Quy tắc tệp đính kèm của Apprise API này không cho phép tải xuống từ địa chỉ này."
+
+#: apprise_api/api/templates/config.html:3228
+msgid "The administrator can change this with:"
+msgstr "Quản trị viên có thể thay đổi điều này bằng:"
+
+#: apprise_api/api/templates/config.html:3241
+msgid "Learn more"
+msgstr "Tìm hiểu thêm"
+
 #: apprise_api/api/templates/config.html:3320
 msgid "This file cannot be shown here."
 msgstr "Không thể hiển thị tệp này ở đây."
@@ -3426,3 +3413,107 @@ msgstr "Mỗi {} tháng"
 #, python-brace-format
 msgid "Every {} years"
 msgstr "Mỗi {} năm"
+
+#: apprise_api/api/templates/resolve.html:37
+#: apprise_api/api/templates/resolve.html:38
+msgid "Copy URL"
+msgstr "Sao chép URL"
+
+#: apprise_api/api/templates/resolve.html:43
+msgid "Parse"
+msgstr "Phân tích"
+
+#: apprise_api/api/templates/resolve.html:352
+#: apprise_api/api/templates/resolve.html:353
+msgid "Remove Value"
+msgstr "Xóa giá trị"
+
+#: apprise_api/api/templates/details.html:13
+msgid "Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts."
+msgstr "Tạo URL Apprise trong ba bước: chọn dịch vụ, điền thông tin, rồi sao chép URL. Đã có URL? Dán vào bước 1 để xem và thay đổi các phần của nó."
+
+#: apprise_api/api/templates/details.html:36
+msgid "Choose a Service"
+msgstr "Chọn dịch vụ"
+
+#: apprise_api/api/templates/details.html:39
+msgid "Search Services"
+msgstr "Tìm dịch vụ"
+
+#: apprise_api/api/templates/details.html:69
+msgid "No services match your search."
+msgstr "Không có dịch vụ nào khớp với tìm kiếm của bạn."
+
+#: apprise_api/api/templates/details.html:74
+msgid "Or Paste an Apprise URL"
+msgstr "Hoặc dán URL Apprise"
+
+#: apprise_api/api/templates/details.html:96
+msgid "Fill In the Details"
+msgstr "Điền thông tin"
+
+#: apprise_api/api/templates/details.html:98
+msgid "Choose a service above, or paste a URL, to see what it needs."
+msgstr "Chọn một dịch vụ ở trên, hoặc dán URL, để xem những gì cần thiết."
+
+#: apprise_api/api/templates/details.html:136
+msgid "Options"
+msgstr "Tùy chọn"
+
+#: apprise_api/api/templates/details.html:140
+msgid "Advanced"
+msgstr "Nâng cao"
+
+#: apprise_api/api/templates/details.html:150
+msgid "Copy Your URL"
+msgstr "Sao chép URL của bạn"
+
+#: apprise_api/api/templates/details.html:159
+msgid "Fill in the details above to build the URL."
+msgstr "Điền thông tin ở trên để tạo URL."
+
+#: apprise_api/api/templates/details.html:462
+msgid "Required"
+msgstr "Bắt buộc"
+
+#: apprise_api/api/templates/details.html:513
+msgid "Separate entries with commas"
+msgstr "Phân tách các mục bằng dấu phẩy"
+
+#: apprise_api/api/templates/details.html:192
+msgid "A configuration login also sends its Config ID in the <code>X-Apprise-Config-ID</code> header."
+msgstr "Đăng nhập cấu hình cũng gửi Config ID của nó trong tiêu đề <code>X-Apprise-Config-ID</code>."
+
+#: apprise_api/api/templates/details.html:195
+msgid "List every service and its fields:"
+msgstr "Liệt kê mọi dịch vụ và các trường của nó:"
+
+#: apprise_api/api/templates/details.html:201
+msgid "Split a URL into its fields:"
+msgstr "Tách một URL thành các trường:"
+
+#: apprise_api/api/templates/details.html:209
+msgid "Put fields back together into a URL:"
+msgstr "Ghép các trường lại thành một URL:"
+
+#: apprise_api/api/templates/welcome.html:773
+msgid "Service and URL Endpoints"
+msgstr "Endpoint dịch vụ và URL"
+
+#: apprise_api/api/templates/welcome.html:776
+#, python-format
+msgid "Your own programs can look up what each service needs and check Apprise URLs without sending anything. The <a href=\"%(BASE_URL)s/details/\">Available Services</a> page is built on these."
+msgstr "Chương trình của bạn có thể tra cứu những gì mỗi dịch vụ cần và kiểm tra URL Apprise mà không gửi gì cả. Trang <a href=\"%(BASE_URL)s/details/\">Dịch vụ có sẵn</a> được xây dựng dựa trên chúng."
+
+#: apprise_api/api/templates/welcome.html:795
+msgid "Lists every service this server supports and the fields each of its URLs is built from."
+msgstr "Liệt kê mọi dịch vụ mà máy chủ này hỗ trợ và các trường dùng để tạo URL của dịch vụ đó."
+
+#: apprise_api/api/templates/welcome.html:816
+msgid "Takes Apprise URLs apart into their fields, or puts fields back together into a URL. Nothing is contacted; the URLs are only read."
+msgstr "Tách URL Apprise thành các trường, hoặc ghép các trường lại thành URL. Không liên hệ với bất kỳ đâu; URL chỉ được đọc."
+
+#: apprise_api/api/templates/details.html:215
+#, python-format
+msgid "Using this from your own program? See the <a href=\"%(BASE_URL)s/#url-endpoints\">API endpoints</a>."
+msgstr "Dùng từ chương trình của riêng bạn? Xem <a href=\"%(BASE_URL)s/#url-endpoints\">endpoint API</a>."

@@ -203,14 +203,6 @@ Footer
 /* =========================================
 Status & Indicators
 ========================================= */
-.url-enabled {
-  color: #2cb6a6;
-}
-
-.url-disabled {
-  color: #e00202;
-}
-
 .no-config .info {
   color: #34383f;
 }
@@ -224,6 +216,12 @@ Status & Indicators
 .notify-target-guidance-title,
 .notify-target-guidance-icon {
   color: #ffbf6b;
+}
+
+/* A note, not a warning, such as when nothing has been added yet. */
+.notify-target-guidance--info .notify-target-guidance-title,
+.notify-target-guidance--info .notify-target-guidance-icon {
+  color: var(--toast-info-text);
 }
 
 .review-empty-card {
@@ -260,11 +258,6 @@ Status & Indicators
   color: #aeb4be;
 }
 
-.api-details .plugin-index {
-  color: #aeb4be;
-  background-color: #17181c;
-  border-color: #3d4350;
-}
 
 .api-details .collapsible>li {
   border-color: #34383f;
@@ -290,13 +283,7 @@ Status & Indicators
   background-color: #17181c;
 }
 
-.api-details .plugin-chevron {
-  color: #666c78;
-}
 
-.api-details .collapsible>li.active .plugin-chevron {
-  color: #7de6da;
-}
 
 .api-details .plugin-service-btn {
   color: #c1c3c9 !important;
@@ -829,11 +816,15 @@ input.config-id-input.is-mismatched {
 }
 
 /* Materialize defaults helper copy to translucent black, which disappears
-   against this card. Keep inactive labels and explanatory text readable. */
-.auth-editor-card .input-field>label:not(.active),
-.auth-editor-card .select-wrapper+label:not(.active),
+   against this card. Keep explanatory text readable. */
 .auth-editor-card .helper-text {
   color: #aeb2bd;
+}
+
+/* Every field label in these cards shares one colour. */
+.auth-editor-card .input-field>label,
+.auth-editor-card .select-wrapper+label {
+  color: #2cb6a6;
 }
 
 .auth-editor-card .value-visibility-toggle i.material-icons {
@@ -850,7 +841,8 @@ input.config-id-input.is-mismatched {
 
 .auth-access-warning,
 .auth-access-warning i.material-icons,
-.apprise-qr-note--warning {
+.apprise-qr-note--warning,
+.notify-attach-blocked {
   color: #f6b45f;
 }
 
@@ -916,7 +908,6 @@ input.config-id-input.is-mismatched {
   color: #aeb2bd;
 }
 
-.auth-tool-panel,
 .auth-content-panel {
   background-color: #17191e;
   border-color: #363942;
@@ -1174,9 +1165,10 @@ Buttons & Chips
 
 #url-list .review-test-btn[disabled],
 #url-list .review-test-btn[disabled]:hover,
-#url-list .review-test-btn[disabled]:focus-visible {
-  color: #6d7380;
-  background-color: rgba(255, 255, 255, 0.03);
+#url-list .review-test-btn[disabled]:focus-visible,
+.details-step .btn[disabled] {
+  color: #6d7380 !important;
+  background-color: rgba(255, 255, 255, 0.03) !important;
   border-color: #3f4552;
 }
 
@@ -1675,12 +1667,13 @@ Reminders
   color: var(--reminder-text);
 }
 
-#reminder-form,
-#reminders .reminder-view-zone {
-  color-scheme: dark;
-}
 
 #reminder-form input,
 #reminders .reminder-view-zone input {
   color: var(--reminder-text);
+}
+
+/* Native scrollbars, pickers and controls follow the theme too. */
+:root {
+  color-scheme: dark;
 }

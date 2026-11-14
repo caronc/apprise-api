@@ -1029,33 +1029,8 @@ textarea {
   border-bottom: none;
 }
 
-.api-details .plugin-index {
-  font-family: monospace;
-  font-size: 0.82rem;
-  min-width: 2.65rem;
-  text-align: center;
-  margin-right: 0.3rem;
-  border: 1px solid;
-  border-radius: 999px;
-  padding: 0.13rem 0.45rem;
-  letter-spacing: 0.03em;
-  line-height: 1.15;
-}
 
-.api-details .plugin-chevron,
-.api-details .plugin-status {
-  margin-right: 0.4rem;
-}
 
-.api-details .plugin-chevron {
-  transition: transform 0.2s ease, color 0.15s ease, opacity 0.15s ease;
-  opacity: 0.75;
-}
-
-.api-details .collapsible>li.active .plugin-chevron {
-  transform: rotate(90deg);
-  opacity: 1;
-}
 
 /* Apprise API status indicator */
 .api-status-icon {
@@ -1534,6 +1509,11 @@ body.swal2-toast-shown .swal2-container {
   width: min(80rem, calc(100vw - 2rem)) !important;
 }
 
+/* The access modes help: wider than a message, narrower than a task. */
+.swal2-popup.auth-access-popup {
+  width: min(44rem, calc(100vw - 2rem)) !important;
+}
+
 .swal2-popup.apprise-popup--task .swal2-html-container {
   margin-bottom: 0.25rem;
 }
@@ -1777,16 +1757,6 @@ body.swal2-toast-shown .swal2-container {
   }
 }
 
-.api-details .service_name {
-  width: auto;
-  flex: 1 1 auto;
-  margin: 0;
-  padding: 0;
-  font-weight: 500;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
 
 .api-details .collapsible>li.active>.collapsible-header {
   border-bottom: 1px solid;
@@ -1817,6 +1787,11 @@ body.swal2-toast-shown .swal2-container {
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
+}
+
+/* A link with nowhere to go, such as a service with no website, is hidden. */
+.api-details .plugin-service-btn[hidden] {
+  display: none;
 }
 
 .api-details .plugin-service-btn {
@@ -2060,11 +2035,6 @@ body.swal2-toast-shown .swal2-container {
 
 }
 
-.detail-buttons--width {
-  width: 90%;
-  min-width: 60%;
-  padding-left: 0;
-}
 
 /* =========================================
 4. Config Page, Tabs & Cards
@@ -3463,6 +3433,11 @@ code.config-id.is-concealed {
   background-color: transparent;
 }
 
+/* An empty list has nothing to show or hide. */
+.config-list-toggle-all.btn-flat[hidden] {
+  display: none;
+}
+
 .config-list-toggle-all .material-icons {
   font-size: 1.75rem;
 }
@@ -3534,25 +3509,20 @@ Authentication Editor
   height: 1rem;
 }
 
+/* As many columns as fit (three on a wide screen, then two), each card only
+   as tall as its own content. */
 .auth-card-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   align-items: start;
   gap: 1.5rem;
-}
-
-.auth-secondary-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  min-width: 0;
 }
 
 .auth-editor-card {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 1.75rem 2rem 2rem;
+  padding: 1.25rem;
   border: 1px solid;
   border-radius: 1.4rem;
 }
@@ -3591,14 +3561,6 @@ Authentication Editor
   height: 100%;
 }
 
-.auth-tools-card-icon svg {
-  fill: currentColor;
-}
-
-.auth-tools-card {
-  padding: 1.25rem;
-}
-
 .auth-card-heading.auth-compact-heading {
   display: flex;
   align-items: center;
@@ -3633,15 +3595,17 @@ Authentication Editor
   fill: currentColor;
 }
 
-.auth-reminder-limits-card {
-  padding: 1.25rem;
-}
-
 .auth-reminder-limits-card .reminder-usage {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.5rem;
   margin-top: 0;
+}
+
+.reminder-limits-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  column-gap: 1rem;
 }
 
 .auth-reminder-limits-card .reminder-hint {
@@ -3663,12 +3627,20 @@ Authentication Editor
   margin: 1rem 0 1.5rem;
 }
 
+/* Labels in these cards always sit above their field, empty or not, so every
+   card lines up the same way. */
+.auth-editor-card .input-field>label:not(.label-icon) {
+  transform: translateY(-14px) scale(0.8);
+  transform-origin: 0 0;
+}
+
 /* This label sits above a custom select/help row instead of floating over an
-   input. Match Materialize's selector specificity so it is correct on first paint. */
+   input. Match Materialize's selector specificity so it is correct on first paint.
+   The negative top margin lines it up with the floating labels beside it. */
 .auth-editor-card .input-field>label.auth-access-label {
   display: block;
   position: static;
-  margin-bottom: 0.1rem;
+  margin: -0.875rem 0 0.1rem;
   font-size: 0.8rem;
   cursor: default;
   transform: none;
@@ -3887,11 +3859,12 @@ Authentication Editor
   opacity: 0.75;
 }
 
+/* The icon sits beside the first line, however long the text runs. */
 .apprise-qr-note--warning {
   display: grid;
   grid-template-columns: 1.75rem minmax(0, 1fr);
   gap: 0.7rem;
-  align-items: center;
+  align-items: start;
   width: 100%;
   padding: 0.75rem 0.85rem;
   border: 1px solid var(--notify-log-warning-border);
@@ -4313,19 +4286,58 @@ Authentication Editor
   margin: 0;
 }
 
-.auth-tool-panel,
 .auth-content-panel {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.7rem;
+  min-width: 0;
   padding: 0.85rem;
   border: 1px solid;
   border-radius: 0.75rem;
 }
 
-.auth-content-panel {
+/* The username/password toggles and the dice button share one row, just above Save.
+   The section starts closed and opens when its title is clicked. */
+.auth-generate {
+  margin: -0.5rem 0 1rem;
+}
+
+.auth-generate summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.auth-generate summary::-webkit-details-marker {
+  display: none;
+}
+
+.auth-generate summary i.material-icons {
+  font-size: 1.1rem;
+  color: inherit;
+  transition: transform 0.15s ease;
+}
+
+.auth-generate[open] summary i.material-icons {
+  transform: rotate(90deg);
+}
+
+.auth-generate[open] summary {
+  margin-bottom: 0.4rem;
+}
+
+.auth-generate-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.auth-generate-row .auth-randomize-options {
   flex: 1 1 auto;
-  min-width: 0;
 }
 
 .auth-content-panel form {
@@ -4342,6 +4354,11 @@ Authentication Editor
   text-transform: uppercase;
 }
 
+/* No divider while there is no login to reset. */
+.auth-remove-option:has(> [hidden]) {
+  display: none;
+}
+
 .auth-remove-option {
   display: flex;
   align-items: center;
@@ -4352,7 +4369,6 @@ Authentication Editor
   border-top: 1px solid;
 }
 
-.auth-randomize-button,
 .auth-content-panel .auth-form-actions .btn {
   display: inline-flex;
   align-items: center;
@@ -4371,17 +4387,14 @@ Authentication Editor
   line-height: 1;
 }
 
-.auth-randomize-icon {
+/* The generate dice looks like every other dice button; it only takes the
+   toggles' height so the row lines up. */
+.auth-randomize-button.btn-flat {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 0;
-}
-
-.auth-randomize-icon svg {
-  display: block;
-  width: 1.1rem;
-  height: 1.1rem;
+  height: auto;
+  min-width: 2.25rem;
 }
 
 .auth-randomize-options {
@@ -4484,22 +4497,6 @@ Authentication Editor
     grid-template-columns: minmax(0, 38rem);
     justify-content: center;
   }
-
-  /* Unwrap the desktop-only grouping div so Tools, the credentials card,
-     and Move can each be given their own stacking position below, instead
-     of Tools and Move always moving together as one block. */
-  .auth-secondary-column {
-    display: contents;
-  }
-
-  .auth-tools-card {
-    order: -1;
-  }
-
-  .auth-move-card,
-  .auth-reminder-limits-card {
-    order: 1;
-  }
 }
 
 @media (max-width: 600px) {
@@ -4511,9 +4508,6 @@ Authentication Editor
     padding: 1.75rem 1.4rem 2rem;
   }
 
-  .auth-editor-card {
-    padding: 1.5rem 1.25rem 1.75rem;
-  }
 }
 
 .swal2-popup .cfggen-modal-copy {
@@ -4943,6 +4937,11 @@ Authentication Editor
   font-size: 1.2rem;
 }
 
+/* Previews need a saved configuration. */
+.notify-attach-no-preview .notify-attach-preview {
+  display: none;
+}
+
 #notify .notify-attach-row input.invalid,
 #notify .notify-url-row input.invalid {
   border-color: var(--form-error-text) !important;
@@ -4992,6 +4991,62 @@ Authentication Editor
   color: var(--select-text);
 }
 
+/* Why the server would not download an address: a headline, one sentence,
+   the setting to change and a link to read more. */
+.notify-attach-blocked {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--notify-log-warning-border);
+  border-radius: 0.55rem;
+  background: var(--notify-log-warning-bg);
+  text-align: start;
+  box-sizing: border-box;
+}
+
+.notify-attach-blocked i.material-icons {
+  font-size: 1.75rem;
+  color: inherit;
+}
+
+.notify-attach-blocked strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.notify-attach-blocked p {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.notify-attach-blocked code {
+  overflow-wrap: anywhere;
+}
+
+.notify-attach-blocked a {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+/* The download log, kept closed under the explanation. */
+.notify-attach-preview-more {
+  width: 100%;
+}
+
+.notify-attach-preview-more summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.notify-attach-preview-more pre {
+  margin-top: 0.5rem !important;
+}
+
 .notify-attach-preview-none {
   display: flex;
   flex-direction: column;
@@ -5004,7 +5059,8 @@ Authentication Editor
   font-size: 3rem;
 }
 
-#notify .notify-attach-error {
+#notify .notify-attach-error,
+.details-step .notify-attach-error {
   display: block;
   margin: 0.25rem 0.4rem;
   font-size: 0.85rem;
@@ -5224,19 +5280,24 @@ Authentication Editor
 }
 
 .notify-template-key-field,
-.notify-template-value-field {
+.notify-template-value-field,
+.details-field {
   min-width: 0;
 }
 
 .notify-template-key-field label,
-.notify-template-value-field label {
+.notify-template-value-field label,
+.details-field>label,
+.details-step-field>label {
   display: block;
   margin-bottom: 0.15rem;
   color: var(--notify-log-muted);
   font-size: 0.75rem;
 }
 
-#notify .notify-template-row input {
+#notify .notify-template-row input,
+.details-step input:not([type="checkbox"]),
+.details-step select {
   width: 100%;
   height: 2.75rem;
   margin: 0;
@@ -5249,13 +5310,239 @@ Authentication Editor
   font-family: monospace;
 }
 
-#notify .notify-template-row input:focus {
+#notify .notify-template-row input:focus,
+.details-step input:not([type="checkbox"]):focus,
+.details-step select:focus {
   border-color: var(--select-border-hover) !important;
   box-shadow: 0 0 0 3px var(--select-focus-ring) !important;
 }
 
-#notify .notify-template-value-control input {
+/* A field whose value is not in the form its service expects. */
+.details-step input.is-invalid:not([type="checkbox"]) {
+  border-color: var(--form-error-border) !important;
+}
+
+.details-field-error:not([hidden]) {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+#notify .notify-template-value-control input,
+.details-step .notify-template-value-control input {
   padding-right: 2.8rem !important;
+}
+
+/* Apprise Details builder: three numbered steps, a service list, fields. */
+.details-step {
+  margin-bottom: 1.5rem;
+}
+
+.details-step-title {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0 0 0.9rem;
+  font-size: 1.25rem;
+}
+
+.details-step-number {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--mobile-app-accent);
+  color: var(--select-bg);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.details-step-field {
+  margin-bottom: 0.9rem;
+}
+
+.details-services {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.45rem;
+  max-height: 22rem;
+  margin: 0 0 0.9rem;
+  padding: 0.2rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.details-services>li {
+  min-width: 0;
+}
+
+.details-service {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--select-border);
+  border-radius: 7px;
+  background: var(--select-bg);
+  color: var(--select-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.details-service:hover,
+.details-service:focus-visible {
+  border-color: var(--select-border-hover);
+}
+
+.details-service[aria-pressed="true"] {
+  border-color: var(--mobile-app-accent);
+  background: var(--mobile-app-accent-soft);
+}
+
+.details-service-name {
+  font-weight: 600;
+}
+
+/* With every service listed, a small mark before the name says whether it works. */
+.details-service .details-service-status {
+  margin-right: 0.25rem;
+  font-size: 1rem;
+  vertical-align: -0.15em;
+}
+
+.details-service .details-service-status.is-enabled {
+  color: var(--toast-success-border);
+}
+
+.details-service .details-service-status.is-disabled {
+  color: var(--form-error-border);
+}
+
+.details-service-schemas {
+  overflow-wrap: anywhere;
+}
+
+/* A turned-off service's notice keeps the shared notice box with a red mark. */
+#details-disabled .notify-target-guidance-title {
+  flex-wrap: wrap;
+  color: inherit;
+}
+
+#details-disabled .notify-target-guidance-title i.material-icons {
+  font-size: 1.15rem;
+  color: var(--form-error-border);
+}
+
+#details-disabled p {
+  margin: 0.25rem 0 0;
+}
+
+/* The URL Builder button sits at the right end of the title row, and drops
+   below the title once the notice gets narrow. */
+#details-disabled-builder {
+  margin-left: auto;
+}
+
+#details-disabled code+code {
+  margin-left: 0.35rem;
+}
+
+.details-service-schemas code {
+  margin-right: 0.35rem;
+  color: var(--notify-log-muted);
+  font-size: 0.8rem;
+}
+
+.details-required {
+  color: var(--form-error-text);
+}
+
+.details-url-row {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.details-url-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The themes colour the border of a greyed out button; Materialize gives it none. */
+.details-step .btn[disabled] {
+  border: 1px solid;
+}
+
+.details-icon-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--select-border);
+  border-radius: 7px;
+}
+
+.details-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.9rem 1.2rem;
+  margin-bottom: 0.9rem;
+}
+
+.details-group,
+.details-map {
+  border: 1px solid var(--select-border);
+  border-radius: 8px;
+}
+
+.details-group {
+  margin-bottom: 0.9rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.details-group summary {
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.details-map {
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.4rem;
+}
+
+.details-map legend {
+  padding: 0 0.35rem;
+  color: var(--notify-log-muted);
+  font-size: 0.75rem;
+}
+
+.details-switch {
+  margin-top: 0.6rem;
+}
+
+@media only screen and (max-width: 600px) {
+
+  .details-fields,
+  .details-services {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .details-url-row {
+    flex-wrap: wrap;
+  }
+
+  .details-url-row input {
+    flex-basis: 100%;
+  }
 }
 
 .notify-template-value-control .value-visibility-toggle,
@@ -5359,25 +5646,32 @@ Authentication Editor
   overflow-x: hidden;
 }
 
-#notify .autocomplete-content {
+#notify .autocomplete-content,
+.details-services {
   scrollbar-width: thin;
   scrollbar-color: var(--review-autocomplete-scroll-thumb) var(--review-autocomplete-scroll-track);
+}
+
+#notify .autocomplete-content {
   height: auto !important;
   max-height: min(18rem, 52vh);
   padding: 0.18rem 0.32rem 0.34rem;
   box-sizing: border-box;
 }
 
-#notify .autocomplete-content::-webkit-scrollbar {
+#notify .autocomplete-content::-webkit-scrollbar,
+.details-services::-webkit-scrollbar {
   width: 0.55rem;
 }
 
-#notify .autocomplete-content::-webkit-scrollbar-track {
+#notify .autocomplete-content::-webkit-scrollbar-track,
+.details-services::-webkit-scrollbar-track {
   background: var(--review-autocomplete-scroll-track);
   border-radius: 999px;
 }
 
-#notify .autocomplete-content::-webkit-scrollbar-thumb {
+#notify .autocomplete-content::-webkit-scrollbar-thumb,
+.details-services::-webkit-scrollbar-thumb {
   background: var(--review-autocomplete-scroll-thumb);
   border: 2px solid var(--review-autocomplete-scroll-track);
   border-radius: 999px;
@@ -7083,6 +7377,11 @@ Reminders
 
 /* Seconds are only offered for the time a reminder is sent. */
 #reminder-picker .reminder-picker-seconds[hidden] {
+  display: none;
+}
+
+/* Clear is only offered for a field that may be left empty. */
+#reminder-picker .reminder-picker-clear[hidden] {
   display: none;
 }
 

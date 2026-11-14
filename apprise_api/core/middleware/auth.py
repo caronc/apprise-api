@@ -71,6 +71,7 @@ _REMINDER_CURRENT_ROUTES = frozenset(
         "reminder_test_current",
     }
 )
+# Routes that take the Config ID from the X-Apprise-Config-ID header instead of the URL.
 _HEADER_ROUTES = frozenset(
     {
         "add_by_header",
@@ -83,6 +84,7 @@ _HEADER_ROUTES = frozenset(
         "qr_by_header",
         "reminder_by_header",
         "resolve_by_header",
+        "resolve_current",
         "health",
         "details",
         *_REMINDER_CURRENT_ROUTES,
@@ -90,7 +92,7 @@ _HEADER_ROUTES = frozenset(
 )
 _SHARED_WEB_ROUTES = frozenset({"welcome", "config_list", "reminder_overview", "details"})
 _CURRENT_CONFIG_ROUTES = frozenset(
-    {"config_current", "auth_current", "health_current", "qr_current", *_REMINDER_CURRENT_ROUTES}
+    {"config_current", "auth_current", "health_current", "qr_current", "resolve_current", *_REMINDER_CURRENT_ROUTES}
 )
 
 

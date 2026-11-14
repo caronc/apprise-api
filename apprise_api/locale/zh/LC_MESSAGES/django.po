@@ -350,14 +350,6 @@ msgstr "已保存 %(saved)s 的访问当前由全局配置锁定执行。如果�
 msgid "Save"
 msgstr "保存"
 
-#: apprise_api/api/templates/auth.html:147
-msgid "Credential Tools"
-msgstr "凭证工具"
-
-#: apprise_api/api/templates/auth.html:148
-msgid "Generate credentials or reset this Config ID's access."
-msgstr "生成凭证或重置此配置ID的访问权限。"
-
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "生成新凭证"
@@ -369,10 +361,6 @@ msgstr "需要随机化的字段"
 #: apprise_api/api/templates/auth.html:168
 msgid "Randomize the Selected Fields"
 msgstr "随机化选定的字段"
-
-#: apprise_api/api/templates/auth.html:172
-msgid "Randomize Selected"
-msgstr "随机化已选"
 
 #: apprise_api/api/templates/auth.html:181
 msgid "Reset Access"
@@ -455,21 +443,34 @@ msgstr "模式"
 msgid "Description"
 msgstr "描述"
 
-#: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "对正常的有状态和无状态通知及配置访问使用其自身登录。"
+#: apprise_api/api/templates/auth.html:370
+msgid "Uses its own login to send notifications and to view and edit the configuration."
+msgstr "使用自己的登录发送通知，并查看和编辑配置。"
 
-#: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "对带标签的有状态通知和密码更改使用其自身登录。配置内容保持隐藏。"
+#: apprise_api/api/templates/auth.html:370
+msgid "Its user also manages the reminders."
+msgstr "其用户也管理提醒。"
 
-#: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "允许无登录的带标签有状态通知。配置内容和无状态通知保持受保护。"
+#: apprise_api/api/templates/auth.html:371
+msgid "Uses its own login to send tagged notifications and change its password. The configuration stays hidden."
+msgstr "使用自己的登录发送带标签的通知并更改密码。配置保持隐藏。"
 
-#: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "冻结配置用户访问，但不删除配置或登录。仅管理员可使用。"
+#: apprise_api/api/templates/auth.html:371
+#: apprise_api/api/templates/auth.html:372
+msgid "Only an administrator manages reminders, and they still run."
+msgstr "只有管理员管理提醒，提醒仍会发送。"
+
+#: apprise_api/api/templates/auth.html:372
+msgid "Anyone may send tagged notifications without a login. The configuration and stateless notifications stay protected."
+msgstr "任何人无需登录即可发送带标签的通知。配置和无状态通知仍受保护。"
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Only an administrator may use it. The configuration and login are kept."
+msgstr "只有管理员可以使用。配置和登录会保留。"
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Its reminders are kept, but none run or can be changed."
+msgstr "其提醒会保留，但不会运行，也无法更改。"
 
 #: apprise_api/api/templates/auth.html:337
 #: apprise_api/api/templates/components/mobile_app_dialog.html:18
@@ -752,8 +753,8 @@ msgid "Configuration List"
 msgstr "配置列表"
 
 #: apprise_api/api/templates/base.html:303
-msgid "Available Plugins"
-msgstr "可用插件"
+msgid "Available Services"
+msgstr "可用服务"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -1504,13 +1505,9 @@ msgstr "BEGIN APPRISE NOTIFICATION LOG"
 msgid "END APPRISE NOTIFICATION LOG"
 msgstr "END APPRISE NOTIFICATION LOG"
 
-#: apprise_api/api/templates/config.html:930
-msgid "event"
-msgstr "事件"
-
-#: apprise_api/api/templates/config.html:931
-msgid "events"
-msgstr "事件列表"
+#: apprise_api/api/templates/components/notify_stream_script.html:193
+msgid "Events: {}"
+msgstr "事件：{}"
 
 #: apprise_api/api/templates/config.html:940
 msgid "Notification logs copied to clipboard"
@@ -1786,13 +1783,6 @@ msgstr "配置已移动。"
 msgid "Apprise Details"
 msgstr "Apprise 详情"
 
-#: apprise_api/api/templates/details.html:13
-msgid ""
-"The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
-"            instance."
-msgstr "以下服务由此 <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> 实例支持。"
-
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
@@ -1819,51 +1809,25 @@ msgstr "安装指南"
 msgid "Service Website"
 msgstr "服务官网"
 
-#: apprise_api/api/templates/details.html:114
-msgid ""
-"\n"
-"                  <strong>Note:</strong> This service is unavailable due to the\n"
-"                  service being disabled by the administrator or the required\n"
-"                  libraries needed to drive it is not installed or functioning\n"
-"                  correctly.\n"
-"                "
-msgstr ""
-"\n"
-"<strong>注意：</strong> 由于管理员禁用了该服务或驱动该服务所需的库未安装或未正常工作，此服务不可用。"
+#: apprise_api/api/templates/details.html:135
+msgid "Service Unavailable"
+msgstr "服务不可用"
 
-#: apprise_api/api/templates/details.html:124
-msgid "Category"
-msgstr "分类"
+#: apprise_api/api/templates/details.html:138
+msgid "The administrator has turned this service off on this server."
+msgstr "管理员已在此服务器上关闭此服务。"
 
-#: apprise_api/api/templates/details.html:129
-msgid "Insecure Schema(s)"
-msgstr "不安全的模式"
+#: apprise_api/api/templates/details.html:140
+msgid "This service is missing the necessary dependencies to function on this server."
+msgstr "此服务缺少在此服务器上运行所需的依赖项。"
 
-#: apprise_api/api/templates/details.html:142
-msgid "Secure Schema(s)"
-msgstr "安全的模式"
+#: apprise_api/api/templates/details.html:143
+msgid "Required packages:"
+msgstr "所需软件包："
 
-#: apprise_api/api/templates/details.html:154
-msgid "Apprise URL Formatting"
-msgstr "Apprise URL 格式化"
-
-#: apprise_api/api/templates/details.html:159
-msgid ""
-"For more details and additional Apprise\n"
-"                    configuration options available to this service:"
-msgstr "有关此服务的更多详细信息和其他 Apprise 配置选项："
-
-#: apprise_api/api/templates/details.html:161
-msgid "Click Here"
-msgstr "点击这里"
-
-#: apprise_api/api/templates/details.html:173
-msgid "API Endpoints"
-msgstr "API 端点"
-
-#: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "希望以可供其应用程序解析的 JSON 字符串接收此结果集的开发者可以执行以下操作以实现此目的："
+#: apprise_api/api/templates/details.html:147
+msgid "You can still build its URL online."
+msgstr "仍可在线生成其 URL。"
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1872,10 +1836,6 @@ msgstr "希望以可供其应用程序解析的 JSON 字符串接收此结果集
 #: apprise_api/api/templates/welcome.html:590
 msgid "Curl Example"
 msgstr "Curl 示例"
-
-#: apprise_api/api/templates/details.html:184
-msgid "Retrieve JSON Formatted Apprise Details"
-msgstr "检索 JSON 格式化 Apprise 详情"
 
 #: apprise_api/api/templates/details.html:191
 #: apprise_api/api/templates/welcome.html:138
@@ -2604,11 +2564,6 @@ msgid ""
 "Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
 msgstr "可选：直接指定要通知的 Apprise URL。<a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">点击此处</a>，借助 Apprise URL Builder 构建您的 URL。"
 
-#: apprise_api/api/templates/config.html:573
-msgid ""
-"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
-msgstr "此服务器已关闭 Stateless Mode，因此这些 URL 仅供提醒使用。"
-
 #: apprise_api/api/templates/config.html:583
 msgid "Also send to untagged services"
 msgstr "同时发送到没有标签的服务"
@@ -2624,6 +2579,14 @@ msgstr "删除 URL"
 #: apprise_api/api/views.py:4307
 msgid "This URL could not be loaded"
 msgstr "无法加载此 URL"
+
+#: apprise_api/api/templates/details.html:555
+msgid "This value is not in the form this service expects."
+msgstr "此值不是该服务所需的格式。"
+
+#: apprise_api/api/templates/details.html:770
+msgid "This URL could not be loaded. Check the highlighted fields."
+msgstr "无法加载此 URL。请检查突出显示的字段。"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:534
 msgid "The end date has already passed, so this reminder will not be sent."
@@ -2645,6 +2608,10 @@ msgstr "提醒的重复间隔不能少于 {} 秒"
 #: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
 msgid "Only an administrator may manage reminders for this configuration"
 msgstr "只有管理员可以管理此配置的提醒"
+
+#: apprise_api/api/views.py:5475
+msgid "Reminders are turned off while this configuration is disabled"
+msgstr "此配置被禁用期间，提醒处于关闭状态"
 
 
 #: apprise_api/api/templates/components/config_reminders_tab.html:14
@@ -3044,8 +3011,8 @@ msgid "Save Limits"
 msgstr "保存限制"
 
 #: apprise_api/api/templates/auth.html:215
-msgid "Leave a field blank for no limit. An attachment space of 0 turns uploads off."
-msgstr "留空表示不限制。附件空间设为 0 会关闭上传。"
+msgid "Leave a field blank to use the server default. An attachment space of 0 turns uploads off."
+msgstr "留空表示使用服务器默认值。附件空间设为 0 会关闭上传。"
 
 #: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
 msgid "Reminder"
@@ -3134,10 +3101,6 @@ msgstr "保存提醒"
 #: apprise_api/api/templates/components/reminder_shared_script.html:32
 msgid "Skipped: it was too late to send"
 msgstr "已跳过：发送已太迟"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:33
-msgid "Paused: this configuration is disabled"
-msgstr "已暂停：此配置已被禁用"
 
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
@@ -3367,6 +3330,30 @@ msgstr "正在加载…"
 msgid "The attachment could not be downloaded"
 msgstr "无法下载附件"
 
+#: apprise_api/api/templates/config.html:3198
+msgid "Local network access is turned off"
+msgstr "本地网络访问已关闭"
+
+#: apprise_api/api/templates/config.html:3199
+msgid "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed."
+msgstr "此 Apprise API 的管理员已关闭从本地网络下载，因此无法预览此地址。"
+
+#: apprise_api/api/templates/config.html:3202
+msgid "This address is blocked"
+msgstr "此地址已被阻止"
+
+#: apprise_api/api/templates/config.html:3203
+msgid "The attachment rules of this Apprise API do not allow downloads from this address."
+msgstr "此 Apprise API 的附件规则不允许从此地址下载。"
+
+#: apprise_api/api/templates/config.html:3228
+msgid "The administrator can change this with:"
+msgstr "管理员可以通过以下设置更改："
+
+#: apprise_api/api/templates/config.html:3241
+msgid "Learn more"
+msgstr "了解更多"
+
 #: apprise_api/api/templates/config.html:3320
 msgid "This file cannot be shown here."
 msgstr "此文件无法在此显示。"
@@ -3425,3 +3412,107 @@ msgstr "每 {} 个月"
 #, python-brace-format
 msgid "Every {} years"
 msgstr "每 {} 年"
+
+#: apprise_api/api/templates/resolve.html:37
+#: apprise_api/api/templates/resolve.html:38
+msgid "Copy URL"
+msgstr "复制 URL"
+
+#: apprise_api/api/templates/resolve.html:43
+msgid "Parse"
+msgstr "解析"
+
+#: apprise_api/api/templates/resolve.html:352
+#: apprise_api/api/templates/resolve.html:353
+msgid "Remove Value"
+msgstr "删除值"
+
+#: apprise_api/api/templates/details.html:13
+msgid "Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts."
+msgstr "分三步创建 Apprise URL：选择服务，填写详细信息，然后复制 URL。已有 URL？将其粘贴到第 1 步即可查看并修改各个部分。"
+
+#: apprise_api/api/templates/details.html:36
+msgid "Choose a Service"
+msgstr "选择服务"
+
+#: apprise_api/api/templates/details.html:39
+msgid "Search Services"
+msgstr "搜索服务"
+
+#: apprise_api/api/templates/details.html:69
+msgid "No services match your search."
+msgstr "没有与搜索匹配的服务。"
+
+#: apprise_api/api/templates/details.html:74
+msgid "Or Paste an Apprise URL"
+msgstr "或粘贴 Apprise URL"
+
+#: apprise_api/api/templates/details.html:96
+msgid "Fill In the Details"
+msgstr "填写详细信息"
+
+#: apprise_api/api/templates/details.html:98
+msgid "Choose a service above, or paste a URL, to see what it needs."
+msgstr "在上方选择服务或粘贴 URL，即可查看所需内容。"
+
+#: apprise_api/api/templates/details.html:136
+msgid "Options"
+msgstr "选项"
+
+#: apprise_api/api/templates/details.html:140
+msgid "Advanced"
+msgstr "高级"
+
+#: apprise_api/api/templates/details.html:150
+msgid "Copy Your URL"
+msgstr "复制 URL"
+
+#: apprise_api/api/templates/details.html:159
+msgid "Fill in the details above to build the URL."
+msgstr "填写上方的详细信息以创建 URL。"
+
+#: apprise_api/api/templates/details.html:462
+msgid "Required"
+msgstr "必填"
+
+#: apprise_api/api/templates/details.html:513
+msgid "Separate entries with commas"
+msgstr "用逗号分隔各项"
+
+#: apprise_api/api/templates/details.html:192
+msgid "A configuration login also sends its Config ID in the <code>X-Apprise-Config-ID</code> header."
+msgstr "配置登录还会在 <code>X-Apprise-Config-ID</code> 标头中发送其 Config ID。"
+
+#: apprise_api/api/templates/details.html:195
+msgid "List every service and its fields:"
+msgstr "列出每个服务及其字段："
+
+#: apprise_api/api/templates/details.html:201
+msgid "Split a URL into its fields:"
+msgstr "将 URL 拆分为字段："
+
+#: apprise_api/api/templates/details.html:209
+msgid "Put fields back together into a URL:"
+msgstr "将字段重新组合为 URL："
+
+#: apprise_api/api/templates/welcome.html:773
+msgid "Service and URL Endpoints"
+msgstr "服务和 URL 端点"
+
+#: apprise_api/api/templates/welcome.html:776
+#, python-format
+msgid "Your own programs can look up what each service needs and check Apprise URLs without sending anything. The <a href=\"%(BASE_URL)s/details/\">Available Services</a> page is built on these."
+msgstr "你自己的程序可以在不发送任何内容的情况下查询每个服务需要什么并检查 Apprise URL。<a href=\"%(BASE_URL)s/details/\">可用服务</a>页面就是基于这些端点构建的。"
+
+#: apprise_api/api/templates/welcome.html:795
+msgid "Lists every service this server supports and the fields each of its URLs is built from."
+msgstr "列出此服务器支持的每个服务，以及构成其 URL 的字段。"
+
+#: apprise_api/api/templates/welcome.html:816
+msgid "Takes Apprise URLs apart into their fields, or puts fields back together into a URL. Nothing is contacted; the URLs are only read."
+msgstr "将 Apprise URL 拆分为字段，或将字段重新组合成 URL。不会联系任何服务；只读取 URL。"
+
+#: apprise_api/api/templates/details.html:215
+#, python-format
+msgid "Using this from your own program? See the <a href=\"%(BASE_URL)s/#url-endpoints\">API endpoints</a>."
+msgstr "要在你自己的程序中使用？请参阅 <a href=\"%(BASE_URL)s/#url-endpoints\">API 端点</a>。"

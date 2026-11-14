@@ -360,6 +360,8 @@ paths:
         - Reminders
       security:
         - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderPrivacy'
       responses:
         '200':
           description: Every reminder.
@@ -996,8 +998,10 @@ paths:
       summary: Downloads an attachment web address the way a send would.
       description: >
         Lets a caller check a web address before sending it or saving it with a
-        reminder. The same attachment rules as /notify apply. The file comes
-        back as application/octet-stream, with its own type in
+        reminder. The same attachment rules as /notify apply, and local
+        network addresses (loopback, private, link-local and other non-public
+        addresses) are refused unless APPRISE_ATTACH_PREVIEW_INTERNAL is set.
+        The file comes back as application/octet-stream, with its own type in
         X-Apprise-Content-Type and its name (URL encoded) in X-Apprise-Filename.
       tags:
         - Persistent
@@ -1023,7 +1027,9 @@ paths:
             X-Apprise-Content-Type:
               schema:
                 type: string
-              description: The type the web server gave the file.
+              description: >
+                The type the web server gave the file, without anything after its `;`.
+                Anything that is not one plain type is sent as application/octet-stream.
             X-Apprise-Filename:
               schema:
                 type: string
@@ -1044,7 +1050,9 @@ paths:
         '424':
           description: >
             The file could not be downloaded or is not allowed. `logs` holds
-            what the download reported, such as a 404.
+            what the download reported, such as a 404. When the address itself
+            is refused, `reason`, `setting` and `help` say why and what an
+            administrator would change.
           content:
             application/json:
               schema:
@@ -1056,17 +1064,38 @@ paths:
                     type: array
                     items:
                       type: string
+                  reason:
+                    type: string
+                    enum: [internal, rules]
+                    description: >
+                      `internal` when the address is on the local network,
+                      `rules` when the attachment allow or deny list refuses it.
+                  setting:
+                    type: string
+                    enum:
+                      - APPRISE_ATTACH_PREVIEW_INTERNAL
+                      - APPRISE_ATTACH_REJECT_URL
+                      - APPRISE_ATTACH_ALLOW_URL
+                    description: The environment variable an administrator would change to allow it.
+                  help:
+                    type: string
+                    format: uri
+                    description: A page explaining the refusal.
 
   /resolve/{key}:
     post:
       operationId: Persistent_ResolveUrls
-      summary: Checks Apprise URLs and returns them in full and with their secrets hidden.
+      summary: Checks Apprise URLs and returns them in full, as fields, and with their secrets hidden.
       description: >
         Returns each URL's service, whether it can be loaded, the URL in full
         with every option written out, and the same URL with its secrets
-        hidden, the way /json/urls?privacy=1 shows them. Works whatever the
-        stateful and stateless modes are; on a `public` or `disabled`
-        configuration only the administrator may use it. Nothing is contacted.
+        hidden, the way /json/urls?privacy=1 shows them. Each also comes back
+        split into its fields, and fields can be sent in place of a URL to
+        turn them back into one. `/resolve/@` reads the Config ID from
+        X-Apprise-Config-ID, or else the one the browser is signed in to.
+        Works whatever the stateful and stateless modes are; on a `public` or
+        `disabled` configuration only the administrator may use it. Nothing is
+        contacted.
       tags:
         - Persistent
       security:
@@ -1084,13 +1113,15 @@ paths:
                 urls:
                   description: >
                     One string of URLs (split on spaces and commas), or a list
-                    where each entry is one URL. At most 100.
+                    where each entry is one URL or the fields of one. At most 100.
                   oneOf:
                     - type: string
                     - type: array
                       maxItems: 100
                       items:
-                        type: string
+                        oneOf:
+                          - type: string
+                          - $ref: '#/components/schemas/ResolveFields'
       responses:
         '200':
           description: Each URL, in the order sent.
@@ -1148,9 +1179,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1213,9 +1245,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1361,9 +1394,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1561,9 +1595,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1623,9 +1658,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1687,9 +1723,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1724,9 +1761,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1774,9 +1812,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1823,9 +1862,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -1880,9 +1920,10 @@ paths:
           description: Unauthorized.
         '403':
           description: >
-            Forbidden. The administrator may always use reminders; the
-            configuration's own user only while its access is `user` (the same
-            rule /status reports as `reminders_enabled`).
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
         '404':
           description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
         '429':
@@ -2287,13 +2328,15 @@ paths:
                 urls:
                   description: >
                     One string of URLs (split on spaces and commas), or a list
-                    where each entry is one URL. At most 100.
+                    where each entry is one URL or the fields of one. At most 100.
                   oneOf:
                     - type: string
                     - type: array
                       maxItems: 100
                       items:
-                        type: string
+                        oneOf:
+                          - type: string
+                          - $ref: '#/components/schemas/ResolveFields'
       responses:
         '200':
           description: Each URL, in the order sent.
@@ -2418,7 +2461,9 @@ components:
       name: end
       schema:
         type: integer
-      description: The UNIX timestamp that ends the `start` window.
+      description: >
+        The UNIX timestamp that ends the `start` window. The window may span at
+        most 400 days; a longer one is refused with a 400 naming `end`.
     ReminderPrivacy:
       in: query
       name: privacy
@@ -2426,8 +2471,11 @@ components:
         type: boolean
         default: false
       description: >
-        Show each reminder's own `urls` with their secrets hidden, the way
-        /json/urls shows them with `privacy=1`. What is stored is not changed.
+        Show each reminder's own `urls`, and its attachment web addresses,
+        with their secrets hidden, the way /json/urls shows them with
+        `privacy=1`. What is stored is not changed.
+        Under APPRISE_CONFIG_LOCK they are always hidden for anyone but the
+        administrator.
     ReminderShowDisabled:
       in: query
       name: disabled
@@ -2632,9 +2680,9 @@ components:
           type: boolean
           description: >-
             Whether this caller may use reminders for the Config ID asked
-            about: always for the administrator, and for the configuration's
-            own login only while its access is `user`. Without a Config ID,
-            true for the administrator.
+            about: for the administrator unless the configuration is
+            `disabled`, and for the configuration's own login only while its
+            access is `user`. Without a Config ID, true for the administrator.
             Missing when APPRISE_REMINDER_ENABLED is `no` or stateful mode is
             disabled.
         scheduler_running:
@@ -2645,8 +2693,9 @@ components:
         reminder_urls_max:
           type: integer
           description: >-
-            The most `urls` a reminder can hold; 0 when it can hold none.
-            Present only with `reminders_enabled`.
+            The most `urls` a reminder can hold; 0 when a reminder can be given
+            no new URLs (APPRISE_REMINDER_URLS_MAX is 0 or APPRISE_STATELESS_MODE
+            is `disabled`). Present only with `reminders_enabled`.
         privilege:
           type: string
           enum: [admin, user]
@@ -2654,6 +2703,29 @@ components:
             What this caller may reach. `user` is a caller authenticated
             against a single configuration; `admin` covers an unrestricted
             credential and a server with authentication turned off.
+
+    ResolveFields:
+      type: object
+      description: >
+        One URL split into fields, named after the tokens and arguments
+        /details lists for its service. Aliases such as `to` are folded in
+        (here into `targets`), key/value options come back as maps
+        (`headers`, `params`, `payload`), and empty values are left out. A
+        name the service does not list makes the entry invalid.
+      required: [schema]
+      properties:
+        schema:
+          type: string
+          description: The URL's schema, such as `mailtos`.
+      additionalProperties: true
+      example:
+        schema: mailtos
+        user: user
+        password: secret
+        host: example.com
+        targets: [a@example.com, b@example.com]
+        smtp: smtp.example.com
+        mode: starttls
 
     ResolveResponse:
       type: object
@@ -2673,6 +2745,19 @@ components:
                 description: >
                   The URL with its secrets hidden; only its schema (such as
                   `json://`) when it cannot be loaded.
+              fields:
+                allOf:
+                  - $ref: '#/components/schemas/ResolveFields'
+                description: >
+                  The URL split into fields; sending them back gives the
+                  same URL. When the URL cannot be loaded but its service is
+                  known, they hold what could be read from it.
+              privacy_fields:
+                allOf:
+                  - $ref: '#/components/schemas/ResolveFields'
+                description: >
+                  The same fields with every entry /details marks as private
+                  hidden; given whenever `fields` is.
               service:
                 type: string
                 nullable: true
@@ -2696,7 +2781,12 @@ components:
         repeat from that time; `every` without `at` starts at `start`, or else
         at the start of the minute it is saved in. Dates and times are `YYYY-MM-DD` with an optional
         `hh`, `hh:mm` or `hh:mm:ss` (a missing time is midnight), and are
-        returned as `YYYY-MM-DDThh:mm:ss`.
+        returned as `YYYY-MM-DDThh:mm:ss`. A time the clocks skip is read as
+        the moment they jumped to (02:30 becomes 03:30), and a time they
+        repeat is the first one. A reminder that repeats daily or less
+        often, or a `cron` whose hour is not `*`, follows this rule every
+        time, so it is sent once; one that repeats by seconds, minutes or
+        hours, or a `cron` with `*` for the hour, follows real time.
       properties:
         tz:
           type: string
@@ -2839,9 +2929,13 @@ components:
             the configuration's URLs it picks are sent to as well; with `tag`
             set to null or empty, the configuration's untagged URLs are, and
             the tag is saved as "". Each must load, and there may be at most
-            APPRISE_REMINDER_URLS_MAX (`reminder_urls_max` in /status), whatever
-            the stateless mode. While it is 0, URLs a reminder already holds
-            can be saved again unchanged but are not sent to. A reminder
+            APPRISE_REMINDER_URLS_MAX (`reminder_urls_max` in /status). New
+            URLs follow the stateless /notify rules: they are refused when
+            APPRISE_STATELESS_MODE is `disabled` or the caller may not send
+            stateless notifications, while URLs a reminder already holds are
+            kept and still sent to. While APPRISE_REMINDER_URLS_MAX is 0, URLs
+            a reminder already holds can be saved again unchanged but are not
+            sent to. A reminder
             that would reach no service is refused. One sent to its own URLs
             alone needs no saved configuration. On a change, `@<id>` keeps a
             URL the reminder already holds by its ID (from `url_ids`), so a
@@ -2849,6 +2943,8 @@ components:
             drop others and add new ones; an ID it doesn't hold is refused. A
             new reminder (a copy, or one standing in for a time of a series)
             may name that way any URL this configuration's reminders hold.
+            URLs named this way count toward APPRISE_REMINDER_URLS_MAX like
+            any other.
           nullable: true
           oneOf:
             - type: string
@@ -2878,8 +2974,9 @@ components:
             A local date and time, as `YYYY-MM-DD` with an optional `hh`,
             `hh:mm` or `hh:mm:ss`. A repeating reminder's own times start
             from it, before any drift is added. A holiday uses only its year
-            and time of day, and may give just `hh:mm` or `hh:mm:ss`, saved on
-            the holiday's next date. One already passed changes nothing.
+            and time of day, read in the reminder's timezone (one with a UTC
+            offset is converted first), and may give just `hh:mm` or
+            `hh:mm:ss`, saved on the holiday's next date. One already passed changes nothing.
         until:
           type: string
           nullable: true
@@ -2895,11 +2992,11 @@ components:
           description: Stop after this many times, counting ones skipped as late and failed sends.
         skip:
           type: array
-          maxItems: 200
           description: >
             Times a repeating reminder is not sent at, as UNIX timestamps.
             Times that have passed are dropped, and times that a one-off stands
-            in for always stay.
+            in for always stay. At most 200, not counting the times a one-off
+            stands in for.
           items:
             type: integer
             maximum: 253402300799
@@ -2977,6 +3074,14 @@ components:
         attach_used:
           type: integer
           description: Bytes used, counting a file shared by several reminders once.
+        custom:
+          type: array
+          items:
+            type: string
+            enum: [reminders, attach_size]
+          description: >
+            The limits the administrator set for this configuration. The others
+            show the server's defaults.
 
     ReminderRules:
       type: object
@@ -3002,7 +3107,7 @@ components:
           description: The most times one preview can list.
         urls_max:
           type: integer
-          description: The most `urls` a reminder can hold; 0 when it can hold none.
+          description: The most `urls` a reminder can hold; 0 when a reminder can be given no new URLs.
 
     Reminder:
       allOf:
@@ -3043,11 +3148,10 @@ components:
                   type: boolean
                 reason:
                   type: string
-                  enum: [late, access, idle]
+                  enum: [late, idle]
                   description: >-
                     Why it was not sent. `late` means it was overdue by more than
-                    APPRISE_REMINDER_GRACE. `access` means it was paused because
-                    the configuration is `disabled`. `idle` means it
+                    APPRISE_REMINDER_GRACE. `idle` means it
                     was paused because the configuration went unused for
                     APPRISE_REMINDER_IDLE_DAYS.
             attach:

@@ -21,6 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from contextlib import nullcontext
 from datetime import UTC, datetime
 import errno
 import fcntl
@@ -30,6 +31,7 @@ import os
 import shutil
 import signal
 import socket
+import threading
 import time
 from unittest.mock import mock_open, patch
 
@@ -45,6 +47,7 @@ from ..utils import (
     MoveResult,
     SimpleFileExtension,
     _configured_datetime,
+    process_space,
 )
 
 
@@ -889,12 +892,28 @@ def test_prune_releases_guard_after_unexpected_failure(tmpdir):
     with (
         patch.object(acc_obj, "_acquire_auth_guard", return_value=10),
         patch.object(acc_obj, "_prune_unused_locks", side_effect=RuntimeError("scan failed")),
+        patch.object(acc_obj, "reminder_guard", nullcontext),
         patch.object(acc_obj, "_release_auth_guard") as release,
         pytest.raises(RuntimeError),
     ):
         acc_obj.prune_unused_locks(older_than_seconds=500)
 
     release.assert_called_once_with(10)
+
+
+def test_login_changes_fail_when_reminders_cannot_be_locked(tmpdir):
+    """Login changes and pruning stop cleanly if the reminder lock cannot be opened."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert acc_obj.set_auth("key", "user", "pass")
+
+    with patch.object(acc_obj, "reminder_guard", side_effect=OSError("denied")):
+        assert acc_obj.set_auth("key", "user", "other") is False
+        assert acc_obj.set_access("key", "disabled") is False
+        assert acc_obj.clear_auth("key") is False
+        assert acc_obj.prune_unused_locks(older_than_seconds=0) == 0
+
+    # The login was left as it was
+    assert acc_obj.verify_auth("key", "user", "pass")
 
 
 def test_prune_skips_when_guard_is_unavailable(tmpdir):
@@ -1599,17 +1618,20 @@ def test_unused_reminder_files_go_right_away(tmpdir):
 
     assert store.reminder_file_stored(digest) is True
 
-    # A damaged reminder file might use it, so it is kept
+    # A damaged reminder file that holds its name might use it, so it is kept
     assert store.write_reminders(store.reminder_path("a"), [])
     with open(store.reminder_path("b"), "w") as f:
-        f.write("{")
+        f.write("{" + digest)
 
     with store.reminder_guard():
         store.drop_unused_reminder_files([digest])
 
     assert store.reminder_file_stored(digest) is True
 
-    os.remove(store.reminder_path("b"))
+    # One that never names it cannot use it
+    with open(store.reminder_path("b"), "w") as f:
+        f.write("{")
+
     with store.reminder_guard():
         store.drop_unused_reminder_files([digest])
 
@@ -1668,6 +1690,51 @@ def test_scheduler_lock_allows_one_holder(tmpdir):
         assert held is True
 
 
+def test_a_waiting_scheduler_takes_over_once_the_first_stops(tmpdir):
+    """A second scheduler can wait for the lock, and gets it when the first lets go."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    taken = threading.Event()
+    results = []
+
+    def second():
+        with store.scheduler_lock(wait=True) as held:
+            results.append(held)
+            taken.set()
+
+    with store.scheduler_lock() as held:
+        assert held is True
+        worker = threading.Thread(target=second)
+        worker.start()
+        # It waits while the first one runs
+        assert taken.wait(0.3) is False
+
+    assert taken.wait(5) is True
+    worker.join()
+    assert results == [True]
+
+
+def test_a_scheduler_lock_that_cannot_be_taken(tmpdir):
+    """A lock the system refuses, or a wait that fails, means no scheduler runs here."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    real_flock = fcntl.flock
+
+    def refused(descriptor, operation):
+        # Taking the lock fails; letting it go still works
+        if operation & fcntl.LOCK_EX:
+            raise OSError(errno.ENOLCK, "no locks")
+        return real_flock(descriptor, operation)
+
+    def busy_then_refused(descriptor, operation):
+        # Another scheduler holds it, then waiting for it fails
+        if operation == fcntl.LOCK_EX | fcntl.LOCK_NB:
+            raise BlockingIOError()
+        return refused(descriptor, operation)
+
+    for flock in (refused, busy_then_refused):
+        with patch.object(utils_module.fcntl, "flock", side_effect=flock), store.scheduler_lock(wait=True) as held:
+            assert held is False
+
+
 def test_scheduler_status_and_change_stamp(tmpdir):
     """Callers can tell whether a scheduler runs, and when reminders last changed."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
@@ -1686,6 +1753,23 @@ def test_scheduler_status_and_change_stamp(tmpdir):
         assert store.wake_scheduler() is False
 
 
+def test_access_changes_wake_the_scheduler(tmpdir):
+    """Saving or removing a login wakes the scheduler, since a disabled configuration's reminders are skipped."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    with patch.object(store, "wake_scheduler") as wake:
+        assert store.set_auth("key", "alice", "secret")
+        assert store.set_access("key", "disabled")
+        assert store.clear_auth("key")
+        assert wake.call_count == 3
+
+        # Nothing saved, nothing to look at again
+        assert store.clear_auth("key") is None
+        assert not store.set_access("key", "user")
+        with patch.object(store, "_write_auth_record", return_value=False):
+            assert not store.set_access("key", "disabled")
+        assert wake.call_count == 3
+
+
 def test_wake_scheduler_signals_only_a_running_scheduler(tmpdir):
     """The wake signal goes only to a scheduler that holds the lock on this host."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
@@ -1695,7 +1779,8 @@ def test_wake_scheduler_signals_only_a_running_scheduler(tmpdir):
     assert store.wake_scheduler() is False
 
     # A stale record left behind by a stopped scheduler is ignored
-    pid_file.write(json.dumps({"pid": 4242, "host": socket.gethostname()}))
+    here = {"host": socket.gethostname(), "space": process_space()}
+    pid_file.write(json.dumps({"pid": 4242, **here}))
     with patch("os.kill") as kill:
         assert store.wake_scheduler() is False
 
@@ -1712,7 +1797,11 @@ def test_wake_scheduler_signals_only_a_running_scheduler(tmpdir):
         with patch("os.kill", side_effect=ProcessLookupError):
             assert store.wake_scheduler() is False
 
-        for record in ("not json", '{"pid": 4242}', '{"pid": 4242, "host": "elsewhere"}'):
+        # Another machine, or another container with the same host name,
+        # where process 4242 is some other process
+        elsewhere = json.dumps({"pid": 4242, "host": "elsewhere", "space": process_space()})
+        other_space = json.dumps({"pid": 4242, **here, "space": -1})
+        for record in ("not json", '{"pid": 4242}', elsewhere, other_space):
             pid_file.write(record)
             with patch("os.kill") as kill:
                 assert store.wake_scheduler() is False
@@ -1720,7 +1809,7 @@ def test_wake_scheduler_signals_only_a_running_scheduler(tmpdir):
             kill.assert_not_called()
 
         # The scheduler never signals itself
-        pid_file.write(json.dumps({"pid": os.getpid(), "host": socket.gethostname()}))
+        pid_file.write(json.dumps({"pid": os.getpid(), **here}))
         assert store.wake_scheduler() is False
 
     finally:
@@ -1975,3 +2064,109 @@ def test_release_user_reminders(tmpdir):
     with open(reminder_file, "w") as f:
         f.write("damaged")
     assert store.release_user_reminders("key", keep=False) is None
+
+
+def test_reminder_guard_waits_for_another_holder_in_short_pauses(tmpdir):
+    """While another process holds the reminder lock, the guard pauses and tries again."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    holder = os.open(os.path.join(str(tmpdir), ".reminder.guard"), os.O_CREAT | os.O_RDWR, 0o600)
+    fcntl.flock(holder, fcntl.LOCK_EX)
+    pauses = []
+
+    def pause(seconds):
+        # The other process lets go after a few tries
+        pauses.append(seconds)
+        if len(pauses) == 6:
+            fcntl.flock(holder, fcntl.LOCK_UN)
+
+    try:
+        with patch.object(utils_module.time, "sleep", side_effect=pause), store.reminder_guard():
+            pass
+
+    finally:
+        os.close(holder)
+
+    # Each pause is longer than the last, up to a tenth of a second
+    assert pauses == [0.005, 0.01, 0.02, 0.04, 0.08, 0.1]
+
+
+def test_unused_reminder_files_are_kept_when_unsure(tmpdir):
+    """A stored file is only removed once every reminder file was checked."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    source = tmpdir.join("photo.jpg")
+    source.write_binary(b"picture")
+    digest, _size = store.store_reminder_file(str(source))
+    assert store.write_reminders(store.reminder_path("a"), [{"id": "a"}])
+
+    # The reminder files could not all be listed, or one could not be read
+    with patch.object(store, "reminder_files", return_value=None), store.reminder_guard():
+        store.drop_unused_reminder_files([digest])
+
+    with store.reminder_guard(), patch("builtins.open", side_effect=PermissionError("denied")):
+        store.drop_unused_reminder_files([digest])
+
+    assert store.reminder_file_stored(digest) is True
+
+    # A reminder file removed while being checked uses nothing
+    gone = str(tmpdir.join(".gone.reminders"))
+    with (
+        patch.object(store, "reminder_files", side_effect=lambda suffix, complete: [gone]),
+        store.reminder_guard(),
+    ):
+        store.drop_unused_reminder_files([digest])
+
+    assert store.reminder_file_stored(digest) is False
+
+
+def test_recovering_removals_does_nothing_without_storage(tmpdir):
+    """With storage turned off there is nothing to recover, and no folder is made."""
+    root = str(tmpdir.join("never-made"))
+    store = AppriseConfigCache(root, mode=AppriseStoreMode.DISABLED)
+    assert store.recover_removed_reminders() == 0
+    assert not os.path.exists(root)
+
+
+def test_last_used_stamp_goes_with_the_last_reminder(tmpdir):
+    """When a Config ID was last used is forgotten with its last reminder, and never blocks a move."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.put("a", "json://localhost", ConfigFormat.TEXT.value)
+    assert store.write_reminders(store.reminder_path("a"), [{"id": "a"}])
+    with override_settings(APPRISE_REMINDER_IDLE_DAYS=30):
+        store.note_use("a")
+
+    assert os.path.isfile(store.seen_path("a"))
+    assert store.write_reminders(store.reminder_path("a"), [])
+    assert not os.path.isfile(store.seen_path("a"))
+
+    # A stamp left beside no reminders is stale, so a move there goes ahead
+    os.makedirs(os.path.dirname(store.seen_path("k")), exist_ok=True)
+    open(store.seen_path("k"), "w").close()
+    assert store.move("a", "k") == MoveResult.MOVED
+    assert store.get("k") == ("json://localhost", ConfigFormat.TEXT.value)
+
+
+def test_stored_reminder_files_are_reused_only_when_whole(tmpdir):
+    """A file already stored is reused only at its full size; a short copy is replaced."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    source = tmpdir.join("a.bin")
+    source.write_binary(b"content")
+    digest, size = store.store_reminder_file(str(source))
+
+    # Already stored whole: the upload is not read again
+    assert store.store_reminder_file(str(tmpdir.join("missing")), (digest, size)) == (digest, size)
+
+    # A copy cut short is replaced, whether or not its name and size are known
+    for known in ((digest, size), None):
+        with open(store.reminder_file_path(digest), "wb") as f:
+            f.write(b"con")
+
+        assert store.store_reminder_file(str(source), known) == (digest, size)
+        with open(store.reminder_file_path(digest), "rb") as f:
+            assert f.read() == b"content"
+
+
+def test_process_space_names_this_process_set():
+    """The process ID set is named on Linux, and unknown where the system does not show it."""
+    assert isinstance(process_space(), int)
+    with patch("os.stat", side_effect=OSError("no /proc")):
+        assert process_space() is None

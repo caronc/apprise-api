@@ -514,6 +514,8 @@ class ManagerPageTests(SimpleTestCase):
         assert 'class="config-list-user"' in content
         assert 'title="alice"' in content
         assert "No Username" in content
+        # A failed move is explained as plain text, never as markup
+        assert "Swal.getValidationMessage().textContent = message;" in content
         open_item = content.split('class="collection-item config-list-item"', 1)[1]
         assert open_item.index("config-auth-status") < open_item.index("config-list-user")
         assert open_item.index("config-list-user") < open_item.index("config-list-link")

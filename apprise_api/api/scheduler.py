@@ -40,7 +40,7 @@ sleeps until then with dateblock. A small thread pool does the sending.
   for that long has every reminder paused, and is sent one notice saying so.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 import logging
@@ -59,9 +59,16 @@ from django.utils.translation import gettext as _
 
 from .auth import AuthStorageError
 from .exceptions import AppriseAPIError, AppriseAPIImproperlyConfigured
-from .schedule import PAUSED_ACCESS, SCHEDULE_ERRORS, drop_past_skips, next_run
-from .utils import Attachment, ConfigCache, apply_global_filters, notify_asset_kwargs, parse_attachments
-from .views import parse_tag_expression, send_notify_webhook
+from .schedule import PAUSED_ACCESS, SCHEDULE_ERRORS, drop_past_skips, needs_config, next_run
+from .utils import (
+    Attachment,
+    ConfigCache,
+    apply_global_filters,
+    config_apprise,
+    notify_asset_kwargs,
+    parse_attachments,
+)
+from .views import find_reminder, parse_tag_expression, send_notify_webhook
 
 # Get an instance of a logger
 logger = logging.getLogger("django")
@@ -117,9 +124,11 @@ def reminder_attachments(event: dict) -> list:
     """
     # Each entry is either a stored upload ({"file": ...}) or a web address.
     entries = event.get("attach") or []
+    # Attachments turned off for the whole server stop the send.
     if entries and settings.APPRISE_ATTACH_SIZE <= 0:
         raise AppriseAPIImproperlyConfigured("Attachment support has been disabled")
 
+    # The attachments to send, in the order saved.
     attach = []
     for entry in entries:
         if entry.get("file"):
@@ -139,19 +148,21 @@ def reminder_attachments(event: dict) -> list:
     return attach
 
 
-def prepare_send(reminder_file: str, event: dict) -> tuple[apprise.Apprise, dict] | None:
+def prepare_send(
+    reminder_file: str, event: dict, stored: tuple[str | None, str | None] | None = None
+) -> tuple[apprise.Apprise, dict] | None:
     """Load what one reminder sends through, without sending it.
 
+    - ``stored``: the configuration and its format, already read; it is read
+      from beside the reminder file otherwise.
     - Returns the Apprise object and the ``notify()`` arguments.
     - Returns ``None`` when the configuration or attachments cannot be used.
     """
     # The configuration is read fresh on every send, so a change to its
-    # services or tags since the reminder was saved is picked up. A reminder
-    # with its own URLs and no tag sends to those alone, the same as /notify;
-    # an empty tag ("") also sends to the configuration's untagged URLs.
+    # services or tags since the reminder was saved is picked up.
     urls = event.get("urls")
     tag = event.get("tag")
-    alone = bool(urls) and tag is None
+    alone = not needs_config(event)
     if urls and settings.APPRISE_REMINDER_URLS_MAX <= 0:
         # The server no longer allows URLs in reminders, so they are left
         # out; a reminder with nothing else fails.
@@ -161,7 +172,8 @@ def prepare_send(reminder_file: str, event: dict) -> tuple[apprise.Apprise, dict
 
         urls = None
 
-    config, fmt = (None, None) if alone else ConfigCache.reminder_config(reminder_file)
+    # Read now unless the claim already read it under the lock.
+    config, fmt = (None, None) if alone else (stored or ConfigCache.reminder_config(reminder_file))
     if config is None and not alone:
         logger.warning("REMINDER - No configuration found for reminder %s", event.get("id"))
         return None
@@ -181,11 +193,8 @@ def prepare_send(reminder_file: str, event: dict) -> tuple[apprise.Apprise, dict
         language=settings.LANGUAGE_CODE,
         **notify_asset_kwargs(event.get("format") or None),
     )
-    a_obj = apprise.Apprise(asset=asset)
-    if not alone:
-        ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
-        ac_obj.add_config(config, format=fmt)
-        a_obj.add(ac_obj)
+    # Only its own URLs, or the configuration's services too.
+    a_obj = apprise.Apprise(asset=asset) if alone else config_apprise(config, fmt, asset)
 
     if urls:
         # A tag only picks services that carry it, so beside one the
@@ -206,12 +215,18 @@ def prepare_send(reminder_file: str, event: dict) -> tuple[apprise.Apprise, dict
     }
 
 
-def deliver(reminder_file: str, event: dict, source: str = WEBHOOK_SOURCE) -> bool:
+def deliver(
+    reminder_file: str,
+    event: dict,
+    source: str = WEBHOOK_SOURCE,
+    stored: tuple[str | None, str | None] | None = None,
+) -> bool:
     """Send one reminder using the configuration beside it.
 
     - ``source``: who the completion webhook says sent it.
+    - ``stored``: the configuration and its format, already read.
     """
-    prepared = prepare_send(reminder_file, event)
+    prepared = prepare_send(reminder_file, event, stored)
     if prepared is None:
         return False
 
@@ -227,6 +242,7 @@ def deliver(reminder_file: str, event: dict, source: str = WEBHOOK_SOURCE) -> bo
 
     # Tell the completion webhook, when one is set, how the send went.
     send_notify_webhook(source, result)
+    # Anything not sent counts as a failed send.
     if not result:
         logger.warning("REMINDER - One or more notifications not sent for reminder %s", event.get("id"))
         return False
@@ -253,15 +269,24 @@ def access_allows(reminder_file: str) -> bool | None:
         return None
 
 
-def _needs_config(event: dict) -> bool:
-    """Return whether an event sends through its configuration, not only its own URLs."""
-    return not event.get("urls") or event.get("tag") is not None
-
-
 def _pending(event: dict) -> bool:
     """Return whether an event is switched on and still has a time to send."""
     # A missing "enabled" counts as on; "next" is None once nothing is left.
     return event.get("enabled", True) is not False and isinstance(event.get("next"), int)
+
+
+def _sendable(events: list[dict], configured: bool) -> Iterator[dict]:
+    """Yield the events that are waiting to be sent.
+
+    - Without a configuration (``configured``), only reminders sent to their
+      own URLs alone have somewhere to go; the rest wait for one to be saved.
+    """
+    return (event for event in events if _pending(event) and (configured or not needs_config(event)))
+
+
+def _earliest(*times: int | None) -> int | None:
+    """Return the earliest of the given times, or ``None`` when none is set."""
+    return min((due for due in times if due is not None), default=None)
 
 
 class Scheduler:
@@ -295,10 +320,21 @@ class Scheduler:
         # Set by SIGTERM or SIGINT; the loop ends after its current pass.
         self.stopping = False
 
-    def run(self) -> bool:
-        """Run until stopped. Return ``False`` if another scheduler is running."""
+    def run(self, wait: bool = False) -> bool:
+        """Run until stopped.
+
+        - ``wait``: when another scheduler is running, wait to take over
+          once it stops, instead of giving up.
+        - Returns ``False`` when it could not become the running scheduler.
+        """
+        # A web save may send SIGUSR1 as soon as the lock below records this
+        # process, and by default that signal ends a process; until the lock
+        # is held it is only noted. SIGTERM and SIGINT still end the process
+        # while it waits for the lock.
+        signal.signal(signal.SIGUSR1, self._on_signal)
+
         # Only one scheduler may send reminders at a time.
-        with ConfigCache.scheduler_lock() as held:
+        with ConfigCache.scheduler_lock(wait=wait) as held:
             if not held:
                 return False
 
@@ -381,41 +417,62 @@ class Scheduler:
             unread = True
             files = ConfigCache.reminder_files()
 
+        # Files with something due, as (how long overdue, file, has a configuration).
+        due = []
         for reminder_file in files:
+            # Read without the lock; each file is replaced in one step.
             events = ConfigCache.read_reminders(reminder_file)
+            # Whether a configuration is saved beside it (None when that cannot be told).
             has_config = ConfigCache.reminder_has_config(reminder_file) if events else False
             if events is None or has_config is None:
                 unread = True
                 continue
 
-            if not has_config:
-                # Without a configuration, only reminders sent to their own URLs
-                # alone have somewhere to go; the rest wait for one to be saved.
-                events = [event for event in events if not _needs_config(event)]
-
-            if not events:
+            # A disabled configuration's reminders are neither sent nor waited
+            # on; changing its access wakes the scheduler to look again.
+            allowed = access_allows(reminder_file) if events else True
+            if allowed is None:
+                unread = True
                 continue
 
-            # Only take the file's lock when something in it is due.
-            if any(_pending(event) and event["next"] <= now for event in events):
-                claimed = self.claim(reminder_file, now, configured=has_config)
-                if claimed is None:
-                    # Try the file again soon rather than straight away.
-                    soonest = now + RECHECK if soonest is None else min(soonest, now + RECHECK)
-                    continue
+            if not allowed:
+                continue
 
-                events = claimed
+            # The longest overdue event, if any is due now.
+            oldest = min(
+                (event["next"] for event in _sendable(events, has_config) if event["next"] <= now), default=None
+            )
+            if oldest is not None:
+                # Its lock is taken once every file has been looked at.
+                due.append((oldest, reminder_file, has_config))
+                continue
 
             # Keep track of the soonest time among what is left.
-            for event in events:
-                if not has_config and _needs_config(event):
-                    continue
+            soonest = _earliest(soonest, *(event["next"] for event in _sendable(events, has_config)))
 
-                if _pending(event) and (soonest is None or event["next"] < soonest):
-                    soonest = event["next"]
+        # The file overdue the longest is claimed first, so a busy Config ID
+        # can never keep the others waiting for room in the pool.
+        for _oldest, reminder_file, has_config in sorted(due):
+            try:
+                claimed = self.claim(reminder_file, now, configured=has_config)
 
+            except OSError as e:
+                # The reminder lock could not be opened, such as on a full or
+                # read-only disk; nothing was changed, so try again later.
+                logger.warning("REMINDER - Could not lock the reminders to send %s", reminder_file)
+                logger.debug("Reminder lock error: %s", e)
+                claimed = None
+
+            if claimed is None:
+                # Try the file again soon rather than straight away.
+                soonest = _earliest(soonest, now + RECHECK)
+                continue
+
+            soonest = _earliest(soonest, *(event["next"] for event in _sendable(claimed, has_config)))
+
+        # Something could not be read; look again soon.
         if unread:
-            soonest = now + RECHECK if soonest is None else min(soonest, now + RECHECK)
+            soonest = _earliest(soonest, now + RECHECK)
 
         return soonest
 
@@ -438,6 +495,7 @@ class Scheduler:
             logger.warning("REMINDER - A scheduled send failed unexpectedly")
             logger.debug("Scheduled send error: %s", future.exception())
 
+        # One fewer send in the pool; note if it was full before.
         with self.queue_lock:
             full = self.queued >= self.capacity
             self.queued -= 1
@@ -456,10 +514,12 @@ class Scheduler:
           instead of repeating it.
         - An event overdue by more than the grace time is skipped, and a
           repeating one never sends a backlog.
-        - Events on a disabled configuration are paused instead.
+        - Nothing is sent or changed on a disabled configuration; its events
+          stay as they are until its access changes.
         - An event with no room in the pool stays due for a later scan.
-        - Returns ``None``, sending nothing, when the file cannot be saved or
-          its configuration's access cannot be read; it is tried again later.
+        - Returns ``None``, sending nothing, when the file cannot be read or
+          saved, or its configuration's access cannot be read; it is tried
+          again later.
         """
         # The events to send once the file is saved.
         jobs = []
@@ -468,6 +528,10 @@ class Scheduler:
         with ConfigCache.reminder_guard():
             # Read again under the lock; the file may have changed since.
             events = ConfigCache.read_reminders(reminder_file)
+            if events is None:
+                # Unreadable for now; tried again later rather than forgotten.
+                return None
+
             if not events:
                 return []
 
@@ -478,6 +542,11 @@ class Scheduler:
                 logger.warning("REMINDER - Held the reminders in %s; its access could not be read", reminder_file)
                 return None
 
+            if not allowed:
+                # Disabled since the scan; leave every event as it is.
+                return []
+
+            # A Config ID nobody has used for a while has its reminders paused.
             idle = self.idle(reminder_file, now)
             if idle and room <= 0:
                 # The notice needs room in the pool like any send, so pause
@@ -492,18 +561,12 @@ class Scheduler:
                         event["enabled"] = False
                         event["last"] = {"at": now, "ok": False, "reason": "idle"}
 
+            # Each due event's next time is looked for after this moment.
             after = datetime.fromtimestamp(now, UTC)
             for event in events:
                 # Leave alone anything paused, finished, not due yet, or
                 # waiting for a configuration.
-                if not _pending(event) or event["next"] > now or (not configured and _needs_config(event)):
-                    continue
-
-                if not allowed:
-                    logger.warning("REMINDER - Paused reminder %s; its configuration is disabled", event.get("id"))
-                    # It stays paused until someone turns it back on.
-                    event["enabled"] = False
-                    event["last"] = {"at": now, "ok": False, "reason": "access"}
+                if not _pending(event) or event["next"] > now or (not configured and needs_config(event)):
                     continue
 
                 # How many seconds past its time this event is.
@@ -543,12 +606,20 @@ class Scheduler:
                 logger.warning("REMINDER - Could not save %s; its due reminders were not sent", reminder_file)
                 return None
 
+            # Read the configuration under the same lock a Config ID move
+            # takes, so a move before the send starts cannot lose it.
+            stored = (
+                ConfigCache.reminder_config(reminder_file)
+                if idle or any(needs_config(event) for event in jobs)
+                else None
+            )
+
         # The file is saved, so it is now safe to send.
         for event in jobs:
-            self.submit(self.send, reminder_file, event)
+            self.submit(self.send, reminder_file, event, stored)
 
         if idle:
-            self.submit(self.send_idle_notice, reminder_file)
+            self.submit(self.send_idle_notice, reminder_file, stored)
 
         return events
 
@@ -565,20 +636,37 @@ class Scheduler:
         return seen is not None and now - seen > days * 86400
 
     @staticmethod
-    def send_idle_notice(reminder_file: str) -> None:
-        """Tell a configuration's own services that its reminders were paused."""
+    def send_idle_notice(reminder_file: str, stored: tuple[str | None, str | None] | None = None) -> None:
+        """Tell a configuration's own services that its reminders were paused.
+
+        - ``stored``: the configuration and its format, already read.
+        """
         # Written in the server's language, since there is no browser to ask.
         with translation.override(settings.LANGUAGE_CODE):
             body = _("Reminders for this configuration were paused because it was not used for {} days").format(
                 settings.APPRISE_REMINDER_IDLE_DAYS
             )
 
-        deliver(reminder_file, {"id": "idle", "body": body, "type": apprise.NotifyType.WARNING.value})
+        # Sent to the configuration's own services, like a reminder.
+        deliver(
+            reminder_file,
+            {"id": "idle", "body": body, "type": apprise.NotifyType.WARNING.value},
+            stored=stored,
+        )
 
-    def send(self, reminder_file: str, event: dict) -> None:
-        """Send one event and record how it went."""
+    def send(self, reminder_file: str, event: dict, stored: tuple[str | None, str | None] | None = None) -> None:
+        """Send one event and record how it went.
+
+        - ``stored``: the configuration and its format, read when it was claimed.
+        - A configuration disabled while the send waited for a worker sends
+          nothing, and the reminder is left as it is.
+        """
+        if access_allows(reminder_file) is False:
+            logger.info("REMINDER - Dropped reminder %s; its configuration was disabled", event.get("id"))
+            return
+
         try:
-            ok = deliver(reminder_file, event)
+            ok = deliver(reminder_file, event, stored=stored)
 
         except Exception as e:
             # Recorded as a failed send, rather than lost with the worker.
@@ -588,10 +676,40 @@ class Scheduler:
 
         # Save the result on the reminder, read fresh in case it was changed.
         with ConfigCache.reminder_guard():
-            events = ConfigCache.read_reminders(reminder_file)
-            for stored in events or []:
-                if stored.get("id") == event.get("id"):
-                    stored["last"] = {"at": int(time.time()), "ok": ok}
-                    if not ConfigCache.write_reminders(reminder_file, events):
-                        logger.warning("REMINDER - Could not record how reminder %s went", event.get("id"))
-                    break
+            if self.record(reminder_file, event, ok):
+                return
+
+        # Its Config ID may have moved while it was sending, or it was removed.
+        # - The other files are searched without the lock, so saves and the
+        #   scheduler are not held up; each file is replaced in one step, so
+        #   reading it is safe.
+        # - Only the file that holds it is locked and updated.
+        for other in ConfigCache.reminder_files() or []:
+            if (
+                other == reminder_file
+                or find_reminder(ConfigCache.read_reminders(other) or [], event.get("id")) is None
+            ):
+                continue
+
+            with ConfigCache.reminder_guard():
+                if self.record(other, event, ok):
+                    return
+
+    @staticmethod
+    def record(reminder_file: str, event: dict, ok: bool) -> bool:
+        """Save how a send went on its reminder; the caller holds the lock.
+
+        - Returns whether the file holds the reminder.
+        """
+        # Read fresh under the lock; the file may have changed while sending.
+        events = ConfigCache.read_reminders(reminder_file) or []
+        saved = find_reminder(events, event.get("id"))
+        if saved is None:
+            return False
+
+        # When it went out and whether every service took it.
+        saved["last"] = {"at": int(time.time()), "ok": ok}
+        if not ConfigCache.write_reminders(reminder_file, events):
+            logger.warning("REMINDER - Could not record how reminder %s went", event.get("id"))
+
+        return True

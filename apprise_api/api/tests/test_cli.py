@@ -191,14 +191,16 @@ class CommandTests(SimpleTestCase):
                     )
                     self.assertNotEqual(result.returncode, 0)
 
-        # Both nginx modes apply the generated timeout to notification routes.
+        # Both nginx modes apply the generated timeout to notification routes,
+        # including a reminder's test send.
         for nginx_name in ("nginx.conf", "nginx-strict.conf"):
             nginx = (package_dir / "etc" / nginx_name).read_text()
             self.assertEqual(
                 nginx.count("include /tmp/apprise/nginx-connection-timeout.conf;"),
-                2,
+                3,
             )
+            # A reminder's test send keeps the app's 503 response too.
             self.assertEqual(
                 nginx.count("proxy_next_upstream error timeout http_502 http_504;"),
-                2,
+                3,
             )

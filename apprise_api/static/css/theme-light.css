@@ -180,14 +180,6 @@ pre code {
 /* =========================================
 Status & Indicators
 ========================================= */
-.url-enabled {
-  color: #148c80;
-}
-
-.url-disabled {
-  color: #8B0000;
-}
-
 .no-config .info {
   color: #148c80;
 }
@@ -201,6 +193,12 @@ Status & Indicators
 .notify-target-guidance-title,
 .notify-target-guidance-icon {
   color: #b87300;
+}
+
+/* A note, not a warning, such as when nothing has been added yet. */
+.notify-target-guidance--info .notify-target-guidance-title,
+.notify-target-guidance--info .notify-target-guidance-icon {
+  color: var(--toast-info-text);
 }
 
 .review-empty-card {
@@ -237,11 +235,6 @@ Status & Indicators
   color: #555a62;
 }
 
-.api-details .plugin-index {
-  color: #555a62;
-  background-color: #ffffff;
-  border-color: #d8d9df;
-}
 
 .api-details .collapsible>li {
   border-color: #c1c3c9;
@@ -267,13 +260,7 @@ Status & Indicators
   background-color: #ffffff;
 }
 
-.api-details .plugin-chevron {
-  color: #888c96;
-}
 
-.api-details .collapsible>li.active .plugin-chevron {
-  color: #148c80;
-}
 
 .api-details .plugin-service-btn {
   color: #34383f !important;
@@ -568,14 +555,13 @@ input.config-id-input.is-mismatched {
 
 /* Match the dark theme's explicit form-copy treatment instead of inheriting
    Materialize's translucent default, while retaining strong light contrast. */
-.auth-editor-card .input-field>label:not(.active),
-.auth-editor-card .select-wrapper+label:not(.active),
 .auth-editor-card .helper-text {
   color: #555a62;
 }
 
-.auth-editor-card .input-field>label.active,
-.auth-editor-card .select-wrapper+label.active {
+/* Every field label in these cards shares one colour. */
+.auth-editor-card .input-field>label,
+.auth-editor-card .select-wrapper+label {
   color: #0f5f57;
 }
 
@@ -585,7 +571,8 @@ input.config-id-input.is-mismatched {
 
 .auth-access-warning,
 .auth-access-warning i.material-icons,
-.apprise-qr-note--warning {
+.apprise-qr-note--warning,
+.notify-attach-blocked {
   color: #8a4b00;
 }
 
@@ -651,7 +638,6 @@ input.config-id-input.is-mismatched {
   color: #656b75;
 }
 
-.auth-tool-panel,
 .auth-content-panel {
   background-color: #ffffff;
   border-color: #d7dbe2;
@@ -1275,9 +1261,10 @@ textarea::placeholder {
 
 #url-list .review-test-btn[disabled],
 #url-list .review-test-btn[disabled]:hover,
-#url-list .review-test-btn[disabled]:focus-visible {
-  color: #8b93a0;
-  background-color: #eff2f6;
+#url-list .review-test-btn[disabled]:focus-visible,
+.details-step .btn[disabled] {
+  color: #8b93a0 !important;
+  background-color: #eff2f6 !important;
   border-color: #d7dde6;
 }
 
@@ -1597,12 +1584,13 @@ Reminders
   color: var(--reminder-text);
 }
 
-#reminder-form,
-#reminders .reminder-view-zone {
-  color-scheme: light;
-}
 
 #reminder-form input,
 #reminders .reminder-view-zone input {
   color: var(--reminder-text);
+}
+
+/* Native scrollbars, pickers and controls follow the theme too. */
+:root {
+  color-scheme: light;
 }

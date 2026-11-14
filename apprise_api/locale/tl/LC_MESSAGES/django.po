@@ -350,14 +350,6 @@ msgstr "Ang naka-save na %(saved)s access ay kasalukuyang ipinatupad bilang naka
 msgid "Save"
 msgstr "I-save"
 
-#: apprise_api/api/templates/auth.html:147
-msgid "Credential Tools"
-msgstr "Mga Tool sa Credential"
-
-#: apprise_api/api/templates/auth.html:148
-msgid "Generate credentials or reset this Config ID's access."
-msgstr "Gumawa ng mga credential o i-reset ang access ng Config ID na ito."
-
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Gumawa ng Bagong Mga Credential"
@@ -369,10 +361,6 @@ msgstr "Mga Patlang na Iraraandom"
 #: apprise_api/api/templates/auth.html:168
 msgid "Randomize the Selected Fields"
 msgstr "I-random ang Mga Napiling Patlang"
-
-#: apprise_api/api/templates/auth.html:172
-msgid "Randomize Selected"
-msgstr "I-random ang Napili"
 
 #: apprise_api/api/templates/auth.html:181
 msgid "Reset Access"
@@ -455,21 +443,34 @@ msgstr "Mode"
 msgid "Description"
 msgstr "Paglalarawan"
 
-#: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "Gumagamit ng sariling login para sa karaniwang stateful at stateless na mga notification at pag-access sa configuration."
+#: apprise_api/api/templates/auth.html:370
+msgid "Uses its own login to send notifications and to view and edit the configuration."
+msgstr "Gumagamit ng sariling login para magpadala ng mga notification at para tingnan at i-edit ang configuration."
 
-#: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "Gumagamit ng sariling login para sa mga tagged stateful na notification at pagbabago ng password. Nanatiling nakatago ang nilalaman ng configuration."
+#: apprise_api/api/templates/auth.html:370
+msgid "Its user also manages the reminders."
+msgstr "Pinamamahalaan din ng user nito ang mga paalala."
 
-#: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "Pinapayagan ang mga tagged stateful na notification nang walang login. Nanatiling protektado ang nilalaman ng configuration at mga stateless na notification."
+#: apprise_api/api/templates/auth.html:371
+msgid "Uses its own login to send tagged notifications and change its password. The configuration stays hidden."
+msgstr "Gumagamit ng sariling login para magpadala ng mga tagged na notification at palitan ang password nito. Nananatiling nakatago ang configuration."
 
-#: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "Pinipigilan ang access ng configuration-user nang hindi binubura ang configuration o login. Tanging isang administrador lamang ang maaaring gumamit nito."
+#: apprise_api/api/templates/auth.html:371
+#: apprise_api/api/templates/auth.html:372
+msgid "Only an administrator manages reminders, and they still run."
+msgstr "Administrator lang ang namamahala sa mga paalala, at patuloy pa rin silang ipinapadala."
+
+#: apprise_api/api/templates/auth.html:372
+msgid "Anyone may send tagged notifications without a login. The configuration and stateless notifications stay protected."
+msgstr "Kahit sino ay maaaring magpadala ng mga tagged na notification nang walang login. Nananatiling protektado ang configuration at mga stateless na notification."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Only an administrator may use it. The configuration and login are kept."
+msgstr "Administrator lang ang maaaring gumamit nito. Pinananatili ang configuration at login."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Its reminders are kept, but none run or can be changed."
+msgstr "Pinananatili ang mga paalala nito, pero walang tumatakbo o mababago."
 
 #: apprise_api/api/templates/auth.html:337
 #: apprise_api/api/templates/components/mobile_app_dialog.html:18
@@ -752,8 +753,8 @@ msgid "Configuration List"
 msgstr "Listahan ng Configuration"
 
 #: apprise_api/api/templates/base.html:303
-msgid "Available Plugins"
-msgstr "Available Plugins"
+msgid "Available Services"
+msgstr "Mga Available na Serbisyo"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -1504,13 +1505,9 @@ msgstr "BEGIN APPRISE NOTIFICATION LOG"
 msgid "END APPRISE NOTIFICATION LOG"
 msgstr "END APPRISE NOTIFICATION LOG"
 
-#: apprise_api/api/templates/config.html:930
-msgid "event"
-msgstr "kaganapan"
-
-#: apprise_api/api/templates/config.html:931
-msgid "events"
-msgstr "mga kaganapan"
+#: apprise_api/api/templates/components/notify_stream_script.html:193
+msgid "Events: {}"
+msgstr "Mga kaganapan: {}"
 
 #: apprise_api/api/templates/config.html:940
 msgid "Notification logs copied to clipboard"
@@ -1786,13 +1783,6 @@ msgstr "Configuration nailipat."
 msgid "Apprise Details"
 msgstr "Apprise Mga Detalye"
 
-#: apprise_api/api/templates/details.html:13
-msgid ""
-"The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
-"            instance."
-msgstr "Sinusuportahan ng instance na ito ng <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> ang mga sumusunod na serbisyo."
-
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
@@ -1819,51 +1809,25 @@ msgstr "Gabay sa Pag-setup"
 msgid "Service Website"
 msgstr "Website ng Service"
 
-#: apprise_api/api/templates/details.html:114
-msgid ""
-"\n"
-"                  <strong>Note:</strong> This service is unavailable due to the\n"
-"                  service being disabled by the administrator or the required\n"
-"                  libraries needed to drive it is not installed or functioning\n"
-"                  correctly.\n"
-"                "
-msgstr ""
-"\n"
-"<strong>Tandaan:</strong> Hindi available ang serbisyong ito dahil ang serbisyo ay hindi pinagana ng administrador o ang kinakailangang mga library na kailangan para paganahin ito ay hindi naka-install o hindi gumagana nang tama."
+#: apprise_api/api/templates/details.html:135
+msgid "Service Unavailable"
+msgstr "Hindi Available ang Serbisyo"
 
-#: apprise_api/api/templates/details.html:124
-msgid "Category"
-msgstr "Kategorya"
+#: apprise_api/api/templates/details.html:138
+msgid "The administrator has turned this service off on this server."
+msgstr "Pinatay ng administrator ang serbisyong ito sa server na ito."
 
-#: apprise_api/api/templates/details.html:129
-msgid "Insecure Schema(s)"
-msgstr "Hindi Secure na Schema(s)"
+#: apprise_api/api/templates/details.html:140
+msgid "This service is missing the necessary dependencies to function on this server."
+msgstr "Kulang ang serbisyong ito sa mga dependency na kailangan para gumana sa server na ito."
 
-#: apprise_api/api/templates/details.html:142
-msgid "Secure Schema(s)"
-msgstr "Secure na Schema(s)"
+#: apprise_api/api/templates/details.html:143
+msgid "Required packages:"
+msgstr "Mga kailangang package:"
 
-#: apprise_api/api/templates/details.html:154
-msgid "Apprise URL Formatting"
-msgstr "Apprise URL Pag-format"
-
-#: apprise_api/api/templates/details.html:159
-msgid ""
-"For more details and additional Apprise\n"
-"                    configuration options available to this service:"
-msgstr "Para sa karagdagang detalye at karagdagang Apprise opsyon sa pagsasaayos na available para sa serbisyong ito:"
-
-#: apprise_api/api/templates/details.html:161
-msgid "Click Here"
-msgstr "I-Click Dito"
-
-#: apprise_api/api/templates/details.html:173
-msgid "API Endpoints"
-msgstr "API Mga Endpoint"
-
-#: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "Ang mga developer na nais makatanggap ng resulta sa anyo ng JSON na string na maipaparse para sa kanilang aplikasyon ay maaaring gawin ang mga sumusunod upang makamit ito:"
+#: apprise_api/api/templates/details.html:147
+msgid "You can still build its URL online."
+msgstr "Maaari mo pa ring buuin ang URL nito online."
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1872,10 +1836,6 @@ msgstr "Ang mga developer na nais makatanggap ng resulta sa anyo ng JSON na stri
 #: apprise_api/api/templates/welcome.html:590
 msgid "Curl Example"
 msgstr "Halimbawa ng Curl"
-
-#: apprise_api/api/templates/details.html:184
-msgid "Retrieve JSON Formatted Apprise Details"
-msgstr "Kunin ang JSON Naka-format na Apprise Detalye"
 
 #: apprise_api/api/templates/details.html:191
 #: apprise_api/api/templates/welcome.html:138
@@ -2604,11 +2564,6 @@ msgid ""
 "Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
 msgstr "Opsyonal na tukuyin nang direkta ang mga Apprise URL na aabisuhan. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Mag-click dito</a> para makakuha ng tulong sa pagbuo ng iyong mga URL mula sa Apprise URL Builder."
 
-#: apprise_api/api/templates/config.html:573
-msgid ""
-"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
-msgstr "Naka-off ang Stateless Mode sa server na ito, kaya ang mga URL na ito ay ginagamit lamang ng mga paalala."
-
 #: apprise_api/api/templates/config.html:583
 msgid "Also send to untagged services"
 msgstr "Ipadala rin sa mga serbisyong walang tag"
@@ -2624,6 +2579,14 @@ msgstr "Alisin ang URL"
 #: apprise_api/api/views.py:4307
 msgid "This URL could not be loaded"
 msgstr "Hindi ma-load ang URL na ito"
+
+#: apprise_api/api/templates/details.html:555
+msgid "This value is not in the form this service expects."
+msgstr "Wala sa anyong inaasahan ng serbisyong ito ang value na ito."
+
+#: apprise_api/api/templates/details.html:770
+msgid "This URL could not be loaded. Check the highlighted fields."
+msgstr "Hindi ma-load ang URL na ito. Suriin ang mga naka-highlight na field."
 
 #: apprise_api/api/templates/components/config_reminders_script.html:534
 msgid "The end date has already passed, so this reminder will not be sent."
@@ -2645,6 +2608,10 @@ msgstr "Hindi maaaring umulit ang paalala nang mas madalas kaysa bawat {} segund
 #: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
 msgid "Only an administrator may manage reminders for this configuration"
 msgstr "Ang administrator lamang ang maaaring mamahala sa mga paalala ng konfigurasyong ito"
+
+#: apprise_api/api/views.py:5475
+msgid "Reminders are turned off while this configuration is disabled"
+msgstr "Naka-off ang mga paalala habang naka-disable ang configuration na ito"
 
 
 #: apprise_api/api/templates/components/config_reminders_tab.html:14
@@ -3044,8 +3011,8 @@ msgid "Save Limits"
 msgstr "I-save ang mga limitasyon"
 
 #: apprise_api/api/templates/auth.html:215
-msgid "Leave a field blank for no limit. An attachment space of 0 turns uploads off."
-msgstr "Iwanang blangko ang field para walang limitasyon. Kapag 0 ang espasyo para sa attachment, naka-off ang pag-upload."
+msgid "Leave a field blank to use the server default. An attachment space of 0 turns uploads off."
+msgstr "Iwanang blangko ang field para gamitin ang default ng server. Kapag 0 ang espasyo para sa attachment, naka-off ang pag-upload."
 
 #: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
 msgid "Reminder"
@@ -3134,10 +3101,6 @@ msgstr "I-save ang paalala"
 #: apprise_api/api/templates/components/reminder_shared_script.html:32
 msgid "Skipped: it was too late to send"
 msgstr "Nilaktawan: huli na para ipadala"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:33
-msgid "Paused: this configuration is disabled"
-msgstr "Naka-pause: naka-disable ang konfigurasyong ito"
 
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
@@ -3367,6 +3330,30 @@ msgstr "Naglo-load…"
 msgid "The attachment could not be downloaded"
 msgstr "Hindi ma-download ang attachment"
 
+#: apprise_api/api/templates/config.html:3198
+msgid "Local network access is turned off"
+msgstr "Naka-off ang access sa lokal na network"
+
+#: apprise_api/api/templates/config.html:3199
+msgid "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed."
+msgstr "In-off ng administrator ng Apprise API na ito ang mga download mula sa lokal na network, kaya hindi ma-preview ang address na ito."
+
+#: apprise_api/api/templates/config.html:3202
+msgid "This address is blocked"
+msgstr "Naka-block ang address na ito"
+
+#: apprise_api/api/templates/config.html:3203
+msgid "The attachment rules of this Apprise API do not allow downloads from this address."
+msgstr "Hindi pinapayagan ng mga patakaran sa attachment ng Apprise API na ito ang mga download mula sa address na ito."
+
+#: apprise_api/api/templates/config.html:3228
+msgid "The administrator can change this with:"
+msgstr "Mababago ito ng administrator gamit ang:"
+
+#: apprise_api/api/templates/config.html:3241
+msgid "Learn more"
+msgstr "Matuto pa"
+
 #: apprise_api/api/templates/config.html:3320
 msgid "This file cannot be shown here."
 msgstr "Hindi maipapakita rito ang file na ito."
@@ -3425,3 +3412,107 @@ msgstr "Bawat {} buwan"
 #, python-brace-format
 msgid "Every {} years"
 msgstr "Bawat {} taon"
+
+#: apprise_api/api/templates/resolve.html:37
+#: apprise_api/api/templates/resolve.html:38
+msgid "Copy URL"
+msgstr "Kopyahin ang URL"
+
+#: apprise_api/api/templates/resolve.html:43
+msgid "Parse"
+msgstr "I-parse"
+
+#: apprise_api/api/templates/resolve.html:352
+#: apprise_api/api/templates/resolve.html:353
+msgid "Remove Value"
+msgstr "Alisin ang Value"
+
+#: apprise_api/api/templates/details.html:13
+msgid "Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts."
+msgstr "Gumawa ng Apprise URL sa tatlong hakbang: pumili ng serbisyo, punan ang mga detalye nito, saka kopyahin ang URL. May URL ka na? I-paste ito sa hakbang 1 para makita at mabago ang mga bahagi nito."
+
+#: apprise_api/api/templates/details.html:36
+msgid "Choose a Service"
+msgstr "Pumili ng Serbisyo"
+
+#: apprise_api/api/templates/details.html:39
+msgid "Search Services"
+msgstr "Maghanap ng Serbisyo"
+
+#: apprise_api/api/templates/details.html:69
+msgid "No services match your search."
+msgstr "Walang serbisyong tumutugma sa iyong paghahanap."
+
+#: apprise_api/api/templates/details.html:74
+msgid "Or Paste an Apprise URL"
+msgstr "O I-paste ang Apprise URL"
+
+#: apprise_api/api/templates/details.html:96
+msgid "Fill In the Details"
+msgstr "Punan ang mga Detalye"
+
+#: apprise_api/api/templates/details.html:98
+msgid "Choose a service above, or paste a URL, to see what it needs."
+msgstr "Pumili ng serbisyo sa itaas, o mag-paste ng URL, para makita kung ano ang kailangan nito."
+
+#: apprise_api/api/templates/details.html:136
+msgid "Options"
+msgstr "Mga Opsyon"
+
+#: apprise_api/api/templates/details.html:140
+msgid "Advanced"
+msgstr "Advanced"
+
+#: apprise_api/api/templates/details.html:150
+msgid "Copy Your URL"
+msgstr "Kopyahin ang Iyong URL"
+
+#: apprise_api/api/templates/details.html:159
+msgid "Fill in the details above to build the URL."
+msgstr "Punan ang mga detalye sa itaas para mabuo ang URL."
+
+#: apprise_api/api/templates/details.html:462
+msgid "Required"
+msgstr "Kailangan"
+
+#: apprise_api/api/templates/details.html:513
+msgid "Separate entries with commas"
+msgstr "Paghiwalayin ang mga entry gamit ang kuwit"
+
+#: apprise_api/api/templates/details.html:192
+msgid "A configuration login also sends its Config ID in the <code>X-Apprise-Config-ID</code> header."
+msgstr "Ipinapadala rin ng login ng configuration ang Config ID nito sa header na <code>X-Apprise-Config-ID</code>."
+
+#: apprise_api/api/templates/details.html:195
+msgid "List every service and its fields:"
+msgstr "Ilista ang bawat serbisyo at ang mga field nito:"
+
+#: apprise_api/api/templates/details.html:201
+msgid "Split a URL into its fields:"
+msgstr "Hatiin ang URL sa mga field nito:"
+
+#: apprise_api/api/templates/details.html:209
+msgid "Put fields back together into a URL:"
+msgstr "Pagsamahin muli ang mga field sa isang URL:"
+
+#: apprise_api/api/templates/welcome.html:773
+msgid "Service and URL Endpoints"
+msgstr "Mga Endpoint ng Serbisyo at URL"
+
+#: apprise_api/api/templates/welcome.html:776
+#, python-format
+msgid "Your own programs can look up what each service needs and check Apprise URLs without sending anything. The <a href=\"%(BASE_URL)s/details/\">Available Services</a> page is built on these."
+msgstr "Maaaring alamin ng sarili mong mga programa kung ano ang kailangan ng bawat serbisyo at suriin ang mga Apprise URL nang walang ipinapadala. Nakabatay sa mga ito ang pahinang <a href=\"%(BASE_URL)s/details/\">Mga Available na Serbisyo</a>."
+
+#: apprise_api/api/templates/welcome.html:795
+msgid "Lists every service this server supports and the fields each of its URLs is built from."
+msgstr "Inililista ang bawat serbisyong sinusuportahan ng server na ito at ang mga field na bumubuo sa mga URL nito."
+
+#: apprise_api/api/templates/welcome.html:816
+msgid "Takes Apprise URLs apart into their fields, or puts fields back together into a URL. Nothing is contacted; the URLs are only read."
+msgstr "Hinahati ang mga Apprise URL sa mga field nito, o pinagsasama muli ang mga field bilang URL. Walang kinokontak; binabasa lang ang mga URL."
+
+#: apprise_api/api/templates/details.html:215
+#, python-format
+msgid "Using this from your own program? See the <a href=\"%(BASE_URL)s/#url-endpoints\">API endpoints</a>."
+msgstr "Gagamitin mo ba ito mula sa sarili mong programa? Tingnan ang <a href=\"%(BASE_URL)s/#url-endpoints\">mga API endpoint</a>."

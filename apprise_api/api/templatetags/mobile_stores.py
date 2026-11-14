@@ -5,6 +5,7 @@ from django.utils.translation import get_language, gettext
 
 register = template.Library()
 
+# Where each store badge links to.
 APP_STORE_URL = "https://apps.apple.com/app/id6821633589"
 GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.appriseit.mobile"
 # Intrinsic proportions of the unmodified artwork. Only these known locales
@@ -36,10 +37,14 @@ BADGE_RATIOS = {
 @register.inclusion_tag("components/mobile_store_links.html")
 def mobile_store_links():
     """Select badges for the active Django language without external requests."""
+    # The page language without its region, e.g. "fr" for "fr-CA".
     language = (get_language() or "en").lower().split("-", 1)[0]
+    # Other codes for Tagalog and Indonesian use those badges.
     language = {"fil": "tl", "in": "id"}.get(language, language)
+    # Only languages with artwork are used; the rest show English.
     if language not in BADGE_RATIOS:
         language = "en"
+    # Each badge's width for its height, so both line up at the same height.
     apple, google = BADGE_RATIOS[language]
     return {
         "app_store_url": APP_STORE_URL,
@@ -50,5 +55,6 @@ def mobile_store_links():
         "google_label": gettext("Get It on Google Play"),
         "apple_ratio": format(apple, ".6f"),
         "google_ratio": format(google, ".6f"),
+        # Both badges side by side at 40px high, plus the 12px gap between them.
         "badge_width": format((apple + google) * 40 + 12, ".3f"),
     }

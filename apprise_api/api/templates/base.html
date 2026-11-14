@@ -311,7 +311,7 @@
                     <span class="menu-icon">
                       {% include "icons/search.svg" %}
                     </span>
-                    <span class="side-nav-text">{% trans "Available Plugins" %}</span>
+                    <span class="side-nav-text">{% trans "Available Services" %}</span>
                   </a>
                 </nav>
               {% endif %}
@@ -1003,6 +1003,19 @@
     }
   }
 
+  // Ask /resolve to read Apprise URLs, or the fields of them, without
+  // contacting them.
+  // - url: the /resolve address of the Config ID in use.
+  // - entries: URLs or field objects; one answer comes back for each.
+  // - Returns the response, so the caller reads the answers or the error.
+  function appriseResolveUrls(url, entries) {
+    return appriseFetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: JSON.stringify({urls: entries})
+    });
+  }
+
   // Use one accessible show/hide control for all concealed fields.
   function appriseWireValueToggles(root) {
     root.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
@@ -1033,6 +1046,25 @@
     });
   }
   appriseWireValueToggles(document);
+
+  // Build the eye button that shows or hides one concealed input.
+  // - inputId: the id of the input it controls.
+  // - It starts out "hidden"; appriseWireValueToggles() makes it work.
+  function appriseValueToggleButton(inputId) {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'btn-flat value-visibility-toggle';
+    // Left out of the tab order, so Tab moves from field to field.
+    toggle.setAttribute('tabindex', '-1');
+    toggle.setAttribute('data-value-toggle', '');
+    toggle.setAttribute('aria-controls', inputId);
+    toggle.setAttribute('aria-label', '{% trans "Show Value" %}');
+    toggle.setAttribute('title', '{% trans "Show Value" %}');
+    toggle.dataset.showLabel = '{% trans "Show Value" %}';
+    toggle.dataset.hideLabel = '{% trans "Hide Value" %}';
+    toggle.innerHTML = '<i class="material-icons" aria-hidden="true">visibility_off</i>';
+    return toggle;
+  }
 
   // Config IDs begin concealed and can be revealed without changing the page.
   // The optional root also supports controls added inside dialogs.
@@ -1630,7 +1662,8 @@
         toast: true,
         position: 'top',
         icon: type,
-        title: message,
+        // Shown as plain text, so a message from the server can never add markup.
+        titleText: message,
         showConfirmButton: false,
         timer: duration || 3500,
         timerProgressBar: true

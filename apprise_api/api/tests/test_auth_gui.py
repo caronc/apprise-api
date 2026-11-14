@@ -105,6 +105,26 @@ class AuthGuiTests(SimpleTestCase):
         APPRISE_AUTH_REQUIRED=True,
         APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
         APPRISE_USER="master",
+        APPRISE_STATEFUL_MODE="simple",
+    )
+    def test_access_help_explains_who_manages_reminders(self):
+        """The access modes help says who manages reminders, only while reminders are on."""
+        with override_settings(APPRISE_REMINDER_ENABLED=True):
+            content = self.client.get("/auth/{}".format(self.key), headers=_MASTER).content.decode()
+        self.assertIn("Its user also manages the reminders.", content)
+        self.assertEqual(content.count("Only an administrator manages reminders, and they still run."), 2)
+        self.assertIn("Its reminders are kept, but none run or can be changed.", content)
+
+        with override_settings(APPRISE_REMINDER_ENABLED=False):
+            content = self.client.get("/auth/{}".format(self.key), headers=_MASTER).content.decode()
+        self.assertIn("Only an administrator may use it. The configuration and login are kept.", content)
+        self.assertNotIn("manages reminders", content)
+        self.assertNotIn("Its reminders are kept", content)
+
+    @override_settings(
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN,
+        APPRISE_USER="master",
     )
     def test_master_sees_auth_editor_and_generator(self):
         """The administrator can create the key's first shared login."""
@@ -147,11 +167,12 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("data-config-id-notice-revert", content)
         self.assertIn("data-value-toggle", content)
         self.assertIn('data-config-id-copy="auth_gui_key"', content)
-        self.assertIn("auth-tools-card", content)
-        self.assertIn("auth-tools-card-icon", content)
-        self.assertIn(">Credential Tools</h5>", content)
-        self.assertIn("Generate credentials or reset this Config ID's access.", content)
+        # The tools to fill in and reset the login sit in the login card itself
+        self.assertIn('id="auth-generate"', content)
+        self.assertNotIn("auth-tools-card", content)
         self.assertIn("Generate New Credentials", content)
+        # Starts closed so the randomize button is not clicked by accident
+        self.assertIn('<details class="auth-generate">', content)
         self.assertIn('class="btn waves-effect waves-light auth-remove-button"', content)
         self.assertIn('id="auth-mode-status"', content)
         self.assertIn('class="auth-mode-status is-admin"', content)
@@ -168,7 +189,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn('id="auth-generate-password"', content)
         self.assertEqual(content.count('aria-pressed="true"'), 2)
         self.assertIn(">Username</button>", content)
-        self.assertIn("Randomize Selected", content)
+        self.assertIn('title="Randomize the Selected Fields"', content)
         self.assertIn("Reset User Access", content)
         self.assertIn("Reset Configuration Too", content)
         self.assertIn("Reset Access and Configuration", content)
@@ -352,7 +373,8 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn(">User</span>", content)
         self.assertIn("auth-card-grid is-user", content)
         self.assertIn("auth-credentials-card", content)
-        self.assertNotIn("auth-tools-card", content)
+        self.assertNotIn('id="auth-generate"', content)
+        self.assertNotIn('id="auth-remove"', content)
         self.assertIn("User Profile", content)
         self.assertIn("Updates to account information are made here.", content)
         self.assertIn("Update Credentials", content)
@@ -691,9 +713,9 @@ class AuthGuiTests(SimpleTestCase):
         details = self.client.get("/details", headers=_MASTER)
 
         self.assertIn("alice:****@", welcome.content.decode())
+        self.assertRegex(welcome.content.decode(), r"alice:\*{4}@[^\"]*/details/")
         self.assertNotIn("secret", welcome.content.decode())
-        self.assertIn("master:****@", details.content.decode())
-        self.assertNotIn("master:pass@", details.content.decode())
+        self.assertNotIn("master:pass", details.content.decode())
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_config_bookmark_url_omits_the_password_placeholder(self):

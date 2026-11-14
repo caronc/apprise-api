@@ -255,9 +255,11 @@
                &nbsp;&nbsp;&nbsp;&nbsp;--config={{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
                   </div>
                   {% blocktrans %}You may also create an <a href="https://appriseit.com/cli/usage/#default-configuration-locations" target="_blank" rel="nofollow noopener noreferrer">Apprise configuration file</a> that contains this line somewhere in it:{% endblocktrans %}
+                  {# The message holds quotes of its own, so it is escaped into the attribute. #}
+                  {% trans "Apprise configuration 'include' entry copied to clipboard" as include_copied %}
                   <div class="code-snippet"
                        data-copy-text='include {{ request.scheme }}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/cfg/{{ key }}'
-                       data-copy-label='{% trans "Apprise configuration 'include' entry copied to clipboard" %}'>
+                       data-copy-label="{{ include_copied|force_escape }}">
                     <pre><code class="bash">include {{request.scheme}}://{% if AUTH_ENABLED %}{{ auth_username|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/cfg/<em data-snippet-config-id>{{key}}</em></code></pre>
                   </div>
                   {% blocktrans %}By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:{% endblocktrans %}
@@ -555,7 +557,8 @@
                     </div>
                   </div>
                 </section>
-                {% if stateless_allowed or reminder_urls_allowed %}
+                {# Shown only to callers who may send to URLs of their own; reminders follow the same rule. #}
+                {% if stateless_allowed %}
                   {# Apprise URLs to send to directly, as well as the services the Tags pick. #}
                   {# Each row shows its URL with its passwords hidden until it is selected. #}
                   <section class="notify-form-section notify-urls-section"
@@ -568,10 +571,6 @@
                           <p>
                             {% blocktrans %}Optionally specify Apprise URLs directly to notify. <a href="https://appriseit.com/url-builder/" target="_blank" rel="nofollow noopener noreferrer">Click here</a> to get help constructing your URLs from the Apprise URL Builder.{% endblocktrans %}
                           </p>
-                          {% if not stateless_allowed %}
-                            {# Send Notification skips them; only a saved reminder uses them. #}
-                            <p>{% trans "Stateless Mode is turned off on this server, so these URLs are only used by reminders." %}</p>
-                          {% endif %}
                         </div>
                       </div>
                       <button id="notify-url-add"
@@ -974,21 +973,8 @@
         input.dataset.templateRequired = 'true';
       }
       control.appendChild(input);
-
-      const visibility = document.createElement('button');
-      visibility.type = 'button';
-      visibility.setAttribute(
-        'class', 'btn-flat value-visibility-toggle');
-      visibility.setAttribute('tabindex', '-1');
-      visibility.setAttribute('data-value-toggle', '');
-      visibility.setAttribute('aria-controls', inputId);
-      visibility.setAttribute('aria-label', '{% trans "Show Value" %}');
-      visibility.setAttribute('title', '{% trans "Show Value" %}');
-      visibility.dataset.showLabel = '{% trans "Show Value" %}';
-      visibility.dataset.hideLabel = '{% trans "Hide Value" %}';
-      visibility.innerHTML =
-        '<i class="material-icons" aria-hidden="true">visibility_off</i>';
-      control.appendChild(visibility);
+      // The eye button that shows or hides the value.
+      control.appendChild(appriseValueToggleButton(inputId));
 
       field.appendChild(control);
 
@@ -1245,20 +1231,8 @@
     disableTemplateAutofill(valueInput);
     valueInput.value = value || '';
     concealed.appendChild(valueInput);
-
-    const visibility = document.createElement('button');
-    visibility.type = 'button';
-    visibility.className = 'btn-flat value-visibility-toggle';
-    visibility.setAttribute('tabindex', '-1');
-    visibility.setAttribute('data-value-toggle', '');
-    visibility.setAttribute('aria-controls', valueId);
-    visibility.setAttribute('aria-label', '{% trans "Show Value" %}');
-    visibility.setAttribute('title', '{% trans "Show Value" %}');
-    visibility.dataset.showLabel = '{% trans "Show Value" %}';
-    visibility.dataset.hideLabel = '{% trans "Hide Value" %}';
-    visibility.innerHTML =
-      '<i class="material-icons" aria-hidden="true">visibility_off</i>';
-    concealed.appendChild(visibility);
+    // The eye button that shows or hides the value.
+    concealed.appendChild(appriseValueToggleButton(valueId));
     valueField.appendChild(valueLabel);
     valueField.appendChild(concealed);
 
@@ -2108,39 +2082,6 @@
     }
   }
 
-  function showCopyToast(anchorEl, message) {
-    const msg = message || '{% trans "URL copied to clipboard" %}';
-    appriseShowCopyToast(msg);
-  }
-  async function copyToClipboard(text, anchorEl, message) {
-    // Prefer modern Clipboard API
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      try {
-        await navigator.clipboard.writeText(text);
-        showCopyToast(anchorEl, message);
-        return;
-      } catch (e) {
-        console.warn('navigator.clipboard failed, falling back', e);
-        // fall through to legacy method
-      }
-    }
-    // Fallback for older browsers
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'absolute';
-    textarea.style.left = '-9999px';
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand('copy');
-      showCopyToast(anchorEl, message);
-    } catch (e) {
-      console.warn('document.execCommand("copy") failed', e);
-    } finally {
-      document.body.removeChild(textarea);
-    }
-  }
   // Split tags on characters that parseNotifyTagToken does not allow.
   // For example, "foo bar,baz;qux" commits four tags without pressing Enter.
   // Leaving the field commits any remaining text.
@@ -2197,6 +2138,11 @@
   // reminders, so those tabs stay open with the tags greyed out.
   function notifyWithoutConfig() {
     notifyConfigMissing = true;
+    // Previews are only made for a saved configuration, so they are hidden.
+    const attachRows = document.querySelector('#notify-attach-rows');
+    if (attachRows) {
+      attachRows.classList.add('notify-attach-no-preview');
+    }
     if (!document.querySelector('#notify-url-rows')) {
       return;
     }
@@ -2222,6 +2168,10 @@
     }
     {% if not CONFIG_LOCK %}
     notifyConfigMissing = false;
+    const attachRows = document.querySelector('#notify-attach-rows');
+    if (attachRows) {
+      attachRows.classList.remove('notify-attach-no-preview');
+    }
     const tagsField = document.querySelector('.chips');
     if (tagsField) {
       tagsField.classList.remove('notify-tags-unavailable');
@@ -2499,7 +2449,7 @@
       copyBtn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        copyToClipboard(code.dataset.rawUrl || decodeHtmlEntities(entry.url), copyBtn);
+        appriseCopyToClipboard(code.dataset.rawUrl || decodeHtmlEntities(entry.url), '{% trans "URL copied to clipboard" %}');
       }, false);
       header.appendChild(copyBtn);
       li.appendChild(header);
@@ -2908,10 +2858,24 @@
   // What a web address must look like: http:// or https:// with no spaces.
   const notifyAttachUrlPattern = /^https?:\/\/\S+$/i;
 
+  // Each web address row's full address. The field shows it with its
+  // password hidden until it is clicked into, like the Apprise URL rows.
+  const notifyAttachFull = new WeakMap();
+
+  // A web address with its password hidden, the way the server hides it.
+  function notifyAttachMasked(url) {
+    return url.replace(/^([a-z][a-z0-9+.-]*:\/\/[^\/?#@:]*:)[^\/?#@]*@/i, '$1****@');
+  }
+
+  // The full address a web address row holds, without spaces around it.
+  function notifyAttachValue(input) {
+    return (notifyAttachFull.get(input) || '').trim();
+  }
+
   // The web addresses to attach, as {url, filename}; each is fetched when the message is sent.
   function notifyAttachmentUrls() {
     return Array.from(document.querySelectorAll('#notify-attach-rows .notify-attach-url')).map(function (input) {
-      const entry = {url: input.value.trim()};
+      const entry = {url: notifyAttachValue(input)};
       if (input.dataset.filename) {
         entry.filename = input.dataset.filename;
       }
@@ -2959,7 +2923,7 @@
   // The server applies its own attachment rules as well.
   function notifyCheckAttachmentUrls() {
     const bad = Array.from(document.querySelectorAll('#notify-attach-rows .notify-attach-url')).find(function (input) {
-      return input.value.trim() && !notifyAttachUrlPattern.test(input.value.trim());
+      return notifyAttachValue(input) && !notifyAttachUrlPattern.test(notifyAttachValue(input));
     });
     notifyAttachmentUrlError(bad ? '{% trans "Bad Attachment" %}' : null, bad);
     return !bad;
@@ -2969,7 +2933,7 @@
   function notifyUpdateAttachAdd() {
     const inputs = document.querySelectorAll('#notify-attach-rows .notify-attach-url');
     const last = inputs[inputs.length - 1];
-    document.querySelector('#notify-attach-add').disabled = Boolean(last && !last.value.trim());
+    document.querySelector('#notify-attach-add').disabled = Boolean(last && !notifyAttachValue(last));
   }
 
   // Add a row for one web address, with buttons to preview and remove it.
@@ -2992,12 +2956,21 @@
     input.placeholder = 'https://';
     input.autocomplete = 'off';
     input.spellcheck = false;
-    input.value = entry ? entry.url : '';
+    notifyAttachFull.set(input, entry ? entry.url : '');
+    input.value = notifyAttachMasked(notifyAttachFull.get(input));
     if (entry && entry.filename) {
       input.dataset.filename = entry.filename;
     }
+    // The full address while it is being edited; its password hidden otherwise.
+    input.addEventListener('focus', function () {
+      input.value = notifyAttachFull.get(input);
+    });
+    input.addEventListener('blur', function () {
+      input.value = notifyAttachMasked(notifyAttachFull.get(input));
+    });
     // Typing clears the error and may allow another row.
     input.addEventListener('input', function () {
+      notifyAttachFull.set(input, input.value);
       notifyAttachmentUrlError(null);
       notifyUpdateAttachAdd();
       if (input.value.trim()) {
@@ -3021,8 +2994,8 @@
     preview.setAttribute('title', '{% trans "Preview" %}');
     preview.innerHTML = '<i class="material-icons" aria-hidden="true">visibility</i>';
     preview.addEventListener('click', function () {
-      if (notifyCheckAttachmentUrls() && input.value.trim()) {
-        notifyPreviewAttachment(input.value.trim());
+      if (notifyCheckAttachmentUrls() && notifyAttachValue(input)) {
+        notifyPreviewAttachment(notifyAttachValue(input));
       }
     });
 
@@ -3116,11 +3089,7 @@
     const sent = pending.map(function (input) { return notifyUrlFull.get(input).trim(); });
     let answers = null;
     try {
-      const response = await appriseFetch('{% url "resolve" key %}', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: JSON.stringify({urls: sent})
-      });
+      const response = await appriseResolveUrls('{% url "resolve" key %}', sent);
       answers = response.ok ? (await response.json()).urls : null;
     } catch (e) {
       answers = null;
@@ -3250,6 +3219,73 @@
     update_count();
   }
 
+  // Explain why the server refused to download an address, or return null
+  // when the answer gives no reason the administrator could change.
+  // - "internal": the address is on the local network, which is turned off.
+  // - "rules": the attachment allow or deny lists refuse it.
+  function notifyPreviewBlocked(data) {
+    const texts = {
+      internal: [
+        '{% trans "Local network access is turned off" %}',
+        '{% trans "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed." %}'
+      ],
+      rules: [
+        '{% trans "This address is blocked" %}',
+        '{% trans "The attachment rules of this Apprise API do not allow downloads from this address." %}'
+      ]
+    };
+    const text = texts[data.reason];
+    if (!text) {
+      return null;
+    }
+
+    const notice = document.createElement('div');
+    notice.className = 'notify-attach-blocked';
+    notice.setAttribute('role', 'alert');
+    notice.innerHTML = '<i class="material-icons" aria-hidden="true">block</i>';
+
+    const body = document.createElement('div');
+    // The headline, then one sentence saying what happened.
+    const headline = document.createElement('strong');
+    headline.textContent = text[0];
+    body.appendChild(headline);
+    const sentence = document.createElement('p');
+    sentence.textContent = text[1];
+    body.appendChild(sentence);
+
+    // The environment variable the administrator would change.
+    if (data.setting) {
+      const setting = document.createElement('p');
+      setting.textContent = '{% trans "The administrator can change this with:" %} ';
+      const code = document.createElement('code');
+      code.textContent = data.setting;
+      setting.appendChild(code);
+      body.appendChild(setting);
+    }
+
+    // Where to read more; only a web address is ever used as the link.
+    if (typeof data.help === 'string' && /^https:\/\//.test(data.help)) {
+      const link = document.createElement('a');
+      link.href = data.help;
+      link.target = '_blank';
+      link.rel = 'nofollow noopener noreferrer';
+      link.textContent = '{% trans "Learn more" %}';
+      body.appendChild(link);
+    }
+
+    notice.appendChild(body);
+    return notice;
+  }
+
+  // Picture types a preview shows as a picture. Anything else that calls
+  // itself an image (such as SVG, which can hold a script) is not.
+  const NOTIFY_PREVIEW_IMAGES = /^image\/(png|jpeg|gif|webp|bmp|avif|x-icon|vnd\.microsoft\.icon)$/;
+
+  // Sound and video types a preview plays. Only these exact types are given
+  // to the browser; anything else that calls itself sound or video (such as
+  // "video/mp4, text/html", which a browser could open as a page) is not.
+  const NOTIFY_PREVIEW_MEDIA = /^(audio\/(mpeg|mp4|aac|ogg|opus|wav|x-wav|webm|flac)|video\/(mp4|webm|ogg|quicktime))$/;
+
   // Download a web address through the server, the same way a send would,
   // and show what came back: the file, or why it could not be fetched.
   async function notifyPreviewAttachment(url) {
@@ -3259,17 +3295,15 @@
     status.className = 'notify-attach-preview-status';
     status.textContent = '{% trans "Loading…" %}';
     holder.appendChild(status);
-    // A temporary browser address for the downloaded file, freed when the dialog closes.
-    let objectUrl = null;
+    // Temporary browser addresses for the downloaded file, freed when the dialog closes.
+    const objectUrls = [];
     appriseFire({
       title: '{% trans "Preview" %}',
       html: holder,
       width: '48rem',
       showConfirmButton: false,
       didClose: function () {
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-        }
+        objectUrls.forEach(function (address) { URL.revokeObjectURL(address); });
       }
     });
     try {
@@ -3286,14 +3320,32 @@
         } catch (e) {
           data = {};
         }
-        status.classList.add('is-error');
-        status.textContent = (data.error || '{% trans "The attachment could not be downloaded" %}') + ' (' + response.status + ')';
+        // An address the server's rules refuse is explained in plain words,
+        // with the setting the administrator would change.
+        const blocked = notifyPreviewBlocked(data);
+        if (blocked) {
+          status.replaceWith(blocked);
+        } else {
+          status.classList.add('is-error');
+          status.textContent = (data.error || '{% trans "The attachment could not be downloaded" %}') + ' (' + response.status + ')';
+        }
         if (data.logs && data.logs.length) {
           // What the download reported, such as a 404 or a refused address.
           const logs = document.createElement('pre');
           logs.className = 'notify-attach-preview-logs';
           logs.textContent = data.logs.join('\n');
-          holder.appendChild(logs);
+          if (blocked) {
+            // Behind the explanation, the log is kept for whoever wants it.
+            const more = document.createElement('details');
+            more.className = 'notify-attach-preview-more';
+            const summary = document.createElement('summary');
+            summary.textContent = '{% trans "More Details" %}';
+            more.appendChild(summary);
+            more.appendChild(logs);
+            holder.appendChild(more);
+          } else {
+            holder.appendChild(logs);
+          }
         }
         return;
       }
@@ -3306,25 +3358,34 @@
       } catch (e) {
         name = 'attachment';
       }
-      const blob = new Blob([await response.arrayBuffer()], {type: type});
-      objectUrl = URL.createObjectURL(blob);
-      status.textContent = type + ' · ' + (blob.size / 1024).toLocaleString(undefined, {maximumFractionDigits: 1}) + ' KB';
+      const bytes = await response.arrayBuffer();
+      status.textContent = type + ' · ' + (bytes.byteLength / 1024).toLocaleString(undefined, {maximumFractionDigits: 1}) + ' KB';
+
+      // A browser address for the file, typed as given. Its address belongs to
+      // this site, so it is only made for types a browser never runs as a page.
+      function previewUrl(blobType) {
+        const address = URL.createObjectURL(new Blob([bytes], {type: blobType}));
+        objectUrls.push(address);
+        return address;
+      }
 
       // Show it the way its type allows: a picture, a player, text, or a note
       // that it cannot be shown.
+      // - Only these picture types are shown as pictures; SVG can hold a
+      //   script, so it is shown as text below instead.
+      // - Text, JSON and XML (SVG included) are shown as text, never as a page.
       let shown = null;
-      if (type.startsWith('image/')) {
+      if (NOTIFY_PREVIEW_IMAGES.test(type)) {
         shown = document.createElement('img');
         shown.alt = name;
-        shown.src = objectUrl;
-      } else if (type.startsWith('audio/') || type.startsWith('video/')) {
+        shown.src = previewUrl(type);
+      } else if (NOTIFY_PREVIEW_MEDIA.test(type)) {
         shown = document.createElement(type.startsWith('audio/') ? 'audio' : 'video');
         shown.controls = true;
-        shown.src = objectUrl;
+        shown.src = previewUrl(type);
       } else if (type.startsWith('text/') || /(json|xml)$/.test(type)) {
-        // Text is shown as text, never as a page.
         shown = document.createElement('pre');
-        shown.textContent = (await blob.slice(0, 20000).text());
+        shown.textContent = new TextDecoder().decode(bytes.slice(0, 20000));
       } else {
         shown = document.createElement('div');
         shown.className = 'notify-attach-preview-none';
@@ -3336,10 +3397,11 @@
       shown.classList.add('notify-attach-preview-content');
       holder.appendChild(shown);
 
-      // A button to save the file.
+      // A button to save the file. It is always plain bytes, so opening it in
+      // a new tab saves it rather than running it as a page of this site.
       const download = document.createElement('a');
       download.className = 'btn waves-effect waves-light notify-attach-download';
-      download.href = objectUrl;
+      download.href = previewUrl('application/octet-stream');
       download.download = name;
       download.innerHTML = '<i class="material-icons left" aria-hidden="true">file_download</i>';
       download.appendChild(document.createTextNode('{% trans "Download" %}'));
@@ -3348,6 +3410,17 @@
       status.classList.add('is-error');
       status.textContent = '{% trans "The attachment could not be downloaded" %}';
     }
+  }
+
+  // Ask for a message body or an attachment before anything is sent or saved.
+  // - title: the dialog's title, e.g. "Notification" or "Reminder".
+  function notifyAskForMessage(title) {
+    markNotifyMinimumMissing();
+    appriseFire({
+      title: title,
+      html: '{% trans "Please provide at least a message body or one attachment before sending." %}',
+      icon: 'warning'
+    });
   }
 
   function markNotifyMinimumMissing() {
@@ -3679,12 +3752,7 @@
 
       // Minimum payload gate: allow body-only OR attachment-only.
       if (!hasBody && !hasAttachment) {
-        markNotifyMinimumMissing();
-        appriseFire({
-          title: '{% trans "Notification" %}',
-          html: '{% trans "Please provide at least a message body or one attachment before sending." %}',
-          icon: 'warning'
-        });
+        notifyAskForMessage('{% trans "Notification" %}');
         return false;
       }
 
@@ -3751,18 +3819,8 @@
         form.append('urls', urls.join('\n'));
         requests.push({
           url: '{% url "s_notify" %}',
-          options: {method: 'POST', body: form, headers: {'X-Apprise-Log-Level': 'info', 'X-Apprise-Config-ID': '{{ key }}'}}
+          options: {method: 'POST', body: form, headers: {'X-Apprise-Log-Level': 'info', 'X-Apprise-Config-ID': '{{ key|escapejs }}'}}
         });
-      }
-      {% else %}
-      // Without stateless mode the URLs are skipped; with nothing else, say why.
-      if (!requests.length) {
-        appriseFire({
-          title: '{% trans "Notification" %}',
-          html: '{% trans "Stateless Mode is turned off on this server, so these URLs are only used by reminders." %}',
-          icon: 'warning'
-        });
-        return false;
       }
       {% endif %}
 
@@ -3853,7 +3911,7 @@
     copyBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      copyToClipboard(copyText, copyBtn, message);
+      appriseCopyToClipboard(copyText, message || '{% trans "URL copied to clipboard" %}');
     }, false);
     // Insert the button into the snippet container
     snippet.appendChild(copyBtn);

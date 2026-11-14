@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 import os
 import tempfile
+import time
 from unittest import mock
 
 from django.test import RequestFactory, SimpleTestCase
@@ -54,6 +55,16 @@ class UtilsTests(SimpleTestCase):
 
                 request = factory.get("/", **headers)
                 assert utils.is_json_response(request) is expected
+
+    def test_json_response_negotiation_stays_quick_on_long_spaces(self):
+        """A long Accept header of spaces is read quickly, the same as a blank one."""
+        factory = RequestFactory()
+        for accept in (" \xa0 */* \x0b", "\xa0" * 8000, "\xa0" * 8000 + "x"):
+            request = factory.get("/", HTTP_ACCEPT=accept, CONTENT_TYPE="application/json")
+            started = time.monotonic()
+            expected = accept.strip() in ("", "*/*")
+            assert utils.is_json_response(request) is expected
+            assert time.monotonic() - started < 0.05
 
     def test_html_response_negotiation(self):
         """HTML must be preferred, not merely listed as an API fallback."""

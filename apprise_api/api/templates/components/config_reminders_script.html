@@ -62,7 +62,6 @@
     return reminderUrls.list + '/' + id + '/' + (suffix || '');
   }
 
-  // A size in bytes shown in megabytes, e.g. 1.5 MB.
   // A picked time ("HH:MM" or "HH:MM:SS") with its seconds, as the API stores it.
   function reminderFullTime(time) {
     return time.length === 5 ? time + ':00' : time;
@@ -143,7 +142,7 @@
     }
     return {
       start: (recurring || holiday) && !counted && date ? date + 'T' + reminderFullTime(reminderElement('reminder-time').value || '00:00') : null,
-      until: recurring && untilDate ? untilDate + 'T' + (reminderElement('reminder-until-time').value || '23:59') + ':00' : null,
+      until: recurring && untilDate ? untilDate + 'T' + reminderFullTime(reminderElement('reminder-until-time').value || '23:59') : null,
       // A run count set through the API is kept while the reminder still repeats.
       count: count
     };
@@ -290,7 +289,8 @@
     }[failure.field];
     const input = where && reminderElement(where);
     if (!input || input.closest('[hidden]')) {
-      appriseShowStatusToast(failure.message, Boolean(failure.warning));
+      // A warning that does not stop saving is not shown as a success.
+      appriseShowStatusToast(failure.message, failure.warning ? 'warning' : 'error');
       return;
     }
     // The note goes at the end of the field's block, below a dropdown too.
@@ -1937,23 +1937,16 @@
     if (!reminderElement('reminder-usage-count')) {
       return;
     }
-    try {
-      const response = await appriseFetch(reminderUrls.limits, {headers: {'Accept': 'application/json'}});
-      if (!response.ok) {
-        return;
-      }
-      const limits = (await response.json()).limits;
-      reminderElement('reminder-usage-count').textContent = limits.reminders_used + ' / ' + limits.reminders;
-      reminderElement('reminder-usage-space').textContent = reminderFormatSize(limits.attach_used) + ' / '
-        + reminderFormatSize(limits.attach_size);
-      // Full once nothing more fits; files the administrator added can even
-      // take it over the limit. A quota of 0 with nothing stored just means
-      // uploads are off, which saving explains.
-      const full = limits.attach_used > 0 && limits.attach_used >= limits.attach_size;
-      document.querySelectorAll('.reminder-space-full').forEach(function (alert) { alert.hidden = !full; });
-    } catch (e) {
+    const limits = await reminderShowUsage(reminderUrls.limits);
+    if (!limits) {
       // The list still works without the usage figures.
+      return;
     }
+    // Full once nothing more fits; files the administrator added can even
+    // take it over the limit. A quota of 0 with nothing stored just means
+    // uploads are off, which saving explains.
+    const full = limits.attach_used > 0 && limits.attach_used >= limits.attach_size;
+    document.querySelectorAll('.reminder-space-full').forEach(function (alert) { alert.hidden = !full; });
   }
 
   // Fetch every reminder of this Config ID, then refresh the cards, the
@@ -2401,12 +2394,7 @@
         return;
       }
       if (!reminderHasMessage()) {
-        markNotifyMinimumMissing();
-        appriseFire({
-          title: '{% trans "Reminder" %}',
-          html: '{% trans "Please provide at least a message body or one attachment before sending." %}',
-          icon: 'warning'
-        });
+        notifyAskForMessage('{% trans "Reminder" %}');
         return;
       }
       clearNotifyMinimumMissing();

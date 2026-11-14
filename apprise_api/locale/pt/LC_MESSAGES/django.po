@@ -351,14 +351,6 @@ msgstr "O acesso a %(saved)s encontra-se atualmente bloqueado devido a um bloque
 msgid "Save"
 msgstr "Salvar"
 
-#: apprise_api/api/templates/auth.html:147
-msgid "Credential Tools"
-msgstr "Ferramentas de Credenciais"
-
-#: apprise_api/api/templates/auth.html:148
-msgid "Generate credentials or reset this Config ID's access."
-msgstr "Gerar credenciais ou redefinir o acesso deste ID de Configuração."
-
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Gerar Novas Credenciais"
@@ -370,10 +362,6 @@ msgstr "Campos para Aleatorizar"
 #: apprise_api/api/templates/auth.html:168
 msgid "Randomize the Selected Fields"
 msgstr "Aleatorizar os Campos Selecionados"
-
-#: apprise_api/api/templates/auth.html:172
-msgid "Randomize Selected"
-msgstr "Aleatorizar Selecionados"
 
 #: apprise_api/api/templates/auth.html:181
 msgid "Reset Access"
@@ -456,21 +444,34 @@ msgstr "Modo"
 msgid "Description"
 msgstr "Descrição"
 
-#: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "Utiliza seu próprio login para notificações tanto stateful quanto stateless e para acesso à configuração."
+#: apprise_api/api/templates/auth.html:370
+msgid "Uses its own login to send notifications and to view and edit the configuration."
+msgstr "Usa o seu próprio login para enviar notificações e para ver e editar a configuração."
 
-#: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "Utiliza seu próprio login para notificações com estado (stateful) e alterações de senha. O conteúdo da configuração permanece oculto."
+#: apprise_api/api/templates/auth.html:370
+msgid "Its user also manages the reminders."
+msgstr "O seu utilizador também gere os lembretes."
 
-#: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "Permite notificações com estado (stateful) e marcadas (tagged) sem a necessidade de login. O conteúdo de configuração e as notificações sem estado (stateless) permanecem protegidos."
+#: apprise_api/api/templates/auth.html:371
+msgid "Uses its own login to send tagged notifications and change its password. The configuration stays hidden."
+msgstr "Usa o seu próprio login para enviar notificações marcadas e alterar a sua senha. A configuração permanece oculta."
 
-#: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "Bloqueia o acesso do usuário à configuração, sem excluir a configuração ou o login. Apenas um administrador pode realizar essa ação."
+#: apprise_api/api/templates/auth.html:371
+#: apprise_api/api/templates/auth.html:372
+msgid "Only an administrator manages reminders, and they still run."
+msgstr "Apenas um administrador gere os lembretes, e eles continuam a ser enviados."
+
+#: apprise_api/api/templates/auth.html:372
+msgid "Anyone may send tagged notifications without a login. The configuration and stateless notifications stay protected."
+msgstr "Qualquer pessoa pode enviar notificações marcadas sem login. A configuração e as notificações sem estado permanecem protegidas."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Only an administrator may use it. The configuration and login are kept."
+msgstr "Apenas um administrador pode usá-la. A configuração e o login são mantidos."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Its reminders are kept, but none run or can be changed."
+msgstr "Os seus lembretes são mantidos, mas nenhum é enviado nem pode ser alterado."
 
 #: apprise_api/api/templates/auth.html:337
 #: apprise_api/api/templates/components/mobile_app_dialog.html:18
@@ -753,8 +754,8 @@ msgid "Configuration List"
 msgstr "Lista de Configurações"
 
 #: apprise_api/api/templates/base.html:303
-msgid "Available Plugins"
-msgstr "Plugins Disponíveis"
+msgid "Available Services"
+msgstr "Serviços Disponíveis"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -1505,13 +1506,9 @@ msgstr "BEGIN APPRISE NOTIFICATION LOG"
 msgid "END APPRISE NOTIFICATION LOG"
 msgstr "END APPRISE NOTIFICATION LOG"
 
-#: apprise_api/api/templates/config.html:930
-msgid "event"
-msgstr "evento"
-
-#: apprise_api/api/templates/config.html:931
-msgid "events"
-msgstr "eventos"
+#: apprise_api/api/templates/components/notify_stream_script.html:193
+msgid "Events: {}"
+msgstr "Eventos: {}"
 
 #: apprise_api/api/templates/config.html:940
 msgid "Notification logs copied to clipboard"
@@ -1787,13 +1784,6 @@ msgstr "Configuração movida."
 msgid "Apprise Details"
 msgstr "Detalhes do Apprise"
 
-#: apprise_api/api/templates/details.html:13
-msgid ""
-"The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
-"            instance."
-msgstr "Os seguintes serviços são suportados por esta instância <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>."
-
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
@@ -1820,51 +1810,25 @@ msgstr "Guia de Configuração"
 msgid "Service Website"
 msgstr "Site do serviço"
 
-#: apprise_api/api/templates/details.html:114
-msgid ""
-"\n"
-"                  <strong>Note:</strong> This service is unavailable due to the\n"
-"                  service being disabled by the administrator or the required\n"
-"                  libraries needed to drive it is not installed or functioning\n"
-"                  correctly.\n"
-"                "
-msgstr ""
-"\n"
-"<strong>Nota:</strong> Este serviço é indisponível porque o serviço pode ser desativado pelo administrador ou as bibliotecas permitidas para que ele não esteja instalado ou funcionando corretamente."
+#: apprise_api/api/templates/details.html:135
+msgid "Service Unavailable"
+msgstr "Serviço indisponível"
 
-#: apprise_api/api/templates/details.html:124
-msgid "Category"
-msgstr "Categoria"
+#: apprise_api/api/templates/details.html:138
+msgid "The administrator has turned this service off on this server."
+msgstr "O administrador desativou este serviço neste servidor."
 
-#: apprise_api/api/templates/details.html:129
-msgid "Insecure Schema(s)"
-msgstr "Esquema(s) Inseguro(s)"
+#: apprise_api/api/templates/details.html:140
+msgid "This service is missing the necessary dependencies to function on this server."
+msgstr "Este serviço não tem as dependências necessárias para funcionar neste servidor."
 
-#: apprise_api/api/templates/details.html:142
-msgid "Secure Schema(s)"
-msgstr "Esquema(s) Seguro(s)"
+#: apprise_api/api/templates/details.html:143
+msgid "Required packages:"
+msgstr "Pacotes necessários:"
 
-#: apprise_api/api/templates/details.html:154
-msgid "Apprise URL Formatting"
-msgstr "Apprise URL Formatação"
-
-#: apprise_api/api/templates/details.html:159
-msgid ""
-"For more details and additional Apprise\n"
-"                    configuration options available to this service:"
-msgstr "Para mais detalhes e opções de configuração adicionais do Apprise disponíveis para este serviço:"
-
-#: apprise_api/api/templates/details.html:161
-msgid "Click Here"
-msgstr "Clique Aqui"
-
-#: apprise_api/api/templates/details.html:173
-msgid "API Endpoints"
-msgstr "API Endpoints"
-
-#: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "Desenvolvedores que desejam receber esse conjunto de resultados em uma string passível de ser analisada como JSON para sua aplicação podem seguir os passos abaixo para obter esse resultado:"
+#: apprise_api/api/templates/details.html:147
+msgid "You can still build its URL online."
+msgstr "Ainda pode criar o URL online."
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1873,10 +1837,6 @@ msgstr "Desenvolvedores que desejam receber esse conjunto de resultados em uma s
 #: apprise_api/api/templates/welcome.html:590
 msgid "Curl Example"
 msgstr "Exemplo Curl"
-
-#: apprise_api/api/templates/details.html:184
-msgid "Retrieve JSON Formatted Apprise Details"
-msgstr "Recuperar detalhes do Apprise em formato JSON"
 
 #: apprise_api/api/templates/details.html:191
 #: apprise_api/api/templates/welcome.html:138
@@ -2607,11 +2567,6 @@ msgid ""
 "Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
 msgstr "Opcionalmente, indique diretamente os URLs do Apprise a notificar. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Clique aqui</a> para obter ajuda na criação dos seus URLs com o Apprise URL Builder."
 
-#: apprise_api/api/templates/config.html:573
-msgid ""
-"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
-msgstr "O Stateless Mode está desativado neste servidor, por isso estes URLs são usados apenas pelos lembretes."
-
 #: apprise_api/api/templates/config.html:583
 msgid "Also send to untagged services"
 msgstr "Enviar também para os serviços sem tag"
@@ -2627,6 +2582,14 @@ msgstr "Remover URL"
 #: apprise_api/api/views.py:4307
 msgid "This URL could not be loaded"
 msgstr "Não foi possível carregar esta URL"
+
+#: apprise_api/api/templates/details.html:555
+msgid "This value is not in the form this service expects."
+msgstr "Este valor não está no formato que este serviço espera."
+
+#: apprise_api/api/templates/details.html:770
+msgid "This URL could not be loaded. Check the highlighted fields."
+msgstr "Não foi possível carregar esta URL. Verifique os campos destacados."
 
 #: apprise_api/api/templates/components/config_reminders_script.html:534
 msgid "The end date has already passed, so this reminder will not be sent."
@@ -2648,6 +2611,10 @@ msgstr "Um lembrete não pode se repetir com mais frequência do que a cada {} s
 #: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
 msgid "Only an administrator may manage reminders for this configuration"
 msgstr "Somente um administrador pode gerenciar os lembretes desta configuração"
+
+#: apprise_api/api/views.py:5475
+msgid "Reminders are turned off while this configuration is disabled"
+msgstr "Os lembretes estão desligados enquanto esta configuração estiver desativada"
 
 
 #: apprise_api/api/templates/components/config_reminders_tab.html:14
@@ -3047,8 +3014,8 @@ msgid "Save Limits"
 msgstr "Salvar limites"
 
 #: apprise_api/api/templates/auth.html:215
-msgid "Leave a field blank for no limit. An attachment space of 0 turns uploads off."
-msgstr "Deixe um campo em branco para não ter limite. Um espaço de anexos de 0 desativa o envio de arquivos."
+msgid "Leave a field blank to use the server default. An attachment space of 0 turns uploads off."
+msgstr "Deixe um campo em branco para usar o valor padrão do servidor. Um espaço de anexos de 0 desativa o envio de arquivos."
 
 #: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
 msgid "Reminder"
@@ -3137,10 +3104,6 @@ msgstr "Salvar lembrete"
 #: apprise_api/api/templates/components/reminder_shared_script.html:32
 msgid "Skipped: it was too late to send"
 msgstr "Ignorado: era tarde demais para enviar"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:33
-msgid "Paused: this configuration is disabled"
-msgstr "Pausado: esta configuração está desativada"
 
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
@@ -3370,6 +3333,30 @@ msgstr "Carregando…"
 msgid "The attachment could not be downloaded"
 msgstr "Não foi possível baixar o anexo"
 
+#: apprise_api/api/templates/config.html:3198
+msgid "Local network access is turned off"
+msgstr "O acesso à rede local está desativado"
+
+#: apprise_api/api/templates/config.html:3199
+msgid "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed."
+msgstr "O administrador desta Apprise API desativou os downloads a partir da rede local, por isso este endereço não pode ser pré-visualizado."
+
+#: apprise_api/api/templates/config.html:3202
+msgid "This address is blocked"
+msgstr "Este endereço está bloqueado"
+
+#: apprise_api/api/templates/config.html:3203
+msgid "The attachment rules of this Apprise API do not allow downloads from this address."
+msgstr "As regras de anexos desta Apprise API não permitem downloads a partir deste endereço."
+
+#: apprise_api/api/templates/config.html:3228
+msgid "The administrator can change this with:"
+msgstr "O administrador pode alterar isto com:"
+
+#: apprise_api/api/templates/config.html:3241
+msgid "Learn more"
+msgstr "Saiba mais"
+
 #: apprise_api/api/templates/config.html:3320
 msgid "This file cannot be shown here."
 msgstr "Este arquivo não pode ser exibido aqui."
@@ -3428,3 +3415,107 @@ msgstr "A cada {} meses"
 #, python-brace-format
 msgid "Every {} years"
 msgstr "A cada {} anos"
+
+#: apprise_api/api/templates/resolve.html:37
+#: apprise_api/api/templates/resolve.html:38
+msgid "Copy URL"
+msgstr "Copiar URL"
+
+#: apprise_api/api/templates/resolve.html:43
+msgid "Parse"
+msgstr "Analisar"
+
+#: apprise_api/api/templates/resolve.html:352
+#: apprise_api/api/templates/resolve.html:353
+msgid "Remove Value"
+msgstr "Remover Valor"
+
+#: apprise_api/api/templates/details.html:13
+msgid "Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts."
+msgstr "Crie um URL do Apprise em três etapas: escolha um serviço, preencha os detalhes e copie o URL. Já tem um URL? Cole-o na etapa 1 para ver e alterar suas partes."
+
+#: apprise_api/api/templates/details.html:36
+msgid "Choose a Service"
+msgstr "Escolha um Serviço"
+
+#: apprise_api/api/templates/details.html:39
+msgid "Search Services"
+msgstr "Pesquisar Serviços"
+
+#: apprise_api/api/templates/details.html:69
+msgid "No services match your search."
+msgstr "Nenhum serviço corresponde à sua pesquisa."
+
+#: apprise_api/api/templates/details.html:74
+msgid "Or Paste an Apprise URL"
+msgstr "Ou Cole um URL do Apprise"
+
+#: apprise_api/api/templates/details.html:96
+msgid "Fill In the Details"
+msgstr "Preencha os Detalhes"
+
+#: apprise_api/api/templates/details.html:98
+msgid "Choose a service above, or paste a URL, to see what it needs."
+msgstr "Escolha um serviço acima, ou cole um URL, para ver o que ele precisa."
+
+#: apprise_api/api/templates/details.html:136
+msgid "Options"
+msgstr "Opções"
+
+#: apprise_api/api/templates/details.html:140
+msgid "Advanced"
+msgstr "Avançado"
+
+#: apprise_api/api/templates/details.html:150
+msgid "Copy Your URL"
+msgstr "Copie seu URL"
+
+#: apprise_api/api/templates/details.html:159
+msgid "Fill in the details above to build the URL."
+msgstr "Preencha os detalhes acima para criar o URL."
+
+#: apprise_api/api/templates/details.html:462
+msgid "Required"
+msgstr "Obrigatório"
+
+#: apprise_api/api/templates/details.html:513
+msgid "Separate entries with commas"
+msgstr "Separe as entradas com vírgulas"
+
+#: apprise_api/api/templates/details.html:192
+msgid "A configuration login also sends its Config ID in the <code>X-Apprise-Config-ID</code> header."
+msgstr "Um login de configuração também envia seu ID de configuração no cabeçalho <code>X-Apprise-Config-ID</code>."
+
+#: apprise_api/api/templates/details.html:195
+msgid "List every service and its fields:"
+msgstr "Listar cada serviço e seus campos:"
+
+#: apprise_api/api/templates/details.html:201
+msgid "Split a URL into its fields:"
+msgstr "Dividir um URL em seus campos:"
+
+#: apprise_api/api/templates/details.html:209
+msgid "Put fields back together into a URL:"
+msgstr "Juntar campos de volta em um URL:"
+
+#: apprise_api/api/templates/welcome.html:773
+msgid "Service and URL Endpoints"
+msgstr "Endpoints de serviços e URLs"
+
+#: apprise_api/api/templates/welcome.html:776
+#, python-format
+msgid "Your own programs can look up what each service needs and check Apprise URLs without sending anything. The <a href=\"%(BASE_URL)s/details/\">Available Services</a> page is built on these."
+msgstr "Seus próprios programas podem consultar o que cada serviço precisa e verificar URLs do Apprise sem enviar nada. A página <a href=\"%(BASE_URL)s/details/\">Serviços Disponíveis</a> é construída sobre eles."
+
+#: apprise_api/api/templates/welcome.html:795
+msgid "Lists every service this server supports and the fields each of its URLs is built from."
+msgstr "Lista cada serviço suportado por este servidor e os campos a partir dos quais suas URLs são construídas."
+
+#: apprise_api/api/templates/welcome.html:816
+msgid "Takes Apprise URLs apart into their fields, or puts fields back together into a URL. Nothing is contacted; the URLs are only read."
+msgstr "Separa URLs do Apprise em seus campos, ou junta campos de volta em uma URL. Nada é contatado; as URLs são apenas lidas."
+
+#: apprise_api/api/templates/details.html:215
+#, python-format
+msgid "Using this from your own program? See the <a href=\"%(BASE_URL)s/#url-endpoints\">API endpoints</a>."
+msgstr "Vai usar isto a partir do seu próprio programa? Veja os <a href=\"%(BASE_URL)s/#url-endpoints\">endpoints da API</a>."

@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 from concurrent.futures import Future
-from datetime import UTC, date, datetime, time as clock
+from datetime import UTC, date, datetime, time as clock, timedelta
 import io
 import os
 import signal
@@ -32,6 +32,7 @@ from zoneinfo import ZoneInfo
 
 import apprise
 from dateblock import dateblock
+from django.conf import settings
 from django.core import management
 from django.core.management.base import CommandError
 from django.test import override_settings
@@ -42,6 +43,7 @@ from ..auth import ConfigAuthRecord
 from ..exceptions import AppriseAPIError
 from ..schedule import (
     drop_past_skips,
+    find_zone,
     format_moment,
     holiday_countries,
     holiday_dates,
@@ -55,6 +57,7 @@ from ..schedule import (
     upcoming,
 )
 from ..scheduler import (
+    RECHECK,
     Scheduler,
     _leave_signals_to_main_thread,
     access_allows,
@@ -63,7 +66,7 @@ from ..scheduler import (
     reminder_attachments,
     wait_until,
 )
-from ..utils import AppriseConfigCache, AppriseStoreMode
+from ..utils import AppriseConfigCache, AppriseStoreMode, MoveResult
 from .helpers import notify_result
 
 TORONTO = ZoneInfo("America/Toronto")
@@ -75,6 +78,19 @@ def store(tmpdir):
     cache = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
     with patch.object(scheduler_module, "ConfigCache", cache):
         yield cache
+
+
+@pytest.fixture(autouse=True)
+def ignore_wake_signal():
+    """Keep the scheduler's wake signal from ending the test run.
+
+    - A send that finishes while the pool is full wakes the scheduler with
+      SIGUSR1. Tests that call scan() without run() have no handler for it,
+      and by default that signal ends the process.
+    """
+    saved = signal.signal(signal.SIGUSR1, signal.SIG_IGN)
+    yield
+    signal.signal(signal.SIGUSR1, saved)
 
 
 @pytest.fixture
@@ -242,6 +258,41 @@ def test_every_rule_in_seconds():
 
     # Times on or after the end of a window are left out
     assert upcoming(event, after, 5, before=start + 54045) == [start + 54000]
+
+
+@pytest.mark.parametrize(
+    ("unit", "interval"),
+    [("seconds", 1800), ("minutes", 30), ("minutes", 45), ("hours", 1), ("hours", 2), ("days", 1)],
+)
+def test_every_rule_moves_forward_when_the_clocks_change(unit, interval):
+    """Each next time is later than the last, through the hour the clocks go back or skip."""
+    # The night the clocks go back, and the night they jump ahead, in Toronto.
+    for start, first in (
+        ("2026-10-31T23:30", datetime(2026, 11, 1, 2, tzinfo=UTC)),
+        ("2027-03-13T23:30", datetime(2027, 3, 14, 3, tzinfo=UTC)),
+    ):
+        event = {"when": {"tz": "America/Toronto", "at": start, "every": {"unit": unit, "interval": interval}}}
+        # Asked at every point across the change, the answer is always later
+        for minutes in range(0, 360, 5):
+            after = first + timedelta(minutes=minutes)
+            due = next_run(event, after)
+            assert due is not None
+            assert due > after.timestamp()
+
+
+def test_find_zone_refuses_a_name_too_long():
+    """A real name is found, an empty one is the server's, and a very long one is refused."""
+    assert find_zone("America/Toronto") == TORONTO
+    assert find_zone(None) == ZoneInfo(settings.TIME_ZONE)
+    with pytest.raises(ValueError):
+        find_zone("a/" * 246 + "b")
+
+
+def test_unknown_holiday_country_is_refused():
+    """A code the holidays package does not know is refused, even one it has a name for."""
+    for country in ("PUBLIC", "JAN", "ZZ"):
+        with pytest.raises(NotImplementedError):
+            holiday_dates(country, None, 2026)
 
 
 def test_shortest_gap_between_runs():
@@ -674,6 +725,41 @@ def test_scan_looks_again_soon_when_something_cannot_be_read(store):
         scheduler.pool.shutdown(wait=True)
 
 
+def test_scan_claims_the_longest_overdue_file_first(store):
+    """A Config ID that sorts first cannot keep one waiting longer from its turn."""
+    now = int(time.time())
+    first = _save(
+        store, "aaa", [{"id": f"a{n}", "when": {"at": "2000-01-01T00:00:00"}, "next": now - 5} for n in range(3)]
+    )
+    later = _save(store, "zzz", [{"id": "z", "when": {"at": "2000-01-01T00:00:00"}, "next": now - 50}])
+    scheduler = Scheduler(workers=1, grace=600)
+    try:
+        with (
+            patch.object(scheduler_module, "deliver", return_value=True),
+            patch.object(scheduler, "claim", wraps=scheduler.claim) as claim,
+        ):
+            scheduler.scan()
+
+    finally:
+        scheduler.pool.shutdown(wait=True)
+
+    # The file 50 seconds late goes before the one only 5 seconds late
+    assert [call.args[0] for call in claim.call_args_list] == [later, first]
+
+
+def test_scan_tries_again_when_the_reminder_lock_cannot_be_opened(store):
+    """A lock file that cannot be opened is tried again soon, without stopping the scheduler."""
+    now = int(time.time())
+    _save(store, "key", [{"id": "due", "when": {"at": "2000-01-01T00:00:00"}, "next": now - 5}])
+    scheduler = Scheduler(workers=1, grace=60)
+    try:
+        with patch.object(scheduler, "claim", side_effect=OSError("read-only")):
+            assert scheduler.scan() <= int(time.time()) + scheduler_module.RECHECK
+
+    finally:
+        scheduler.pool.shutdown(wait=True)
+
+
 def test_claim_stops_a_damaged_reminder(store):
     """A reminder damaged on disk is stopped instead of stopping the scheduler."""
     now = int(time.time())
@@ -782,26 +868,77 @@ def test_claim_skips_events_past_the_grace_time(store):
         (ConfigAuthRecord(access="disabled"), False),
     ],
 )
-def test_claim_pauses_reminders_the_access_setting_forbids(store, record, runs):
-    """A disabled configuration pauses its due reminders instead of sending them."""
+def test_claim_leaves_disabled_reminders_alone(store, record, runs):
+    """A disabled configuration's due reminders are neither sent nor changed."""
     now = int(time.time())
-    reminder_file = _save(store, "key", [{"id": "a", "when": {"at": "2000-01-01T00:00:00"}, "next": now}])
+    events = [{"id": "a", "when": {"at": "2000-01-01T00:00:00"}, "next": now}]
+    reminder_file = _save(store, "key", events)
     if record is not None:
         assert store._write_auth_record("key", record)
 
     scheduler = Scheduler(workers=1, grace=60)
     with patch.object(scheduler.pool, "submit") as submit:
-        (event,) = scheduler.claim(reminder_file, now)
+        claimed = scheduler.claim(reminder_file, now)
 
     assert submit.called is runs
     if runs:
-        assert event["runs"] == 1
+        assert claimed[0]["runs"] == 1
     else:
-        assert event["enabled"] is False
-        assert event["last"]["reason"] == "access"
-        # A paused reminder keeps its time so it can be turned back on
-        assert event["next"] == now
-        assert "runs" not in event
+        # Nothing is handed back to wait on, and the file is left as it was
+        assert claimed == []
+        assert store.read_reminders(reminder_file) == events
+
+
+@override_settings(APPRISE_AUTH_REQUIRED=True)
+def test_scan_never_waits_on_a_disabled_configuration(store):
+    """A disabled configuration's reminders are skipped, due or not, until its access changes."""
+    now = int(time.time())
+    later = now + 600
+    reminder_file = _save(
+        store,
+        "key",
+        [
+            {"id": "due", "when": {"at": "2000-01-01T00:00:00"}, "next": now - 5},
+            {"id": "later", "when": {"at": "2999-01-01T00:00:00"}, "next": later},
+        ],
+    )
+    before = store.read_reminders(reminder_file)
+    assert store.set_access("key", "disabled")
+
+    scheduler = Scheduler(workers=1, grace=60)
+    try:
+        with patch.object(scheduler_module, "deliver") as send:
+            # Nothing to wait for, and nothing sent or changed
+            assert scheduler.scan() is None
+            assert store.read_reminders(reminder_file) == before
+
+            # An access record that cannot be read is looked at again soon
+            with patch.object(scheduler_module, "access_allows", return_value=None):
+                assert scheduler.scan() <= int(time.time()) + scheduler_module.RECHECK
+
+            # Turned back on, the due reminder goes out and the later one is waited on
+            assert store.set_access("key", "public")
+            assert scheduler.scan() == later
+            scheduler.pool.shutdown(wait=True)
+
+        assert [call.args[1]["id"] for call in send.call_args_list] == ["due"]
+
+    finally:
+        scheduler.pool.shutdown(wait=True)
+
+
+@override_settings(APPRISE_AUTH_REQUIRED=True)
+def test_send_drops_a_reminder_disabled_while_it_waited(store):
+    """A send still waiting for a worker when its configuration is disabled sends nothing."""
+    events = [{"id": "a", "when": {"at": "2000-01-01T00:00:00"}, "next": None}]
+    reminder_file = _save(store, "key", events)
+    assert store.set_access("key", "disabled")
+
+    with patch.object(scheduler_module, "deliver") as send:
+        Scheduler(workers=1, grace=60).send(reminder_file, dict(events[0]))
+
+    send.assert_not_called()
+    assert store.read_reminders(reminder_file) == events
 
 
 def test_access_allows_without_logins_but_not_with_a_damaged_record(store):
@@ -867,6 +1004,41 @@ def test_send_records_the_result(store):
     assert events[1]["last"]["ok"] is False
 
 
+def test_send_result_is_dropped_when_the_reminder_goes_while_it_is_found(store):
+    """A reminder found in another file but gone once that file is locked is not recorded."""
+    _save(store, "old", [])
+    other = _save(store, "new", [{"id": "a"}])
+    scheduler = Scheduler(workers=1, grace=60)
+    with (
+        patch.object(scheduler_module, "deliver", return_value=True),
+        patch.object(Scheduler, "record", return_value=False) as record,
+    ):
+        scheduler.send(store.reminder_path("old"), {"id": "a"})
+
+    # Its own file, then the file it was found in; nothing else is tried
+    assert [call.args[0] for call in record.call_args_list] == [store.reminder_path("old"), other]
+    assert "last" not in store.read_reminders(other)[0]
+
+
+def test_a_config_id_moved_mid_send_still_sends_and_records(store):
+    """A reminder claimed just before its Config ID moves still goes out, and its result is kept."""
+    now = int(time.time())
+    reminder_file = _save(store, "old", [{"id": "a", "body": "Hi", "when": {"at": "2000-01-01T00:00:00"}, "next": now}])
+    scheduler = Scheduler(workers=1, grace=60)
+    with patch.object(scheduler.pool, "submit") as submit:
+        scheduler.claim(reminder_file, now)
+
+    # The Config ID moves before the queued send starts
+    assert store.move("old", "new") == MoveResult.MOVED
+    task, *args = submit.call_args.args
+    with patch("apprise.Apprise.notify", return_value=True) as notify:
+        task(*args)
+
+    notify.assert_called_once()
+    (event,) = store.read_reminders(store.reminder_path("new"))
+    assert event["last"]["ok"] is True
+
+
 def test_sleep_is_skipped_after_a_change(store):
     """A change noted during a scan is acted on without sleeping first."""
     scheduler = Scheduler(workers=1, grace=60)
@@ -907,7 +1079,7 @@ def test_run_wakes_for_a_sooner_event(store, restore_signals):
         sent.wait(10)
         os.kill(os.getpid(), signal.SIGTERM)
 
-    def record(_schedule_file, event):
+    def record(_schedule_file, event, **_kwargs):
         sent.set()
         return True
 
@@ -961,11 +1133,19 @@ def test_command_runs_the_scheduler():
         management.call_command("scheduler", stdout=io.StringIO())
 
     scheduler.assert_called_once_with(3, 90)
+    # A second instance sharing the directory waits to take over
+    scheduler.return_value.run.assert_called_once_with(wait=True)
 
-    with patch("api.management.commands.scheduler.Scheduler") as scheduler:
+    # Without the lock it pauses before failing, so restarts never spin
+    with (
+        patch("api.management.commands.scheduler.Scheduler") as scheduler,
+        patch("api.management.commands.scheduler.time.sleep") as sleep,
+    ):
         scheduler.return_value.run.return_value = False
         with pytest.raises(CommandError):
             management.call_command("scheduler", stdout=io.StringIO())
+
+    sleep.assert_called_once_with(RECHECK)
 
 
 def test_reminder_attachments(store, tmpdir):
@@ -1044,7 +1224,9 @@ def test_claim_pauses_idle_configurations(store):
     assert {event["last"]["reason"] for event in events[:2]} == {"idle"}
     # A reminder that was already off keeps its last result
     assert "last" not in events[2]
-    assert submit.call_args_list[-1].args == (scheduler.send_idle_notice, reminder_file)
+    assert submit.call_args_list[-1].args[:2] == (scheduler.send_idle_notice, reminder_file)
+    # The notice carries the configuration it goes out through
+    assert submit.call_args_list[-1].args[2][0] == "json://localhost"
     assert len(submit.call_args_list) == 1
 
     # A recently used configuration keeps sending

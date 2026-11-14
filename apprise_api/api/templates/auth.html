@@ -127,6 +127,38 @@
                 </div>
               {% endif %}
             </div>
+            {% if not shared_user %}
+              {# Fill the username and password above with random values. Closed until opened so it is not used by accident. #}
+              <details class="auth-generate">
+                <summary class="auth-tool-label">
+                  <i class="material-icons" aria-hidden="true">chevron_right</i>
+                  {% trans "Generate New Credentials" %}
+                </summary>
+                <div class="auth-generate-row">
+                  <div class="auth-randomize-options"
+                       role="group"
+                       aria-label="{% trans "Fields to Randomize" %}">
+                    <button id="auth-generate-user"
+                            class="auth-randomize-option is-selected"
+                            type="button"
+                            aria-pressed="true">{% trans "Username" %}</button>
+                    <button id="auth-generate-password"
+                            class="auth-randomize-option is-selected"
+                            type="button"
+                            aria-pressed="true">{% trans "Password" %}</button>
+                  </div>
+                  <button type="button"
+                          id="auth-generate"
+                          class="btn-flat btn-small config-id-randomize auth-randomize-button"
+                          aria-label="{% trans "Randomize the Selected Fields" %}"
+                          title="{% trans "Randomize the Selected Fields" %}">
+                    <span aria-hidden="true">
+                      {% include "icons/dice.svg" %}
+                    </span>
+                  </button>
+                </div>
+              </details>
+            {% endif %}
             <div class="auth-form-actions">
               <button class="btn waves-effect waves-light" type="submit">
                 {% trans "Save" %}
@@ -135,147 +167,114 @@
             </div>
           </form>
         </div>
-      </section>
-      <div class="auth-secondary-column">
         {% if not shared_user %}
-          <section class="auth-editor-card auth-tools-card">
-            <div class="auth-card-heading auth-compact-heading auth-tools-card-heading">
-              <span class="auth-card-icon auth-tools-card-icon" aria-hidden="true">
-                {% include "icons/tools.svg" %}
-              </span>
-              <div>
-                <h5>{% trans "Credential Tools" %}</h5>
-                <p>{% trans "Generate credentials or reset this Config ID's access." %}</p>
-              </div>
-            </div>
-            <div class="auth-tool-panel">
-              <span class="auth-tool-label">{% trans "Generate New Credentials" %}</span>
-              <div class="auth-randomize-options"
-                   role="group"
-                   aria-label="{% trans "Fields to Randomize" %}">
-                <button id="auth-generate-user"
-                        class="auth-randomize-option is-selected"
-                        type="button"
-                        aria-pressed="true">{% trans "Username" %}</button>
-                <button id="auth-generate-password"
-                        class="auth-randomize-option is-selected"
-                        type="button"
-                        aria-pressed="true">{% trans "Password" %}</button>
-              </div>
-              <button type="button"
-                      id="auth-generate"
-                      class="btn waves-effect waves-light auth-randomize-button"
-                      title="{% trans "Randomize the Selected Fields" %}">
-                <span class="auth-randomize-icon" aria-hidden="true">
-                  {% include "icons/dice.svg" %}
-                </span>
-                <span>{% trans "Randomize Selected" %}</span>
-              </button>
-            </div>
-            <div class="auth-remove-option">
-              <button id="auth-remove"
-                      class="btn waves-effect waves-light auth-remove-button"
-                      type="button"
-                      {% if auth_mode != 'assigned' %}hidden{% endif %}>
-                <i class="material-icons" aria-hidden="true">delete</i>
-                <span>{% trans "Reset Access" %}</span>
-              </button>
-            </div>
-          </section>
+          <div class="auth-remove-option">
+            <button id="auth-remove"
+                    class="btn waves-effect waves-light auth-remove-button"
+                    type="button"
+                    {% if auth_mode != 'assigned' %}hidden{% endif %}>
+              <i class="material-icons" aria-hidden="true">delete</i>
+              <span>{% trans "Reset Access" %}</span>
+            </button>
+          </div>
         {% endif %}
-        {% if reminders_allowed and not shared_user and auth_mode == "assigned" %}
-          {# Limits hold back only the configuration's own user; the administrator is never limited. #}
-          <section class="auth-editor-card auth-reminder-limits-card">
-            <div class="auth-card-heading auth-compact-heading">
-              <span class="auth-card-icon auth-reminder-limits-icon" aria-hidden="true">
-                {% include "icons/alarm.svg" %}
-              </span>
-              <div>
-                <h5>{% trans "Reminder Limits" %}</h5>
-                <p>{% trans "How much this Config ID's user may save as reminders." %}</p>
-              </div>
+      </section>
+      {# Login first, then moving the Config ID; reminder limits come last. #}
+      {% if CAN_MOVE_CONFIG %}
+        <section class="auth-editor-card auth-move-card">
+          <div class="auth-card-heading auth-compact-heading">
+            <span class="auth-card-icon auth-move-card-icon" aria-hidden="true">
+              {% include "icons/move.svg" %}
+            </span>
+            <div>
+              <h5>{% trans "Move Configuration" %}</h5>
+              <p>{% trans "Transfer this configuration to a different Config ID." %}</p>
             </div>
-            <div class="auth-content-panel">
-              <p class="reminder-usage">
-                <span>{% trans "Reminders used" %}: <strong id="reminder-usage-count">-</strong></span>
-                <span>{% trans "Attachment space used" %}: <strong id="reminder-usage-space">-</strong></span>
-              </p>
-              <form id="reminder-limits-form"
-                    class="row reminder-limits-form"
-                    autocomplete="off">
-                <div class="input-field col s12 m6">
-                  <input id="reminder-limit-count" type="number" min="1" step="1">
-                  <label for="reminder-limit-count">{% trans "Most reminders" %}</label>
-                </div>
-                <div class="input-field col s12 m6">
-                  <input id="reminder-limit-space" type="number" min="0" step="0.1">
-                  <label for="reminder-limit-space">{% trans "Attachment space (MB)" %}</label>
-                </div>
-                <p class="col s12 reminder-hint">
-                  {% trans "Leave a field blank for no limit. An attachment space of 0 turns uploads off." %}
-                </p>
-                <div class="col s12 reminder-limits-actions">
-                  <button class="btn waves-effect waves-light" type="submit">{% trans "Save Limits" %}</button>
-                </div>
-              </form>
+          </div>
+          <div class="auth-content-panel">
+            <div id="move-form-error"
+                 class="auth-login-error auth-form-error"
+                 role="alert"
+                 hidden>
+              <i class="material-icons" aria-hidden="true">error_outline</i>
+              <div id="move-form-error-message"></div>
             </div>
-          </section>
-        {% endif %}
-        {% if CAN_MOVE_CONFIG %}
-          <section class="auth-editor-card auth-move-card">
-            <div class="auth-card-heading auth-compact-heading">
-              <span class="auth-card-icon auth-move-card-icon" aria-hidden="true">
-                {% include "icons/move.svg" %}
-              </span>
-              <div>
-                <h5>{% trans "Move Configuration" %}</h5>
-                <p>{% trans "Transfer this configuration to a different Config ID." %}</p>
-              </div>
-            </div>
-            <div class="auth-content-panel">
-              <div id="move-form-error"
-                   class="auth-login-error auth-form-error"
-                   role="alert"
-                   hidden>
-                <i class="material-icons" aria-hidden="true">error_outline</i>
-                <div id="move-form-error-message"></div>
-              </div>
-              <form id="move-form"
-                    action="{% url 'move' key %}"
-                    method="post"
-                    autocomplete="off"
-                    novalidate>
-                <div class="auth-credential-fields">
-                  <div class="input-field concealed-field auth-credential-field">
-                    {# Reuse the site's common concealed-input control for Config IDs. #}
-                    {% include "components/concealed_input.html" with field=form_move.from show_label=show_config_id hide_label=hide_config_id %}
-                  </div>
-                  <div class="input-field concealed-field auth-credential-field move-destination-field">
-                    {% include "components/concealed_input.html" with field=form_move.to show_label=show_config_id hide_label=hide_config_id %}
+            <form id="move-form"
+                  action="{% url 'move' key %}"
+                  method="post"
+                  autocomplete="off"
+                  novalidate>
+              <div class="auth-credential-fields">
+                <div class="input-field concealed-field auth-credential-field">
+                  {# Reuse the site's common concealed-input control for Config IDs. #}
+                  {% include "components/concealed_input.html" with field=form_move.from show_label=show_config_id hide_label=hide_config_id %}
+                </div>
+                <div class="input-field concealed-field auth-credential-field move-destination-field">
+                  {% include "components/concealed_input.html" with field=form_move.to show_label=show_config_id hide_label=hide_config_id %}
 
-                    <button type="button"
-                            id="move-randomize-destination"
-                            class="btn-flat btn-small config-id-randomize move-config-randomize"
-                            tabindex="-1"
-                            aria-label="{% trans "Randomize Destination Config ID" %}"
-                            title="{% trans "Randomize Destination Config ID" %}">
-                      <span aria-hidden="true">
-                        {% include "icons/dice.svg" %}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-                <div class="auth-form-actions">
-                  <button class="btn waves-effect waves-light" type="submit">
-                    {% trans "Move" %}
-                    <i class="material-icons right">arrow_forward</i>
+                  <button type="button"
+                          id="move-randomize-destination"
+                          class="btn-flat btn-small config-id-randomize move-config-randomize"
+                          tabindex="-1"
+                          aria-label="{% trans "Randomize Destination Config ID" %}"
+                          title="{% trans "Randomize Destination Config ID" %}">
+                    <span aria-hidden="true">
+                      {% include "icons/dice.svg" %}
+                    </span>
                   </button>
                 </div>
-              </form>
+              </div>
+              <div class="auth-form-actions">
+                <button class="btn waves-effect waves-light" type="submit">
+                  {% trans "Move" %}
+                  <i class="material-icons right">arrow_forward</i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      {% endif %}
+      {% if reminders_allowed and not shared_user and auth_mode == "assigned" %}
+        {# Limits hold back only the configuration's own user; the administrator is never limited. #}
+        <section class="auth-editor-card auth-reminder-limits-card">
+          <div class="auth-card-heading auth-compact-heading">
+            <span class="auth-card-icon auth-reminder-limits-icon" aria-hidden="true">
+              {% include "icons/alarm.svg" %}
+            </span>
+            <div>
+              <h5>{% trans "Reminder Limits" %}</h5>
+              <p>{% trans "How much this Config ID's user may save as reminders." %}</p>
             </div>
-          </section>
-        {% endif %}
-      </div>
+          </div>
+          <div class="auth-content-panel">
+            <p class="reminder-usage">
+              <span>{% trans "Reminders used" %}: <strong id="reminder-usage-count">-</strong></span>
+              <span>{% trans "Attachment space used" %}: <strong id="reminder-usage-space">-</strong></span>
+            </p>
+            <form id="reminder-limits-form" autocomplete="off">
+              <div class="reminder-limits-fields">
+                <div class="input-field auth-credential-field">
+                  <input id="reminder-limit-count" type="number" min="1" step="1">
+                  <label for="reminder-limit-count">{% trans "Most reminders" %}:</label>
+                </div>
+                <div class="input-field auth-credential-field">
+                  <input id="reminder-limit-space" type="number" min="0" step="0.1">
+                  <label for="reminder-limit-space">{% trans "Attachment space (MB)" %}:</label>
+                </div>
+              </div>
+              <p class="reminder-hint">
+                {% trans "Leave a field blank to use the server default. An attachment space of 0 turns uploads off." %}
+              </p>
+              <div class="auth-form-actions">
+                <button class="btn waves-effect waves-light" type="submit">
+                  {% trans "Save Limits" %}
+                  <i class="material-icons right">save</i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      {% endif %}
     </div>
   </div>
 {% endblock body %}
@@ -366,11 +365,14 @@
       appriseFire({
         title: '{% trans "Configuration Access Modes" %}',
         icon: 'info',
+        // Wide enough that the four modes fit without scrolling.
+        customClass: {popup: 'auth-access-popup'},
         html: '<table class="auth-access-table"><thead><tr><th>{% trans "Mode" %}</th><th>{% trans "Description" %}</th></tr></thead><tbody>'
-          + '<tr><th>{% trans "User" %}</th><td>{% trans "Uses its own login for normal stateful and stateless notifications and configuration access." %}</td></tr>'
-          + '<tr><th>{% trans "Locked" %}</th><td>{% trans "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden." %}</td></tr>'
-          + '<tr><th>{% trans "Public" %}</th><td>{% trans "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected." %}</td></tr>'
-          + '<tr><th>{% trans "Disabled" %}</th><td>{% trans "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it." %}</td></tr>'
+          {# Each mode says what its login may do, then who manages its reminders. #}
+          + '<tr><th>{% trans "User" %}</th><td>{% trans "Uses its own login to send notifications and to view and edit the configuration." %}{% if REMINDERS_ENABLED %} {% trans "Its user also manages the reminders." %}{% endif %}</td></tr>'
+          + '<tr><th>{% trans "Locked" %}</th><td>{% trans "Uses its own login to send tagged notifications and change its password. The configuration stays hidden." %}{% if REMINDERS_ENABLED %} {% trans "Only an administrator manages reminders, and they still run." %}{% endif %}</td></tr>'
+          + '<tr><th>{% trans "Public" %}</th><td>{% trans "Anyone may send tagged notifications without a login. The configuration and stateless notifications stay protected." %}{% if REMINDERS_ENABLED %} {% trans "Only an administrator manages reminders, and they still run." %}{% endif %}</td></tr>'
+          + '<tr><th>{% trans "Disabled" %}</th><td>{% trans "Only an administrator may use it. The configuration and login are kept." %}{% if REMINDERS_ENABLED %} {% trans "Its reminders are kept, but none run or can be changed." %}{% endif %}</td></tr>'
           + '</tbody></table>',
         confirmButtonText: '{% trans "Close" %}'
       });
@@ -587,7 +589,7 @@
             <p>{% trans "This will reset only the user access currently associated with this configuration:" %}</p>
             <div class="input-field concealed-field auth-credential-field reset-access-config-id">
               <input id="swal-reset-config-id" type="password" readonly>
-              <label for="swal-reset-config-id">{% trans "Configuration ID" %}</label>
+              <label for="swal-reset-config-id">{% trans "Configuration ID" %}:</label>
               <button type="button"
                       class="btn-flat value-visibility-toggle"
                       tabindex="-1"
@@ -875,43 +877,60 @@
   }
   {% endif %}
   {% if reminders_allowed and not shared_user and auth_mode == 'assigned' %}
-  // Reminder limits for the configuration's user.
+  // Reminder limits for the configuration's user; the usage figures are
+  // filled in the same way the Reminders tab fills them.
+  {% include "components/reminder_shared_script.html" %}
   const reminderLimitsUrl = '{% url "reminder_limits" key %}';
 
-  function reminderLimitsSize(bytes) {
-    return (bytes / 1048576).toLocaleString('{{ LANGUAGE_CODE|escapejs }}', {maximumFractionDigits: 1}) + ' MB';
-  }
+  // Each field as it was filled in, so only the limits changed are sent.
+  const reminderLimitsShown = {};
 
   async function reminderLimitsLoad() {
-    try {
-      const response = await appriseFetch(reminderLimitsUrl, {headers: {'Accept': 'application/json'}});
-      if (!response.ok) {
-        return;
-      }
-      const limits = (await response.json()).limits;
-      document.getElementById('reminder-usage-count').textContent = limits.reminders_used + ' / ' + limits.reminders;
-      document.getElementById('reminder-usage-space').textContent = reminderLimitsSize(limits.attach_used) + ' / '
-        + reminderLimitsSize(limits.attach_size);
-      document.getElementById('reminder-limit-count').value = limits.reminders;
-      document.getElementById('reminder-limit-space').value = Math.round(limits.attach_size / 104857.6) / 10;
-      M.updateTextFields();
-    } catch (e) {
+    const limits = await reminderShowUsage(reminderLimitsUrl);
+    if (!limits) {
       // The form still works without the current values.
+      return;
     }
+    // Limits the administrator set fill the fields, the space in megabytes.
+    // A server default is only shown as a placeholder, so a blank field keeps
+    // following it.
+    const custom = limits.custom || [];
+    [
+      ['reminder-limit-count', 'reminders', function (value) { return value; }],
+      ['reminder-limit-space', 'attach_size', function (value) { return Math.round(value / 104857.6) / 10; }],
+    ].forEach(function (field) {
+      const input = document.getElementById(field[0]);
+      const value = limits[field[1]];
+      const shown = value === null || value === undefined ? '' : String(field[2](value));
+      input.placeholder = shown;
+      input.value = custom.includes(field[1]) ? shown : '';
+      reminderLimitsShown[field[1]] = input.value;
+    });
+    M.updateTextFields();
   }
 
   document.getElementById('reminder-limits-form').addEventListener('submit', async function (event) {
     event.preventDefault();
+    // A number the field cannot read is pointed out, not sent as a blank.
+    if (!event.target.checkValidity()) {
+      event.target.reportValidity();
+      return;
+    }
     const count = document.getElementById('reminder-limit-count').value.trim();
     const space = document.getElementById('reminder-limit-space').value.trim();
+    // Only the limits changed here are sent; a blank one goes back to its default.
+    const changes = {};
+    if (count !== reminderLimitsShown.reminders) {
+      changes.reminders = count ? parseInt(count, 10) : null;
+    }
+    if (space !== reminderLimitsShown.attach_size) {
+      changes.attach_size = space === '' ? null : Math.round(parseFloat(space) * 1048576);
+    }
     try {
       const response = await appriseFetch(reminderLimitsUrl, {
         method: 'POST',
         headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          reminders: count ? parseInt(count, 10) : null,
-          attach_size: space === '' ? null : Math.round(parseFloat(space) * 1048576)
-        })
+        body: JSON.stringify(changes)
       });
       if (!response.ok) {
         const failure = await appriseResponseFailure(response, '{% trans "The limits could not be saved" %}');

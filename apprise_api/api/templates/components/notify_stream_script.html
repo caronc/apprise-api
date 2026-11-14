@@ -189,9 +189,8 @@
       if (empty) empty.hidden = entries.length > 0;
       const count = container.querySelector('[data-notify-live-count]');
       if (count) {
-        count.textContent = entries.length === 1
-          ? '1 {% trans "event" %}'
-          : entries.length + ' {% trans "events" %}';
+        // One label with the number in it, so no language has to build a plural.
+        count.textContent = '{% trans "Events: {}" %}'.replace('{}', entries.length);
       }
       const copy = container.querySelector('[data-notify-copy-logs]');
       if (copy && copy.dataset.wired !== '1') {

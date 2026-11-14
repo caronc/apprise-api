@@ -4,7 +4,9 @@
 # This code is licensed under the MIT License.
 """Run the scheduler that sends reminders."""
 
-from api.scheduler import Scheduler
+import time
+
+from api.scheduler import RECHECK, Scheduler
 from api.utils import reminders_enabled
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -22,6 +24,11 @@ class Command(BaseCommand):
             self.stdout.write("The scheduler is disabled")
             return
 
-        # Runs until stopped; False means another scheduler holds the lock.
-        if not Scheduler(settings.APPRISE_REMINDER_WORKERS, settings.APPRISE_REMINDER_GRACE).run():
-            raise CommandError("Another scheduler is already running")
+        # Runs until stopped. While another instance sharing this directory
+        # runs its scheduler, this one waits quietly to take over.
+        if not Scheduler(settings.APPRISE_REMINDER_WORKERS, settings.APPRISE_REMINDER_GRACE).run(wait=True):
+            # The lock file could not be used, such as in a read-only folder.
+            # Waiting first keeps the process manager from restarting it
+            # over and over without a pause.
+            time.sleep(RECHECK)
+            raise CommandError("Could not take the scheduler lock")

@@ -25,12 +25,12 @@
     {% endif %}
     {# Shown while there are no reminders, the same way the Notifications tab asks for targets. #}
     <div id="reminder-empty"
-         class="notify-target-guidance reminder-empty"
+         class="notify-target-guidance notify-target-guidance--info reminder-empty"
          aria-live="polite"
          hidden>
       <div class="notify-target-guidance-title">
         <span class="notify-target-guidance-icon" aria-hidden="true">
-          {% include "icons/status-warning.svg" %}
+          {% include "icons/status-info.svg" %}
         </span>
         <span>{% trans "No Reminders Yet" %}</span>
       </div>

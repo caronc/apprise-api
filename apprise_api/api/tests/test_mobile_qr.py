@@ -349,8 +349,10 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
-    def _script_blocks(self, html):
-        return re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.S)
+    def _script_blocks(self, html, data=False):
+        """Return the page's scripts, or with ``data`` its JSON data blocks."""
+        blocks = re.findall(r"<script(\s[^>]*)?>(.*?)</script>", html, re.S)
+        return [body for attrs, body in blocks if ('type="application/json"' in (attrs or "")) == data]
 
     def test_auth_page_renders_for_an_administrator(self):
         """The real editor (not a template error) renders for an admin."""
@@ -449,6 +451,10 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
             for page in pages:
                 response = client.get(page, headers={"accept": "text/html", "accept-language": code})
                 self.assertEqual(response.status_code, 200)
+
+                # Data handed to the scripts must read as JSON in every language
+                for block in self._script_blocks(response.content.decode(), data=True):
+                    loads(block)
 
                 # Check every script on the page in one pass; each keeps its own scope
                 scripts = self._script_blocks(response.content.decode())

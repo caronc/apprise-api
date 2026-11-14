@@ -105,6 +105,13 @@
   const configListDelUrlTemplate = '{% url "del" "PLACEHOLDER_KEY" %}';
   const configListMoveUrlTemplate = '{% url "move" "PLACEHOLDER_KEY" %}';
 
+  // Show why a move failed under the field, as plain text, so a message from
+  // the server can never add markup.
+  function configListMoveError(message) {
+    Swal.showValidationMessage('');
+    Swal.getValidationMessage().textContent = message;
+  }
+
   document.querySelectorAll('.config-list-delete').forEach(function (button) {
     button.addEventListener('click', function () {
       const key = button.dataset.configId;
@@ -224,12 +231,12 @@
             );
             if (!response.ok) {
               const failure = await appriseResponseFailure(response, '{% trans "The configuration could not be moved." %}');
-              Swal.showValidationMessage(failure.message);
+              configListMoveError(failure.message);
               return false;
             }
             return newKey;
           } catch (error) {
-            Swal.showValidationMessage(error.message || '{% trans "The configuration could not be moved." %}');
+            configListMoveError(error.message || '{% trans "The configuration could not be moved." %}');
             return false;
           }
         }

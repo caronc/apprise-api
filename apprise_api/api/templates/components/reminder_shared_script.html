@@ -33,11 +33,9 @@
 
   // Why a reminder was not sent, by the reason the server saved:
   // - late: the server was down past the time it could still be sent.
-  // - access: its configuration's access is set to disabled.
   // - idle: its configuration was not used for too long.
   const reminderReasons = {
     late: '{% trans "Skipped: it was too late to send" %}',
-    access: '{% trans "Paused: this configuration is disabled" %}',
     idle: '{% trans "Paused: this configuration was not used for a while" %}'
   };
 
@@ -198,10 +196,29 @@
     return button;
   }
 
-  // One "Label: value" line on a reminder's card.
   // A size in bytes as megabytes, e.g. "3.4 MB".
   function reminderFormatSize(bytes) {
     return (bytes / 1048576).toLocaleString(reminderLocale, {maximumFractionDigits: 1}) + ' MB';
+  }
+
+  // Read a Config ID's reminder limits and show how much of them is used.
+  // - Returns the limits, or null when they could not be read.
+  async function reminderShowUsage(url) {
+    try {
+      const response = await appriseFetch(url, {headers: {'Accept': 'application/json'}});
+      if (!response.ok) {
+        return null;
+      }
+      const limits = (await response.json()).limits;
+      // e.g. "3 / 100" and "1.5 MB / 50 MB".
+      reminderElement('reminder-usage-count').textContent = limits.reminders_used + ' / ' + limits.reminders;
+      reminderElement('reminder-usage-space').textContent = reminderFormatSize(limits.attach_used) + ' / '
+        + reminderFormatSize(limits.attach_size);
+      return limits;
+    } catch (e) {
+      // The page still works without the usage figures.
+      return null;
+    }
   }
 
   // How many attachments a reminder has, and the space its stored files take
@@ -212,6 +229,7 @@
     return attach.length + (size ? ' · ' + reminderFormatSize(size) : '');
   }
 
+  // One "Label: value" line on a reminder's card.
   function reminderLine(label, value) {
     const line = document.createElement('div');
     const name = document.createElement('span');
@@ -279,8 +297,8 @@
     return paused ? '{% trans "Resume Series" %}' : '{% trans "Pause Series" %}';
   }
 
-  // A small button that sends a reminder now, without changing its schedule.
-  // Send a reminder now, showing each service's log live like Send Notification.
+  // A small button that sends a reminder now, without changing its schedule,
+  // showing each service's log live like Send Notification.
   function reminderSendButton(url) {
     return reminderButton('send', '{% trans "Send Now" %}', function () {
       sendNotifyStream(url, {method: 'POST', headers: {'X-Apprise-Log-Level': 'debug'}}, {

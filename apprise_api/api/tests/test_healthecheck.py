@@ -260,7 +260,8 @@ class HealthCheckTests(SimpleTestCase):
                 "privilege": "admin",
                 "reminders_enabled": True,
                 "scheduler_running": False,
-                "reminder_urls_max": 100,
+                # Reminders can be given no new URLs without stateless mode.
+                "reminder_urls_max": 0,
             }
 
         with override_settings(APPRISE_STATEFUL_MODE=" DISABLED ", APPRISE_STATELESS_MODE=" DISABLED "):
