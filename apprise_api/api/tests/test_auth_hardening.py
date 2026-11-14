@@ -249,7 +249,7 @@ class DelViewAuthOrderingTests(SimpleTestCase):
             "/del/{}".format(key),
             headers=_GOOD_MASTER,
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertFalse(ConfigCache.has_auth(key))
 
 

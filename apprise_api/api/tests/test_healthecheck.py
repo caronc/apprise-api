@@ -85,6 +85,9 @@ class HealthCheckTests(SimpleTestCase):
                 "details": ["OK"],
             },
             "privilege": "admin",
+            "reminders_enabled": True,
+            "scheduler_running": False,
+            "reminder_urls_max": 100,
         }
         assert response["Content-Type"].startswith("application/json")
 
@@ -118,6 +121,9 @@ class HealthCheckTests(SimpleTestCase):
                     "details": ["OK"],
                 },
                 "privilege": "admin",
+                "reminders_enabled": True,
+                "scheduler_running": False,
+                "reminder_urls_max": 100,
             }
 
         with override_settings(APPRISE_STATEFUL_MODE="disabled"):
@@ -182,6 +188,9 @@ class HealthCheckTests(SimpleTestCase):
                     "details": ["OK"],
                 },
                 "privilege": "admin",
+                "reminders_enabled": True,
+                "scheduler_running": False,
+                "reminder_urls_max": 100,
             }
 
         with override_settings(APPRISE_MAX_ATTACHMENTS=0):
@@ -214,6 +223,9 @@ class HealthCheckTests(SimpleTestCase):
                     "details": ["OK"],
                 },
                 "privilege": "admin",
+                "reminders_enabled": True,
+                "scheduler_running": False,
+                "reminder_urls_max": 100,
             }
 
         with override_settings(APPRISE_STATELESS_MODE="disabled"):
@@ -246,6 +258,9 @@ class HealthCheckTests(SimpleTestCase):
                     "details": ["OK"],
                 },
                 "privilege": "admin",
+                "reminders_enabled": True,
+                "scheduler_running": False,
+                "reminder_urls_max": 100,
             }
 
         with override_settings(APPRISE_STATEFUL_MODE=" DISABLED ", APPRISE_STATELESS_MODE=" DISABLED "):

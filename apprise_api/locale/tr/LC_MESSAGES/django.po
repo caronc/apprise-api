@@ -214,6 +214,7 @@ msgid "Attachment"
 msgstr "Ek"
 
 #: apprise_api/api/forms.py:391 apprise_api/api/forms.py:400
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
 msgid "Tags"
 msgstr "Etiketler"
 
@@ -1273,8 +1274,8 @@ msgid ""
 msgstr "Aşağıdaki komut, apprise’ın yüklenmiş yapılandırmayı almasına ve eklediğiniz tüm hizmetlere test bildirimi göndermesine neden olur:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "Ayrıca bu satırı içeren bir <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise yapılandırma dosyası</a> oluşturabilirsiniz:"
+msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
+msgstr "Ayrıca bu satırı içeren bir <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise yapılandırma dosyası</a> oluşturabilirsiniz:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
@@ -1789,9 +1790,9 @@ msgstr "Apprise Detaylar"
 #: apprise_api/api/templates/details.html:13
 msgid ""
 "The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
+"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "Aşağıdaki hizmetler bu <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> örneği tarafından desteklenmektedir."
+msgstr "Aşağıdaki hizmetler bu <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> örneği tarafından desteklenmektedir."
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
@@ -1929,8 +1930,8 @@ msgid "Execute the request"
 msgstr "İsteği yürütün"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "JSON formatı hakkında daha fazla bilgiyi <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">burada</a> bulabilirsiniz."
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">here</a>."
+msgstr "JSON formatı hakkında daha fazla bilgiyi <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">burada</a> bulabilirsiniz."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1966,13 +1967,13 @@ msgstr "Apprise API"
 #: apprise_api/api/templates/welcome.html:12
 msgid ""
 "\n"
-"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
+"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
 "      all of the most popular notification services available to us today such as: <em>Telegram</em>, <em>Discord</em>,\n"
 "      <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, etc.\n"
 "      This API provides a simple gateway to directly access it via an HTTP interface."
 msgstr ""
 "\n"
-"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> bize bugün mevcut olan en popüler bildirim servislerinin neredeyse tamamına bildirim göndermenizi sağlar, örneğin: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, vb. Bu API, HTTP arayüzü aracılığıyla doğrudan erişim için basit bir geçit sağlar."
+"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> bize bugün mevcut olan en popüler bildirim servislerinin neredeyse tamamına bildirim göndermenizi sağlar, örneğin: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, vb. Bu API, HTTP arayüzü aracılığıyla doğrudan erişim için basit bir geçit sağlar."
 
 #: apprise_api/api/templates/welcome.html:20
 msgid ""
@@ -1992,9 +1993,9 @@ msgstr "Durumsuz Uç Noktalar"
 
 #: apprise_api/api/templates/welcome.html:35
 msgid ""
-"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
+"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "Bu API’yi yalnızca bir <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\"> yan araç </a> ve/veya projelerine mikro hizmet olarak kullanmak isteyenler, yalnızca aşağıdaki URL’ü kullanmalıdır."
+msgstr "Bu API’yi yalnızca bir <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\"> yan araç </a> ve/veya projelerine mikro hizmet olarak kullanmak isteyenler, yalnızca aşağıdaki URL’ü kullanmalıdır."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2003,9 +2004,9 @@ msgstr "URL"
 
 #: apprise_api/api/templates/welcome.html:52
 msgid ""
-"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Bir veya daha fazla belirtilmiş Apprise URL’ini bildirmek için kullanılır. <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> ile URL(lerin)izi oluştururken yardıma ihtiyacınız olursa bakın."
+msgstr "Bir veya daha fazla belirtilmiş Apprise URL’ini bildirmek için kullanılır. <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> ile URL(lerin)izi oluştururken yardıma ihtiyacınız olursa bakın."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2053,8 +2054,8 @@ msgid "Notifies an email address with attachments"
 msgstr "Ekleri ile bir e-posta adresine bildirim gönderir"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "<a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> sunucusuna web tabanlı bir dosya eki gönder:"
+msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> server:"
+msgstr "<a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> sunucusuna web tabanlı bir dosya eki gönder:"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2149,9 +2150,9 @@ msgstr "Gönderilen veri bekleyen tüm uç noktalar, JSON veya standart kodlamas
 #, python-format
 msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
-"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "Yeni bir Apprise yapılandırması veya bir URL seti eklemek ve bunları <em>%(key)s</em> kimliği ile tanımlanan yapılandırmayla ilişkilendirmek için kullanılır. URL’lerinizi oluşturmakta yardıma ihtiyacınız varsa <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a>’a bakın."
+msgstr "Yeni bir Apprise yapılandırması veya bir URL seti eklemek ve bunları <em>%(key)s</em> kimliği ile tanımlanan yapılandırmayla ilişkilendirmek için kullanılır. URL’lerinizi oluşturmakta yardıma ihtiyacınız varsa <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a>’a bakın."
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
@@ -2473,9 +2474,11 @@ msgstr "Yapılandırma kaldırılamadı"
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "Yapılandırma kaldırıldı, ancak kimlik doğrulaması kaldırılamadı"
 
-#: apprise_api/api/views.py:2609
-msgid "Successfully removed configuration"
-msgstr "Yapılandırma başarıyla kaldırıldı"
+
+#: apprise_api/api/views.py:4922
+msgid "Successfully saved reminder"
+msgstr "Hatırlatıcı başarıyla kaydedildi"
+
 
 #: apprise_api/api/views.py:2717
 msgid "Content-Type must be application/json"
@@ -2562,6 +2565,133 @@ msgstr "Yük alanı eşleştirmesi başarısız"
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} alanı bir dize olmalıdır"
+
+#: apprise_api/api/views.py:4239
+#, python-brace-format
+msgid "The {} field is invalid"
+msgstr "{} alanı geçersiz"
+
+#: apprise_api/api/views.py:4276
+#, python-brace-format
+msgid "The {} field is too long"
+msgstr "{} alanı çok uzun"
+
+#: apprise_api/api/views.py:4985
+msgid "The reminder is too large to save"
+msgstr "Hatırlatıcı kaydedilemeyecek kadar büyük"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:415 apprise_api/api/views.py:4506
+msgid "This reminder would never be sent"
+msgstr "Bu hatırlatıcı hiçbir zaman gönderilmez"
+
+#: apprise_api/api/views.py:4493 apprise_api/api/templates/components/config_reminders_script.html:297
+msgid "The end date is before the start"
+msgstr "Bitiş tarihi başlangıçtan önce"
+
+#: apprise_api/api/views.py:4587
+msgid "This server does not save URLs with reminders"
+msgstr "Bu sunucu hatırlatıcılarla birlikte URL kaydetmez"
+
+#: apprise_api/api/views.py:4590
+msgid "A reminder can hold at most {} URLs"
+msgstr "Bir hatırlatıcı en fazla {} URL içerebilir"
+
+#: apprise_api/api/templates/config.html:567
+msgid "Apprise URLs"
+msgstr "Apprise URL’leri"
+
+#: apprise_api/api/templates/config.html:568
+msgid ""
+"Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
+msgstr "İsteğe bağlı olarak bildirilecek Apprise URL’lerini doğrudan belirtin. Apprise URL Builder ile URL’lerinizi oluşturmak için yardım almak üzere <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">buraya tıklayın</a>."
+
+#: apprise_api/api/templates/config.html:573
+msgid ""
+"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
+msgstr "Bu sunucuda Stateless Mode kapalı, bu yüzden bu URL’ler yalnızca hatırlatıcılar tarafından kullanılır."
+
+#: apprise_api/api/templates/config.html:583
+msgid "Also send to untagged services"
+msgstr "Etiketsiz hizmetlere de gönder"
+
+#: apprise_api/api/templates/config.html:3117
+msgid "Apprise URL"
+msgstr "Apprise URL’si"
+
+#: apprise_api/api/templates/config.html:3154
+msgid "Remove URL"
+msgstr "URL’yi kaldır"
+
+#: apprise_api/api/views.py:4307
+msgid "This URL could not be loaded"
+msgstr "Bu URL yüklenemedi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:534
+msgid "The end date has already passed, so this reminder will not be sent."
+msgstr "Bitiş tarihi geçti, bu nedenle bu hatırlatıcı gönderilmeyecek."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:535
+msgid "This time has already passed, so the reminder will not be sent."
+msgstr "Bu zaman geçti, bu nedenle hatırlatıcı gönderilmeyecek."
+
+#: apprise_api/api/views.py:4501
+msgid "Nothing would be sent before the end date"
+msgstr "Bitiş tarihinden önce hiçbir şey gönderilmez"
+
+#: apprise_api/api/views.py:4567
+#, python-brace-format
+msgid "A reminder cannot repeat more often than every {} seconds"
+msgstr "Bir hatırlatıcı {} saniyede birden daha sık tekrarlanamaz"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
+msgid "Only an administrator may manage reminders for this configuration"
+msgstr "Bu yapılandırmanın hatırlatıcılarını yalnızca bir yönetici yönetebilir"
+
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:14
+msgid "The scheduler is not running, so reminders are saved but not sent."
+msgstr "Zamanlayıcı çalışmıyor, bu nedenle hatırlatıcılar kaydediliyor ancak gönderilmiyor."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1434 apprise_api/api/templates/reminder_list.html:113 apprise_api/api/views.py:4768
+msgid "The reminders could not be read"
+msgstr "Hatırlatıcılar okunamadı"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1168 apprise_api/api/templates/components/reminder_shared_script.html:144 apprise_api/api/views.py:4773
+msgid "The reminders could not be saved"
+msgstr "Hatırlatıcılar kaydedilemedi"
+
+#: apprise_api/api/views.py:4778
+msgid "The reminder was not found"
+msgstr "Hatırlatıcı bulunamadı"
+
+#: apprise_api/api/views.py:4959
+msgid "This configuration already has the most reminders allowed"
+msgstr "Bu yapılandırma zaten izin verilen en fazla sayıda hatırlatıcıya sahip"
+
+#: apprise_api/api/views.py:4838
+msgid "There is not enough attachment space left for this configuration"
+msgstr "Bu yapılandırmada ekler için yeterli alan kalmadı"
+
+#: apprise_api/api/views.py:5081
+msgid "Attachments are turned off for this configuration's reminders"
+msgstr "Bu yapılandırmanın hatırlatıcıları için ekler kapalı"
+
+#: apprise_api/api/views.py:4987
+msgid "There is not enough attachment space left on this server"
+msgstr "Bu sunucuda ekler için yeterli alan kalmadı"
+
+#: apprise_api/api/views.py:5362
+msgid "Only an administrator may change the limits of this configuration"
+msgstr "Bu yapılandırmanın sınırlarını yalnızca bir yönetici değiştirebilir"
+
+#: apprise_api/api/templates/auth.html:918 apprise_api/api/views.py:5388
+msgid "The limits could not be saved"
+msgstr "Sınırlar kaydedilemedi"
+
+#: apprise_api/api/scheduler.py:425
+#, python-brace-format
+msgid "Reminders for this configuration were paused because it was not used for {} days"
+msgstr "Bu yapılandırmanın hatırlatıcıları {} gündür kullanılmadığı için duraklatıldı"
 
 #: apprise_api/api/views.py:3296
 msgid "The format field must be a string or null"
@@ -2730,3 +2860,569 @@ msgstr "Sayfa bulunamadı"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "Sistem hatası"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:8 apprise_api/api/templates/config.html:62
+msgid "Reminders"
+msgstr "Hatırlatıcılar"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:9
+msgid "All pre-saved notifications set to be sent at a later time are listed here."
+msgstr "Daha sonra gönderilmek üzere kaydedilen tüm bildirimler burada listelenir."
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:45
+#, python-format
+msgid "No reminders have been added. Use the %(notify_chip)s section to add one."
+msgstr "Hiç hatırlatıcı eklenmedi. Eklemek için %(notify_chip)s bölümünü kullanın."
+
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1212 apprise_api/api/templates/components/config_reminders_tab.html:52
+msgid "Show times in"
+msgstr "Saatleri şurada göster"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:73
+msgid "Use my timezone"
+msgstr "Saat dilimimi kullan"
+
+#: apprise_api/api/templates/components/config_reminders.html:161
+msgid "Drift"
+msgstr "Kayma"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1489
+msgid "All"
+msgstr "Tümü"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
+msgid "None (untagged services only)"
+msgstr "Yok (yalnızca etiketsiz hizmetler)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Finished"
+msgstr "Tamamlandı"
+
+#: apprise_api/api/templates/reminder_list.html:26
+#, python-format
+msgid "No reminders have been added. Open a configuration from the %(list_chip)s and use its Notifications section to add one."
+msgstr "Hiç hatırlatıcı eklenmedi. %(list_chip)s üzerinden bir yapılandırma açın ve eklemek için onun Bildirimler bölümünü kullanın."
+
+#: apprise_api/api/templates/components/config_reminders.html:85
+msgid "Starts (optional)"
+msgstr "Başlangıç (isteğe bağlı)"
+
+#: apprise_api/api/templates/components/config_reminders.html:190
+msgid "Ends (optional)"
+msgstr "Bitiş (isteğe bağlı)"
+
+#: apprise_api/api/templates/components/config_reminders.html:94
+msgid "Now"
+msgstr "Şimdi"
+
+#: apprise_api/api/templates/components/config_reminders.html:87
+msgid "Date and time"
+msgstr "Tarih ve saat"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:747
+msgid "Quick Select"
+msgstr "Hızlı Seçim"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:611
+msgid "Today"
+msgstr "Bugün"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:626
+msgid "Tomorrow"
+msgstr "Yarın"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:627
+msgid "This Weekend"
+msgstr "Bu hafta sonu"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:630
+msgid "Later This Week"
+msgstr "Bu hafta daha sonra"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:631
+msgid "Next Week"
+msgstr "Gelecek hafta"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:634
+msgid "Next Weekend"
+msgstr "Gelecek hafta sonu"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:637
+msgid "End of Month"
+msgstr "Ay sonu"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:640
+msgid "In a Month"
+msgstr "Bir ay içinde"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:890
+msgid "Start Date"
+msgstr "Başlangıç Tarihi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:891
+msgid "A Day Later"
+msgstr "Bir Gün Sonra"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:892
+msgid "A Week Later"
+msgstr "Bir Hafta Sonra"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:894
+msgid "A Month Later"
+msgstr "Bir Ay Sonra"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:895
+msgid "A Year Later"
+msgstr "Bir Yıl Sonra"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:612
+msgid "Clear"
+msgstr "Temizle"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:749
+msgid "Confirm"
+msgstr "Onayla"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Hour"
+msgstr "Saat"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Minute"
+msgstr "Dakika"
+
+#: apprise_api/api/templates/components/config_reminders.html:196
+msgid "No end date"
+msgstr "Bitiş tarihi yok"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1498
+msgid "No reminders are due in this period."
+msgstr "Bu dönemde planlanmış hatırlatıcı yok."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374
+msgid "No reminders have been added yet."
+msgstr "Henüz hatırlatıcı eklenmedi."
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:42 apprise_api/api/templates/reminder_list.html:22
+msgid "No Reminders Yet"
+msgstr "Henüz hatırlatıcı yok"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:12
+msgid "Attachment Space Full"
+msgstr "Ek Alanı Dolu"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:14
+msgid "Your reminders use all of their attachment space. Remove attachments from them, or ask the administrator for more space, to add new ones. Sending notifications is not affected."
+msgstr "Hatırlatıcılarınız ek alanlarının tamamını kullanıyor. Yeni ek eklemek için hatırlatıcılardan ek kaldırın veya yöneticiden daha fazla alan isteyin. Bildirim gönderimi bundan etkilenmez."
+
+#: apprise_api/api/templates/auth.html:200 apprise_api/api/templates/components/config_reminders_tab.html:29
+msgid "Reminders used"
+msgstr "Kullanılan hatırlatıcılar"
+
+#: apprise_api/api/templates/auth.html:201 apprise_api/api/templates/components/config_reminders_tab.html:30
+msgid "Attachment space used"
+msgstr "Kullanılan ek alanı"
+
+#: apprise_api/api/templates/auth.html:194
+msgid "Reminder Limits"
+msgstr "Hatırlatıcı Sınırları"
+
+#: apprise_api/api/templates/auth.html:195
+msgid "How much this Config ID's user may save as reminders."
+msgstr "Bu Konfigürasyon ID’sinin kullanıcısının hatırlatıcı olarak ne kadar kaydedebileceği."
+
+#: apprise_api/api/templates/auth.html:208
+msgid "Most reminders"
+msgstr "En fazla hatırlatıcı"
+
+#: apprise_api/api/templates/auth.html:212
+msgid "Attachment space (MB)"
+msgstr "Ek alanı (MB)"
+
+#: apprise_api/api/templates/auth.html:218
+msgid "Save Limits"
+msgstr "Sınırları kaydet"
+
+#: apprise_api/api/templates/auth.html:215
+msgid "Leave a field blank for no limit. An attachment space of 0 turns uploads off."
+msgstr "Sınır koymamak için alanı boş bırakın. 0 ek alanı dosya yüklemeyi kapatır."
+
+#: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
+msgid "Reminder"
+msgstr "Hatırlatıcı"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:15
+msgid "Once"
+msgstr "Bir kez"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+msgid "Every day"
+msgstr "Her gün"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+msgid "Every week"
+msgstr "Her hafta"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+msgid "Every month"
+msgstr "Her ay"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+msgid "Every year"
+msgstr "Her yıl"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:16
+msgid "On a holiday"
+msgstr "Resmî tatilde"
+
+#: apprise_api/api/templates/components/config_reminders.html:52
+msgid "Country"
+msgstr "Ülke"
+
+#: apprise_api/api/templates/components/config_reminders.html:70
+msgid "Region"
+msgstr "Bölge"
+
+#: apprise_api/api/templates/components/config_reminders.html:74
+msgid "Holiday"
+msgstr "Tatil"
+
+#: apprise_api/api/templates/components/config_reminders.html:125
+msgid "Previous year"
+msgstr "Önceki yıl"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Next year"
+msgstr "Sonraki yıl"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:269
+msgid "All regions"
+msgstr "Tüm bölgeler"
+
+#: apprise_api/api/templates/components/config_reminders.html:154 apprise_api/api/templates/components/reminder_shared_script.html:17
+msgid "Custom (crontab)"
+msgstr "Özel (crontab)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:306
+msgid "Repeat"
+msgstr "Tekrar"
+
+#: apprise_api/api/templates/components/config_reminders.html:150
+msgid "Days"
+msgstr "Günler"
+
+#: apprise_api/api/templates/components/config_reminders.html:185
+msgid "Crontab entry"
+msgstr "Crontab girdisi"
+
+#: apprise_api/api/templates/components/config_reminders.html:187
+msgid "Five fields: minute, hour, day of the month, month and day of the week."
+msgstr "Beş alan: dakika, saat, ayın günü, ay ve haftanın günü."
+
+#: apprise_api/api/templates/components/config_reminders.html:205
+msgid "Upcoming"
+msgstr "Yaklaşanlar"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:363
+msgid "No more times after this"
+msgstr "Bundan sonra başka zaman yok"
+
+#: apprise_api/api/templates/config.html:624
+msgid "Save Reminder"
+msgstr "Hatırlatıcıyı kaydet"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:32
+msgid "Skipped: it was too late to send"
+msgstr "Atlandı: göndermek için çok geçti"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:33
+msgid "Paused: this configuration is disabled"
+msgstr "Duraklatıldı: bu yapılandırma devre dışı"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:34
+msgid "Paused: this configuration was not used for a while"
+msgstr "Duraklatıldı: bu yapılandırma bir süredir kullanılmadı"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
+msgid "Reminder saved."
+msgstr "Hatırlatıcı kaydedildi."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1888
+msgid "Clear this result"
+msgstr "Bu sonucu temizle"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1364 apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Paused"
+msgstr "Duraklatıldı"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Active"
+msgstr "Etkin"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:307
+msgid "Next"
+msgstr "Sonraki"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Sent"
+msgstr "Gönderildi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Failed"
+msgstr "Başarısız"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:312
+msgid "Last"
+msgstr "Son"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Resume"
+msgstr "Sürdür"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Pause"
+msgstr "Duraklat"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Pause Series"
+msgstr "Seriyi duraklat"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Resume Series"
+msgstr "Seriyi sürdür"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1373 apprise_api/api/templates/components/reminder_shared_script.html:338
+msgid "Edit"
+msgstr "Düzenle"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:210
+msgid "Send Now"
+msgstr "Şimdi gönder"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:258
+msgid "Delete this reminder?"
+msgstr "Bu hatırlatıcı silinsin mi?"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:278
+msgid "Reminder removed."
+msgstr "Hatırlatıcı kaldırıldı."
+
+#: apprise_api/api/templates/auth.html:922
+msgid "Limits saved."
+msgstr "Sınırlar kaydedildi."
+
+#: apprise_api/api/templates/config.html:623
+msgid "Add Reminder"
+msgstr "Hatırlatıcı ekle"
+
+#: apprise_api/api/templates/config.html:518
+msgid "Editing reminder"
+msgstr "Hatırlatıcı düzenleniyor"
+
+#: apprise_api/api/templates/auth.html:626
+msgid "Keep Reminders"
+msgstr "Hatırlatıcıları tut"
+
+#: apprise_api/api/templates/auth.html:627
+msgid "Hand the reminders this user added to the administrator instead of removing them."
+msgstr "Bu kullanıcının eklediği hatırlatıcıları silmek yerine yöneticiye devret."
+
+#: apprise_api/api/templates/base.html:305 apprise_api/api/templates/reminder_list.html:10
+msgid "Reminder List"
+msgstr "Hatırlatıcı listesi"
+
+#: apprise_api/api/templates/reminder_list.html:11
+msgid "Every reminder saved on this server, soonest first."
+msgstr "Bu sunucuda kayıtlı tüm hatırlatıcılar, en yakını önce."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1353 apprise_api/api/templates/reminder_list.html:91
+msgid "Series"
+msgstr "Seri"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374 apprise_api/api/templates/components/reminder_shared_script.html:340
+msgid "Clone"
+msgstr "Kopyala"
+
+#: apprise_api/api/templates/components/config_reminders.html:126
+msgid "Only this one time changes. Use Clone to start a new repeating reminder from it."
+msgstr "Yalnızca bu seferki değişir. Buradan yeni bir yinelenen hatırlatıcı başlatmak için Kopyala’yı kullanın."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1122
+msgid "Copied into a new reminder. Change what you like, then choose Add Reminder."
+msgstr "Yeni bir hatırlatıcıya kopyalandı. İstediğinizi değiştirin, ardından Hatırlatıcı ekle’yi seçin."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1323
+msgid "Edit this time"
+msgstr "Yalnızca bu seferi düzenle"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1324
+msgid "Edit the series"
+msgstr "Seriyi düzenle"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:266
+msgid "Delete Entry"
+msgstr "Girişi sil"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:267
+msgid "Delete Series"
+msgstr "Seriyi sil"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:254
+msgid "Delete Entry removes only this time. Delete Series removes the reminder and every time."
+msgstr "Girişi sil yalnızca bu seferi kaldırır. Seriyi sil hatırlatıcıyı ve tüm zamanlarını kaldırır."
+
+#: apprise_api/api/templates/config.html:519
+msgid "Editing one time of"
+msgstr "Tek bir sefer düzenleniyor:"
+
+#: apprise_api/api/templates/components/config_reminders.html:27
+msgid "Send on"
+msgstr "Ne zaman gönderilsin"
+
+#: apprise_api/api/templates/components/config_reminders.html:29
+msgid "A date"
+msgstr "Belirli bir tarih"
+
+#: apprise_api/api/templates/components/config_reminders.html:30
+msgid "A holiday"
+msgstr "Resmî tatil"
+
+#: apprise_api/api/templates/components/config_reminders.html:122
+msgid "Make recurring"
+msgstr "Yinelensin"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Every"
+msgstr "Her"
+
+#: apprise_api/api/templates/components/config_reminders.html:147
+msgid "Seconds"
+msgstr "Saniye"
+
+#: apprise_api/api/templates/components/config_reminders.html:148
+msgid "Minutes"
+msgstr "Dakika"
+
+#: apprise_api/api/templates/components/config_reminders.html:149
+msgid "Hours"
+msgstr "Saat"
+
+#: apprise_api/api/templates/components/config_reminders.html:151
+msgid "Weeks"
+msgstr "Hafta"
+
+#: apprise_api/api/templates/components/config_reminders.html:152
+msgid "Months"
+msgstr "Ay"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:9
+msgid "Select all"
+msgstr "Tümünü seç"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:16
+msgid "Select none"
+msgstr "Hiçbirini seçme"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:23
+msgid "Invert selection"
+msgstr "Seçimi tersine çevir"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1228
+msgid "Choose at least one."
+msgstr "En az birini seçin."
+
+#: apprise_api/api/templates/components/config_reminders.html:153
+msgid "Years"
+msgstr "Yıl"
+
+#: apprise_api/api/templates/config.html:590
+msgid "Attachments"
+msgstr "Ekler"
+
+#: apprise_api/api/templates/config.html:591
+msgid "Upload files, or add web addresses that are downloaded each time the message is sent."
+msgstr "Dosya yükleyin veya mesaj her gönderildiğinde indirilen web adresleri ekleyin."
+
+#: apprise_api/api/templates/config.html:3404
+msgid "Stored with the reminder"
+msgstr "Hatırlatıcıyla birlikte saklandı"
+
+#: apprise_api/api/templates/config.html:599
+msgid "Add URL"
+msgstr "URL ekle"
+
+#: apprise_api/api/templates/config.html:3209
+msgid "Preview"
+msgstr "Önizleme"
+
+#: apprise_api/api/templates/config.html:3221
+msgid "Remove Attachment"
+msgstr "Eki kaldır"
+
+#: apprise_api/api/templates/config.html:3253
+msgid "Loading…"
+msgstr "Yükleniyor…"
+
+#: apprise_api/api/templates/config.html:3281
+msgid "The attachment could not be downloaded"
+msgstr "Ek indirilemedi"
+
+#: apprise_api/api/templates/config.html:3320
+msgid "This file cannot be shown here."
+msgstr "Bu dosya burada gösterilemiyor."
+
+#: apprise_api/api/templates/config.html:3331
+msgid "Download"
+msgstr "İndir"
+
+#: apprise_api/api/templates/config.html:3178
+msgid "Attachment URL"
+msgstr "Ek URL’si"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+msgid "Every second"
+msgstr "Her saniye"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+#, python-brace-format
+msgid "Every {} seconds"
+msgstr "Her {} saniyede"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+msgid "Every minute"
+msgstr "Her dakika"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+msgid "Every hour"
+msgstr "Her saat"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+#, python-brace-format
+msgid "Every {} minutes"
+msgstr "Her {} dakikada"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+#, python-brace-format
+msgid "Every {} hours"
+msgstr "Her {} saatte"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+#, python-brace-format
+msgid "Every {} days"
+msgstr "Her {} günde"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+#, python-brace-format
+msgid "Every {} weeks"
+msgstr "Her {} haftada"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+#, python-brace-format
+msgid "Every {} months"
+msgstr "Her {} ayda"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+#, python-brace-format
+msgid "Every {} years"
+msgstr "Her {} yılda"

@@ -183,6 +183,44 @@
             </div>
           </section>
         {% endif %}
+        {% if reminders_allowed and not shared_user and auth_mode == "assigned" %}
+          {# Limits hold back only the configuration's own user; the administrator is never limited. #}
+          <section class="auth-editor-card auth-reminder-limits-card">
+            <div class="auth-card-heading auth-compact-heading">
+              <span class="auth-card-icon auth-reminder-limits-icon" aria-hidden="true">
+                {% include "icons/alarm.svg" %}
+              </span>
+              <div>
+                <h5>{% trans "Reminder Limits" %}</h5>
+                <p>{% trans "How much this Config ID's user may save as reminders." %}</p>
+              </div>
+            </div>
+            <div class="auth-content-panel">
+              <p class="reminder-usage">
+                <span>{% trans "Reminders used" %}: <strong id="reminder-usage-count">-</strong></span>
+                <span>{% trans "Attachment space used" %}: <strong id="reminder-usage-space">-</strong></span>
+              </p>
+              <form id="reminder-limits-form"
+                    class="row reminder-limits-form"
+                    autocomplete="off">
+                <div class="input-field col s12 m6">
+                  <input id="reminder-limit-count" type="number" min="1" step="1">
+                  <label for="reminder-limit-count">{% trans "Most reminders" %}</label>
+                </div>
+                <div class="input-field col s12 m6">
+                  <input id="reminder-limit-space" type="number" min="0" step="0.1">
+                  <label for="reminder-limit-space">{% trans "Attachment space (MB)" %}</label>
+                </div>
+                <p class="col s12 reminder-hint">
+                  {% trans "Leave a field blank for no limit. An attachment space of 0 turns uploads off." %}
+                </p>
+                <div class="col s12 reminder-limits-actions">
+                  <button class="btn waves-effect waves-light" type="submit">{% trans "Save Limits" %}</button>
+                </div>
+              </form>
+            </div>
+          </section>
+        {% endif %}
         {% if CAN_MOVE_CONFIG %}
           <section class="auth-editor-card auth-move-card">
             <div class="auth-card-heading auth-compact-heading">
@@ -575,6 +613,21 @@
                 <small>{% trans "Also permanently remove its saved notification configuration." %}</small>
               </span>
             </button>
+            {% if REMINDERS_ENABLED %}
+            <button id="swal-keep-reminders"
+                    class="reset-configuration-toggle"
+                    type="button"
+                    role="switch"
+                    aria-checked="false">
+              <span class="reset-configuration-toggle__track" aria-hidden="true">
+                <span></span>
+              </span>
+              <span class="reset-configuration-toggle__copy">
+                <strong>{% trans "Keep Reminders" %}</strong>
+                <small>{% trans "Hand the reminders this user added to the administrator instead of removing them." %}</small>
+              </span>
+            </button>
+            {% endif %}
           </div>
         `,
         icon: 'warning',
@@ -589,18 +642,31 @@
           configIdField.value = authConfigId;
           appriseWireValueToggles(popup);
           M.updateTextFields();
+          const keepReminders = popup.querySelector('#swal-keep-reminders');
           resetConfiguration.addEventListener('click', function () {
             const selected = resetConfiguration.getAttribute('aria-checked') !== 'true';
             resetConfiguration.setAttribute('aria-checked', selected ? 'true' : 'false');
             confirmButton.textContent = selected
               ? '{% trans "Reset Access and Configuration" %}'
               : '{% trans "Reset User Access" %}';
+            if (keepReminders) {
+              // Reminders cannot outlive the configuration they send through.
+              keepReminders.hidden = selected;
+            }
           });
+          if (keepReminders) {
+            keepReminders.addEventListener('click', function () {
+              const keep = keepReminders.getAttribute('aria-checked') !== 'true';
+              keepReminders.setAttribute('aria-checked', keep ? 'true' : 'false');
+            });
+          }
         },
         preConfirm: function () {
+          const keepReminders = document.getElementById('swal-keep-reminders');
           return {
             resetConfiguration: document.getElementById('swal-reset-configuration')
-              .getAttribute('aria-checked') === 'true'
+              .getAttribute('aria-checked') === 'true',
+            keepReminders: Boolean(keepReminders && keepReminders.getAttribute('aria-checked') === 'true')
           };
         }
       }).then(async function (result) {
@@ -609,8 +675,12 @@
         }
         try {
           const resetConfiguration = Boolean(result.value && result.value.resetConfiguration);
+          const resetUrl = new URL(authForm.action, window.location.href);
+          if (result.value && result.value.keepReminders) {
+            resetUrl.searchParams.set('keep_reminders', 'yes');
+          }
           const response = await appriseFetch(
-            resetConfiguration ? authDeleteConfigUrl : authForm.action,
+            resetConfiguration ? authDeleteConfigUrl : resetUrl.toString(),
             {
               method: resetConfiguration ? 'POST' : 'DELETE',
               headers: {'Accept': 'application/json'}
@@ -803,6 +873,58 @@
       }
     });
   }
+  {% endif %}
+  {% if reminders_allowed and not shared_user and auth_mode == 'assigned' %}
+  // Reminder limits for the configuration's user.
+  const reminderLimitsUrl = '{% url "reminder_limits" key %}';
+
+  function reminderLimitsSize(bytes) {
+    return (bytes / 1048576).toLocaleString('{{ LANGUAGE_CODE|escapejs }}', {maximumFractionDigits: 1}) + ' MB';
+  }
+
+  async function reminderLimitsLoad() {
+    try {
+      const response = await appriseFetch(reminderLimitsUrl, {headers: {'Accept': 'application/json'}});
+      if (!response.ok) {
+        return;
+      }
+      const limits = (await response.json()).limits;
+      document.getElementById('reminder-usage-count').textContent = limits.reminders_used + ' / ' + limits.reminders;
+      document.getElementById('reminder-usage-space').textContent = reminderLimitsSize(limits.attach_used) + ' / '
+        + reminderLimitsSize(limits.attach_size);
+      document.getElementById('reminder-limit-count').value = limits.reminders;
+      document.getElementById('reminder-limit-space').value = Math.round(limits.attach_size / 104857.6) / 10;
+      M.updateTextFields();
+    } catch (e) {
+      // The form still works without the current values.
+    }
+  }
+
+  document.getElementById('reminder-limits-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const count = document.getElementById('reminder-limit-count').value.trim();
+    const space = document.getElementById('reminder-limit-space').value.trim();
+    try {
+      const response = await appriseFetch(reminderLimitsUrl, {
+        method: 'POST',
+        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          reminders: count ? parseInt(count, 10) : null,
+          attach_size: space === '' ? null : Math.round(parseFloat(space) * 1048576)
+        })
+      });
+      if (!response.ok) {
+        const failure = await appriseResponseFailure(response, '{% trans "The limits could not be saved" %}');
+        appriseShowStatusToast(failure.message, false);
+        return;
+      }
+      appriseShowStatusToast('{% trans "Limits saved." %}', true);
+      reminderLimitsLoad();
+    } catch (e) {
+      appriseShowStatusToast('{% trans "The limits could not be saved" %}', false);
+    }
+  });
+  reminderLimitsLoad();
   {% endif %}
 
 {% endblock jsfooter %}

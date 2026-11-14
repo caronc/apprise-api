@@ -50,17 +50,23 @@ class CommandTests(SimpleTestCase):
             management.call_command("authprune", seconds=-1, stdout=io.StringIO())
 
     def test_combined_prune_runs_both_cleanups(self):
-        """The container command prunes state and unused locks together."""
+        """The container command prunes state, unused locks and reminder files together."""
         out = io.StringIO()
         with (
             patch("api.management.commands.prune.apprise.PersistentStore.disk_prune") as disk_prune,
             patch("api.management.commands.prune.ConfigCache.prune_unused_locks", return_value=2) as lock_prune,
+            patch("api.management.commands.prune.ConfigCache.prune_reminder_files", return_value=3) as file_prune,
+            patch(
+                "api.management.commands.prune.ConfigCache.prune_finished_reminders", return_value=4
+            ) as finished_prune,
         ):
             management.call_command("prune", stdout=out)
 
         disk_prune.assert_called_once()
         lock_prune.assert_called_once()
-        self.assertIn("2 unused lock(s)", out.getvalue())
+        file_prune.assert_called_once()
+        finished_prune.assert_called_once_with(7 * 86400)
+        self.assertIn("2 unused lock(s), 4 finished reminder(s) and 3 unused reminder file(s)", out.getvalue())
 
     @override_settings(APPRISE_AUTH_PRUNE_SECONDS=-1)
     def test_combined_prune_rejects_negative_lock_age(self):

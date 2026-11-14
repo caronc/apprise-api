@@ -214,6 +214,7 @@ msgid "Attachment"
 msgstr "Tệp đính kèm"
 
 #: apprise_api/api/forms.py:391 apprise_api/api/forms.py:400
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
 msgid "Tags"
 msgstr "Thẻ"
 
@@ -1273,8 +1274,8 @@ msgid ""
 msgstr "Lệnh sau sẽ khiến apprise lấy cấu hình đã tải và gửi một thông báo thử nghiệm đến tất cả các dịch vụ mà bạn đã thêm:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "Bạn cũng có thể tạo một tệp cấu hình <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise</a> chứa dòng này ở đâu đó bên trong:"
+msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
+msgstr "Bạn cũng có thể tạo một tệp cấu hình <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise</a> chứa dòng này ở đâu đó bên trong:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
@@ -1789,9 +1790,9 @@ msgstr "Apprise Chi tiết"
 #: apprise_api/api/templates/details.html:13
 msgid ""
 "The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
+"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a>\n"
 "            instance."
-msgstr "Các dịch vụ sau được hỗ trợ bởi phiên bản <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> này."
+msgstr "Các dịch vụ sau được hỗ trợ bởi phiên bản <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> này."
 
 #: apprise_api/api/templates/details.html:22
 #, python-format
@@ -1929,8 +1930,8 @@ msgid "Execute the request"
 msgstr "Thực thi yêu cầu"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "Thêm chi tiết về định dạng JSON có thể được tìm thấy <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\"> tại đây </a>."
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">here</a>."
+msgstr "Thêm chi tiết về định dạng JSON có thể được tìm thấy <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\"> tại đây </a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1966,13 +1967,13 @@ msgstr "Apprise API"
 #: apprise_api/api/templates/welcome.html:12
 msgid ""
 "\n"
-"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
+"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
 "      all of the most popular notification services available to us today such as: <em>Telegram</em>, <em>Discord</em>,\n"
 "      <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, etc.\n"
 "      This API provides a simple gateway to directly access it via an HTTP interface."
 msgstr ""
 "\n"
-"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> cho phép bạn gửi thông báo tới hầu hết các dịch vụ thông báo phổ biến nhất hiện nay như: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, v.v. API này cung cấp một cổng đơn giản để truy cập trực tiếp thông qua giao diện HTTP."
+"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> cho phép bạn gửi thông báo tới hầu hết các dịch vụ thông báo phổ biến nhất hiện nay như: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, v.v. API này cung cấp một cổng đơn giản để truy cập trực tiếp thông qua giao diện HTTP."
 
 #: apprise_api/api/templates/welcome.html:20
 msgid ""
@@ -1992,9 +1993,9 @@ msgstr "Các điểm cuối không trạng thái"
 
 #: apprise_api/api/templates/welcome.html:35
 msgid ""
-"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
+"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "Những người muốn coi API này chỉ là một <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> và/hoặc microservice cho dự án của họ chỉ cần sử dụng URL sau đây."
+msgstr "Những người muốn coi API này chỉ là một <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">sidecar</a> và/hoặc microservice cho dự án của họ chỉ cần sử dụng URL sau đây."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2003,9 +2004,9 @@ msgstr "URL"
 
 #: apprise_api/api/templates/welcome.html:52
 msgid ""
-"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Dùng để thông báo tới một hoặc nhiều URL Apprise được chỉ định. Xem <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp để xây dựng URL(của bạn)."
+msgstr "Dùng để thông báo tới một hoặc nhiều URL Apprise được chỉ định. Xem <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp để xây dựng URL(của bạn)."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2053,8 +2054,8 @@ msgid "Notifies an email address with attachments"
 msgstr "Thông báo đến một địa chỉ email kèm tệp đính kèm"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "Gửi một tệp đính kèm dựa trên web đến một <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> máy chủ:"
+msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> server:"
+msgstr "Gửi một tệp đính kèm dựa trên web đến một <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> máy chủ:"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2149,9 +2150,9 @@ msgstr "Tất cả các điểm cuối mà mong đợi dữ liệu gửi đi có
 #, python-format
 msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
-"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "Được sử dụng để thêm một cấu hình Apprise mới hoặc một tập hợp URL và liên kết chúng với cấu hình được xác định bằng id của <em>%(key)s</em>. Xem <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp trong việc xây dựng URL của mình."
+msgstr "Được sử dụng để thêm một cấu hình Apprise mới hoặc một tập hợp URL và liên kết chúng với cấu hình được xác định bằng id của <em>%(key)s</em>. Xem <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> nếu bạn cần trợ giúp trong việc xây dựng URL của mình."
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
@@ -2473,9 +2474,11 @@ msgstr "Cấu hình không thể bị xóa"
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "Cấu hình đã bị xóa, nhưng xác thực của nó không thể bị xóa"
 
-#: apprise_api/api/views.py:2609
-msgid "Successfully removed configuration"
-msgstr "Đã xóa cấu hình thành công"
+
+#: apprise_api/api/views.py:4922
+msgid "Successfully saved reminder"
+msgstr "Đã lưu lời nhắc thành công"
+
 
 #: apprise_api/api/views.py:2717
 msgid "Content-Type must be application/json"
@@ -2562,6 +2565,133 @@ msgstr "Ánh xạ trường dữ liệu tải không thành công"
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "Trường {} phải là chuỗi"
+
+#: apprise_api/api/views.py:4239
+#, python-brace-format
+msgid "The {} field is invalid"
+msgstr "Trường {} không hợp lệ"
+
+#: apprise_api/api/views.py:4276
+#, python-brace-format
+msgid "The {} field is too long"
+msgstr "Trường {} quá dài"
+
+#: apprise_api/api/views.py:4985
+msgid "The reminder is too large to save"
+msgstr "Lời nhắc quá lớn để lưu"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:415 apprise_api/api/views.py:4506
+msgid "This reminder would never be sent"
+msgstr "Lời nhắc này sẽ không bao giờ được gửi"
+
+#: apprise_api/api/views.py:4493 apprise_api/api/templates/components/config_reminders_script.html:297
+msgid "The end date is before the start"
+msgstr "Ngày kết thúc trước thời điểm bắt đầu"
+
+#: apprise_api/api/views.py:4587
+msgid "This server does not save URLs with reminders"
+msgstr "Máy chủ này không lưu URL cùng với lời nhắc"
+
+#: apprise_api/api/views.py:4590
+msgid "A reminder can hold at most {} URLs"
+msgstr "Một lời nhắc có thể chứa tối đa {} URL"
+
+#: apprise_api/api/templates/config.html:567
+msgid "Apprise URLs"
+msgstr "URL Apprise"
+
+#: apprise_api/api/templates/config.html:568
+msgid ""
+"Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
+msgstr "Tùy chọn chỉ định trực tiếp các URL Apprise để thông báo. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Nhấp vào đây</a> để được trợ giúp tạo URL từ Apprise URL Builder."
+
+#: apprise_api/api/templates/config.html:573
+msgid ""
+"Stateless Mode is turned off on this server, so these URLs are only used by reminders."
+msgstr "Stateless Mode đang tắt trên máy chủ này, nên các URL này chỉ được dùng cho lời nhắc."
+
+#: apprise_api/api/templates/config.html:583
+msgid "Also send to untagged services"
+msgstr "Gửi cả tới các dịch vụ không có thẻ"
+
+#: apprise_api/api/templates/config.html:3117
+msgid "Apprise URL"
+msgstr "URL Apprise"
+
+#: apprise_api/api/templates/config.html:3154
+msgid "Remove URL"
+msgstr "Xóa URL"
+
+#: apprise_api/api/views.py:4307
+msgid "This URL could not be loaded"
+msgstr "Không thể tải URL này"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:534
+msgid "The end date has already passed, so this reminder will not be sent."
+msgstr "Ngày kết thúc đã qua, nên lời nhắc này sẽ không được gửi."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:535
+msgid "This time has already passed, so the reminder will not be sent."
+msgstr "Thời điểm này đã qua, nên lời nhắc sẽ không được gửi."
+
+#: apprise_api/api/views.py:4501
+msgid "Nothing would be sent before the end date"
+msgstr "Sẽ không có gì được gửi trước ngày kết thúc"
+
+#: apprise_api/api/views.py:4567
+#, python-brace-format
+msgid "A reminder cannot repeat more often than every {} seconds"
+msgstr "Lời nhắc không thể lặp lại thường xuyên hơn mỗi {} giây"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
+msgid "Only an administrator may manage reminders for this configuration"
+msgstr "Chỉ quản trị viên mới có thể quản lý lời nhắc của cấu hình này"
+
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:14
+msgid "The scheduler is not running, so reminders are saved but not sent."
+msgstr "Bộ lập lịch không chạy, nên lời nhắc được lưu nhưng không được gửi."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1434 apprise_api/api/templates/reminder_list.html:113 apprise_api/api/views.py:4768
+msgid "The reminders could not be read"
+msgstr "Không thể đọc các lời nhắc"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1168 apprise_api/api/templates/components/reminder_shared_script.html:144 apprise_api/api/views.py:4773
+msgid "The reminders could not be saved"
+msgstr "Không thể lưu các lời nhắc"
+
+#: apprise_api/api/views.py:4778
+msgid "The reminder was not found"
+msgstr "Không tìm thấy lời nhắc"
+
+#: apprise_api/api/views.py:4959
+msgid "This configuration already has the most reminders allowed"
+msgstr "Cấu hình này đã có số lời nhắc tối đa được phép"
+
+#: apprise_api/api/views.py:4838
+msgid "There is not enough attachment space left for this configuration"
+msgstr "Cấu hình này không còn đủ dung lượng cho tệp đính kèm"
+
+#: apprise_api/api/views.py:5081
+msgid "Attachments are turned off for this configuration's reminders"
+msgstr "Tệp đính kèm đã bị tắt cho các lời nhắc của cấu hình này"
+
+#: apprise_api/api/views.py:4987
+msgid "There is not enough attachment space left on this server"
+msgstr "Máy chủ này không còn đủ dung lượng cho tệp đính kèm"
+
+#: apprise_api/api/views.py:5362
+msgid "Only an administrator may change the limits of this configuration"
+msgstr "Chỉ quản trị viên mới có thể thay đổi giới hạn của cấu hình này"
+
+#: apprise_api/api/templates/auth.html:918 apprise_api/api/views.py:5388
+msgid "The limits could not be saved"
+msgstr "Không thể lưu các giới hạn"
+
+#: apprise_api/api/scheduler.py:425
+#, python-brace-format
+msgid "Reminders for this configuration were paused because it was not used for {} days"
+msgstr "Các lời nhắc của cấu hình này đã bị tạm dừng vì cấu hình không được dùng trong {} ngày"
 
 #: apprise_api/api/views.py:3296
 msgid "The format field must be a string or null"
@@ -2730,3 +2860,569 @@ msgstr "Không tìm thấy trang"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "Lỗi hệ thống"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:8 apprise_api/api/templates/config.html:62
+msgid "Reminders"
+msgstr "Lời nhắc"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:9
+msgid "All pre-saved notifications set to be sent at a later time are listed here."
+msgstr "Tất cả thông báo đã lưu để gửi sau được liệt kê ở đây."
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:45
+#, python-format
+msgid "No reminders have been added. Use the %(notify_chip)s section to add one."
+msgstr "Chưa có lời nhắc nào được thêm. Hãy dùng mục %(notify_chip)s để thêm."
+
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1212 apprise_api/api/templates/components/config_reminders_tab.html:52
+msgid "Show times in"
+msgstr "Hiển thị giờ theo"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:73
+msgid "Use my timezone"
+msgstr "Dùng múi giờ của tôi"
+
+#: apprise_api/api/templates/components/config_reminders.html:161
+msgid "Drift"
+msgstr "Độ lệch"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1489
+msgid "All"
+msgstr "Tất cả"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
+msgid "None (untagged services only)"
+msgstr "Không có (chỉ các dịch vụ không có thẻ)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Finished"
+msgstr "Đã xong"
+
+#: apprise_api/api/templates/reminder_list.html:26
+#, python-format
+msgid "No reminders have been added. Open a configuration from the %(list_chip)s and use its Notifications section to add one."
+msgstr "Chưa có lời nhắc nào được thêm. Mở một cấu hình từ %(list_chip)s và dùng mục Thông báo của nó để thêm."
+
+#: apprise_api/api/templates/components/config_reminders.html:85
+msgid "Starts (optional)"
+msgstr "Bắt đầu (không bắt buộc)"
+
+#: apprise_api/api/templates/components/config_reminders.html:190
+msgid "Ends (optional)"
+msgstr "Kết thúc (không bắt buộc)"
+
+#: apprise_api/api/templates/components/config_reminders.html:94
+msgid "Now"
+msgstr "Bây giờ"
+
+#: apprise_api/api/templates/components/config_reminders.html:87
+msgid "Date and time"
+msgstr "Ngày và giờ"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:747
+msgid "Quick Select"
+msgstr "Chọn nhanh"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:611
+msgid "Today"
+msgstr "Hôm nay"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:626
+msgid "Tomorrow"
+msgstr "Ngày mai"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:627
+msgid "This Weekend"
+msgstr "Cuối tuần này"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:630
+msgid "Later This Week"
+msgstr "Cuối tuần làm việc này"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:631
+msgid "Next Week"
+msgstr "Tuần sau"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:634
+msgid "Next Weekend"
+msgstr "Cuối tuần sau"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:637
+msgid "End of Month"
+msgstr "Cuối tháng"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:640
+msgid "In a Month"
+msgstr "Một tháng nữa"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:890
+msgid "Start Date"
+msgstr "Ngày bắt đầu"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:891
+msgid "A Day Later"
+msgstr "Một ngày sau"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:892
+msgid "A Week Later"
+msgstr "Một tuần sau"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:894
+msgid "A Month Later"
+msgstr "Một tháng sau"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:895
+msgid "A Year Later"
+msgstr "Một năm sau"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:612
+msgid "Clear"
+msgstr "Xóa"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:749
+msgid "Confirm"
+msgstr "Xác nhận"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Hour"
+msgstr "Giờ"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Minute"
+msgstr "Phút"
+
+#: apprise_api/api/templates/components/config_reminders.html:196
+msgid "No end date"
+msgstr "Không có ngày kết thúc"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1498
+msgid "No reminders are due in this period."
+msgstr "Không có lời nhắc nào trong khoảng thời gian này."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374
+msgid "No reminders have been added yet."
+msgstr "Chưa có lời nhắc nào được thêm."
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:42 apprise_api/api/templates/reminder_list.html:22
+msgid "No Reminders Yet"
+msgstr "Chưa có lời nhắc nào"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:12
+msgid "Attachment Space Full"
+msgstr "Dung lượng tệp đính kèm đã đầy"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:14
+msgid "Your reminders use all of their attachment space. Remove attachments from them, or ask the administrator for more space, to add new ones. Sending notifications is not affected."
+msgstr "Các lời nhắc của bạn đã dùng hết dung lượng tệp đính kèm. Hãy xóa bớt tệp đính kèm khỏi chúng, hoặc xin quản trị viên thêm dung lượng, để thêm tệp mới. Việc gửi thông báo không bị ảnh hưởng."
+
+#: apprise_api/api/templates/auth.html:200 apprise_api/api/templates/components/config_reminders_tab.html:29
+msgid "Reminders used"
+msgstr "Số lời nhắc đã dùng"
+
+#: apprise_api/api/templates/auth.html:201 apprise_api/api/templates/components/config_reminders_tab.html:30
+msgid "Attachment space used"
+msgstr "Dung lượng đính kèm đã dùng"
+
+#: apprise_api/api/templates/auth.html:194
+msgid "Reminder Limits"
+msgstr "Giới hạn lời nhắc"
+
+#: apprise_api/api/templates/auth.html:195
+msgid "How much this Config ID's user may save as reminders."
+msgstr "Người dùng của ID Cấu Hình này có thể lưu bao nhiêu lời nhắc."
+
+#: apprise_api/api/templates/auth.html:208
+msgid "Most reminders"
+msgstr "Số lời nhắc tối đa"
+
+#: apprise_api/api/templates/auth.html:212
+msgid "Attachment space (MB)"
+msgstr "Dung lượng đính kèm (MB)"
+
+#: apprise_api/api/templates/auth.html:218
+msgid "Save Limits"
+msgstr "Lưu giới hạn"
+
+#: apprise_api/api/templates/auth.html:215
+msgid "Leave a field blank for no limit. An attachment space of 0 turns uploads off."
+msgstr "Để trống một trường để không giới hạn. Dung lượng đính kèm bằng 0 sẽ tắt tải tệp lên."
+
+#: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
+msgid "Reminder"
+msgstr "Lời nhắc"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:15
+msgid "Once"
+msgstr "Một lần"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+msgid "Every day"
+msgstr "Mỗi ngày"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+msgid "Every week"
+msgstr "Mỗi tuần"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+msgid "Every month"
+msgstr "Mỗi tháng"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+msgid "Every year"
+msgstr "Mỗi năm"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:16
+msgid "On a holiday"
+msgstr "Vào ngày lễ"
+
+#: apprise_api/api/templates/components/config_reminders.html:52
+msgid "Country"
+msgstr "Quốc gia"
+
+#: apprise_api/api/templates/components/config_reminders.html:70
+msgid "Region"
+msgstr "Vùng"
+
+#: apprise_api/api/templates/components/config_reminders.html:74
+msgid "Holiday"
+msgstr "Ngày lễ"
+
+#: apprise_api/api/templates/components/config_reminders.html:125
+msgid "Previous year"
+msgstr "Năm trước"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Next year"
+msgstr "Năm sau"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:269
+msgid "All regions"
+msgstr "Tất cả các vùng"
+
+#: apprise_api/api/templates/components/config_reminders.html:154 apprise_api/api/templates/components/reminder_shared_script.html:17
+msgid "Custom (crontab)"
+msgstr "Tùy chỉnh (crontab)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:306
+msgid "Repeat"
+msgstr "Lặp lại"
+
+#: apprise_api/api/templates/components/config_reminders.html:150
+msgid "Days"
+msgstr "Các ngày"
+
+#: apprise_api/api/templates/components/config_reminders.html:185
+msgid "Crontab entry"
+msgstr "Mục crontab"
+
+#: apprise_api/api/templates/components/config_reminders.html:187
+msgid "Five fields: minute, hour, day of the month, month and day of the week."
+msgstr "Năm trường: phút, giờ, ngày trong tháng, tháng và ngày trong tuần."
+
+#: apprise_api/api/templates/components/config_reminders.html:205
+msgid "Upcoming"
+msgstr "Sắp tới"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:363
+msgid "No more times after this"
+msgstr "Không còn lần nào sau lần này"
+
+#: apprise_api/api/templates/config.html:624
+msgid "Save Reminder"
+msgstr "Lưu lời nhắc"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:32
+msgid "Skipped: it was too late to send"
+msgstr "Đã bỏ qua: đã quá muộn để gửi"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:33
+msgid "Paused: this configuration is disabled"
+msgstr "Đã tạm dừng: cấu hình này đã bị tắt"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:34
+msgid "Paused: this configuration was not used for a while"
+msgstr "Đã tạm dừng: cấu hình này đã lâu không được dùng"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
+msgid "Reminder saved."
+msgstr "Đã lưu lời nhắc."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1888
+msgid "Clear this result"
+msgstr "Xóa kết quả này"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1364 apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Paused"
+msgstr "Đã tạm dừng"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Active"
+msgstr "Đang hoạt động"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:307
+msgid "Next"
+msgstr "Tiếp theo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Sent"
+msgstr "Đã gửi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Failed"
+msgstr "Thất bại"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:312
+msgid "Last"
+msgstr "Gần nhất"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Resume"
+msgstr "Tiếp tục"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Pause"
+msgstr "Tạm dừng"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Pause Series"
+msgstr "Tạm dừng chuỗi"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Resume Series"
+msgstr "Tiếp tục chuỗi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1373 apprise_api/api/templates/components/reminder_shared_script.html:338
+msgid "Edit"
+msgstr "Sửa"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:210
+msgid "Send Now"
+msgstr "Gửi ngay"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:258
+msgid "Delete this reminder?"
+msgstr "Xóa lời nhắc này?"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:278
+msgid "Reminder removed."
+msgstr "Đã xóa lời nhắc."
+
+#: apprise_api/api/templates/auth.html:922
+msgid "Limits saved."
+msgstr "Đã lưu giới hạn."
+
+#: apprise_api/api/templates/config.html:623
+msgid "Add Reminder"
+msgstr "Thêm lời nhắc"
+
+#: apprise_api/api/templates/config.html:518
+msgid "Editing reminder"
+msgstr "Đang sửa lời nhắc"
+
+#: apprise_api/api/templates/auth.html:626
+msgid "Keep Reminders"
+msgstr "Giữ lời nhắc"
+
+#: apprise_api/api/templates/auth.html:627
+msgid "Hand the reminders this user added to the administrator instead of removing them."
+msgstr "Giao các lời nhắc do người dùng này thêm cho quản trị viên thay vì xóa chúng."
+
+#: apprise_api/api/templates/base.html:305 apprise_api/api/templates/reminder_list.html:10
+msgid "Reminder List"
+msgstr "Danh sách lời nhắc"
+
+#: apprise_api/api/templates/reminder_list.html:11
+msgid "Every reminder saved on this server, soonest first."
+msgstr "Tất cả lời nhắc được lưu trên máy chủ này, gần nhất trước."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1353 apprise_api/api/templates/reminder_list.html:91
+msgid "Series"
+msgstr "Chuỗi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374 apprise_api/api/templates/components/reminder_shared_script.html:340
+msgid "Clone"
+msgstr "Nhân bản"
+
+#: apprise_api/api/templates/components/config_reminders.html:126
+msgid "Only this one time changes. Use Clone to start a new repeating reminder from it."
+msgstr "Chỉ lần này thay đổi. Dùng Nhân bản để tạo một lời nhắc lặp lại mới từ lần này."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1122
+msgid "Copied into a new reminder. Change what you like, then choose Add Reminder."
+msgstr "Đã sao chép thành lời nhắc mới. Thay đổi những gì bạn muốn, rồi chọn Thêm lời nhắc."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1323
+msgid "Edit this time"
+msgstr "Sửa lần này"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1324
+msgid "Edit the series"
+msgstr "Sửa cả chuỗi"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:266
+msgid "Delete Entry"
+msgstr "Xóa mục"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:267
+msgid "Delete Series"
+msgstr "Xóa chuỗi"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:254
+msgid "Delete Entry removes only this time. Delete Series removes the reminder and every time."
+msgstr "Xóa mục chỉ xóa lần này. Xóa chuỗi xóa lời nhắc và mọi lần của nó."
+
+#: apprise_api/api/templates/config.html:519
+msgid "Editing one time of"
+msgstr "Đang sửa một lần của"
+
+#: apprise_api/api/templates/components/config_reminders.html:27
+msgid "Send on"
+msgstr "Gửi vào"
+
+#: apprise_api/api/templates/components/config_reminders.html:29
+msgid "A date"
+msgstr "Một ngày"
+
+#: apprise_api/api/templates/components/config_reminders.html:30
+msgid "A holiday"
+msgstr "Một ngày lễ"
+
+#: apprise_api/api/templates/components/config_reminders.html:122
+msgid "Make recurring"
+msgstr "Lặp lại"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Every"
+msgstr "Mỗi"
+
+#: apprise_api/api/templates/components/config_reminders.html:147
+msgid "Seconds"
+msgstr "Giây"
+
+#: apprise_api/api/templates/components/config_reminders.html:148
+msgid "Minutes"
+msgstr "Phút"
+
+#: apprise_api/api/templates/components/config_reminders.html:149
+msgid "Hours"
+msgstr "Giờ"
+
+#: apprise_api/api/templates/components/config_reminders.html:151
+msgid "Weeks"
+msgstr "Tuần"
+
+#: apprise_api/api/templates/components/config_reminders.html:152
+msgid "Months"
+msgstr "Tháng"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:9
+msgid "Select all"
+msgstr "Chọn tất cả"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:16
+msgid "Select none"
+msgstr "Bỏ chọn tất cả"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:23
+msgid "Invert selection"
+msgstr "Đảo ngược lựa chọn"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1228
+msgid "Choose at least one."
+msgstr "Hãy chọn ít nhất một."
+
+#: apprise_api/api/templates/components/config_reminders.html:153
+msgid "Years"
+msgstr "Năm"
+
+#: apprise_api/api/templates/config.html:590
+msgid "Attachments"
+msgstr "Tệp đính kèm"
+
+#: apprise_api/api/templates/config.html:591
+msgid "Upload files, or add web addresses that are downloaded each time the message is sent."
+msgstr "Tải tệp lên, hoặc thêm địa chỉ web được tải về mỗi khi tin nhắn được gửi."
+
+#: apprise_api/api/templates/config.html:3404
+msgid "Stored with the reminder"
+msgstr "Đã lưu cùng lời nhắc"
+
+#: apprise_api/api/templates/config.html:599
+msgid "Add URL"
+msgstr "Thêm URL"
+
+#: apprise_api/api/templates/config.html:3209
+msgid "Preview"
+msgstr "Xem trước"
+
+#: apprise_api/api/templates/config.html:3221
+msgid "Remove Attachment"
+msgstr "Gỡ tệp đính kèm"
+
+#: apprise_api/api/templates/config.html:3253
+msgid "Loading…"
+msgstr "Đang tải…"
+
+#: apprise_api/api/templates/config.html:3281
+msgid "The attachment could not be downloaded"
+msgstr "Không thể tải tệp đính kèm xuống"
+
+#: apprise_api/api/templates/config.html:3320
+msgid "This file cannot be shown here."
+msgstr "Không thể hiển thị tệp này ở đây."
+
+#: apprise_api/api/templates/config.html:3331
+msgid "Download"
+msgstr "Tải xuống"
+
+#: apprise_api/api/templates/config.html:3178
+msgid "Attachment URL"
+msgstr "URL tệp đính kèm"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+msgid "Every second"
+msgstr "Mỗi giây"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+#, python-brace-format
+msgid "Every {} seconds"
+msgstr "Mỗi {} giây"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+msgid "Every minute"
+msgstr "Mỗi phút"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+msgid "Every hour"
+msgstr "Mỗi giờ"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+#, python-brace-format
+msgid "Every {} minutes"
+msgstr "Mỗi {} phút"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+#, python-brace-format
+msgid "Every {} hours"
+msgstr "Mỗi {} giờ"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+#, python-brace-format
+msgid "Every {} days"
+msgstr "Mỗi {} ngày"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+#, python-brace-format
+msgid "Every {} weeks"
+msgstr "Mỗi {} tuần"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+#, python-brace-format
+msgid "Every {} months"
+msgstr "Mỗi {} tháng"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+#, python-brace-format
+msgid "Every {} years"
+msgstr "Mỗi {} năm"

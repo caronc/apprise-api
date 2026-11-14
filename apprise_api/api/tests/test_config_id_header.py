@@ -89,7 +89,7 @@ class ConfigIdHeaderTests(SimpleTestCase):
         self.assertIsNotNone(ConfigCache.get(key)[0])
 
         response = self.client.post("/del/", headers={"X-Apprise-Config-ID": key})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertIsNone(ConfigCache.get(key)[0])
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)

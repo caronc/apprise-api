@@ -27,6 +27,9 @@ from . import views
 from .utils import CONFIG_KEY_REGEX
 
 _KEY = r"(?P<key>{})".format(CONFIG_KEY_REGEX)
+_REMINDER_ID = r"(?P<rid>[0-9a-f]{32})"
+# Passed to the views of '@' routes, which use the current configuration.
+_CURRENT = {"key": "@"}
 
 urlpatterns = [
     re_path(r"^$", views.WelcomeView.as_view(), name="welcome"),
@@ -87,4 +90,52 @@ urlpatterns = [
         name="json_urls",
     ),
     re_path(r"^json/urls/?$", views.JsonUrlView.as_view(), name="json_urls_by_header"),
+    re_path(r"^attach/{}/?$".format(_KEY), views.AttachPreviewView.as_view(), name="attach_preview"),
+    re_path(r"^resolve/?$", views.ResolveView.as_view(), name="resolve_by_header"),
+    re_path(r"^resolve/{}/?$".format(_KEY), views.ResolveView.as_view(), name="resolve"),
+    re_path(r"^reminders/?$", views.ReminderOverviewView.as_view(), name="reminder_overview"),
+    re_path(r"^reminder/?$", views.ReminderListView.as_view(), name="reminder_by_header"),
+    re_path(r"^reminder/{}/?$".format(_KEY), views.ReminderListView.as_view(), name="reminder"),
+    re_path(r"^reminder/{}/preview/?$".format(_KEY), views.ReminderPreviewView.as_view(), name="reminder_preview"),
+    re_path(r"^reminder/{}/limits/?$".format(_KEY), views.ReminderLimitsView.as_view(), name="reminder_limits"),
+    re_path(r"^reminder/{}/holidays/?$".format(_KEY), views.ReminderHolidaysView.as_view(), name="reminder_holidays"),
+    re_path(r"^reminder/{}/{}/?$".format(_KEY, _REMINDER_ID), views.ReminderView.as_view(), name="reminder_item"),
+    re_path(
+        r"^reminder/{}/{}/test/?$".format(_KEY, _REMINDER_ID),
+        views.ReminderTestView.as_view(),
+        name="reminder_test",
+    ),
+    # '@' takes the key from the header, or else from the browser login, so a
+    # reminder ID can still follow it.
+    re_path(r"^reminder/@/?$", views.ReminderListView.as_view(), _CURRENT, name="reminder_current"),
+    re_path(
+        r"^reminder/@/preview/?$",
+        views.ReminderPreviewView.as_view(),
+        _CURRENT,
+        name="reminder_preview_current",
+    ),
+    re_path(
+        r"^reminder/@/limits/?$",
+        views.ReminderLimitsView.as_view(),
+        _CURRENT,
+        name="reminder_limits_current",
+    ),
+    re_path(
+        r"^reminder/@/holidays/?$",
+        views.ReminderHolidaysView.as_view(),
+        _CURRENT,
+        name="reminder_holidays_current",
+    ),
+    re_path(
+        r"^reminder/@/{}/?$".format(_REMINDER_ID),
+        views.ReminderView.as_view(),
+        _CURRENT,
+        name="reminder_item_current",
+    ),
+    re_path(
+        r"^reminder/@/{}/test/?$".format(_REMINDER_ID),
+        views.ReminderTestView.as_view(),
+        _CURRENT,
+        name="reminder_test_current",
+    ),
 ]

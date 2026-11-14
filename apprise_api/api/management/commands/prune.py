@@ -2,7 +2,7 @@
 # All rights reserved.
 #
 # This code is licensed under the MIT License.
-"""Prune persistent state and unused authentication locks together."""
+"""Prune persistent state, unused authentication locks and reminder files together."""
 
 from api.utils import ConfigCache
 import apprise
@@ -13,7 +13,7 @@ from django.core.management.base import BaseCommand, CommandError
 class Command(BaseCommand):
     """Run every routine disk cleanup used by the container."""
 
-    help = "Prune expired persistent state and unused authentication locks"
+    help = "Prune expired persistent state, unused authentication locks and unused reminder files"
 
     def handle(self, *args, **options):
         """Prune expired notification data and unused access records."""
@@ -30,4 +30,21 @@ class Command(BaseCommand):
 
         # Locks attached to configurations are never removed by this method.
         locks = ConfigCache.prune_unused_locks(settings.APPRISE_AUTH_PRUNE_SECONDS)
-        self.stdout.write(self.style.SUCCESS(f"Successfully completed pruning ({locks} unused lock(s) removed)"))
+
+        # Finish any configuration removal a crash left part way, so the
+        # reminders it set aside are not stranded.
+        ConfigCache.recover_removed_reminders()
+
+        # Reminders with nothing left to send. Done first, so the attachments
+        # only they used are removed below.
+        finished = ConfigCache.prune_finished_reminders(settings.APPRISE_REMINDER_PRUNE_DAYS * 86400)
+
+        # Attachments left behind by deleted reminders, or by an upload whose
+        # reminder was never saved.
+        files = ConfigCache.prune_reminder_files()
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully completed pruning ({locks} unused lock(s), {finished} finished reminder(s) and "
+                f"{files} unused reminder file(s) removed)"
+            )
+        )

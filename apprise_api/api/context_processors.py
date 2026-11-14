@@ -30,6 +30,7 @@ from .utils import (
     CONFIG_KEY_MAX_LENGTH,
     ConfigCache,
     gen_unique_config_id,
+    reminders_enabled,
 )
 
 
@@ -38,6 +39,11 @@ def stateful_mode(request):
     Returns our loaded Stateful Mode
     """
     return {"STATEFUL_MODE": ConfigCache.mode}
+
+
+def reminders(request):
+    """Tell templates whether reminders are turned on."""
+    return {"REMINDERS_ENABLED": reminders_enabled()}
 
 
 def stateless_mode(request):

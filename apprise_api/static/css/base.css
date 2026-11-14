@@ -1159,6 +1159,13 @@ textarea {
   backdrop-filter: blur(2px);
 }
 
+/* A toast is a small notice, not a dialog, so nothing behind it is dimmed or blurred. */
+.swal2-container:has(.swal2-toast),
+body.swal2-toast-shown .swal2-container {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
 /* Compact status notices stay centered and use the same shape in every view. */
 .swal2-popup.swal2-toast.apprise-toast {
   --toast-bg: var(--toast-info-bg);
@@ -2420,7 +2427,8 @@ pre code em {
   transform: translateY(-1px);
 }
 
-.tabs .tab a .card-count {
+.tabs .tab a .card-count,
+.tabs .tab a .reminder-tab-count {
   margin-left: 0.1rem;
 }
 
@@ -2437,20 +2445,31 @@ body .tabs .tab.disabled a:hover i {
   cursor: default;
 }
 
+/* The tabs fill the strip, each taking an equal share however many are
+   shown. They shrink and cut long labels short, so none is pushed out of sight. */
 .tabs.config-overview {
+  display: flex;
   margin-top: 0;
 }
 
-@media (max-width: 900px) {
-  .tabs.config-overview {
-    display: flex;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+.tabs.config-overview .tab {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
 
-  .tabs.config-overview .tab {
-    flex: 0 0 auto;
-  }
+.tabs.config-overview .tab a {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+}
+
+.tabs.config-overview .tab a .config-tab-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 800px) {
@@ -2467,6 +2486,7 @@ body .tabs .tab.disabled a:hover i {
   }
 
   .tabs.config-overview .tab a .card-count,
+  .tabs.config-overview .tab a .reminder-tab-count,
   .tabs.config-overview .tab a .config-tab-label {
     display: none !important;
   }
@@ -2803,21 +2823,23 @@ body .tabs .tab.disabled a:hover i {
   display: inline-block;
   position: relative;
   z-index: 0;
-  padding: 0 0.27rem;
+  padding: 0 0.2rem;
   border: 0;
   background: transparent;
+  font-weight: 500;
   line-height: 1;
   vertical-align: baseline;
 }
 
-/* Expand the marker inside the field without changing the URL row height. */
+/* A slim highlight around the name, like marked text, that keeps the URL row
+   height. */
 #url-list .url-template-var::before {
   content: "";
   position: absolute;
-  inset: -0.29rem 0 -0.35rem;
+  inset: -0.12rem 0 -0.16rem;
   z-index: -1;
-  border: 1px solid var(--mobile-app-accent);
-  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mobile-app-accent) 45%, transparent);
+  border-radius: 0.25rem;
   background: var(--mobile-app-accent-soft);
 }
 
@@ -3423,7 +3445,9 @@ code.config-id.is-concealed {
   background: var(--config-list-id-bg);
 }
 
-.config-list-heading {
+/* The Configuration List and Reminder List headings sit the same distance below the banner. */
+.config-list-heading,
+.reminder-overview>.page-section-heading {
   margin-top: 1rem;
 }
 
@@ -3607,6 +3631,23 @@ Authentication Editor
 
 .auth-move-card-icon svg {
   fill: currentColor;
+}
+
+.auth-reminder-limits-card {
+  padding: 1.25rem;
+}
+
+.auth-reminder-limits-card .reminder-usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-top: 0;
+}
+
+.auth-reminder-limits-card .reminder-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--reminder-muted);
 }
 
 .auth-credential-fields {
@@ -4038,6 +4079,14 @@ Authentication Editor
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
+.reset-configuration-toggle[hidden] {
+  display: none;
+}
+
+.reset-configuration-toggle+.reset-configuration-toggle {
+  margin-top: 0.5rem;
+}
+
 .reset-configuration-toggle__track {
   position: relative;
   width: 2.35rem;
@@ -4447,7 +4496,8 @@ Authentication Editor
     order: -1;
   }
 
-  .auth-move-card {
+  .auth-move-card,
+  .auth-reminder-limits-card {
     order: 1;
   }
 }
@@ -4798,7 +4848,6 @@ Authentication Editor
   box-shadow: inset 0 0 0 1px rgba(255, 183, 77, 0.7), 0 0 0 2px rgba(255, 183, 77, 0.2);
 }
 
-#notify .notify-attachments-field .btn-file,
 #notify .notify-form-actions .btn,
 #notify .notify-form-actions .btn-clear-form,
 #config .config-toolbar .config-url-builder-btn,
@@ -4814,7 +4863,6 @@ Authentication Editor
   padding: 0 1rem;
 }
 
-#notify .notify-attachments-field .btn-file i.material-icons,
 #notify .notify-form-actions .btn i.material-icons,
 #notify .notify-form-actions .btn-clear-form i.material-icons,
 #config .config-toolbar .config-url-builder-btn i.material-icons,
@@ -4824,7 +4872,6 @@ Authentication Editor
   margin: 0;
 }
 
-#notify .notify-attachments-field .btn-file i.right,
 #notify .notify-form-actions .btn i.right,
 #notify .notify-form-actions .btn-clear-form i.right,
 #config .config-toolbar .config-url-builder-btn i.right,
@@ -4841,6 +4888,7 @@ Authentication Editor
 }
 
 .notify-attachments-list .attachment-chip {
+  max-width: 100%;
   border-radius: 16px;
   padding: 0 0.75rem;
   line-height: 1.8;
@@ -4848,11 +4896,134 @@ Authentication Editor
   font-size: 0.9rem;
   display: inline-flex;
   align-items: center;
+  overflow-wrap: anywhere;
 }
 
 .notify-attachments-list .attachment-chip i.material-icons {
   font-size: 1.1rem;
   margin-left: 0.25rem;
+}
+
+/* The icon saying what kind of attachment it is: a stored file, an upload or a web address. */
+.notify-attachments-list .attachment-chip i.attachment-chip-kind {
+  margin-left: 0;
+  margin-right: 0.35rem;
+}
+
+/* Browse and Add URL sit together at the right of the heading. */
+.notify-attachments-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* A web address row: the address, then Preview and Remove. */
+.notify-template-row.notify-attach-row {
+  grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem;
+}
+
+/* An Apprise URL row: the URL and its remove button. */
+.notify-template-row.notify-url-row {
+  grid-template-columns: minmax(0, 1fr) 2.5rem;
+}
+
+.notify-attach-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--select-border);
+  border-radius: 7px;
+}
+
+.notify-attach-preview i.material-icons {
+  font-size: 1.2rem;
+}
+
+#notify .notify-attach-row input.invalid,
+#notify .notify-url-row input.invalid {
+  border-color: var(--form-error-text) !important;
+}
+
+/* What Preview shows: the file, or why it could not be downloaded. */
+.notify-attach-preview-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.notify-attach-preview-status {
+  margin: 0;
+  color: var(--notify-log-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.notify-attach-preview-status.is-error {
+  color: var(--form-error-text);
+}
+
+.notify-attach-preview-body img,
+.notify-attach-preview-body video {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}
+
+.notify-attach-preview-body pre {
+  width: 100%;
+  max-height: 50vh;
+  margin: 0;
+  padding: 0.65rem;
+  overflow: auto;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--select-border);
+  border-radius: 7px;
+  background: var(--select-bg);
+  color: var(--select-text);
+}
+
+.notify-attach-preview-none {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+}
+
+.notify-attach-preview-none i.material-icons {
+  font-size: 3rem;
+}
+
+#notify .notify-attach-error {
+  display: block;
+  margin: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+  color: var(--form-error-text);
+}
+
+/* Under the Apprise URL rows: whether the untagged services get it too. */
+#notify .notify-url-untagged {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+  color: var(--select-text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+#notify .notify-url-untagged[hidden] {
+  display: none;
 }
 
 .notify-form-section {
@@ -4871,11 +5042,33 @@ Authentication Editor
   margin-top: 0;
 }
 
+/* Process As and Type keep room for their longest choice (such as MARKDOWN),
+   so Tags moves to its own line before squeezing them. */
+@media (min-width: 601px) {
+  #notify .notify-top-row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  #notify .notify-top-row>.input-field.col {
+    margin-left: 0;
+    flex: 1 0 11rem;
+    max-width: 15rem;
+  }
+
+  #notify .notify-top-row>.input-field.col:last-child {
+    flex: 1 1 20rem;
+    max-width: none;
+  }
+}
+
 #notify .notify-form-section .select-wrapper input.select-dropdown,
 #notify .notify-form-section .chips,
 #notify .notify-template-row input,
 #notify .notify-message-fields input,
-#notify .notify-message-fields textarea {
+#notify .notify-message-fields textarea,
+#notify #reminder-form input:not([type="checkbox"]),
+#reminders .reminder-view-zone input {
   border: 1px solid var(--select-border) !important;
   border-radius: 7px !important;
   box-sizing: border-box;
@@ -4884,9 +5077,24 @@ Authentication Editor
 }
 
 #notify .notify-form-section .select-wrapper input.select-dropdown,
-#notify .notify-message-fields input {
+#notify .notify-message-fields input,
+#notify #reminder-form input:not([type="checkbox"]),
+#reminders .reminder-view-zone input {
   min-height: 2.75rem;
   height: 2.75rem;
+}
+
+#notify #reminder-form input:not([type="checkbox"]),
+#reminders .reminder-view-zone input {
+  width: 100%;
+  margin: 0;
+  padding: 0 0.65rem;
+}
+
+#notify #reminder-form input:not([type="checkbox"]):focus,
+#reminders .reminder-view-zone input:focus {
+  border-color: var(--select-border-hover) !important;
+  box-shadow: 0 0 0 3px var(--select-focus-ring) !important;
 }
 
 #notify .notify-form-section .chips {
@@ -4895,10 +5103,17 @@ Authentication Editor
   padding: 0 0.65rem;
 }
 
-#notify .notify-delivery-options .notify-attachments-field .btn-file {
-  min-height: 2.75rem;
-  height: 2.75rem;
-  line-height: 2.75rem;
+/* Without a configuration there are no tags to pick, so the field is greyed out. */
+#notify .notify-form-section .chips.notify-tags-unavailable,
+#notify label[for="id_tag"]:has(+ .chips.notify-tags-unavailable) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* The Tags box is also an input-field, whose row padding would push the tags
+   below the middle; flexbox already centres them. */
+#notify .notify-form-section .chips.input-field {
+  padding-top: 0;
 }
 
 #notify .notify-form-section .chips input {
@@ -4923,7 +5138,7 @@ Authentication Editor
   resize: vertical;
 }
 
-.notify-template-values-heading {
+.notify-section-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4931,12 +5146,33 @@ Authentication Editor
   margin-bottom: 0.55rem;
 }
 
-.notify-template-values-heading h6,
-.notify-template-values-heading p {
+.notify-section-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.notify-section-title>i.material-icons {
+  flex: 0 0 auto;
+  margin-top: 0.05rem;
+  color: var(--mobile-app-accent);
+  font-size: 1.25rem;
+}
+
+.notify-section-heading h6,
+.notify-section-heading p {
   margin: 0;
 }
 
-.notify-template-values-heading p,
+.notify-section-heading h6,
+.notify-section-heading-label {
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.notify-section-heading p,
 .notify-template-empty {
   color: var(--notify-log-muted);
   font-size: 0.82rem;
@@ -5216,7 +5452,6 @@ Authentication Editor
 
   #notify .notify-form-actions .btn,
   #notify .notify-form-actions .btn-clear-form,
-  #notify .notify-attachments-field .btn-file,
   #config .config-toolbar .config-url-builder-btn,
   #config .config-form-actions .btn {
     min-height: 2.7rem;
@@ -5245,13 +5480,56 @@ Authentication Editor
     align-self: end;
   }
 
+  /* On a phone the picked value takes its own line, above the buttons. */
+  #reminder-picker .reminder-picker-footer {
+    justify-content: flex-end;
+  }
+
+  #reminder-picker .reminder-picker-value {
+    flex: 1 1 100%;
+  }
+
+  /* On a phone the quick choices sit above the calendar, two to a row. */
+  #reminder-picker .reminder-picker-main {
+    flex-direction: column;
+  }
+
+  #reminder-picker .reminder-picker-quick {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-right: 0;
+    border-bottom: 1px solid var(--dialog-border);
+  }
+
+  #reminder-picker .reminder-picker-heading {
+    grid-column: 1 / -1;
+  }
+
+  /* Web address rows keep Preview and Remove beside the address. */
+  .notify-template-row.notify-attach-row {
+    grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem;
+  }
+
+  .notify-template-row.notify-attach-row .notify-template-remove {
+    grid-column: 3;
+  }
+
+  .notify-template-row.notify-url-row {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+
+  .notify-template-row.notify-url-row .notify-template-remove {
+    grid-column: 2;
+  }
+
+  /* Three buttons wrap onto two rows rather than squeeze their labels. */
   #notify .notify-form-actions {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   #notify .notify-form-actions .btn,
   #notify .notify-form-actions .btn-clear-form {
-    flex: 1 1 0;
+    flex: 1 1 calc(50% - 0.6rem);
     min-width: 0;
     padding: 0 0.6rem;
     font-size: 0.82rem;
@@ -5267,13 +5545,17 @@ Authentication Editor
     padding: 0.55rem;
   }
 
-  .notify-template-values-heading {
+  .notify-section-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
   .notify-template-add {
     justify-content: center;
+  }
+
+  .notify-attachments-buttons .notify-template-add {
+    flex: 1 1 0;
   }
 
   #notify .notify-top-row>.input-field.col {
@@ -5707,4 +5989,1174 @@ Config Page Toolbar (URL Builder)
   #config .config-form-actions .btn {
     width: 100%;
   }
+}
+
+/* =========================================
+Reminders
+========================================= */
+#reminders .reminder-notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid;
+  border-radius: 8px;
+}
+
+#reminders .reminder-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  #reminders .reminder-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+#reminders .reminder-empty {
+  margin: 0 0 1rem;
+}
+
+#reminders .reminder-empty[hidden] {
+  display: none;
+}
+
+/* The attachment space alert, on the Reminders tab and in the Reminder section. */
+.reminder-space-full {
+  margin: 0 0 1rem;
+}
+
+.reminder-space-full[hidden] {
+  display: none;
+}
+
+#reminders .reminder-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  color: var(--reminder-text);
+  background-color: var(--reminder-card-bg);
+  border: 1px solid var(--reminder-card-border);
+  border-left: 4px solid var(--reminder-accent);
+  border-radius: 8px;
+}
+
+#reminders .reminder-card.is-paused {
+  border-left-color: var(--reminder-paused);
+}
+
+#reminders .reminder-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+#reminders .reminder-status {
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.5rem;
+  color: var(--reminder-accent);
+  background-color: var(--reminder-accent-soft);
+  border-radius: 1rem;
+}
+
+#reminders .reminder-card.is-paused .reminder-status {
+  color: var(--reminder-paused);
+  background-color: var(--reminder-paused-soft);
+}
+
+/* A send that failed is marked in red. */
+#reminders .reminder-status.is-failed {
+  color: var(--reminder-failed);
+  background-color: var(--reminder-failed-soft);
+  border: 1px solid var(--reminder-failed);
+}
+
+#reminders .reminder-card-line {
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+#reminders .reminder-card-label {
+  color: var(--reminder-muted);
+}
+
+#reminders .reminder-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+#reminders .reminder-action {
+  display: inline-flex;
+  flex: 0 0 2.25rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+#reminders .reminder-action i.material-icons {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+#reminders .reminder-calendar {
+  margin-bottom: 1.5rem;
+}
+
+/* The delete dialog: the reminder in a small card, read from the left like
+   the rest of the dialog, with a line saying what each button removes. */
+.swal2-popup.reminder-delete-popup .swal2-html-container {
+  padding: 0;
+  text-align: left;
+}
+
+.reminder-delete-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--dialog-border);
+  border-left: 4px solid var(--reminder-accent);
+  border-radius: 8px;
+  background: var(--dialog-surface-raised);
+}
+
+.reminder-delete-card i.material-icons {
+  color: var(--reminder-accent);
+}
+
+.reminder-delete-card div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reminder-delete-card span {
+  color: var(--notify-log-muted);
+  font-size: 0.9rem;
+}
+
+.reminder-delete-note {
+  margin: 0.75rem 0 0;
+  color: var(--notify-log-muted);
+  font-size: 0.9rem;
+}
+
+/* A small menu below a button, such as Edit this time or Edit the series. */
+.reminder-menu {
+  display: block;
+  position: absolute;
+  z-index: 1001;
+  min-width: 12rem;
+  width: auto;
+  height: auto;
+  padding: 0.3rem;
+  opacity: 1;
+  overflow: hidden;
+}
+
+/* Materialize makes dropdown items tall and paints them light grey on hover,
+   which would show as a bar around the shorter buttons. */
+.reminder-menu li {
+  min-height: 0;
+  line-height: normal;
+  background: transparent !important;
+}
+
+.reminder-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.3rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.reminder-menu button i.material-icons {
+  font-size: 1.15rem;
+  color: inherit;
+}
+
+/* The calendar never makes the page scroll sideways. */
+#reminders .reminder-calendar {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* A reminder time clicked in the week or month view. */
+#reminders .fc .fc-event.is-picked {
+  outline: 2px solid var(--reminder-accent);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--fc-highlight-color);
+}
+
+/* The reminders of the day or hour picked, under the calendar. */
+#reminders .reminder-selection {
+  margin-top: 1rem;
+}
+
+#reminders .reminder-selection[hidden] {
+  display: none;
+}
+
+#reminders .reminder-selection-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--reminder-text);
+  font-weight: 500;
+}
+
+/* Everything listed is on the day in the heading. */
+#reminders .reminder-selection .fc-list-day {
+  display: none;
+}
+
+#reminders .fc .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#reminders .fc .fc-toolbar-title {
+  font-size: 1.25rem;
+}
+
+/* Dates and reminder names are links, but should read as plain text. */
+#reminders .fc a {
+  color: var(--reminder-text) !important;
+}
+
+/* The list shows each reminder time as a coloured row with its buttons. */
+#reminders .fc .fc-list-table {
+  border-collapse: separate;
+  border-spacing: 0 0.35rem;
+}
+
+#reminders .fc .fc-list-event td {
+  vertical-align: middle;
+  background: var(--reminder-event-bg);
+  border: 0;
+}
+
+#reminders .fc .fc-list-event .fc-list-event-time {
+  width: 7rem;
+  padding-left: 0.85rem;
+  border-left: 4px solid var(--reminder-event-accent);
+  border-radius: 7px 0 0 7px;
+  font-weight: 600;
+}
+
+#reminders .fc .fc-list-event .fc-list-event-graphic {
+  display: none;
+}
+
+#reminders .fc .fc-list-event .fc-list-event-title {
+  border-radius: 0 7px 7px 0;
+}
+
+/* Rows act only through their buttons. */
+#reminders .fc .fc-list-event {
+  cursor: default;
+}
+
+#reminders .fc .fc-list-event:hover td {
+  background: var(--reminder-event-hover);
+}
+
+/* A paused reminder turns grey (see the theme files) and faded, apart from its buttons. */
+#reminders .fc .fc-list-event.is-paused .fc-list-event-time {
+  color: var(--notify-log-muted);
+}
+
+#reminders .fc .fc-list-event.is-paused .reminder-event-text {
+  opacity: 0.6;
+}
+
+#reminders .fc .fc-list-event.is-paused .reminder-status {
+  color: var(--notify-log-muted);
+  background-color: transparent;
+  border: 1px solid var(--notify-log-muted);
+}
+
+/* Play stands out on a paused reminder, as it is what resumes it. */
+#reminders .reminder-action.reminder-action-resume {
+  color: var(--reminder-accent);
+  background-color: var(--reminder-accent-soft);
+  border-color: var(--reminder-accent);
+}
+
+#reminders .reminder-action.reminder-action-resume:hover,
+#reminders .reminder-action.reminder-action-resume:focus-visible {
+  color: var(--reminder-card-bg);
+  background-color: var(--reminder-accent);
+}
+
+#reminders .reminder-action.reminder-action-resume i.material-icons {
+  color: inherit;
+}
+
+#reminders .reminder-event-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+#reminders .reminder-event-text {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+#reminders .reminder-event-summary {
+  color: var(--reminder-muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+#reminders .reminder-event-actions {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Week and month views colour each reminder the same way. */
+#reminders .fc .fc-event[class*="reminder-color-"] {
+  --fc-event-bg-color: var(--reminder-event-accent);
+  --fc-event-border-color: var(--reminder-event-accent);
+}
+
+/* A failed send shows a red dot. */
+#reminders .fc .reminder-event-past.is-failed {
+  --fc-event-bg-color: var(--reminder-failed);
+  --fc-event-border-color: var(--reminder-failed);
+}
+
+#reminders .fc .reminder-event-past:not(.fc-list-event) {
+  opacity: 0.75;
+}
+
+/* In the list only the text fades, so the result and buttons stay clear. */
+#reminders .fc .fc-list-event.reminder-event-past .fc-list-event-time {
+  color: var(--reminder-muted);
+}
+
+#reminders .fc .fc-list-event.reminder-event-past .reminder-event-text {
+  opacity: 0.75;
+}
+
+#reminders .reminder-usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+/* The section header opens and closes the Reminders section. */
+#notify-reminder .reminder-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-transform: none;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+#notify-reminder .reminder-toggle:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--select-focus-ring);
+}
+
+#notify-reminder .reminder-toggle .reminder-toggle-arrow {
+  margin-left: auto;
+  color: var(--notify-log-muted);
+  transition: transform 0.2s ease;
+}
+
+#notify-reminder .reminder-toggle:hover .reminder-toggle-arrow,
+#notify-reminder .reminder-toggle:focus-visible .reminder-toggle-arrow {
+  color: var(--mobile-app-accent);
+}
+
+#notify-reminder .reminder-toggle[aria-expanded="true"] .reminder-toggle-arrow {
+  transform: rotate(180deg);
+}
+
+#notify-reminder .reminder-panel {
+  padding-top: 0.5rem;
+}
+
+#notify-reminder .reminder-panel[hidden] {
+  display: none;
+}
+
+/* A reminder just saved is outlined for a moment on the calendar. */
+#reminders .fc .reminder-event-saved td {
+  box-shadow: inset 0 2px 0 var(--mobile-app-accent), inset 0 -2px 0 var(--mobile-app-accent);
+}
+
+#reminders .fc .reminder-event-saved .fc-list-event-title {
+  box-shadow: inset 0 2px 0 var(--mobile-app-accent), inset 0 -2px 0 var(--mobile-app-accent), inset -2px 0 0 var(--mobile-app-accent);
+}
+
+/* "Show times in" sits above the calendar, with a button back to the browser's timezone. */
+#reminders .reminder-view-zone {
+  max-width: 25rem;
+  margin: 0 0 1rem;
+}
+
+#reminders .reminder-view-zone-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#reminders .reminder-view-zone-row .reminder-combobox {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#reminders .reminder-view-zone-reset,
+#reminder-form .reminder-holiday-step button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--select-border);
+  border-radius: 7px;
+  background: var(--select-bg);
+  color: var(--mobile-app-accent);
+}
+
+#reminders .reminder-view-zone-reset:hover,
+#reminders .reminder-view-zone-reset:focus-visible,
+#reminder-form .reminder-holiday-step button:hover,
+#reminder-form .reminder-holiday-step button:focus-visible {
+  border-color: var(--select-border-hover);
+}
+
+#reminders .reminder-view-zone-reset:disabled,
+#reminder-form .reminder-holiday-step button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#reminders .reminder-view-zone-reset i.material-icons,
+#reminder-form .reminder-holiday-step button i.material-icons {
+  color: inherit;
+}
+
+/* Select all, none and invert, small beside the Days and Months labels. */
+#reminder-form .reminder-pick-actions {
+  display: inline-flex;
+  gap: 0.2rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+#reminder-form .reminder-pick-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid var(--select-border);
+  border-radius: 6px;
+  background: var(--select-bg);
+  color: var(--notify-log-muted);
+  line-height: 1;
+}
+
+#reminder-form .reminder-pick-actions button:hover,
+#reminder-form .reminder-pick-actions button:focus-visible {
+  border-color: var(--select-border-hover);
+  color: var(--mobile-app-accent);
+}
+
+#reminder-form .reminder-pick-actions button i.material-icons {
+  color: inherit;
+  font-size: 1rem;
+}
+
+/* The start's picker, with a holiday's year buttons beside it. */
+#reminder-form .reminder-start-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#reminder-form .reminder-start-row .reminder-picker-anchor {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#reminder-form .reminder-holiday-step {
+  display: flex;
+  gap: 0.25rem;
+}
+
+#reminder-form .reminder-holiday-step[hidden] {
+  display: none;
+}
+
+/* The All view lists every reminder as a card, without the date controls. */
+#reminder-calendar:has(.reminder-all-view) .fc-header-toolbar .fc-toolbar-chunk:not(:last-child) {
+  display: none;
+}
+
+#reminder-calendar:has(.reminder-all-view) .fc-header-toolbar .fc-toolbar-chunk:last-child {
+  margin-left: auto;
+}
+
+#reminder-calendar .reminder-all-view .reminder-list {
+  margin: 0;
+}
+
+/* The empty box spans both card columns on a wide screen. */
+#reminder-calendar .reminder-all-view .reminder-all-empty {
+  grid-column: 1 / -1;
+}
+
+/* Cards open the reminder when clicked. */
+#reminders .reminder-card.is-clickable {
+  cursor: pointer;
+}
+
+/* Labels that are not tied to one field, such as Days, read like the others. */
+#reminder-form .reminder-field-label,
+#reminders .reminder-view-zone label {
+  display: block;
+  margin: 0 0 0.2rem 0;
+  color: var(--mobile-app-accent);
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+/* Weekdays and months are pills that light up when chosen. */
+#reminder-form .reminder-days-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+#reminder-form .reminder-days-list label {
+  display: inline-flex;
+}
+
+#reminder-form .reminder-days-list [type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#reminder-form .reminder-days-list [type="checkbox"]+span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.1rem;
+  height: 2.1rem;
+  padding: 0 0.75rem;
+  color: var(--reminder-text);
+  font-size: 0.9rem;
+  line-height: 1;
+  background: var(--select-bg);
+  border: 1px solid var(--select-border);
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+/* Materialize draws its own check box before the text; pills do not need it. */
+#reminder-form .reminder-days-list [type="checkbox"]+span::before,
+#reminder-form .reminder-days-list [type="checkbox"]+span::after {
+  display: none;
+}
+
+#reminder-form .reminder-days-list [type="checkbox"]:checked+span {
+  color: var(--mobile-app-accent);
+  font-weight: 600;
+  background: var(--reminder-accent-soft);
+  border-color: var(--mobile-app-accent);
+}
+
+#reminder-form .reminder-days-list [type="checkbox"]:focus-visible+span {
+  box-shadow: 0 0 0 3px var(--select-focus-ring);
+}
+
+/* "Make recurring" uses the same switch as the Review tab's filter. */
+#reminder-form .reminder-recurring-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--reminder-text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* Why the switch is off while one time of a series is changed. */
+#reminder-form .reminder-span .reminder-hint {
+  flex-basis: 100%;
+  margin: 0.35rem 0 0;
+  color: var(--reminder-muted);
+  font-size: 0.85rem;
+}
+
+#reminder-form .reminder-span .reminder-hint[hidden] {
+  display: none;
+}
+
+#reminder-form .reminder-recurring-toggle:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Fields wrap in rows like words, so a taller one (such as one showing an
+   error) never pushes the next out of line the way floated columns can. */
+#reminder-form.row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Materialize centres its columns with auto margins, which would push a
+   field alone on its line to the right. */
+#reminder-form.row>.col {
+  margin-left: 0;
+}
+
+/* Starts, the "Make recurring" switch and Ends on one line, wrapping on a phone. */
+#reminder-form .reminder-span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 1.5rem;
+}
+
+/* Starts and Ends share what the switch leaves of the row, each wide enough
+   for a full date and time; when they do not fit, Ends moves to a new line. */
+#reminder-form .reminder-span-field {
+  flex: 1 1 17.5rem;
+  min-width: 0;
+}
+
+/* A holiday's start also holds its two year buttons. */
+#reminder-form .reminder-span-field:has(.reminder-holiday-step:not([hidden])) {
+  flex-basis: 24rem;
+}
+
+/* The switch lines up with the fields beside it, below their labels. */
+#reminder-form .reminder-recurring {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: 1.95rem;
+}
+
+@media (max-width: 600px) {
+
+  /* Stacked on a phone, the dates fill the width and the switch needs no gap above it. */
+  #reminder-form .reminder-span-field {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  #reminder-form .reminder-recurring {
+    margin-top: 0.25rem;
+  }
+
+  /* Narrower year buttons leave a holiday's date and time room to show in full. */
+  #reminder-form .reminder-holiday-step button {
+    width: 2.25rem;
+  }
+}
+
+/* "Every [x] [unit]" and the drift side by side, wrapping on a phone. */
+#reminder-form .reminder-every {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
+}
+
+#reminder-form .reminder-every>.input-field {
+  margin-top: 0;
+}
+
+/* Each keeps the width its controls need rather than stretching across. */
+#reminder-form .reminder-every-main,
+#reminder-form .reminder-drift {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* "Every [x] [unit]" on one line. */
+#reminder-form .reminder-every-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+#reminder-form .reminder-every-controls .reminder-interval {
+  flex: 0 0 5.5rem;
+  width: 5.5rem;
+}
+
+#reminder-form .reminder-every-controls .reminder-unit {
+  flex: 0 1 11rem;
+  width: 11rem;
+  min-width: 0;
+}
+
+/* The drift can be a long, negative number, and its units are shorter. */
+#reminder-form .reminder-drift .reminder-interval {
+  flex-basis: 8rem;
+  width: 8rem;
+}
+
+#reminder-form .reminder-drift .reminder-unit {
+  flex-basis: 9rem;
+  width: 9rem;
+}
+
+/* Rows laid out with flex still hide when the schedule does not use them. */
+#reminder-form [hidden] {
+  display: none !important;
+}
+
+/* A text field with a list of matches below it, such as the timezone. */
+#reminder-form .reminder-combobox,
+#reminders .reminder-view-zone .reminder-combobox {
+  position: relative;
+}
+
+#reminder-form .reminder-combobox-list[hidden],
+#reminders .reminder-view-zone .reminder-combobox-list[hidden] {
+  display: none !important;
+}
+
+#reminder-form .reminder-combobox-list,
+#reminders .reminder-view-zone .reminder-combobox-list {
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  max-height: min(18rem, 52vh);
+  margin: 0.2rem 0 0;
+  overflow-y: auto;
+  opacity: 1;
+}
+
+#reminder-form .reminder-combobox-list li,
+#reminders .reminder-view-zone .reminder-combobox-list li {
+  min-height: 0;
+  cursor: pointer;
+}
+
+#reminder-form .reminder-combobox-list li>span,
+#reminders .reminder-view-zone .reminder-combobox-list li>span {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+/* Upcoming send times as small cards in a row that wraps when it must. */
+#reminder-form .reminder-upcoming-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.2rem 0 0;
+}
+
+#reminder-form .reminder-upcoming-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--reminder-card-border);
+  border-left: 3px solid var(--reminder-accent);
+  border-radius: 7px;
+  background: var(--reminder-card-bg);
+  line-height: 1.25;
+}
+
+#reminder-form .reminder-upcoming-date {
+  color: var(--reminder-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+#reminder-form .reminder-upcoming-time {
+  color: var(--reminder-muted);
+  font-size: 0.85rem;
+}
+
+/* The card that says a repeating reminder has no more times after these. */
+#reminder-form .reminder-upcoming-item.is-end {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--reminder-muted);
+  font-size: 0.85rem;
+  border-style: dashed;
+  border-left: 1px dashed var(--reminder-card-border);
+  background: transparent;
+}
+
+#reminder-form .reminder-upcoming-item.is-end i.material-icons {
+  font-size: 1.1rem;
+}
+
+/* A field that needs fixing is outlined the same way as a missing message body. */
+#notify #reminder-form input.invalid {
+  border-color: rgba(255, 183, 77, 0.7) !important;
+  box-shadow: 0 0 0 1px rgba(255, 183, 77, 0.55) !important;
+}
+
+/* A field that opens the date picker, with its icon inside on the right. */
+#reminder-form .reminder-picker-anchor {
+  position: relative;
+}
+
+#reminder-form .reminder-picker-anchor>i.material-icons {
+  position: absolute;
+  top: 1.375rem;
+  right: 0.7rem;
+  transform: translateY(-50%);
+  color: var(--notify-log-muted);
+  pointer-events: none;
+}
+
+/* Room for the icon, so the text never runs under it. Named with "input"
+   so it wins over the padding every reminder field gets. */
+#notify #reminder-form input.reminder-picker-field {
+  padding-right: 2.6rem;
+  cursor: pointer;
+}
+
+/* The date picker opens in the middle of the screen over a dimmed page:
+   quick choices beside a calendar, then the time. */
+.reminder-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1002;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.reminder-picker-backdrop[hidden] {
+  display: none;
+}
+
+#reminder-picker {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1003;
+  width: min(35rem, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 1.5rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  transform: translate(-50%, -50%);
+  color: var(--dialog-text);
+  background: var(--dialog-surface);
+  border: 1px solid var(--dialog-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+#reminder-picker[hidden] {
+  display: none !important;
+}
+
+#reminder-picker .reminder-picker-main {
+  display: flex;
+}
+
+#reminder-picker[data-mode="time"] .reminder-picker-main {
+  display: none;
+}
+
+#reminder-picker .reminder-picker-quick {
+  flex: 0 0 13rem;
+  padding: 0.5rem 0;
+  border-right: 1px solid var(--dialog-border);
+}
+
+#reminder-picker .reminder-picker-heading {
+  display: block;
+  padding: 0.25rem 0.9rem 0.45rem;
+  color: var(--notify-log-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#reminder-picker .reminder-picker-quick button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.4rem 0.9rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+#reminder-picker .reminder-picker-quick button:hover,
+#reminder-picker .reminder-picker-quick button:focus-visible {
+  background: var(--select-bg);
+  outline: none;
+}
+
+#reminder-picker .reminder-picker-quick i.material-icons {
+  color: var(--notify-log-muted);
+  font-size: 1.1rem;
+}
+
+#reminder-picker .reminder-picker-day {
+  margin-left: auto;
+  color: var(--notify-log-muted);
+  font-size: 0.8rem;
+}
+
+#reminder-picker .reminder-picker-calendar {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem;
+}
+
+#reminder-picker .reminder-picker-calendar .air-datepicker {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  border: 0;
+}
+
+/* The calendar's month heading stays inside the calendar's width. */
+#reminder-picker .reminder-picker-calendar .air-datepicker-nav {
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+}
+
+/* Keep the month and year together as one compact heading. */
+#reminder-picker .air-datepicker-nav--title {
+  align-items: center;
+  min-width: 0;
+  padding: 0 0.5rem;
+  color: var(--dialog-text);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#reminder-picker .air-datepicker-nav--title i {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  margin-left: 0.4rem;
+  color: var(--notify-log-muted);
+  font-family: inherit;
+  font-size: 1rem;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.2;
+  vertical-align: baseline;
+}
+
+#reminder-picker .reminder-picker-time,
+#reminder-picker .reminder-picker-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid var(--dialog-border);
+}
+
+#reminder-picker[data-mode="time"] .reminder-picker-time {
+  border-top: 0;
+}
+
+#reminder-picker .reminder-picker-time>i.material-icons {
+  color: var(--notify-log-muted);
+}
+
+#reminder-picker .reminder-picker-spin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#reminder-picker .reminder-picker-spin button {
+  height: 1.2rem;
+  padding: 0;
+  color: var(--notify-log-muted);
+  line-height: 1.2rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+#reminder-picker .reminder-picker-spin input.reminder-picker-hour,
+#reminder-picker .reminder-picker-spin input.reminder-picker-minute,
+#reminder-picker .reminder-picker-spin input.reminder-picker-second {
+  width: 2.6rem;
+  min-height: 0;
+  height: 2.2rem;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: center;
+  background: transparent;
+  border: 0 !important;
+  border-radius: 6px;
+  box-shadow: none !important;
+}
+
+#reminder-picker .reminder-picker-spin input:focus {
+  background: var(--select-bg);
+}
+
+#reminder-picker .reminder-picker-colon {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* An end shows its own quick choices, counted from the start. */
+#reminder-picker .reminder-picker-quick button[hidden] {
+  display: none;
+}
+
+/* Seconds are only offered for the time a reminder is sent. */
+#reminder-picker .reminder-picker-seconds[hidden] {
+  display: none;
+}
+
+#reminder-picker .reminder-picker-presets {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+#reminder-picker .reminder-picker-presets button {
+  padding: 0.15rem 0.6rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  background: none;
+  border: 1px solid var(--select-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+#reminder-picker .reminder-picker-presets button.is-active {
+  color: var(--mobile-app-accent);
+  border-color: var(--mobile-app-accent);
+}
+
+#reminder-picker .reminder-picker-value {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: auto;
+  font-size: 0.9rem;
+}
+
+#reminder-picker .reminder-picker-value i.material-icons {
+  color: var(--mobile-app-accent);
+  font-size: 1.1rem;
+}
+
+#reminder-form .reminder-field-error {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--form-error-text);
+}
+
+/* A warning that does not stop saving, such as a time that has passed. */
+#reminder-form .reminder-field-warning {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--toast-warning-text);
+}
+
+#reminders .reminder-card-key {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+#reminders .reminder-card-key code.config-id {
+  overflow-wrap: anywhere;
+}
+
+/* The "Editing reminder" notice uses the same box as the other notices, with Cancel on the right. */
+#notify .notify-reminder-editing[hidden] {
+  display: none;
+}
+
+#notify .notify-reminder-editing-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+#notify .notify-reminder-editing-body strong {
+  overflow-wrap: anywhere;
 }

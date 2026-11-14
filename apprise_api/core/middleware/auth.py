@@ -38,7 +38,39 @@ from django.utils.translation import gettext_lazy as _
 
 # Route names come from Django's URL table, so adding an endpoint does not
 # require another path regular expression in this middleware.
-_KEYED_ROUTES = frozenset({"config", "add", "del", "get", "move", "notify", "json_urls", "auth", "health_key", "qr"})
+_KEYED_ROUTES = frozenset(
+    {
+        "config",
+        "add",
+        "del",
+        "get",
+        "move",
+        "notify",
+        "json_urls",
+        "attach_preview",
+        "resolve",
+        "auth",
+        "health_key",
+        "qr",
+        "reminder",
+        "reminder_preview",
+        "reminder_limits",
+        "reminder_holidays",
+        "reminder_item",
+        "reminder_test",
+    }
+)
+# Reminder routes with '@' take the key from the header, or the browser login.
+_REMINDER_CURRENT_ROUTES = frozenset(
+    {
+        "reminder_current",
+        "reminder_preview_current",
+        "reminder_limits_current",
+        "reminder_holidays_current",
+        "reminder_item_current",
+        "reminder_test_current",
+    }
+)
 _HEADER_ROUTES = frozenset(
     {
         "add_by_header",
@@ -49,12 +81,17 @@ _HEADER_ROUTES = frozenset(
         "json_urls_by_header",
         "auth_by_header",
         "qr_by_header",
+        "reminder_by_header",
+        "resolve_by_header",
         "health",
         "details",
+        *_REMINDER_CURRENT_ROUTES,
     }
 )
-_SHARED_WEB_ROUTES = frozenset({"welcome", "config_list", "details"})
-_CURRENT_CONFIG_ROUTES = frozenset({"config_current", "auth_current", "health_current", "qr_current"})
+_SHARED_WEB_ROUTES = frozenset({"welcome", "config_list", "reminder_overview", "details"})
+_CURRENT_CONFIG_ROUTES = frozenset(
+    {"config_current", "auth_current", "health_current", "qr_current", *_REMINDER_CURRENT_ROUTES}
+)
 
 
 def _request_route(request):

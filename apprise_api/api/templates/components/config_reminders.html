@@ -1,0 +1,266 @@
+{% load i18n %}
+
+{# The Reminders section of the Notifications form: when to send the message as a reminder. #}
+<section id="notify-reminder"
+         class="notify-form-section notify-reminder-section"
+         aria-labelledby="reminder-toggle">
+  {# The heading opens and closes the section. #}
+  <button id="reminder-toggle"
+          type="button"
+          class="reminder-toggle"
+          aria-expanded="false"
+          aria-controls="reminder-panel">
+    <span class="notify-section-title">
+      <i class="material-icons" aria-hidden="true">alarm</i>
+      <span class="notify-section-heading-label">{% trans "Reminder" %}</span>
+    </span>
+    <i class="material-icons reminder-toggle-arrow" aria-hidden="true">expand_more</i>
+  </button>
+  <div id="reminder-panel" class="reminder-panel" hidden>
+    {% if not reminders_admin %}
+      {% include "components/reminder_space_full.html" %}
+    {% endif %}
+    {# These fields have no name, so sending the notification ignores them. #}
+    {# Each label comes before its field, the same as the rest of the form. #}
+    {# Chrome ignores autocomplete="off" on fields it takes for a person or an address, such as #}
+    {# Name, Country or Region, but leaves alone a value it does not know, so those use one. #}
+    {# The fields wrap like words in a sentence, in the same order as Tab moves through them. #}
+    <div id="reminder-form" class="row reminder-form">
+      <div class="input-field col s12">
+        <label for="reminder-name">{% trans "Name" %}:</label>
+        <input id="reminder-name"
+               type="text"
+               maxlength="100"
+               autocomplete="apprise-none">
+      </div>
+      {# Send on a date, or on a holiday each year. #}
+      <div class="input-field col s12 m6">
+        <label for="reminder-send">{% trans "Send on" %}:</label>
+        <select id="reminder-send" class="reminder-select">
+          <option value="date">{% trans "A date" %}</option>
+          <option value="holiday">{% trans "A holiday" %}</option>
+        </select>
+      </div>
+      {# The timezone its times are in; type to search the list. #}
+      <div class="input-field col s12 m6">
+        <label for="reminder-timezone">{% trans "Timezone" %}:</label>
+        <div class="reminder-combobox">
+          <input id="reminder-timezone"
+                 type="text"
+                 role="combobox"
+                 aria-autocomplete="list"
+                 aria-expanded="false"
+                 aria-controls="reminder-timezone-list"
+                 autocomplete="apprise-search"
+                 spellcheck="false">
+          <ul id="reminder-timezone-list"
+              class="dropdown-content reminder-combobox-list"
+              role="listbox"
+              hidden>
+          </ul>
+        </div>
+      </div>
+      {# A holiday: its country, region (optional) and name. Its date and time of day are #}
+      {# set in Starts below, which fills in the holiday's date when one is chosen. #}
+      <div class="input-field col s12 m6 l3" data-reminder-send="holiday">
+        <label for="reminder-country">{% trans "Country" %}:</label>
+        <div class="reminder-combobox">
+          <input id="reminder-country"
+                 type="text"
+                 role="combobox"
+                 aria-autocomplete="list"
+                 aria-expanded="false"
+                 aria-controls="reminder-country-list"
+                 autocomplete="apprise-search"
+                 spellcheck="false">
+          <ul id="reminder-country-list"
+              class="dropdown-content reminder-combobox-list"
+              role="listbox"
+              hidden>
+          </ul>
+        </div>
+      </div>
+      <div class="input-field col s12 m6 l3" data-reminder-send="holiday">
+        <label for="reminder-region">{% trans "Region" %}:</label>
+        <select id="reminder-region"
+                class="reminder-select"
+                autocomplete="apprise-none"></select>
+      </div>
+      {# Holiday names are long, so the list takes half the row on a wide screen. #}
+      <div class="input-field col s12 l6" data-reminder-send="holiday">
+        <label for="reminder-holiday">{% trans "Holiday" %}:</label>
+        <select id="reminder-holiday" class="reminder-select"></select>
+      </div>
+      {# The pickers fill these hidden fields with dates (YYYY-MM-DD) and times (HH:MM). #}
+      {# An empty start date on a repeating reminder means it starts now. #}
+      <input id="reminder-date" type="hidden">
+      <input id="reminder-time" type="hidden" value="09:00">
+      <input id="reminder-until-date" type="hidden">
+      <input id="reminder-until-time" type="hidden" value="23:59">
+      {# Starts, the "Make recurring" switch and Ends share one line, which wraps on a phone. #}
+      <div class="col s12 reminder-span">
+        <div class="input-field reminder-span-field">
+          {# Reads "Starts (optional)" while the reminder repeats. #}
+          <label for="reminder-at"
+                 data-once-label="{% trans "Date and time" %}:"
+                 data-repeat-label="{% trans "Starts (optional)" %}:">{% trans "Date and time" %}:</label>
+          <div class="reminder-start-row">
+            <div class="reminder-picker-anchor">
+              <input id="reminder-at"
+                     class="reminder-picker-field"
+                     type="text"
+                     readonly
+                     placeholder="{% trans "Now" %}"
+                     data-reminder-date="reminder-date"
+                     data-reminder-time="reminder-time"
+                     data-reminder-seconds
+                     aria-haspopup="dialog">
+              <i class="material-icons" aria-hidden="true">event</i>
+            </div>
+            {# A holiday's start moves to the same holiday a year earlier or later. #}
+            <div class="reminder-holiday-step" data-reminder-send="holiday">
+              <button id="reminder-holiday-previous"
+                      type="button"
+                      class="btn-flat"
+                      title="{% trans "Previous year" %}"
+                      aria-label="{% trans "Previous year" %}">
+                <i class="material-icons" aria-hidden="true">chevron_left</i>
+              </button>
+              <button id="reminder-holiday-next"
+                      type="button"
+                      class="btn-flat"
+                      data-last-year="{{ reminder_holiday_last }}"
+                      title="{% trans "Next year" %}"
+                      aria-label="{% trans "Next year" %}">
+                <i class="material-icons" aria-hidden="true">chevron_right</i>
+              </button>
+            </div>
+          </div>
+        </div>
+        {# Off, a holiday is sent once, on the date chosen; on, every year it falls. #}
+        <div class="reminder-recurring">
+          {# The same switch as the Review tab's filter. #}
+          <label class="reminder-recurring-toggle">
+            <span class="review-selected-filter">
+              <input id="reminder-recurring" type="checkbox">
+              <span class="review-selected-filter-track" aria-hidden="true">
+                <span class="review-selected-filter-knob"></span>
+              </span>
+            </span>
+            <span>{% trans "Make recurring" %}</span>
+          </label>
+        </div>
+        <div class="input-field reminder-span-field" data-reminder-until>
+          <label for="reminder-until-at">{% trans "Ends (optional)" %}:</label>
+          <div class="reminder-picker-anchor">
+            <input id="reminder-until-at"
+                   class="reminder-picker-field"
+                   type="text"
+                   readonly
+                   placeholder="{% trans "No end date" %}"
+                   data-reminder-date="reminder-until-date"
+                   data-reminder-time="reminder-until-time"
+                   data-reminder-from="reminder-date"
+                   data-reminder-optional
+                   aria-haspopup="dialog">
+            <i class="material-icons" aria-hidden="true">event_available</i>
+          </div>
+        </div>
+        {# Changing one time of a series replaces only that time, so it cannot repeat itself. #}
+        <p id="reminder-occurrence-note" class="reminder-hint" hidden>
+          {% trans "Only this one time changes. Use Clone to start a new repeating reminder from it." %}
+        </p>
+      </div>
+      {# "Every [x] [unit]" and the drift share one line, which wraps on a phone. #}
+      {# A holiday repeats on its own, so it shows only the drift. #}
+      <div class="col s12 reminder-every" data-reminder-until>
+        <div class="input-field reminder-every-main" data-reminder-repeat>
+          <label for="reminder-unit">{% trans "Every" %}:</label>
+          <div class="reminder-every-controls">
+            <input id="reminder-interval"
+                   class="reminder-interval"
+                   type="number"
+                   min="1"
+                   max="999"
+                   step="1"
+                   placeholder="1"
+                   aria-label="{% trans "Every" %}"
+                   data-reminder-units="seconds minutes hours days weeks months years">
+            <div class="reminder-unit">
+              <select id="reminder-unit" class="reminder-select">
+                {# Left out for a user who may not repeat that often, unless their reminder already does. #}
+                <option value="seconds"
+                        {% if not reminder_seconds %}data-reminder-seconds-locked{% endif %}>{% trans "Seconds" %}</option>
+                <option value="minutes">{% trans "Minutes" %}</option>
+                <option value="hours">{% trans "Hours" %}</option>
+                <option value="days">{% trans "Days" %}</option>
+                <option value="weeks">{% trans "Weeks" %}</option>
+                <option value="months">{% trans "Months" %}</option>
+                <option value="years">{% trans "Years" %}</option>
+                <option value="custom">{% trans "Custom (crontab)" %}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        {# Time added to every time, e.g. 90 seconds sends a 09:00 reminder at 09:01:30 and -1 week sends it a week early. #}
+        {# It is entered in a unit and saved in seconds; the limits are dateblock's, in seconds. #}
+        <div class="input-field reminder-drift">
+          <label for="reminder-drift">{% trans "Drift" %}:</label>
+          <div class="reminder-every-controls">
+            <input id="reminder-drift"
+                   class="reminder-interval"
+                   type="number"
+                   min="{{ reminder_drift_min }}"
+                   max="{{ reminder_drift_max }}"
+                   step="1"
+                   placeholder="0"
+                   aria-label="{% trans "Drift" %}"
+                   data-drift-min="{{ reminder_drift_min }}"
+                   data-drift-max="{{ reminder_drift_max }}">
+            <div class="reminder-unit">
+              <select id="reminder-drift-unit" class="reminder-select">
+                <option value="1">{% trans "Seconds" %}</option>
+                <option value="60">{% trans "Minutes" %}</option>
+                <option value="3600">{% trans "Hours" %}</option>
+                <option value="86400">{% trans "Days" %}</option>
+                <option value="604800">{% trans "Weeks" %}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      {# Twelve months need more room than seven days to stay on one line. #}
+      <div class="col s12 l5 reminder-days"
+           data-reminder-repeat
+           data-reminder-units="seconds minutes hours days weeks">
+        <span class="reminder-field-label">{% trans "Days" %}:
+          {% include "components/reminder_pick_actions.html" with target="reminder-days" %}
+        </span>
+        <span id="reminder-days" class="reminder-days-list"></span>
+      </div>
+      <div class="col s12 l7 reminder-days"
+           data-reminder-repeat
+           data-reminder-units="seconds minutes hours days weeks months">
+        <span class="reminder-field-label">{% trans "Months" %}:
+          {% include "components/reminder_pick_actions.html" with target="reminder-months" %}
+        </span>
+        <span id="reminder-months" class="reminder-days-list"></span>
+      </div>
+      <div class="input-field col s12 l6"
+           data-reminder-repeat
+           data-reminder-units="custom">
+        <label for="reminder-cron">{% trans "Crontab entry" %}:</label>
+        <input id="reminder-cron" type="text" placeholder="0 9 * * 1-5">
+        <span class="helper-text">{% trans "Five fields: minute, hour, day of the month, month and day of the week." %}</span>
+      </div>
+      {# The next few send times, filled in by the server's preview as the fields change. #}
+      <div class="col s12 reminder-upcoming">
+        <span class="reminder-field-label">{% trans "Upcoming" %}:</span>
+        <ul id="reminder-upcoming-list"
+            class="reminder-upcoming-list"
+            aria-live="polite">
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

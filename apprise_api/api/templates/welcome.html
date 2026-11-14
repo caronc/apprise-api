@@ -10,7 +10,7 @@
       </div>
       <p>
         {% blocktrans %}
-      <a target="_blank" href="https://github.com/caronc/apprise" rel="noopener noreferrer">Apprise</a> allows you to send a notification to almost
+      <a target="_blank" href="https://github.com/caronc/apprise" rel="nofollow noopener noreferrer">Apprise</a> allows you to send a notification to almost
       all of the most popular notification services available to us today such as: <em>Telegram</em>, <em>Discord</em>,
       <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, etc.
       This API provides a simple gateway to directly access it via an HTTP interface.{% endblocktrans %}
@@ -32,7 +32,7 @@
       </div>
       {% if STATELESS_MODE != "disabled" %}
         <p>
-          {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener noreferrer">sidecar</a> and/or
+          {% blocktrans %}Those who wish to treat this API as nothing but a <a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="nofollow noopener noreferrer">sidecar</a> and/or
     microservice to their project only need to use the following URL.{% endblocktrans %}
         </p>
         <div class="table-wrapper">
@@ -49,7 +49,7 @@
                   <code>{{ BASE_URL }}/notify/</code>
                 </td>
                 <td>
-                  {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer">Apprise URL Builder</a> if you need help
+                  {% blocktrans %}Used to notify one one or more specified Apprise URLs. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="nofollow noopener noreferrer">Apprise URL Builder</a> if you need help
           constructing your URL(s).{% endblocktrans %}
                   <div class="section">
                     <table>
@@ -126,7 +126,7 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
                           {# djlint:on #}
                           {# djlint:off #}
-                        <pre><code class="bash"># {% blocktrans %}Send an web based file attachment to a <a href="https://appriseit.com/services/discord/" target="_blank" rel="noopener noreferrer">Discord</a> server:{% endblocktrans %}<br />
+                        <pre><code class="bash"># {% blocktrans %}Send an web based file attachment to a <a href="https://appriseit.com/services/discord/" target="_blank" rel="nofollow noopener noreferrer">Discord</a> server:{% endblocktrans %}<br />
                         curl -X POST -F 'urls=discord://credentials' \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;-F "attach=https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png" \<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;"{{request.scheme}}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{request.META.HTTP_HOST}}{{BASE_URL}}/notify/"</code></pre>
@@ -293,7 +293,7 @@
                   </td>
                   <td>
                     {% blocktrans %}Used to add a new Apprise configuration or a set of URLs and associates them with configuration
-            identified with the id of <em>{{key}}</em>. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="noopener noreferrer">Apprise URL Builder</a> if you need help
+            identified with the id of <em>{{key}}</em>. See the <a target="_blank" href="https://appriseit.com/url-builder/" rel="nofollow noopener noreferrer">Apprise URL Builder</a> if you need help
             constructing your URLs.{% endblocktrans %}
                     <div class="section">
                       <table>

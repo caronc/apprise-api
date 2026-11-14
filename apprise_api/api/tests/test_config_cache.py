@@ -23,9 +23,13 @@
 # THE SOFTWARE.
 from datetime import UTC, datetime
 import errno
+import fcntl
 import gzip
+import json
 import os
 import shutil
+import signal
+import socket
 import time
 from unittest.mock import mock_open, patch
 
@@ -33,6 +37,7 @@ from apprise import ConfigFormat
 from django.test import override_settings
 import pytest
 
+from .. import utils as utils_module
 from ..utils import (
     AppriseConfigCache,
     AppriseStoreMode,
@@ -927,6 +932,39 @@ def test_prune_unused_locks_simple_mode(tmpdir):
     assert acc_obj.get(configured_key) == ("mailto://test:pass@gmail.com", ConfigFormat.TEXT.value)
 
 
+@pytest.mark.parametrize("mode", [AppriseStoreMode.SIMPLE, AppriseStoreMode.HASH])
+@pytest.mark.parametrize("access", ["user", "locked", "disabled"])
+def test_prune_keeps_locks_beside_reminders(tmpdir, mode, access):
+    """An old access record stays while reminders without a configuration still use it."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=mode)
+    key = "test_prune_reminders"
+    assert acc_obj.set_auth(key, "alice", "secret", access=access)
+    reminder_file = acc_obj.reminder_path(key)
+    with acc_obj.reminder_guard():
+        assert acc_obj.write_reminders(reminder_file, [{"id": "a", "urls": ["json://one.example"]}])
+
+    path, filename = acc_obj.auth_path(key)
+    _backdate(os.path.join(path, filename), seconds_ago=1000)
+    assert acc_obj.prune_unused_locks(older_than_seconds=500) == 0
+    assert acc_obj.has_auth(key)
+
+    # Once the reminders are gone, the record is pruned as before
+    with acc_obj.reminder_guard():
+        assert acc_obj.write_reminders(reminder_file, [])
+
+    assert acc_obj.prune_unused_locks(older_than_seconds=500) == 1
+    assert not acc_obj.has_auth(key)
+
+
+def test_keys_include_reminders_without_a_configuration(tmpdir):
+    """A Config ID holding only reminders is listed, so the global reminder list finds it."""
+    acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    with acc_obj.reminder_guard():
+        assert acc_obj.write_reminders(acc_obj.reminder_path("only-reminders"), [{"id": "a"}])
+
+    assert acc_obj.keys() == ["only-reminders"]
+
+
 def test_prune_removes_all_eligible(tmpdir):
     """Prune every eligible lock without changing unlocked configurations."""
     acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
@@ -1175,3 +1213,765 @@ def test_get_file_times_is_empty_when_content_is_unreadable(tmpdir):
 
     with patch("os.stat", side_effect=OSError(errno.EACCES, "denied")):
         assert store.get_file_times("unreadable-key") == (None, None)
+
+
+@pytest.mark.parametrize("mode", [AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE])
+def test_reminders_round_trip(tmpdir, mode):
+    """Reminders are saved, listed, read back and removed in either mode."""
+    store = AppriseConfigCache(str(tmpdir), mode=mode)
+    assert store.put("reminder-key", "json://localhost", ConfigFormat.TEXT.value)
+    reminder_file = store.reminder_path("reminder-key")
+
+    # Nothing is stored until the first event is saved
+    assert store.read_reminders(reminder_file) == []
+    assert store.reminder_files() == []
+
+    with store.reminder_guard():
+        assert store.write_reminders(reminder_file, [{"id": "a"}, {"id": "b"}]) is True
+
+    assert store.read_reminders(reminder_file) == [{"id": "a"}, {"id": "b"}]
+    assert store.reminder_files() == [reminder_file]
+    # The scheduler finds the configuration through the reminder file alone
+    assert store.reminder_config(reminder_file) == ("json://localhost", ConfigFormat.TEXT.value)
+
+    # A reminder file lists its Config ID, never its hidden file name
+    if mode == AppriseStoreMode.SIMPLE:
+        assert store.keys() == ["reminder-key"]
+
+    # Saving no events removes the file, and removing it again is harmless
+    with store.reminder_guard():
+        assert store.write_reminders(reminder_file, []) is True
+        assert store.write_reminders(reminder_file, []) is True
+
+    assert not os.path.exists(reminder_file)
+
+
+def test_reminder_files_skips_unrelated_entries(tmpdir):
+    """Only real reminder files are listed."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.reminder_files() == []
+
+    prefix = tmpdir.mkdir("ab")
+    prefix.join(".ignored.tmp").write("{}")
+    prefix.join(".reminders").write("{}")
+    prefix.join("visible.reminders").write("{}")
+    prefix.join(".real.reminders").write("{}")
+    # Directories that are not hash prefixes are left alone
+    tmpdir.mkdir("not-a-prefix").join(".other.reminders").write("{}")
+    assert store.reminder_files() == [str(prefix.join(".real.reminders"))]
+
+    # Directories that cannot be listed are left out, or make a complete
+    # listing impossible
+    with patch("os.listdir", side_effect=OSError(errno.EACCES, "denied")):
+        assert store.reminder_files() == []
+        assert store.reminder_files(complete=True) is None
+
+    with patch("os.scandir", side_effect=OSError(errno.EIO, "unavailable")):
+        assert store.reminder_files() == []
+        assert store.reminder_files(complete=True) is None
+
+    disabled = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED)
+    assert disabled.reminder_files() == []
+
+    missing = AppriseConfigCache(str(tmpdir.join("missing")), mode=AppriseStoreMode.HASH)
+    assert missing.reminder_files() == []
+    assert missing.reminder_files(complete=True) == []
+
+
+def test_read_reminders_rejects_damaged_files(tmpdir):
+    """A damaged reminders reads as None instead of raising."""
+    path = tmpdir.join(".key.reminders")
+
+    path.write("not json")
+    assert AppriseConfigCache.read_reminders(str(path)) is None
+
+    path.write('["no", "events", "key"]')
+    assert AppriseConfigCache.read_reminders(str(path)) is None
+
+    path.write('{"events": "not a list"}')
+    assert AppriseConfigCache.read_reminders(str(path)) is None
+
+    # Entries that are not events are dropped
+    path.write('{"events": [{"id": "a"}, 7]}')
+    assert AppriseConfigCache.read_reminders(str(path)) == [{"id": "a"}]
+
+
+def test_write_reminders_failures(tmpdir):
+    """A reminder file that cannot be written leaves no temporary file behind."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    reminder_file = store.reminder_path("key")
+
+    with patch("tempfile.mkstemp", side_effect=OSError(errno.EACCES, "denied")):
+        assert store.write_reminders(reminder_file, [{"id": "a"}]) is False
+
+    with patch("os.replace", side_effect=OSError(errno.EACCES, "denied")):
+        assert store.write_reminders(reminder_file, [{"id": "a"}]) is False
+
+    assert os.listdir(str(tmpdir)) == []
+
+    assert store.write_reminders(reminder_file, [{"id": "a"}]) is True
+    with patch("os.remove", side_effect=OSError(errno.EACCES, "denied")):
+        assert store.write_reminders(reminder_file, []) is False
+
+    # A folder that cannot be put on disk, as on some network shares, is fine
+    with patch("os.fsync", side_effect=[None, OSError(errno.EINVAL, "not supported")]):
+        assert store.write_reminders(reminder_file, [{"id": "b"}]) is True
+
+    # So is a file that cannot be, but a real write error still fails
+    with patch("os.fsync", side_effect=OSError(errno.ENOTSUP, "not supported")):
+        assert store.write_reminders(reminder_file, [{"id": "b"}]) is True
+
+    with patch("os.fsync", side_effect=OSError(errno.EIO, "disk error")):
+        assert store.write_reminders(reminder_file, [{"id": "c"}]) is False
+
+    assert store.read_reminders(reminder_file) == [{"id": "b"}]
+
+
+def test_clear_removes_reminders(tmpdir):
+    """Replacing a configuration keeps its reminders; deleting it removes them."""
+    for mode in (AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE):
+        store = AppriseConfigCache(str(tmpdir.mkdir(str(mode))), mode=mode)
+        assert store.put("key", "json://localhost", ConfigFormat.TEXT.value)
+        source = tmpdir.join(f"{mode}.txt")
+        source.write_binary(str(mode).encode())
+        digest, _size = store.store_reminder_file(str(source))
+        reminder_file = store.reminder_path("key")
+        event = {"id": "a", "enabled": False, "attach": [{"file": digest}]}
+        assert store.write_reminders(reminder_file, [event]) is True
+        assert store.reminder_has_config(reminder_file) is True
+
+        # Replacing the configuration keeps its reminders
+        assert store.put("key", "urls:\n  - json://localhost", ConfigFormat.YAML.value)
+        assert store.read_reminders(reminder_file) == [event]
+
+        # Reminders that cannot be moved aside leave everything in place
+        with patch("os.replace", side_effect=OSError(errno.EACCES, "denied")):
+            assert store.clear("key") is False
+
+        assert store.get("key")[0] is not None
+        assert store.read_reminders(reminder_file) == [event]
+
+        # A configuration that could not be removed gets its reminders back
+        with patch.object(store, "_clear", return_value=False):
+            assert store.clear("key") is False
+
+        assert store.read_reminders(reminder_file) == [event]
+
+        # If they cannot be put back, they wait aside for recovery
+        replace = os.replace
+
+        def move_aside_only(source, target, reminder_file=reminder_file, replace=replace):
+            if target == reminder_file:
+                raise OSError(errno.EACCES, "denied")
+
+            return replace(source, target)
+
+        with patch.object(store, "_clear", return_value=False), patch("os.replace", side_effect=move_aside_only):
+            assert store.clear("key") is False
+
+        assert os.path.exists(reminder_file + ".removing")
+        with patch.object(store, "wake_scheduler"):
+            assert store.recover_removed_reminders() == 1
+
+        assert store.read_reminders(reminder_file) == [event]
+
+        # Left aside again, then deleted: the leftover goes with this delete
+        os.replace(reminder_file, reminder_file + ".removing")
+        assert store.write_reminders(reminder_file, [{"id": "b"}])
+        with patch.object(store, "wake_scheduler"):
+            assert store.clear("key") is True
+
+        assert not os.path.exists(reminder_file + ".removing")
+        assert not os.path.exists(reminder_file)
+        assert store.put("key", "json://localhost", ConfigFormat.TEXT.value)
+
+        # Removed reminders that cannot be deleted stay marked finished, so
+        # saving the Config ID again never brings them back
+        assert store.write_reminders(reminder_file, [event])
+        remove = store._remove_file
+
+        def keep_finished(path, remove=remove):
+            return False if path.endswith(".removed") else remove(path)
+
+        with patch.object(store, "_remove_file", side_effect=keep_finished), patch.object(store, "wake_scheduler"):
+            assert store.clear("key") is True
+
+        assert os.path.exists(reminder_file + ".removed")
+        assert store.put("key", "json://localhost", ConfigFormat.TEXT.value)
+        assert store.recover_removed_reminders() == 1
+        assert store.read_reminders(reminder_file) == []
+
+        # Reminders that cannot be marked finished are still deleted
+        assert store.write_reminders(reminder_file, [event])
+
+        def no_marking(source, target, replace=replace):
+            if target.endswith(".removed"):
+                raise OSError(errno.EACCES, "denied")
+
+            return replace(source, target)
+
+        with patch("os.replace", side_effect=no_marking), patch.object(store, "wake_scheduler"):
+            assert store.clear("key") is True
+
+        assert not os.path.exists(reminder_file + ".removing")
+        assert store.put("key", "json://localhost", ConfigFormat.TEXT.value)
+        assert store.write_reminders(reminder_file, [event])
+
+        # Deleting it removes them, and the files nothing else uses, then wakes the scheduler
+        with patch.object(store, "wake_scheduler") as wake:
+            assert store.clear("key") is True
+
+        wake.assert_called_once_with()
+        assert not os.path.exists(reminder_file)
+        assert store.reminder_file_stored(digest) is False
+
+        # Once the configuration itself is gone, its reminders go even if the rest failed
+        assert store.put("key", "json://localhost", ConfigFormat.TEXT.value)
+        assert store.write_reminders(reminder_file, [event]) is True
+        seen = store.seen_path("key")
+        remove = store._remove_file
+
+        def remove_all_but_seen(path, seen=seen, remove=remove):
+            return path != seen and remove(path)
+
+        with patch.object(store, "_remove_file", side_effect=remove_all_but_seen):
+            assert store.clear("key") is False
+
+        assert store.get("key") == (None, "")
+        assert store.read_reminders(reminder_file) == []
+
+
+def test_recover_removed_reminders(tmpdir):
+    """Reminders a crash left aside go back, or finish being removed."""
+    store = AppriseConfigCache(str(tmpdir.mkdir("cfg")), mode=AppriseStoreMode.SIMPLE)
+    source = tmpdir.join("photo.jpg")
+    source.write_binary(b"picture")
+    digest, _size = store.store_reminder_file(str(source))
+
+    def leave_aside(key, events):
+        # As if a removal stopped right after moving the reminders aside
+        assert store.write_reminders(store.reminder_path(key), events)
+        os.replace(store.reminder_path(key), store.reminder_path(key) + ".removing")
+
+    # Still configured: they go back, joined with any saved since
+    assert store.put("kept", "json://localhost", ConfigFormat.TEXT.value)
+    leave_aside("kept", [{"id": "a"}, {"id": "b"}])
+    assert store.write_reminders(store.reminder_path("kept"), [{"id": "b", "name": "newer"}])
+
+    # No longer configured: they are removed, with files nothing else uses
+    leave_aside("gone", [{"id": "c", "attach": [{"file": digest}]}])
+
+    # Files of reminders left aside count as used until then
+    with store.reminder_guard():
+        store.drop_unused_reminder_files([digest])
+
+    assert store.reminder_file_stored(digest) is True
+
+    with patch.object(store, "wake_scheduler"):
+        assert store.recover_removed_reminders() == 2
+
+    assert store.read_reminders(store.reminder_path("kept")) == [{"id": "b", "name": "newer"}, {"id": "a"}]
+    assert store.reminder_files(".reminders.removing") == []
+    assert store.reminder_file_stored(digest) is False
+
+    # Ones that cannot be dealt with stay aside for later
+    leave_aside("kept", [{"id": "d"}])
+    with patch.object(store, "write_reminders", return_value=False):
+        assert store.recover_removed_reminders() == 0
+
+    with open(store.reminder_path("kept"), "w") as f:
+        f.write("damaged")
+
+    assert store.recover_removed_reminders() == 0
+    os.remove(store.reminder_path("kept"))
+
+    with patch.object(store, "_remove_file", return_value=False):
+        assert store.recover_removed_reminders() == 0
+
+    with open(store.reminder_path("kept") + ".removing", "w") as f:
+        f.write("damaged")
+
+    assert store.recover_removed_reminders() == 0
+    assert len(store.reminder_files(".reminders.removing")) == 1
+    os.remove(store.reminder_path("kept") + ".removing")
+
+    # A Config ID saved or moved to again finishes the stopped removal first,
+    # so the old ones never come back
+    leave_aside("again", [{"id": "f"}])
+    with patch("os.replace", side_effect=OSError("denied")):
+        assert store.put("again", "json://localhost", ConfigFormat.TEXT.value) is False
+
+    assert store.put("again", "json://localhost", ConfigFormat.TEXT.value)
+    assert store.reminder_files(".reminders.removing") == []
+    assert store.recover_removed_reminders() == 0
+    assert store.read_reminders(store.reminder_path("again")) == []
+
+    assert store.put("moving", "json://localhost", ConfigFormat.TEXT.value)
+    leave_aside("target", [{"id": "t"}])
+    with patch("os.replace", side_effect=OSError("denied")):
+        assert store.move("moving", "target") == MoveResult.FAILED
+
+    assert store.move("moving", "target") == MoveResult.MOVED
+    assert store.reminder_files(".reminders.removing") == []
+    assert store.read_reminders(store.reminder_path("target")) == []
+
+    # Saving a configuration that is still there puts its reminders back
+    leave_aside("target", [{"id": "u"}])
+    assert store.put("target", "json://localhost", ConfigFormat.TEXT.value)
+    assert store.read_reminders(store.reminder_path("target")) == [{"id": "u"}]
+
+    # Moving a configuration whose reminders were left aside takes them along
+    assert store.put("source", "json://localhost", ConfigFormat.TEXT.value)
+    leave_aside("source", [{"id": "s"}])
+    assert store.move("source", "dest") == MoveResult.MOVED
+    assert store.recover_removed_reminders() == 0
+    assert store.read_reminders(store.reminder_path("dest")) == [{"id": "s"}]
+
+    # It is not saved while they cannot go back, so they are never forgotten
+    leave_aside("target", [{"id": "v"}])
+    with patch.object(store, "write_reminders", return_value=False):
+        assert store.put("target", "json://localhost", ConfigFormat.TEXT.value) is False
+        assert store.move("moving", "target") == MoveResult.FAILED
+
+    assert len(store.reminder_files(".reminders.removing")) == 1
+    os.remove(store.reminder_path("target") + ".removing")
+
+    # Files that cannot be checked (e.g. a share not answering) are never
+    # taken as missing, so nothing is saved over or removed on a guess
+    leave_aside("target", [{"id": "w"}])
+    real_exists = utils_module._file_exists
+    for unknown in (".removing", ".cfg"):
+
+        def exists(path, unknown=unknown):
+            return None if path.endswith(unknown) else real_exists(path)
+
+        with patch.object(utils_module, "_file_exists", side_effect=exists):
+            assert store.put("target", "json://localhost", ConfigFormat.TEXT.value) is False
+            assert store.move("moving", "target") == MoveResult.FAILED
+            if unknown == ".cfg":
+                assert store.recover_removed_reminders() == 0
+                assert store.clear("target") is False
+
+        assert store.read_reminders(store.reminder_path("target") + ".removing") == [{"id": "w"}]
+
+    aside = store.reminder_path("target") + ".removing"
+    assert real_exists(aside) is True
+    assert real_exists(aside + "/missing") is False
+    with patch("os.stat", side_effect=OSError(errno.EIO, "unavailable")):
+        assert real_exists(aside) is None
+
+    os.remove(store.reminder_path("target") + ".removing")
+
+    # A removal stops when reminders left aside earlier cannot be settled
+    with open(store.reminder_path("again") + ".removing", "w") as f:
+        f.write("damaged")
+
+    assert store.write_reminders(store.reminder_path("again"), [{"id": "g"}])
+    assert store.clear("again") is False
+    assert store.get("again")[0] is not None
+    assert store.read_reminders(store.reminder_path("again")) == [{"id": "g"}]
+    os.remove(store.reminder_path("again") + ".removing")
+
+    # Ones marked finished are only ever removed, even though "kept" exists
+    assert store.write_reminders(store.reminder_path("kept"), [{"id": "e"}])
+    os.replace(store.reminder_path("kept"), store.reminder_path("kept") + ".removed")
+    assert store.recover_removed_reminders() == 1
+    assert store.read_reminders(store.reminder_path("kept")) == []
+    assert store.reminder_files(".reminders.removed") == []
+
+
+def test_unused_reminder_files_go_right_away(tmpdir):
+    """Stored files nothing uses are removed at once, unless a reminder file cannot be read."""
+    store = AppriseConfigCache(str(tmpdir.mkdir("cfg")), mode=AppriseStoreMode.SIMPLE)
+    assert store.reminder_store_size() == 0
+    source = tmpdir.join("photo.jpg")
+    source.write_binary(b"picture")
+    digest, _size = store.store_reminder_file(str(source))
+    assert store.reminder_store_size() == 7
+    with patch("os.scandir", side_effect=PermissionError("denied")):
+        assert store.reminder_store_size() is None
+
+    # Still used by a reminder
+    assert store.write_reminders(store.reminder_path("a"), [{"id": "a", "attach": [{"file": digest}]}])
+    with store.reminder_guard():
+        store.drop_unused_reminder_files([])
+        store.drop_unused_reminder_files([digest])
+
+    assert store.reminder_file_stored(digest) is True
+
+    # A damaged reminder file might use it, so it is kept
+    assert store.write_reminders(store.reminder_path("a"), [])
+    with open(store.reminder_path("b"), "w") as f:
+        f.write("{")
+
+    with store.reminder_guard():
+        store.drop_unused_reminder_files([digest])
+
+    assert store.reminder_file_stored(digest) is True
+
+    os.remove(store.reminder_path("b"))
+    with store.reminder_guard():
+        store.drop_unused_reminder_files([digest])
+
+    assert store.reminder_file_stored(digest) is False
+
+
+def test_move_carries_reminders(tmpdir):
+    """A moved configuration keeps its reminders and wakes the scheduler."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.put("old", "json://localhost", ConfigFormat.TEXT.value)
+    assert store.write_reminders(store.reminder_path("old"), [{"id": "a"}]) is True
+
+    with patch.object(store, "wake_scheduler") as wake:
+        assert store.move("old", "new") == MoveResult.MOVED
+
+    wake.assert_called_once_with()
+    assert not os.path.exists(store.reminder_path("old"))
+    assert store.read_reminders(store.reminder_path("new")) == [{"id": "a"}]
+
+    # A configuration without reminders moves without waking anything
+    with patch.object(store, "wake_scheduler") as wake:
+        assert store.move("new", "newer") == MoveResult.MOVED
+        assert store.move("newer", "plain") == MoveResult.MOVED
+
+    assert wake.call_count == 2
+    os.remove(store.reminder_path("plain"))
+    with patch.object(store, "wake_scheduler") as wake:
+        assert store.move("plain", "last") == MoveResult.MOVED
+
+    wake.assert_not_called()
+
+
+def test_move_refuses_existing_destination_reminders(tmpdir):
+    """Reminders already at the destination blocks the move."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert store.put("old", "json://localhost", ConfigFormat.TEXT.value)
+    assert store.write_reminders(store.reminder_path("new"), [{"id": "a"}]) is True
+
+    assert store.move("old", "new") == MoveResult.CONFLICT
+
+
+def test_scheduler_lock_allows_one_holder(tmpdir):
+    """Only one scheduler can hold the lock, and it records its process ID."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    with store.scheduler_lock() as held:
+        assert held is True
+        with store.scheduler_lock() as second:
+            assert second is False
+
+        assert str(os.getpid()) in tmpdir.join(".scheduler.pid").read()
+
+    # The pid file is not mistaken for a key
+    assert store.keys() == []
+
+    with store.scheduler_lock() as held:
+        assert held is True
+
+
+def test_scheduler_status_and_change_stamp(tmpdir):
+    """Callers can tell whether a scheduler runs, and when reminders last changed."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert store.scheduler_running() is False
+    assert store.reminders_changed() == 0
+
+    with store.scheduler_lock():
+        assert store.scheduler_running() is True
+
+    # Waking marks reminders as changed, even with no scheduler to signal
+    assert store.wake_scheduler() is False
+    assert store.reminders_changed() > 0
+
+    # A stamp that cannot be written is only logged
+    with patch.object(utils_module, "touch", return_value=False):
+        assert store.wake_scheduler() is False
+
+
+def test_wake_scheduler_signals_only_a_running_scheduler(tmpdir):
+    """The wake signal goes only to a scheduler that holds the lock on this host."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    pid_file = tmpdir.join(".scheduler.pid")
+
+    # No scheduler has ever run
+    assert store.wake_scheduler() is False
+
+    # A stale record left behind by a stopped scheduler is ignored
+    pid_file.write(json.dumps({"pid": 4242, "host": socket.gethostname()}))
+    with patch("os.kill") as kill:
+        assert store.wake_scheduler() is False
+
+    kill.assert_not_called()
+
+    holder = os.open(str(pid_file), os.O_RDWR)
+    fcntl.flock(holder, fcntl.LOCK_EX)
+    try:
+        with patch("os.kill") as kill:
+            assert store.wake_scheduler() is True
+
+        kill.assert_called_once_with(4242, signal.SIGUSR1)
+
+        with patch("os.kill", side_effect=ProcessLookupError):
+            assert store.wake_scheduler() is False
+
+        for record in ("not json", '{"pid": 4242}', '{"pid": 4242, "host": "elsewhere"}'):
+            pid_file.write(record)
+            with patch("os.kill") as kill:
+                assert store.wake_scheduler() is False
+
+            kill.assert_not_called()
+
+        # The scheduler never signals itself
+        pid_file.write(json.dumps({"pid": os.getpid(), "host": socket.gethostname()}))
+        assert store.wake_scheduler() is False
+
+    finally:
+        os.close(holder)
+
+    with patch("fcntl.flock", side_effect=OSError(errno.ENOLCK, "no locks")):
+        assert store.wake_scheduler() is False
+
+
+def test_limits_round_trip(tmpdir):
+    """Limits are saved, read back, and removed once none are left."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.get_limits("key") == {}
+    assert store.set_limits("key", {"attach_size": 10}) is True
+    assert store.get_limits("key") == {"attach_size": 10}
+
+    assert store.set_limits("key", {}) is True
+    assert not os.path.exists(store.limits_path("key"))
+    assert store.set_limits("key", {}) is True
+
+    # A damaged file cannot be read
+    os.makedirs(os.path.dirname(store.limits_path("key")), exist_ok=True)
+    for content in ("not json", "[1]"):
+        with open(store.limits_path("key"), "w") as f:
+            f.write(content)
+        assert store.get_limits("key") is None
+
+
+@override_settings(APPRISE_REMINDER_IDLE_DAYS=30)
+def test_note_use_records_at_most_once_a_day(tmpdir):
+    """Use is recorded only for a key with reminders, and at most daily."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    seen = store.seen_path("key")
+    store.note_use("key")
+    assert not os.path.exists(seen)
+
+    assert store.write_reminders(store.reminder_path("key"), [{"id": "a"}])
+    store.note_use("key")
+    assert os.path.exists(seen)
+
+    # A recent record is left alone, and an old one is renewed
+    os.utime(seen, (1000, 1000))
+    with patch("time.time", return_value=1000 + 3600):
+        store.note_use("key")
+    assert os.path.getmtime(seen) == 1000
+
+    store.note_use("key")
+    assert os.path.getmtime(seen) > 1000
+
+    os.utime(seen, (1000, 1000))
+    with patch("builtins.open", side_effect=OSError(errno.EACCES, "denied")):
+        store.note_use("key")
+    assert os.path.getmtime(seen) == 1000
+
+    with override_settings(APPRISE_REMINDER_IDLE_DAYS=0):
+        store.note_use("key")
+    assert os.path.getmtime(seen) == 1000
+
+
+def test_reminder_seen_starts_counting(tmpdir):
+    """A key never recorded starts counting the first time it is checked."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    reminder_file = store.reminder_path("key")
+    assert store.reminder_seen(reminder_file) > 0
+    assert os.path.exists(store.seen_path("key"))
+
+    with patch("builtins.open", side_effect=OSError(errno.EACCES, "denied")):
+        assert store.reminder_seen(reminder_file) is None
+
+
+def test_store_reminder_file_keeps_one_copy(tmpdir):
+    """The same content is stored once and renewed when stored again."""
+    store = AppriseConfigCache(str(tmpdir.mkdir("cfg")), mode=AppriseStoreMode.HASH)
+    source = tmpdir.join("photo.jpg")
+    source.write_binary(b"picture")
+
+    digest, size = store.store_reminder_file(str(source))
+    assert size == 7
+    with open(store.reminder_file_path(digest), "rb") as f:
+        assert f.read() == b"picture"
+    os.utime(store.reminder_file_path(digest), (1000, 1000))
+
+    assert store.store_reminder_file(str(source)) == (digest, 7)
+    assert os.path.getmtime(store.reminder_file_path(digest)) > 1000
+    assert os.listdir(os.path.dirname(store.reminder_file_path(digest))) == [digest]
+
+    assert store.store_reminder_file(str(tmpdir.join("missing"))) is None
+    assert os.listdir(os.path.dirname(store.reminder_file_path(digest))) == [digest]
+
+    # Hashing alone gives the same name and size without storing anything
+    other = tmpdir.join("other.jpg")
+    other.write_binary(b"another")
+    name, size = store.reminder_file_digest(str(other))
+    assert size == 7
+    assert store.reminder_file_stored(digest) is True
+    assert store.reminder_file_stored(name) is False
+    assert store.reminder_file_digest(str(tmpdir.join("missing"))) is None
+
+
+def test_prune_reminder_files_removes_only_unused_old_files(tmpdir):
+    """Stored files no reminder uses are pruned once they are old enough."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.prune_reminder_files() == 0
+
+    directory = os.path.dirname(store.reminder_file_path("x"))
+    os.makedirs(directory)
+    for name in ("used", "unused", "fresh"):
+        with open(os.path.join(directory, name), "w") as f:
+            f.write(name)
+        if name != "fresh":
+            os.utime(os.path.join(directory, name), (1000, 1000))
+
+    assert store.put("key", "json://localhost", ConfigFormat.TEXT.value)
+    reminder_file = store.reminder_path("key")
+    assert store.write_reminders(reminder_file, [{"id": "a", "attach": [{"file": "used"}, {"url": "http://x"}]}])
+    assert store.prune_reminder_files() == 1
+    assert sorted(os.listdir(directory)) == ["fresh", "used"]
+
+    # Nothing is removed while a reminder file cannot be read
+    os.utime(os.path.join(directory, "fresh"), (1000, 1000))
+    with open(reminder_file, "w") as f:
+        f.write("damaged")
+    assert store.prune_reminder_files() == 0
+    assert store.write_reminders(reminder_file, [{"id": "a"}])
+
+    # Nor while a configuration directory cannot be listed
+    real_listdir = os.listdir
+    blocked = os.path.dirname(reminder_file)
+
+    def listdir(path):
+        if path == blocked:
+            raise OSError(errno.EIO, "unavailable")
+        return real_listdir(path)
+
+    with patch("os.listdir", side_effect=listdir):
+        assert store.prune_reminder_files() == 0
+
+    assert sorted(os.listdir(directory)) == ["fresh", "used"]
+
+    # Or the stored files themselves
+    blocked = directory
+    with patch("os.listdir", side_effect=listdir):
+        assert store.prune_reminder_files() == 0
+
+    with patch("os.remove", side_effect=OSError(errno.EACCES, "denied")):
+        assert store.prune_reminder_files() == 0
+
+    assert store.prune_reminder_files() == 2
+    assert AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED).prune_reminder_files() == 0
+
+
+def test_prune_finished_reminders(tmpdir):
+    """Reminders with nothing left to send are removed once old enough, freeing their files."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.prune_finished_reminders(0) == 0
+
+    now = int(time.time())
+    old = now - 8 * 86400
+    events = [
+        {"id": "sent", "next": None, "updated": old, "last": {"at": old, "ok": True}, "attach": [{"file": "f"}]},
+        {"id": "recent", "next": None, "updated": old, "last": {"at": now, "ok": True}},
+        {"id": "ended", "next": None, "updated": old},
+        {"id": "paused", "enabled": False, "next": None, "updated": old},
+        {"id": "due", "next": now + 60, "updated": old},
+    ]
+    assert store.put("key", "json://localhost", ConfigFormat.TEXT.value)
+    reminder_file = store.reminder_path("key")
+    assert store.write_reminders(reminder_file, events)
+    directory = os.path.dirname(store.reminder_file_path("f"))
+    os.makedirs(directory)
+    with open(os.path.join(directory, "f"), "w") as f:
+        f.write("f")
+    os.utime(os.path.join(directory, "f"), (old, old))
+
+    # A reminders file with nothing in it is passed over
+    assert store.put("other", "json://localhost", ConfigFormat.TEXT.value)
+    with open(store.reminder_path("other"), "w") as f:
+        f.write('{"version": 1, "events": []}')
+
+    # A failed save removes nothing
+    with patch.object(store, "write_reminders", return_value=False):
+        assert store.prune_finished_reminders(7 * 86400) == 0
+
+    assert store.prune_finished_reminders(7 * 86400) == 2
+    assert [event["id"] for event in store.read_reminders(reminder_file)] == ["recent", "paused", "due"]
+    # The attachment only the sent reminder used goes with it
+    assert store.prune_reminder_files() == 1
+
+    # With no wait, every finished reminder goes; an emptied file is removed
+    assert store.write_reminders(reminder_file, [events[1]])
+    assert store.prune_finished_reminders(0) == 1
+    assert not os.path.exists(reminder_file)
+    assert AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED).prune_finished_reminders(0) == 0
+
+
+def test_move_and_clear_handle_limits_and_use(tmpdir):
+    """Limits and the use record move with a configuration; clearing keeps the limits."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
+    assert store.put("old", "json://localhost", ConfigFormat.TEXT.value)
+    assert store.set_limits("old", {"reminders": 3})
+    store.reminder_seen(store.reminder_path("old"))
+
+    assert store.move("old", "new") == MoveResult.MOVED
+    assert store.get_limits("new") == {"reminders": 3}
+    assert os.path.exists(store.seen_path("new"))
+    assert not os.path.exists(store.seen_path("old"))
+
+    assert store.clear("new") is True
+    assert not os.path.exists(store.seen_path("new"))
+    # Limits are the administrator's, so a user's delete does not drop them
+    assert store.get_limits("new") == {"reminders": 3}
+
+    # The use record that cannot be removed fails the delete
+    assert store.put("new", "json://localhost", ConfigFormat.TEXT.value)
+    with patch.object(store, "_remove_file", return_value=False):
+        assert store.clear("new") is False
+
+
+def test_prune_unused_locks_removes_their_limits(tmpdir):
+    """Limits go with the unused lock of a configuration that was deleted."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    assert store.set_auth("gone", "alice", "secret")
+    assert store.set_limits("gone", {"reminders": 3})
+    assert store.prune_unused_locks(0) == 1
+    assert not os.path.exists(store.limits_path("gone"))
+
+
+def test_release_user_reminders(tmpdir):
+    """A removed user's reminders are deleted, or handed to the administrator."""
+    store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
+    reminder_file = store.reminder_path("key")
+    assert store.release_user_reminders("key", keep=False) == ([], [])
+
+    # Both the reminders as they were and as they are now come back
+    events = [{"id": "a", "owner": "admin"}, {"id": "b", "owner": "user"}]
+    assert store.write_reminders(reminder_file, events)
+    before, after = store.release_user_reminders("key", keep=True)
+    assert before == events
+    assert [event["owner"] for event in after] == ["admin", "admin"]
+    assert store.read_reminders(reminder_file) == after
+
+    assert store.write_reminders(reminder_file, events)
+    assert store.release_user_reminders("key", keep=False) == (events, [events[0]])
+    assert store.read_reminders(reminder_file) == [events[0]]
+
+    # A file that cannot be saved or read is reported
+    assert store.write_reminders(reminder_file, events)
+    with patch.object(store, "write_reminders", return_value=False):
+        assert store.release_user_reminders("key", keep=True) is None
+        assert store.release_user_reminders("key", keep=False) is None
+
+    with open(reminder_file, "w") as f:
+        f.write("damaged")
+    assert store.release_user_reminders("key", keep=False) is None

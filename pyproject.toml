@@ -46,6 +46,9 @@ dependencies = [
   "slixmpp >= 1.16.0",
   # Provides amqp:// support for AMQP 0.9.1
   "pika",
+  # Works out and waits for reminder times
+  "dateblock >= 2.2.0",
+  "holidays >= 0.108",
 ]
 
 [project.urls]

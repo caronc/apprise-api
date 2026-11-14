@@ -78,7 +78,14 @@ def main(argv=None):
     # every language would read as English
     compile_all_translations()
 
-    return subprocess.call([sys.executable, "manage.py", "runserver", *runserver_args])
+    # Run the scheduler beside the server so reminders are sent.
+    scheduler = subprocess.Popen([sys.executable, "manage.py", "scheduler"])
+    try:
+        return subprocess.call([sys.executable, "manage.py", "runserver", *runserver_args])
+
+    finally:
+        scheduler.terminate()
+        scheduler.wait()
 
 
 if __name__ == "__main__":

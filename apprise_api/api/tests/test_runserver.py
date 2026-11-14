@@ -122,6 +122,7 @@ class RunserverTests(SimpleTestCase):
             patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=True),
             patch("apprise_api.runserver.install_apprise_pypi") as mock_install_pypi,
             patch("apprise_api.runserver.compile_all_translations") as mock_compile,
+            patch("subprocess.Popen"),
             patch("subprocess.call", return_value=0) as mock_call,
         ):
             assert main([]) == 0
@@ -135,6 +136,7 @@ class RunserverTests(SimpleTestCase):
             patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=False),
             patch("apprise_api.runserver.install_apprise_pypi") as mock_install_pypi,
             patch("apprise_api.runserver.compile_all_translations") as mock_compile,
+            patch("subprocess.Popen"),
             patch("subprocess.call", return_value=0),
         ):
             assert main([]) == 0
@@ -148,6 +150,7 @@ class RunserverTests(SimpleTestCase):
             patch("apprise_api.runserver.install_apprise_branch") as mock_install_branch,
             patch("apprise_api.runserver.apprise_is_vcs_installed") as mock_is_vcs,
             patch("apprise_api.runserver.compile_all_translations") as mock_compile,
+            patch("subprocess.Popen"),
             patch("subprocess.call", return_value=0) as mock_call,
         ):
             assert main(["--branch=feature/retry", "127.0.0.1:8001"]) == 0
@@ -158,12 +161,28 @@ class RunserverTests(SimpleTestCase):
         mock_is_vcs.assert_not_called()
         assert mock_call.call_args.args[0][-1] == "127.0.0.1:8001"
 
+    def test_main_runs_scheduler_beside_server(self):
+        """The scheduler starts with the server and stops when it exits."""
+        with (
+            patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=False),
+            patch("apprise_api.runserver.compile_all_translations"),
+            patch("subprocess.Popen") as mock_popen,
+            patch("subprocess.call", side_effect=KeyboardInterrupt),
+            self.assertRaises(KeyboardInterrupt),
+        ):
+            main([])
+
+        assert mock_popen.call_args.args[0][-2:] == ["manage.py", "scheduler"]
+        mock_popen.return_value.terminate.assert_called_once_with()
+        mock_popen.return_value.wait.assert_called_once_with()
+
     def test_module_entrypoint(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             with (
                 patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=False),
                 patch("apprise_api.apprise_translations.compile_all_translations", return_value=0),
+                patch("subprocess.Popen"),
                 patch("subprocess.call", return_value=7),
                 patch("sys.argv", ["apprise_api.runserver"]),
                 self.assertRaises(SystemExit) as ctx,

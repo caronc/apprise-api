@@ -540,7 +540,7 @@ class AuthGuiTests(SimpleTestCase):
         content = page.content.decode()
         self.assertIn('autocomplete="username" autofocus', content)
         self.assertIn('autocomplete="current-password"', content)
-        self.assertNotIn("data-1p-ignore", content)
+        self.assertNotIn('data-1p-ignore="true"', content)
         self.assertIn("browser-login-card", content)
         self.assertIn("browser-login-icon", content)
         self.assertNotIn('id="mobile-menu-open"', content)
@@ -721,6 +721,19 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn("secret", bookmark_url)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_config_bookmark_url_without_a_login(self):
+        """Without a login on the Config ID, the bookmark URL has no stray '@'."""
+        content = self.client.get("/cfg/{}".format(self.key), headers=_MASTER).content.decode()
+        match = re.search(
+            r"Apprise Configuration URL copied to clipboard'\s*"
+            r"data-copy-text='([^']*)'",
+            content,
+        )
+        self.assertIsNotNone(match, "bookmark snippet not found in rendered page")
+        self.assertNotIn("@", match.group(1))
+        self.assertNotIn("://@", content)
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_logout_ends_browser_session_despite_cached_basic_auth(self):
         """Chrome-style cached Basic credentials cannot restore a web login."""
         ConfigCache.set_auth(self.key, "alice", "secret")
@@ -832,11 +845,12 @@ class AuthGuiTests(SimpleTestCase):
         content = response.content.decode()
         self.assertEqual(content.count('class="tab disabled col s3"'), 2)
         self.assertNotIn("disabledcol", content)
-        self.assertEqual(content.count('class="config-tab-label"'), 4)
+        self.assertEqual(content.count('class="config-tab-label"'), 5)
         self.assertIn('aria-label="Overview"', content)
         self.assertIn('aria-label="Configuration"', content)
         self.assertIn('aria-label="Review"', content)
         self.assertIn('aria-label="Notifications"', content)
+        self.assertIn('aria-label="Reminders"', content)
         self.assertIn("Choose at least one tag", content)
         self.assertIn("Required Tag", content)
         self.assertIn("wireNotifyTagAutoCommit(chipElement);", content)

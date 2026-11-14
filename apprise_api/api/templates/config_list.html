@@ -275,57 +275,10 @@
     });
   });
 
-  (function () {
-    const toggleAllBtn = document.querySelector('#config-list-toggle-all');
-    if (!toggleAllBtn) {
-      return;
-    }
-
-    function rowToggles() {
-      return document.querySelectorAll('.config-id-visibility[data-config-id-toggle]');
-    }
-
-    function applyToggleAllMode(hideMode) {
-      const label = hideMode ? toggleAllBtn.dataset.hideLabel : toggleAllBtn.dataset.showLabel;
-      toggleAllBtn.setAttribute('aria-pressed', hideMode ? 'true' : 'false');
-      toggleAllBtn.setAttribute('aria-label', label);
-      toggleAllBtn.title = label;
-      // Match the list-wide icon to the current row states.
-      toggleAllBtn.querySelector('i').textContent = hideMode ? 'visibility' : 'visibility_off';
-    }
-
-    // Offer "hide all" while any Config ID is visible; otherwise offer "show all."
-    function syncToggleAllState() {
-      const toggles = Array.from(rowToggles());
-      if (!toggles.length) {
-        return;
-      }
-      const anyShown = toggles.some(function (t) {
-        return t.getAttribute('aria-pressed') === 'true';
-      });
-      applyToggleAllMode(anyShown);
-    }
-
-    toggleAllBtn.addEventListener('click', function () {
-      const hideMode = toggleAllBtn.getAttribute('aria-pressed') === 'true';
-      const show = !hideMode;
-      rowToggles().forEach(function (t) {
-        if ((t.getAttribute('aria-pressed') === 'true') !== show) {
-          t.click();
-        }
-      });
-      syncToggleAllState();
-    });
-
-    // Individual row toggles also refresh the list-wide action.
-    const list = document.querySelector('.collection.z-depth-1');
-    if (list) {
-      list.addEventListener('click', function (event) {
-        if (event.target.closest('.config-id-visibility[data-config-id-toggle]')) {
-          syncToggleAllState();
-        }
-      });
-    }
-  })();
+  // The list-wide eye shows or hides every Config ID.
+  appriseWireConfigIdToggleAll(
+    document.querySelector('#config-list-toggle-all'),
+    document.querySelector('.collection.z-depth-1')
+  );
 {% endblock jsfooter %}
 {# djlint:on #}

@@ -30,6 +30,10 @@ tags:
     description: Endpoints that work with pre-saved configurations identified by a {key}.
   - name: Meta
     description: Introspection and system endpoints.
+  - name: Reminders
+    description: >
+      Notifications saved now and sent later, once or on a repeating schedule.
+      These endpoints exist only when /status includes `reminders_enabled`.
 
 # Basic Auth is optional, so requests may omit credentials when authentication
 # mode is disabled. Administrator credentials satisfy every keyed login.
@@ -344,6 +348,44 @@ paths:
         '503':
           $ref: '#/components/responses/StreamCapacityUnavailable'
 
+  /reminders:
+    get:
+      operationId: Reminders_ListAll
+      summary: Lists the reminders of every Config ID.
+      description: >
+        Each reminder includes the `key` of the Config ID it belongs to,
+        soonest first. The same rules as GET /cfg apply: SIMPLE stateful mode,
+        APPRISE_ADMIN, and administrator access when logins are required.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Every reminder.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reminders]
+                properties:
+                  reminders:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Reminder'
+                        - type: object
+                          properties:
+                            key:
+                              type: string
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden. Listing is not allowed on this server.
+        '404':
+          description: Not Found. Reminders are turned off.
+        '421':
+          description: Misdirected Request. HTML is turned off by APPRISE_API_ONLY.
   /cfg:
     get:
       operationId: Persistent_ListConfigurations
@@ -453,15 +495,16 @@ paths:
         content. Its credentials remain and their pruning grace period restarts,
         allowing replacement content to be saved later. Administrator deletion
         also removes the configuration's credentials.
+        The configuration's reminders are removed with it.
       tags:
         - Persistent
       parameters:
         - $ref: '#/components/parameters/key'
       responses:
-        '200':
-          description: Configuration removed.
         '204':
-          description: No content (Configuration did not exist).
+          description: >
+            No content. The configuration was removed, or there was nothing to
+            remove. Older releases answered a removal with 200.
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
@@ -704,13 +747,15 @@ paths:
       summary: Removes {key}'s own Basic Auth.
       description: >
         Removes only the authentication requirement. Global administrator
-        credentials are required.
+        credentials are required. Reminders the configuration's user added are
+        removed too, unless `keep_reminders` hands them to the administrator.
       tags:
         - Persistent
       security:
         - basicAuth: []
       parameters:
         - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/KeepReminders'
       responses:
         '200':
           description: Authentication removed.
@@ -945,6 +990,909 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
+  /attach/{key}:
+    post:
+      operationId: Persistent_PreviewAttachment
+      summary: Downloads an attachment web address the way a send would.
+      description: >
+        Lets a caller check a web address before sending it or saving it with a
+        reminder. The same attachment rules as /notify apply. The file comes
+        back as application/octet-stream, with its own type in
+        X-Apprise-Content-Type and its name (URL encoded) in X-Apprise-Filename.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  example: https://camera.example.com/snapshot.jpg
+      responses:
+        '200':
+          description: The downloaded file.
+          headers:
+            X-Apprise-Content-Type:
+              schema:
+                type: string
+              description: The type the web server gave the file.
+            X-Apprise-Filename:
+              schema:
+                type: string
+              description: The file name, URL encoded.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: The body is not a JSON object.
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: Forbidden (persistent storage is disabled).
+        '404':
+          description: No configuration is saved under this key.
+        '424':
+          description: >
+            The file could not be downloaded or is not allowed. `logs` holds
+            what the download reported, such as a 404.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  logs:
+                    type: array
+                    items:
+                      type: string
+
+  /resolve/{key}:
+    post:
+      operationId: Persistent_ResolveUrls
+      summary: Checks Apprise URLs and returns them in full and with their secrets hidden.
+      description: >
+        Returns each URL's service, whether it can be loaded, the URL in full
+        with every option written out, and the same URL with its secrets
+        hidden, the way /json/urls?privacy=1 shows them. Works whatever the
+        stateful and stateless modes are; on a `public` or `disabled`
+        configuration only the administrator may use it. Nothing is contacted.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [urls]
+              properties:
+                urls:
+                  description: >
+                    One string of URLs (split on spaces and commas), or a list
+                    where each entry is one URL. At most 100.
+                  oneOf:
+                    - type: string
+                    - type: array
+                      maxItems: 100
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Each URL, in the order sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveResponse'
+        '400':
+          description: >
+            Bad Request (not a JSON object, `urls` missing, of the wrong type
+            or too long, or the Config ID missing or invalid).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (the configuration is `public` or `disabled`, and the
+            caller is not the administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /reminder/{key}:
+    get:
+      operationId: Reminders_List
+      summary: Lists the reminders saved for {key}.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderWindowStart'
+        - $ref: '#/components/parameters/ReminderWindowEnd'
+        - $ref: '#/components/parameters/ReminderShowDisabled'
+        - $ref: '#/components/parameters/ReminderPrivacy'
+      responses:
+        '200':
+          description: Every reminder saved for this configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reminders]
+                properties:
+                  reminders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: The reminders could not be read.
+    post:
+      operationId: Reminders_Add
+      summary: Adds a reminder to {key}.
+      description: >
+        The message fields are read the same way as /notify: `tags` is the same
+        as `tag`, and `attachment` or `attachments` the same as `attach`. Fields
+        the payload leaves out come from the X-Apprise-* headers, then from
+        `?title=`, `?type=`, `?format=` and `?tag=`. JSON callers get the saved
+        reminder back; others get a short message. Either way the
+        `X-Apprise-Reminder-ID` header names it.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderPrivacy'
+        - $ref: '#/components/parameters/NotifyTitleHeader'
+        - $ref: '#/components/parameters/NotifyTypeHeader'
+        - $ref: '#/components/parameters/NotifyTagHeader'
+        - $ref: '#/components/parameters/NotifyTemplateHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderInput'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReminderUpload'
+      responses:
+        '200':
+          description: The saved reminder with its new `id` and `next` time.
+          headers:
+            X-Apprise-Reminder-ID:
+              description: The reminder's ID.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+            text/plain:
+              schema:
+                type: string
+                example: Successfully saved reminder
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '409':
+          description: The configuration's user already has the most reminders allowed.
+        '413':
+          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+        '500':
+          description: The reminders could not be read or saved.
+  /reminder/{key}/preview:
+    get:
+      operationId: Reminders_Preview
+      summary: Lists the next times a reminder would be sent, without saving it.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - in: query
+          name: at
+          schema:
+            type: string
+          description: A single local date and time, e.g. `2026-12-25 09:00`. Use one of `at`, `cron` or `holiday`.
+        - in: query
+          name: cron
+          schema:
+            type: string
+          description: A repeating dateblock cron, e.g. `0 0 9 * * Mon-Fri`. Use one of `at`, `cron` or `holiday`.
+        - in: query
+          name: drift
+          schema:
+            type: integer
+            minimum: -2147483647
+            maximum: 2147483647
+          description: Seconds added to every time; a negative drift sends each one early. Defaults to 0.
+        - in: query
+          name: every
+          schema:
+            type: string
+            enum: [seconds, minutes, hours, days, weeks, months, years]
+          description: Repeat from `at` in this unit, read with `interval`, `months` and `days`.
+        - in: query
+          name: interval
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 999
+          description: How many units apart the sends are. Defaults to 1.
+        - in: query
+          name: id
+          schema:
+            type: string
+          description: >-
+            The reminder being changed, if any. A rule that repeats more often
+            than the caller may set is refused (400, field `when`), exactly as
+            saving it would be; the reminder named here may keep times it
+            already repeats at.
+        - in: query
+          name: months
+          schema:
+            type: string
+          description: Comma-separated months (1 to 12) to send in, e.g. `1,2,12`.
+        - in: query
+          name: days
+          schema:
+            type: string
+          description: Comma-separated weekdays to send on, e.g. `Mon,Wed`.
+        - in: query
+          name: holiday
+          schema:
+            type: string
+          description: A holiday name, e.g. `Christmas Day`, read with `country` and `region`, and sent at the time of day of `start` from the start's year on. Use one of `at`, `cron` or `holiday`.
+        - in: query
+          name: country
+          schema:
+            type: string
+          description: The holiday's country code, e.g. `CA`.
+        - in: query
+          name: region
+          schema:
+            type: string
+          description: The holiday's region code, e.g. `ON`.
+        - in: query
+          name: tz
+          schema:
+            type: string
+          description: An IANA timezone such as `America/Toronto`. Defaults to the server's timezone.
+        - in: query
+          name: isc
+          schema:
+            type: boolean
+          description: Read `cron` as a 5-field crontab entry.
+        - in: query
+          name: start
+          schema:
+            type: string
+          description: A local date and time before which nothing is sent. For a holiday, only its year and time of day are used, and it may be just `hh:mm` or `hh:mm:ss`.
+        - in: query
+          name: until
+          schema:
+            type: string
+          description: A local date and time after which nothing more is sent.
+        - in: query
+          name: count
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000000
+          description: Stop after this many times, counting ones skipped as late and failed sends.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 25
+            default: 5
+          description: How many upcoming times to list.
+      responses:
+        '200':
+          description: Upcoming times as UNIX timestamps. Empty when a one-off's time has passed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [next]
+                properties:
+                  next:
+                    type: array
+                    items:
+                      type: integer
+        '400':
+          description: >
+            Bad Request. JSON errors name the problem `field`. A repeating
+            reminder with nothing to send is an error too: on `until` when the
+            end date is the cause, otherwise on `when`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /reminder/{key}/holidays:
+    get:
+      operationId: Reminders_Holidays
+      summary: Lists the countries with public holidays, or one country's holidays.
+      description: >
+        Without `country`, every country code is listed with its regions. With
+        `country`, its holidays are listed over the next 12 months, or over
+        `year`. A holiday reminder saves the `name`; `label` is the same
+        holiday in the page language when one is known.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - in: query
+          name: country
+          schema:
+            type: string
+          description: A country code, e.g. `CA`.
+        - in: query
+          name: region
+          schema:
+            type: string
+          description: A region code of that country, e.g. `ON`.
+        - in: query
+          name: year
+          schema:
+            type: integer
+          description: A year to list instead of the next 12 months, from this year up to 4 years ahead.
+      responses:
+        '200':
+          description: The countries, or the country's holidays in date order.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    required: [countries]
+                    properties:
+                      countries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                            regions:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  code:
+                                    type: string
+                                  name:
+                                    type: string
+                                    nullable: true
+                  - type: object
+                    required: [holidays]
+                    properties:
+                      holidays:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date:
+                              type: string
+                              format: date
+                            name:
+                              type: string
+                            label:
+                              type: string
+        '400':
+          description: Bad Request. The country, region or year is unknown.
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /reminder/{key}/limits:
+    get:
+      operationId: Reminders_Limits
+      summary: Shows the limits on {key}'s reminders and how much of each is used.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+      responses:
+        '200':
+          description: The limits.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [limits, rules]
+                properties:
+                  limits:
+                    $ref: '#/components/schemas/ReminderLimits'
+                  rules:
+                    $ref: '#/components/schemas/ReminderRules'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Not Found. Reminders are turned off.
+        '500':
+          description: The limits or reminders could not be read.
+    post:
+      operationId: Reminders_SetLimits
+      summary: Changes the limits on {key}'s reminders.
+      description: >
+        Only the administrator may change limits, which apply to everyone but
+        the administrator: the configuration's own user, or anyone when logins
+        are off. A field left out keeps its value, and null puts it back to its
+        default (APPRISE_REMINDER_MAX reminders, and APPRISE_REMINDER_ATTACH_QUOTA
+        for attachments).
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reminders:
+                  type: integer
+                  nullable: true
+                  minimum: 1
+                attach_size:
+                  type: integer
+                  nullable: true
+                  minimum: 0
+      responses:
+        '200':
+          description: The saved limits.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [limits]
+                properties:
+                  limits:
+                    $ref: '#/components/schemas/ReminderLimits'
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden. Only the administrator may change limits.
+        '404':
+          description: Not Found. Reminders are turned off.
+        '500':
+          description: The limits could not be read or saved.
+  /reminder/{key}/{id}:
+    get:
+      operationId: Reminders_Get
+      summary: Shows one reminder.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderId'
+        - $ref: '#/components/parameters/ReminderPrivacy'
+      responses:
+        '200':
+          description: The reminder.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: The reminders could not be read.
+    put:
+      operationId: Reminders_Replace
+      summary: Replaces every field a caller may set on a reminder.
+      description: >
+        A new `when` starts the run count again. A new time, end or run count,
+        or turning a reminder back on, works out its `next` time again.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderId'
+        - $ref: '#/components/parameters/ReminderPrivacy'
+        - $ref: '#/components/parameters/NotifyTitleHeader'
+        - $ref: '#/components/parameters/NotifyTypeHeader'
+        - $ref: '#/components/parameters/NotifyTagHeader'
+        - $ref: '#/components/parameters/NotifyTemplateHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderInput'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReminderUpload'
+      responses:
+        '200':
+          description: The saved reminder.
+          headers:
+            X-Apprise-Reminder-ID:
+              description: The reminder's ID.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+            text/plain:
+              schema:
+                type: string
+                example: Successfully saved reminder
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+        '500':
+          description: The reminders could not be read or saved.
+    patch:
+      operationId: Reminders_Change
+      summary: Changes only the fields sent, keeping the rest.
+      description: >
+        Works like PUT, but any field left out keeps its saved value. Send
+        `{"enabled": false}` to pause a reminder.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderId'
+        - $ref: '#/components/parameters/ReminderPrivacy'
+        - $ref: '#/components/parameters/NotifyTitleHeader'
+        - $ref: '#/components/parameters/NotifyTypeHeader'
+        - $ref: '#/components/parameters/NotifyTagHeader'
+        - $ref: '#/components/parameters/NotifyTemplateHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderFields'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReminderUpload'
+      responses:
+        '200':
+          description: The saved reminder.
+          headers:
+            X-Apprise-Reminder-ID:
+              description: The reminder's ID.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+            text/plain:
+              schema:
+                type: string
+                example: Successfully saved reminder
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+        '500':
+          description: The reminders could not be read or saved.
+    delete:
+      operationId: Reminders_Remove
+      summary: Removes a reminder.
+      description: >
+        Removing a repeating reminder also removes the one-offs that stand in
+        for some of its times.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderId'
+      responses:
+        '204':
+          description: The reminder was removed. No content, the same as /del.
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: The reminders could not be read or saved.
+  /reminder/{key}/{id}/test:
+    post:
+      operationId: Reminders_Test
+      summary: Sends a reminder now without changing when it is next due.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderId'
+        - $ref: '#/components/parameters/StreamQueryParam'
+      responses:
+        '200':
+          description: >
+            The reminder was sent. It is sent and answered the same way as
+            /notify: its log as text, HTML or JSON, or a live event stream when
+            `stream` is truthy or `Accept: text/event-stream` is sent.
+          content:
+            text/plain:
+              schema:
+                type: string
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogResponse'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/StreamEvent'
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '424':
+          description: One or more notifications could not be sent.
+        '500':
+          description: The reminders could not be read.
+        '503':
+          $ref: '#/components/responses/StreamCapacityUnavailable'
+  /reminder/:
+    get:
+      operationId: Reminders_ListByHeader
+      summary: Header-based equivalent of GET /reminder/{key}.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+        - $ref: '#/components/parameters/ReminderWindowStart'
+        - $ref: '#/components/parameters/ReminderWindowEnd'
+        - $ref: '#/components/parameters/ReminderShowDisabled'
+      responses:
+        '200':
+          description: Every reminder saved for this configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reminders]
+                properties:
+                  reminders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: The reminders could not be read.
+    post:
+      operationId: Reminders_AddByHeader
+      summary: Header-based equivalent of POST /reminder/{key}.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+        - $ref: '#/components/parameters/NotifyTitleHeader'
+        - $ref: '#/components/parameters/NotifyTypeHeader'
+        - $ref: '#/components/parameters/NotifyTagHeader'
+        - $ref: '#/components/parameters/NotifyTemplateHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderInput'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReminderUpload'
+      responses:
+        '200':
+          description: The saved reminder with its new `id` and `next` time.
+          headers:
+            X-Apprise-Reminder-ID:
+              description: The reminder's ID.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+            text/plain:
+              schema:
+                type: string
+                example: Successfully saved reminder
+        '400':
+          description: Bad Request. JSON errors name the problem `field`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may always use reminders; the
+            configuration's own user only while its access is `user` (the same
+            rule /status reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '409':
+          description: The configuration's user already has the most reminders allowed.
+        '413':
+          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+        '500':
+          description: The reminders could not be read or saved.
   /add/:
     post:
       operationId: Persistent_AddConfigurationByHeader
@@ -996,10 +1944,10 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ConfigIdHeaderRequired'
       responses:
-        '200':
-          description: Configuration removed.
         '204':
-          description: No content (Configuration did not exist).
+          description: >
+            No content. The configuration was removed, or there was nothing to
+            remove. Older releases answered a removal with 200.
         '400':
           description: Bad Request (missing or invalid X-Apprise-Config-ID).
         '401':
@@ -1238,6 +2186,7 @@ paths:
         - basicAuth: []
       parameters:
         - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+        - $ref: '#/components/parameters/KeepReminders'
       responses:
         '200':
           description: Authentication removed.
@@ -1311,6 +2260,57 @@ paths:
           description: >
             Forbidden (persistent storage is disabled, or CONFIG_LOCK requires
             an authenticated administrator).
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /resolve/:
+    post:
+      operationId: Persistent_ResolveUrlsByHeader
+      summary: Header-based equivalent of POST /resolve/{key}.
+      description: >
+        Identical to POST /resolve/{key}, key via X-Apprise-Config-ID instead
+        of the URL. 400 if that header is missing or invalid.
+      tags:
+        - Persistent
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [urls]
+              properties:
+                urls:
+                  description: >
+                    One string of URLs (split on spaces and commas), or a list
+                    where each entry is one URL. At most 100.
+                  oneOf:
+                    - type: string
+                    - type: array
+                      maxItems: 100
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Each URL, in the order sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveResponse'
+        '400':
+          description: >
+            Bad Request (not a JSON object, `urls` missing, of the wrong type
+            or too long, or the Config ID missing or invalid).
+        '401':
+          description: Unauthorized (this key's authentication requirements were not met).
+        '403':
+          description: >
+            Forbidden (the configuration is `public` or `disabled`, and the
+            caller is not the administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -1393,6 +2393,65 @@ components:
         minLength: 1
         maxLength: 128
       description: Configuration key (1-128 chars, alphanumeric, _, -).
+    ReminderKey:
+      in: path
+      name: key
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+      description: >
+        Configuration key (1-128 chars, alphanumeric, _, -), or `@` to read it
+        from X-Apprise-Config-ID (or else the browser login). The header takes
+        precedence over a key in the path.
+    ReminderWindowStart:
+      in: query
+      name: start
+      schema:
+        type: integer
+      description: >
+        With `end`, a UNIX timestamp that starts a window. Each reminder then
+        lists the `occurrences` it is due inside it, for a calendar.
+    ReminderWindowEnd:
+      in: query
+      name: end
+      schema:
+        type: integer
+      description: The UNIX timestamp that ends the `start` window.
+    ReminderPrivacy:
+      in: query
+      name: privacy
+      schema:
+        type: boolean
+        default: false
+      description: >
+        Show each reminder's own `urls` with their secrets hidden, the way
+        /json/urls shows them with `privacy=1`. What is stored is not changed.
+    ReminderShowDisabled:
+      in: query
+      name: disabled
+      schema:
+        type: string
+        enum: [show]
+      description: >
+        Set to `show` to also list the `occurrences` of paused reminders, the
+        times they would be due. Without it, a paused reminder lists none.
+    KeepReminders:
+      in: query
+      name: keep_reminders
+      schema:
+        type: boolean
+        default: false
+      description: Hand the user's reminders to the administrator instead of removing them.
+    ReminderId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9a-f]{32}$'
+      description: The reminder ID the server gave when the reminder was added.
     LogLevelHeader:
       in: header
       name: X-Apprise-Log-Level
@@ -1569,6 +2628,25 @@ components:
               type: array
               items:
                 type: string
+        reminders_enabled:
+          type: boolean
+          description: >-
+            Whether this caller may use reminders for the Config ID asked
+            about: always for the administrator, and for the configuration's
+            own login only while its access is `user`. Without a Config ID,
+            true for the administrator.
+            Missing when APPRISE_REMINDER_ENABLED is `no` or stateful mode is
+            disabled.
+        scheduler_running:
+          type: boolean
+          description: >-
+            Whether the scheduler that sends reminders is running. Present only
+            with `reminders_enabled`.
+        reminder_urls_max:
+          type: integer
+          description: >-
+            The most `urls` a reminder can hold; 0 when it can hold none.
+            Present only with `reminders_enabled`.
         privilege:
           type: string
           enum: [admin, user]
@@ -1576,6 +2654,434 @@ components:
             What this caller may reach. `user` is a caller authenticated
             against a single configuration; `admin` covers an unrestricted
             credential and a server with authentication turned off.
+
+    ResolveResponse:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                description: >
+                  The URL in full, secrets included, with every option written
+                  out; as it was sent when it cannot be loaded.
+              privacy_url:
+                type: string
+                description: >
+                  The URL with its secrets hidden; only its schema (such as
+                  `json://`) when it cannot be loaded.
+              service:
+                type: string
+                nullable: true
+                description: The service's name, or null when it cannot be loaded.
+              id:
+                type: string
+                nullable: true
+                description: >
+                  The ID /json/urls gives the same URL in a configuration; only
+                  when `valid` is true.
+              valid:
+                type: boolean
+              error:
+                type: string
+                description: Why it cannot be loaded; only when `valid` is false.
+
+    ReminderWhen:
+      type: object
+      description: >
+        Holds exactly one of `at`, `cron` or `holiday`. Add `every` to `at` to
+        repeat from that time; `every` without `at` starts at `start`, or else
+        at the start of the minute it is saved in. Dates and times are `YYYY-MM-DD` with an optional
+        `hh`, `hh:mm` or `hh:mm:ss` (a missing time is midnight), and are
+        returned as `YYYY-MM-DDThh:mm:ss`.
+      properties:
+        tz:
+          type: string
+          description: An IANA timezone such as `America/Toronto`. Defaults to the server's timezone.
+        at:
+          type: string
+          description: A single local date and time, e.g. `2026-12-25 09:00`.
+        cron:
+          type: string
+          maxLength: 255
+          description: A repeating dateblock cron, e.g. `0 0 9 * * Mon-Fri`.
+        isc:
+          type: boolean
+          description: Read `cron` as a 5-field crontab entry.
+        holiday:
+          $ref: '#/components/schemas/ReminderHoliday'
+        every:
+          $ref: '#/components/schemas/ReminderEvery'
+        drift:
+          type: integer
+          minimum: -2147483647
+          maximum: 2147483647
+          default: 0
+          description: >
+            Seconds added to every time the schedule works out to, e.g. 90
+            sends a 09:00 reminder at 09:01:30 and -604800 sends it a week
+            early. Left out when 0.
+
+    ReminderEvery:
+      type: object
+      description: >
+        Repeats from `at`, counting the interval from that start. For example,
+        `{"unit": "weeks", "interval": 2, "days": ["Mon", "Wed"]}` sends on
+        Monday and Wednesday every second week.
+      required: [unit]
+      properties:
+        unit:
+          type: string
+          enum: [seconds, minutes, hours, days, weeks, months, years]
+        interval:
+          type: integer
+          minimum: 1
+          maximum: 999
+          default: 1
+          description: >
+            How many units apart the sends are. A configuration's own user
+            cannot repeat more often than APPRISE_REMINDER_USER_MIN_INTERVAL
+            seconds, unless the reminder already did before their change.
+        months:
+          type: array
+          description: Only send in these months (1 to 12). Not used with `years`.
+          items:
+            type: integer
+            minimum: 1
+            maximum: 12
+        days:
+          type: array
+          description: >
+            Only send on these weekdays. Used with seconds, minutes, hours,
+            days and weeks; weeks without days repeat on the start date's weekday.
+          items:
+            type: string
+            enum: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+
+    ReminderHoliday:
+      type: object
+      description: >
+        A public holiday, sent on every year it falls, at the time of day of
+        the reminder's `start`, or at midnight without one. The start's year
+        is the first year it is sent; its month and day are not used.
+      required: [country, name]
+      properties:
+        country:
+          type: string
+          description: A country code from `/reminder/{key}/holidays`, e.g. `CA`.
+        region:
+          type: string
+          description: A region code of that country, e.g. `ON`. Leave it out to use the whole country's holidays.
+        name:
+          type: string
+          description: A holiday `name` from `/reminder/{key}/holidays`, e.g. `Christmas Day`.
+
+    ReminderFields:
+      type: object
+      description: >
+        Every field a reminder takes. Only `body` (or an attachment) and `when`
+        are needed; any other field, including those inside `when`, may be
+        left out or set to null to take its default; an empty list counts as
+        left out. A PATCH sends only the
+        fields it changes, and one set to null goes back to its default.
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          description: >
+            A label for the reminder. Defaults to the title, or else the first
+            line of the body.
+        enabled:
+          type: boolean
+          default: true
+        last:
+          type: object
+          nullable: true
+          description: >
+            Only null is taken, on a PUT or PATCH: it clears how the last send
+            went. Moving a reminder to a new time clears it as well.
+        title:
+          type: string
+          maxLength: 250
+        body:
+          type: string
+          maxLength: 32768
+          description: Required unless attachments are sent.
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        format:
+          type: string
+          nullable: true
+          description: The message format. Defaults to APPRISE_DEFAULT_FORMAT.
+        tag:
+          description: >
+            Which services to send to, with the same rules as /notify. A list
+            means any of its entries; an entry that is itself a list needs all
+            of its tags. `tags` is accepted the same way. At most 1000
+            characters once joined.
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+        urls:
+          description: >
+            Apprise URLs to send to, read the same way as /notify (one string,
+            split on spaces and commas, or a list); every one is sent to. With
+            no `tag` key they are sent to alone, as with /notify. With a `tag`,
+            the configuration's URLs it picks are sent to as well; with `tag`
+            set to null or empty, the configuration's untagged URLs are, and
+            the tag is saved as "". Each must load, and there may be at most
+            APPRISE_REMINDER_URLS_MAX (`reminder_urls_max` in /status), whatever
+            the stateless mode. While it is 0, URLs a reminder already holds
+            can be saved again unchanged but are not sent to. A reminder
+            that would reach no service is refused. One sent to its own URLs
+            alone needs no saved configuration. On a change, `@<id>` keeps a
+            URL the reminder already holds by its ID (from `url_ids`), so a
+            caller that only has its URLs with secrets hidden can keep some,
+            drop others and add new ones; an ID it doesn't hold is refused. A
+            new reminder (a copy, or one standing in for a time of a series)
+            may name that way any URL this configuration's reminders hold.
+          nullable: true
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        template:
+          type: object
+          nullable: true
+          maxProperties: 256
+          additionalProperties:
+            oneOf:
+              - type: string
+                maxLength: 1024
+              - type: number
+              - type: boolean
+          description: >
+            Values for the configuration's template variables, checked the same
+            way as /notify. Blank values are left out, so the configuration's
+            fallback values apply. Names are case-insensitive.
+        when:
+          $ref: '#/components/schemas/ReminderWhen'
+        start:
+          type: string
+          nullable: true
+          description: >
+            A local date and time, as `YYYY-MM-DD` with an optional `hh`,
+            `hh:mm` or `hh:mm:ss`. A repeating reminder's own times start
+            from it, before any drift is added. A holiday uses only its year
+            and time of day, and may give just `hh:mm` or `hh:mm:ss`, saved on
+            the holiday's next date. One already passed changes nothing.
+        until:
+          type: string
+          nullable: true
+          description: >
+            A local date and time after which nothing more is sent. One before
+            the start (a holiday's start year) is refused. A reminder whose until, or whose one-off time,
+            has passed is saved with next set to null and never sent.
+        count:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 1000000
+          description: Stop after this many times, counting ones skipped as late and failed sends.
+        skip:
+          type: array
+          maxItems: 200
+          description: >
+            Times a repeating reminder is not sent at, as UNIX timestamps.
+            Times that have passed are dropped, and times that a one-off stands
+            in for always stay.
+          items:
+            type: integer
+            maximum: 253402300799
+        series:
+          type: string
+          description: >
+            Only when adding a one-off: the ID of a repeating reminder it stands
+            in for at `occurrence`. That time is added to the repeating
+            reminder's `skip`.
+        occurrence:
+          type: integer
+          description: With `series`, the UNIX timestamp of the time being replaced.
+        attach:
+          type: array
+          description: >
+            Attachments, using the same forms as /notify (web addresses and
+            base64 objects). Web addresses are checked when saved and
+            downloaded each time the reminder is sent. `{"file": "<name>"}`
+            keeps a stored file the reminder already has. Uploaded files are
+            added to these. `attachment` and `attachments` are accepted the
+            same way.
+          items:
+            oneOf:
+              - type: string
+              - type: object
+
+    ReminderInput:
+      description: A whole reminder, as added or replaced.
+      allOf:
+        - $ref: '#/components/schemas/ReminderFields'
+        - type: object
+          required: [when]
+
+    ReminderUpload:
+      type: object
+      required: [reminder]
+      properties:
+        reminder:
+          type: string
+          description: The ReminderInput fields as a JSON string.
+        attach:
+          type: array
+          items:
+            type: string
+            format: binary
+
+    ReminderAttachment:
+      type: object
+      description: A stored file (`file`, `filename`, `size`) or a web address (`url`, `filename`).
+      properties:
+        file:
+          type: string
+          description: The SHA-256 of the stored content.
+        url:
+          type: string
+        filename:
+          type: string
+        size:
+          type: integer
+
+    ReminderLimits:
+      type: object
+      properties:
+        reminders:
+          type: integer
+          description: The most reminders this configuration can hold.
+        reminders_used:
+          type: integer
+        attach_size:
+          type: integer
+          description: >
+            The bytes of stored attachments allowed in total. 0 turns attachments
+            off, web addresses included. Files the administrator adds count too,
+            so the use can be above it.
+        attach_used:
+          type: integer
+          description: Bytes used, counting a file shared by several reminders once.
+
+    ReminderRules:
+      type: object
+      description: The rules a reminder must follow, so an app can check one before saving it.
+      properties:
+        min_interval:
+          type: integer
+          description: The fewest seconds apart the caller may set a reminder to repeat. 0 is no limit.
+        drift_min:
+          type: integer
+          description: The lowest drift allowed, in seconds.
+        drift_max:
+          type: integer
+          description: The highest drift allowed, in seconds.
+        holiday_last_year:
+          type: integer
+          description: The last year a holiday can be looked up.
+        timezone:
+          type: string
+          description: The time zone used when a reminder names none.
+        preview_max:
+          type: integer
+          description: The most times one preview can list.
+        urls_max:
+          type: integer
+          description: The most `urls` a reminder can hold; 0 when it can hold none.
+
+    Reminder:
+      allOf:
+        - $ref: '#/components/schemas/ReminderInput'
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: '^[0-9a-f]{32}$'
+            owner:
+              type: string
+              enum: [admin, user]
+              description: Who added it; `user` is the configuration's own login.
+            url_ids:
+              type: array
+              items:
+                type: string
+              description: >
+                One ID per entry in `urls`, in the same order: the ID /json/urls
+                gives the same URL in a configuration (its options aside), so a
+                caller can tell which of its URLs a reminder holds, and keep one
+                on a change as `@<id>`. Only present when it holds URLs.
+            runs:
+              type: integer
+              description: How many times it has been due.
+            next:
+              type: integer
+              nullable: true
+              description: When it is next due, as a UNIX timestamp. Null when nothing is left.
+            last:
+              type: object
+              nullable: true
+              description: How the most recent send went.
+              properties:
+                at:
+                  type: integer
+                ok:
+                  type: boolean
+                reason:
+                  type: string
+                  enum: [late, access, idle]
+                  description: >-
+                    Why it was not sent. `late` means it was overdue by more than
+                    APPRISE_REMINDER_GRACE. `access` means it was paused because
+                    the configuration is `disabled`. `idle` means it
+                    was paused because the configuration went unused for
+                    APPRISE_REMINDER_IDLE_DAYS.
+            attach:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReminderAttachment'
+            occurrences:
+              type: array
+              description: >
+                Only when listing with `start` and `end`: the UNIX timestamps it
+                is due inside that window, from now on (at most 200).
+              items:
+                type: integer
+            created:
+              type: integer
+            updated:
+              type: integer
+
+    ReminderResponse:
+      type: object
+      required: [reminder]
+      properties:
+        reminder:
+          $ref: '#/components/schemas/Reminder'
+
+    ReminderError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        field:
+          type: string
+          description: The field that could not be accepted.
 
     AuthChangeResponse:
       type: object

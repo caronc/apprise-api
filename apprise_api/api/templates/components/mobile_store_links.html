@@ -4,12 +4,12 @@
      dir="ltr"
      style="--store-columns: minmax(0, {{ apple_ratio }}fr) minmax(0, {{ google_ratio }}fr);
             --store-width: {{ badge_width }}px">
-  <a href="{{ app_store_url }}" target="_blank" rel="noopener noreferrer">
+  <a href="{{ app_store_url }}" target="_blank" rel="nofollow noopener noreferrer">
     <img src="{% static apple_badge %}" alt="{{ apple_label }}">
   </a>
   <a href="{{ google_play_url }}"
      target="_blank"
-     rel="noopener noreferrer">
+     rel="nofollow noopener noreferrer">
     <img src="{% static google_badge %}" alt="{{ google_label }}">
   </a>
 </div>
