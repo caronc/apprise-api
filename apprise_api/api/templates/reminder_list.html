@@ -69,7 +69,8 @@
     const line = document.createElement('div');
     const label = document.createElement('span');
     const code = document.createElement('code');
-    const toggle = document.createElement('button');
+    // The eye starts out offering to show the Config ID.
+    const toggle = appriseIconButton('visibility_off', '{% trans "Show Config ID" %}', 'btn-flat btn-small config-id-visibility');
     line.className = 'reminder-card-line reminder-card-key';
     label.className = 'reminder-card-label';
     label.textContent = '{% trans "Config ID" %}: ';
@@ -78,16 +79,11 @@
     code.dataset.configIdValue = reminder.key;
     code.setAttribute('aria-label', '{% trans "Config ID hidden" %}');
     code.textContent = '••••••••';
-    toggle.type = 'button';
-    toggle.className = 'btn-flat btn-small config-id-visibility';
     toggle.dataset.configIdToggle = '';
     toggle.dataset.showLabel = '{% trans "Show Config ID" %}';
     toggle.dataset.hideLabel = '{% trans "Hide Config ID" %}';
     toggle.setAttribute('aria-controls', code.id);
     toggle.setAttribute('aria-pressed', 'false');
-    toggle.setAttribute('aria-label', toggle.dataset.showLabel);
-    toggle.title = toggle.dataset.showLabel;
-    toggle.innerHTML = '<i class="material-icons" aria-hidden="true">visibility_off</i>';
     line.append(label, code, toggle);
     return line;
   }
@@ -144,17 +140,10 @@
 
   // Fetch the list again after a change, then redraw it.
   async function reminderOverviewLoad() {
-    try {
-      const response = await appriseFetch(reminderOverviewUrl, {headers: {'Accept': 'application/json'}});
-      if (!response.ok) {
-        const failure = await appriseResponseFailure(response, '{% trans "The reminders could not be read" %}');
-        appriseShowStatusToast(failure.message, false);
-        return;
-      }
-      reminderItems = (await response.json()).reminders;
+    const reminders = await reminderReadList(reminderOverviewUrl);
+    if (reminders) {
+      reminderItems = reminders;
       reminderOverviewRender();
-    } catch (e) {
-      appriseShowStatusToast('{% trans "The reminders could not be read" %}', false);
     }
   }
 

@@ -1047,6 +1047,25 @@
   }
   appriseWireValueToggles(document);
 
+  // A small button that shows only an icon. Its label is read by screen
+  // readers and shown as a tooltip.
+  // - icon: the Material icon name, such as 'delete'.
+  // - className: its classes, such as 'btn-flat notify-template-remove'.
+  function appriseIconButton(icon, label, className) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    // The icon is set as text, so its name can never become markup.
+    const mark = document.createElement('i');
+    mark.className = 'material-icons';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = icon;
+    button.appendChild(mark);
+    return button;
+  }
+
   // Build the eye button that shows or hides one concealed input.
   // - inputId: the id of the input it controls.
   // - It starts out "hidden"; appriseWireValueToggles() makes it work.
@@ -1208,10 +1227,12 @@
   appriseWireConfigIdQr(document);
 
   // Submit a Config ID as form data so it never appears in the address bar.
-  function apprisePostConfigId(configId, nextName) {
+  // - tab: a page tab to open once there, such as '#reminders'.
+  function apprisePostConfigId(configId, nextName, tab) {
     const form = document.createElement('form');
     form.method = 'post';
-    form.action = '{% url "config_current" %}';
+    // The page answers with a redirect, which keeps the tab.
+    form.action = '{% url "config_current" %}' + (tab || '');
     form.hidden = true;
     const field = document.createElement('input');
     field.name = 'key';
@@ -1246,6 +1267,10 @@
       );
       return;
     }
+    // Stay on the open tab, such as #reminders. Anything after it, such as
+    // a reminder's ID in #notify/<id>, belongs to the old Config ID.
+    const openTab = window.location.hash.split('/')[0];
+    const tab = /^#[\w-]+$/.test(openTab) ? openTab : '';
 
     appriseFire({
       title: '{% trans "Open Configuration" %}',
@@ -1257,10 +1282,10 @@
     }).then(function(result) {
       if (result.isConfirmed) {
         if (useCookieAlias) {
-          apprisePostConfigId(configId, nextName);
+          apprisePostConfigId(configId, nextName, tab);
         } else {
           // Cookie-free Basic Auth sessions continue with an explicit keyed URL.
-          window.location.assign(explicitBase + encodeURIComponent(configId));
+          window.location.assign(explicitBase + encodeURIComponent(configId) + tab);
         }
       }
     });

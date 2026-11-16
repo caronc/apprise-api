@@ -58,6 +58,7 @@ _KEYED_ROUTES = frozenset(
         "reminder_holidays",
         "reminder_item",
         "reminder_test",
+        "reminder_diagnostics",
     }
 )
 # Reminder routes with '@' take the key from the header, or the browser login.
@@ -69,6 +70,7 @@ _REMINDER_CURRENT_ROUTES = frozenset(
         "reminder_holidays_current",
         "reminder_item_current",
         "reminder_test_current",
+        "reminder_diagnostics_current",
     }
 )
 # Routes that take the Config ID from the X-Apprise-Config-ID header instead of the URL.

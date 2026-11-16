@@ -1557,10 +1557,6 @@ msgstr "전송"
 msgid "Notification"
 msgstr "알림"
 
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "이 테스트 작업을 수행하려면 대상 항목에 최소한 하나의 태그가 필요합니다."
-
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Apprise API 테스트"
@@ -2585,6 +2581,18 @@ msgstr "이 URL을 불러올 수 없습니다"
 msgid "This value is not in the form this service expects."
 msgstr "이 값은 이 서비스가 요구하는 형식이 아닙니다."
 
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "각 항목에 종류를 표시하세요: {}."
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{}: {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "{}은(는) {}(으)로 읽혔습니다."
+
 #: apprise_api/api/templates/details.html:770
 msgid "This URL could not be loaded. Check the highlighted fields."
 msgstr "이 URL을 불러올 수 없습니다. 강조 표시된 필드를 확인하세요."
@@ -3106,6 +3114,46 @@ msgstr "건너뜀: 보내기에 너무 늦었습니다"
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
 msgstr "일시 중지됨: 이 구성을 한동안 사용하지 않았습니다"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "실패: 이 서버는 더 이상 리마인더에 URL을 허용하지 않습니다"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "실패: 구성을 찾을 수 없습니다"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "실패: 첨부 파일을 사용할 수 없습니다"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "실패: 오류로 인해 전송이 중단되었습니다"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "진단 정보를 읽을 수 없습니다"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "진단"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "이 리마인더를 추적하는 데 도움이 되도록 지원 티켓에 붙여 넣으세요. 메시지는 제외되고 URL의 비밀번호는 숨겨집니다. ‘가림’는 이름, 태그, URL도 숨깁니다."
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "복사"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "가림"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "이 진단 정보를 읽는 방법"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."

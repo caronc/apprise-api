@@ -151,8 +151,9 @@
           <div id="details-disabled-missing">
             <p>{% trans "This service is missing the necessary dependencies to function on this server." %}</p>
             <p id="details-disabled-details"></p>
+            {# The script adds each package after the label. #}
             <p id="details-disabled-packages">
-              {% trans "Required packages:" %} <span></span>
+              <span>{% trans "Required packages:" %}</span>
             </p>
           </div>
         </div>
@@ -264,6 +265,7 @@
   function detailsShowUrl() {
     detailsUrl.value = document.activeElement === detailsUrl ? detailsFull : (detailsHidden || detailsFull);
     detailsCopy.disabled = !detailsFull;
+    detailsShowReading();
   }
 
   // Step 1: show only the services whose name or schema holds the search.
@@ -317,7 +319,8 @@
     document.querySelector('#details-disabled-missing').hidden = Boolean(service.admin_disabled);
     details.textContent = requirements.details || '';
     details.hidden = !requirements.details;
-    list.querySelector('span').replaceChildren(...packages.map(function (name) {
+    // The label stays first, then each package as code.
+    list.replaceChildren(list.firstElementChild, ' ', ...packages.map(function (name) {
       const code = document.createElement('code');
       code.textContent = name;
       return code;
@@ -545,7 +548,75 @@
       note.textContent = '{% trans "This value is not in the form this service expects." %}';
       holder.appendChild(note);
     }
+
+    // A list that holds more than one kind of entry, told apart by a mark in
+    // front (BulkSMS: + for a phone number, @ for a group), says which mark
+    // means what, and later how each entry without one was read.
+    const kinds = (meta.group || []).map(function (member) {
+      return detailsChosen.details.tokens[member] || {};
+    }).filter(function (kind) { return kind.prefix; });
+    if (holder.dataset.kind === 'list' && kinds.length && (meta.group || []).length > 1) {
+      holder.detailsKinds = kinds;
+      const hint = document.createElement('span');
+      hint.className = 'details-field-hint';
+      hint.textContent = detailsFormat('{% trans "Mark each entry with its kind: {}." %}', kinds.map(function (kind) {
+        return detailsFormat('{% trans "{} for {}" %}', kind.prefix, kind.name);
+      }).join(', '));
+      const read = document.createElement('span');
+      read.className = 'details-field-hint details-field-read';
+      read.hidden = true;
+      holder.append(hint, read);
+    }
     return holder;
+  }
+
+  // Fill each {} in a translated text with the next value, in order; a value
+  // that holds {} itself is never filled in again.
+  function detailsFormat(text) {
+    const values = Array.prototype.slice.call(arguments, 1);
+    return text.split('{}').map(function (piece, index) {
+      return index < values.length ? piece + values[index] : piece;
+    }).join('');
+  }
+
+  // The parts of a URL's address, decoded, with any login left out:
+  // "bulksms://user:pass@@abcd/+1555/?x=y" gives "@abcd" and "+1555".
+  function detailsUrlParts(url) {
+    const parts = url.split('?')[0].replace(/^[^:]+:\/\//, '').split('/');
+    // A login comes before the first @; Apprise encodes any @ inside it.
+    parts[0] = parts[0].slice(parts[0].indexOf('@') + 1);
+    return parts.map(function (part) {
+      try {
+        return decodeURIComponent(part);
+      } catch (e) {
+        return part;
+      }
+    });
+  }
+
+  // Under a list of several kinds, say how each entry typed without a mark
+  // was read, from the URL Apprise wrote: "abcd was read as a Target Group".
+  function detailsShowReading() {
+    const parts = detailsFull ? detailsUrlParts(detailsFull) : [];
+    document.querySelectorAll('#details-service [data-field]').forEach(function (holder) {
+      if (!holder.detailsKinds) {
+        return;
+      }
+      const notes = [];
+      (detailsValue(holder) || []).forEach(function (entry) {
+        const kinds = holder.detailsKinds;
+        if (kinds.some(function (kind) { return entry.startsWith(kind.prefix); })) {
+          return;
+        }
+        const found = kinds.find(function (kind) { return parts.includes(kind.prefix + entry); });
+        if (found) {
+          notes.push(detailsFormat('{% trans "{} was read as a {}." %}', entry, found.name));
+        }
+      });
+      const read = holder.querySelector('.details-field-read');
+      read.textContent = notes.join(' ');
+      read.hidden = !notes.length;
+    });
   }
 
   // A pattern from the server, written for Python, made readable by the
@@ -620,12 +691,7 @@
       row.appendChild(field);
     });
 
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'btn-flat notify-template-remove';
-    remove.setAttribute('aria-label', '{% trans "Remove Value" %}');
-    remove.setAttribute('title', '{% trans "Remove Value" %}');
-    remove.innerHTML = '<i class="material-icons" aria-hidden="true">delete</i>';
+    const remove = appriseIconButton('delete', '{% trans "Remove Value" %}', 'btn-flat notify-template-remove');
     remove.addEventListener('click', function () {
       row.remove();
       // Let Add Value check its rows again.

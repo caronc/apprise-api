@@ -78,6 +78,10 @@ PAUSED_ACCESS = frozenset({Authentication.ACCESS_DISABLED})
 # NotImplementedError comes from an unknown holiday country or region.
 SCHEDULE_ERRORS = (SyntaxError, ValueError, TypeError, OverflowError, ZoneInfoNotFoundError, NotImplementedError)
 
+# Errors from a reminder damaged on disk or edited by hand, where a field
+# can also be missing or the wrong shape.
+DAMAGED_ERRORS = (*SCHEDULE_ERRORS, AttributeError, KeyError)
+
 # How many years of holidays the calendar and holiday lists offer.
 HOLIDAY_YEARS = 5
 
@@ -100,6 +104,9 @@ GAP_RUNS = 10
 
 # Cron shorthands that send at a set time of day (unlike @hourly).
 CRON_CLOCK_SHORTHANDS = frozenset({"@yearly", "@annually", "@monthly", "@weekly", "@daily", "@midnight"})
+
+# How times read in log lines; the same layout as each line's own timestamp.
+LOG_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # The longest timezone name looked up. Real names are far shorter, and a very
 # long one can overflow Python's own lookup.
@@ -166,6 +173,42 @@ def find_zone(name: Any) -> ZoneInfo:
         raise ValueError("Timezone name is too long")
 
     return ZoneInfo(name)
+
+
+def log_time(due: Any, zone: Any = None, server: Any = None) -> str:
+    """Write a UNIX timestamp the way reminder log lines show it.
+
+    - Shown in the server's timezone, the same clock that stamps each log line.
+    - ``zone``: the reminder's own timezone; its local time follows in
+      brackets when it reads differently, e.g.
+      ``2026-11-17 14:00:00 (2026-11-17 09:00:00 America/Toronto)``.
+    - ``server``: another server's timezone, to read its logs; this
+      process's clock otherwise.
+    - A reminder with no time left reads ``none``.
+    """
+    if not isinstance(due, int):
+        return "none"
+
+    try:
+        # Without a server timezone, a naive time from the process clock,
+        # which follows the server's TZ.
+        text = datetime.fromtimestamp(due, find_zone(server) if server else None).strftime(LOG_TIME_FORMAT)
+
+    # A time or server timezone that cannot be read is shown as it was given.
+    except (*SCHEDULE_ERRORS, OSError):
+        return str(due)
+
+    if not zone:
+        return text
+
+    try:
+        local = datetime.fromtimestamp(due, find_zone(zone)).strftime(LOG_TIME_FORMAT)
+
+    # A timezone damaged on disk leaves just the server's time.
+    except SCHEDULE_ERRORS:
+        return text
+
+    return text if local == text else f"{text} ({local} {zone})"
 
 
 def local_moment(text: str, tz: ZoneInfo) -> datetime:
@@ -612,12 +655,6 @@ def needs_config(event: dict) -> bool:
       untagged URLs.
     """
     return not event.get("urls") or event.get("tag") is not None
-
-
-def drop_past_skips(event: dict, now: float) -> None:
-    """Forget skipped times that have already passed."""
-    if event.get("skip"):
-        event["skip"] = [due for due in event["skip"] if due > now]
 
 
 def until_passed(event: dict, after: datetime) -> bool:

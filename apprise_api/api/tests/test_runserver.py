@@ -161,7 +161,7 @@ class RunserverTests(SimpleTestCase):
         mock_is_vcs.assert_not_called()
         assert mock_call.call_args.args[0][-1] == "127.0.0.1:8001"
 
-    def test_main_runs_scheduler_beside_server(self):
+    def test_main_runs_scheduler(self):
         """The scheduler starts with the server and stops when it exits."""
         with (
             patch("apprise_api.runserver.apprise_is_vcs_installed", return_value=False),

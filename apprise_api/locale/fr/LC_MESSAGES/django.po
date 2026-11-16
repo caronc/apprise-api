@@ -1567,10 +1567,6 @@ msgstr "Envoyer"
 msgid "Notification"
 msgstr "Notification"
 
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "Cette action de test nécessite au moins un tag sur l’entrée cible."
-
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Test Apprise API"
@@ -2595,6 +2591,18 @@ msgstr "Cette URL n’a pas pu être chargée"
 msgid "This value is not in the form this service expects."
 msgstr "Cette valeur n’a pas la forme attendue par ce service."
 
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "Marquez chaque entrée selon son type : {}."
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{} pour {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "{} a été lu comme {}."
+
 #: apprise_api/api/templates/details.html:770
 msgid "This URL could not be loaded. Check the highlighted fields."
 msgstr "Cette URL n’a pas pu être chargée. Vérifiez les champs en surbrillance."
@@ -3120,6 +3128,46 @@ msgstr "Ignoré : il était trop tard pour l’envoyer"
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
 msgstr "En pause : cette configuration n’a pas été utilisée depuis un moment"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "Échec : ce serveur n’autorise plus les URL dans les rappels"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "Échec : aucune configuration n’a été trouvée"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "Échec : ses pièces jointes n’ont pas pu être utilisées"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "Échec : une erreur a interrompu l’envoi"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "Les diagnostics n’ont pas pu être lus"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "Diagnostics"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "Collez ceci dans un ticket d’assistance pour aider à suivre ce rappel. Son message est omis et les mots de passe de ses URL sont masqués. « Masqué » masque aussi son nom, ses tags et ses URL."
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "Copier"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "Masqué"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "Comment lire ces diagnostics"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."

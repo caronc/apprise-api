@@ -439,6 +439,8 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
             result.returncode, 0, "Auth page script has a JavaScript syntax error:\n{}".format(result.stderr)
         )
 
+    # The Reminder List is only offered while the administrator may list everything.
+    @override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple")
     def test_page_scripts_are_valid_javascript_in_every_language(self):
         """A translated label must never break a page's embedded scripts."""
         node = shutil.which("node")
@@ -446,7 +448,7 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
             self.skipTest("Node.js is not available to check JavaScript syntax")
 
         client = _web_cookie_client(Authentication.ROLE_ADMIN, "master")
-        pages = ("/", "/details", "/cfg/qr_render_admin_key", "/auth/qr_render_admin_key")
+        pages = ("/", "/details", "/reminders", "/cfg/qr_render_admin_key", "/auth/qr_render_admin_key")
         for code, _name in settings.LANGUAGES:
             for page in pages:
                 response = client.get(page, headers={"accept": "text/html", "accept-language": code})

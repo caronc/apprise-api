@@ -32,8 +32,10 @@ import unittest
 from unittest import mock
 
 import apprise
+from core.middleware import auth as auth_middleware
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from django.urls import get_resolver
 
 from ..auth import Authentication
 from ..utils import ConfigCache
@@ -371,6 +373,16 @@ class RouteAuthConsistencyTests(SimpleTestCase):
         for key in ("hardening_cfg_page_key", "hardening_header_key", "hardening_url_key"):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
+
+    def test_every_keyed_route_is_known_to_the_login_check(self):
+        """Each route with a Config ID in its URL, or '@', lets that configuration's login through."""
+        for pattern in get_resolver("api.urls").url_patterns:
+            with self.subTest(route=pattern.name):
+                if "key" in pattern.pattern.regex.groupindex:
+                    self.assertIn(pattern.name, auth_middleware._KEYED_ROUTES)
+
+                if pattern.default_args.get("key") == "@":
+                    self.assertIn(pattern.name, auth_middleware._CURRENT_CONFIG_ROUTES)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_config_editor_enforces_key_auth(self):

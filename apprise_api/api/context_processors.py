@@ -24,6 +24,7 @@
 import apprise
 from apprise.utils.template import TEMPLATE_NAME_MAXLEN
 from django.conf import settings
+from django.http import HttpRequest
 
 from .auth import Authentication
 from .utils import (
@@ -41,8 +42,9 @@ def stateful_mode(request):
     return {"STATEFUL_MODE": ConfigCache.mode}
 
 
-def reminders(request):
+def reminders(request: HttpRequest) -> dict[str, bool]:
     """Tell templates whether reminders are turned on."""
+    # Reminders need saved configurations as well as the setting.
     return {"REMINDERS_ENABLED": reminders_enabled()}
 
 

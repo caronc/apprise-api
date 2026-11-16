@@ -3051,7 +3051,9 @@ body .tabs .tab.disabled a:hover i {
   background: var(--select-bg);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
   box-sizing: border-box;
-  line-height: 2.75rem;
+  /* The line fills the space inside the 1px borders, so letters that hang
+     below the line, such as g or y, have room and are never cut off. */
+  line-height: calc(2.75rem - 2px);
   transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
@@ -5327,6 +5329,16 @@ Authentication Editor
   margin-top: 0.25rem;
 }
 
+/* Under a list of several kinds of entry: which mark means what, and how
+   entries without one were read. */
+.details-field-hint:not([hidden]) {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--notify-log-muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
 #notify .notify-template-value-control input,
 .details-step .notify-template-value-control input {
   padding-right: 2.8rem !important;
@@ -6420,6 +6432,56 @@ Reminders
 .swal2-popup.reminder-delete-popup .swal2-html-container {
   padding: 0;
   text-align: left;
+}
+
+/* The diagnostics dialog reads left to right, like the code it holds. */
+.swal2-popup.reminder-diagnostics-popup .swal2-html-container {
+  text-align: left;
+}
+
+
+/* A reminder's diagnostics: shown whole, so only the dialog scrolls. Long
+   lines wrap rather than scroll sideways. The theme colours the code. */
+.reminder-diagnostics {
+  margin: 0.75rem 0 0;
+  border: 1px solid var(--select-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.reminder-diagnostics code {
+  display: block;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The link to how to read them, then the switch between the redacted and
+   whole diagnostics: small, at the left of the buttons' row. On a narrow
+   screen they wrap onto a line of their own above the buttons. */
+.swal2-popup.reminder-diagnostics-popup .swal2-actions {
+  flex-wrap: wrap;
+}
+
+.reminder-diagnostics-help,
+.reminder-diagnostics-redact {
+  order: -1;
+  font-size: 0.8rem;
+}
+
+.reminder-diagnostics-redact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: auto;
+  color: var(--select-text);
+  cursor: pointer;
+}
+
+/* Keys stand apart from the coloured values. */
+.reminder-diagnostics .hljs-attr {
+  font-weight: 600;
 }
 
 .reminder-delete-card {

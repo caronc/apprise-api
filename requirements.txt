@@ -40,7 +40,7 @@ pika
 # prometheus metrics
 django-prometheus
 
-# Works out and waits for reminder times
+# Works out when reminders are due
 dateblock >= 2.2.0
 
 # Public holiday dates for holiday reminders

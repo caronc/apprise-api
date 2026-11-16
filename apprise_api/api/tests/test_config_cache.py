@@ -901,7 +901,7 @@ def test_prune_releases_guard_after_unexpected_failure(tmpdir):
     release.assert_called_once_with(10)
 
 
-def test_login_changes_fail_when_reminders_cannot_be_locked(tmpdir):
+def test_login_changes_need_reminder_lock(tmpdir):
     """Login changes and pruning stop cleanly if the reminder lock cannot be opened."""
     acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     assert acc_obj.set_auth("key", "user", "pass")
@@ -975,7 +975,7 @@ def test_prune_keeps_locks_beside_reminders(tmpdir, mode, access):
     assert not acc_obj.has_auth(key)
 
 
-def test_keys_include_reminders_without_a_configuration(tmpdir):
+def test_keys_include_reminder_only_keys(tmpdir):
     """A Config ID holding only reminders is listed, so the global reminder list finds it."""
     acc_obj = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     with acc_obj.reminder_guard():
@@ -1599,7 +1599,7 @@ def test_recover_removed_reminders(tmpdir):
     assert store.reminder_files(".reminders.removed") == []
 
 
-def test_unused_reminder_files_go_right_away(tmpdir):
+def test_unused_reminder_files_dropped(tmpdir):
     """Stored files nothing uses are removed at once, unless a reminder file cannot be read."""
     store = AppriseConfigCache(str(tmpdir.mkdir("cfg")), mode=AppriseStoreMode.SIMPLE)
     assert store.reminder_store_size() == 0
@@ -1664,6 +1664,24 @@ def test_move_carries_reminders(tmpdir):
     wake.assert_not_called()
 
 
+@pytest.mark.parametrize("mode", [AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE])
+def test_move_reminders_only(tmpdir, mode):
+    """A Config ID that holds only reminders moves like any other."""
+    store = AppriseConfigCache(str(tmpdir), mode=mode)
+    assert store.write_reminders(store.reminder_path("old"), [{"id": "a"}]) is True
+
+    with patch.object(store, "wake_scheduler"):
+        assert store.move("old", "new") == MoveResult.MOVED
+
+    assert not os.path.exists(store.reminder_path("old"))
+    assert store.read_reminders(store.reminder_path("new")) == [{"id": "a"}]
+    assert store.get("new") == (None, "")
+
+    # Limits alone are not something to move
+    assert store.set_limits("lonely", {"reminders": 3})
+    assert store.move("lonely", "elsewhere") == MoveResult.NOT_FOUND
+
+
 def test_move_refuses_existing_destination_reminders(tmpdir):
     """Reminders already at the destination blocks the move."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
@@ -1690,7 +1708,7 @@ def test_scheduler_lock_allows_one_holder(tmpdir):
         assert held is True
 
 
-def test_a_waiting_scheduler_takes_over_once_the_first_stops(tmpdir):
+def test_scheduler_lock_takeover(tmpdir):
     """A second scheduler can wait for the lock, and gets it when the first lets go."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     taken = threading.Event()
@@ -1713,7 +1731,7 @@ def test_a_waiting_scheduler_takes_over_once_the_first_stops(tmpdir):
     assert results == [True]
 
 
-def test_a_scheduler_lock_that_cannot_be_taken(tmpdir):
+def test_scheduler_lock_refused(tmpdir):
     """A lock the system refuses, or a wait that fails, means no scheduler runs here."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     real_flock = fcntl.flock
@@ -1733,6 +1751,10 @@ def test_a_scheduler_lock_that_cannot_be_taken(tmpdir):
     for flock in (refused, busy_then_refused):
         with patch.object(utils_module.fcntl, "flock", side_effect=flock), store.scheduler_lock(wait=True) as held:
             assert held is False
+
+    # A lock file that cannot be made, such as in a read-only folder
+    with patch("os.open", side_effect=PermissionError("read-only")), store.scheduler_lock(wait=True) as held:
+        assert held is False
 
 
 def test_scheduler_status_and_change_stamp(tmpdir):
@@ -1770,7 +1792,7 @@ def test_access_changes_wake_the_scheduler(tmpdir):
         assert wake.call_count == 3
 
 
-def test_wake_scheduler_signals_only_a_running_scheduler(tmpdir):
+def test_wake_scheduler_targets(tmpdir):
     """The wake signal goes only to a scheduler that holds the lock on this host."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     pid_file = tmpdir.join(".scheduler.pid")
@@ -1839,7 +1861,7 @@ def test_limits_round_trip(tmpdir):
 
 
 @override_settings(APPRISE_REMINDER_IDLE_DAYS=30)
-def test_note_use_records_at_most_once_a_day(tmpdir):
+def test_note_use_daily(tmpdir):
     """Use is recorded only for a key with reminders, and at most daily."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     seen = store.seen_path("key")
@@ -1860,7 +1882,7 @@ def test_note_use_records_at_most_once_a_day(tmpdir):
     assert os.path.getmtime(seen) > 1000
 
     os.utime(seen, (1000, 1000))
-    with patch("builtins.open", side_effect=OSError(errno.EACCES, "denied")):
+    with patch("os.open", side_effect=OSError(errno.EACCES, "denied")):
         store.note_use("key")
     assert os.path.getmtime(seen) == 1000
 
@@ -1909,7 +1931,7 @@ def test_store_reminder_file_keeps_one_copy(tmpdir):
     assert store.reminder_file_digest(str(tmpdir.join("missing"))) is None
 
 
-def test_prune_reminder_files_removes_only_unused_old_files(tmpdir):
+def test_prune_reminder_files(tmpdir):
     """Stored files no reminder uses are pruned once they are old enough."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
     assert store.prune_reminder_files() == 0
@@ -2005,7 +2027,7 @@ def test_prune_finished_reminders(tmpdir):
     assert AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.DISABLED).prune_finished_reminders(0) == 0
 
 
-def test_move_and_clear_handle_limits_and_use(tmpdir):
+def test_move_clear_limits_and_use(tmpdir):
     """Limits and the use record move with a configuration; clearing keeps the limits."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
     assert store.put("old", "json://localhost", ConfigFormat.TEXT.value)
@@ -2066,7 +2088,7 @@ def test_release_user_reminders(tmpdir):
     assert store.release_user_reminders("key", keep=False) is None
 
 
-def test_reminder_guard_waits_for_another_holder_in_short_pauses(tmpdir):
+def test_reminder_guard_backoff(tmpdir):
     """While another process holds the reminder lock, the guard pauses and tries again."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     holder = os.open(os.path.join(str(tmpdir), ".reminder.guard"), os.O_CREAT | os.O_RDWR, 0o600)
@@ -2090,7 +2112,7 @@ def test_reminder_guard_waits_for_another_holder_in_short_pauses(tmpdir):
     assert pauses == [0.005, 0.01, 0.02, 0.04, 0.08, 0.1]
 
 
-def test_unused_reminder_files_are_kept_when_unsure(tmpdir):
+def test_unused_files_kept_when_unsure(tmpdir):
     """A stored file is only removed once every reminder file was checked."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     source = tmpdir.join("photo.jpg")
@@ -2118,15 +2140,20 @@ def test_unused_reminder_files_are_kept_when_unsure(tmpdir):
     assert store.reminder_file_stored(digest) is False
 
 
-def test_recovering_removals_does_nothing_without_storage(tmpdir):
-    """With storage turned off there is nothing to recover, and no folder is made."""
+@pytest.mark.parametrize("mode", [AppriseStoreMode.DISABLED, AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE])
+def test_reminder_upkeep_without_reminders(tmpdir, mode):
+    """With no reminders, upkeep takes no lock, so no folder is made."""
     root = str(tmpdir.join("never-made"))
-    store = AppriseConfigCache(root, mode=AppriseStoreMode.DISABLED)
-    assert store.recover_removed_reminders() == 0
+    store = AppriseConfigCache(root, mode=mode)
+    assert store.reminder_files(complete=True) == []
+    with patch.object(store, "reminder_guard", side_effect=PermissionError("read-only")):
+        assert store.recover_removed_reminders() == 0
+        assert store.prune_finished_reminders(0) == 0
+
     assert not os.path.exists(root)
 
 
-def test_last_used_stamp_goes_with_the_last_reminder(tmpdir):
+def test_last_used_stamp_cleanup(tmpdir):
     """When a Config ID was last used is forgotten with its last reminder, and never blocks a move."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.HASH)
     assert store.put("a", "json://localhost", ConfigFormat.TEXT.value)
@@ -2145,7 +2172,7 @@ def test_last_used_stamp_goes_with_the_last_reminder(tmpdir):
     assert store.get("k") == ("json://localhost", ConfigFormat.TEXT.value)
 
 
-def test_stored_reminder_files_are_reused_only_when_whole(tmpdir):
+def test_stored_files_reused_whole(tmpdir):
     """A file already stored is reused only at its full size; a short copy is replaced."""
     store = AppriseConfigCache(str(tmpdir), mode=AppriseStoreMode.SIMPLE)
     source = tmpdir.join("a.bin")
@@ -2165,7 +2192,25 @@ def test_stored_reminder_files_are_reused_only_when_whole(tmpdir):
             assert f.read() == b"content"
 
 
-def test_process_space_names_this_process_set():
+def test_store_reminder_file_disk_sync(tmpdir):
+    """A share that cannot put files on disk still stores; a real disk error does not."""
+    store = AppriseConfigCache(str(tmpdir.mkdir("cfg")), mode=AppriseStoreMode.SIMPLE)
+    source = tmpdir.join("a.bin")
+    source.write_binary(b"content")
+
+    with patch("os.fsync", side_effect=OSError(errno.EIO, "disk error")):
+        assert store.store_reminder_file(str(source)) is None
+
+    assert store.reminder_store_size() == 0
+
+    with patch("os.fsync", side_effect=OSError(errno.EINVAL, "not supported")):
+        digest, size = store.store_reminder_file(str(source))
+
+    assert store.reminder_file_stored(digest) is True
+    assert size == 7
+
+
+def test_process_space():
     """The process ID set is named on Linux, and unknown where the system does not show it."""
     assert isinstance(process_space(), int)
     with patch("os.stat", side_effect=OSError("no /proc")):

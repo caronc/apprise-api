@@ -382,13 +382,13 @@ class AppriseURLFilter:
 
         return is_public_ip_address(address)
 
-    def is_allowed(self, url: str, resolve=True) -> bool:
+    def is_allowed(self, url: str, resolve: bool = True) -> bool:
         """
         Checks a given URL against the deny list first, then the allow list.
         """
         return self.refusal(url, resolve=resolve) is None
 
-    def refusal(self, url: str, resolve=True) -> str | None:
+    def refusal(self, url: str, resolve: bool = True) -> str | None:
         """Return which rule refuses a URL, or ``None`` when it is allowed.
 
         - ``"invalid"``: it cannot be read as a web address.

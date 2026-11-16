@@ -209,6 +209,7 @@ paths:
       tags:
         - Meta
       parameters:
+        - $ref: '#/components/parameters/ConfigIdHeader'
         - in: query
           name: all
           schema:
@@ -239,8 +240,17 @@ paths:
             text/html:
               schema:
                 type: string
+        '400':
+          description: Bad Request. X-Apprise-Config-ID is invalid.
         '401':
           description: Unauthorized when authentication requirements were not met.
+        '403':
+          description: >
+            Forbidden. The configuration named by X-Apprise-Config-ID, or the
+            one a configuration login belongs to, is `public` or `disabled`,
+            and the caller is not the administrator.
+        '421':
+          description: Misdirected Request. HTML is turned off by APPRISE_API_ONLY.
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
@@ -356,6 +366,7 @@ paths:
         Each reminder includes the `key` of the Config ID it belongs to,
         soonest first. The same rules as GET /cfg apply: SIMPLE stateful mode,
         APPRISE_ADMIN, and administrator access when logins are required.
+        A browser that does not ask for JSON gets a web page instead.
       tags:
         - Reminders
       security:
@@ -377,9 +388,13 @@ paths:
                       allOf:
                         - $ref: '#/components/schemas/Reminder'
                         - type: object
+                          required: [key]
                           properties:
                             key:
                               type: string
+            text/html:
+              schema:
+                type: string
         '401':
           description: Unauthorized.
         '403':
@@ -506,7 +521,7 @@ paths:
         '204':
           description: >
             No content. The configuration was removed, or there was nothing to
-            remove. Older releases answered a removal with 200.
+            remove.
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
@@ -1040,11 +1055,13 @@ paths:
                 type: string
                 format: binary
         '400':
-          description: The body is not a JSON object.
+          description: Bad Request (the body is not a JSON object, or not sent as application/json).
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
-          description: Forbidden (persistent storage is disabled).
+          description: >
+            Forbidden (persistent storage is disabled, or the configuration is
+            `disabled`).
         '404':
           description: No configuration is saved under this key.
         '424':
@@ -1081,6 +1098,12 @@ paths:
                     type: string
                     format: uri
                     description: A page explaining the refusal.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
+        '500':
+          description: The configuration could not be read.
 
   /resolve/{key}:
     post:
@@ -1088,8 +1111,8 @@ paths:
       summary: Checks Apprise URLs and returns them in full, as fields, and with their secrets hidden.
       description: >
         Returns each URL's service, whether it can be loaded, the URL in full
-        with every option written out, and the same URL with its secrets
-        hidden, the way /json/urls?privacy=1 shows them. Each also comes back
+        (leaving out options Apprise would set the same way anyway), and the
+        same URL with its secrets hidden, the way /json/urls?privacy=1 shows them. Each also comes back
         split into its fields, and fields can be sent in place of a URL to
         turn them back into one. `/resolve/@` reads the Config ID from
         X-Apprise-Config-ID, or else the one the browser is signed in to.
@@ -1131,8 +1154,9 @@ paths:
                 $ref: '#/components/schemas/ResolveResponse'
         '400':
           description: >
-            Bad Request (not a JSON object, `urls` missing, of the wrong type
-            or too long, or the Config ID missing or invalid).
+            Bad Request (the body is not a JSON object or not sent as
+            application/json, `urls` is missing, of the wrong type or too long,
+            or the Config ID is missing or invalid).
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
@@ -1141,6 +1165,8 @@ paths:
             caller is not the administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
 
   /reminder/{key}:
     get:
@@ -1170,7 +1196,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/Reminder'
         '400':
-          description: Bad Request. JSON errors name the problem `field`.
+          description: >
+            Bad Request. `start` or `end` is invalid (JSON errors name it in
+            `field`), or the Config ID is missing or invalid.
           content:
             application/json:
               schema:
@@ -1184,7 +1212,7 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1250,13 +1278,23 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: >
+            Not Found. Reminders are turned off, or no configuration is saved
+            under this key. A reminder that sends only to its own `urls` needs
+            none.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '409':
-          description: The configuration's user already has the most reminders allowed.
+          description: >
+            This configuration already has the most reminders it may hold.
+            The administrator is not limited.
         '413':
-          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+          description: >
+            The new attachments do not fit. The configuration's attachment
+            quota is used up or set to 0, or APPRISE_REMINDER_STORE_MAX has no
+            room left. The administrator is not limited.
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
         '500':
           description: The reminders could not be read or saved.
   /reminder/{key}/preview:
@@ -1399,7 +1437,7 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off.
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /reminder/{key}/holidays:
@@ -1475,11 +1513,16 @@ paths:
                             label:
                               type: string
         '400':
-          description: Bad Request. The country, region or year is unknown.
+          description: Bad Request. The country, region or year is unknown, or the Config ID is missing or invalid.
         '401':
           description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user`.
         '404':
-          description: Not Found. Reminders are turned off, or the configuration does not exist.
+          description: Not Found. Reminders are turned off.
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /reminder/{key}/limits:
@@ -1505,10 +1548,19 @@ paths:
                     $ref: '#/components/schemas/ReminderLimits'
                   rules:
                     $ref: '#/components/schemas/ReminderRules'
+        '400':
+          description: Bad Request. The Config ID is missing, or X-Apprise-Config-ID is invalid.
         '401':
           description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user`.
         '404':
           description: Not Found. Reminders are turned off.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           description: The limits or reminders could not be read.
     post:
@@ -1561,9 +1613,15 @@ paths:
         '401':
           description: Unauthorized.
         '403':
-          description: Forbidden. Only the administrator may change limits.
+          description: >
+            Forbidden. Only the administrator may change limits, and nobody may
+            while the configuration is `disabled`.
         '404':
           description: Not Found. Reminders are turned off.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
         '500':
           description: The limits could not be read or saved.
   /reminder/{key}/{id}:
@@ -1586,7 +1644,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReminderResponse'
         '400':
-          description: Bad Request. JSON errors name the problem `field`.
+          description: Bad Request. The Config ID is missing, or X-Apprise-Config-ID is invalid.
           content:
             application/json:
               schema:
@@ -1600,7 +1658,7 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off, or the reminder does not exist.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1609,8 +1667,9 @@ paths:
       operationId: Reminders_Replace
       summary: Replaces every field a caller may set on a reminder.
       description: >
-        A new `when` starts the run count again. A new time, end or run count,
-        or turning a reminder back on, works out its `next` time again.
+        A new `when` or `start` starts the run count again and clears `last`.
+        A change to `when`, `start`, `until`, `count` or `skip`, or turning a
+        reminder back on, works out its `next` time again.
       tags:
         - Reminders
       security:
@@ -1663,11 +1722,16 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off, or the reminder does not exist.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '413':
-          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+          description: >
+            The new attachments do not fit. The configuration's attachment
+            quota is used up or set to 0, or APPRISE_REMINDER_STORE_MAX has no
+            room left. The administrator is not limited.
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
         '500':
           description: The reminders could not be read or saved.
     patch:
@@ -1728,11 +1792,16 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off, or the reminder does not exist.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '413':
-          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+          description: >
+            The new attachments do not fit. The configuration's attachment
+            quota is used up or set to 0, or APPRISE_REMINDER_STORE_MAX has no
+            room left. The administrator is not limited.
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
         '500':
           description: The reminders could not be read or saved.
     delete:
@@ -1752,7 +1821,7 @@ paths:
         '204':
           description: The reminder was removed. No content, the same as /del.
         '400':
-          description: Bad Request. JSON errors name the problem `field`.
+          description: Bad Request. The Config ID is missing, or X-Apprise-Config-ID is invalid.
           content:
             application/json:
               schema:
@@ -1766,7 +1835,7 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off, or the reminder does not exist.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1783,6 +1852,7 @@ paths:
         - $ref: '#/components/parameters/ReminderKey'
         - $ref: '#/components/parameters/ReminderId'
         - $ref: '#/components/parameters/StreamQueryParam'
+        - $ref: '#/components/parameters/LogLevelHeader'
       responses:
         '200':
           description: >
@@ -1803,7 +1873,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StreamEvent'
         '400':
-          description: Bad Request. JSON errors name the problem `field`.
+          description: >
+            Bad Request. The Config ID is missing or invalid, or Apprise
+            reported an error while sending.
           content:
             application/json:
               schema:
@@ -1817,7 +1889,7 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off, or the reminder does not exist.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '424':
@@ -1826,6 +1898,61 @@ paths:
           description: The reminders could not be read.
         '503':
           $ref: '#/components/responses/StreamCapacityUnavailable'
+  /reminder/{key}/{id}/diagnostics:
+    get:
+      operationId: Reminders_Diagnostics
+      summary: Gathers what is needed to trace a reminder that was not sent as expected.
+      description: >
+        Meant to be pasted into a support ticket and read back with
+        `python manage.py reminder_check`, which works its times out again
+        from `copied` and lists anything that would stop it being sent. It
+        leaves out the reminder's title, body and the Config ID, and hides
+        the passwords and tokens in its URLs. Every time is in UTC. Anyone who
+        may read the reminder may read these.
+      tags:
+        - Reminders
+      security:
+        - basicAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReminderKey'
+        - $ref: '#/components/parameters/ReminderId'
+        - in: query
+          name: privacy
+          schema:
+            type: boolean
+            default: false
+          description: Also hide the reminder's name and tag, and all but each URL's and attachment address's scheme.
+      responses:
+        '200':
+          description: The reminder's diagnostics.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [diagnostics]
+                properties:
+                  diagnostics:
+                    $ref: '#/components/schemas/ReminderDiagnostics'
+        '400':
+          description: Bad Request. The Config ID is missing, or X-Apprise-Config-ID is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderError'
+        '401':
+          description: Unauthorized.
+        '403':
+          description: >
+            Forbidden. The administrator may use reminders unless the
+            configuration is `disabled`, when nobody may; the configuration's
+            own user only while its access is `user` (the same rule /status
+            reports as `reminders_enabled`).
+        '404':
+          description: Not Found. Reminders are turned off, or the reminder does not exist.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: The reminders could not be read.
   /reminder/:
     get:
       operationId: Reminders_ListByHeader
@@ -1839,6 +1966,7 @@ paths:
         - $ref: '#/components/parameters/ReminderWindowStart'
         - $ref: '#/components/parameters/ReminderWindowEnd'
         - $ref: '#/components/parameters/ReminderShowDisabled'
+        - $ref: '#/components/parameters/ReminderPrivacy'
       responses:
         '200':
           description: Every reminder saved for this configuration.
@@ -1853,7 +1981,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/Reminder'
         '400':
-          description: Bad Request. JSON errors name the problem `field`.
+          description: >
+            Bad Request. `start` or `end` is invalid (JSON errors name it in
+            `field`), or the Config ID is missing or invalid.
           content:
             application/json:
               schema:
@@ -1867,7 +1997,7 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: Not Found. Reminders are turned off.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -1881,6 +2011,7 @@ paths:
         - basicAuth: []
       parameters:
         - $ref: '#/components/parameters/ConfigIdHeaderRequired'
+        - $ref: '#/components/parameters/ReminderPrivacy'
         - $ref: '#/components/parameters/NotifyTitleHeader'
         - $ref: '#/components/parameters/NotifyTypeHeader'
         - $ref: '#/components/parameters/NotifyTagHeader'
@@ -1925,13 +2056,23 @@ paths:
             own user only while its access is `user` (the same rule /status
             reports as `reminders_enabled`).
         '404':
-          description: Not Found. Reminders are turned off, or the configuration or reminder does not exist.
+          description: >
+            Not Found. Reminders are turned off, or no configuration is saved
+            under this key. A reminder that sends only to its own `urls` needs
+            none.
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '409':
-          description: The configuration's user already has the most reminders allowed.
+          description: >
+            This configuration already has the most reminders it may hold.
+            The administrator is not limited.
         '413':
-          description: The configuration's attachment quota, or APPRISE_REMINDER_STORE_MAX, has no room for the new files.
+          description: >
+            The new attachments do not fit. The configuration's attachment
+            quota is used up or set to 0, or APPRISE_REMINDER_STORE_MAX has no
+            room left. The administrator is not limited.
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
         '500':
           description: The reminders could not be read or saved.
   /add/:
@@ -1988,7 +2129,7 @@ paths:
         '204':
           description: >
             No content. The configuration was removed, or there was nothing to
-            remove. Older releases answered a removal with 200.
+            remove.
         '400':
           description: Bad Request (missing or invalid X-Apprise-Config-ID).
         '401':
@@ -2346,8 +2487,9 @@ paths:
                 $ref: '#/components/schemas/ResolveResponse'
         '400':
           description: >
-            Bad Request (not a JSON object, `urls` missing, of the wrong type
-            or too long, or the Config ID missing or invalid).
+            Bad Request (the body is not a JSON object or not sent as
+            application/json, `urls` is missing, of the wrong type or too long,
+            or the Config ID is missing or invalid).
         '401':
           description: Unauthorized (this key's authentication requirements were not met).
         '403':
@@ -2356,6 +2498,8 @@ paths:
             caller is not the administrator).
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        '431':
+          description: Request Header Fields Too Large (the JSON payload is too big).
 
   /qr/:
     get:
@@ -2682,8 +2826,8 @@ components:
             Whether this caller may use reminders for the Config ID asked
             about: for the administrator unless the configuration is
             `disabled`, and for the configuration's own login only while its
-            access is `user`. Without a Config ID, true for the administrator.
-            Missing when APPRISE_REMINDER_ENABLED is `no` or stateful mode is
+            access is `user`. Without a Config ID, true for the administrator,
+            or for anyone when logins are off. Missing when APPRISE_REMINDER_ENABLED is `no` or stateful mode is
             disabled.
         scheduler_running:
           type: boolean
@@ -2738,8 +2882,9 @@ components:
               url:
                 type: string
                 description: >
-                  The URL in full, secrets included, with every option written
-                  out; as it was sent when it cannot be loaded.
+                  The URL in full, secrets included, leaving out options
+                  Apprise would set the same way anyway; as it was sent when
+                  it cannot be loaded.
               privacy_url:
                 type: string
                 description: >
@@ -2832,12 +2977,12 @@ components:
           maximum: 999
           default: 1
           description: >
-            How many units apart the sends are. A configuration's own user
-            cannot repeat more often than APPRISE_REMINDER_USER_MIN_INTERVAL
-            seconds, unless the reminder already did before their change.
+            How many units apart the sends are. Everyone but the administrator
+            is held to APPRISE_REMINDER_USER_MIN_INTERVAL seconds or more,
+            unless the reminder already repeated more often before the change.
         months:
           type: array
-          description: Only send in these months (1 to 12). Not used with `years`.
+          description: Only send in these months (1 to 12). Not allowed with `years`.
           items:
             type: integer
             minimum: 1
@@ -2845,8 +2990,8 @@ components:
         days:
           type: array
           description: >
-            Only send on these weekdays. Used with seconds, minutes, hours,
-            days and weeks; weeks without days repeat on the start date's weekday.
+            Only send on these weekdays. Not allowed with `months` or `years`;
+            weeks without days repeat on the start date's weekday.
           items:
             type: string
             enum: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
@@ -2905,7 +3050,10 @@ components:
         format:
           type: string
           nullable: true
-          description: The message format. Defaults to APPRISE_DEFAULT_FORMAT.
+          enum: [text, markdown, html, ""]
+          description: >
+            The message format. Left out or null uses APPRISE_DEFAULT_FORMAT;
+            an empty string sends the body as it is.
         tag:
           description: >
             Which services to send to, with the same rules as /notify. A list
@@ -2930,10 +3078,8 @@ components:
             set to null or empty, the configuration's untagged URLs are, and
             the tag is saved as "". Each must load, and there may be at most
             APPRISE_REMINDER_URLS_MAX (`reminder_urls_max` in /status). New
-            URLs follow the stateless /notify rules: they are refused when
-            APPRISE_STATELESS_MODE is `disabled` or the caller may not send
-            stateless notifications, while URLs a reminder already holds are
-            kept and still sent to. While APPRISE_REMINDER_URLS_MAX is 0, URLs
+            URLs are refused when APPRISE_STATELESS_MODE is `disabled`, while
+            URLs a reminder already holds are kept and still sent to. While APPRISE_REMINDER_URLS_MAX is 0, URLs
             a reminder already holds can be saved again unchanged but are not
             sent to. A reminder
             that would reach no service is refused. One sent to its own URLs
@@ -3148,12 +3294,17 @@ components:
                   type: boolean
                 reason:
                   type: string
-                  enum: [late, idle]
+                  enum: [late, idle, urls, config, attach, error]
                   description: >-
                     Why it was not sent. `late` means it was overdue by more than
                     APPRISE_REMINDER_GRACE. `idle` means it
                     was paused because the configuration went unused for
-                    APPRISE_REMINDER_IDLE_DAYS.
+                    APPRISE_REMINDER_IDLE_DAYS. `urls` means it only sends to its
+                    own URLs, which APPRISE_REMINDER_URLS_MAX no longer allows.
+                    `config` means it sends through a configuration that was not
+                    found. `attach` means its attachments could not be used.
+                    `error` means Apprise could not send it at all. A send some
+                    services refused has no reason; the server's log says which.
             attach:
               type: array
               items:
@@ -3177,6 +3328,86 @@ components:
         reminder:
           $ref: '#/components/schemas/Reminder'
 
+    ReminderDiagnostics:
+      type: object
+      description: Every time is an ISO 8601 date and time in UTC, such as `2026-11-17T14:00:00+00:00`.
+      required: [format, copied, server, config, versions, reminder, upcoming]
+      properties:
+        format:
+          type: integer
+          description: The layout's version, raised if it ever changes.
+        copied:
+          type: string
+          format: date-time
+          description: When these were gathered. Every time is worked out again from it.
+        server:
+          type: object
+          description: The server's clock, its reminder settings, and whether its scheduler was running.
+          properties:
+            time:
+              type: string
+              format: date-time
+              description: The copy time on the server's own clock, with its offset, as its log shows it.
+            tz:
+              type: string
+            scheduler_running:
+              type: boolean
+            grace:
+              type: integer
+              description: APPRISE_REMINDER_GRACE.
+            idle_days:
+              type: integer
+              description: APPRISE_REMINDER_IDLE_DAYS.
+            workers:
+              type: integer
+              description: APPRISE_REMINDER_WORKERS.
+            urls_allowed:
+              type: boolean
+            attach_allowed:
+              type: boolean
+            auth_required:
+              type: boolean
+        config:
+          type: object
+          properties:
+            saved:
+              type: boolean
+              nullable: true
+              description: Whether a configuration is saved; null when that could not be told.
+            access:
+              type: string
+              nullable: true
+              description: Its access setting, `unreadable` when it could not be read, or null without one.
+            last_used:
+              type: string
+              format: date-time
+              nullable: true
+              description: When the configuration was last used.
+        versions:
+          type: object
+          description: >
+            The versions of apprise-api, apprise, dateblock, holidays, python
+            and tzdata (the timezone database, null when unknown).
+          additionalProperties:
+            type: string
+            nullable: true
+        reminder:
+          type: object
+          description: >
+            The reminder's `id`, `name`, `enabled`, `when`, `start`, `until`,
+            `count`, `skip`, `runs`, `next`, `last`, `series`, `occurrence`,
+            `owner`, `created`, `updated`, `tag`, `urls` and `attach` as saved,
+            with its URLs' passwords and tokens hidden. Redacted, `name` and a
+            set `tag` read `(redacted)`, each URL keeps only its scheme (such as
+            `json://`), and each attachment only its `size` or its address's
+            scheme.
+        upcoming:
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: date-time
+          description: The next 5 times it is due, worked out when copied; null when they cannot be.
     ReminderError:
       type: object
       required: [error]
@@ -3253,13 +3484,13 @@ components:
         not stop notification delivery; the stream reports it as an `ERROR`
         log and continues when space is available:
           - `log`: `{"level": string, "asctime": string, "message": string,
-            "service": string|null}` — one captured log line as it's
+            "service": string|null}` - one captured log line as it's
             produced; `service` is the service *type* (e.g. "JSON",
             "Telegram"), never a URL.
-          - `result`: `{"status": string}` — the final
+          - `result`: `{"status": string}` - the final
             AppriseResultStatus (e.g. "SUCCESS", "FAILURE", "NOMATCH",
             "PARTIAL", "TIMEOUT") once every service has finished.
-          - `error`: `{"message": string}` — sent instead of `result` if
+          - `error`: `{"message": string}` - sent instead of `result` if
             notification processing raised unexpectedly.
       example: |
         event: log

@@ -1558,10 +1558,6 @@ msgstr "भेजें"
 msgid "Notification"
 msgstr "सूचना"
 
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "इस परीक्षण कार्रवाई के लिए लक्ष्य प्रविष्टि पर कम से कम एक टैग आवश्यक है।"
-
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Apprise API परीक्षण"
@@ -2586,6 +2582,18 @@ msgstr "यह URL लोड नहीं हो सका"
 msgid "This value is not in the form this service expects."
 msgstr "यह मान उस रूप में नहीं है जिसकी यह सेवा अपेक्षा करती है।"
 
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "हर प्रविष्टि को उसके प्रकार से चिह्नित करें: {}।"
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{}: {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "{} को {} के रूप में पढ़ा गया।"
+
 #: apprise_api/api/templates/details.html:770
 msgid "This URL could not be loaded. Check the highlighted fields."
 msgstr "यह URL लोड नहीं हो सका। हाइलाइट किए गए फ़ील्ड जाँचें।"
@@ -3107,6 +3115,46 @@ msgstr "छोड़ा गया: भेजने में बहुत दे
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
 msgstr "रोका गया: यह विन्यास कुछ समय से उपयोग नहीं हुआ"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "विफल: यह सर्वर अब रिमाइंडर में URL की अनुमति नहीं देता"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "विफल: कोई कॉन्फ़िगरेशन नहीं मिला"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "विफल: इसके अटैचमेंट उपयोग नहीं किए जा सके"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "विफल: एक त्रुटि ने भेजना रोक दिया"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "डायग्नोस्टिक्स पढ़े नहीं जा सके"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "डायग्नोस्टिक्स"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "इस रिमाइंडर का पता लगाने में मदद के लिए इसे सपोर्ट टिकट में पेस्ट करें। इसका संदेश शामिल नहीं है, और इसके URL में पासवर्ड छिपे हैं। “छिपाया गया” इसका नाम, टैग और URL भी छिपाता है।"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "कॉपी करें"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "छिपाया गया"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "इन डायग्नोस्टिक्स को कैसे पढ़ें"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."

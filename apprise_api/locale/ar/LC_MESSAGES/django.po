@@ -1557,10 +1557,6 @@ msgstr "إرسال"
 msgid "Notification"
 msgstr "الإشعار"
 
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "هذا الإجراء التجريبي يتطلب وجود علامة واحدة على الأقل على الإدخال المستهدف."
-
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Apprise API اختبار"
@@ -2585,6 +2581,18 @@ msgstr "تعذّر تحميل عنوان URL هذا"
 msgid "This value is not in the form this service expects."
 msgstr "هذه القيمة ليست بالشكل الذي تتوقعه هذه الخدمة."
 
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "حدّد نوع كل إدخال: {}."
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{} لـ {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "قُرئ {} على أنه {}."
+
 #: apprise_api/api/templates/details.html:770
 msgid "This URL could not be loaded. Check the highlighted fields."
 msgstr "تعذّر تحميل عنوان URL هذا. تحقق من الحقول المميزة."
@@ -3106,6 +3114,46 @@ msgstr "تم التخطي: فات أوان الإرسال"
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
 msgstr "متوقف مؤقتًا: لم يُستخدم هذا الإعداد منذ مدة"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "فشل: لم يعد هذا الخادم يسمح بعناوين URL في التذكيرات"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "فشل: لم يتم العثور على أي إعداد"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "فشل: تعذر استخدام مرفقاته"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "فشل: أوقف خطأ عملية الإرسال"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "تعذرت قراءة بيانات التشخيص"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "التشخيص"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "الصق هذا في تذكرة دعم للمساعدة في تتبع هذا التذكير. تُحذف رسالته وتُخفى كلمات المرور في عناوين URL الخاصة به. يُخفي «مخفي» أيضًا اسمه ووسومه وعناوين URL."
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "نسخ"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "مخفي"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "كيفية قراءة بيانات التشخيص هذه"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."

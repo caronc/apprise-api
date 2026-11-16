@@ -1557,10 +1557,6 @@ msgstr "ส่ง"
 msgid "Notification"
 msgstr "การแจ้งเตือน"
 
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "การดำเนินการทดสอบนี้ต้องมีแท็กอย่างน้อยหนึ่งรายการบนรายการเป้าหมาย"
-
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Apprise API ทดสอบ"
@@ -2585,6 +2581,18 @@ msgstr "ไม่สามารถโหลด URL นี้ได้"
 msgid "This value is not in the form this service expects."
 msgstr "ค่านี้ไม่อยู่ในรูปแบบที่บริการนี้ต้องการ"
 
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "ระบุชนิดของแต่ละรายการ: {}"
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{} สำหรับ {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "{} ถูกอ่านเป็น {}"
+
 #: apprise_api/api/templates/details.html:770
 msgid "This URL could not be loaded. Check the highlighted fields."
 msgstr "ไม่สามารถโหลด URL นี้ได้ ตรวจสอบฟิลด์ที่ไฮไลต์ไว้"
@@ -3106,6 +3114,46 @@ msgstr "ข้ามไป: สายเกินไปที่จะส่ง"
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
 msgstr "หยุดชั่วคราว: การตั้งค่านี้ไม่ได้ใช้งานมาระยะหนึ่ง"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "ล้มเหลว: เซิร์ฟเวอร์นี้ไม่อนุญาตให้ใช้ URL ในการเตือนความจำอีกต่อไป"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "ล้มเหลว: ไม่พบการตั้งค่า"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "ล้มเหลว: ไม่สามารถใช้ไฟล์แนบได้"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "ล้มเหลว: เกิดข้อผิดพลาดที่ทำให้การส่งหยุดลง"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "ไม่สามารถอ่านข้อมูลการวินิจฉัยได้"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "การวินิจฉัย"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "วางข้อมูลนี้ลงในตั๋วขอความช่วยเหลือเพื่อช่วยติดตามการเตือนความจำนี้ ข้อความจะไม่ถูกรวมไว้ และรหัสผ่านใน URL จะถูกซ่อน “ซ่อนข้อมูล” จะซ่อนชื่อ แท็ก และ URL ด้วย"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "คัดลอก"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "ซ่อนข้อมูล"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "วิธีอ่านข้อมูลการวินิจฉัยนี้"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."

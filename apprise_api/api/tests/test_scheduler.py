@@ -42,7 +42,6 @@ from .. import schedule as schedule_module, scheduler as scheduler_module
 from ..auth import ConfigAuthRecord
 from ..exceptions import AppriseAPIError
 from ..schedule import (
-    drop_past_skips,
     find_zone,
     format_moment,
     holiday_countries,
@@ -441,10 +440,6 @@ def test_skipped_times_are_passed_over():
     # A skipped one-off is still due; only repeating reminders skip times
     once = {"when": {"tz": "Etc/UTC", "at": "2026-01-02T09:00:00"}}
     assert next_run({**once, "skip": [second]}, after) == second
-
-    event = {"skip": [first, third]}
-    drop_past_skips(event, second)
-    assert event == {"skip": [third]}
 
 
 def test_claim_forgets_skipped_times_that_passed(store):

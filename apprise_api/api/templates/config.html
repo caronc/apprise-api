@@ -895,17 +895,6 @@
 
   {% include "components/notify_stream_script.html" %}
 
-  // Keep template inputs out of browser and password-manager autofill.
-  function disableTemplateAutofill(input) {
-    input.autocomplete = 'off';
-    // These attributes cover common password managers as well as browsers.
-    input.setAttribute('data-1p-ignore', 'true');
-    input.setAttribute('data-bwignore', 'true');
-    input.setAttribute('data-lpignore', 'true');
-    input.setAttribute('data-protonpass-ignore', 'true');
-    input.setAttribute('data-form-type', 'other');
-  }
-
   // Ask for the values an entry is waiting on before a test send.
   // Returns a {name: value} object, or null when the prompt was closed.
   // Blank values are omitted so the server can use its configured fallback.
@@ -962,7 +951,7 @@
       // Conceal a text field visually so password managers leave it alone.
       input.setAttribute('type', 'text');
       input.dataset.concealedText = 'true';
-      disableTemplateAutofill(input);
+      appriseNoAutofill(input);
       input.dataset.templateName = name;
       if (hasDefault) {
         // A declared default fills this name if the field stays blank.
@@ -1059,29 +1048,25 @@
     return result && result.isConfirmed ? (result.value || {}) : null;
   }
 
-  // The index narrows this quick test to its card; tags still filter delivery.
-  async function sendReviewTestNotification(tags, entryIndex, anchorEl, templateValues) {
-    if (!tags || tags.length === 0) {
-      appriseFire({
-        title: '{% trans "Notification" %}',
-        html: '{% trans "This test action requires at least one tag on the target entry." %}',
-        icon: 'warning'
-      });
-      return;
-    }
-    const debugTags = tags.map(function (tag) {
-      const token = parseNotifyTagToken(tag);
-      if (!token) {
-        return tag;
-      }
-      return token.priority === null
-        ? `${token.name}:0`
-        : `${token.priority}:${token.name}:0`;
-    });
+  // Send a test to one card and nothing else. No tag is ever sent.
+  // - A plain URL is sent on its own through stateless /notify.
+  // - A templated URL goes through this Config ID, which fills in its
+  //   ${NAME} values; the card's position limits the send to that entry.
+  async function sendReviewTestNotification(entry, entryIndex, anchorEl, templateValues) {
     const formData = new FormData();
     formData.append('title', '{% trans "Apprise API Test" %}');
     formData.append('body', '{% trans "Message Body" %}');
-    formData.append('tag', debugTags.join(','));
+    const templated = Object.keys(entry.template || {}).length > 0;
+    let target = '{% url "notify" key %}';
+    const headers = {'X-Apprise-Log-Level': 'debug'};
+    if (templated) {
+      headers['X-Apprise-Notification-Index'] = String(entryIndex);
+    } else {
+      target = '{% url "s_notify" %}';
+      formData.append('urls', entry.testUrl);
+      // Only says who is asking; the URL above is the one sent to.
+      headers['X-Apprise-Config-ID'] = '{{ key|escapejs }}';
+    }
     Object.keys(templateValues || {}).forEach(function (name) {
       const value = String(templateValues[name] || '').trim();
       if (name.trim() && value) {
@@ -1093,13 +1078,9 @@
       anchorEl.disabled = true;
     }
     try {
-      await sendNotifyStream('{% url "notify" key %}', {
+      await sendNotifyStream(target, {
         method: 'POST',
-        headers: {
-          'X-Apprise-Log-Level': 'debug',
-          // This card's position is checked against the loaded entries.
-          'X-Apprise-Notification-Index': String(entryIndex)
-        },
+        headers: headers,
         body: formData
       }, {
         title: '{% trans "Notification" %}',
@@ -1206,7 +1187,7 @@
     keyInput.id = keyId;
     keyInput.className = 'notify-template-key';
     keyInput.type = 'text';
-    disableTemplateAutofill(keyInput);
+    appriseNoAutofill(keyInput);
     // Chrome takes a field labelled "Name" for a person's name and ignores
     // "off" there, but leaves alone a value it does not know.
     keyInput.autocomplete = 'apprise-none';
@@ -1228,7 +1209,7 @@
     valueInput.className = 'notify-template-value';
     valueInput.type = 'text';
     valueInput.dataset.concealedText = 'true';
-    disableTemplateAutofill(valueInput);
+    appriseNoAutofill(valueInput);
     valueInput.value = value || '';
     concealed.appendChild(valueInput);
     // The eye button that shows or hides the value.
@@ -2225,6 +2206,11 @@
       const defaultsData = await defaultsResponse.json();
       (data.urls || []).forEach(function (entry, index) {
         const source = (defaultsData.urls || [])[index];
+        if (source) {
+          // A card's test sends this exact URL on its own; the card shows
+          // the masked one.
+          entry.testUrl = source.url;
+        }
         if (entry.template && source && source.template) {
           // The masked listing withholds every default; take them from
           // the unmasked one, which this editor may already read anyway.
@@ -2349,7 +2335,7 @@
     // Now build our our loaded list of configuration for our welcome page
     let urlList = document.createElement('ul');
     // Create a list item for each url retrieved
-    // Keep each loaded entry's position for its card-level quick test.
+    // Keep each loaded entry's position for a templated card's quick test.
     data.urls.forEach(function (entry, entryIndex) {
       const isEnabled = entry.enabled !== false;
       const entryTags = Array.isArray(entry.tags) ? entry.tags.slice() : [];
@@ -2471,11 +2457,6 @@
               exact: `0:${String(tag)}`
             };
           });
-      const testTags = entryTagDetails.map(function (detail) {
-        return detail && detail.token ? detail.token : null;
-      }).filter(function (t) {
-        return typeof t === 'string' && t.trim().length > 0;
-      });
       const displayTagDetails = [{
         name: 'all',
         priority: 0,
@@ -2520,9 +2501,10 @@
       testBtn.type = 'button';
       testBtn.setAttribute('class', 'review-test-btn btn-flat btn-small');
       testBtn.setAttribute('title', '{% trans "Send Test Notification" %}');
-      if (testTags.length === 0 || !isEnabled) {
-        testBtn.setAttribute('disabled', 'disabled');
-      }
+      {% if not stateless_allowed %}
+      // A test sends the URL through stateless /notify, which this caller may not use.
+      testBtn.setAttribute('disabled', 'disabled');
+      {% endif %}
       let testIcon = document.createElement('i');
       testIcon.setAttribute('class', 'material-icons');
       testIcon.textContent = 'send';
@@ -2539,15 +2521,25 @@
           return;
         }
         if (tplNames.length) {
+          // Ask for the missing values first, then send through this Config ID.
           promptForTemplateValues(entry.template || {}).then(
             function (values) {
               if (values !== null) {
-                sendReviewTestNotification(testTags, entryIndex, testBtn, values);
+                sendReviewTestNotification(entry, entryIndex, testBtn, values);
               }
             });
           return;
         }
-        sendReviewTestNotification(testTags, entryIndex, testBtn, {});
+        if (!entry.testUrl) {
+          // The unmasked listing could not be read, so there is no URL to send.
+          appriseFire({
+            title: '{% trans "Notification" %}',
+            html: '{% trans "Failed to send test notification." %}',
+            icon: 'error'
+          });
+          return;
+        }
+        sendReviewTestNotification(entry, entryIndex, testBtn, {});
       }, false);
       tagRow.appendChild(testBtn);
       li.appendChild(tagRow);
@@ -2987,12 +2979,7 @@
     field.appendChild(input);
 
     // Preview downloads the address through the server and shows it.
-    const preview = document.createElement('button');
-    preview.type = 'button';
-    preview.className = 'btn-flat notify-attach-preview';
-    preview.setAttribute('aria-label', '{% trans "Preview" %}');
-    preview.setAttribute('title', '{% trans "Preview" %}');
-    preview.innerHTML = '<i class="material-icons" aria-hidden="true">visibility</i>';
+    const preview = appriseIconButton('visibility', '{% trans "Preview" %}', 'btn-flat notify-attach-preview');
     preview.addEventListener('click', function () {
       if (notifyCheckAttachmentUrls() && notifyAttachValue(input)) {
         notifyPreviewAttachment(notifyAttachValue(input));
@@ -3000,12 +2987,7 @@
     });
 
     // Remove drops the row.
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'btn-flat notify-template-remove';
-    remove.setAttribute('aria-label', '{% trans "Remove Attachment" %}');
-    remove.setAttribute('title', '{% trans "Remove Attachment" %}');
-    remove.innerHTML = '<i class="material-icons" aria-hidden="true">delete</i>';
+    const remove = appriseIconButton('delete', '{% trans "Remove Attachment" %}', 'btn-flat notify-template-remove');
     remove.addEventListener('click', function () {
       row.remove();
       notifyAttachmentUrlError(null);
@@ -3164,12 +3146,7 @@
     field.appendChild(input);
 
     // Remove drops the row.
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'btn-flat notify-template-remove';
-    remove.setAttribute('aria-label', '{% trans "Remove URL" %}');
-    remove.setAttribute('title', '{% trans "Remove URL" %}');
-    remove.innerHTML = '<i class="material-icons" aria-hidden="true">delete</i>';
+    const remove = appriseIconButton('delete', '{% trans "Remove URL" %}', 'btn-flat notify-template-remove');
     remove.addEventListener('click', function () {
       notifyUrlError(input, null);
       row.remove();
@@ -3825,14 +3802,7 @@
       {% endif %}
 
       // POST to the SSE endpoint and append log events as they arrive.
-      sendNotifyStreams(requests, {
-        title: '{% trans "Notification" %}',
-        responseTitle: '{% trans "Delivery Response" %}',
-        sending: '{% trans "Sending notification(s)…" %}',
-        success: '{% trans "Successfully sent the notification(s)." %}',
-        partial: '{% trans "One or more of the notification(s) were not sent." %}',
-        failure: '{% trans "Failed to send the notification(s)." %}'
-      });
+      sendNotifyStreams(requests, notifyStreamMessages);
       return false;
     }
   }

@@ -23,12 +23,14 @@
 
 import base64
 from json import dumps, loads
+from unittest.mock import patch
 
 import apprise
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from ..utils import ConfigCache
+from ..views import RESOLVE_OPTIONS_MAX, _short_urls
 
 _MASTER_TOKEN = base64.b64encode(b"master:pass").decode()
 _MASTER = {"authorization": "Basic " + _MASTER_TOKEN}
@@ -66,9 +68,9 @@ class ResolveTests(SimpleTestCase):
         first, unknown, blank, last = loads(response.content)["urls"]
         self.assertTrue(first["valid"])
         self.assertTrue(first["service"])
-        # The full URL keeps its password and writes out every option
+        # The full URL keeps its password, but not options Apprise sets anyway
         self.assertIn("hunter2", first["url"])
-        self.assertIn("?", first["url"])
+        self.assertNotIn("overflow=", first["url"])
         self.assertNotIn("hunter2", first["privacy_url"])
         self.assertTrue(first["privacy_url"].startswith("mailto://"))
         # Its ID is the one /json/urls gives the same URL in a configuration
@@ -92,6 +94,47 @@ class ResolveTests(SimpleTestCase):
         # The Config ID may also come in the header
         response = self.resolve(["json://a"], path="/resolve/", headers={"X-Apprise-Config-ID": self.key})
         self.assertEqual(response.status_code, 200)
+
+    def test_urls_leave_out_options_apprise_sets_anyway(self):
+        """Only the options that change something stay, in the full and the hidden URL alike."""
+        changed, plain = loads(
+            self.resolve(["bulksms://user:secret@abcd/?route=ECONOMY&batch=no", "json://localhost"]).content
+        )["urls"]
+        self.assertEqual(changed["url"], "bulksms://user:secret@@abcd/?route=ECONOMY")
+        self.assertEqual(changed["privacy_url"], "bulksms://u...r:****@@abcd/?route=ECONOMY")
+        self.assertEqual(plain["url"], "json://localhost/")
+        # The shorter URL loads to exactly what the full one does
+        full = apprise.Apprise.instantiate("bulksms://user:secret@abcd/?route=ECONOMY").url()
+        self.assertEqual(apprise.Apprise.instantiate(changed["url"]).url(), full)
+
+    def test_a_url_that_will_not_load_again_keeps_every_option(self):
+        """When the full URL does not load a second time, nothing is left out."""
+        plugin = apprise.Apprise.instantiate("json://localhost")
+        with patch("api.views.apprise.Apprise.instantiate", return_value=None):
+            self.assertEqual(_short_urls(plugin, apprise.AppriseAsset()), (plugin.url(), plugin.url(privacy=True)))
+
+    def test_a_url_with_many_options_keeps_them_all(self):
+        """A URL with too many options to check one by one keeps every one of them."""
+        headers = "&".join(f"+h{number}=v" for number in range(RESOLVE_OPTIONS_MAX))
+        with patch("api.views.apprise.Apprise.instantiate", wraps=apprise.Apprise.instantiate) as loads_url:
+            answer = loads(self.resolve([f"json://localhost/?{headers}"]).content)["urls"][0]
+
+        self.assertTrue(answer["valid"])
+        # Nothing was checked, so even options Apprise sets anyway stay
+        self.assertIn("overflow=", answer["url"])
+        self.assertIn("overflow=", answer["privacy_url"])
+        # Loaded once only, rather than once more for every option
+        self.assertEqual(loads_url.call_count, 1)
+
+    def test_refused_entries_are_hidden_down_to_a_plain_schema(self):
+        """Anything but a plain schema is left out of a refused entry's hidden form."""
+        answers = loads(
+            self.resolve(
+                ["Bearer abc123 json://x", "NOPE://thing", {"schema": "Bearer abc123"}, {"schema": "NOPE"}]
+            ).content
+        )["urls"]
+        self.assertEqual([answer["privacy_url"] for answer in answers], ["", "nope://", "", "nope://"])
+        self.assertEqual([answer["valid"] for answer in answers], [False] * 4)
 
     def test_urls_and_fields_turn_into_each_other(self):
         """A URL comes back as fields, and those fields come back as the same URL."""

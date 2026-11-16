@@ -1557,10 +1557,6 @@ msgstr "送信"
 msgid "Notification"
 msgstr "通知"
 
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "このテストアクションを実行するには、対象項目に少なくとも1つのタグが必要です。"
-
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Apprise API テスト"
@@ -2585,6 +2581,18 @@ msgstr "この URL を読み込めませんでした"
 msgid "This value is not in the form this service expects."
 msgstr "この値は、このサービスが求める形式ではありません。"
 
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "各エントリに種類を示す記号を付けてください: {}。"
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{}: {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "{} は {} として読み取られました。"
+
 #: apprise_api/api/templates/details.html:770
 msgid "This URL could not be loaded. Check the highlighted fields."
 msgstr "この URL を読み込めませんでした。強調表示されたフィールドを確認してください。"
@@ -3106,6 +3114,46 @@ msgstr "スキップ: 送信するには遅すぎました"
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
 msgstr "一時停止: この構成がしばらく使用されていません"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "失敗: このサーバーではリマインダーにURLを使えなくなりました"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "失敗: 構成が見つかりませんでした"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "失敗: 添付ファイルを使用できませんでした"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "失敗: エラーにより送信が止まりました"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "診断情報を読み込めませんでした"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "診断"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "このリマインダーの追跡に役立てるため、これをサポートチケットに貼り付けてください。メッセージは含まれず、URL 内のパスワードは隠されます。「伏せ字」では名前、タグ、URL も隠されます。"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "コピー"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "伏せ字"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "この診断情報の読み方"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."

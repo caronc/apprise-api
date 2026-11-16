@@ -71,6 +71,19 @@ def test_a_wake_signal_before_the_lock_is_held_is_only_noted(store, restore_sign
     assert signal.getsignal(signal.SIGTERM) is not scheduler._on_signal
 
 
+def test_only_the_first_signal_ends_a_sleep():
+    """A second signal that lands while the first is handled is only noted, so it cannot stop the scheduler."""
+    scheduler = Scheduler(workers=1, grace=60)
+    scheduler.sleeping = True
+    with pytest.raises(scheduler_module.Reschedule):
+        scheduler._on_signal(signal.SIGUSR1, None)
+
+    # The sleep is already ending, so this one is only noted
+    scheduler._on_signal(signal.SIGUSR1, None)
+    assert scheduler.dirty is True
+    assert scheduler.sleeping is False
+
+
 def _yielding(values):
     """Return a context manager that yields the first of ``values``."""
 

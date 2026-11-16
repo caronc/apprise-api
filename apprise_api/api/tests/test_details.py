@@ -147,6 +147,24 @@ class DetailTests(SimpleTestCase):
         # The fields are put together by /resolve for the browser's Config ID
         self.assertContains(response, "/resolve/")
 
+    def test_lists_of_several_kinds_say_how_entries_are_read(self):
+        """A list told apart by marks (+ phone, @ group) says which means what, and how an unmarked entry was read."""
+        content = self.client.get("/details").content.decode()
+        # The page has what it needs: BulkSMS lists its two marked kinds
+        data = json.loads(re.search(r'id="details-data"[^>]*>(.*?)</script>', content, re.S).group(1))
+        bulksms = next(
+            entry
+            for entry in data["schemas"]
+            if "bulksms" in (entry["protocols"] or []) + (entry["secure_protocols"] or [])
+        )
+        tokens = bulksms["details"]["tokens"]
+        self.assertEqual(sorted(tokens[member]["prefix"] for member in tokens["targets"]["group"]), ["+", "@"])
+        self.assertIn("Mark each entry with its kind: {}.", content)
+        # How each unmarked entry was read comes from the URL Apprise wrote
+        self.assertIn("kinds.find(function (kind) { return parts.includes(kind.prefix + entry); })", content)
+        self.assertIn("{} was read as a {}.", content)
+        self.assertIn("detailsShowReading();", content)
+
     def test_service_website_hidden_without_one(self):
         """A service with no website or setup guide shows no button for it."""
         content = self.client.get("/details").content.decode()

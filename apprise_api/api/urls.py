@@ -106,6 +106,11 @@ urlpatterns = [
         views.ReminderTestView.as_view(),
         name="reminder_test",
     ),
+    re_path(
+        r"^reminder/{}/{}/diagnostics/?$".format(_KEY, _REMINDER_ID),
+        views.ReminderDiagnosticsView.as_view(),
+        name="reminder_diagnostics",
+    ),
     # '@' takes the key from the header, or else from the browser login, so a
     # reminder ID can still follow it.
     re_path(r"^reminder/@/?$", views.ReminderListView.as_view(), _CURRENT, name="reminder_current"),
@@ -138,5 +143,11 @@ urlpatterns = [
         views.ReminderTestView.as_view(),
         _CURRENT,
         name="reminder_test_current",
+    ),
+    re_path(
+        r"^reminder/@/{}/diagnostics/?$".format(_REMINDER_ID),
+        views.ReminderDiagnosticsView.as_view(),
+        _CURRENT,
+        name="reminder_diagnostics_current",
     ),
 ]

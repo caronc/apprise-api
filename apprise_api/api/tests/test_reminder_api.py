@@ -29,12 +29,12 @@ from json import dumps, loads
 import os
 from pathlib import Path
 import re
-import sys
 import threading
 import time
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
+from api import utils as runtime_utils, views as runtime_views
 import apprise
 from dateblock import DRIFT_MAX, DRIFT_MIN
 from django.conf import settings
@@ -45,7 +45,7 @@ from django.test.client import BOUNDARY, encode_multipart
 from django.test.utils import override_settings
 from django.utils.html import escapejs
 
-from ..schedule import HOLIDAY_YEARS
+from ..schedule import HOLIDAY_YEARS, log_time
 from ..urlfilter import AppriseURLFilter
 from ..utils import ConfigCache
 from ..views import REMINDER_DAYS, REMINDER_PREVIEW_MAX
@@ -303,6 +303,30 @@ class ReminderCrudTests(ReminderTestCase):
             self.assertEqual(self.send("patch", path, {"name": "x"}).status_code, 500)
             self.assertEqual(self.send("delete", path).status_code, 500)
             self.assertEqual(self.send("post", path + "test/").status_code, 500)
+
+    def test_read_only_store(self):
+        """A store where the reminder lock can't be made refuses changes but is still read."""
+        rid = loads(self.add({**_DAILY, "urls": ["json://user:hunter2@one.example"]}).content)["reminder"]["id"]
+        path = f"/reminder/{self.key}/{rid}/"
+        self.age_url_views()
+        json_only = {"Accept": "application/json"}
+
+        with patch("api.views.ConfigCache.reminder_guard", side_effect=PermissionError("read-only")):
+            for response in (
+                self.add(headers=json_only),
+                self.send("patch", path, {"name": "x"}, headers=json_only),
+                self.send("delete", path, headers=json_only),
+            ):
+                self.assertEqual(response.status_code, 500)
+                self.assertEqual(loads(response.content)["error"], "The reminders could not be saved")
+
+            # Old URL views are worked out for each read instead of being saved
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(loads(response.content)["reminder"]["url_ids"]), 1)
+
+        self.assertEqual(self.stored()[0]["name"], _DAILY["name"])
+        self.assertEqual(self.stored()[0]["url_views"]["apprise"], "0.0")
 
     def test_json_is_required(self):
         """Changes must be sent as a JSON object."""
@@ -720,7 +744,7 @@ class ReminderUrlTests(ReminderTestCase):
           request landed just then; ``calls`` lists whether the reminder lock
           was held during each.
         """
-        real = sys.modules["api.views"]._reminder_targets_missing
+        real = runtime_views._reminder_targets_missing
         calls = []
 
         def check(*args):
@@ -737,7 +761,7 @@ class ReminderUrlTests(ReminderTestCase):
 
     def _guard_free(self):
         """Return whether no request holds the reminder lock in this process."""
-        lock = sys.modules["api.utils"].REMINDER_PROCESS_LOCK
+        lock = runtime_utils.REMINDER_PROCESS_LOCK
         if not lock.acquire(blocking=False):
             return False
 
@@ -854,7 +878,7 @@ class ReminderUrlTests(ReminderTestCase):
             ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), events)
 
         clock = [due - 1]
-        real_guard = sys.modules["api.views"].ConfigCache.reminder_guard
+        real_guard = runtime_views.ConfigCache.reminder_guard
 
         @contextmanager
         def later_guard():
@@ -1155,6 +1179,16 @@ class ReminderValidationTests(ReminderTestCase):
         self.assertEqual(self.add(later).status_code, 200)
         earlier = {**_DAILY, "start": "2099-01-01T09:00:00-12:00", "until": "2099-01-01T10:00:00+14:00"}
         self.assertEqual(loads(self.add(earlier).content)["field"], "until")
+
+        # A holiday counts from the start of its start's year in its own
+        # timezone, where this start is still New Year's Eve of 2098
+        holiday = {
+            **_DAILY,
+            "when": {"tz": "Etc/UTC", "holiday": _CHRISTMAS},
+            "start": "2099-01-01T02:00:00+05:00",
+            "until": "2098-12-31T23:00:00",
+        }
+        self.assertEqual(self.add(holiday).status_code, 200)
 
     def test_passed_times_are_kept_but_not_sent(self):
         """A one-off in the past, or a repeating reminder past its end date, is saved but never sent."""
@@ -1825,6 +1859,7 @@ class ReminderHolidayTests(ReminderTestCase):
             response = self.holidays(query)
             self.assertEqual(response.status_code, 400, query)
             self.assertIn(field, loads(response.content)["error"], query)
+            self.assertEqual(loads(response.content)["field"], field, query)
 
 
 @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
@@ -1846,11 +1881,15 @@ class ReminderAccessTests(ReminderTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(loads(response.content)["reminder"]["owner"], "user")
 
+        # They may also read its diagnostics
+        rid = loads(response.content)["reminder"]["id"]
+        self.assertEqual(self.client.get(f"/reminder/{self.key}/{rid}/diagnostics/", headers=_USER).status_code, 200)
+
     def test_a_login_removed_while_saving_is_noticed(self):
         """A user whose login goes while their save waits for the lock cannot add or change reminders."""
         self.login("user")
         rid = loads(self.add(headers=_USER).content)["reminder"]["id"]
-        views = sys.modules["api.views"]
+        views = runtime_views
         real_guard = views.ConfigCache.reminder_guard
         real_read = views.ConfigCache.read_reminders
 
@@ -1893,7 +1932,7 @@ class ReminderAccessTests(ReminderTestCase):
 
     def test_a_login_change_waits_for_a_reminder_change_in_progress(self):
         """Removing a login or changing its access waits until a user's save or delete is done."""
-        views = sys.modules["api.views"]
+        views = runtime_views
         real_check = views._reminder_user_gone
 
         for method, status, revoke in (
@@ -1944,6 +1983,8 @@ class ReminderAccessTests(ReminderTestCase):
             ("delete", path, {}),
             ("get", f"/reminder/@/{rid}/", {"headers": header}),
             ("post", f"{path}test/", {}),
+            ("get", f"{path}diagnostics/", {}),
+            ("get", f"/reminder/@/{rid}/diagnostics/", {"headers": header}),
             ("get", f"/reminder/{self.key}/preview/?cron=0+0+9", {}),
             ("get", f"/reminder/{self.key}/holidays/", {}),
             ("get", f"/reminder/{self.key}/limits/", {}),
@@ -2086,8 +2127,8 @@ class ReminderAccessTests(ReminderTestCase):
         # A configuration disabled while a save waited refuses the administrator too
         self.assertTrue(ConfigCache.set_access(self.key, "disabled"))
         request = RequestFactory().get("/")
-        request.apprise_auth_permission = sys.modules["api.views"].Authentication.ROLE_ADMIN
-        self.assertEqual(sys.modules["api.views"]._reminder_user_gone(request, self.key).status_code, 403)
+        request.apprise_auth_permission = runtime_views.Authentication.ROLE_ADMIN
+        self.assertEqual(runtime_views._reminder_user_gone(request, self.key).status_code, 403)
 
     def test_browser_user_reaches_current_reminders(self):
         """A signed-in configuration user manages reminders through '@' routes."""
@@ -2107,6 +2148,8 @@ class ReminderAccessTests(ReminderTestCase):
 
         response = self.client.get("/reminder/@/", headers=web)
         self.assertEqual([event["id"] for event in loads(response.content)["reminders"]], [rid])
+        self.assertEqual(self.client.get(f"/reminder/@/{rid}/diagnostics/", headers=web).status_code, 200)
+        self.assertEqual(self.client.get(f"/reminder/{self.key}/{rid}/diagnostics/", headers=web).status_code, 200)
         self.assertEqual(self.send("delete", f"/reminder/@/{rid}/", headers=web).status_code, 204)
 
         # The login covers only its own configuration
@@ -2673,7 +2716,7 @@ class ReminderAccountTests(ReminderTestCase):
     def test_reset_access_catches_a_reminder_saved_meanwhile(self):
         """A reminder the user saved while their login was being removed goes with it."""
         self.seed()
-        views = sys.modules["api.views"]
+        views = runtime_views
         real_clear = views.ConfigCache.clear_auth
 
         def clear_after_a_late_save(key):
@@ -2849,16 +2892,18 @@ class ReminderCalendarTests(ReminderTestCase):
         self.assertEqual(listed[0]["occurrences"], [paused["next"] + day * 86400 for day in range(3)])
 
     def test_occurrences_skip_unusable_times(self):
-        """A reminder whose time cannot be worked out lists nothing."""
+        """A reminder whose time cannot be worked out, or is damaged on disk, lists nothing."""
         self.add()
-        with ConfigCache.reminder_guard():
-            events = self.stored()
-            events[0]["when"] = {"cron": "garbage"}
-            ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), events)
-
         start = int(time.time())
-        response = self.client.get(f"/reminder/{self.key}/?start={start}&end={start + 86400 * 30}")
-        self.assertEqual(loads(response.content)["reminders"][0]["occurrences"], [])
+        for when in ({"cron": "garbage"}, "damaged", {"tz": "Etc/UTC"}):
+            with ConfigCache.reminder_guard():
+                events = self.stored()
+                events[0]["when"] = when
+                ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), events)
+
+            response = self.client.get(f"/reminder/{self.key}/?start={start}&end={start + 86400 * 30}")
+            self.assertEqual(response.status_code, 200, when)
+            self.assertEqual(loads(response.content)["reminders"][0]["occurrences"], [], when)
 
     def test_window_is_limited_to_400_days(self):
         """A window longer than 400 days is refused on its end."""
@@ -3055,7 +3100,8 @@ class ReminderPageTests(ReminderTestCase):
         self.assertIn("reminderFromHash(wanted)", html)
         # Pausing a repeating reminder says it pauses the whole series
         self.assertIn("return paused ? 'Resume Series' : 'Pause Series';", html)
-        self.assertEqual(html.count("reminderPauseLabel(reminder, paused), async"), 2)
+        self.assertEqual(html.count("reminderPauseLabel(reminder, paused), async"), 1)
+        self.assertIn("actions.append(reminderPauseButton(reminder, reminderPage));", html)
         # Fields Chrome takes for a person or an address get a value it does not know
         self.assertRegex(html, r'<input id="reminder-name"[^>]*autocomplete="apprise-none"')
         self.assertRegex(html, r'<select id="reminder-region"[^>]*autocomplete="apprise-none"')
@@ -3157,11 +3203,12 @@ class ReminderPageTests(ReminderTestCase):
         # The full attachment space alert waits, hidden, on the tab and in the Reminder section
         self.assertEqual(html.count('class="notify-target-guidance reminder-space-full"'), 2)
 
-        # Locked: no tab, form, buttons or scripts for its own user
-        self.assertTrue(ConfigCache.set_access(self.key, "locked"))
-        html = self.page()
-        for marker in ('<a href="#reminders"', 'id="reminder-form"', 'id="notify-add-reminder"', "remindersInit()"):
-            self.assertNotIn(marker, html)
+        # Locked or public: no tab, form, buttons or scripts for its own user
+        for access in ("locked", "public"):
+            self.assertTrue(ConfigCache.set_access(self.key, access))
+            html = self.page()
+            for marker in ('<a href="#reminders"', 'id="reminder-form"', 'id="notify-add-reminder"', "remindersInit()"):
+                self.assertNotIn(marker, html, access)
 
         # The administrator still has them on a locked configuration
         self.sign_in("master", "pass")
@@ -3237,3 +3284,142 @@ class ReminderPageTests(ReminderTestCase):
         self.assertIn('id="swal-keep-reminders"', self.client.get(path, headers=headers).content.decode())
         with override_settings(APPRISE_REMINDER_ENABLED=False):
             self.assertNotIn('id="swal-keep-reminders"', self.client.get(path, headers=headers).content.decode())
+
+
+class ReminderLoggingTests(ReminderTestCase):
+    """What a reminder save logs, to trace one that was not sent."""
+
+    def test_a_save_logs_its_next_time_but_never_its_message(self):
+        """A save logs when it is next sent; debug adds its schedule, without its title, body or URLs."""
+        with self.assertLogs("django", level="DEBUG") as logs:
+            event = loads(self.add({**_DAILY, "urls": ["json://private.example"]}).content)["reminder"]
+
+        rid = event["id"]
+        self.assertIn(
+            f"INFO:django:REMINDER - 127.0.0.1 - Added reminder {rid} using KEY: {self.key}; "
+            f"next {log_time(event['next'], 'Etc/UTC')}",
+            logs.output,
+        )
+        schedule = [line for line in logs.output if f"Reminder {rid} schedule:" in line]
+        self.assertEqual(len(schedule), 1)
+        self.assertIn('"cron": "0 0 9"', schedule[0])
+        self.assertIn('"skip": 0', schedule[0])
+        for private in ("Standup", "Time to meet", "private.example"):
+            self.assertNotIn(private, "\n".join(logs.output))
+
+        # A paused reminder has no next time to log
+        with self.assertLogs("django", level="INFO") as logs:
+            self.send("patch", f"/reminder/{self.key}/{rid}/", {"enabled": False})
+
+        self.assertIn(
+            f"INFO:django:REMINDER - 127.0.0.1 - Updated reminder {rid} using KEY: {self.key}; next paused",
+            logs.output,
+        )
+
+    def test_a_save_warns_when_no_scheduler_will_send_it(self):
+        """Saving a reminder with no scheduler running warns, as nothing sends it until one starts."""
+        with self.assertLogs("django", level="WARNING") as logs:
+            rid = loads(self.add().content)["reminder"]["id"]
+
+        self.assertIn(
+            f"WARNING:django:REMINDER - 127.0.0.1 - No scheduler is running; reminder {rid} is not sent "
+            "until one starts",
+            logs.output,
+        )
+
+        # Quiet with a scheduler running, and for a paused reminder
+        with (
+            patch("api.views.ConfigCache.scheduler_running", return_value=True),
+            self.assertLogs("django", level="INFO") as logs,
+        ):
+            self.add()
+
+        with self.assertLogs("django", level="INFO") as quiet:
+            self.add({**_DAILY, "enabled": False})
+
+        self.assertFalse([line for line in logs.output + quiet.output if line.startswith("WARNING")])
+
+    def test_a_test_send_names_the_client(self):
+        """A test send from the web logs the client's address, like other web requests."""
+        rid = loads(self.add().content)["reminder"]["id"]
+        with patch("api.scheduler.prepare_send", return_value=None) as prepare:
+            self.send("post", f"/reminder/{self.key}/{rid}/test/")
+
+        self.assertEqual(prepare.call_args.kwargs["who"], "127.0.0.1")
+
+
+class ReminderDiagnosticsTests(ReminderTestCase):
+    """Copy what traces a reminder, for a support ticket."""
+
+    def test_diagnostics_show_where_it_sends_but_never_its_message_or_secrets(self):
+        """Diagnostics hold the schedule, tag and hidden URLs, but never the message, passwords or Config ID."""
+        rid = loads(
+            self.add(
+                {
+                    **_DAILY,
+                    "title": "Private title",
+                    "urls": ["json://user:secretpass@private.example"],
+                    "tag": "family",
+                }
+            ).content
+        )["reminder"]["id"]
+
+        response = self.client.get(f"/reminder/{self.key}/{rid}/diagnostics/")
+        self.assertEqual(response.status_code, 200)
+        diagnostics = loads(response.content)["diagnostics"]
+        reminder = diagnostics["reminder"]
+        self.assertEqual((reminder["id"], reminder["name"], reminder["tag"]), (rid, "Standup", "family"))
+        self.assertEqual(reminder["when"], _DAILY["when"])
+        self.assertEqual(len(reminder["urls"]), 1)
+        self.assertTrue(reminder["urls"][0].startswith("json://"))
+        # Times read as UTC dates and times
+        self.assertTrue(reminder["next"].endswith("+00:00"))
+        self.assertTrue(diagnostics["copied"].endswith("+00:00"))
+        self.assertEqual(diagnostics["server"]["tz"], settings.TIME_ZONE)
+        self.assertEqual(len(diagnostics["upcoming"]), 5)
+        self.assertEqual(
+            set(diagnostics["versions"]), {"apprise-api", "apprise", "dateblock", "holidays", "python", "tzdata"}
+        )
+        for private in ("Private title", "Time to meet", "secretpass", self.key):
+            self.assertNotIn(private, response.content.decode())
+
+        # Redacted: no name, tag or address, but still one URL and its scheme
+        response = self.client.get(f"/reminder/{self.key}/{rid}/diagnostics/?privacy=yes")
+        reminder = loads(response.content)["diagnostics"]["reminder"]
+        self.assertEqual(
+            (reminder["name"], reminder["tag"], reminder["urls"]), ("(redacted)", "(redacted)", ["json://"])
+        )
+        for private in ("Standup", "family", "private.example"):
+            self.assertNotIn(private, response.content.decode())
+
+        # A missing reminder, and reminders that cannot be read
+        self.assertEqual(self.client.get(f"/reminder/{self.key}/{'0' * 32}/diagnostics/").status_code, 404)
+        with patch("api.views.ConfigCache.read_reminders", return_value=None):
+            self.assertEqual(self.client.get(f"/reminder/{self.key}/{rid}/diagnostics/").status_code, 500)
+
+        # Refused to anyone who may not use the configuration's reminders
+        with patch("api.views._reminder_refusal", return_value="No"):
+            self.assertEqual(self.client.get(f"/reminder/{self.key}/{rid}/diagnostics/").status_code, 403)
+
+    def test_each_reminder_offers_its_diagnostics(self):
+        """Reminder cards and past calendar rows offer Diagnostics, and every failure reason has words."""
+        html = self.client.get(f"/cfg/{self.key}", headers={"Accept": "text/html"}).content.decode()
+        self.assertIn("reminderDiagnosticsButton(page.itemUrl(reminder.id, 'diagnostics/'))", html)
+        # A last result's row, and a finished reminder's row through the card's own buttons
+        self.assertEqual(html.count("reminderDiagnosticsButton(reminderItemUrl(reminder.id, 'diagnostics/'))"), 1)
+        self.assertIn("const actions = reminderActions(reminder, reminderPage);", html)
+        # Coloured by the page's highlighter, keeping its indentation
+        self.assertIn("code.innerHTML = hljs.highlight(shown, {language: 'json'}).value;", html)
+        # Links to how to read them, and reads left to right
+        self.assertIn("help.href = 'https://appriseit.com/api/reference/reminder-diagnostics/';", html)
+        # The link, then the switch, beside the buttons, so both stay in sight while the code scrolls
+        self.assertIn("Swal.getActions().prepend(help, toggle);", html)
+        self.assertIn("customClass: {popup: 'reminder-diagnostics-popup'},", html)
+        # Shown and copied redacted unless the switch is turned off; both are
+        # read before Copy is pressed
+        self.assertIn("[url, url + '?privacy=yes'].map(", html)
+        self.assertIn('<input type="checkbox" checked>', html)
+        self.assertIn("appriseCopyToClipboard('```json\\n' + (redact.checked ? redacted : text) + '\\n```');", html)
+        self.assertNotIn("showDenyButton: true,\n      confirmButtonText: '", html)
+        for reason in ("late", "idle", "urls", "config", "attach", "error"):
+            self.assertRegex(html, rf"\n    {reason}: '")

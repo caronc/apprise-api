@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 import base64
 import binascii
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager, suppress
 from datetime import UTC, datetime
 import errno
@@ -53,6 +53,7 @@ from apprise.exception import AppriseTemplateError
 # Shared with Apprise on purpose so both projects apply the same destination
 # checks; see the module notes in apprise/utils/http.py.
 from apprise.utils.http import HTTPPolicy, HTTPPolicySession
+from apprise.utils.parse import GET_SCHEMA_RE
 from apprise.utils.template import (
     TEMPLATE_NAME_PATTERN,
     TEMPLATE_NAME_RE,
@@ -266,6 +267,21 @@ def _file_exists(path: str) -> bool | None:
 
     except OSError:
         return None
+
+
+def _sync_to_disk(descriptor: int) -> None:
+    """Make sure what was written to an open file is on disk.
+
+    - Skipped on a file system that cannot do this, such as some network
+      shares. A real write error still raises ``OSError``.
+    """
+    try:
+        os.fsync(descriptor)
+
+    except OSError as e:
+        # Saving goes on without it where the file system has no support.
+        if e.errno not in UNSUPPORTED_SYNC_ERRORS:
+            raise
 
 
 def process_space() -> int | None:
@@ -557,7 +573,13 @@ class HTTPAttachment(A_MGR["http"]):
     Web Attachments
     """
 
-    def __init__(self, filename=None, delete=True, url_filter=None, **kwargs):
+    def __init__(
+        self,
+        filename: str | None = None,
+        delete: bool = True,
+        url_filter: AppriseURLFilter | None = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Initialize our attachment
 
@@ -653,6 +675,17 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
         return False
 
     return True
+
+
+def url_scheme(url: str) -> str:
+    """Return just the scheme of a URL, such as ``json://``.
+
+    - Read the way Apprise reads it, so nothing typed in front of the scheme
+      (such as a token) is ever given back.
+    - Returns "" when the text has no scheme.
+    """
+    match = GET_SCHEMA_RE.match(url)
+    return match.group("schema").lower() + "://" if match else ""
 
 
 def _upload_chunks(upload, chunk_size):
@@ -759,7 +792,7 @@ def _decode_base64_attachment(value, filename, size_limit):
     return decoded
 
 
-def check_attachment_url(url, no=1, url_filter=None):
+def check_attachment_url(url: Any, no: int = 1, url_filter: AppriseURLFilter | None = None) -> dict[str, Any]:
     """Refuse a web attachment the configured rules do not allow, without downloading it.
 
     - ``url_filter``: the rules to apply; the attachment rules by default.
@@ -816,7 +849,13 @@ def preview_refusal(url: Any) -> dict[str, str] | None:
     return None
 
 
-def build_http_attachment(url, no, fallback_filename, override_filename=None, url_filter=None):
+def build_http_attachment(
+    url: Any,
+    no: int,
+    fallback_filename: str,
+    override_filename: str | None = None,
+    url_filter: AppriseURLFilter | None = None,
+) -> HTTPAttachment:
     """Build a hosted HTTP attachment from either supported URL input form.
 
     - Only HTTP(S) URLs that pass the configured rules are accepted.
@@ -1165,7 +1204,7 @@ class AppriseConfigCache:
         path, filename = self.path(key)
         return self._read_content(path, filename)
 
-    def _read_content(self, path, filename):
+    def _read_content(self, path: str, filename: str) -> tuple[str | None, str | None]:
         """Read the configuration named ``filename`` inside ``path``.
 
         Return values match ``get()``.
@@ -1222,7 +1261,7 @@ class AppriseConfigCache:
         # return our read content
         return (content, fmt)
 
-    def clear(self, key, formats=None):
+    def clear(self, key: str, formats: set[str] | None = None) -> bool | None:
         """Remove content for ``key``, optionally limited by format.
 
         - Removing every format removes the configuration's reminders too.
@@ -1311,17 +1350,21 @@ class AppriseConfigCache:
           stored files nothing else uses.
         - Returns how many were dealt with.
         """
-        # Nothing is stored when storage is turned off.
-        if self.mode == AppriseStoreMode.DISABLED:
+        # Reminders set aside by a removal, and ones marked finished.
+        suffixes = (REMINDER_SUFFIX + REMOVING_SUFFIX, REMINDER_SUFFIX + REMOVED_SUFFIX)
+
+        # Usually there are none, so no lock is taken and nothing is written.
+        # This also covers storage that is turned off or read-only.
+        if not any(self.reminder_files(suffix) for suffix in suffixes):
             return 0
 
         handled = 0
         # The stored files of reminders removed here.
         dropped = set()
         with self.reminder_guard():
-            for aside in self.reminder_files(REMINDER_SUFFIX + REMOVING_SUFFIX) + self.reminder_files(
-                REMINDER_SUFFIX + REMOVED_SUFFIX
-            ):
+            # Listed again under the lock, since another process may have
+            # finished some meanwhile.
+            for aside in self.reminder_files(suffixes[0]) + self.reminder_files(suffixes[1]):
                 handled += self._settle_aside(aside, dropped)
 
             # Files only the removed reminders used can go now.
@@ -1416,7 +1459,7 @@ class AppriseConfigCache:
         self.drop_unused_reminder_files(dropped)
         return True
 
-    def _clear(self, key, formats=None):
+    def _clear(self, key: str, formats: set[str] | None = None) -> bool | None:
         """Remove content for ``key``; see ``clear()``."""
         # Default our response None
         response = None
@@ -1581,6 +1624,12 @@ class AppriseConfigCache:
         if self.mode == AppriseStoreMode.DISABLED:
             return False
 
+        # Check and hash the login before taking any lock. Hashing is slow on
+        # purpose, and reminder saves for every Config ID wait on the lock.
+        record = self._auth_record(key, username, password, access)
+        if record is None:
+            return False
+
         try:
             guard = self._acquire_auth_guard(key)
         except OSError:
@@ -1591,7 +1640,7 @@ class AppriseConfigCache:
             # Wait for a reminder change in progress, so none finishes after
             # the login or its access has changed.
             with self.reminder_guard():
-                saved = self._set_auth(key, username, password, access)
+                saved = self._write_auth_record(key, record)
                 if saved:
                     # The scheduler skips the reminders of a disabled
                     # configuration, so it looks again once access may have changed.
@@ -1604,37 +1653,36 @@ class AppriseConfigCache:
         finally:
             self._release_auth_guard(guard)
 
-    def _set_auth(self, key, username, password, access):
-        """Write credentials while the caller holds this key's guard."""
+    @staticmethod
+    def _auth_record(key: str, username: str | None, password: str, access: str) -> ConfigAuthRecord | None:
+        """Build the login record to save, or ``None`` when it is not valid."""
 
         if access not in Authentication.ACCESS_CHOICES:
             logger.error("Unsupported configuration access for KEY: %s", key)
-            return False
+            return None
 
         if username is None:
             username = ""
         if not isinstance(username, str) or not isinstance(password, str):
             logger.error("Credentials must be text for KEY: %s", key)
-            return False
+            return None
 
         # Normalize usernames while leaving passwords exactly as supplied.
         username = username.strip()
         if ":" in username:
             logger.error("Username cannot contain ':' for KEY: {}".format(key))
-            return False
+            return None
 
         try:
             # Django's password hasher adds a unique salt.
             digest = make_password("{}:{}".format(username, password))
 
-        except (TypeError, UnicodeError):
+        except UnicodeError:
+            # Both values are text here; only characters that cannot be encoded, such as a lone surrogate, fail.
             logger.error("Could not hash authentication credentials for KEY: {}".format(key))
-            return False
+            return None
 
-        return self._write_auth_record(
-            key,
-            ConfigAuthRecord(access=access, username=username, digest=digest),
-        )
+        return ConfigAuthRecord(access=access, username=username, digest=digest)
 
     def set_access(self, key, access):
         """Change access without replacing credentials.
@@ -1748,7 +1796,7 @@ class AppriseConfigCache:
         return self._read_auth_record(os.path.join(path, filename), key)
 
     @staticmethod
-    def _read_auth_record(full_path, key):
+    def _read_auth_record(full_path: str, key: str) -> ConfigAuthRecord | None:
         """Read and check one access record file, or return ``None`` when absent."""
         try:
             with open(full_path) as f:
@@ -2063,7 +2111,8 @@ class AppriseConfigCache:
     def move(self, from_key, to_key):
         """Move a configuration and its access record to another key.
 
-        An access-only key moves without configuration content. The result is a
+        A key with only an access record or reminders moves without
+        configuration content. The result is a
         ``MoveResult`` value describing success, absence, conflict, or failure.
         """
         if self.mode == AppriseStoreMode.DISABLED:
@@ -2109,7 +2158,9 @@ class AppriseConfigCache:
             (src_lock, dst_lock),
         ]
         sources = [(source, destination) for source, destination in candidates if os.path.isfile(source)]
-        if not sources:
+        # Reminders sent only to their own URLs need no configuration, so they
+        # are enough to move on their own.
+        if not sources and not os.path.isfile(self.reminder_path(from_key)):
             return MoveResult.NOT_FOUND
         candidates.append((src_created, dst_created))
         if os.path.isfile(src_created):
@@ -2242,6 +2293,10 @@ class AppriseConfigCache:
             try:
                 # The names in one folder; a folder that cannot be read is skipped.
                 names = os.listdir(directory)
+
+            except FileNotFoundError:
+                # Never made, or removed since it was found, so it holds none.
+                continue
 
             except OSError as e:
                 logger.warning("Could not list reminders in %s", directory)
@@ -2478,14 +2533,8 @@ class AppriseConfigCache:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
                 f.write(dumps(data, separators=(",", ":")))
                 f.flush()
-                try:
-                    os.fsync(f.fileno())
-
-                except OSError as e:
-                    # Some network shares cannot do this; the swap below is
-                    # still all or nothing. A real write error still fails.
-                    if e.errno not in UNSUPPORTED_SYNC_ERRORS:
-                        raise
+                # Where this cannot be done, the swap below is still all or nothing.
+                _sync_to_disk(f.fileno())
 
             # Then swap it into place, which readers see as a single change.
             os.replace(tmp_path, path)
@@ -2570,14 +2619,9 @@ class AppriseConfigCache:
             # Not touched before, so create it below.
             pass
 
-        try:
-            # Create the file if needed, then set its time to now.
-            with open(path, "a"):
-                os.utime(path)
-
-        except OSError as e:
+        # Create the file if needed, then set its time to now.
+        if not touch(path):
             logger.warning("Could not record use of KEY: %s", key)
-            logger.debug("Use record error: %s", e)
 
     @staticmethod
     def reminder_seen(reminder_file: str) -> float | None:
@@ -2665,7 +2709,7 @@ class AppriseConfigCache:
                 # On disk before it takes its name, so a crash never leaves
                 # a short file that later uploads would reuse.
                 dst.flush()
-                os.fsync(dst.fileno())
+                _sync_to_disk(dst.fileno())
 
             # The file is named by its hash, so the same content is stored only once.
             target = os.path.join(directory, digest.hexdigest())
@@ -2699,7 +2743,9 @@ class AppriseConfigCache:
         - Paused reminders are kept, since someone chose to stop them.
         - Returns how many were removed.
         """
-        if self.mode == AppriseStoreMode.DISABLED:
+        # Without any reminders, no lock is taken and nothing is written. This
+        # also covers storage that is turned off or read-only.
+        if not self.reminder_files():
             return 0
 
         pruned = 0
@@ -2752,7 +2798,7 @@ class AppriseConfigCache:
 
         return used
 
-    def drop_unused_reminder_files(self, names) -> None:
+    def drop_unused_reminder_files(self, names: Iterable[str]) -> None:
         """Remove stored files right away once no reminder uses them.
 
         - ``names``: the files to check, such as those of reminders just
@@ -2868,9 +2914,18 @@ class AppriseConfigCache:
           off, or when the lock cannot be taken at all.
         - The scheduler's process ID is stored so it can be woken up.
         """
-        os.makedirs(self.root, exist_ok=True)
-        # The lock file is created if missing, readable only by this user.
-        descriptor = os.open(os.path.join(self.root, SCHEDULER_PID_FILE), os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            os.makedirs(self.root, exist_ok=True)
+            # The lock file is created if missing, readable only by this user.
+            descriptor = os.open(os.path.join(self.root, SCHEDULER_PID_FILE), os.O_CREAT | os.O_RDWR, 0o600)
+
+        except OSError as e:
+            # Such as a read-only configuration folder.
+            logger.warning("REMINDER - scheduler - Could not open the scheduler lock")
+            logger.debug("Scheduler lock error: %s", e)
+            yield False
+            return
+
         try:
             try:
                 # Take the lock without waiting; failing means another scheduler has it.
@@ -2881,20 +2936,20 @@ class AppriseConfigCache:
                     yield False
                     return
 
-                logger.info("REMINDER - Another scheduler is running; waiting to take over")
+                logger.info("REMINDER - scheduler - Another scheduler is running; waiting to take over")
                 try:
                     # Blocks until the other scheduler stops; a stop signal
                     # still ends this process while it waits.
                     fcntl.flock(descriptor, fcntl.LOCK_EX)
 
                 except OSError as e:
-                    logger.warning("REMINDER - Could not wait for the scheduler lock")
+                    logger.warning("REMINDER - scheduler - Could not wait for the scheduler lock")
                     logger.debug("Scheduler lock error: %s", e)
                     yield False
                     return
 
             except OSError as e:
-                logger.warning("REMINDER - Could not take the scheduler lock")
+                logger.warning("REMINDER - scheduler - Could not take the scheduler lock")
                 logger.debug("Scheduler lock error: %s", e)
                 yield False
                 return

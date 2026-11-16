@@ -34,9 +34,17 @@
   // Why a reminder was not sent, by the reason the server saved:
   // - late: the server was down past the time it could still be sent.
   // - idle: its configuration was not used for too long.
+  // - urls: it only sends to its own URLs, which the server no longer allows.
+  // - config: it sends through a configuration that was not found.
+  // - attach: its attachments could not be used.
+  // - error: an error stopped the send.
   const reminderReasons = {
     late: '{% trans "Skipped: it was too late to send" %}',
-    idle: '{% trans "Paused: this configuration was not used for a while" %}'
+    idle: '{% trans "Paused: this configuration was not used for a while" %}',
+    urls: '{% trans "Failed: this server no longer allows URLs in reminders" %}',
+    config: '{% trans "Failed: no configuration was found" %}',
+    attach: '{% trans "Failed: its attachments could not be used" %}',
+    error: '{% trans "Failed: an error stopped the send" %}'
   };
 
   // Shorthand for finding an element by its ID.
@@ -154,17 +162,55 @@
     return Boolean(when.at) && !when.every;
   }
 
-  // Short weekday and month names in the page language.
-  function reminderDayLabel(name) {
+  // A weekday's name in the page language, counting from Sunday (0).
+  // - style: 'short' (e.g. "Mon") or 'long' (e.g. "Monday").
+  function reminderWeekdayName(index, style) {
     // 7 January 2024 was a Sunday.
-    return new Intl.DateTimeFormat(reminderLocale, {weekday: 'short', timeZone: 'UTC'})
-      .format(new Date(Date.UTC(2024, 0, 7 + reminderDayNames.indexOf(name))));
+    return new Intl.DateTimeFormat(reminderLocale, {weekday: style, timeZone: 'UTC'})
+      .format(new Date(Date.UTC(2024, 0, 7 + index)));
+  }
+
+  // A month's name in the page language, counting from January (0).
+  // - style: 'short' (e.g. "Jan") or 'long' (e.g. "January").
+  function reminderMonthName(index, style) {
+    return new Intl.DateTimeFormat(reminderLocale, {month: style, timeZone: 'UTC'})
+      .format(new Date(Date.UTC(2024, index, 1)));
+  }
+
+  // A cron day name (e.g. "Mon") as its short name in the page language.
+  function reminderDayLabel(name) {
+    return reminderWeekdayName(reminderDayNames.indexOf(name), 'short');
   }
 
   // A month number (1 to 12) as its short name.
   function reminderMonthLabel(month) {
-    return new Intl.DateTimeFormat(reminderLocale, {month: 'short', timeZone: 'UTC'})
-      .format(new Date(Date.UTC(2024, month - 1, 1)));
+    return reminderMonthName(month - 1, 'short');
+  }
+
+  // Fetch JSON from the API; anything but a success is thrown as an error.
+  async function reminderGetJson(url) {
+    const response = await appriseFetch(url, {headers: {'Accept': 'application/json'}});
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+    return response.json();
+  }
+
+  // Fetch a list of reminders. A failure is shown as a message, and gives null.
+  async function reminderReadList(url) {
+    try {
+      const response = await appriseFetch(url, {headers: {'Accept': 'application/json'}});
+      if (!response.ok) {
+        const failure = await appriseResponseFailure(response, '{% trans "The reminders could not be read" %}');
+        appriseShowStatusToast(failure.message, false);
+        return null;
+      }
+      return (await response.json()).reminders;
+    } catch (e) {
+      // The server could not be reached, or did not answer with JSON.
+      appriseShowStatusToast('{% trans "The reminders could not be read" %}', false);
+      return null;
+    }
   }
 
   // Run one action on a reminder, then show how it went.
@@ -186,12 +232,7 @@
 
   // A small icon button; its label shows as a tooltip and is read by screen readers.
   function reminderButton(icon, label, handler, extraClass) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'btn-flat reminder-action' + (extraClass ? ' ' + extraClass : '');
-    button.setAttribute('aria-label', label);
-    button.title = label;
-    button.innerHTML = '<i class="material-icons" aria-hidden="true">' + icon + '</i>';
+    const button = appriseIconButton(icon, label, 'btn-flat reminder-action' + (extraClass ? ' ' + extraClass : ''));
     button.addEventListener('click', handler);
     return button;
   }
@@ -205,11 +246,7 @@
   // - Returns the limits, or null when they could not be read.
   async function reminderShowUsage(url) {
     try {
-      const response = await appriseFetch(url, {headers: {'Accept': 'application/json'}});
-      if (!response.ok) {
-        return null;
-      }
-      const limits = (await response.json()).limits;
+      const limits = (await reminderGetJson(url)).limits;
       // e.g. "3 / 100" and "1.5 MB / 50 MB".
       reminderElement('reminder-usage-count').textContent = limits.reminders_used + ' / ' + limits.reminders;
       reminderElement('reminder-usage-space').textContent = reminderFormatSize(limits.attach_used) + ' / '
@@ -288,6 +325,15 @@
     return parts.join(' · ');
   }
 
+  // How a reminder's last send went: why it was not sent, or else Sent or Failed.
+  function reminderLastResult(last) {
+    if (last.reason) {
+      // A reason this page has no words for is shown as the server saved it.
+      return reminderReasons[last.reason] || last.reason;
+    }
+    return last.ok ? '{% trans "Sent" %}' : '{% trans "Failed" %}';
+  }
+
   // Pausing a repeating reminder stops every time it has, so its button says so.
   // A holiday sent once (a count of 1) is not a series.
   function reminderPauseLabel(reminder, paused) {
@@ -297,23 +343,123 @@
     return paused ? '{% trans "Resume Series" %}' : '{% trans "Pause Series" %}';
   }
 
+  // The button that pauses a reminder, or resumes a paused one. A paused
+  // reminder's play button stands out, as it is what brings it back.
+  // - page: as for reminderCard().
+  function reminderPauseButton(reminder, page) {
+    const paused = reminder.enabled === false;
+    return reminderButton(paused ? 'play_arrow' : 'pause', reminderPauseLabel(reminder, paused), async function () {
+      if (await reminderAction(page.itemUrl(reminder.id), {method: 'PATCH', body: JSON.stringify({enabled: paused})}, '{% trans "Reminder saved." %}')) {
+        page.onChange(null);
+      }
+    }, paused ? 'reminder-action-resume' : '');
+  }
+
   // A small button that sends a reminder now, without changing its schedule,
   // showing each service's log live like Send Notification.
   function reminderSendButton(url) {
     return reminderButton('send', '{% trans "Send Now" %}', function () {
-      sendNotifyStream(url, {method: 'POST', headers: {'X-Apprise-Log-Level': 'debug'}}, {
-        title: '{% trans "Notification" %}',
-        responseTitle: '{% trans "Delivery Response" %}',
-        sending: '{% trans "Sending notification(s)…" %}',
-        success: '{% trans "Successfully sent the notification(s)." %}',
-        partial: '{% trans "One or more of the notification(s) were not sent." %}',
-        failure: '{% trans "Failed to send the notification(s)." %}'
-      });
+      sendNotifyStream(url, {method: 'POST', headers: {'X-Apprise-Log-Level': 'debug'}}, notifyStreamMessages);
     });
   }
 
-  // The date ("YYYY-MM-DD") and time ("HH:MM") a UNIX timestamp falls on in a timezone.
-  function reminderLocalParts(epoch, zone) {
+  // Show a reminder's diagnostics to paste into a support ticket. A switch,
+  // on to start with, shows them redacted or whole, and Copy copies what is
+  // shown, so the person sees exactly what they share. Both versions are
+  // read up front, so the copy comes straight from the button's click, which
+  // the browser requires.
+  async function reminderShowDiagnostics(url) {
+    // Fenced, so each reads as a JSON block once pasted into a ticket.
+    let text, redacted;
+    try {
+      const responses = await Promise.all([url, url + '?privacy=yes'].map(function (address) {
+        return appriseFetch(address, {headers: {'Accept': 'application/json'}});
+      }));
+      const failed = responses.find(function (response) { return !response.ok; });
+      if (failed) {
+        const failure = await appriseResponseFailure(failed, '{% trans "The diagnostics could not be read" %}');
+        appriseShowStatusToast(failure.message, false);
+        return;
+      }
+      [text, redacted] = await Promise.all(responses.map(async function (response) {
+        return JSON.stringify((await response.json()).diagnostics, null, 2);
+      }));
+    } catch (e) {
+      appriseShowStatusToast('{% trans "The diagnostics could not be read" %}', false);
+      return;
+    }
+    const holder = document.createElement('div');
+    const note = document.createElement('p');
+    note.textContent = '{% trans "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs." %}';
+    // What each field means, on the documentation site.
+    const help = document.createElement('a');
+    help.className = 'reminder-diagnostics-help';
+    help.href = 'https://appriseit.com/api/reference/reminder-diagnostics/';
+    help.target = '_blank';
+    help.rel = 'nofollow noopener noreferrer';
+    help.textContent = '{% trans "How to read these diagnostics" %}';
+    // The same switch as the Notifications form's.
+    const toggle = document.createElement('label');
+    toggle.className = 'reminder-diagnostics-redact';
+    toggle.innerHTML = '<span class="review-selected-filter"><input type="checkbox" checked>'
+      + '<span class="review-selected-filter-track" aria-hidden="true"><span class="review-selected-filter-knob"></span></span></span>';
+    const caption = document.createElement('span');
+    caption.textContent = '{% trans "Redacted" %}';
+    toggle.append(caption);
+    const redact = toggle.querySelector('input');
+    const block = document.createElement('pre');
+    const code = document.createElement('code');
+    block.className = 'reminder-diagnostics';
+    block.append(code);
+    // Show the version the switch picks.
+    function showDiagnostics() {
+      const shown = redact.checked ? redacted : text;
+      if (typeof hljs !== 'undefined') {
+        // Coloured in the page's theme. hljs.highlight() escapes the text, and
+        // unlike highlightElement() keeps its indentation.
+        code.className = 'hljs language-json';
+        code.innerHTML = hljs.highlight(shown, {language: 'json'}).value;
+      } else {
+        code.textContent = shown;
+      }
+    }
+    redact.addEventListener('change', showDiagnostics);
+    showDiagnostics();
+    holder.append(note, block);
+    appriseFire({
+      title: '{% trans "Diagnostics" %}',
+      html: holder,
+      // Wide enough that most lines fit; the dialog scrolls as a whole.
+      width: '48rem',
+      customClass: {popup: 'reminder-diagnostics-popup'},
+      // The link and the switch sit in the buttons' row, so they stay in
+      // sight, and the switch can be changed, while the code scrolls.
+      didOpen: function () {
+        Swal.getActions().prepend(help, toggle);
+      },
+      // The dialog is reused, so they must not stay for the next one.
+      willClose: function () {
+        help.remove();
+        toggle.remove();
+      },
+      showCancelButton: true,
+      confirmButtonText: '{% trans "Copy" %}',
+      cancelButtonText: '{% trans "Close" %}'
+    }).then(function (result) {
+      if (result.isConfirmed) {
+        appriseCopyToClipboard('```json\n' + (redact.checked ? redacted : text) + '\n```');
+      }
+    });
+  }
+
+  // The button that shows a reminder's diagnostics.
+  function reminderDiagnosticsButton(url) {
+    return reminderButton('bug_report', '{% trans "Diagnostics" %}', function () { reminderShowDiagnostics(url); });
+  }
+
+  // The clock a UNIX timestamp shows in a timezone, as "YYYY-MM-DD" and
+  // "HH:MM:SS". The server's timezone is used when none is given.
+  function reminderClock(epoch, zone) {
     const parts = {};
     new Intl.DateTimeFormat('en-CA', {
       timeZone: zone || reminderServerZone,
@@ -321,7 +467,14 @@
     }).formatToParts(new Date(epoch * 1000)).forEach(function (part) {
       parts[part.type] = part.value;
     });
-    return {date: parts.year + '-' + parts.month + '-' + parts.day, time: reminderShortTime(parts.hour + ':' + parts.minute + ':' + parts.second)};
+    return {date: parts.year + '-' + parts.month + '-' + parts.day, time: parts.hour + ':' + parts.minute + ':' + parts.second};
+  }
+
+  // The date ("YYYY-MM-DD") and time ("HH:MM") a UNIX timestamp falls on in a timezone.
+  function reminderLocalParts(epoch, zone) {
+    const clock = reminderClock(epoch, zone);
+    // Seconds stay only when they are not 00.
+    return {date: clock.date, time: reminderShortTime(clock.time)};
   }
 
   // Ask before removing a reminder, then remove it. A repeating reminder can
@@ -410,10 +563,7 @@
     card.append(reminderLine('{% trans "Repeat" %}', reminderSummary(reminder)));
     card.append(reminderLine('{% trans "Next" %}', paused ? '-' : reminderFormatTime(reminder.next, reminderShowsSeconds(reminder.when, reminder.start))));
     if (reminder.last) {
-      const result = reminder.last.reason
-        ? reminderReasons[reminder.last.reason] || reminder.last.reason
-        : (reminder.last.ok ? '{% trans "Sent" %}' : '{% trans "Failed" %}');
-      card.append(reminderLine('{% trans "Last" %}', reminderFormatTime(reminder.last.at) + ' · ' + result));
+      card.append(reminderLine('{% trans "Last" %}', reminderFormatTime(reminder.last.at) + ' · ' + reminderLastResult(reminder.last)));
     }
     if ((reminder.attach || []).length) {
       card.append(reminderLine('{% trans "Attachments" %}', reminderAttachSummary(reminder)));
@@ -431,16 +581,19 @@
         page.onEdit(reminder);
       }
     });
-    // The buttons: pause or resume (not once finished), edit, clone, send now and delete.
+    card.append(reminderActions(reminder, page));
+    return card;
+  }
+
+  // A reminder's row of buttons, as its card shows them: pause or resume
+  // (not once finished), edit, clone, send now, diagnostics and delete.
+  // - page: as for reminderCard().
+  function reminderActions(reminder, page) {
     const actions = document.createElement('div');
     actions.className = 'reminder-card-actions';
-    if (!finished) {
-      // A paused reminder's play button stands out, as it is what brings it back.
-      actions.append(reminderButton(paused ? 'play_arrow' : 'pause', reminderPauseLabel(reminder, paused), async function () {
-        if (await reminderAction(page.itemUrl(reminder.id), {method: 'PATCH', body: JSON.stringify({enabled: paused})}, '{% trans "Reminder saved." %}')) {
-          page.onChange(null);
-        }
-      }, paused ? 'reminder-action-resume' : ''));
+    // Finished: nothing left to send, so there is nothing to pause.
+    if (reminder.enabled === false || reminder.next) {
+      actions.append(reminderPauseButton(reminder, page));
     }
     actions.append(reminderButton('edit', '{% trans "Edit" %}', function () { page.onEdit(reminder); }));
     if (page.onClone) {
@@ -448,10 +601,10 @@
     }
     actions.append(
       reminderSendButton(page.itemUrl(reminder.id, 'test/')),
+      reminderDiagnosticsButton(page.itemUrl(reminder.id, 'diagnostics/')),
       // A card stands for the whole reminder, so it is removed whole.
       reminderButton('delete', '{% trans "Delete" %}', function () { reminderConfirmDelete(reminder, page, null, true); }, 'reminder-action-delete')
     );
-    card.append(actions);
-    return card;
+    return actions;
   }
 {# djlint:on #}

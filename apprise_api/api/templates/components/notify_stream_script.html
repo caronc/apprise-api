@@ -4,6 +4,17 @@
   // Send to a notification endpoint and show its log live in a dialog, then
   // the result. Used by the Notifications form and the reminder Send Now buttons.
 
+  // What the dialog says while a notification is sent, and once it is done.
+  // Send Notification and the reminders' Send Now share it.
+  const notifyStreamMessages = {
+    title: '{% trans "Notification" %}',
+    responseTitle: '{% trans "Delivery Response" %}',
+    sending: '{% trans "Sending notification(s)…" %}',
+    success: '{% trans "Successfully sent the notification(s)." %}',
+    partial: '{% trans "One or more of the notification(s) were not sent." %}',
+    failure: '{% trans "Failed to send the notification(s)." %}'
+  };
+
   // The same address with ?stream=1, which asks the server for a live log.
   function notifyStreamUrl(url) {
     const streamUrl = new URL(url, window.location.href);

@@ -6,6 +6,9 @@ Take advantage of [Apprise](https://github.com/caronc/apprise) through your netw
 - An incredibly lightweight gateway to Apprise.
 - A production-ready micro-service at your disposal.
 - A Simple Website to verify and test your configuration with.
+- Group your services with tags, then notify only the ones that need to know.
+- Private by design: messages go straight from your own server to each service, with no third party in between.
+- [Reminders](#reminders) that send a notification later: once, on a repeating schedule, or on a public holiday.
 - An [Android and iOS app](#apprise-mobile) to notify and manage your server from your phone.
 
 Apprise API was designed to easily fit into existing (and new) ecosystems that are looking for a simple notification solution.
@@ -23,7 +26,12 @@ Visit the [Official Documentation](https://appriseit.com/getting-started/) site 
 
 Apprise provides one consistent notification interface for your apps, automation, and infrastructure. Generate an Apprise URL, send it through the API or core library, and deliver notifications to a large number of supported services.
 
-[![Apprise overview showing notification sources, API entry points, and supported destinations](Apprise-Overview.png)](Apprise-Overview.png)
+<a href="https://appriseit.com/getting-started/#how-apprise-fits-together">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/caronc/apprise-api/master/Apprise-Overview-dark.png">
+    <img alt="Apprise overview showing notification sources, API entry points, and supported destinations" src="Apprise-Overview.png">
+  </picture>
+</a>
 
 ## Screenshots
 
@@ -61,7 +69,7 @@ Android requires Android 8.0 or later. iPhone and iPad require iOS 17.2 or later
 
 ### Connecting to Your Server
 
-Once the app is installed, open the *Configuration Manager* in your browser and reveal the **Apprise Mobile Quick Setup** QR code on any configuration you've saved. Scanning it from the app adds your server and loads that configuration in one step—no typing URLs on a phone keyboard.
+Once the app is installed, open the *Configuration Manager* in your browser and reveal the **Apprise Mobile Quick Setup** QR code on any configuration you've saved. Scanning it from the app adds your server and loads that configuration in one step, without typing URLs on a phone keyboard.
 
 Visit the [Apprise Mobile](https://appriseit.com/mobile/) page for more details, screenshots, and the app's privacy policy and terms.
 
@@ -412,7 +420,7 @@ The `/cfg` list requires `APPRISE_STATEFUL_MODE=simple` and is available by defa
 | `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, `access`, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
-| `/reminder/{KEY}` |  GET, POST | Lists or adds reminders: notifications saved now and sent later, once, on a repeating schedule or on a public holiday. `/reminder/{KEY}/{ID}` reads (GET), replaces (PUT), changes (PATCH) or removes (DELETE) one, and `/reminder/{KEY}/{ID}/test` (POST) sends it now. Reminders can carry attachments. `/reminder/{KEY}/limits` sets how many reminders and how much attachment space a Config ID gets, and `/reminder/{KEY}/holidays` lists the holidays a reminder can use. `/reminders` lists every Config ID's reminders for the administrator. See [Reminders](https://appriseit.com/api/endpoints/#reminders) for the payload.
+| `/reminder/{KEY}` |  GET, POST | Lists or adds [reminders](#reminders). See [Reminders](https://appriseit.com/api/endpoints/#reminders) for every reminder route and its payload.
 | `/details` |  GET  | Opens a page that builds Apprise URLs for the services on this server. Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/library/inspection/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
@@ -488,6 +496,20 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/abc123
 ```
+
+### Reminders
+
+Save a notification now and let the server send it later. A reminder can go out once, repeat on a schedule (every weekday at 9:00, every second Tuesday, the first of each month), or arrive on a public holiday every year. Create, pause and test them from the **Reminders** tab, or through the API:
+
+```bash
+# Every weekday at 9:00 Toronto time, sent to the 'devops' tag of 'abc123'
+curl -X POST -H "Content-Type: application/json" \
+    -d '{"body": "Stand-up in 5 minutes", "tag": "devops",
+         "when": {"tz": "America/Toronto", "cron": "0 0 9 * * Mon-Fri"}}' \
+    http://localhost:8000/reminder/abc123
+```
+
+See [Reminders](https://appriseit.com/api/endpoints/#reminders) for every option, including attachments, holidays and [troubleshooting](https://appriseit.com/api/reference/reminder-diagnostics/).
 
 ### Plain Text Messages and Headers
 
@@ -742,12 +764,12 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_REMINDER_ENABLED` | Set to `no` to turn off reminders (notifications saved now and sent later). Defaults to `yes`.
 | `APPRISE_REMINDER_WORKERS` | The number of reminders that can be sent at the same time. Defaults to `4`.
 | `APPRISE_REMINDER_GRACE` | How many seconds late a reminder may still be sent, for example after a restart. Older ones are skipped. Defaults to `3600` (1 hour).
-| `APPRISE_REMINDER_URLS_MAX` | The most Apprise URLs one reminder can hold, for everyone who may send stateless notifications. `0` turns them off. Defaults to `100`.
+| `APPRISE_REMINDER_URLS_MAX` | The most Apprise URLs one reminder can hold. `0` turns them off. Defaults to `100`.
 | `APPRISE_REMINDER_MAX` | The most reminders a Config ID can have, for everyone but the administrator. Defaults to `100`.
 | `APPRISE_REMINDER_USER_MIN_INTERVAL` | The fewest seconds apart anyone but the administrator may set a reminder to repeat. `0` or `1` sets no limit. Defaults to `60`.
 | `APPRISE_REMINDER_ATTACH_QUOTA` | The most space, in MB, the attachments stored with a Config ID's reminders may take, for everyone but the administrator. `0` turns attachments off for reminders, web addresses included. Defaults to `50`.
 | `APPRISE_REMINDER_STORE_MAX` | The most space, in MB, all stored reminder attachments on the server may take together, for everyone but the administrator. `0` sets no limit. Defaults to `1024`.
-| `APPRISE_REMINDER_IDLE_DAYS` | Pause a Config ID's reminders after this many days without use, so a forgotten Config ID does not send them forever. Defaults to `0` (never pause).
+| `APPRISE_REMINDER_IDLE_DAYS` | Pause a Config ID's reminders after this many days without use. Defaults to `0` (never pause).
 | `APPRISE_REMINDER_PRUNE_DAYS` | Days a finished reminder (nothing left to send) is kept before prune removes it. Defaults to `7`.
 | `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
 | `APPRISE_ATTACH_SIZE` | Over-ride the attachment size (defined in MB). By default it is set to `200` (Megabytes). You can set this up to a maximum value of `500` which is the restriction in place for NginX (internal hosting ervice) at this time.  If you set this to zero (`0`) then attachments will not be passed along even if provided.
@@ -1121,7 +1143,7 @@ spec:
             name: apprise-api-override-conf-config
 ```
 
-### Hardened Kubernetes deployment (rootless and read only)
+### Hardened Kubernetes Deployment (Rootless and Read Only)
 
 For a more security conscious setup, you can run Apprise API as a non-root
 user with a read only root filesystem and explicit ephemeral volumes.

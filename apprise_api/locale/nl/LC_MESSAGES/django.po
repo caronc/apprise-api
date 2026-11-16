@@ -1557,10 +1557,6 @@ msgstr "Verzenden"
 msgid "Notification"
 msgstr "Melding"
 
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "Deze testactie vereist ten minste één tag op het doelitem."
-
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
 msgstr "Apprise API Test"
@@ -2585,6 +2581,18 @@ msgstr "Deze URL kon niet worden geladen"
 msgid "This value is not in the form this service expects."
 msgstr "Deze waarde heeft niet de vorm die deze dienst verwacht."
 
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "Markeer elk item met zijn soort: {}."
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{} voor {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "{} is gelezen als {}."
+
 #: apprise_api/api/templates/details.html:770
 msgid "This URL could not be loaded. Check the highlighted fields."
 msgstr "Deze URL kon niet worden geladen. Controleer de gemarkeerde velden."
@@ -3106,6 +3114,46 @@ msgstr "Overgeslagen: het was te laat om te verzenden"
 #: apprise_api/api/templates/components/reminder_shared_script.html:34
 msgid "Paused: this configuration was not used for a while"
 msgstr "Gepauzeerd: deze configuratie is een tijd niet gebruikt"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "Mislukt: deze server staat geen URL’s meer toe in herinneringen"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "Mislukt: er is geen configuratie gevonden"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "Mislukt: de bijlagen konden niet worden gebruikt"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "Mislukt: een fout heeft het verzenden gestopt"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "De diagnose kon niet worden gelezen"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "Diagnose"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "Plak dit in een supportticket om deze herinnering te helpen traceren. Het bericht is weggelaten en wachtwoorden in de URL’s zijn verborgen. „Geanonimiseerd” verbergt ook de naam, tags en URL’s."
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "Kopiëren"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "Geanonimiseerd"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "Zo leest u deze diagnose"
 
 #: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
 msgid "Reminder saved."
