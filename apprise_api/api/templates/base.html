@@ -1734,17 +1734,59 @@
       relevance: 0
     };
 
-    const URL = {
-      className: 'string',
-      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\//,
-      end: /(?=\s|#|$)/,
-      contains: [TEMPLATE_VARIABLE],
+    // A URL option (?key= or &key=): the name stands out, the value keeps the
+    // URL colour and the ? & = between them are muted.
+    const URL_OPTION = {
+      match: [/[?&]/, /[^=&\s"'$]+/, /=/],
+      scope: {1: 'punctuation', 2: 'attr', 3: 'punctuation'},
       relevance: 0
     };
+
+    // Only colours change, never letter widths, so the coloured copy lines up
+    // with the text being typed over it.
+    // - The service (json://) and the login right after it (user:pass@) each
+    //   get their own colour.
+    // - A URL ends at a space, a quote or the end of the line, so a "#" stays
+    //   part of it, such as a Slack #channel.
+    const URL = {
+      scope: 'string',
+      begin: [/\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, /(?:[^\s\/?#@"'$]+(?::[^\s\/?#@"'$]*)?@)?/],
+      beginScope: {1: 'title', 2: 'subst'},
+      end: /(?=[\s"']|$)/,
+      contains: [TEMPLATE_VARIABLE, URL_OPTION],
+      relevance: 0
+    };
+
+    // A quoted value, such as a YAML URL in quotes. A quote only opens one at
+    // the start of a value, and it never runs past the end of the line, so an
+    // apostrophe (Don't) cannot colour the rest of the file.
+    const QUOTED = ['"', "'"].map(function (quote) {
+      return {
+        scope: 'string',
+        begin: new RegExp('(?<=^|[\\s:=,\\[-])' + quote),
+        end: new RegExp(quote + '|$'),
+        contains: [URL, TEMPLATE_VARIABLE],
+        relevance: 0
+      };
+    });
 
     const COMMENT = {
       className: 'comment',
       begin: /^[ \t]*[;#].*$/,
+      relevance: 0
+    };
+
+    // A comment after a value, such as "tag: ops  # the on-call team".
+    const TRAILING_COMMENT = {
+      className: 'comment',
+      begin: /[ \t]#.*$/,
+      relevance: 0
+    };
+
+    // A YAML key ("urls:", "- tag:"); the colon is muted.
+    const YAML_KEY = {
+      match: [/^[ \t]*(?:-[ \t]+)?/, /[A-Za-z_][\w.-]*/, /:(?=\s|$)/],
+      scope: {2: 'attr', 3: 'punctuation'},
       relevance: 0
     };
 
@@ -1768,7 +1810,10 @@
       contains: [
         COMMENT,
         TAG_DECL,
+        YAML_KEY,
+        ...QUOTED,
         URL,
+        TRAILING_COMMENT,
         TEMPLATE_VARIABLE,
         TAG_NAME
       ]

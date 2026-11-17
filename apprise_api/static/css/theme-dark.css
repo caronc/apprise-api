@@ -1474,6 +1474,20 @@ Config Editor — textarea border override
   color: #c1c3c9 !important;
 }
 
+/* 8. URL parts: the service (json://), the login (user:pass@), and the
+   muted ? & = : between names and values */
+.apprise-config-highlight .hljs-title {
+  color: #c9a2f2 !important;
+}
+
+.apprise-config-highlight .hljs-subst {
+  color: #f0b46c !important;
+}
+
+.apprise-config-highlight .hljs-punctuation {
+  color: #6b7080 !important;
+}
+
 /* =========================================
 Highlight.js (general code blocks)
 ========================================= */

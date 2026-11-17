@@ -6149,6 +6149,9 @@ Apprise Configuration Editor (Grid Overlay)
   display: grid;
   position: relative;
   margin-top: 0.5rem;
+  /* An editor dragged wider than its card scrolls inside it instead of
+     pushing the page sideways. */
+  overflow-x: auto;
 }
 
 /* Shared styles for perfect alignment */
@@ -6161,29 +6164,37 @@ Apprise Configuration Editor (Grid Overlay)
   letter-spacing: 0px !important;
   tab-size: 2;
   padding: 15px !important;
-  width: 100% !important;
   box-sizing: border-box !important;
   border-radius: 4px;
   white-space: pre-wrap !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
+  /* A long URL fills each line to the edge instead of jumping to the next
+     line early and leaving a gap. Both layers share it, so they stay aligned. */
+  word-break: break-all !important;
   overflow-y: hidden !important;
   margin: 0 !important;
   min-height: 250px;
 }
 
+/* The editor can be dragged taller and wider, but never smaller than it starts:
+   the full width of its card and the minimum height above. Sizes are left
+   without !important so the size a drag sets can take effect. */
 .apprise-config-editor textarea {
-  height: initial !important;
+  width: 100%;
+  min-width: 100%;
+  height: initial;
   background: transparent !important;
   color: transparent !important;
   z-index: 2;
-  resize: vertical;
+  resize: both;
   border: 1px solid #444 !important;
 }
 
 .apprise-config-editor .apprise-config-highlight {
   z-index: 1;
   pointer-events: none;
+  width: 100% !important;
   height: 100% !important;
   border: 1px solid transparent !important;
 }

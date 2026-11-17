@@ -73,18 +73,51 @@ class TemplateTests(SimpleTestCase):
         assert response.status_code == 200
         content = response.content.decode()
         assert "className: 'template-variable'" in content
-        assert "contains: [TEMPLATE_VARIABLE]" in content
+        assert "contains: [TEMPLATE_VARIABLE, URL_OPTION]" in content
         assert "selectedFormat === 'yaml'" in content
         assert "declaredNames.has(match[1].toLowerCase())" in content
         assert "setReviewUrlTextWithBreaks(code, entry.url, entry.template)" in content
 
+    def test_editor_colours_url_parts(self):
+        """URLs are coloured by part, in quotes too, without a stray quote taking over a line."""
+        content = self.client.get(f"/cfg/{self.key}", headers={"accept": "text/html"}).content.decode()
+        # The service and login, then each ?name= and &name=.
+        assert "beginScope: {1: 'title', 2: 'subst'}" in content
+        assert "scope: {1: 'punctuation', 2: 'attr', 3: 'punctuation'}" in content
+        # A "#" stays part of a URL; only a space, quote or line end closes it.
+        assert "end: /(?=[\\s\"']|$)/," in content
+        # A quote opens a value only at its start, and closes by the line's end.
+        assert "new RegExp('(?<=^|[\\\\s:=,\\\\[-])' + quote)" in content
+        assert "end: new RegExp(quote + '|$')" in content
+
     def test_editor_highlight_supports_both_themes(self):
-        """Light and dark themes give template variables distinct colors."""
+        """Light and dark themes give template variables and URL parts distinct colors."""
         css_path = Path(settings.BASE_DIR) / "static" / "css"
 
         for theme in ("theme-light.css", "theme-dark.css"):
             content = (css_path / theme).read_text(encoding="utf-8")
             assert (".apprise-config-yaml .apprise-config-highlight .hljs-template-variable") in content
+            for part in ("title", "subst", "punctuation"):
+                assert f".apprise-config-highlight .hljs-{part} {{" in content
+
+        # Both editor layers wrap long URLs the same way, filling each line.
+        base = (css_path / "base.css").read_text(encoding="utf-8")
+        assert "word-break: break-all !important;" in base
+
+    def test_editor_can_be_resized(self):
+        """The configuration editor can be dragged taller and wider, never smaller than it starts."""
+        css = (Path(settings.BASE_DIR) / "static" / "css" / "base.css").read_text(encoding="utf-8")
+        start = css.index(".apprise-config-editor textarea {\n  width: 100%;")
+        rule = css[start : css.index("}", start)]
+        assert "resize: both;" in rule
+        assert "min-width: 100%;" in rule
+        # A size forced with !important would ignore the size a drag sets.
+        assert "height: initial;" in rule
+        assert "!important" not in rule.split("background:")[0]
+
+        # A dragged height becomes the least height, so the editor still grows with its text.
+        page = self.client.get(f"/cfg/{self.key}").content.decode("utf-8")
+        assert "textarea.style.minHeight = Math.max(editorMinHeight, parseFloat(textarea.style.height)) + 'px';" in page
 
     @patch("apprise.Apprise.notify")
     def test_json_value(self, mock_notify):

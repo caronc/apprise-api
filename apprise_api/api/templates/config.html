@@ -1515,12 +1515,21 @@
       code.scrollTop = textarea.scrollTop;
       code.scrollLeft = textarea.scrollLeft;
     });
+    // The smallest height the editor may be dragged to, from the stylesheet.
+    const editorMinHeight = parseFloat(getComputedStyle(textarea).minHeight) || 0;
     // --- NEW: Resize Safety Net ---
     // If CSS fails to stretch the background, this forces it.
     if (window.ResizeObserver) {
       new ResizeObserver(() => {
         // Force background to match textarea height exactly
         code.style.height = textarea.style.height;
+        // Dragging the corner sets a fixed height. Keep it as the least height
+        // instead, so the editor still grows with its text and never hides
+        // lines that would end up below the drag.
+        if (textarea.style.height) {
+          textarea.style.minHeight = Math.max(editorMinHeight, parseFloat(textarea.style.height)) + 'px';
+          textarea.style.height = '';
+        }
         // Re-sync scroll just in case
         code.scrollTop = textarea.scrollTop;
       }).observe(textarea);
