@@ -3397,7 +3397,8 @@ components:
             The reminder's `id`, `name`, `enabled`, `when`, `start`, `until`,
             `count`, `skip`, `runs`, `next`, `last`, `series`, `occurrence`,
             `owner`, `created`, `updated`, `tag`, `urls` and `attach` as saved,
-            with its URLs' passwords and tokens hidden. Redacted, `name` and a
+            with the passwords and tokens in its URLs and attachment web
+            addresses hidden. Redacted, `name` and a
             set `tag` read `(redacted)`, each URL keeps only its scheme (such as
             `json://`), and each attachment only its `size` or its address's
             scheme.

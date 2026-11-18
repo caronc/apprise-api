@@ -537,6 +537,22 @@ class ReminderUrlTests(ReminderTestCase):
         self.assertEqual(shown[1], {"url": "https://example.com/b.png", "filename": "b.png"})
         self.assertEqual(self.stored()[0]["attach"][0]["url"], attach[0])
 
+        # Query values and headers can hold tokens, so only Apprise's own options show
+        attach = [
+            "https://example.com/a.png?token=hunter2&name=a.png",
+            "https://example.com/b.png?X-Amz-Credential=KEY&X-Amz-Signature=hunter2",
+            "https://example.com/c.png?+Authorization=Bearer%20hunter2",
+        ]
+        self.send("patch", path, {"attach": attach})
+        shown = loads(self.client.get(f"{path}?privacy=yes").content)["reminder"]["attach"]
+        self.assertEqual(shown[0]["url"], "https://example.com/a.png?name=a.png&token=****")
+        self.assertEqual(shown[1]["url"], "https://example.com/b.png?X-Amz-Credential=****&X-Amz-Signature=****")
+        self.assertEqual(shown[2]["url"], "https://example.com/c.png?%2BAuthorization=****")
+
+        # Sent back as shown, each still means the address it was saved as
+        self.send("patch", path, {"attach": [entry["url"] for entry in shown]})
+        self.assertEqual([entry["url"] for entry in self.stored()[0]["attach"]], attach)
+
         # Stored files and anything else are shown as they are, and an address
         # that no longer reads (such as one edited by hand) keeps only its schema
         with ConfigCache.reminder_guard():

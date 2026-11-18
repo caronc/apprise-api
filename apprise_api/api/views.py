@@ -6209,11 +6209,13 @@ def _reminder_privacy(request, events: list[dict], key: str | None = None, priva
 
 
 def _private_attachment(entry: Any) -> Any:
-    """Return a saved attachment with the password in its web address hidden.
+    """Return a saved attachment with the secrets in its web address hidden.
 
-    - Hidden the way Apprise hides an attachment address (``****``).
+    - The password is hidden the way Apprise hides it (``****``).
+    - Query values and ``+``/``-`` headers are hidden too, as they can hold
+      tokens or signatures; Apprise's own options (such as ``name``) stay.
     - Stored files, anything that is not a web address, and an address
-      without a password are left as they are.
+      with nothing to hide are left as they are.
     """
     url = entry.get("url") if isinstance(entry, dict) else None
     if not isinstance(url, str) or not ATTACH_HTTP_SCHEME.match(url):
@@ -6224,11 +6226,17 @@ def _private_attachment(entry: Any) -> Any:
     if not parsed:
         return {**entry, "url": url_scheme(url)}
 
-    # Without a password there is nothing to hide, so it is shown as saved.
-    if not parsed.get("password"):
+    # Without a password or anything Apprise does not read itself, it is shown as saved.
+    if not parsed.get("password") and all(name in AttachHTTP.template_args for name in parsed["qsd"]):
         return entry
 
-    return {**entry, "url": AttachHTTP(**parsed).url(privacy=True)}
+    # Apprise hides only the password, so every other value is hidden here.
+    parts = urlsplit(AttachHTTP(**parsed).url(privacy=True))
+    query = [
+        (name, value if name in AttachHTTP.template_args else "****")
+        for name, value in parse_qsl(parts.query, keep_blank_values=True)
+    ]
+    return {**entry, "url": parts._replace(query=urlencode(query, safe="*")).geturl()}
 
 
 def _log_reminder_saved(request, key: str, event: dict, action: str) -> None:

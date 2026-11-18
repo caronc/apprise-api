@@ -851,8 +851,17 @@ class Scheduler:
         - ``stored``: the configuration and its format, read when it was claimed.
         - A configuration disabled while the send waited for a worker sends
           nothing, and the reminder is left as it is.
+        - The same goes when its access record can no longer be read, as it
+          may say "disabled".
         """
-        if access_allows(reminder_file) is False:
+        allowed = access_allows(reminder_file)
+        if allowed is None:
+            logger.warning(
+                "REMINDER - %s - Dropped reminder %s; its access could not be read", _actor(), event.get("id")
+            )
+            return
+
+        if not allowed:
             logger.info(
                 "REMINDER - %s - Dropped reminder %s; its configuration was disabled", _actor(), event.get("id")
             )

@@ -110,6 +110,7 @@ class AttachPreviewTests(SimpleTestCase):
         ):
             _download(mock_get, b"DATA", {"Content-Type": given})
             response = self.preview({"url": "https://example.com/clip"})
+            response.close()
             self.assertEqual(response["X-Apprise-Content-Type"], shown, given)
 
     def test_preview_page_only_plays_known_sound_and_video_types(self):
@@ -191,6 +192,7 @@ class AttachPreviewTests(SimpleTestCase):
         with patch("socket.getaddrinfo", side_effect=socket.gaierror("name not known")):
             response = self.preview({"url": "https://example.com/a.png"})
 
+        response.close()
         self.assertEqual(response.status_code, 200)
 
     def test_preview_logs_hold_only_this_request(self):

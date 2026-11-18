@@ -936,6 +936,22 @@ def test_send_drops_a_reminder_disabled_while_it_waited(store):
     assert store.read_reminders(reminder_file) == events
 
 
+@override_settings(APPRISE_AUTH_REQUIRED=True)
+def test_send_drops_a_reminder_whose_access_became_unreadable(store):
+    """A send still waiting for a worker when its access record is damaged sends nothing."""
+    events = [{"id": "a", "when": {"at": "2000-01-01T00:00:00"}, "next": None}]
+    reminder_file = _save(store, "key", events)
+    path, filename = store.auth_path("key")
+    with open(os.path.join(path, filename), "w") as f:
+        f.write("not json")
+
+    with patch.object(scheduler_module, "deliver") as send:
+        Scheduler(workers=1, grace=60).send(reminder_file, dict(events[0]))
+
+    send.assert_not_called()
+    assert store.read_reminders(reminder_file) == events
+
+
 def test_access_allows_without_logins_but_not_with_a_damaged_record(store):
     """Reminders run when logins are off; a damaged access record is unknown."""
     reminder_file = _save(store, "key", [{"id": "a"}])
