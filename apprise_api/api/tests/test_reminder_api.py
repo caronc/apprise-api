@@ -537,6 +537,24 @@ class ReminderUrlTests(ReminderTestCase):
         self.assertEqual(shown[1], {"url": "https://example.com/b.png", "filename": "b.png"})
         self.assertEqual(self.stored()[0]["attach"][0]["url"], attach[0])
 
+        # Query and header values are hidden too, but Apprise's own options are not
+        attach = [
+            "https://example.com/file?token=SECRET&X-Amz-Signature=SIGNED&name=a.txt",
+            "https://example.com/c.png?+Authorization=Bearer%20HIDDEN",
+        ]
+        self.send("patch", path, {"attach": attach})
+        shown = loads(self.client.get(f"{path}?privacy=yes").content)["reminder"]["attach"]
+        for secret in ("SECRET", "SIGNED", "HIDDEN"):
+            self.assertNotIn(secret, str(shown))
+        self.assertIn("token=", shown[0]["url"])
+        self.assertIn("name=a.txt", shown[0]["url"])
+        self.assertIn("Authorization=", shown[1]["url"])
+        self.assertEqual([entry["url"] for entry in self.stored()[0]["attach"]], attach)
+
+        # Sending back what a read showed keeps the saved addresses
+        self.send("patch", path, {"attach": shown})
+        self.assertEqual([entry["url"] for entry in self.stored()[0]["attach"]], attach)
+
         # Stored files and anything else are shown as they are, and an address
         # that no longer reads (such as one edited by hand) keeps only its schema
         with ConfigCache.reminder_guard():

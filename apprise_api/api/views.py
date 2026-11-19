@@ -6209,11 +6209,12 @@ def _reminder_privacy(request, events: list[dict], key: str | None = None, priva
 
 
 def _private_attachment(entry: Any) -> Any:
-    """Return a saved attachment with the password in its web address hidden.
+    """Return a saved attachment with the secrets in its web address hidden.
 
-    - Hidden the way Apprise hides an attachment address (``****``).
+    - Hides the password, every header value (``+name=``) and every query
+      value Apprise does not use itself, such as a download token (``****``).
     - Stored files, anything that is not a web address, and an address
-      without a password are left as they are.
+      with nothing to hide are left as they are.
     """
     url = entry.get("url") if isinstance(entry, dict) else None
     if not isinstance(url, str) or not ATTACH_HTTP_SCHEME.match(url):
@@ -6224,11 +6225,14 @@ def _private_attachment(entry: Any) -> Any:
     if not parsed:
         return {**entry, "url": url_scheme(url)}
 
-    # Without a password there is nothing to hide, so it is shown as saved.
-    if not parsed.get("password"):
+    attachment = AttachHTTP(**parsed)
+    if not (parsed.get("password") or attachment.headers or attachment.qsd):
+        # Nothing to hide, so it is shown as saved.
         return entry
 
-    return {**entry, "url": AttachHTTP(**parsed).url(privacy=True)}
+    attachment.headers = dict.fromkeys(attachment.headers, "****")
+    attachment.qsd = dict.fromkeys(attachment.qsd, "****")
+    return {**entry, "url": attachment.url(privacy=True)}
 
 
 def _log_reminder_saved(request, key: str, event: dict, action: str) -> None:

@@ -95,6 +95,7 @@ class AttachPreviewTests(SimpleTestCase):
         self.assertEqual(response["X-Apprise-Filename"], "cam.png")
         self.assertEqual(response["X-Content-Type-Options"], "nosniff")
         self.assertEqual(response["Content-Security-Policy"], "sandbox")
+        response.close()
 
         # The web address itself is requested, not a stored copy
         self.assertEqual(mock_get.call_args.args[0], "https://example.com/camera/live")
@@ -111,6 +112,7 @@ class AttachPreviewTests(SimpleTestCase):
             _download(mock_get, b"DATA", {"Content-Type": given})
             response = self.preview({"url": "https://example.com/clip"})
             self.assertEqual(response["X-Apprise-Content-Type"], shown, given)
+            response.close()
 
     def test_preview_page_only_plays_known_sound_and_video_types(self):
         """The page plays only sound and video types it names; others are not given to the browser."""
@@ -192,6 +194,7 @@ class AttachPreviewTests(SimpleTestCase):
             response = self.preview({"url": "https://example.com/a.png"})
 
         self.assertEqual(response.status_code, 200)
+        response.close()
 
     def test_preview_logs_hold_only_this_request(self):
         """Log lines written by another request at the same time are left out."""
