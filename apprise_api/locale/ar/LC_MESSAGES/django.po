@@ -1063,6 +1063,10 @@ msgstr "معاينة التطبيق"
 msgid "Apprise Mobile dashboard"
 msgstr "لوحة معلومات Apprise Mobile"
 
+#: apprise_api/api/templates/components/mobile_app_dialog.html:62
+msgid "Apprise Mobile reminders"
+msgstr "Apprise Mobile التذكيرات"
+
 #: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "لوحة التحكم"

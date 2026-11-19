@@ -1063,6 +1063,10 @@ msgstr "Предварительный просмотр приложения"
 msgid "Apprise Mobile dashboard"
 msgstr "Панель управления Apprise Mobile"
 
+#: apprise_api/api/templates/components/mobile_app_dialog.html:62
+msgid "Apprise Mobile reminders"
+msgstr "Apprise Mobile напоминания"
+
 #: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Панель управления"

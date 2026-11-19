@@ -56,12 +56,14 @@ Android requires Android 8.0 or later. iPhone and iPad require iOS 17.2 or later
 
 <table>
 <tr>
-<th width="33%" align="center">Dashboard</th>
-<th width="33%" align="center">URL Builder</th>
-<th width="33%" align="center">Delivery Report</th>
+<th width="25%" align="center">Dashboard</th>
+<th width="25%" align="center">Reminders</th>
+<th width="25%" align="center">URL Builder</th>
+<th width="25%" align="center">Delivery Report</th>
 </tr>
 <tr>
 <td align="center"><img width="80%" alt="Apprise Mobile dashboard" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-dashboard.png"></td>
+<td align="center"><img width="80%" alt="Apprise Mobile reminders" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-reminders.png"></td>
 <td align="center"><img width="80%" alt="Apprise Mobile URL Builder" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-url-builder.png"></td>
 <td align="center"><img width="80%" alt="Apprise Mobile delivery report" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-delivery-report.png"></td>
 </tr>

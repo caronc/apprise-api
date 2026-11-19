@@ -1062,6 +1062,10 @@ msgstr "预览应用。"
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile仪表板。"
 
+#: apprise_api/api/templates/components/mobile_app_dialog.html:62
+msgid "Apprise Mobile reminders"
+msgstr "Apprise Mobile 提醒"
+
 #: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "仪表盘"

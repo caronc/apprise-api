@@ -1064,6 +1064,10 @@ msgstr "Aperçu de l’application"
 msgid "Apprise Mobile dashboard"
 msgstr "Tableau de bord Apprise Mobile"
 
+#: apprise_api/api/templates/components/mobile_app_dialog.html:62
+msgid "Apprise Mobile reminders"
+msgstr "Rappels d’Apprise Mobile"
+
 #: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Tableau de bord"

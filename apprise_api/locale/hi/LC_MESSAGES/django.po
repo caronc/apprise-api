@@ -1063,6 +1063,10 @@ msgstr "ऐप का प्रिव्यू करें"
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile डैशबोर्ड"
 
+#: apprise_api/api/templates/components/mobile_app_dialog.html:62
+msgid "Apprise Mobile reminders"
+msgstr "Apprise Mobile रिमाइंडर"
+
 #: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "डैशबोर्ड"

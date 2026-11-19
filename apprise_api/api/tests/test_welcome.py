@@ -65,6 +65,15 @@ class WelcomePageTests(SimpleTestCase):
         self.assertNotContains(response, 'rel="noopener noreferrer"')
         self.assertContains(response, "window.appriseCloseMobileMenu();")
 
+    def test_mobile_app_dialog_previews_four_screens(self):
+        """The app preview shows the dashboard, reminders, URL Builder and delivery report."""
+        response = self.client.get("/")
+        for screen in ("dashboard", "reminders", "url-builder", "delivery-report"):
+            self.assertContains(response, f"mobile/apprise-mobile-{screen}.png")
+
+        self.assertContains(response, 'alt="Apprise Mobile reminders"')
+        self.assertContains(response, 'height="968"', count=4)
+
     def test_shared_popup_shell_and_task_abort_are_rendered(self):
         """Modal defaults distinguish dismissible dialogs from task aborts."""
         response = self.client.get("/cfg/popup_test")
