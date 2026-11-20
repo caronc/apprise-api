@@ -614,6 +614,19 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn("apprise_support_dismissed", wrong.cookies)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_login_mobile_promo_links_to_app_stores(self):
+        """The login page's mobile card links straight to both app stores."""
+        from ..templatetags.mobile_stores import APP_STORE_URL, GOOGLE_PLAY_URL
+
+        content = self.client.get("/login", headers=_BROWSER).content.decode()
+        promo = re.search(r'<div class="browser-login-mobile-promo">.*?</div>\s*</div>', content, re.S)
+        self.assertIsNotNone(promo)
+        self.assertIn("Manage this server from your Android or iOS device.", promo.group(0))
+        self.assertIn(f'href="{APP_STORE_URL}"', promo.group(0))
+        self.assertIn(f'href="{GOOGLE_PLAY_URL}"', promo.group(0))
+        self.assertNotIn("data-mobile-app-open", promo.group(0))
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_login_prefills_key_from_destination(self):
         """A keyed local destination fills in the optional Config ID."""
         page = self.client.get(
