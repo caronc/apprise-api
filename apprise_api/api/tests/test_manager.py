@@ -192,9 +192,12 @@ class ManagerPageTests(SimpleTestCase):
         assert "configIdInput.addEventListener('blur'" in content
         assert 'data-config-id-copy="valid-key"' in content
         assert "button.dataset.configIdCopy" in content
-        assert "apprisePostConfigId(configId, nextName)" in content
+        assert "apprisePostConfigId(configId, nextName, tab)" in content
+        # A new Config ID opens on the same tab, without the old one's reminder ID
+        assert "const openTab = window.location.hash.split('/')[0];" in content
+        assert "form.action = '/cfg/@' + (tab || '');" in content
+        assert "window.location.assign(explicitBase + encodeURIComponent(configId) + tab);" in content
         assert "appriseConfirmConfigSelection(configId, nextName, explicitBase, useCookieAlias)" in content
-        assert "window.location.assign(explicitBase + encodeURIComponent(configId))" in content
         assert "Any unsaved changes on this page will be lost." in content
         assert 'id="cfggen-config-id"' in content
         assert 'aria-controls="cfggen-config-id"' in content
@@ -514,6 +517,8 @@ class ManagerPageTests(SimpleTestCase):
         assert 'class="config-list-user"' in content
         assert 'title="alice"' in content
         assert "No Username" in content
+        # A failed move is explained as plain text, never as markup
+        assert "Swal.getValidationMessage().textContent = message;" in content
         open_item = content.split('class="collection-item config-list-item"', 1)[1]
         assert open_item.index("config-auth-status") < open_item.index("config-list-user")
         assert open_item.index("config-list-user") < open_item.index("config-list-link")

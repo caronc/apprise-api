@@ -449,6 +449,17 @@ class Authentication:
     @staticmethod
     def key_ok(request: HttpRequest, key: str, allow_public=False) -> bool:
         """Return whether this request may use a protected Config ID."""
+        allowed = Authentication._key_ok(request, key, allow_public)
+        if allowed:
+            from .utils import ConfigCache
+
+            # Reminders pause on a Config ID nobody uses, when that is turned on.
+            ConfigCache.note_use(key)
+        return allowed
+
+    @staticmethod
+    def _key_ok(request: HttpRequest, key: str, allow_public: bool) -> bool:
+        """Check the request's access to a Config ID; see ``key_ok()``."""
         request.apprise_config_key = key
         if getattr(request, "globally_authenticated", False):
             request.apprise_auth_permission = Authentication.ROLE_ADMIN

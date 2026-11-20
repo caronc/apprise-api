@@ -72,7 +72,7 @@ class DelTests(SimpleTestCase):
 
         # remove the key
         response = self.client.post("/del/{}".format(key))
-        assert response.status_code == 200
+        assert response.status_code == 204
 
         # Test again; key is gone
         response = self.client.post("/del/{}".format(key))
@@ -113,7 +113,7 @@ class DelTests(SimpleTestCase):
         assert response.status_code == 200
 
         response = self.client.post("/del/{}".format(key), headers=_GOOD_MASTER)
-        assert response.status_code == 200
+        assert response.status_code == 204
 
     def test_del_post(self):
         """
@@ -142,7 +142,7 @@ class DelTests(SimpleTestCase):
 
         # We can now remove the key
         response = self.client.post("/del/{}".format(key))
-        assert response.status_code == 200
+        assert response.status_code == 204
 
         # Key has already been removed
         response = self.client.post("/del/{}".format(key))
@@ -165,8 +165,8 @@ class DelTests(SimpleTestCase):
         os.utime(auth_file, (old_time, old_time))
 
         response = self.client.post("/del/{}".format(key), headers={**user_creds, "accept": "application/json"})
-        assert response.status_code == 200
-        assert response.json() == {"error": None}
+        assert response.status_code == 204
+        assert response.content == b""
         assert os.path.getmtime(auth_file) > old_time
         assert ConfigCache.verify_auth(key, "alice", "secret") is True
 
@@ -221,7 +221,7 @@ class DelTests(SimpleTestCase):
         assert ConfigCache.set_auth(key, "alice", "secret") is True
 
         response = self.client.post("/del/{}".format(key), headers=_GOOD_MASTER)
-        assert response.status_code == 200
+        assert response.status_code == 204
 
         ConfigCache.clear(key)
         ConfigCache.clear_auth(key)
@@ -233,4 +233,4 @@ class DelTests(SimpleTestCase):
         assert response.status_code == 200
 
         response = self.client.post("/del/{}".format(key))
-        assert response.status_code == 200
+        assert response.status_code == 204

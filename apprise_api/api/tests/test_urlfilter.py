@@ -389,6 +389,22 @@ class AttachmentTests(SimpleTestCase):
         with mock.patch("socket.getaddrinfo", side_effect=socket.gaierror("name not known")):
             self.assertFalse(af.is_allowed("http://this-does-not-resolve.invalid/x"))
 
+    def test_refusal_names_the_rule(self):
+        """refusal() says which rule refused a URL, and None when it is allowed."""
+        af = AppriseURLFilter("example.com", "blocked.example internal")
+        self.assertEqual(af.refusal("not a url"), "invalid")
+        self.assertEqual(af.refusal("http://blocked.example/x", resolve=False), "deny")
+        self.assertEqual(af.refusal("http://other.example/x", resolve=False), "allow")
+        self.assertIsNone(af.refusal("http://example.com/x", resolve=False))
+
+        # Looked up, a local address and a host with no address are told apart
+        private = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.20", 0))]
+        with mock.patch("socket.getaddrinfo", return_value=private):
+            self.assertEqual(af.refusal("http://example.com/x"), "internal")
+
+        with mock.patch("socket.getaddrinfo", side_effect=socket.gaierror("name not known")):
+            self.assertEqual(af.refusal("http://example.com/x"), "unresolved")
+
     def test_internal_token_fails_closed_on_resolution_timeout(self):
         """A resolver timeout is treated as blocked."""
         af = AppriseURLFilter("*", "internal")

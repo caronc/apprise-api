@@ -41,7 +41,7 @@
       <a class="mobile-app-dialog__learn-more"
          href="https://appriseit.com/{% if LANGUAGE_CODE == 'fr' %}fr/{% endif %}mobile/"
          target="_blank"
-         rel="noopener noreferrer">
+         rel="nofollow noopener noreferrer">
         {% trans "Learn More" %}
         <span aria-hidden="true">→</span>
       </a>
@@ -53,15 +53,23 @@
           <img src="{% static 'mobile/apprise-mobile-dashboard.png' %}"
                alt="{% trans "Apprise Mobile dashboard" %}"
                width="450"
-               height="932"
+               height="968"
                loading="lazy">
           <figcaption>{% trans "Dashboard" %}</figcaption>
+        </figure>
+        <figure>
+          <img src="{% static 'mobile/apprise-mobile-reminders.png' %}"
+               alt="{% trans "Apprise Mobile reminders" %}"
+               width="450"
+               height="968"
+               loading="lazy">
+          <figcaption>{% trans "Reminders" %}</figcaption>
         </figure>
         <figure>
           <img src="{% static 'mobile/apprise-mobile-url-builder.png' %}"
                alt="{% trans "Apprise Mobile URL Builder" %}"
                width="450"
-               height="932"
+               height="968"
                loading="lazy">
           <figcaption>{% trans "URL Builder" %}</figcaption>
         </figure>
@@ -69,7 +77,7 @@
           <img src="{% static 'mobile/apprise-mobile-delivery-report.png' %}"
                alt="{% trans "Apprise Mobile delivery report" %}"
                width="450"
-               height="932"
+               height="968"
                loading="lazy">
           <figcaption>{% trans "Delivery Report" %}</figcaption>
         </figure>

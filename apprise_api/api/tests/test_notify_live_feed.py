@@ -163,7 +163,7 @@ const checks = [
   [row1AfterSecond === row1AfterThird, 'row 1 was destroyed and recreated after the 3rd entry'],
   [lengthBeforeBatchRender === 1, 'entries were rendered before the next animation frame'],
   [live.list.children.length === 3, 'expected exactly 3 rows in the live list, got ' + live.list.children.length],
-  [live.count.textContent === '3 events', 'live event count text wrong: ' + live.count.textContent],
+  [live.count.textContent === 'Events: 3', 'live event count text wrong: ' + live.count.textContent],
   [live.empty.hidden === true, 'the empty-state message should be hidden once rows exist']
 ];
 

@@ -89,7 +89,7 @@ class ConfigIdHeaderTests(SimpleTestCase):
         self.assertIsNotNone(ConfigCache.get(key)[0])
 
         response = self.client.post("/del/", headers={"X-Apprise-Config-ID": key})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertIsNone(ConfigCache.get(key)[0])
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
@@ -186,6 +186,26 @@ class ConfigIdHeaderTests(SimpleTestCase):
         )
         self.assertEqual(allowed.status_code, 200)
         self.assertIn("schemas", loads(allowed.content))
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
+    def test_details_follows_the_same_rules_as_resolve(self):
+        """On a public or disabled configuration, only the administrator may use /details."""
+        key = "header_details_rules"
+        self.client.post(
+            "/auth/{}".format(key),
+            data=dumps({"username": "alice", "password": "secret"}),
+            content_type="application/json",
+            headers=_GOOD_MASTER,
+        )
+        alice = {"X-Apprise-Config-ID": key, "authorization": _basic("alice", "secret")}
+        master = {"X-Apprise-Config-ID": key, **_GOOD_MASTER}
+        for access, expected in (("locked", 200), ("public", 403), ("disabled", 403)):
+            self.assertTrue(ConfigCache.set_access(key, access))
+            response = self.client.get("/details", headers=alice, **{"HTTP_ACCEPT": "application/json"})
+            self.assertEqual(response.status_code, expected, access)
+            response = self.client.get("/details", headers=master, **{"HTTP_ACCEPT": "application/json"})
+            self.assertEqual(response.status_code, 200, access)
+        ConfigCache.clear_auth(key)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN)
     def test_details_header_still_accepts_master_credentials(self):

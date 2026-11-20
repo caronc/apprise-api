@@ -3,6 +3,9 @@ services:
   apprise:
     image: caronc/apprise:latest
     container_name: apprise
+    # Docker stops a container after 10 seconds by default. The reminder
+    # scheduler waits up to 60 seconds for sends already under way.
+    stop_grace_period: 75s
     ports:
       - "8000:8000"
     environment:

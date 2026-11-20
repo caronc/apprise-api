@@ -6,6 +6,9 @@ Take advantage of [Apprise](https://github.com/caronc/apprise) through your netw
 - An incredibly lightweight gateway to Apprise.
 - A production-ready micro-service at your disposal.
 - A Simple Website to verify and test your configuration with.
+- Group your services with tags, then notify only the ones that need to know.
+- Private by design: messages go straight from your own server to each service, with no third party in between.
+- [Reminders](#reminders) that send a notification later: once, on a repeating schedule, or on a public holiday.
 - An [Android and iOS app](#apprise-mobile) to notify and manage your server from your phone.
 
 Apprise API was designed to easily fit into existing (and new) ecosystems that are looking for a simple notification solution.
@@ -23,7 +26,12 @@ Visit the [Official Documentation](https://appriseit.com/getting-started/) site 
 
 Apprise provides one consistent notification interface for your apps, automation, and infrastructure. Generate an Apprise URL, send it through the API or core library, and deliver notifications to a large number of supported services.
 
-[![Apprise overview showing notification sources, API entry points, and supported destinations](Apprise-Overview.png)](Apprise-Overview.png)
+<a href="https://appriseit.com/getting-started/#how-apprise-fits-together">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/caronc/apprise-api/master/Apprise-Overview-dark.png">
+    <img alt="Apprise overview showing notification sources, API entry points, and supported destinations" src="Apprise-Overview.png">
+  </picture>
+</a>
 
 ## Screenshots
 
@@ -48,12 +56,14 @@ Android requires Android 8.0 or later. iPhone and iPad require iOS 17.2 or later
 
 <table>
 <tr>
-<th width="33%" align="center">Dashboard</th>
-<th width="33%" align="center">URL Builder</th>
-<th width="33%" align="center">Delivery Report</th>
+<th width="25%" align="center">Dashboard</th>
+<th width="25%" align="center">Reminders</th>
+<th width="25%" align="center">URL Builder</th>
+<th width="25%" align="center">Delivery Report</th>
 </tr>
 <tr>
 <td align="center"><img width="80%" alt="Apprise Mobile dashboard" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-dashboard.png"></td>
+<td align="center"><img width="80%" alt="Apprise Mobile reminders" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-reminders.png"></td>
 <td align="center"><img width="80%" alt="Apprise Mobile URL Builder" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-url-builder.png"></td>
 <td align="center"><img width="80%" alt="Apprise Mobile delivery report" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/apprise-mobile-delivery-report.png"></td>
 </tr>
@@ -61,7 +71,7 @@ Android requires Android 8.0 or later. iPhone and iPad require iOS 17.2 or later
 
 ### Connecting to Your Server
 
-Once the app is installed, open the *Configuration Manager* in your browser and reveal the **Apprise Mobile Quick Setup** QR code on any configuration you've saved. Scanning it from the app adds your server and loads that configuration in one step—no typing URLs on a phone keyboard.
+Once the app is installed, open the *Configuration Manager* in your browser and reveal the **Apprise Mobile Quick Setup** QR code on any configuration you've saved. Scanning it from the app adds your server and loads that configuration in one step, without typing URLs on a phone keyboard.
 
 Visit the [Apprise Mobile](https://appriseit.com/mobile/) page for more details, screenshots, and the app's privacy policy and terms.
 
@@ -405,12 +415,15 @@ The `/cfg` list requires `APPRISE_STATEFUL_MODE=simple` and is available by defa
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).<br/>📌 **template**: Values for a configuration written with `${NAME}` markers. Send a JSON object (`"template": {"api_key": "..."}`) or one form field per name (`template[api_key]=...`).
+| `/resolve/{KEY}` |  POST  | Checks Apprise URLs (`{"urls": ...}`) without contacting them. Returns each URL in full, with its secrets hidden, and split into the fields `/details` lists. Send fields in place of a URL to put it back together.
+| `/attach/{KEY}` |  POST  | Downloads an attachment web address (`{"url": ...}`) the way a send would and returns the file, or a `424` with `logs` saying why it failed. The same attachment rules as `/notify` apply, and local network addresses are refused unless `APPRISE_ATTACH_PREVIEW_INTERNAL` is set. A refused address also returns `reason`, the `setting` to change and a `help` link.
 | `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists its template names. With `privacy=0`, each name carries its configuration default (or `null`). With `privacy=1`, URL secrets are hidden and every name is `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required and every name is `null`.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
 | `/auth/{KEY}` |  GET  | Opens the access editor, or returns the mode, `access`, and username as JSON. Passwords are never returned.
 | `/auth/{KEY}` |  POST  | Sets credentials and `access`. Administrators may change access; configuration users may change their password.
 | `/auth/{KEY}` |  DELETE | Removes the key's Basic Auth without removing its configuration. Global administrator credentials are required. `/del/{KEY}` removes both.
-| `/details` |  GET  | Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/library/inspection/)
+| `/reminder/{KEY}` |  GET, POST | Lists or adds [reminders](#reminders). See [Reminders](https://appriseit.com/api/endpoints/#reminders) for every reminder route and its payload.
+| `/details` |  GET  | Opens a page that builds Apprise URLs for the services on this server. Set the `Accept` Header to `application/json` and retrieve a JSON response object that contains all of the supported Apprise URLs. See [here for more details](https://appriseit.com/library/inspection/)
 | `/metrics` |  GET  | Prometheus endpoint for _basic_ Metrics Collection & Analysis and/or Observability.
 
 As an example, the `/json/urls/{KEY}` response might return something like this:
@@ -485,6 +498,20 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
     -H "Content-Type: application/json" \
     http://localhost:8000/notify/abc123
 ```
+
+### Reminders
+
+Save a notification now and let the server send it later. A reminder can go out once, repeat on a schedule (every weekday at 9:00, every second Tuesday, the first of each month), or arrive on a public holiday every year. Create, pause and test them from the **Reminders** tab, or through the API:
+
+```bash
+# Every weekday at 9:00 Toronto time, sent to the 'devops' tag of 'abc123'
+curl -X POST -H "Content-Type: application/json" \
+    -d '{"body": "Stand-up in 5 minutes", "tag": "devops",
+         "when": {"tz": "America/Toronto", "cron": "0 0 9 * * Mon-Fri"}}' \
+    http://localhost:8000/reminder/abc123
+```
+
+See [Reminders](https://appriseit.com/api/endpoints/#reminders) for every option, including attachments, holidays and [troubleshooting](https://appriseit.com/api/reference/reminder-diagnostics/).
 
 ### Plain Text Messages and Headers
 
@@ -679,20 +706,20 @@ data: {"status": "SUCCESS"}
 | HTTP Code | Name                            | Effect |
 | --------- | ------------------------------- | ------ |
 | 200       | OK                              | The request succeeded. |
-| 204       | No Content                      | Nothing was found to retrieve or remove (`/get`, `/cfg`, `/json/urls` or `/del`). The response has no body. |
+| 204       | No Content                      | A removal succeeded (`/del`, or `DELETE` on a reminder), or nothing was found to retrieve or remove (`/get`, `/cfg`, `/json/urls` or `/del`). The response has no body. |
 | 302       | Found                           | The Web interface redirected the browser after a login, logout, or configuration selection. |
 | 400       | Bad Request                     | The request contained an invalid key, payload, field, format, tag, or recursion header, or a stateless `/notify` had no valid URLs to send to. |
 | 401       | Unauthorized                    | Required Basic Auth credentials were missing or invalid. |
 | 403       | Forbidden                       | The server mode or caller's access level denied the operation. |
-| 404       | Not Found                       | The route or requested configuration does not exist, including a `/notify/{KEY}` with no saved configuration. Strict mode returns this for unknown routes. |
+| 404       | Not Found                       | The route, requested configuration, or reminder does not exist, including a `/notify/{KEY}` with no saved configuration. Every `/reminder` route returns this when reminders are turned off. Strict mode returns this for unknown routes. |
 | 405       | Method Not Allowed              | The route does not support the request method. See the response's `Allow` header. |
 | 406       | Not Acceptable                  | A recursion limit or another server rule rejected the operation. |
-| 409       | Conflict                        | A configuration move targeted an existing Config ID. |
-| 413       | Content Too Large               | Nginx rejected a body larger than the route or server upload limit. |
+| 409       | Conflict                        | A configuration move targeted an existing Config ID, or a configuration already has the most reminders allowed. |
+| 413       | Content Too Large               | Nginx rejected a body larger than the route or server upload limit, or a reminder's attachments do not fit its configuration's quota or the server's attachment space. |
 | 414       | URI Too Long                    | Nginx rejected a request target that was too long. |
 | 417       | Expectation Failed              | The health check found a blocking configuration or permission problem. |
 | 421       | Misdirected Request             | A Web interface page was requested while `APPRISE_API_ONLY=yes`. |
-| 424       | Failed Dependency               | At least one notification failed, no requested tag matched, or the configuration store could not complete a dependent operation. |
+| 424       | Failed Dependency               | At least one notification failed, no requested tag matched, the configuration store could not complete a dependent operation, or an attachment preview (`/attach`) could not download the file. |
 | 429       | Too Many Requests               | Nginx temporarily rate-limited the request. Packaged deployments return `Retry-After: 60`. |
 | 431       | Request Header Fields Too Large | Django rejected a JSON payload or plain text message body above `APPRISE_UPLOAD_MAX_MEMORY_SIZE`. |
 | 500       | Internal Server Error           | The server could not save or load data, or encountered an unexpected I/O error. |
@@ -736,6 +763,16 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_PRUNE_INTERVAL_SECONDS` | How often the container prunes persistent state and unused authentication locks. Defaults to `86400` (daily).
 | `APPRISE_PRUNE_TIMEOUT_SECONDS` | Maximum time allowed for each automatic prune run. Defaults to `28800` (8 hours) and is shortened automatically when it is not below the prune interval.
 | `APPRISE_PRUNE_ENABLED` | Set to `no` to stop automatic pruning. Manual commands remain available. Defaults to `yes`.
+| `APPRISE_REMINDER_ENABLED` | Set to `no` to turn off reminders (notifications saved now and sent later). Defaults to `yes`.
+| `APPRISE_REMINDER_WORKERS` | The number of reminders that can be sent at the same time. Defaults to `4`.
+| `APPRISE_REMINDER_GRACE` | How many seconds late a reminder may still be sent, for example after a restart. Older ones are skipped. Defaults to `3600` (1 hour).
+| `APPRISE_REMINDER_URLS_MAX` | The most Apprise URLs one reminder can hold. `0` turns them off. Defaults to `100`.
+| `APPRISE_REMINDER_MAX` | The most reminders a Config ID can have, for everyone but the administrator. Defaults to `100`.
+| `APPRISE_REMINDER_USER_MIN_INTERVAL` | The fewest seconds apart anyone but the administrator may set a reminder to repeat. `0` or `1` sets no limit. Defaults to `60`.
+| `APPRISE_REMINDER_ATTACH_QUOTA` | The most space, in MB, the attachments stored with a Config ID's reminders may take, for everyone but the administrator. `0` turns attachments off for reminders, web addresses included. Defaults to `50`.
+| `APPRISE_REMINDER_STORE_MAX` | The most space, in MB, all stored reminder attachments on the server may take together, for everyone but the administrator. `0` sets no limit. Defaults to `1024`.
+| `APPRISE_REMINDER_IDLE_DAYS` | Pause a Config ID's reminders after this many days without use. Defaults to `0` (never pause).
+| `APPRISE_REMINDER_PRUNE_DAYS` | Days a finished reminder (nothing left to send) is kept before prune removes it. Defaults to `7`.
 | `APPRISE_ATTACH_DIR` | The directory the uploaded attachments are placed in. By default:<br/> - Attachments are written to the `apprise_api/var/attach` directory when just using the _Django_ `manage runserver` script. However for the path for the container is `/attach`.
 | `APPRISE_ATTACH_SIZE` | Over-ride the attachment size (defined in MB). By default it is set to `200` (Megabytes). You can set this up to a maximum value of `500` which is the restriction in place for NginX (internal hosting ervice) at this time.  If you set this to zero (`0`) then attachments will not be passed along even if provided.
 | `APPRISE_UPLOAD_MAX_MEMORY_SIZE` | Over-ride the in-memory accepted payload size (defined in MB). By default it is set to `3` (Megabytes). There is no reason the HTTP payload (excluding attachments) should exceed this limit.  This value is only configurable for those who have edge cases where there are exceptions to this rule.
@@ -763,6 +800,7 @@ The use of environment variables allow you to provide overrides to default setti
 | `APPRISE_API_ONLY` | This option will disable the entire access to web administration interface and only the API will be available for use. By default, this option will be set to `no`, or you can omit this variable if you wish.
 | `APPRISE_ATTACH_ALLOW_URL` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always accept.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. Use a space and/or a comma to identify more then one entry. By default this is set to `*` (Accept all provided URLs).
 | `APPRISE_ATTACH_REJECT_URL` | A comma separated set of entries identifying the HTTP Attach URLs the Apprise API shall always reject.  Use wildcards such as `*` and `?` to help construct the URL/Hosts you identify. `APPRISE_ATTACH_REJECT_URL` is always processed before `APPRISE_ATTACH_ALLOW_URL`. Use a space and/or a comma to identify more then one entry. By default this is set to `127.0.* localhost*`. You can also add the special keyword `internal`, which blocks any destination that resolves to a loopback, private, link-local, or otherwise non-public address -- including LAN devices, so it's off by default.
+| `APPRISE_ATTACH_PREVIEW_INTERNAL` | Set to `yes` to let the attachment preview (`/attach`) download from local network addresses, such as a camera on your LAN. By default this is set to `no`.
 | `SECRET_KEY`       | A Django variable acting as a *salt* for most things that require security. This API uses it for the hash sequences when writing the configuration files to disk (`hash` mode only).
 | `ALLOWED_HOSTS`    | A list of strings representing the host/domain names that this API can serve. This is a security measure to prevent HTTP Host header attacks, which are possible even under many seemingly-safe web server configurations. By default this is set to `*` allowing any host. Use space to delimit more than one host.
 | `APPRISE_PLUGIN_PATHS` | Apprise supports the ability to define your own `schema://` definitions and load them.  To read more about how you can create your own customizations, check out [this link here](https://appriseit.com/library/extending/decorator/). You may define one or more paths (separated by comma `,`) here. By default the `apprise_api/var/plugin` directory is scanned (which does not include anything). Feel free to set this to an empty string to disable any custom plugin loading.
@@ -834,7 +872,7 @@ Public access applies only to `POST /notify/{KEY}`. Health, configuration, listi
 
 For stateless `POST /notify`, administrator credentials work without a Config ID. A configuration user must provide explicit `urls`, valid credentials, and the matching `X-Apprise-Config-ID`; the access mode must be `user`. Without `urls`, the v2 header form remains a stateful saved-configuration call. The other access modes are rejected for stateless destinations.
 
-Configuration users use their credentials with their Config ID in the URL or `X-Apprise-Config-ID`. The header is required for their stateless calls. `user` and `locked` accounts may retrieve `/status` and `/details` this way; a disabled account cannot. Administrators may include a valid Config ID header for client convenience, but do not need one.
+Configuration users use their credentials with their Config ID in the URL or `X-Apprise-Config-ID`. The header is required for their stateless calls. `user` and `locked` accounts may retrieve `/status` and `/details` this way; a disabled account cannot, and a public one cannot retrieve `/details`. Administrators may include a valid Config ID header for client convenience, but do not need one.
 
 Open a configuration and select its lock icon or **Authentication**. Choose access, enter credentials when required, and select **Save**. Administrators can also use **Randomize**.
 
@@ -953,12 +991,13 @@ htpasswd apprise_api.htpasswd user2
 ```
 
 ## Pruning
-The packaged container runs one low-priority cleanup cycle each day. It covers both areas below and has a time limit:
+The packaged container runs one low-priority cleanup cycle each day. It covers the areas below and has a time limit:
 
 | Area | What it prunes | Retention setting |
 | ---- | -------------- | ----------------- |
 | Persistent state | Apprise's notification-state storage (`APPRISE_STORAGE_DIR`). | `APPRISE_STORAGE_PRUNE_DAYS` (default `30` days) |
 | Authentication | Per-key locks without configuration. | `APPRISE_AUTH_PRUNE_SECONDS` (default `2592000`, or 30 days) |
+| Reminders | Finished reminders (nothing left to send), then stored attachments no reminder uses. | `APPRISE_REMINDER_PRUNE_DAYS` (default `7` days); attachments kept for 1 hour after upload |
 
 `APPRISE_PRUNE_INTERVAL_SECONDS` controls the daily schedule. Set `APPRISE_PRUNE_ENABLED=no` to disable it, or use `APPRISE_PRUNE_TIMEOUT_SECONDS` to change the 8-hour time limit. Automatic runs are stopped when they exceed this limit, and Supervisor restarts the scheduler if it exits. The combined or individual commands may still run manually:
 ```bash
@@ -1106,7 +1145,7 @@ spec:
             name: apprise-api-override-conf-config
 ```
 
-### Hardened Kubernetes deployment (rootless and read only)
+### Hardened Kubernetes Deployment (Rootless and Read Only)
 
 For a more security conscious setup, you can run Apprise API as a non-root
 user with a read only root filesystem and explicit ephemeral volumes.

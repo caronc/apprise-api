@@ -23,6 +23,7 @@
 # THE SOFTWARE.
 import os
 import tempfile
+import time
 from unittest import mock
 
 from django.test import RequestFactory, SimpleTestCase
@@ -55,6 +56,21 @@ class UtilsTests(SimpleTestCase):
                 request = factory.get("/", **headers)
                 assert utils.is_json_response(request) is expected
 
+    def test_json_negotiation_long_spaces(self):
+        """A long Accept header of spaces is read quickly, the same as a blank one."""
+        factory = RequestFactory()
+        cases = (
+            (" \xa0 */* \x0b", True),
+            ("\xa0" * 8000, True),
+            ("\xa0" * 8000 + "x", False),
+        )
+        for accept, expected in cases:
+            request = factory.get("/", HTTP_ACCEPT=accept, CONTENT_TYPE="application/json")
+            started = time.monotonic()
+            assert utils.is_json_response(request) is expected
+            # A slow pattern took most of a second on the last case.
+            assert time.monotonic() - started < 0.25
+
     def test_html_response_negotiation(self):
         """HTML must be preferred, not merely listed as an API fallback."""
         cases = (
@@ -82,3 +98,16 @@ class UtilsTests(SimpleTestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir, mock.patch("os.fdopen", side_effect=OSError()):
             assert utils.touch(os.path.join(tmpdir, "tmp-file")) is False
+
+    def test_url_scheme_only(self):
+        """Only a real scheme is kept; anything typed in front of it is not."""
+        cases = (
+            ("json://user:pass@host", "json://"),
+            ("  JSON://host", "json://"),
+            ("Bearer abc123 json://host", ""),
+            ("no scheme here", ""),
+            ("", ""),
+        )
+        for url, expected in cases:
+            with self.subTest(url=url):
+                assert utils.url_scheme(url) == expected

@@ -31,7 +31,7 @@ dynamic = ["version"]
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
 dependencies = [
-  "apprise == 2.2.0",
+  "apprise == 2.3.0",
   # Language selection relies on a Django internal; raise after testing a new major
   "django < 7",
   "gevent",
@@ -46,6 +46,10 @@ dependencies = [
   "slixmpp >= 1.16.0",
   # Provides amqp:// support for AMQP 0.9.1
   "pika",
+  # Works out when reminders are due
+  "dateblock >= 2.2.0",
+  # Public holiday dates for holiday reminders
+  "holidays >= 0.108",
 ]
 
 [project.urls]

@@ -24,6 +24,7 @@
 """Cover authentication failure paths that protect browser and API access."""
 
 import base64
+from contextlib import nullcontext
 from json import dumps
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -123,6 +124,7 @@ class AuthUtilityCoverageTests(SimpleTestCase):
             self.assertFalse(store.set_auth("mkdir", "user", "pass"))
         with (
             patch.object(store, "_acquire_auth_guard", return_value=10),
+            patch.object(store, "reminder_guard", nullcontext),
             patch.object(store, "_release_auth_guard"),
             patch("os.makedirs", side_effect=OSError),
         ):

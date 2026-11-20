@@ -10,9 +10,7 @@
         <div class="page-section-heading__copy">
           <h4>{% trans "Apprise Details" %}</h4>
           <p>
-            {% blocktrans %}The following services are supported by this
-            <a target="_blank" href="https://github.com/caronc/apprise" rel="noopener noreferrer">Apprise</a>
-            instance.{% endblocktrans %}
+            {% blocktrans %}Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts.{% endblocktrans %}
           </p>
         </div>
       </div>
@@ -31,260 +29,863 @@
         {{ details.schemas|length }}
       </div>
     </div>
-    {# Plugin accordion #}
-    <div class="section details-plugins">
-      <ul class="collapsible">
+    {# Step 1: find a service, or start from a URL that already exists. #}
+    <section class="details-step" aria-labelledby="details-step-1">
+      <h5 id="details-step-1" class="details-step-title">
+        <span class="details-step-number" aria-hidden="true">1</span>
+        {% trans "Choose a Service" %}
+      </h5>
+      <div class="details-step-field">
+        <label for="details-search">{% trans "Search Services" %}</label>
+        <input id="details-search"
+               type="search"
+               spellcheck="false"
+               autocomplete="off">
+      </div>
+      <ul id="details-services" class="details-services">
         {% for entry in details.schemas %}
           <li>
-            <div class="collapsible-header">
-              <span class="plugin-index">{{ forloop.counter|stringformat:"03d" }}</span>
-              <i class="tiny material-icons plugin-chevron">chevron_right</i>
-              {% if show_all %}
-                {% if entry.enabled %}
-                  <i class="url-enabled material-icons plugin-status">
-                    check_circle
-                  </i>
-                {% else %}
-                  <i class="url-disabled material-icons plugin-status">
-                    remove_circle
-                  </i>
-                {% endif %}
-              {% endif %}
-              <span class="service_name">{{ entry.service_name }}</span>
-            </div>
-            <div class="collapsible-body">
-              <div class="plugin-service-row">
-                <div class="plugin-service-meta">
-                  <h5>{{ entry.service_name }}</h5>
-                </div>
-                <div class="plugin-service-actions">
-                  {% if entry.secure_protocols %}
-                    <a class="plugin-service-btn plugin-service-btn--external"
-                       href="https://appriseit.com/url-builder/?schema={{ entry.secure_protocols|first }}"
-                       target="_blank"
-                       rel="noopener noreferrer">
-                      <span class="plugin-service-icon" aria-hidden="true">
-                        {% include "icons/tool.svg" %}
-                      </span>
-                      <span>{% trans "Apprise URL Builder" %}</span>
-                    </a>
-                  {% elif entry.protocols %}
-                    <a class="plugin-service-btn plugin-service-btn--external"
-                       href="https://appriseit.com/url-builder/?schema={{ entry.protocols|first }}"
-                       target="_blank"
-                       rel="noopener noreferrer">
-                      <span class="plugin-service-icon" aria-hidden="true">
-                        {% include "icons/tool.svg" %}
-                      </span>
-                      <span>{% trans "Apprise URL Builder" %}</span>
-                    </a>
+            <button type="button"
+                    class="details-service"
+                    data-index="{{ forloop.counter0 }}"
+                    data-search="{{ entry.service_name|lower }} {{ entry.protocols|join:' ' }} {{ entry.secure_protocols|join:' ' }}"
+                    aria-pressed="false">
+              <span class="details-service-name">
+                {% if show_all %}
+                  {% if entry.enabled %}
+                    <i class="material-icons details-service-status is-enabled"
+                       aria-hidden="true">check_circle</i>
                   {% else %}
-                    <a class="plugin-service-btn plugin-service-btn--external"
-                       href="https://appriseit.com/url-builder/"
-                       target="_blank"
-                       rel="noopener noreferrer">
-                      <span class="plugin-service-icon" aria-hidden="true">
-                        {% include "icons/tool.svg" %}
-                      </span>
-                      <span>{% trans "Apprise URL Builder" %}</span>
-                    </a>
+                    <i class="material-icons details-service-status is-disabled"
+                       aria-hidden="true">remove_circle</i>
                   {% endif %}
-                  <a class="plugin-service-btn plugin-service-btn--external"
-                     href="{{ entry.setup_url }}"
-                     target="_blank"
-                     rel="noopener noreferrer">
-                    <span class="plugin-service-icon" aria-hidden="true">
-                      {% include "icons/book-open.svg" %}
-                    </span>
-                    <span>{% trans "Setup Guide" %}</span>
-                  </a>
-                  <a class="plugin-service-btn plugin-service-btn--external"
-                     href="{{ entry.service_url }}"
-                     target="_blank"
-                     rel="noopener noreferrer">
-                    <span class="plugin-service-icon" aria-hidden="true">
-                      {% include "icons/library.svg" %}
-                    </span>
-                    <span>{% trans "Service Website" %}</span>
-                  </a>
-                </div>
-              </div>
-              {% if show_all and not entry.enabled %}
-                <i class="url-disabled material-icons">report</i>
-                {% blocktrans %}
-                  <strong>Note:</strong> This service is unavailable due to the
-                  service being disabled by the administrator or the required
-                  libraries needed to drive it is not installed or functioning
-                  correctly.
-                {% endblocktrans %}
-              {% endif %}
-              <hr />
-              <ul class="detail-buttons detail-buttons--width">
-                <li>
-                  <strong>{% blocktrans %}Category{% endblocktrans %}:</strong>
-                  <code>{{ entry.category }}</code>
-                </li>
-                {% if entry.protocols %}
-                  <li>
-                    <strong>{% blocktrans %}Insecure Schema(s){% endblocktrans %}:</strong>
-                    <code>
-                      {% for schema in entry.protocols %}
-                        <a href="https://appriseit.com/url-builder/?schema={{ schema }}"
-                           target="_blank"
-                           rel="noopener noreferrer">{{ schema }}</a>
-                        {% if not forloop.last %},{% endif %}
-                      {% endfor %}
-                    </code>
-                  </li>
                 {% endif %}
-                {% if entry.secure_protocols %}
-                  <li>
-                    <strong>{% blocktrans %}Secure Schema(s){% endblocktrans %}:</strong>
-                    <code>
-                      {% for schema in entry.secure_protocols %}
-                        <a href="https://appriseit.com/url-builder/?schema={{ schema }}"
-                           target="_blank"
-                           rel="noopener noreferrer">{{ schema }}</a>
-                        {% if not forloop.last %},{% endif %}
-                      {% endfor %}
-                    </code>
-                  </li>
-                {% endif %}
-                <li>{# djlint:off #}
-                  <pre><code class="bash"># {% blocktrans %}Apprise URL Formatting{% endblocktrans %}<br />
-                  {% for url in entry.details.templates %}{{ url }}<br />{% endfor %}</code></pre>
-                  {# djlint:on #}</li>
-                <li>
-                  <p>
-                    {% blocktrans %}For more details and additional Apprise
-                    configuration options available to this service:{% endblocktrans %}
-                    <a href="{{ entry.setup_url }}" target="_blank">{% trans "Click Here" %}</a>
-                  </p>
-                </li>
-              </ul>
-            </div>
+                {{ entry.service_name }}
+              </span>
+              <span class="details-service-schemas">
+                {% for schema in entry.secure_protocols %}<code>{{ schema }}://</code>{% endfor %}
+                {% for schema in entry.protocols %}<code>{{ schema }}://</code>{% endfor %}
+              </span>
+            </button>
           </li>
         {% endfor %}
       </ul>
-    </div>
-    {# API endpoints section #}
-    <div class="section details-api">
-      <div class="page-section-heading">
-        <h4>{% trans "API Endpoints" %}</h4>
+      <p id="details-no-match" class="details-no-match" hidden>{% trans "No services match your search." %}</p>
+      <form id="details-paste"
+            class="details-step-field"
+            autocomplete="off"
+            novalidate>
+        <label for="details-paste-url">{% trans "Or Paste an Apprise URL" %}</label>
+        <div class="details-url-row">
+          <input id="details-paste-url"
+                 type="text"
+                 placeholder="schema://"
+                 spellcheck="false"
+                 autocomplete="off">
+          <button type="submit"
+                  id="details-parse"
+                  class="btn waves-effect waves-light"
+                  disabled>{% trans "Parse" %}</button>
+        </div>
+        <span id="details-paste-error"
+              class="notify-attach-error"
+              role="alert"
+              hidden></span>
+      </form>
+    </section>
+    {# Step 2: the chosen service's fields. #}
+    <section class="details-step" aria-labelledby="details-step-2">
+      <h5 id="details-step-2" class="details-step-title">
+        <span class="details-step-number" aria-hidden="true">2</span>
+        {% trans "Fill In the Details" %}
+      </h5>
+      <p id="details-step-2-empty">{% trans "Choose a service above, or paste a URL, to see what it needs." %}</p>
+      <div id="details-service" hidden>
+        <div class="plugin-service-row">
+          <div class="plugin-service-meta">
+            <h5 id="details-service-name"></h5>
+          </div>
+          <div class="plugin-service-actions">
+            <a id="details-setup"
+               class="plugin-service-btn plugin-service-btn--external"
+               target="_blank"
+               rel="nofollow noopener noreferrer">
+              <span class="plugin-service-icon" aria-hidden="true">
+                {% include "icons/book-open.svg" %}
+              </span>
+              <span>{% trans "Setup Guide" %}</span>
+            </a>
+            <a id="details-website"
+               class="plugin-service-btn plugin-service-btn--external"
+               target="_blank"
+               rel="nofollow noopener noreferrer">
+              <span class="plugin-service-icon" aria-hidden="true">
+                {% include "icons/library.svg" %}
+              </span>
+              <span>{% trans "Service Website" %}</span>
+            </a>
+          </div>
+        </div>
+        {# Why a turned-off service cannot be used on this server. #}
+        <div id="details-disabled"
+             class="notify-target-guidance"
+             role="note"
+             hidden>
+          {# The title, with the online URL Builder on the right (below it on a phone). #}
+          <div class="notify-target-guidance-title">
+            <i class="material-icons" aria-hidden="true">report</i>
+            <span>{% trans "Service Unavailable" %}</span>
+            <a id="details-disabled-builder"
+               class="plugin-service-btn plugin-service-btn--external"
+               target="_blank"
+               rel="nofollow noopener noreferrer"
+               title="{% trans "You can still build its URL online." %}"
+               href="https://appriseit.com/url-builder/">
+              <span class="plugin-service-icon" aria-hidden="true">
+                {% include "icons/tool.svg" %}
+              </span>
+              <span>{% trans "Apprise URL Builder" %}</span>
+            </a>
+          </div>
+          <p id="details-disabled-admin">{% trans "The administrator has turned this service off on this server." %}</p>
+          <div id="details-disabled-missing">
+            <p>{% trans "This service is missing the necessary dependencies to function on this server." %}</p>
+            <p id="details-disabled-details"></p>
+            {# The script adds each package after the label. #}
+            <p id="details-disabled-packages">
+              <span>{% trans "Required packages:" %}</span>
+            </p>
+          </div>
+        </div>
+        {# A turned-off service has no fields here; its URL cannot be checked on this server. #}
+        <div id="details-form">
+          <div id="details-fields" class="details-fields"></div>
+          <details id="details-options" class="details-group" open>
+            <summary>{% trans "Options" %}</summary>
+            <div class="details-fields"></div>
+          </details>
+          <details id="details-advanced" class="details-group">
+            <summary>{% trans "Advanced" %}</summary>
+            <div class="details-fields"></div>
+          </details>
+          <div id="details-maps"></div>
+        </div>
       </div>
-      <p>
-        {% blocktrans %}Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:{% endblocktrans %}
-      </p>
-      <ul class="collapsible">
-        <li>
-          <div class="collapsible-header">
-            <i class="material-icons">code</i>{% trans "Curl Example" %}
-          </div>
-          <div class="collapsible-body">{# djlint:off #}
-            <pre><code class="bash">#{% blocktrans %}Retrieve JSON Formatted Apprise Details{% endblocktrans %}<br />
-            curl -H "Accept: application/json" \<br />
-            &nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}"</code></pre>
-            {# djlint:on #}</div>
-        </li>
-        <li>
-          <div class="collapsible-header">
-            <i class="material-icons">code</i>{% trans "Python Example" %}
-          </div>
-          <div class="collapsible-body">{# djlint:off #}
-            <pre><code class="python">import json<br />
-from urllib.request import Request<br />
-<br /># {% trans "The URL" %}<br />
-req = Request(<br />
-&nbsp;&nbsp;&nbsp;&nbsp;"{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}",<br />
-&nbsp;&nbsp;&nbsp;&nbsp;json.dumps(payload).encode('utf-8'),<br />
-&nbsp;&nbsp;&nbsp;&nbsp;{"Accept": "application/json"},<br />
-&nbsp;&nbsp;&nbsp;&nbsp;method='GET',<br />
-)</code></pre>
-            {# djlint:on #}</div>
-        </li>
-        <li>
-          <div class="collapsible-header">
-            <i class="material-icons">code</i>{% trans "PHP Example" %}
-          </div>
-          <div class="collapsible-body">{# djlint:off #}
-            <pre><code class="php">&lt;?php<br />
-<br />
-// {% trans "The URL" %}<br />
-$url = '{{ request.scheme }}://{% if AUTH_ENABLED %}{{ AUTH_USERNAME|urlencode }}:****@{% endif %}{{ request.META.HTTP_HOST }}{{ BASE_URL }}/details/{% if show_all %}?all=yes{% endif %}';<br />
-<br />
-// {% trans "Initiate cURL." %}<br />
-$ch = curl_init($url);<br />
-<br />
-// {% trans "Set the content type to application/json" %}<br />
-curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));<br />
-<br />
-// {% trans "Execute the request" %}<br />
-$result = curl_exec($ch);</code></pre>
-            {# djlint:on #}</div>
-        </li>
-      </ul>
-      <p>
-        {% blocktrans %}More details on the JSON format can be found <a href="https://appriseit.com/library/inspection/" target="_blank" rel="noopener noreferrer">here</a>.{% endblocktrans %}
-      </p>
-    </div>
+    </section>
+    {# Step 3: the URL the fields make, shown with its secrets hidden. #}
+    <section id="details-result"
+             class="details-step"
+             aria-labelledby="details-step-3">
+      <h5 id="details-step-3" class="details-step-title">
+        <span class="details-step-number" aria-hidden="true">3</span>
+        {% trans "Copy Your URL" %}
+      </h5>
+      <div class="details-step-field">
+        <label for="details-url">{% trans "Apprise URL" %}</label>
+        <div class="details-url-row">
+          <input id="details-url"
+                 type="text"
+                 readonly
+                 spellcheck="false"
+                 placeholder="{% trans "Fill in the details above to build the URL." %}">
+          <button type="button"
+                  id="details-copy"
+                  class="btn-flat details-icon-button"
+                  aria-label="{% trans "Copy URL" %}"
+                  title="{% trans "Copy URL" %}"
+                  disabled>
+            <i class="material-icons" aria-hidden="true">content_copy</i>
+          </button>
+        </div>
+        <span id="details-url-error"
+              class="notify-attach-error"
+              role="alert"
+              hidden></span>
+      </div>
+    </section>
+    {# The API behind this page is described on the home page. #}
+    <p class="details-api-link">
+      {% blocktrans %}Using this from your own program? See the <a href="{{ BASE_URL }}/#url-endpoints">API endpoints</a>.{% endblocktrans %}
+    </p>
   </div>
+  {# Every service's details, read by the script below. #}
+  {{ details_json }}
+  {{ shared_args_json }}
 {% endblock body %}
 {# djlint:off #}
 {% block jsfooter %}
-  function showCopyToast(anchorEl, message) {
-    var msg = message || '{% trans "Copied to clipboard" %}';
-    appriseShowCopyToast(msg);
+  // Every service this server offers, and the settings they all share.
+  const detailsData = JSON.parse(document.getElementById('details-data').textContent);
+  const detailsShared = new Set(JSON.parse(document.getElementById('details-shared-args').textContent));
+  // Fields are put together into a URL by the server, for this Config ID.
+  const detailsResolveUrl = '{% if COOKIE_CONFIG_URLS %}{% url "resolve_current" %}{% else %}{% url "resolve" DEFAULT_CONFIG_ID %}{% endif %}';
+
+  const detailsSearch = document.querySelector('#details-search');
+  const detailsServices = document.querySelectorAll('.details-service');
+  const detailsPasteInput = document.querySelector('#details-paste-url');
+  const detailsParse = document.querySelector('#details-parse');
+  const detailsUrl = document.querySelector('#details-url');
+  const detailsCopy = document.querySelector('#details-copy');
+
+  // The chosen service, the URL its fields make, and that URL with its
+  // secrets hidden.
+  let detailsChosen = null;
+  let detailsFull = '';
+  let detailsHidden = '';
+  // The pasted URL last parsed; parsing it again would change nothing.
+  let detailsParsed = '';
+  // Each answer is numbered, so a slow one never replaces a newer one.
+  let detailsAsked = 0;
+  let detailsTimer = null;
+  let detailsFieldId = 0;
+
+  // Show or clear a message under a field.
+  function detailsShowError(id, message) {
+    const note = document.getElementById(id);
+    note.textContent = message || '';
+    note.hidden = !message;
   }
 
-  async function copyToClipboard(text, anchorEl, message) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      try {
-        await navigator.clipboard.writeText(text);
-        showCopyToast(anchorEl, message);
-        return;
-      } catch (e) { /* fall through */ }
+  // Send one URL, or the fields of one, to be checked and written out.
+  async function detailsAsk(entry) {
+    try {
+      const response = await appriseResolveUrls(detailsResolveUrl, [entry]);
+      if (!response.ok) {
+        const failure = await appriseResponseFailure(
+          response, '{% trans "This URL could not be loaded" %}');
+        return {valid: false, error: failure.message};
+      }
+      return (await response.json()).urls[0];
+    } catch (e) {
+      return {valid: false, error: '{% trans "This URL could not be loaded" %}'};
     }
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'absolute';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); showCopyToast(anchorEl, message); }
-    catch (e) { /* ignore */ }
-    finally { document.body.removeChild(ta); }
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.details-api .collapsible-body pre').forEach(function(pre) {
-      if (pre.parentNode.classList.contains('code-snippet')) { return; }
-      var code = pre.querySelector('code');
-      var copyText = (code ? code.innerText : pre.innerText).trim();
-      var snippet = document.createElement('div');
-      snippet.className = 'code-snippet';
-      snippet.dataset.copyText = copyText;
-      pre.parentNode.insertBefore(snippet, pre);
-      snippet.appendChild(pre);
+  // The URL box shows the hidden URL, and the full one while it is selected.
+  function detailsShowUrl() {
+    detailsUrl.value = document.activeElement === detailsUrl ? detailsFull : (detailsHidden || detailsFull);
+    detailsCopy.disabled = !detailsFull;
+    detailsShowReading();
+  }
 
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'snippet-copy-btn btn-flat btn-small';
-      btn.title = '{% trans "Copy to clipboard" %}';
-
-      var icon = document.createElement('i');
-      icon.className = 'material-icons';
-      icon.textContent = 'content_copy';
-      btn.appendChild(icon);
-
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        copyToClipboard(copyText, btn, '{% trans "Copied to clipboard" %}');
-      }, false);
-
-      snippet.appendChild(btn);
+  // Step 1: show only the services whose name or schema holds the search.
+  detailsSearch.addEventListener('input', function () {
+    const words = detailsSearch.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    detailsServices.forEach(function (button) {
+      const match = words.every(function (word) { return button.dataset.search.includes(word); });
+      button.parentElement.hidden = !match;
+      shown += match ? 1 : 0;
     });
+    document.querySelector('#details-no-match').hidden = shown > 0;
+  });
+
+  detailsServices.forEach(function (button) {
+    button.addEventListener('click', function () {
+      detailsChoose(Number(button.dataset.index), null);
+    });
+  });
+
+  // A service's tokens that have a field of their own; a list token stands
+  // in for the tokens it groups, and aliases are only other names.
+  function detailsTokens(tokens) {
+    const grouped = new Set();
+    Object.keys(tokens).forEach(function (name) {
+      const meta = tokens[name];
+      if ((meta.type || '').startsWith('list') && Array.isArray(meta.group)) {
+        meta.group.forEach(function (member) { grouped.add(member); });
+      }
+    });
+    return Object.keys(tokens).filter(function (name) {
+      return !tokens[name].alias_of && !grouped.has(name);
+    });
+  }
+
+  // Explain why a turned-off service is unavailable: the administrator
+  // turned it off, or the server is missing what it needs to run. Its
+  // fields and URL are left to the online URL Builder instead.
+  function detailsShowUnavailable(service) {
+    const requirements = service.requirements || {};
+    const packages = requirements.packages_required || [];
+    const details = document.querySelector('#details-disabled-details');
+    const list = document.querySelector('#details-disabled-packages');
+    const off = service.enabled === false;
+    document.querySelector('#details-disabled').hidden = !off;
+    document.querySelector('#details-form').hidden = off;
+    document.querySelector('#details-result').hidden = off;
+    document.querySelector('#details-disabled-builder').href = 'https://appriseit.com/url-builder/?schema='
+      + encodeURIComponent((service.secure_protocols || [])[0] || (service.protocols || [])[0] || '');
+    document.querySelector('#details-disabled-admin').hidden = !service.admin_disabled;
+    document.querySelector('#details-disabled-missing').hidden = Boolean(service.admin_disabled);
+    details.textContent = requirements.details || '';
+    details.hidden = !requirements.details;
+    // The label stays first, then each package as code.
+    list.replaceChildren(list.firstElementChild, ' ', ...packages.map(function (name) {
+      const code = document.createElement('code');
+      code.textContent = name;
+      return code;
+    }));
+    list.hidden = !packages.length;
+  }
+
+  // Step 2: show the chosen service with empty fields, or with a URL's values.
+  function detailsChoose(index, values) {
+    const service = detailsData.schemas[index];
+    const details = service.details;
+    detailsChosen = service;
+    detailsServices.forEach(function (button) {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.index) === index));
+    });
+
+    document.querySelector('#details-step-2-empty').hidden = true;
+    document.querySelector('#details-service').hidden = false;
+    document.querySelector('#details-service-name').textContent = service.service_name;
+    // A custom plugin may have no setup guide; its button is hidden then.
+    const setup = document.querySelector('#details-setup');
+    setup.href = service.setup_url || '';
+    setup.hidden = !service.setup_url;
+    // A few services, such as E-Mail, have no website of their own.
+    const website = document.querySelector('#details-website');
+    website.href = service.service_url || '';
+    website.hidden = !service.service_url;
+    detailsShowUnavailable(service);
+
+    // A new URL starts with the service's secure schema when it has one.
+    const fields = values || {
+      schema: (service.secure_protocols || [])[0] || (service.protocols || [])[0]
+    };
+    // The schema comes first, then each part in the order the fullest URL
+    // template writes it (user, password, host, port, then the path).
+    const order = ['schema'];
+    details.templates.slice().sort(function (a, b) {
+      return (b.match(/\{/g) || []).length - (a.match(/\{/g) || []).length;
+    }).forEach(function (template) {
+      (template.match(/\{[^}]+\}/g) || []).forEach(function (part) {
+        if (!order.includes(part.slice(1, -1))) {
+          order.push(part.slice(1, -1));
+        }
+      });
+    });
+    const rank = function (name) {
+      return order.includes(name) ? order.indexOf(name) : order.length;
+    };
+    const tokens = detailsTokens(details.tokens).sort(function (a, b) {
+      return rank(a) - rank(b);
+    });
+    const main = tokens.map(function (name) {
+      return detailsEntry(name, details.tokens[name], fields[name], true);
+    });
+    // An option that only feeds a part shown above (email's to= feeding its
+    // targets) would be the same value twice, so it is left out.
+    const shown = new Set(tokens.map(function (name) { return details.tokens[name].map_to || name; }));
+    const options = [];
+    const advanced = [];
+    Object.keys(details.args).forEach(function (name) {
+      const meta = details.args[name];
+      if (meta.alias_of || shown.has(meta.map_to || name)) {
+        return;
+      }
+      (detailsShared.has(name) ? advanced : options).push(detailsEntry(name, meta, fields[name]));
+    });
+    const maps = Object.keys(details.kwargs).map(function (name) {
+      return detailsMapEntry(name, details.kwargs[name], fields[name]);
+    });
+
+    document.querySelector('#details-fields').replaceChildren.apply(
+      document.querySelector('#details-fields'), main);
+    const optionGroup = document.querySelector('#details-options');
+    optionGroup.querySelector('.details-fields').replaceChildren.apply(
+      optionGroup.querySelector('.details-fields'), options);
+    optionGroup.hidden = !options.length;
+    const advancedGroup = document.querySelector('#details-advanced');
+    advancedGroup.querySelector('.details-fields').replaceChildren.apply(
+      advancedGroup.querySelector('.details-fields'), advanced);
+    advancedGroup.hidden = !advanced.length;
+    // A URL that changes a shared setting shows it straight away.
+    advancedGroup.open = advanced.some(function (holder) { return detailsValue(holder) !== undefined; });
+    document.querySelector('#details-maps').replaceChildren.apply(
+      document.querySelector('#details-maps'), maps);
+
+    detailsShowUrl();
+    if (!values) {
+      detailsShowError('details-url-error', null);
+      detailsBuild();
+    } else {
+      detailsCheckAll();
+    }
+  }
+
+  // A label, with a marker on the fields a service needs.
+  function detailsLabel(id, text, required) {
+    const label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.textContent = text;
+    if (required) {
+      const mark = document.createElement('span');
+      mark.className = 'details-required';
+      mark.textContent = ' *';
+      mark.setAttribute('title', '{% trans "Required" %}');
+      label.appendChild(mark);
+    }
+    return label;
+  }
+
+  // Build one labelled field; an empty one shows its default as a hint.
+  // - part: the field is a part of the URL itself rather than an option.
+  function detailsEntry(name, meta, value, part) {
+    const holder = document.createElement('div');
+    holder.className = 'details-field';
+    holder.dataset.field = name;
+    const id = 'details-field-' + String(detailsFieldId++);
+    holder.appendChild(detailsLabel(id, meta.name || name, meta.required));
+    if (meta.required && (meta.default === undefined || meta.default === null)) {
+      holder.dataset.required = 'true';
+    }
+
+    const type = meta.type || 'string';
+    const given = value !== undefined && value !== null;
+    let input = null;
+    if (type.endsWith('bool')) {
+      // On/off settings use the same switch as the rest of the site.
+      holder.dataset.kind = 'bool';
+      holder.dataset.default = String(Boolean(meta.default));
+      const toggle = document.createElement('label');
+      toggle.className = 'review-selected-filter details-switch';
+      input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = given ? Boolean(value) : Boolean(meta.default);
+      const track = document.createElement('span');
+      track.className = 'review-selected-filter-track';
+      track.setAttribute('aria-hidden', 'true');
+      track.innerHTML = '<span class="review-selected-filter-knob"></span>';
+      toggle.appendChild(input);
+      toggle.appendChild(track);
+      holder.appendChild(toggle);
+    } else if (Array.isArray(meta.values) && meta.values.length && !type.startsWith('list')) {
+      // A fixed set of choices is a list to pick from.
+      holder.dataset.kind = name === 'schema' ? 'schema' : 'choice';
+      holder.dataset.default = meta.default === undefined || meta.default === null ? '' : String(meta.default);
+      input = document.createElement('select');
+      input.className = 'browser-default';
+      const choices = meta.values.map(String);
+      if (given && !choices.includes(String(value))) {
+        choices.unshift(String(value));
+      }
+      choices.forEach(function (choice) {
+        const option = document.createElement('option');
+        option.value = choice;
+        option.textContent = choice;
+        input.appendChild(option);
+      });
+      input.value = given ? String(value) : (holder.dataset.default || choices[0]);
+      holder.appendChild(input);
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.spellcheck = false;
+      appriseNoAutofill(input);
+      if (type.startsWith('list')) {
+        // Lists are written with commas between their entries.
+        holder.dataset.kind = 'list';
+        input.value = given ? (Array.isArray(value) ? value : [value]).join(', ') : '';
+      } else if (/(int|float)$/.test(type)) {
+        holder.dataset.kind = 'number';
+        input.type = 'number';
+        input.step = 'any';
+        input.value = given ? String(value) : '';
+      } else {
+        holder.dataset.kind = 'text';
+        input.value = given ? String(value) : '';
+      }
+      // A default shows what is used when the field is left empty; a URL
+      // part without one shows its name, and a list how to write several.
+      if (meta.default !== undefined && meta.default !== null && meta.default !== '') {
+        input.placeholder = String(meta.default);
+      } else if (holder.dataset.kind === 'list') {
+        input.placeholder = '{% trans "Separate entries with commas" %}';
+      } else if (part) {
+        input.placeholder = meta.name || name;
+      }
+
+      if (meta.private) {
+        // Secrets stay hidden until shown, the same as on the Notify form.
+        const concealed = document.createElement('div');
+        concealed.className = 'notify-template-value-control concealed-field';
+        input.dataset.concealedText = 'true';
+        input.type = 'text';
+        concealed.appendChild(input);
+        concealed.appendChild(appriseValueToggleButton(id));
+        holder.appendChild(concealed);
+        appriseWireValueToggles(concealed);
+      } else {
+        holder.appendChild(input);
+      }
+    }
+
+    input.id = id;
+    input.addEventListener(input.tagName === 'SELECT' || input.type === 'checkbox' ? 'change' : 'input', detailsSchedule);
+
+    // What a typed value must look like: the field's own pattern or, for a
+    // list, the patterns of the kinds of entry it holds (a phone number or an
+    // email). A list with any kind of entry that has no pattern is not checked.
+    if (['text', 'list', 'number'].includes(holder.dataset.kind)) {
+      const tokens = detailsChosen.details.tokens;
+      const rules = meta.regex ? [meta.regex] : (meta.group || []).map(function (member) {
+        return (tokens[member] || {}).regex;
+      });
+      const patterns = rules.map(detailsPattern);
+      holder.detailsPatterns = rules.length && patterns.every(Boolean) ? patterns : [];
+      if (typeof meta.min === 'number') {
+        holder.dataset.min = String(meta.min);
+      }
+      if (typeof meta.max === 'number') {
+        holder.dataset.max = String(meta.max);
+      }
+      const note = document.createElement('span');
+      note.className = 'review-template-error details-field-error';
+      note.setAttribute('role', 'alert');
+      note.hidden = true;
+      note.textContent = '{% trans "This value is not in the form this service expects." %}';
+      holder.appendChild(note);
+    }
+
+    // A list that holds more than one kind of entry, told apart by a mark in
+    // front (BulkSMS: + for a phone number, @ for a group), says which mark
+    // means what, and later how each entry without one was read.
+    const kinds = (meta.group || []).map(function (member) {
+      return detailsChosen.details.tokens[member] || {};
+    }).filter(function (kind) { return kind.prefix; });
+    if (holder.dataset.kind === 'list' && kinds.length && (meta.group || []).length > 1) {
+      holder.detailsKinds = kinds;
+      const hint = document.createElement('span');
+      hint.className = 'details-field-hint';
+      hint.textContent = detailsFormat('{% trans "Mark each entry with its kind: {}." %}', kinds.map(function (kind) {
+        return detailsFormat('{% trans "{} for {}" %}', kind.prefix, kind.name);
+      }).join(', '));
+      const read = document.createElement('span');
+      read.className = 'details-field-hint details-field-read';
+      read.hidden = true;
+      holder.append(hint, read);
+    }
+    return holder;
+  }
+
+  // Fill each {} in a translated text with the next value, in order; a value
+  // that holds {} itself is never filled in again.
+  function detailsFormat(text) {
+    const values = Array.prototype.slice.call(arguments, 1);
+    return text.split('{}').map(function (piece, index) {
+      return index < values.length ? piece + values[index] : piece;
+    }).join('');
+  }
+
+  // The parts of a URL's address, decoded, with any login left out:
+  // "bulksms://user:pass@@abcd/+1555/?x=y" gives "@abcd" and "+1555".
+  function detailsUrlParts(url) {
+    const parts = url.split('?')[0].replace(/^[^:]+:\/\//, '').split('/');
+    // A login comes before the first @; Apprise encodes any @ inside it.
+    parts[0] = parts[0].slice(parts[0].indexOf('@') + 1);
+    return parts.map(function (part) {
+      try {
+        return decodeURIComponent(part);
+      } catch (e) {
+        return part;
+      }
+    });
+  }
+
+  // Under a list of several kinds, say how each entry typed without a mark
+  // was read, from the URL Apprise wrote: "abcd was read as a Target Group".
+  function detailsShowReading() {
+    const parts = detailsFull ? detailsUrlParts(detailsFull) : [];
+    document.querySelectorAll('#details-service [data-field]').forEach(function (holder) {
+      if (!holder.detailsKinds) {
+        return;
+      }
+      const notes = [];
+      (detailsValue(holder) || []).forEach(function (entry) {
+        const kinds = holder.detailsKinds;
+        if (kinds.some(function (kind) { return entry.startsWith(kind.prefix); })) {
+          return;
+        }
+        const found = kinds.find(function (kind) { return parts.includes(kind.prefix + entry); });
+        if (found) {
+          notes.push(detailsFormat('{% trans "{} was read as a {}." %}', entry, found.name));
+        }
+      });
+      const read = holder.querySelector('.details-field-read');
+      read.textContent = notes.join(' ');
+      read.hidden = !notes.length;
+    });
+  }
+
+  // A pattern from the server, written for Python, made readable by the
+  // browser. It is matched from the first character, like Apprise does.
+  // - Returns null when the browser cannot read it, so a good value is never
+  //   flagged because of it.
+  function detailsPattern(regex) {
+    if (!Array.isArray(regex) || typeof regex[0] !== 'string') {
+      return null;
+    }
+    const flags = String(regex[1] || '').replace(/[^ims]/g, '');
+    const source = '^(?:' + regex[0].replace(/\(\?P</g, '(?<').replace(/\(\?P=(\w+)\)/g, '\\k<$1>') + ')';
+    for (const extra of ['u', '']) {
+      try {
+        return new RegExp(source, flags + extra);
+      } catch (e) {
+        // Try again without the unicode flag, which is stricter.
+      }
+    }
+    return null;
+  }
+
+  // Mark a field whose value is not in the form the service expects.
+  // - Returns false when it is marked.
+  function detailsCheck(holder) {
+    const note = holder.querySelector('.details-field-error');
+    if (!note) {
+      return true;
+    }
+    const value = detailsValue(holder);
+    let bad = false;
+    if (value !== undefined && holder.dataset.kind === 'number') {
+      bad = (holder.dataset.min !== undefined && value < Number(holder.dataset.min))
+        || (holder.dataset.max !== undefined && value > Number(holder.dataset.max));
+    } else if (value !== undefined && holder.detailsPatterns.length) {
+      // Apprise trims a value before it checks it.
+      bad = (Array.isArray(value) ? value : [value]).some(function (entry) {
+        return !holder.detailsPatterns.some(function (pattern) { return pattern.test(String(entry).trim()); });
+      });
+    }
+    holder.querySelector('input').classList.toggle('is-invalid', bad);
+    note.hidden = !bad;
+    return !bad;
+  }
+
+  // Check every field. Returns false when any of them is marked.
+  function detailsCheckAll() {
+    let good = true;
+    document.querySelectorAll('#details-service [data-field]').forEach(function (holder) {
+      good = detailsCheck(holder) && good;
+    });
+    return good;
+  }
+
+  // Add one name and value pair to a key/value field.
+  function detailsMapRow(rows, key, value) {
+    const row = document.createElement('div');
+    row.className = 'notify-template-row';
+    [['{% trans "Name" %}', key], ['{% trans "Value" %}', value]].forEach(function (part) {
+      const field = document.createElement('div');
+      field.className = 'notify-template-value-field';
+      const id = 'details-field-' + String(detailsFieldId++);
+      const input = document.createElement('input');
+      input.id = id;
+      input.type = 'text';
+      input.spellcheck = false;
+      appriseNoAutofill(input);
+      input.value = part[1] || '';
+      input.addEventListener('input', detailsSchedule);
+      field.appendChild(detailsLabel(id, part[0], false));
+      field.appendChild(input);
+      row.appendChild(field);
+    });
+
+    const remove = appriseIconButton('delete', '{% trans "Remove Value" %}', 'btn-flat notify-template-remove');
+    remove.addEventListener('click', function () {
+      row.remove();
+      // Let Add Value check its rows again.
+      rows.dispatchEvent(new Event('input'));
+      detailsSchedule();
+    });
+    row.appendChild(remove);
+    rows.appendChild(row);
+  }
+
+  // Build a key/value field, such as headers, as rows of names and values.
+  function detailsMapEntry(name, meta, value) {
+    const holder = document.createElement('fieldset');
+    holder.className = 'details-field details-map';
+    holder.dataset.field = name;
+    holder.dataset.kind = 'map';
+    const legend = document.createElement('legend');
+    legend.textContent = meta.name || name;
+    holder.appendChild(legend);
+
+    const rows = document.createElement('div');
+    rows.className = 'notify-template-rows';
+    Object.keys(value || {}).forEach(function (key) {
+      detailsMapRow(rows, key, value[key]);
+    });
+    holder.appendChild(rows);
+
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'btn-flat details-map-add';
+    add.innerHTML = '<i class="material-icons" aria-hidden="true">add</i> ';
+    add.appendChild(document.createTextNode('{% trans "Add Value" %}'));
+    add.addEventListener('click', function () {
+      detailsMapRow(rows, '', '');
+      refresh();
+      rows.lastElementChild.querySelector('input').focus();
+    });
+    // Add Value waits until the last row has a name, like Add URL.
+    const refresh = function () {
+      const last = rows.lastElementChild;
+      add.disabled = Boolean(last && !last.querySelector('input').value.trim());
+    };
+    rows.addEventListener('input', refresh);
+    refresh();
+    holder.appendChild(add);
+    return holder;
+  }
+
+  // Read one field: undefined when it is empty or left at its default.
+  function detailsValue(holder) {
+    const kind = holder.dataset.kind;
+    if (kind === 'map') {
+      const map = {};
+      holder.querySelectorAll('.notify-template-row').forEach(function (row) {
+        const inputs = row.querySelectorAll('input');
+        if (inputs[0].value.trim()) {
+          map[inputs[0].value.trim()] = inputs[1].value;
+        }
+      });
+      return Object.keys(map).length ? map : undefined;
+    }
+
+    const input = holder.querySelector('input, select');
+    if (kind === 'bool') {
+      return String(input.checked) === holder.dataset.default ? undefined : input.checked;
+    }
+    if (kind === 'choice') {
+      return input.value === holder.dataset.default ? undefined : input.value;
+    }
+    if (kind === 'schema') {
+      return input.value;
+    }
+    if (kind === 'list') {
+      const list = input.value.split(',').map(function (entry) { return entry.trim(); })
+        .filter(function (entry) { return entry; });
+      return list.length ? list : undefined;
+    }
+    if (input.value === '') {
+      return undefined;
+    }
+    return kind === 'number' ? Number(input.value) : input.value;
+  }
+
+  // A field changed: put the URL together again once typing pauses.
+  function detailsSchedule() {
+    clearTimeout(detailsTimer);
+    detailsTimer = setTimeout(detailsBuild, 400);
+  }
+
+  // Every field that holds something, the way the server reads them.
+  function detailsCollect() {
+    const fields = {};
+    document.querySelectorAll('#details-service [data-field]').forEach(function (holder) {
+      const value = detailsValue(holder);
+      if (value !== undefined) {
+        fields[holder.dataset.field] = value;
+      }
+    });
+    return fields;
+  }
+
+  // Step 3: ask the server for the URL the fields make.
+  async function detailsBuild() {
+    if (detailsChosen.enabled === false) {
+      return;
+    }
+    const fields = detailsCollect();
+    const checked = detailsCheckAll();
+    const asked = ++detailsAsked;
+    // A service with fields to fill in has no URL until one of them is, and
+    // none while a part it needs is still empty.
+    const needed = detailsTokens(detailsChosen.details.tokens).some(function (name) { return name !== 'schema'; });
+    const missing = Array.prototype.some.call(
+      document.querySelectorAll('#details-fields [data-required]'),
+      function (holder) { return detailsValue(holder) === undefined; });
+    if (missing || (needed && Object.keys(fields).length < 2)) {
+      detailsFull = '';
+      detailsHidden = '';
+      detailsShowError('details-url-error', null);
+      detailsShowUrl();
+      return;
+    }
+
+    const answer = await detailsAsk(fields);
+    if (asked !== detailsAsked) {
+      return;
+    }
+    detailsFull = answer.valid ? answer.url : '';
+    detailsHidden = answer.valid ? answer.privacy_url : '';
+    // A marked field is the likely reason the server could not load the URL.
+    detailsShowError('details-url-error', answer.valid ? null : (checked ? answer.error
+      : '{% trans "This URL could not be loaded. Check the highlighted fields." %}'));
+    detailsShowUrl();
+  }
+
+  // Step 1, the other way in: read a URL and show its fields.
+  async function detailsParseUrl() {
+    const pasted = detailsPasteInput.value.trim();
+    const asked = ++detailsAsked;
+    detailsParsed = pasted;
+    detailsParse.disabled = true;
+    const answer = await detailsAsk(pasted);
+    if (asked !== detailsAsked) {
+      return;
+    }
+
+    // The service comes from what the server read, or else from the schema
+    // as typed (mailto://, MAILTO or mailtos: all pick E-Mail).
+    const typed = (pasted.match(/^\s*([a-z0-9][a-z0-9+.-]*)\s*(?::|$)/i) || [])[1] || '';
+    const schema = ((answer.fields && answer.fields.schema) || typed).toLowerCase();
+    const index = detailsData.schemas.findIndex(function (service) {
+      return (service.protocols || []).concat(service.secure_protocols || []).includes(schema);
+    });
+    if (index < 0) {
+      detailsShowError('details-paste-error', answer.error);
+      return;
+    }
+
+    // A URL that can't be used yet still fills in what it holds; Step 3
+    // shows the URL once whatever is still needed is filled in.
+    detailsShowError('details-paste-error', null);
+    detailsShowError('details-url-error', null);
+    detailsFull = answer.valid ? answer.url : '';
+    detailsHidden = answer.valid ? answer.privacy_url : '';
+    detailsChoose(index, answer.fields || {schema: schema});
+    if (!answer.valid) {
+      detailsBuild();
+    }
+    document.querySelector('#details-step-2').scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+
+  // Parse waits for a pasted URL that has not been read yet.
+  detailsPasteInput.addEventListener('input', function () {
+    const pasted = detailsPasteInput.value.trim();
+    detailsParse.disabled = !pasted || pasted === detailsParsed;
+    detailsShowError('details-paste-error', null);
+    detailsShowUrl();
+  });
+
+  // Enter in the box parses it too, but only when Parse could.
+  document.querySelector('#details-paste').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!detailsParse.disabled) {
+      detailsParseUrl();
+    }
+  });
+
+  // Selecting the URL shows it in full; leaving it hides the secrets again.
+  detailsUrl.addEventListener('focus', detailsShowUrl);
+  detailsUrl.addEventListener('blur', detailsShowUrl);
+
+  // Copy the full URL, never the hidden one shown in the box.
+  detailsCopy.addEventListener('click', function () {
+    appriseCopyToClipboard(detailsFull, '{% trans "URL copied to clipboard" %}');
   });
 {% endblock jsfooter %}
 {# djlint:on #}

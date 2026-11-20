@@ -23,9 +23,9 @@
 # THE SOFTWARE.
 import base64
 import binascii
-from collections.abc import Mapping
-from contextlib import suppress
-from datetime import datetime
+from collections.abc import Iterable, Iterator, Mapping
+from contextlib import contextmanager, suppress
+from datetime import UTC, datetime
 import errno
 import fcntl
 import gzip
@@ -37,7 +37,14 @@ import logging
 import os
 import re
 import shutil
+import signal
+import socket
+import stat
 import tempfile
+import threading
+import time
+from typing import Any
+import zlib
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import apprise
@@ -46,6 +53,7 @@ from apprise.exception import AppriseTemplateError
 # Shared with Apprise on purpose so both projects apply the same destination
 # checks; see the module notes in apprise/utils/http.py.
 from apprise.utils.http import HTTPPolicy, HTTPPolicySession
+from apprise.utils.parse import GET_SCHEMA_RE
 from apprise.utils.template import (
     TEMPLATE_NAME_PATTERN,
     TEMPLATE_NAME_RE,
@@ -63,6 +71,7 @@ from .exceptions import (
     AppriseAPIImproperlyConfigured,
     AppriseAPIStorageError,
 )
+from .schedule import SCHEDULE_ERRORS, next_run
 from .urlfilter import AppriseURLFilter
 
 # Get an instance of a logger
@@ -79,10 +88,10 @@ MIME_IS_JSON = re.compile(r"(text|application)/(x-)?json", re.I)
 # otherwise expose files on the API server.
 ATTACH_HTTP_SCHEME = re.compile(r"^https?://", re.I)
 
-# Parsing of Accept; the following amounts to Accept All
-# */*
-# <blank>
-ACCEPT_ALL = re.compile(r"^\s*([*]/[*]|)\s*$", re.I)
+# Accept values that amount to Accept All, once spaces around them are
+# removed: */* and a blank one. Compared as text, since a pattern with
+# spaces on both sides slows down a lot on a long run of spaces.
+ACCEPT_ALL = frozenset({"", "*/*"})
 
 # This header keeps configuration keys out of URLs and access logs. Validate
 # it because headers bypass the URL pattern and may become SIMPLE filenames.
@@ -92,6 +101,59 @@ CONFIG_KEY_HEADER = "X-Apprise-Config-ID"
 CONFIG_KEY_MAX_LENGTH = 128
 CONFIG_KEY_REGEX = r"[\w_-]{{1,{}}}".format(CONFIG_KEY_MAX_LENGTH)
 CONFIG_KEY_PATTERN = re.compile(r"^{}$".format(CONFIG_KEY_REGEX))
+
+# Each Config ID keeps its reminders in a hidden file ending in
+# this suffix, beside its configuration.
+REMINDER_SUFFIX = ".reminders"
+
+# The layout version written into every reminder file.
+REMINDER_VERSION = 1
+
+# Requests and threads of one process take turns on this before waiting for
+# the reminder lock file. gevent makes it cooperative in the web workers.
+REMINDER_PROCESS_LOCK = threading.Lock()
+
+# The shortest and longest pause, in seconds, between tries for the reminder
+# lock file while another process holds it.
+REMINDER_GUARD_PAUSE = (0.005, 0.1)
+
+# Files attached to reminders live in this hidden folder of the configuration
+# directory. Each is named by the SHA-256 of its content, so a file used by
+# several reminders is stored once and a config move never has to touch them.
+REMINDER_FILES_DIR = ".reminder-files"
+
+# A stored file no reminder uses is kept this many seconds before pruning, in
+# case the reminder that uploaded it is still being saved.
+REMINDER_FILE_GRACE = 3600
+
+# Added to a reminder file's name while its configuration is being removed.
+# It no longer ends in REMINDER_SUFFIX, so nothing sends from it meanwhile.
+REMOVING_SUFFIX = ".removing"
+
+# What a file system that cannot flush a file to disk reports, such as some
+# network shares. Saving then goes on without it.
+UNSUPPORTED_SYNC_ERRORS = frozenset({errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP, errno.ENOSYS})
+
+# Replaces REMOVING_SUFFIX once the configuration is gone. Reminders marked
+# this way are only ever deleted, even if the Config ID is saved again.
+REMOVED_SUFFIX = ".removed"
+
+# An administrator's limits for a Config ID, kept beside its configuration.
+LIMITS_SUFFIX = ".limits"
+
+# Touched when a Config ID is used, so idle reminders can be paused.
+SEEN_SUFFIX = ".seen"
+
+# The running scheduler holds a lock on this file and records its process ID
+# in it. The name must not end in .lock, or SIMPLE mode would list it as a key.
+SCHEDULER_PID_FILE = ".scheduler.pid"
+
+# Touched whenever reminders change. A scheduler that cannot be signalled,
+# such as one on another host sharing this directory, checks it now and then.
+REMINDER_STAMP_FILE = ".reminder.changed"
+
+# HASH mode stores files under a directory named after two hex characters.
+HASH_PREFIX_RE = re.compile(r"^[0-9a-f]{2}$")
 
 
 def _configured_datetime(timestamp):
@@ -120,6 +182,15 @@ N_MGR.evict_on_disable = True
 
 # Prepare our Attachment URL Filter
 ATTACH_URL_FILTER = AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS)
+
+# The attachment preview uses the same rules, and also refuses the local
+# network unless APPRISE_ATTACH_PREVIEW_INTERNAL allows it. A deny list that
+# already refuses it is used as it is, so the host is never looked up twice.
+ATTACH_PREVIEW_FILTER = (
+    ATTACH_URL_FILTER
+    if settings.APPRISE_ATTACH_PREVIEW_INTERNAL or ATTACH_URL_FILTER.blocks_internal
+    else AppriseURLFilter(settings.APPRISE_ATTACH_ALLOW_URLS, settings.APPRISE_ATTACH_DENY_URLS + " internal")
+)
 
 # Keep each multipart read small while leaving enough room for efficient I/O.
 ATTACH_UPLOAD_CHUNK_SIZE = 64 * 1024
@@ -165,6 +236,11 @@ def stateful_store_enabled():
     return mode in {AppriseStoreMode.HASH, AppriseStoreMode.SIMPLE}
 
 
+def reminders_enabled() -> bool:
+    """Return whether reminders are turned on, which needs saved configurations."""
+    return settings.APPRISE_REMINDER_ENABLED and stateful_store_enabled()
+
+
 # Matches a template[name] form field. A template value is posted as
 # template[name]=value.
 TEMPLATE_FIELD_RE = re.compile(r"\Atemplate\[(?P<name>" + TEMPLATE_NAME_PATTERN + r")\]\Z")
@@ -175,6 +251,66 @@ TEMPLATE_FIELD_PREFIX = "template["
 
 class TemplateValueError(ValueError):
     """Raised when a supplied set of template values cannot be used."""
+
+
+def _file_exists(path: str) -> bool | None:
+    """Return whether a file is there.
+
+    - Returns ``None`` when that cannot be told, e.g. a network share that is
+      not answering, so nothing is removed on a guess.
+    """
+    try:
+        return stat.S_ISREG(os.stat(path).st_mode)
+
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+
+    except OSError:
+        return None
+
+
+def _sync_to_disk(descriptor: int) -> None:
+    """Make sure what was written to an open file is on disk.
+
+    - Skipped on a file system that cannot do this, such as some network
+      shares. A real write error still raises ``OSError``.
+    """
+    try:
+        os.fsync(descriptor)
+
+    except OSError as e:
+        # Saving goes on without it where the file system has no support.
+        if e.errno not in UNSUPPORTED_SYNC_ERRORS:
+            raise
+
+
+def process_space() -> int | None:
+    """Return an ID for the set of process IDs this process belongs to.
+
+    - Containers each have their own, so the same process ID in two of them
+      means two different processes.
+    - ``None`` on a system that does not show it (anything but Linux).
+    """
+    try:
+        return os.stat("/proc/self/ns/pid").st_ino
+
+    except OSError:
+        return None
+
+
+def reminder_file_names(events: list) -> set[str]:
+    """Return the name of every stored file the given reminders use.
+
+    - Anything that is not a list of attachments (such as a file edited by
+      hand) names no files, rather than stopping a removal or a prune.
+    """
+    return {
+        entry["file"]
+        for event in events
+        if isinstance(event.get("attach"), list)
+        for entry in event["attach"]
+        if isinstance(entry, dict) and isinstance(entry.get("file"), str)
+    }
 
 
 def normalize_template_values(entries):
@@ -308,7 +444,7 @@ def is_json_response(request: HttpRequest) -> bool:
     accept = request.headers.get("accept", "")
     content_type = request.content_type or request.headers.get("content-type", "")
     return MIME_IS_JSON.match(accept) is not None or (
-        ACCEPT_ALL.match(accept) is not None and MIME_IS_JSON.match(content_type) is not None
+        accept.strip() in ACCEPT_ALL and MIME_IS_JSON.match(content_type) is not None
     )
 
 
@@ -437,9 +573,18 @@ class HTTPAttachment(A_MGR["http"]):
     Web Attachments
     """
 
-    def __init__(self, filename=None, delete=True, **kwargs):
+    def __init__(
+        self,
+        filename: str | None = None,
+        delete: bool = True,
+        url_filter: AppriseURLFilter | None = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Initialize our attachment
+
+        - ``url_filter``: the rules the download must pass; the attachment
+          rules (``ATTACH_URL_FILTER``) by default.
         """
         # Establish every cleanup attribute before later setup can fail.
         self.http_session = None
@@ -454,7 +599,7 @@ class HTTPAttachment(A_MGR["http"]):
         self._filename = effective_name
 
         # Bind both checks to one policy so they cannot drift independently.
-        url_filter = ATTACH_URL_FILTER
+        url_filter = url_filter or ATTACH_URL_FILTER
         self.http_session = HTTPPolicySession(
             HTTPPolicy(
                 url_filter=lambda url: url_filter.is_allowed(
@@ -530,6 +675,17 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
         return False
 
     return True
+
+
+def url_scheme(url: str) -> str:
+    """Return just the scheme of a URL, such as ``json://``.
+
+    - Read the way Apprise reads it, so nothing typed in front of the scheme
+      (such as a token) is ever given back.
+    - Returns "" when the text has no scheme.
+    """
+    match = GET_SCHEMA_RE.match(url)
+    return match.group("schema").lower() + "://" if match else ""
 
 
 def _upload_chunks(upload, chunk_size):
@@ -636,18 +792,18 @@ def _decode_base64_attachment(value, filename, size_limit):
     return decoded
 
 
-def _build_http_attachment(url, no, fallback_filename, override_filename=None):
-    """Build a hosted HTTP attachment from either supported URL input form.
+def check_attachment_url(url: Any, no: int = 1, url_filter: AppriseURLFilter | None = None) -> dict[str, Any]:
+    """Refuse a web attachment the configured rules do not allow, without downloading it.
 
-    Only HTTP(S) URLs that pass the configured rules are accepted. An explicit
-    filename wins over URL-derived names, with ``fallback_filename`` used last.
+    - ``url_filter``: the rules to apply; the attachment rules by default.
+    - Returns the parsed URL details.
     """
     if not isinstance(url, str) or not ATTACH_HTTP_SCHEME.match(url):
         # Reject local and unsupported sources before parsing the URL.
         raise AppriseAPIImproperlyConfigured(f"Failed to load attachment {no} (not web request)")
 
     # The HTTP transport checks and pins the destination address.
-    if not ATTACH_URL_FILTER.is_allowed(url, resolve=False):
+    if not (url_filter or ATTACH_URL_FILTER).is_allowed(url, resolve=False):
         # Reject URLs blocked by the configured attachment rules.
         raise AppriseAPIImproperlyConfigured(f"Denied attachment {no} (blocked web request)")
 
@@ -655,6 +811,59 @@ def _build_http_attachment(url, no, fallback_filename, override_filename=None):
     _parsed = A_MGR["http"].parse_url(url)
     if not _parsed:
         raise AppriseAPIImproperlyConfigured(f"Failed to parse attachment {no} URL")
+
+    return _parsed
+
+
+# Where the documentation explains why an attachment address is refused.
+ATTACH_BLOCKED_HELP = "https://appriseit.com/api/deployment/#blocked-attachment-addresses"
+
+
+def preview_refusal(url: Any) -> dict[str, str] | None:
+    """Return why the preview rules refuse a web address, or ``None``.
+
+    - ``reason``: ``"internal"`` when the address is on the local network, or
+      ``"rules"`` when the allow or deny list refuses it.
+    - ``setting``: the environment variable the administrator would change.
+    - ``help``: where the documentation explains it.
+    - Anything else (not a web address, or a host that can't be found) is
+      left for the download to report.
+    """
+    if not isinstance(url, str) or not ATTACH_HTTP_SCHEME.match(url):
+        return None
+
+    # Which rule refuses it; the host is looked up to tell if it is local.
+    refusal = ATTACH_PREVIEW_FILTER.refusal(url)
+    if refusal == "internal":
+        # Turned off by the deny list itself, or only for previews.
+        setting = (
+            "APPRISE_ATTACH_REJECT_URL" if ATTACH_URL_FILTER.blocks_internal else "APPRISE_ATTACH_PREVIEW_INTERNAL"
+        )
+        return {"reason": "internal", "setting": setting, "help": ATTACH_BLOCKED_HELP}
+
+    if refusal in {"deny", "allow"}:
+        # The deny list names it, or the allow list leaves it out.
+        setting = "APPRISE_ATTACH_REJECT_URL" if refusal == "deny" else "APPRISE_ATTACH_ALLOW_URL"
+        return {"reason": "rules", "setting": setting, "help": ATTACH_BLOCKED_HELP}
+
+    return None
+
+
+def build_http_attachment(
+    url: Any,
+    no: int,
+    fallback_filename: str,
+    override_filename: str | None = None,
+    url_filter: AppriseURLFilter | None = None,
+) -> HTTPAttachment:
+    """Build a hosted HTTP attachment from either supported URL input form.
+
+    - Only HTTP(S) URLs that pass the configured rules are accepted.
+    - An explicit filename wins over URL-derived names, with
+      ``fallback_filename`` used last.
+    - ``url_filter``: the rules to apply; the attachment rules by default.
+    """
+    _parsed = check_attachment_url(url, no, url_filter)
 
     # Prefer an explicit name, then ``?name=``, the URL path, and the fallback.
     if override_filename:
@@ -664,7 +873,7 @@ def _build_http_attachment(url, no, fallback_filename, override_filename=None):
         if not _path_name:
             _parsed["name"] = fallback_filename
 
-    attachment = HTTPAttachment(**_parsed)
+    attachment = HTTPAttachment(url_filter=url_filter, **_parsed)
     try:
         available = bool(attachment)
     except OSError as error:
@@ -759,11 +968,11 @@ def parse_attachments(attachment_payload, files_request):
                     count -= 1
                     continue
 
-                attachment = _build_http_attachment(entry, no, filename)
+                attachment = build_http_attachment(entry, no, filename)
 
             elif isinstance(entry, dict) and AttachmentPayload.URL in entry and AttachmentPayload.BASE64 not in entry:
                 # URL dictionaries use the same validation as string URLs.
-                attachment = _build_http_attachment(
+                attachment = build_http_attachment(
                     entry[AttachmentPayload.URL],
                     no,
                     filename,
@@ -892,6 +1101,12 @@ class AppriseConfigCache:
             # Do nothing
             return False
 
+        if _file_exists(self.reminder_path(key) + REMOVING_SUFFIX) is not False:
+            # A removal of this Config ID stopped part way; finish it first.
+            with self.reminder_guard():
+                if not self._finish_removal(key):
+                    return False
+
         # First two characters are reserved for cache level directory writing.
         path, filename = self.path(key)
         created_at = self._creation_timestamp(key)
@@ -987,7 +1202,13 @@ class AppriseConfigCache:
 
         # First two characters are reserved for cache level directory writing.
         path, filename = self.path(key)
+        return self._read_content(path, filename)
 
+    def _read_content(self, path: str, filename: str) -> tuple[str | None, str | None]:
+        """Read the configuration named ``filename`` inside ``path``.
+
+        Return values match ``get()``.
+        """
         # prepare our format to return
         fmt = None
 
@@ -1022,7 +1243,8 @@ class AppriseConfigCache:
                     # Write our content to disk
                     content = f.read().decode()
 
-            except (OSError, UnicodeDecodeError):
+            # A cut-short file raises EOFError, and damaged data zlib.error.
+            except (OSError, UnicodeDecodeError, EOFError, zlib.error):
                 # Two None values distinguish a read failure from a missing file.
                 return (None, None)
 
@@ -1039,12 +1261,206 @@ class AppriseConfigCache:
         # return our read content
         return (content, fmt)
 
-    def clear(self, key, formats=None):
+    def clear(self, key: str, formats: set[str] | None = None) -> bool | None:
         """Remove content for ``key``, optionally limited by format.
 
-        Return ``True`` when content was removed, ``None`` when nothing
-        existed, or ``False`` when removal failed.
+        - Removing every format removes the configuration's reminders too.
+        - Return ``True`` when content was removed, ``None`` when nothing
+          existed, or ``False`` when removal failed.
         """
+        if self.mode == AppriseStoreMode.DISABLED or formats is not None:
+            return self._clear(key, formats)
+
+        # The reminders are moved aside first and only deleted once the
+        # configuration is gone, so a failure leaves both as they were.
+        reminder_file = self.reminder_path(key)
+        aside = reminder_file + REMOVING_SUFFIX
+        with self.reminder_guard():
+            # Reminders an earlier failure left aside are settled first, so
+            # moving these aside never overwrites them; if that fails, stop.
+            if _file_exists(aside) is not False:
+                dropped = set()
+                settled = self._settle_aside(aside, dropped)
+                self.drop_unused_reminder_files(dropped)
+                if not settled and _file_exists(aside) is not False:
+                    logger.warning("Could not remove KEY: %s; reminders left aside earlier are still there", key)
+                    return False
+
+            try:
+                # Set the reminders aside so nothing sends from them while the configuration goes.
+                os.replace(reminder_file, aside)
+                moved = True
+
+            except FileNotFoundError:
+                # No reminders to deal with.
+                moved = False
+
+            except OSError as e:
+                logger.warning("Could not remove the reminders of KEY: %s", key)
+                logger.debug("Reminder removal error: %s", e)
+                return False
+
+            # Then remove the configuration itself.
+            response = self._clear(key)
+            if not moved:
+                return response
+
+            if response is False and self.get(key)[1] != "":
+                # The configuration is still there, so its reminders go back.
+                try:
+                    os.replace(aside, reminder_file)
+
+                except OSError as e:
+                    logger.error(
+                        "The reminders of KEY: %s could not be put back; the scheduler or prune will retry", key
+                    )
+                    logger.debug("Reminder restore error: %s", e)
+
+                return response
+
+            # Read what they used before deleting them, so files nothing else
+            # uses can go now.
+            events = self.read_reminders(aside) or []
+
+            # The configuration is gone. Mark the reminders finished before
+            # deleting them, so recovery never brings them back, even if the
+            # Config ID is saved again first.
+            done = reminder_file + REMOVED_SUFFIX
+            try:
+                os.replace(aside, done)
+
+            except OSError as e:
+                logger.error("The removed reminders of KEY: %s could not be marked finished", key)
+                logger.debug("Reminder removal error: %s", e)
+                done = aside
+
+            # Gone for good, along with any stored file only they used.
+            self._remove_file(done)
+            self.drop_unused_reminder_files(reminder_file_names(events))
+            self.wake_scheduler()
+
+        return response
+
+    def recover_removed_reminders(self) -> int:
+        """Finish configuration removals that stopped part way, such as on a crash.
+
+        - Reminders whose configuration is still there go back beside it,
+          joined with any saved since.
+        - Reminders whose configuration is gone are removed, along with the
+          stored files nothing else uses.
+        - Returns how many were dealt with.
+        """
+        # Reminders set aside by a removal, and ones marked finished.
+        suffixes = (REMINDER_SUFFIX + REMOVING_SUFFIX, REMINDER_SUFFIX + REMOVED_SUFFIX)
+
+        # Usually there are none, so no lock is taken and nothing is written.
+        # This also covers storage that is turned off or read-only.
+        if not any(self.reminder_files(suffix) for suffix in suffixes):
+            return 0
+
+        handled = 0
+        # The stored files of reminders removed here.
+        dropped = set()
+        with self.reminder_guard():
+            # Listed again under the lock, since another process may have
+            # finished some meanwhile.
+            for aside in self.reminder_files(suffixes[0]) + self.reminder_files(suffixes[1]):
+                handled += self._settle_aside(aside, dropped)
+
+            # Files only the removed reminders used can go now.
+            self.drop_unused_reminder_files(dropped)
+
+        return handled
+
+    def _settle_aside(self, aside: str, dropped: set[str]) -> bool:
+        """Put back or remove one set of reminders left aside.
+
+        - Ones marked REMOVING_SUFFIX go back if their configuration is still
+          there. Ones marked REMOVED_SUFFIX, or whose configuration is gone,
+          are removed.
+        - ``dropped``: gets the stored files of reminders removed here.
+        - Returns whether it was dealt with. Hold ``reminder_guard()`` while calling.
+        """
+        events = self.read_reminders(aside)
+        if events is None:
+            # Damaged; leave it for a person to look at.
+            logger.warning("Could not read the reminders left in %s", aside)
+            return False
+
+        # A ``.removed`` file is only ever deleted; a ``.removing`` one may go back.
+        finished = aside.endswith(REMOVED_SUFFIX)
+        reminder_file = aside[: -len(REMOVED_SUFFIX if finished else REMOVING_SUFFIX)]
+        configured = False if finished else self.reminder_has_config(reminder_file)
+        if configured is None:
+            # Removing them on a guess could lose them; try again later.
+            logger.warning("Could not tell whether %s is still configured; left %s for later", reminder_file, aside)
+            return False
+
+        if configured:
+            # Keep any saved since, then add back the ones set aside.
+            current = self.read_reminders(reminder_file)
+            if current is None:
+                logger.warning("Could not read %s; left %s for later", reminder_file, aside)
+                return False
+
+            # A reminder saved meanwhile wins over the copy set aside.
+            known = {event.get("id") for event in current}
+            restored = current + [event for event in events if event.get("id") not in known]
+            if not self.write_reminders(reminder_file, restored):
+                return False
+
+            logger.warning("Put back %d reminder(s) left aside in %s", len(events), aside)
+
+        else:
+            # The removal finished everything else, so finish it too.
+            logger.warning("Removed %d reminder(s) left aside in %s", len(events), aside)
+            dropped.update(reminder_file_names(events))
+
+        return self._remove_file(aside) is not False
+
+    def _finish_removal(self, key: str) -> bool:
+        """Finish a removal of ``key`` that stopped part way, before it is used again.
+
+        - Reminders left aside while no configuration is saved belong to the
+          one removed, so they are marked finished and never come back.
+        - Ones whose configuration is still there are put back beside it.
+        - Returns ``False`` when they could not be marked or put back, or when
+          the files could not be checked. Hold ``reminder_guard()``.
+        """
+        reminder_file = self.reminder_path(key)
+        aside = reminder_file + REMOVING_SUFFIX
+        waiting = _file_exists(aside)
+        if waiting is False:
+            # Nothing left aside.
+            return True
+
+        configured = None if waiting is None else self.reminder_has_config(reminder_file)
+        if configured is None:
+            logger.warning("Could not check an earlier removal of KEY: %s", key)
+            return False
+
+        if configured:
+            # The removal failed, so its reminders go back and are sent again.
+            return self._settle_aside(aside, set())
+
+        # The configuration is gone, so the set-aside reminders are marked for deletion.
+        done = reminder_file + REMOVED_SUFFIX
+        try:
+            os.replace(aside, done)
+
+        except OSError as e:
+            logger.warning("Could not finish an earlier removal of KEY: %s", key)
+            logger.debug("Reminder removal error: %s", e)
+            return False
+
+        # Remove them now; recovery tries again if this fails.
+        dropped = set()
+        self._settle_aside(done, dropped)
+        self.drop_unused_reminder_files(dropped)
+        return True
+
+    def _clear(self, key: str, formats: set[str] | None = None) -> bool | None:
+        """Remove content for ``key``; see ``clear()``."""
         # Default our response None
         response = None
 
@@ -1085,6 +1501,10 @@ class AppriseConfigCache:
             except OSError as e:
                 if e.errno != errno.ENOENT:
                     response = False
+
+        # The record of when the Config ID was last used goes too.
+        if clear_creation and response is not False and self._remove_file(self.seen_path(key)) is False:
+            response = False
 
         return response
 
@@ -1138,9 +1558,9 @@ class AppriseConfigCache:
             return (self.root, key)
 
     def keys(self):
-        """Return stored keys, including keys with only an access record.
+        """Return stored keys, including keys with only an access record or reminders.
 
-        Access-only keys are listed because they are still occupied and must
+        Those keys are listed because they are still occupied and must
         remain visible to administrators.
         """
         keys = set()
@@ -1150,10 +1570,13 @@ class AppriseConfigCache:
         lock_suffix = ".lock"
         for filename in os.listdir(self.root):
             if filename.startswith("."):
-                # Recover keys only from the hidden lock filename format.
-                # Other hidden files do not belong to the configuration list.
+                # Recover keys only from the hidden lock and reminder filename
+                # formats. Other hidden files do not belong to the configuration list.
                 if filename.endswith(lock_suffix) and len(filename) > len(lock_suffix) + 1:
                     keys.add(filename[1 : -len(lock_suffix)])
+                # Reminders sent only to their own URLs need no configuration.
+                elif filename.endswith(REMINDER_SUFFIX) and len(filename) > len(REMINDER_SUFFIX) + 1:
+                    keys.add(filename[1 : -len(REMINDER_SUFFIX)])
                 continue
             path = os.path.join(self.root, filename)
             if os.path.isfile(path):
@@ -1201,6 +1624,12 @@ class AppriseConfigCache:
         if self.mode == AppriseStoreMode.DISABLED:
             return False
 
+        # Check and hash the login before taking any lock. Hashing is slow on
+        # purpose, and reminder saves for every Config ID wait on the lock.
+        record = self._auth_record(key, username, password, access)
+        if record is None:
+            return False
+
         try:
             guard = self._acquire_auth_guard(key)
         except OSError:
@@ -1208,41 +1637,52 @@ class AppriseConfigCache:
             return False
 
         try:
-            return self._set_auth(key, username, password, access)
+            # Wait for a reminder change in progress, so none finishes after
+            # the login or its access has changed.
+            with self.reminder_guard():
+                saved = self._write_auth_record(key, record)
+                if saved:
+                    # The scheduler skips the reminders of a disabled
+                    # configuration, so it looks again once access may have changed.
+                    self.wake_scheduler()
+
+                return saved
+        except OSError:
+            logger.error("Could not lock reminders for KEY: %s", key)
+            return False
         finally:
             self._release_auth_guard(guard)
 
-    def _set_auth(self, key, username, password, access):
-        """Write credentials while the caller holds this key's guard."""
+    @staticmethod
+    def _auth_record(key: str, username: str | None, password: str, access: str) -> ConfigAuthRecord | None:
+        """Build the login record to save, or ``None`` when it is not valid."""
 
         if access not in Authentication.ACCESS_CHOICES:
             logger.error("Unsupported configuration access for KEY: %s", key)
-            return False
+            return None
 
         if username is None:
             username = ""
         if not isinstance(username, str) or not isinstance(password, str):
             logger.error("Credentials must be text for KEY: %s", key)
-            return False
+            return None
 
         # Normalize usernames while leaving passwords exactly as supplied.
         username = username.strip()
         if ":" in username:
             logger.error("Username cannot contain ':' for KEY: {}".format(key))
-            return False
+            return None
 
         try:
             # Django's password hasher adds a unique salt.
             digest = make_password("{}:{}".format(username, password))
 
-        except (TypeError, UnicodeError):
+        except UnicodeError:
+            # Both values are text here; only characters that cannot be encoded, such as a lone surrogate, fail.
             logger.error("Could not hash authentication credentials for KEY: {}".format(key))
-            return False
+            return None
 
-        return self._write_auth_record(
-            key,
-            ConfigAuthRecord(access=access, username=username, digest=digest),
-        )
+        return ConfigAuthRecord(access=access, username=username, digest=digest)
 
     def set_access(self, key, access):
         """Change access without replacing credentials.
@@ -1261,30 +1701,44 @@ class AppriseConfigCache:
             return False
 
         try:
-            try:
-                record = self.get_auth_record(key)
-            except AuthStorageError:
-                return False
+            # Wait for a reminder change in progress, so none finishes after
+            # the access has changed.
+            with self.reminder_guard():
+                try:
+                    record = self.get_auth_record(key)
+                except AuthStorageError:
+                    return False
 
-            if record is None:
-                if access not in {
-                    Authentication.ACCESS_PUBLIC,
-                    Authentication.ACCESS_DISABLED,
-                }:
-                    return False
-                record = ConfigAuthRecord(access=access)
-            else:
-                if record.digest is None and access not in {
-                    Authentication.ACCESS_PUBLIC,
-                    Authentication.ACCESS_DISABLED,
-                }:
-                    return False
-                record = ConfigAuthRecord(
-                    access=access,
-                    username=record.username,
-                    digest=record.digest,
-                )
-            return self._write_auth_record(key, record)
+                # Without a login, only access that needs no password can be set.
+                if record is None:
+                    if access not in {
+                        Authentication.ACCESS_PUBLIC,
+                        Authentication.ACCESS_DISABLED,
+                    }:
+                        return False
+                    record = ConfigAuthRecord(access=access)
+                else:
+                    if record.digest is None and access not in {
+                        Authentication.ACCESS_PUBLIC,
+                        Authentication.ACCESS_DISABLED,
+                    }:
+                        return False
+                    # Keep the login as it is and change only its access.
+                    record = ConfigAuthRecord(
+                        access=access,
+                        username=record.username,
+                        digest=record.digest,
+                    )
+                saved = self._write_auth_record(key, record)
+                if saved:
+                    # The scheduler skips the reminders of a disabled
+                    # configuration, so it looks again once access may have changed.
+                    self.wake_scheduler()
+
+                return saved
+        except OSError:
+            logger.error("Could not lock reminders for KEY: %s", key)
+            return False
         finally:
             self._release_auth_guard(guard)
 
@@ -1339,7 +1793,11 @@ class AppriseConfigCache:
     def get_auth_record(self, key):
         """Return a key's saved access record, or ``None`` when absent."""
         path, filename = self.auth_path(key)
-        full_path = os.path.join(path, filename)
+        return self._read_auth_record(os.path.join(path, filename), key)
+
+    @staticmethod
+    def _read_auth_record(full_path: str, key: str) -> ConfigAuthRecord | None:
+        """Read and check one access record file, or return ``None`` when absent."""
         try:
             with open(full_path) as f:
                 stored = f.read().strip()
@@ -1372,7 +1830,8 @@ class AppriseConfigCache:
             ):
                 raise ValueError
 
-        except (KeyError, TypeError, ValueError):
+        # A damaged file nested very deeply runs out of stack.
+        except (KeyError, TypeError, ValueError, RecursionError):
             logger.error("Could not decode authentication for KEY: {}".format(key))
             raise AuthStorageError("Invalid authentication record") from None
 
@@ -1424,7 +1883,19 @@ class AppriseConfigCache:
             return False
 
         try:
-            return self._clear_auth(key)
+            # Wait for a reminder change in progress, so none finishes after
+            # the login is gone.
+            with self.reminder_guard():
+                removed = self._clear_auth(key)
+                if removed:
+                    # The scheduler skips the reminders of a disabled
+                    # configuration, so it looks again once access may have changed.
+                    self.wake_scheduler()
+
+                return removed
+        except OSError:
+            logger.error("Could not lock reminders for KEY: %s", key)
+            return False
         finally:
             self._release_auth_guard(guard)
 
@@ -1457,7 +1928,12 @@ class AppriseConfigCache:
             return 0
 
         try:
-            return self._prune_unused_locks(older_than_seconds)
+            # A reminder saved meanwhile keeps the access record beside it.
+            with self.reminder_guard():
+                return self._prune_unused_locks(older_than_seconds)
+        except OSError as e:
+            logger.error("Could not lock reminders for authentication pruning (%s)", e)
+            return 0
         finally:
             # Always release the descriptor, including unexpected failures.
             self._release_auth_guard(guard)
@@ -1466,7 +1942,6 @@ class AppriseConfigCache:
         """Prune stale locks while the shared credential guard is held."""
 
         # Match only the filenames created by each storage mode.
-        hash_prefix_pattern = re.compile(r"^[0-9a-f]{2}$")
         hash_name_pattern = re.compile(r"^[0-9a-f]{54}$")
 
         if self.mode == AppriseStoreMode.HASH:
@@ -1485,7 +1960,7 @@ class AppriseConfigCache:
                     entries = []
 
                 for entry in entries:
-                    if not hash_prefix_pattern.match(entry.name):
+                    if not HASH_PREFIX_RE.match(entry.name):
                         continue
                     try:
                         if entry.is_dir(follow_symlinks=False):
@@ -1529,9 +2004,11 @@ class AppriseConfigCache:
                 if age < older_than_seconds:
                     continue
 
+                # Reminders count too: one sent only to its own URLs needs no
+                # configuration, and its access record still decides if it runs.
                 has_content = any(
                     os.path.isfile(os.path.join(directory, "{}.{}".format(name, ext))) for ext in content_extensions
-                )
+                ) or os.path.isfile(os.path.join(directory, ".{}{}".format(name, REMINDER_SUFFIX)))
                 if has_content:
                     continue
 
@@ -1544,6 +2021,9 @@ class AppriseConfigCache:
 
                 logger.info("Pruned stale unused authentication lock: {}".format(name))
                 pruned += 1
+
+                # An administrator's limits belong to the same unused Config ID.
+                self._remove_file(os.path.join(directory, ".{}{}".format(name, LIMITS_SUFFIX)))
 
             if self.mode == AppriseStoreMode.HASH:
                 try:
@@ -1631,7 +2111,8 @@ class AppriseConfigCache:
     def move(self, from_key, to_key):
         """Move a configuration and its access record to another key.
 
-        An access-only key moves without configuration content. The result is a
+        A key with only an access record or reminders moves without
+        configuration content. The result is a
         ``MoveResult`` value describing success, absence, conflict, or failure.
         """
         if self.mode == AppriseStoreMode.DISABLED:
@@ -1641,7 +2122,17 @@ class AppriseConfigCache:
         try:
             # Guard the source and destination without locking routine logins.
             guard = self._acquire_auth_guard(from_key)
-            return self._move(from_key, to_key)
+            # Keep reminder updates from writing to the old key mid-move.
+            with self.reminder_guard():
+                # A removal of either key that stopped part way is finished
+                # first, so the reminders left aside move with their configuration.
+                settled = self._finish_removal(from_key) and self._finish_removal(to_key)
+                result = self._move(from_key, to_key) if settled else MoveResult.FAILED
+
+            if result == MoveResult.MOVED and os.path.isfile(self.reminder_path(to_key)):
+                # The scheduler must find the reminders under its new name.
+                self.wake_scheduler()
+            return result
         except OSError as e:
             logger.error("Could not lock configuration move from %s to %s (%s)", from_key, to_key, e)
             return MoveResult.FAILED
@@ -1667,11 +2158,24 @@ class AppriseConfigCache:
             (src_lock, dst_lock),
         ]
         sources = [(source, destination) for source, destination in candidates if os.path.isfile(source)]
-        if not sources:
+        # Reminders sent only to their own URLs need no configuration, so they
+        # are enough to move on their own.
+        if not sources and not os.path.isfile(self.reminder_path(from_key)):
             return MoveResult.NOT_FOUND
         candidates.append((src_created, dst_created))
         if os.path.isfile(src_created):
             sources.append((src_created, dst_created))
+        # A last-used stamp left beside no reminders is stale, not a conflict.
+        if not os.path.isfile(self._sidecar_path(to_key, REMINDER_SUFFIX)):
+            self._remove_file(self._sidecar_path(to_key, SEEN_SUFFIX))
+
+        # Reminders, limits and the last-used stamp follow the configuration.
+        for suffix in (REMINDER_SUFFIX, LIMITS_SUFFIX, SEEN_SUFFIX):
+            src_sidecar = self._sidecar_path(from_key, suffix)
+            dst_sidecar = self._sidecar_path(to_key, suffix)
+            candidates.append((src_sidecar, dst_sidecar))
+            if os.path.isfile(src_sidecar):
+                sources.append((src_sidecar, dst_sidecar))
         if any(os.path.isfile(destination) for _, destination in candidates):
             return MoveResult.CONFLICT
 
@@ -1749,6 +2253,800 @@ class AppriseConfigCache:
 
         return True
 
+    def reminder_path(self, key: str) -> str:
+        """Return the hidden file that holds a Config ID's reminders."""
+        return self._sidecar_path(key, REMINDER_SUFFIX)
+
+    def reminder_files(self, suffix: str = REMINDER_SUFFIX, complete: bool = False) -> list[str] | None:
+        """Return every reminder file in the configuration directory.
+
+        - ``suffix``: the ending to look for; reminders being removed end in
+          REMINDER_SUFFIX + REMOVING_SUFFIX.
+        - ``complete``: return ``None`` when a directory could not be listed,
+          rather than leaving its files out.
+        """
+        if self.mode == AppriseStoreMode.DISABLED:
+            return []
+
+        # SIMPLE mode keeps every file directly in the root.
+        directories = [self.root]
+        if self.mode == AppriseStoreMode.HASH:
+            # HASH reminder files live under root/<prefix>/.<remainder>.reminders.
+            try:
+                with os.scandir(self.root) as it:
+                    # Only the two-character prefix folders, and never a link to one.
+                    directories = [
+                        entry.path
+                        for entry in it
+                        if HASH_PREFIX_RE.match(entry.name) and entry.is_dir(follow_symlinks=False)
+                    ]
+
+            except FileNotFoundError:
+                return []
+
+            except OSError:
+                return None if complete else []
+
+        # Gather the hidden reminder files from each directory.
+        files = []
+        for directory in directories:
+            try:
+                # The names in one folder; a folder that cannot be read is skipped.
+                names = os.listdir(directory)
+
+            except FileNotFoundError:
+                # Never made, or removed since it was found, so it holds none.
+                continue
+
+            except OSError as e:
+                logger.warning("Could not list reminders in %s", directory)
+                logger.debug("Reminder listing error: %s", e)
+                if complete:
+                    return None
+                continue
+
+            # A match looks like ".<name>.reminders", with a name of at least one character.
+            files.extend(
+                os.path.join(directory, name)
+                for name in names
+                if name.startswith(".") and name.endswith(suffix) and len(name) > len(suffix) + 1
+            )
+
+        # Sorted, so the files are always read in the same order.
+        return sorted(files)
+
+    def reminder_has_config(self, reminder_file: str) -> bool | None:
+        """Return whether a configuration is saved beside a reminder file.
+
+        - Returns ``None`` when that cannot be told.
+        """
+        # ".<name>.reminders" -> "<name>"
+        path, name = os.path.split(reminder_file)
+        name = name[1 : -len(REMINDER_SUFFIX)]
+
+        # The configuration is saved as either text or YAML.
+        if self.mode == AppriseStoreMode.HASH:
+            extensions = (apprise.ConfigFormat.TEXT.value, apprise.ConfigFormat.YAML.value)
+        else:  # AppriseStoreMode.SIMPLE
+            extensions = (SimpleFileExtension.TEXT, SimpleFileExtension.YAML)
+        found = [_file_exists(os.path.join(path, "{}.{}".format(name, ext))) for ext in extensions]
+        if True in found:
+            return True
+
+        # One that could not be checked may be the configuration.
+        return None if None in found else False
+
+    def reminder_config(self, reminder_file: str) -> tuple[str | None, str | None]:
+        """Read the configuration stored beside a reminder file.
+
+        The scheduler uses this because HASH mode hides the original key.
+        Return values match ``get()``.
+        """
+        # ".<name>.reminders" -> "<name>", the configuration's own file name.
+        path, name = os.path.split(reminder_file)
+        return self._read_content(path, name[1 : -len(REMINDER_SUFFIX)])
+
+    def release_user_reminders(self, key: str, keep: bool) -> tuple[list[dict], list[dict]] | None:
+        """Deal with the reminders a Config ID's user added once their login is removed.
+
+        - ``keep``: hand them to the administrator instead of removing them.
+        - Removing a repeating reminder also removes the one-offs that replaced
+          some of its times, the same as deleting it.
+        - Removing a one-off gives the time it replaced back to its repeating
+          reminder.
+        - Returns the reminders as they were and as they are now, read and
+          saved under one lock, or ``None`` when the file could not be read or
+          saved.
+        """
+        reminder_file = self.reminder_path(key)
+        with self.reminder_guard():
+            events = self.read_reminders(reminder_file)
+            if events is None:
+                return None
+
+            # A copy of each, as the ones below are changed in place.
+            before = [dict(event) for event in events]
+
+            # Nothing to do when the user added none.
+            if not any(event.get("owner") == "user" for event in events):
+                return before, events
+
+            # Keeping them: the administrator now owns every reminder.
+            if keep:
+                for event in events:
+                    event["owner"] = "admin"
+
+                return (before, events) if self.write_reminders(reminder_file, events) else None
+
+            # The IDs of the user's reminders, which are being removed.
+            removed = {event.get("id") for event in events if event.get("owner") == "user"}
+
+            # The (series ID, time) pairs those one-offs stood in for.
+            replaced = {
+                (event.get("series"), event.get("occurrence")) for event in events if event.get("id") in removed
+            }
+            # Drop the user's reminders and any one-off that stood in for one of their series.
+            events = [
+                event for event in events if event.get("id") not in removed and event.get("series") not in removed
+            ]
+
+            # Give each remaining series back the times a removed one-off had taken.
+            now = datetime.now(UTC)
+            for event in events:
+                skip = [due for due in event.get("skip") or () if (event.get("id"), due) not in replaced]
+                if skip != (event.get("skip") or []):
+                    event["skip"] = skip
+                    # A time given back may now be the next one to send.
+                    with suppress(*SCHEDULE_ERRORS):
+                        event["next"] = next_run(event, now)
+
+            return (before, events) if self.write_reminders(reminder_file, events) else None
+
+    def reminder_access(self, reminder_file: str) -> str | None:
+        """Return the saved access of the configuration beside a reminder file.
+
+        - ``None`` means there is no access record, so the administrator manages it.
+        - Raises ``AuthStorageError`` when the record is damaged.
+        """
+        # The access record sits beside it as ".<name>.lock".
+        record = self._read_auth_record(reminder_file[: -len(REMINDER_SUFFIX)] + ".lock", reminder_file)
+        return None if record is None else record.access
+
+    @contextmanager
+    def reminder_guard(self) -> Iterator[None]:
+        """Hold the lock that keeps reminder updates from overlapping.
+
+        - Requests and threads of this process first take turns on a lock of
+          their own, so only one at a time waits for the lock file.
+        - The lock file is then tried without blocking, pausing between tries.
+          A pause lets gevent run other requests, where waiting inside the
+          operating system would stop them all.
+        """
+        with REMINDER_PROCESS_LOCK:
+            # One lock file in the root covers every Config ID's reminders.
+            os.makedirs(self.root, exist_ok=True)
+            descriptor = os.open(os.path.join(self.root, ".reminder.guard"), os.O_CREAT | os.O_RDWR, 0o600)
+            try:
+                pause = REMINDER_GUARD_PAUSE[0]
+                while True:
+                    try:
+                        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        break
+
+                    except BlockingIOError:
+                        # Another process holds it; wait a little longer each time.
+                        time.sleep(pause)
+                        pause = min(pause * 2, REMINDER_GUARD_PAUSE[1])
+
+                yield
+
+            finally:
+                self._release_auth_guard(descriptor)
+
+    @staticmethod
+    def read_reminders(reminder_file: str) -> list[dict] | None:
+        """Return the events stored in a reminder file.
+
+        - A missing file returns an empty list.
+        - An unreadable or damaged file returns ``None``.
+        """
+        try:
+            with open(reminder_file, encoding="utf-8") as f:
+                data = loads(f.read())
+
+        except FileNotFoundError:
+            return []
+
+        # Very deeply nested JSON (a damaged file) runs out of stack.
+        except (OSError, ValueError, RecursionError) as e:
+            logger.warning("Could not read reminders %s", reminder_file)
+            logger.debug("Reminder read error: %s", e)
+            return None
+
+        # The file looks like {"version": 1, "events": [...]}.
+        events = data.get("events") if isinstance(data, dict) else None
+        if not isinstance(events, list):
+            logger.warning("Ignored damaged reminders %s", reminder_file)
+            return None
+
+        # Anything in the list that is not a reminder is left out.
+        return [event for event in events if isinstance(event, dict)]
+
+    def write_reminders(self, reminder_file: str, events: list[dict]) -> bool:
+        """Replace a reminder file in one step, then wake the scheduler.
+
+        An empty list removes the file. Hold ``reminder_guard()`` while calling.
+        """
+        # No reminders left: remove the file rather than saving an empty one.
+        if not events:
+            removed = self._remove_file(reminder_file)
+            if removed:
+                self.wake_scheduler()
+
+            if removed is not False and reminder_file.endswith(REMINDER_SUFFIX):
+                # When it was last used only matters while it has reminders;
+                # an old stamp would make new ones look idle at once.
+                self._remove_file(reminder_file[: -len(REMINDER_SUFFIX)] + SEEN_SUFFIX)
+
+            return removed is not False
+
+        if not self._replace_json(reminder_file, {"version": REMINDER_VERSION, "events": events}):
+            return False
+
+        # The scheduler reads the change so its next wake-up time stays right.
+        self.wake_scheduler()
+        return True
+
+    @staticmethod
+    def _remove_file(path: str) -> bool | None:
+        """Remove a file. Return ``None`` when it was already gone, ``False`` on failure."""
+        try:
+            os.remove(path)
+
+        except FileNotFoundError:
+            return None
+
+        except OSError as e:
+            logger.warning("Could not remove %s", path)
+            logger.debug("Removal error: %s", e)
+            return False
+
+        return True
+
+    @staticmethod
+    def _replace_json(path: str, data: dict) -> bool:
+        """Write JSON to a file in one step, so readers never see half of it."""
+        directory, filename = os.path.split(path)
+        try:
+            os.makedirs(directory, exist_ok=True)
+            # The temporary name never ends in a suffix that is listed or read.
+            fd, tmp_path = tempfile.mkstemp(prefix=filename, dir=directory)
+
+        except OSError as e:
+            logger.warning("Could not prepare %s", path)
+            logger.debug("Preparation error: %s", e)
+            return False
+
+        try:
+            # Write the whole file under a temporary name first, and make sure
+            # it is on disk, so a crash never leaves an empty file in its place.
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(dumps(data, separators=(",", ":")))
+                f.flush()
+                # Where this cannot be done, the swap below is still all or nothing.
+                _sync_to_disk(f.fileno())
+
+            # Then swap it into place, which readers see as a single change.
+            os.replace(tmp_path, path)
+
+        except OSError as e:
+            logger.warning("Could not write %s", path)
+            logger.debug("Write error: %s", e)
+            with suppress(OSError):
+                os.remove(tmp_path)
+            return False
+
+        # Put the swap itself on disk too. Some systems (Windows, some network
+        # shares) cannot do this for a folder, which is fine.
+        with suppress(OSError):
+            folder = os.open(directory, os.O_RDONLY)
+            try:
+                os.fsync(folder)
+
+            finally:
+                os.close(folder)
+
+        return True
+
+    def _sidecar_path(self, key: str, suffix: str) -> str:
+        """Return a hidden file kept beside a Config ID's configuration."""
+        # e.g. "<dir>/abc.text" -> "<dir>/.abc.reminders"
+        path, filename = self.path(key)
+        return os.path.join(path, ".{}{}".format(filename, suffix))
+
+    def limits_path(self, key: str) -> str:
+        """Return the hidden file that holds a Config ID's limits."""
+        return self._sidecar_path(key, LIMITS_SUFFIX)
+
+    def get_limits(self, key: str) -> dict | None:
+        """Return the limits an administrator saved for a Config ID.
+
+        - An empty dict means none were saved.
+        - ``None`` means the file could not be read.
+        """
+        try:
+            with open(self.limits_path(key), encoding="utf-8") as f:
+                limits = loads(f.read())
+
+        except FileNotFoundError:
+            return {}
+
+        except (OSError, ValueError) as e:
+            logger.warning("Could not read limits for KEY: %s", key)
+            logger.debug("Limits read error: %s", e)
+            return None
+
+        # Anything other than a JSON object is treated as damaged.
+        return limits if isinstance(limits, dict) else None
+
+    def set_limits(self, key: str, limits: dict) -> bool:
+        """Save a Config ID's limits, removing the file when none are left."""
+        if not limits:
+            return self._remove_file(self.limits_path(key)) is not False
+
+        return self._replace_json(self.limits_path(key), limits)
+
+    def seen_path(self, key: str) -> str:
+        """Return the hidden file touched whenever a Config ID is used."""
+        return self._sidecar_path(key, SEEN_SUFFIX)
+
+    def note_use(self, key: str) -> None:
+        """Record that a Config ID was used, at most once a day.
+
+        Only kept when idle reminders are paused and the key has reminders.
+        """
+        # Nothing to track when idle pausing is off or the key has no reminders.
+        if settings.APPRISE_REMINDER_IDLE_DAYS <= 0 or not os.path.isfile(self.reminder_path(key)):
+            return
+
+        path = self.seen_path(key)
+        try:
+            # Already touched within the last day (86400 seconds).
+            if time.time() - os.path.getmtime(path) < 86400:
+                return
+
+        except OSError:
+            # Not touched before, so create it below.
+            pass
+
+        # Create the file if needed, then set its time to now.
+        if not touch(path):
+            logger.warning("Could not record use of KEY: %s", key)
+
+    @staticmethod
+    def reminder_seen(reminder_file: str) -> float | None:
+        """Return when the Config ID beside a reminder file was last used.
+
+        A Config ID never recorded starts counting now. ``None`` means the
+        record could not be read or started.
+        """
+        # ".<name>.reminders" -> ".<name>.seen"
+        path = reminder_file[: -len(REMINDER_SUFFIX)] + SEEN_SUFFIX
+        try:
+            # Opening to append creates a missing file without changing an existing one.
+            with open(path, "a"):
+                return os.path.getmtime(path)
+
+        except OSError as e:
+            logger.warning("Could not read when %s was last used", reminder_file)
+            logger.debug("Use record error: %s", e)
+            return None
+
+    def reminder_file_path(self, digest: str) -> str:
+        """Return where a stored reminder attachment lives."""
+        return os.path.join(self.root, REMINDER_FILES_DIR, digest)
+
+    def reminder_file_stored(self, digest: str) -> bool:
+        """Return whether a reminder attachment is in the store."""
+        return os.path.isfile(self.reminder_file_path(digest))
+
+    @staticmethod
+    def reminder_file_digest(source: str) -> tuple[str, int] | None:
+        """Return the SHA-256 name and size a file would be stored under.
+
+        Nothing is copied. Returns ``None`` when the file cannot be read.
+        """
+        digest = hashlib.sha256()
+        size = 0
+        try:
+            # Read in 64 KB pieces, hashing and counting the bytes on the way.
+            with open(source, "rb") as src:
+                for chunk in iter(lambda: src.read(65536), b""):
+                    digest.update(chunk)
+                    size += len(chunk)
+
+        except OSError as e:
+            logger.warning("Could not read a reminder attachment")
+            logger.debug("Reminder attachment error: %s", e)
+            return None
+
+        return digest.hexdigest(), size
+
+    def store_reminder_file(self, source: str, known: tuple[str, int] | None = None) -> tuple[str, int] | None:
+        """Copy a file into the reminder file store.
+
+        - Returns its SHA-256 name and size, or ``None`` when it could not be stored.
+        - A file already stored is kept and marked fresh, so pruning leaves it
+          alone while the reminder using it is saved. One of the wrong size
+          (cut short, such as by a power cut) is replaced.
+        - ``known``: its name and size when already worked out. A file stored
+          under that name and size is then only marked fresh, without reading
+          ``source`` again.
+        """
+        directory = os.path.join(self.root, REMINDER_FILES_DIR)
+        if known is not None:
+            stored = os.path.join(directory, known[0])
+            # Not stored (or not as it should be): copied below instead.
+            with suppress(OSError):
+                if os.path.getsize(stored) == known[1]:
+                    os.utime(stored)
+                    return known
+
+        tmp_path = None
+        try:
+            os.makedirs(directory, exist_ok=True)
+            fd, tmp_path = tempfile.mkstemp(prefix=".tmp-", dir=directory)
+            digest = hashlib.sha256()
+            size = 0
+
+            # Copy in 64 KB pieces, hashing and counting the bytes on the way.
+            with open(source, "rb") as src, os.fdopen(fd, "wb") as dst:
+                for chunk in iter(lambda: src.read(65536), b""):
+                    digest.update(chunk)
+                    dst.write(chunk)
+                    size += len(chunk)
+
+                # On disk before it takes its name, so a crash never leaves
+                # a short file that later uploads would reuse.
+                dst.flush()
+                _sync_to_disk(dst.fileno())
+
+            # The file is named by its hash, so the same content is stored only once.
+            target = os.path.join(directory, digest.hexdigest())
+            if os.path.isfile(target) and os.path.getsize(target) == size:
+                # Already stored: mark it fresh and drop the copy below.
+                os.utime(target)
+            else:
+                os.replace(tmp_path, target)
+                # Moved into place, so there is no temporary copy to remove.
+                tmp_path = None
+
+        except OSError as e:
+            logger.warning("Could not store a reminder attachment")
+            logger.debug("Reminder attachment error: %s", e)
+            return None
+
+        finally:
+            if tmp_path:
+                with suppress(OSError):
+                    os.remove(tmp_path)
+
+        return digest.hexdigest(), size
+
+    def prune_finished_reminders(self, older_than_seconds: int) -> int:
+        """Remove reminders that have nothing left to send.
+
+        - A reminder is finished once it has no next time: a sent one-off, or a
+          repeating reminder past its end date or count.
+        - It is kept for ``older_than_seconds`` after it last changed or sent,
+          so it can still be seen, copied or edited.
+        - Paused reminders are kept, since someone chose to stop them.
+        - Returns how many were removed.
+        """
+        # Without any reminders, no lock is taken and nothing is written. This
+        # also covers storage that is turned off or read-only.
+        if not self.reminder_files():
+            return 0
+
+        pruned = 0
+        # Anything that last changed or sent before this time may go.
+        cutoff = time.time() - older_than_seconds
+        with self.reminder_guard():
+            for reminder_file in self.reminder_files():
+                events = self.read_reminders(reminder_file)
+                # Skip empty files, and damaged ones (None) so nothing is lost.
+                if not events:
+                    continue
+
+                # Keep a reminder that is paused, still has a time to send,
+                # or changed or sent recently.
+                kept = [
+                    event
+                    for event in events
+                    if event.get("enabled") is False
+                    or event.get("next") is not None
+                    or max((event.get("last") or {}).get("at") or 0, event.get("updated") or 0) > cutoff
+                ]
+                if len(kept) < len(events) and self.write_reminders(reminder_file, kept):
+                    pruned += len(events) - len(kept)
+
+        return pruned
+
+    def _used_reminder_files(self) -> set[str] | None:
+        """Return the name of every stored file any reminder uses.
+
+        - Returns ``None`` when a reminder file cannot be listed or read,
+          since it might use any of them.
+        - Hold ``reminder_guard()`` while calling.
+        """
+        # Reminders left aside by an unfinished removal may still come back.
+        suffixes = (REMINDER_SUFFIX, REMINDER_SUFFIX + REMOVING_SUFFIX)
+        listed = [self.reminder_files(suffix, complete=True) for suffix in suffixes]
+        if None in listed:
+            logger.warning("Kept every reminder attachment; the reminder files could not all be listed")
+            return None
+
+        # Every stored file named by any reminder, in any Config ID.
+        used = set()
+        for reminder_file in listed[0] + listed[1]:
+            events = self.read_reminders(reminder_file)
+            if events is None:
+                logger.warning("Kept every reminder attachment; %s could not be read", reminder_file)
+                return None
+
+            used.update(reminder_file_names(events))
+
+        return used
+
+    def drop_unused_reminder_files(self, names: Iterable[str]) -> None:
+        """Remove stored files right away once no reminder uses them.
+
+        - ``names``: the files to check, such as those of reminders just
+          removed or changed.
+        - Hold ``reminder_guard()`` while calling, so no save starts using one
+          meanwhile. A save that uploaded the same file stores it again.
+        """
+        # Each name once; nothing to do when no file was named.
+        candidates = set(names)
+        if not candidates:
+            return
+
+        # Reminders left aside by an unfinished removal may still come back.
+        suffixes = (REMINDER_SUFFIX, REMINDER_SUFFIX + REMOVING_SUFFIX)
+        listed = [self.reminder_files(suffix, complete=True) for suffix in suffixes]
+        if None in listed:
+            logger.warning("Kept reminder attachments; the reminder files could not all be listed")
+            return
+
+        # A reminder file can only use a file whose name it holds, so its text
+        # is searched rather than read as JSON, which takes far longer. A name
+        # that only looks used is kept for prune to check properly later.
+        for reminder_file in listed[0] + listed[1]:
+            try:
+                with open(reminder_file, encoding="utf-8", errors="replace") as f:
+                    text = f.read()
+
+            except FileNotFoundError:
+                continue
+
+            except OSError as e:
+                logger.warning("Kept reminder attachments; %s could not be read", reminder_file)
+                logger.debug("Reminder read error: %s", e)
+                return
+
+            candidates = {name for name in candidates if name not in text}
+            if not candidates:
+                # Every one is still used.
+                return
+
+        for name in candidates:
+            self._remove_file(self.reminder_file_path(name))
+
+    def reminder_store_size(self) -> int | None:
+        """Return how many bytes every stored reminder attachment takes.
+
+        Returns ``None`` when the store cannot be read.
+        """
+        try:
+            with os.scandir(os.path.join(self.root, REMINDER_FILES_DIR)) as it:
+                return sum(entry.stat().st_size for entry in it if entry.is_file(follow_symlinks=False))
+
+        except FileNotFoundError:
+            # Nothing stored yet.
+            return 0
+
+        except OSError as e:
+            logger.warning("Could not measure the reminder attachment store")
+            logger.debug("Reminder attachment store error: %s", e)
+            return None
+
+    def prune_reminder_files(self, older_than_seconds: int = REMINDER_FILE_GRACE) -> int:
+        """Remove stored reminder attachments that no reminder uses any more.
+
+        Files newer than ``older_than_seconds`` are kept, since the reminder
+        that uploaded them may still be saving. Returns how many were removed.
+        """
+        directory = os.path.join(self.root, REMINDER_FILES_DIR)
+        if self.mode == AppriseStoreMode.DISABLED or not os.path.isdir(directory):
+            return 0
+
+        pruned = 0
+        # Unused files last touched before this time may go.
+        cutoff = time.time() - older_than_seconds
+        with self.reminder_guard():
+            used = self._used_reminder_files()
+            if used is None:
+                return 0
+
+            try:
+                names = os.listdir(directory)
+
+            except OSError as e:
+                logger.warning("Could not list reminder attachments")
+                logger.debug("Reminder attachment listing error: %s", e)
+                return 0
+
+            # Remove each stored file that is unused and old enough.
+            for name in names:
+                path = os.path.join(directory, name)
+                try:
+                    if name in used or os.path.getmtime(path) > cutoff:
+                        continue
+
+                    os.remove(path)
+
+                except OSError as e:
+                    logger.warning("Could not prune reminder attachment %s", name)
+                    logger.debug("Reminder attachment prune error: %s", e)
+                    continue
+
+                pruned += 1
+
+        return pruned
+
+    @contextmanager
+    def scheduler_lock(self, wait: bool = False) -> Iterator[bool]:
+        """Hold the lock that lets only one scheduler run at a time.
+
+        - ``wait``: when another scheduler holds it, wait until it lets go
+          (a second instance sharing this directory takes over that way).
+        - Yields ``False`` when another scheduler holds it and ``wait`` is
+          off, or when the lock cannot be taken at all.
+        - The scheduler's process ID is stored so it can be woken up.
+        """
+        try:
+            os.makedirs(self.root, exist_ok=True)
+            # The lock file is created if missing, readable only by this user.
+            descriptor = os.open(os.path.join(self.root, SCHEDULER_PID_FILE), os.O_CREAT | os.O_RDWR, 0o600)
+
+        except OSError as e:
+            # Such as a read-only configuration folder.
+            logger.warning("REMINDER - scheduler - Could not open the scheduler lock")
+            logger.debug("Scheduler lock error: %s", e)
+            yield False
+            return
+
+        try:
+            try:
+                # Take the lock without waiting; failing means another scheduler has it.
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+            except BlockingIOError:
+                if not wait:
+                    yield False
+                    return
+
+                logger.info("REMINDER - scheduler - Another scheduler is running; waiting to take over")
+                try:
+                    # Blocks until the other scheduler stops; a stop signal
+                    # still ends this process while it waits.
+                    fcntl.flock(descriptor, fcntl.LOCK_EX)
+
+                except OSError as e:
+                    logger.warning("REMINDER - scheduler - Could not wait for the scheduler lock")
+                    logger.debug("Scheduler lock error: %s", e)
+                    yield False
+                    return
+
+            except OSError as e:
+                logger.warning("REMINDER - scheduler - Could not take the scheduler lock")
+                logger.debug("Scheduler lock error: %s", e)
+                yield False
+                return
+
+            # Record who holds it:
+            # - pid: the process to signal when reminders change
+            # - host: so a scheduler on another machine is never signalled
+            # - space: so one in another container sharing the host name
+            #   (where the same process ID means another process) is not either
+            os.ftruncate(descriptor, 0)
+            record = {"pid": os.getpid(), "host": socket.gethostname(), "space": process_space()}
+            os.write(descriptor, dumps(record).encode())
+            yield True
+
+        finally:
+            self._release_auth_guard(descriptor)
+
+    def _scheduler_record(self) -> bytes | None:
+        """Return what the running scheduler wrote in its lock file.
+
+        Return ``None`` when no scheduler holds the lock.
+        """
+        try:
+            descriptor = os.open(os.path.join(self.root, SCHEDULER_PID_FILE), os.O_RDONLY)
+
+        except OSError:
+            return None
+
+        try:
+            try:
+                # Getting this lock means no scheduler holds the file.
+                fcntl.flock(descriptor, fcntl.LOCK_SH | fcntl.LOCK_NB)
+
+            except BlockingIOError:
+                # A running scheduler holds the lock, so its process ID is current.
+                return os.read(descriptor, 256)
+
+            except OSError:
+                return None
+
+            # Nothing holds the lock, so any process ID inside is stale.
+            return None
+
+        finally:
+            self._release_auth_guard(descriptor)
+
+    def scheduler_running(self) -> bool:
+        """Return whether a scheduler is running for this configuration directory."""
+        return self._scheduler_record() is not None
+
+    def reminders_changed(self) -> int:
+        """Return when reminders last changed, in nanoseconds, or 0 if never."""
+        try:
+            # The stamp file's modified time is the moment of the last change.
+            return os.stat(os.path.join(self.root, REMINDER_STAMP_FILE)).st_mtime_ns
+
+        except OSError:
+            return 0
+
+    def wake_scheduler(self) -> bool:
+        """Ask the running scheduler to read every reminder file again.
+
+        Return ``False`` when no scheduler on this host holds the lock.
+        """
+        # Mark the change for a scheduler that checks the stamp instead.
+        if not touch(os.path.join(self.root, REMINDER_STAMP_FILE), mode=0o600):
+            logger.warning("Could not mark reminders as changed in %s", self.root)
+
+        # Find out which process to signal, if any.
+        raw = self._scheduler_record()
+        if raw is None:
+            return False
+
+        try:
+            record = loads(raw)
+            pid = int(record["pid"])
+            host = record["host"]
+            space = record.get("space")
+
+        except (ValueError, KeyError, TypeError):
+            return False
+
+        # A process ID from another container could belong to anything there.
+        if host != socket.gethostname() or space != process_space() or pid == os.getpid():
+            return False
+
+        try:
+            # SIGUSR1 makes the scheduler stop waiting and read the files again.
+            os.kill(pid, signal.SIGUSR1)
+
+        except OSError as e:
+            logger.warning("Could not wake the scheduler (PID %d)", pid)
+            logger.debug("Scheduler wake error: %s", e)
+            return False
+
+        return True
+
 
 # Initialize our singleton
 ConfigCache = AppriseConfigCache(
@@ -1776,29 +3074,85 @@ def config_key_header_present_but_invalid(request: HttpRequest) -> bool:
     return bool(header_key) and not CONFIG_KEY_PATTERN.match(header_key)
 
 
+# A schema named in an allow or deny list, e.g. "json" in "json, xml".
+SERVICE_NAME_RE = re.compile(r"^(?P<name>[a-z][a-z0-9]+)", re.IGNORECASE)
+
+
+def _service_names(value: str) -> list[str]:
+    """Return the schemas named in an allow or deny list."""
+    # Each entry is matched once; entries that name no schema are skipped.
+    matches = (SERVICE_NAME_RE.match(x) for x in re.split(r"[ ,]+", value))
+    return [match.group("name").lower() for match in matches if match]
+
+
 def apply_global_filters():
     #
     # Apply Any Global Filters (if identified)
     #
     if settings.APPRISE_ALLOW_SERVICES:
-        alphanum_re = re.compile(r"^(?P<name>[a-z][a-z0-9]+)", re.IGNORECASE)
-        entries = [
-            alphanum_re.match(x).group("name").lower()
-            for x in re.split(r"[ ,]+", settings.APPRISE_ALLOW_SERVICES)
-            if alphanum_re.match(x)
-        ]
-
-        N_MGR.enable_only(*entries)
+        N_MGR.enable_only(*_service_names(settings.APPRISE_ALLOW_SERVICES))
 
     elif settings.APPRISE_DENY_SERVICES:
-        alphanum_re = re.compile(r"^(?P<name>[a-z][a-z0-9]+)", re.IGNORECASE)
-        entries = [
-            alphanum_re.match(x).group("name").lower()
-            for x in re.split(r"[ ,]+", settings.APPRISE_DENY_SERVICES)
-            if alphanum_re.match(x)
-        ]
+        N_MGR.disable(*_service_names(settings.APPRISE_DENY_SERVICES))
 
-        N_MGR.disable(*entries)
+
+def service_turned_off(schemas: list[str]) -> bool:
+    """Tell whether the allow or deny list turns a service off.
+
+    - ``schemas``: every schema the service answers to.
+    """
+    names = {schema.lower() for schema in schemas}
+    if settings.APPRISE_ALLOW_SERVICES:
+        return not names & set(_service_names(settings.APPRISE_ALLOW_SERVICES))
+
+    if settings.APPRISE_DENY_SERVICES:
+        return bool(names & set(_service_names(settings.APPRISE_DENY_SERVICES)))
+
+    return False
+
+
+def notify_asset_kwargs(body_format: str | None = None, persistent: bool = True) -> dict[str, Any]:
+    """Return the ``AppriseAsset`` settings every notification is sent with.
+
+    - ``body_format``: the input format of the message, when one was given.
+    - ``persistent``: include the persistent storage settings.
+    """
+    kwargs = {
+        "plugin_paths": settings.APPRISE_PLUGIN_PATHS,
+        "interpret_emojis": settings.APPRISE_INTERPRET_EMOJIS,
+        "http_redirects": settings.APPRISE_HTTP_REDIRECTS,
+        "result_log_memory_size": settings.APPRISE_STREAM_MEMORY_SIZE,
+        "result_log_disk_size": settings.APPRISE_STREAM_DISK_SIZE,
+        # Only the person running this server decides whether a saved
+        # configuration may use template variables.
+        "allow_templates": settings.APPRISE_ALLOW_TEMPLATES,
+    }
+    if persistent:
+        # Where Apprise keeps what services remember between sends.
+        kwargs.update(
+            {
+                "storage_path": settings.APPRISE_STORAGE_DIR,
+                "storage_idlen": settings.APPRISE_STORAGE_UID_LENGTH,
+                "storage_mode": settings.APPRISE_STORAGE_MODE,
+            }
+        )
+    if body_format:
+        # The format the message was written in, such as text or markdown.
+        kwargs["body_format"] = body_format
+
+    return kwargs
+
+
+def config_apprise(config: str, fmt: str | None, asset: apprise.AppriseAsset) -> apprise.Apprise:
+    """Return an Apprise object holding the services of a stored configuration.
+
+    - Loaded the way /notify loads it, with the same nesting limit.
+    """
+    a_obj = apprise.Apprise(asset=asset)
+    ac_obj = apprise.AppriseConfig(asset=asset, recursion=settings.APPRISE_RECURSION_MAX)
+    ac_obj.add_config(config, format=fmt)
+    a_obj.add(ac_obj)
+    return a_obj
 
 
 def gen_unique_config_id():

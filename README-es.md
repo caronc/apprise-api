@@ -1,10 +1,14 @@
 # Apprise API
 
-Aprovecha [Informar](https://github.com/caronc/apprise) a través de su red con una API fácil de usar.
+Aprovecha [Apprise](https://github.com/caronc/apprise) a través de su red con una API fácil de usar.
 
 *   Envía notificaciones a más de 150 servicios.
 *   Una puerta de entrada increíblemente ligera a Apprise.
 *   Un microservicio listo para la producción a su disposición.
+*   Agrupe sus servicios con etiquetas y notifique solo a los que necesitan saberlo.
+*   Privado por diseño: los mensajes van directamente de su propio servidor a cada servicio, sin intermediarios.
+*   [Recordatorios](#recordatorios) que envían una notificación más tarde: una vez, de forma repetida o en un día festivo.
+*   Una [aplicación para Android e iOS](#apprise-mobile) para notificar y administrar su servidor desde su teléfono.
 
 Apprise API fue diseñado para adaptarse fácilmente a los ecosistemas existentes (y nuevos) que buscan una solución de notificación simple.
 
@@ -17,14 +21,19 @@ Apprise API fue diseñado para adaptarse fácilmente a los ecosistemas existente
 
 ## Apprise Mobile
 
-Apprise Mobile es la aplicación complementaria para Android, iPhone y iPad. Envía notificaciones y archivos adjuntos, administra las URL de los servicios y consulta los informes de entrega. Necesita acceso a tu propio servidor Apprise API; no es un servicio de notificaciones independiente.
+**Apprise Mobile** es la aplicación complementaria de Apprise API para Android e iOS. Envíe un mensaje, una foto o un archivo a un destino, a un grupo o a todos los destinos que haya configurado. La aplicación necesita acceso a su propio servidor Apprise API; no es un servicio de notificaciones independiente.
 
 <a href="https://apps.apple.com/app/id6821633589"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/app-store-es.svg" alt="Descargar en el App Store"></a> <a href="https://play.google.com/store/apps/details?id=com.appriseit.mobile"><img height="40" src="https://raw.githubusercontent.com/caronc/apprise-api/master/apprise_api/static/mobile/store-badges/google-play-es.svg" alt="Disponible en Google Play"></a>
 
-Consulta la [documentación de Apprise Mobile](https://appriseit.com/mobile/) y la [guía de configuración](https://appriseit.com/mobile/getting-started/) para conectar tu servidor. La aplicación requiere Android 8.0 o posterior, o iOS 17.2 o posterior en iPhone y iPad.
+Android requiere Android 8.0 o posterior. iPhone y iPad requieren iOS 17.2 o posterior. Consulte la [guía de configuración](https://appriseit.com/mobile/getting-started/) para conectar su servidor.
 
+### Conexión con su Servidor
 
-## Capturas de pantalla
+Una vez instalada la aplicación, abra el *Administrador de Configuración* en su navegador y muestre el código QR **Apprise Mobile Configuración Rápida** de cualquier configuración guardada. Al escanearlo desde la aplicación, se agrega su servidor y se carga esa configuración en un solo paso, sin escribir URL en el teclado del teléfono.
+
+Visite la página de [Apprise Mobile](https://appriseit.com/mobile/) para ver más detalles, capturas de pantalla, y la política de privacidad y los términos de la aplicación.
+
+## Capturas de Pantalla
 
 Hay un pequeño incorporado *Administrador de configuración* a los que se puede acceder opcionalmente a través de su navegador web, lo que le permite crear y guardar tantas configuraciones como desee. Cada configuración se diferencia por una `{KEY}` que usted decida:<br/>
 ![Screenshot of GUI - Using Keys](https://raw.githubusercontent.com/caronc/apprise-api/master/Screenshot-1.png)<br/>
@@ -63,7 +72,7 @@ Un `docker-compose.yml` el archivo ya está configurado para otorgarle un entorn
 docker-compose up
 ```
 
-### Permisos de directorio de configuración
+### Permisos del Directorio de Configuración
 
 Bajo el capó, un servicio NginX está leyendo/escribiendo sus archivos de configuración como usuario (y grupo) `www-data` que generalmente tiene el identificador de `33`.  En preparación para que no reciba el error: `An error occured saving configuration.` Considere también la posibilidad de configurar su local `/var/lib/apprise/config` permisos como:
 
@@ -110,7 +119,7 @@ Se admiten las siguientes arquitecturas: `386`, `amd64`, `arm/v6`, `arm/v7`y `ar
 
 ## Detalles de la API
 
-### Solución apátrida
+### Solución sin Estado
 
 Es posible que algunas personas deseen tener solo una solución de sidecar que requiera el uso de cualquier almacenamiento persistente.  El siguiente punto de enlace de api se puede utilizar para enviar directamente una notificación de su elección a cualquiera de los [servicios soportados por Apprise](https://appriseit.com/services/) sin ningún requisito basado en almacenamiento:
 
@@ -131,7 +140,7 @@ curl -X POST -d '{"urls": "mailto://user:pass@gmail.com", "body":"test message"}
     http://localhost:8000/notify
 ```
 
-### Solución de almacenamiento persistente
+### Solución de Almacenamiento Persistente
 
 Puede guardar previamente toda la configuración de Apprise y/o el conjunto de URL de Apprise y asociarlas con un `{KEY}` de su elección. Una vez establecida, la configuración persiste para su recuperación por el `apprise` [Herramienta CLI](https://appriseit.com/guides/) o cualquier otra integración personalizada que haya configurado. El sitio web incorporado viene con una interfaz de usuario que también puede usar para aprovechar estas llamadas a la API. Aquellos que deseen crear su propia aplicación en torno a esto pueden usar los siguientes puntos finales de la API:
 
@@ -141,7 +150,10 @@ Puede guardar previamente toda la configuración de Apprise y/o el conjunto de U
 | `/del/{KEY}` |  PUBLICAR | Quita la configuración de Apprise del almacén persistente.
 | `/get/{KEY}` |  PUBLICAR | Devuelve la configuración de Apprise del almacén persistente.  Esto se puede utilizar directamente con el *Apprise CLI* y/o el *AppriseConfig()* objeto ([ver aquí para más detalles](https://appriseit.com/getting-started/configuration/)).
 | `/notify/{KEY}` |  PUBLICAR | Envía notificaciones a todos los puntos finales que haya configurado previamente asociados a un *{CLAVE}*.<br/>*Parámetros de carga útil*<br/>📌 **cuerpo**: El cuerpo de su mensaje. Este es el *solamente* campo obligatorio.<br/>📌 **título**: Opcionalmente, defina un título para que vaya junto con el *cuerpo*.<br/>📌 **tipo**: define el tipo de mensaje que desea enviar.  Las opciones válidas son `info`, `success`, `warning`y `failure`. Si no *tipo* se especifica a continuación `info` es el valor predeterminado utilizado.<br/>📌 **etiqueta**: Opcionalmente notifique solo a los etiquetados en consecuencia.<br/>📌 **formato**: Opcionalmente, identifique el formato de texto de los datos que está alimentando Apprise. Las opciones válidas son `text`, `markdown`, `html`. Si no se especifica nada, no se aplica ningún formato y el contenido se transmite sin modificar.
-| `/json/urls/{KEY}` |  HAZTE | Devuelve un objeto de respuesta JSON que contiene todas las direcciones URL y etiquetas asociadas a la clave especificada.
+| `/resolve/{KEY}` |  POST  | Comprueba URL de Apprise (`{"urls": ...}`) sin contactar con ellas. Devuelve cada URL completa, con sus secretos ocultos y dividida en los campos que lista `/details`. Envíe campos en lugar de una URL para volver a armarla.
+| `/attach/{KEY}` |  POST  | Descarga la dirección web de un adjunto (`{"url": ...}`) igual que un envío y devuelve el archivo, o un `424` con `logs` que explica por qué falló. Se aplican las mismas reglas de adjuntos que en `/notify`, y las direcciones de la red local se rechazan salvo que `APPRISE_ATTACH_PREVIEW_INTERNAL` esté activado. Una dirección rechazada también devuelve `reason`, el `setting` que hay que cambiar y un enlace `help`.
+| `/json/urls/{KEY}` |  GET | Devuelve un objeto de respuesta JSON que contiene todas las direcciones URL y etiquetas asociadas a la clave especificada.
+| `/reminder/{KEY}` |  GET, POST | Lista o agrega [recordatorios](#recordatorios). Consulte [Reminders](https://appriseit.com/api/endpoints/#reminders) para ver todas las rutas de recordatorios y su contenido.
 
 A modo de ejemplo, el `/json/urls/{KEY}` la respuesta podría devolver algo como esto:
 
@@ -194,7 +206,21 @@ curl -X POST -d '{"tag":"devops", "body":"test message"}' \
     http://localhost:8000/notify/abc123
 ```
 
-### Mensajes de texto plano y encabezados
+### Recordatorios
+
+Guarde una notificación ahora y deje que el servidor la envíe más tarde. Un recordatorio puede enviarse una vez, repetirse según un calendario (cada día laborable a las 9:00, un martes de cada dos, el primero de cada mes) o llegar en un día festivo cada año. Créelos, páuselos y pruébelos desde la pestaña **Recordatorios**, o mediante la API:
+
+```bash
+# Every weekday at 9:00 Toronto time, sent to the 'devops' tag of 'abc123'
+curl -X POST -H "Content-Type: application/json" \
+    -d '{"body": "Stand-up in 5 minutes", "tag": "devops",
+         "when": {"tz": "America/Toronto", "cron": "0 0 9 * * Mon-Fri"}}' \
+    http://localhost:8000/reminder/abc123
+```
+
+Consulte [Reminders](https://appriseit.com/api/endpoints/#reminders) para ver todas las opciones, incluidos los adjuntos, los días festivos y la [resolución de problemas](https://appriseit.com/api/reference/reminder-diagnostics/).
+
+### Mensajes de Texto Plano y Encabezados
 
 `/notify` y `/notify/{KEY}` también aceptan el mensaje como el cuerpo completo de la solicitud. El `Content-Type` define su formato:
 
@@ -252,7 +278,7 @@ Sin etiqueta, una solicitud con estado notifica solo las URL que no tienen etiqu
 *   No se requiere autenticación (o cifrado SSL) para usar esta API; esto es por diseño. La intención aquí es ser un microservicio ligero y rápido.
 *   No hay dependencias adicionales (como requisitos de base de datos, etc.) si decide utilizar el almacén persistente opcional (montado como `/config`).
 
-### Variables de entorno
+### Variables de Entorno
 
 El uso de variables de entorno le permite proporcionar anulaciones a la configuración predeterminada.
 
@@ -261,9 +287,20 @@ El uso de variables de entorno le permite proporcionar anulaciones a la configur
 | `APPRISE_CONFIG_DIR` | Define una ubicación de almacén persistente (opcional) de todos los archivos de configuración guardados. Por defecto:<br/> - La configuración se escribe en el `apprise_api/var/config` cuando se utiliza el *Django* `manage runserver` Guión. Sin embargo, para la ruta de acceso para el contenedor es `/config`.
 | `APPRISE_STATELESS_URLS` | Para una solución no persistente, puede aprovechar esta variable global. Use esto para definir un conjunto predeterminado de URL de Apprise para notificar cuando se usan llamadas a la API a `/notify`.  Si no `{KEY}` se define al llamar `/notify` a continuación, se utilizan las URL definidas aquí en su lugar. De forma predeterminada, no se define nada para esta variable.
 | `APPRISE_STATEFUL_MODE` | Esto se puede configurar en los siguientes modos posibles:<br/>📌 **picadillo**: Este es también el valor predeterminado.  Almacena la configuración del servidor en un formato hash que se puede indexar y comprimir fácilmente.<br/>📌 **sencillo**: La configuración se escribe directamente en el disco utilizando el comando `{KEY}.cfg` (si `TEXT` basado) y `{KEY}.yml` (si `YAML` basado).<br/>📌 **Deshabilitado**: Denegar directamente cualquier consulta de lectura/escritura al almacén con estado de los servidores.  Desactive efectivamente la función Apprise Stateful por completo.
+| `APPRISE_REMINDER_ENABLED` | Establezca `no` para desactivar los recordatorios (notificaciones guardadas ahora y enviadas más tarde). El valor predeterminado es `yes`.
+| `APPRISE_REMINDER_WORKERS` | El número de recordatorios que se pueden enviar al mismo tiempo. El valor predeterminado es `4`.
+| `APPRISE_REMINDER_GRACE` | Cuántos segundos de retraso puede tener un recordatorio y aun así enviarse, por ejemplo después de un reinicio. Los más antiguos se omiten. El valor predeterminado es `3600` (1 hora).
+| `APPRISE_REMINDER_URLS_MAX` | El número máximo de URL de Apprise que puede guardar un recordatorio, `0` las desactiva. El valor predeterminado es `100`.
+| `APPRISE_REMINDER_MAX` | El número máximo de recordatorios de un Config ID, para todos salvo el administrador. El valor predeterminado es `100`.
+| `APPRISE_REMINDER_USER_MIN_INTERVAL` | El mínimo de segundos entre envíos de un recordatorio repetido, para todos salvo el administrador. `0` o `1` no fija ningún límite. El valor predeterminado es `60`.
+| `APPRISE_REMINDER_ATTACH_QUOTA` | El espacio máximo, en MB, que pueden ocupar los adjuntos guardados con los recordatorios de un Config ID, para todos salvo el administrador. `0` desactiva los adjuntos de los recordatorios, incluidas las direcciones web. El valor predeterminado es `50`.
+| `APPRISE_REMINDER_STORE_MAX` | El espacio máximo, en MB, que pueden ocupar juntos todos los adjuntos guardados de recordatorios del servidor, para todos salvo el administrador. `0` no fija ningún límite. El valor predeterminado es `1024`.
+| `APPRISE_REMINDER_IDLE_DAYS` | Pausa los recordatorios de un Config ID después de esta cantidad de días sin uso. El valor predeterminado es `0` (nunca pausar).
+| `APPRISE_REMINDER_PRUNE_DAYS` | Días que se conserva un recordatorio terminado (sin nada más que enviar) antes de que la poda lo elimine. El valor predeterminado es `7`.
 | `APPRISE_CONFIG_LOCK` | Bloquea el alojamiento de su API para que ya no pueda eliminar/actualizar/acceder a información con estado. Se sigue haciendo referencia a la configuración cuando se realizan llamadas con estado a `/notify`.  La idea de este cambio es permitir que alguien establezca su configuración (Apprise) y luego, como táctica de seguridad adicional, puede optar por bloquear su configuración (en un estado de solo lectura). Aquellos que usan la herramienta APprise CLI aún pueden hacerlo, sin embargo, el `--config` (`-c`) ya no hará referencia correctamente a este punto de acceso. Sin embargo, puede utilizar el `apprise://` plugin sin ningún problema ([ver aquí para más detalles](https://appriseit.com/services/apprise_api/)). De forma predeterminada, el valor predeterminado es `no` y, sin embargo, se puede establecer en `yes` simplemente definiendo la variable global como tal.
 | `APPRISE_DENY_SERVICES` | Un conjunto de entradas separadas por comas que identifican a qué plugins denegar el acceso. Solo necesita identificar una entrada de esquema asociada con un complemento para, a su vez, deshabilitarlo todo.  Por lo tanto, si desea deshabilitar el `glib` plugin, no es necesario incluir adicionalmente `qt` también ya que se incluye como parte de la (`dbus`) paquete; en consecuencia, especificando `qt` a su vez deshabilitaría el `glib` módulo también (otra forma de realizar la misma tarea).  Para excluir/deshabilitar más el único servicio ascendente, simplemente especifique entradas adicionales separadas por un `,` (coma) o ` ` (espacio). El `APPRISE_DENY_SERVICES` Las entradas se omiten si el `APPRISE_ALLOW_SERVICES` está identificado. De forma predeterminada, esto se inicializa en `windows, dbus, gnome, macosx, syslog` (bloqueando la emisión de acciones locales dentro del contenedor docker)
 | `APPRISE_ALLOW_SERVICES` | Un conjunto de entradas separadas por comas que identifican a qué plugins permitir el acceso. De todos modos, solo puede usar caracteres alfanuméricos, como lo es la restricción de los esquemas de Apprise (schema://).  Para incluir exclusivamente más el único servicio ascendente, simplemente especifique entradas adicionales separadas por un `,` (coma) o ` ` (espacio). El `APPRISE_DENY_SERVICES` Las entradas se omiten si el `APPRISE_ALLOW_SERVICES` está identificado.
+| `APPRISE_ATTACH_PREVIEW_INTERNAL` | Establezca `yes` para que la vista previa de adjuntos (`/attach`) descargue desde direcciones de la red local, como una cámara de su LAN. El valor predeterminado es `no`.
 | `SECRET_KEY`       | Una variable de Django que actúa como un *sal* para la mayoría de las cosas que requieren seguridad. Esta API lo utiliza para las secuencias hash al escribir los archivos de configuración en el disco (`hash` modo solamente).
 | `ALLOWED_HOSTS`    | Una lista de cadenas que representan los nombres de host/dominio que esta API puede servir. Esta es una medida de seguridad para evitar ataques de encabezado de host HTTP, que son posibles incluso en muchas configuraciones de servidor web aparentemente seguras. De forma predeterminada, se establece en `*` permitiendo cualquier host. Utilice el espacio para delimitar más de un host.
 | `APPRISE_RECURSION_MAX` | Esto define el número de veces que un servidor api de Apprise puede (recursivamente) llamar a otro.  Esto es para apoyar y mitigar el abuso a través de [el `apprise://` esquema](https://appriseit.com/services/apprise_api/) para aquellos que eligen usarlo. Cuando se aprovecha correctamente, puede aumentar este valor (máximo de recursividad) y equilibrar con éxito la carga del manejo de muchas solicitudes de notificación a través de muchos servidores API adicionales.  De forma predeterminada, este valor se establece en `1` (uno).
@@ -271,7 +308,7 @@ El uso de variables de entorno le permite proporcionar anulaciones a la configur
 | `LOG_LEVEL`    | Ajuste el nivel de registro a la consola. Los valores posibles son `CRITICAL`, `ERROR`, `WARNING`, `INFO`y `DEBUG`.
 | `DEBUG`            | De forma predeterminada, el valor predeterminado es `no` y, sin embargo, se puede establecer en `yes` simplemente definiendo la variable global como tal.
 
-## Entorno de desarrollo
+## Entorno de Desarrollo
 
 Lo siguiente debería proporcionarle un entorno de desarrollo de trabajo para probar:
 
@@ -301,7 +338,7 @@ flake8 apprise_api
 pytest apprise_api
 ```
 
-## Integración Apprise
+## Integración con Apprise
 
 Primero tendrás que tenerlo instalado:
 
@@ -310,7 +347,7 @@ Primero tendrás que tenerlo instalado:
 pip install apprise
 ```
 
-### Ejemplo de extracción de CLI de Apprise
+### Ejemplo de Extracción con la CLI de Apprise
 
 Un escenario en el que desea sondear la API para su configuración:
 
@@ -373,7 +410,7 @@ Podríamos activar nuestra notificación a nuestros amigos ahora como:
 apprise -vvv --tag=devteam --body="Guys, don't forget about the audit tomorrow morning."
 ```
 
-### Ejemplo de extracción de AppriseConfig()
+### Ejemplo de Extracción con AppriseConfig()
 
 Uso del [Biblioteca de Python de Apprise](https://github.com/caronc/apprise), puede acceder y cargar fácilmente su configuración guardada fuera de esta API para usarla en futuras notificaciones.
 

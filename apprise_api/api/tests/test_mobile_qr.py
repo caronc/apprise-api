@@ -349,8 +349,10 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
             ConfigCache.clear(key)
             ConfigCache.clear_auth(key)
 
-    def _script_blocks(self, html):
-        return re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.S)
+    def _script_blocks(self, html, data=False):
+        """Return the page's scripts, or with ``data`` its JSON data blocks."""
+        blocks = re.findall(r"<script(\s[^>]*)?>(.*?)</script>", html, re.S)
+        return [body for attrs, body in blocks if ('type="application/json"' in (attrs or "")) == data]
 
     def test_auth_page_renders_for_an_administrator(self):
         """The real editor (not a template error) renders for an admin."""
@@ -437,6 +439,8 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
             result.returncode, 0, "Auth page script has a JavaScript syntax error:\n{}".format(result.stderr)
         )
 
+    # The Reminder List is only offered while the administrator may list everything.
+    @override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple")
     def test_page_scripts_are_valid_javascript_in_every_language(self):
         """A translated label must never break a page's embedded scripts."""
         node = shutil.which("node")
@@ -444,11 +448,15 @@ class AuthPageQrButtonRenderingTests(SimpleTestCase):
             self.skipTest("Node.js is not available to check JavaScript syntax")
 
         client = _web_cookie_client(Authentication.ROLE_ADMIN, "master")
-        pages = ("/", "/details", "/cfg/qr_render_admin_key", "/auth/qr_render_admin_key")
+        pages = ("/", "/details", "/reminders", "/cfg/qr_render_admin_key", "/auth/qr_render_admin_key")
         for code, _name in settings.LANGUAGES:
             for page in pages:
                 response = client.get(page, headers={"accept": "text/html", "accept-language": code})
                 self.assertEqual(response.status_code, 200)
+
+                # Data handed to the scripts must read as JSON in every language
+                for block in self._script_blocks(response.content.decode(), data=True):
+                    loads(block)
 
                 # Check every script on the page in one pass; each keeps its own scope
                 scripts = self._script_blocks(response.content.decode())

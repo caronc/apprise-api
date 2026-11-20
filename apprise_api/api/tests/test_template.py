@@ -73,18 +73,51 @@ class TemplateTests(SimpleTestCase):
         assert response.status_code == 200
         content = response.content.decode()
         assert "className: 'template-variable'" in content
-        assert "contains: [TEMPLATE_VARIABLE]" in content
+        assert "contains: [TEMPLATE_VARIABLE, URL_OPTION]" in content
         assert "selectedFormat === 'yaml'" in content
         assert "declaredNames.has(match[1].toLowerCase())" in content
         assert "setReviewUrlTextWithBreaks(code, entry.url, entry.template)" in content
 
+    def test_editor_colours_url_parts(self):
+        """URLs are coloured by part, in quotes too, without a stray quote taking over a line."""
+        content = self.client.get(f"/cfg/{self.key}", headers={"accept": "text/html"}).content.decode()
+        # The service and login, then each ?name= and &name=.
+        assert "beginScope: {1: 'title', 2: 'subst'}" in content
+        assert "scope: {1: 'punctuation', 2: 'attr', 3: 'punctuation'}" in content
+        # A "#" stays part of a URL; only a space, quote or line end closes it.
+        assert "end: /(?=[\\s\"']|$)/," in content
+        # A quote opens a value only at its start, and closes by the line's end.
+        assert "new RegExp('(?<=^|[\\\\s:=,\\\\[-])' + quote)" in content
+        assert "end: new RegExp(quote + '|$')" in content
+
     def test_editor_highlight_supports_both_themes(self):
-        """Light and dark themes give template variables distinct colors."""
+        """Light and dark themes give template variables and URL parts distinct colors."""
         css_path = Path(settings.BASE_DIR) / "static" / "css"
 
         for theme in ("theme-light.css", "theme-dark.css"):
             content = (css_path / theme).read_text(encoding="utf-8")
             assert (".apprise-config-yaml .apprise-config-highlight .hljs-template-variable") in content
+            for part in ("title", "subst", "punctuation"):
+                assert f".apprise-config-highlight .hljs-{part} {{" in content
+
+        # Both editor layers wrap long URLs the same way, filling each line.
+        base = (css_path / "base.css").read_text(encoding="utf-8")
+        assert "word-break: break-all !important;" in base
+
+    def test_editor_can_be_resized(self):
+        """The configuration editor can be dragged taller and wider, never smaller than it starts."""
+        css = (Path(settings.BASE_DIR) / "static" / "css" / "base.css").read_text(encoding="utf-8")
+        start = css.index(".apprise-config-editor textarea {\n  width: 100%;")
+        rule = css[start : css.index("}", start)]
+        assert "resize: both;" in rule
+        assert "min-width: 100%;" in rule
+        # A size forced with !important would ignore the size a drag sets.
+        assert "height: initial;" in rule
+        assert "!important" not in rule.split("background:")[0]
+
+        # A dragged height becomes the least height, so the editor still grows with its text.
+        page = self.client.get(f"/cfg/{self.key}").content.decode("utf-8")
+        assert "textarea.style.minHeight = Math.max(editorMinHeight, parseFloat(textarea.style.height)) + 'px';" in page
 
     @patch("apprise.Apprise.notify")
     def test_json_value(self, mock_notify):
@@ -351,31 +384,73 @@ class TemplateTests(SimpleTestCase):
         assert "localhost" in dumps([str(call) for call in mock_request.call_args_list])
 
     @patch("requests.request")
-    def test_review_quick_test_sends_only_selected_entry(self, mock_request):
-        """A card test does not include another entry with the same tag."""
+    def test_review_quick_test_sends_only_its_url(self, mock_request):
+        """A plain card's test reaches its own URL and no service of the configuration."""
         upstream = Mock()
         upstream.status_code = requests.codes.ok
         upstream.content = ""
         upstream.headers = {}
         mock_request.return_value = upstream
 
+        # Sent the way the card's button sends it: one URL, no tag.
         result = self.client.post(
-            f"/notify/{self.key}",
-            {"body": "test", "tag": "work:0", "template[token]": "abc123"},
-            headers={"X-Apprise-Notification-Index": "0"},
+            "/notify/",
+            {"body": "test", "urls": "json://card-host/"},
+            headers={"X-Apprise-Config-ID": self.key},
         )
 
         assert result.status_code == 200
         assert mock_request.call_count == 1
+        assert "http://card-host/" in str(mock_request.call_args)
+
+    @patch("requests.request")
+    def test_review_quick_test_templated_card(self, mock_request):
+        """A templated card's test reaches that entry alone, with no tag sent."""
+        upstream = Mock()
+        upstream.status_code = requests.codes.ok
+        upstream.content = ""
+        upstream.headers = {}
+        mock_request.return_value = upstream
+
+        # The first entry is tagged "work"; no tag is needed to reach it.
+        result = self.client.post(
+            f"/notify/{self.key}",
+            {"body": "test", "template[token]": "abc123"},
+            headers={"X-Apprise-Notification-Index": "0"},
+        )
+
+        # Its sibling, also tagged "work", was not sent to.
+        assert result.status_code == 200
+        assert mock_request.call_count == 1
+        assert "http://localhost/" in str(mock_request.call_args)
+
+    @patch("requests.request")
+    def test_review_quick_test_keeps_sent_tag(self, mock_request):
+        """A tag sent with a card position must still match that entry."""
+        upstream = Mock()
+        upstream.status_code = requests.codes.ok
+        upstream.content = ""
+        upstream.headers = {}
+        mock_request.return_value = upstream
+
+        for tag, sends in (("work", 1), ("other", 0)):
+            with self.subTest(tag=tag):
+                mock_request.reset_mock()
+                self.client.post(
+                    f"/notify/{self.key}",
+                    {"body": "test", "tag": tag, "template[token]": "abc123"},
+                    headers={"X-Apprise-Notification-Index": "0"},
+                )
+                assert mock_request.call_count == sends
 
     @patch("requests.request")
     def test_review_quick_test_rejects_invalid_entry_index(self, mock_request):
-        """Malformed or stale card indexes never fall back to a broad send."""
+        """Malformed or stale card positions never fall back to a broad send."""
         for value in ("-1", "01", "invalid", "999"):
             with self.subTest(value=value):
                 result = self.client.post(
                     f"/notify/{self.key}",
-                    {"body": "test", "tag": "work:0", "template[token]": "abc123"},
+                    {"body": "test", "template[token]": "abc123"},
                     headers={"X-Apprise-Notification-Index": value},
                 )
                 assert result.status_code == 400
@@ -612,6 +687,17 @@ class TemplateTests(SimpleTestCase):
         payload = result.json()
         assert payload["config_lock"] is False
 
+    def test_review_test_button_needs_stateless(self):
+        """The card's test button is turned off only when stateless sends are not allowed."""
+        marker = "// A test sends the URL through stateless /notify, which this caller may not use."
+
+        page = self.client.get(f"/cfg/{self.key}").content.decode("utf-8")
+        assert marker not in page
+
+        with override_settings(APPRISE_STATELESS_MODE="disabled"):
+            page = self.client.get(f"/cfg/{self.key}").content.decode("utf-8")
+        assert marker in page
+
     def test_web_template_controls(self):
         """The page provides concealed template controls for both send paths."""
         result = self.client.get(f"/cfg/{self.key}")
@@ -629,12 +715,20 @@ class TemplateTests(SimpleTestCase):
         assert "url-template-summary" in page
         assert "url-template-row" not in page
         assert "collectNotifyTemplateValues" in page
-        assert "sendReviewTestNotification(tags, entryIndex" in page
-        assert "'X-Apprise-Notification-Index': String(entryIndex)" in page
+        # A plain card sends its own unmasked URL alone; a templated one asks
+        # for its values and is sent to its own entry. Neither sends a tag.
+        assert "sendReviewTestNotification(entry, entryIndex, anchorEl, templateValues)" in page
+        assert "formData.append('urls', entry.testUrl);" in page
+        assert "entry.testUrl = source.url;" in page
+        assert "headers['X-Apprise-Notification-Index'] = String(entryIndex);" in page
+        assert "promptForTemplateValues(entry.template || {})" in page
+        assert "formData.append('tag'" not in page
         assert "data-notify-copy-logs" in page
         assert "--- BEGIN APPRISE NOTIFICATION LOG ---" in page
         assert "--- END APPRISE NOTIFICATION LOG ---" in page
-        assert "disableTemplateAutofill" in page
+        # Template fields use the site-wide helper that keeps autofill away
+        assert "appriseNoAutofill(valueInput);" in page
+        assert "disableTemplateAutofill" not in page
         assert "input.autocomplete = 'off'" in page
         assert "input.dataset.concealedText = 'true'" in page
         assert "input.setAttribute('type', 'password')" not in page
@@ -647,6 +741,28 @@ class TemplateTests(SimpleTestCase):
         assert "data-protonpass-ignore" in page
         assert "data-form-type" in page
         assert "Show Value" in page
+
+    def test_reminder_helpers_are_shared(self):
+        """Reminder cards and calendar rows are built by one set of helpers."""
+        result = self.client.get(f"/cfg/{self.key}", headers={"accept": "text/html"})
+        assert result.status_code == 200
+        page = result.content.decode("utf-8")
+        for helper in (
+            "reminderActions",
+            "reminderPauseButton",
+            "reminderLastResult",
+            "reminderReadList",
+            "reminderGetJson",
+            "reminderClock",
+            "reminderWeekdayName",
+        ):
+            assert page.count(f"function {helper}(") == 1, helper
+
+        # A finished reminder's calendar row offers the same buttons as its card
+        assert "const actions = reminderActions(reminder, reminderPage);" in page
+        # A saved message type is compared as text, never placed in a selector
+        assert "option.value === entry[1]" in page
+        assert "option[value=" not in page
 
     @patch("apprise.Apprise.notify")
     def test_stateless_values_are_accepted_and_unused(self, mock_notify):

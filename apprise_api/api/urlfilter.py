@@ -358,13 +358,17 @@ class AppriseURLFilter:
         """Prepare a scheme-independent hostname and optional-port rule."""
         return _HostRule(token)
 
-    def _is_internal_target(self, host: str) -> bool:
-        """Return true if any address is internal or resolution fails."""
+    def _internal_target(self, host: str) -> str | None:
+        """Return why a host counts as internal, or ``None`` when it is public.
+
+        - ``"unresolved"``: it has no address, so it is refused to be safe.
+        - ``"internal"``: one of its addresses is on the local network.
+        """
         addresses = _resolve_addresses(host)
         if not addresses:
-            return True
+            return "unresolved"
 
-        return any(_is_blocked_address(addr) for addr in addresses)
+        return "internal" if any(_is_blocked_address(addr) for addr in addresses) else None
 
     @property
     def blocks_internal(self) -> bool:
@@ -378,13 +382,25 @@ class AppriseURLFilter:
 
         return is_public_ip_address(address)
 
-    def is_allowed(self, url: str, resolve=True) -> bool:
+    def is_allowed(self, url: str, resolve: bool = True) -> bool:
         """
         Checks a given URL against the deny list first, then the allow list.
         """
+        return self.refusal(url, resolve=resolve) is None
+
+    def refusal(self, url: str, resolve: bool = True) -> str | None:
+        """Return which rule refuses a URL, or ``None`` when it is allowed.
+
+        - ``"invalid"``: it cannot be read as a web address.
+        - ``"internal"``: the deny list holds ``internal`` and the host is on
+          the local network (only looked up when ``resolve`` is set).
+        - ``"unresolved"``: the same, but the host has no address at all.
+        - ``"deny"``: a deny rule matches it.
+        - ``"allow"``: no allow rule matches it.
+        """
         # Reject invalid or unusually long values before parsing or matching.
         if not isinstance(url, str) or len(url) > _MAX_URL_LENGTH:
-            return False
+            return "invalid"
 
         try:
             parsed = parse_url(url, strict_port=True, simple=True)
@@ -396,36 +412,38 @@ class AppriseURLFilter:
 
         except (UnicodeError, ValueError):
             # Treat malformed URLs that raise, such as broken IPv6, as denied.
-            return False
+            return "invalid"
 
         if not parsed:
-            return False
+            return "invalid"
 
         # A parsed result with no usable host can't be matched against
         # anything meaningfully -- treat it as blocked rather than let an
         # empty/None host reach string formatting or DNS resolution below.
         host = parsed.get("host")
         if not host:
-            return False
+            return "invalid"
 
         # includes port if present
         port = parsed.get("port")
         netloc = f"{host}:{port}" if port is not None else host
         if len(netloc) > _MAX_HOST_LENGTH:
-            return False
+            return "invalid"
 
         # Check deny rules first.
         for pattern, kind in self.deny_rules:
             if kind == "internal":
-                if resolve and self._is_internal_target(host):
-                    return False
+                # Only looked up when asked, as it needs a DNS lookup.
+                internal = self._internal_target(host) if resolve else None
+                if internal is not None:
+                    return internal
 
             elif kind == "url":
                 if pattern.match(url):
-                    return False
+                    return "deny"
 
             elif pattern.match(netloc):
-                return False
+                return "deny"
 
         # Then check allow rules. "internal" has no meaning as a positive
         # match (there's nothing bounded to allow), so it's ignored here.
@@ -435,9 +453,9 @@ class AppriseURLFilter:
 
             if kind == "url":
                 if pattern.match(url):
-                    return True
+                    return None
 
             elif pattern.match(netloc):
-                return True
+                return None
 
-        return False
+        return "allow"

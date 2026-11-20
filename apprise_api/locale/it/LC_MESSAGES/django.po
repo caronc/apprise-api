@@ -214,6 +214,7 @@ msgid "Attachment"
 msgstr "Allegato"
 
 #: apprise_api/api/forms.py:391 apprise_api/api/forms.py:400
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
 msgid "Tags"
 msgstr "Tag"
 
@@ -350,14 +351,6 @@ msgstr "L’accesso salvato %(saved)s è attualmente imposto come bloccato dalla
 msgid "Save"
 msgstr "Salva"
 
-#: apprise_api/api/templates/auth.html:147
-msgid "Credential Tools"
-msgstr "Strumenti per le credenziali"
-
-#: apprise_api/api/templates/auth.html:148
-msgid "Generate credentials or reset this Config ID's access."
-msgstr "Genera credenziali o reimposta l'accesso di questo ID di configurazione."
-
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Genera nuove credenziali"
@@ -369,10 +362,6 @@ msgstr "Campi da randomizzare"
 #: apprise_api/api/templates/auth.html:168
 msgid "Randomize the Selected Fields"
 msgstr "Randomizza i campi selezionati"
-
-#: apprise_api/api/templates/auth.html:172
-msgid "Randomize Selected"
-msgstr "Randomizza selezionati"
 
 #: apprise_api/api/templates/auth.html:181
 msgid "Reset Access"
@@ -455,21 +444,34 @@ msgstr "Modalità"
 msgid "Description"
 msgstr "Descrizione"
 
-#: apprise_api/api/templates/auth.html:332
-msgid "Uses its own login for normal stateful and stateless notifications and configuration access."
-msgstr "Utilizza il proprio login per notifiche e accesso alla configurazione sia in modalità stateless che stateful."
+#: apprise_api/api/templates/auth.html:370
+msgid "Uses its own login to send notifications and to view and edit the configuration."
+msgstr "Usa il proprio accesso per inviare notifiche e per vedere e modificare la configurazione."
 
-#: apprise_api/api/templates/auth.html:333
-msgid "Uses its own login for tagged stateful notifications and password changes. Configuration content stays hidden."
-msgstr "Utilizza il proprio login per notifiche stateful contrassegnate e cambio password. Il contenuto della configurazione rimane nascosto."
+#: apprise_api/api/templates/auth.html:370
+msgid "Its user also manages the reminders."
+msgstr "Il suo utente gestisce anche i promemoria."
 
-#: apprise_api/api/templates/auth.html:334
-msgid "Allows tagged stateful notifications without a login. Configuration content and stateless notifications stay protected."
-msgstr "Consente notifiche stateful contrassegnate senza login. Il contenuto della configurazione e le notifiche stateless rimangono protetti."
+#: apprise_api/api/templates/auth.html:371
+msgid "Uses its own login to send tagged notifications and change its password. The configuration stays hidden."
+msgstr "Usa il proprio accesso per inviare notifiche contrassegnate e cambiare la password. La configurazione resta nascosta."
 
-#: apprise_api/api/templates/auth.html:335
-msgid "Freezes configuration-user access without deleting the configuration or login. Only an administrator may use it."
-msgstr "Blocca l’accesso dell’utente alla configurazione senza eliminare la configurazione o l’accesso. Solo un amministratore può usarlo."
+#: apprise_api/api/templates/auth.html:371
+#: apprise_api/api/templates/auth.html:372
+msgid "Only an administrator manages reminders, and they still run."
+msgstr "Solo un amministratore gestisce i promemoria, che continuano a essere inviati."
+
+#: apprise_api/api/templates/auth.html:372
+msgid "Anyone may send tagged notifications without a login. The configuration and stateless notifications stay protected."
+msgstr "Chiunque può inviare notifiche contrassegnate senza accesso. La configurazione e le notifiche stateless restano protette."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Only an administrator may use it. The configuration and login are kept."
+msgstr "Solo un amministratore può usarla. La configurazione e l’accesso vengono conservati."
+
+#: apprise_api/api/templates/auth.html:373
+msgid "Its reminders are kept, but none run or can be changed."
+msgstr "I suoi promemoria vengono conservati, ma nessuno viene inviato né può essere modificato."
 
 #: apprise_api/api/templates/auth.html:337
 #: apprise_api/api/templates/components/mobile_app_dialog.html:18
@@ -752,8 +754,8 @@ msgid "Configuration List"
 msgstr "Elenco Configurazioni"
 
 #: apprise_api/api/templates/base.html:303
-msgid "Available Plugins"
-msgstr "Plugin disponibili"
+msgid "Available Services"
+msgstr "Servizi disponibili"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -1061,6 +1063,10 @@ msgstr "Anteprima dell’App"
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile cruscotto"
 
+#: apprise_api/api/templates/components/mobile_app_dialog.html:62
+msgid "Apprise Mobile reminders"
+msgstr "Apprise Mobile promemoria"
+
 #: apprise_api/api/templates/components/mobile_app_dialog.html:49
 msgid "Dashboard"
 msgstr "Cruscotto"
@@ -1273,8 +1279,8 @@ msgid ""
 msgstr "Il seguente comando farebbe sì che Apprise recuperi la configurazione caricata e invii una notifica di prova a tutti i tuoi servizi aggiunti:"
 
 #: apprise_api/api/templates/config.html:256
-msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
-msgstr "Puoi anche creare un file di configurazione <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"noopener noreferrer\">Apprise</a> che contenga questa riga da qualche parte al suo interno:"
+msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
+msgstr "Puoi anche creare un file di configurazione <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise</a> che contenga questa riga da qualche parte al suo interno:"
 
 #: apprise_api/api/templates/config.html:259
 msgid "Apprise configuration 'include' entry copied to clipboard"
@@ -1504,13 +1510,9 @@ msgstr "BEGIN APPRISE NOTIFICATION LOG"
 msgid "END APPRISE NOTIFICATION LOG"
 msgstr "END APPRISE NOTIFICATION LOG"
 
-#: apprise_api/api/templates/config.html:930
-msgid "event"
-msgstr "evento"
-
-#: apprise_api/api/templates/config.html:931
-msgid "events"
-msgstr "eventi"
+#: apprise_api/api/templates/components/notify_stream_script.html:193
+msgid "Events: {}"
+msgstr "Eventi: {}"
 
 #: apprise_api/api/templates/config.html:940
 msgid "Notification logs copied to clipboard"
@@ -1558,10 +1560,6 @@ msgstr "Invia"
 #: apprise_api/api/templates/config.html:3336
 msgid "Notification"
 msgstr "Notifica"
-
-#: apprise_api/api/templates/config.html:1252
-msgid "This test action requires at least one tag on the target entry."
-msgstr "Questa azione di test richiede almeno un tag sulla voce di destinazione."
 
 #: apprise_api/api/templates/config.html:1267
 msgid "Apprise API Test"
@@ -1786,13 +1784,6 @@ msgstr "Configurazione spostata."
 msgid "Apprise Details"
 msgstr "Apprise Dettagli"
 
-#: apprise_api/api/templates/details.html:13
-msgid ""
-"The following services are supported by this\n"
-"            <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>\n"
-"            instance."
-msgstr "I seguenti servizi sono supportati da questa istanza <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a>."
-
 #: apprise_api/api/templates/details.html:22
 #, python-format
 msgid ""
@@ -1819,51 +1810,25 @@ msgstr "Guida all’installazione"
 msgid "Service Website"
 msgstr "Sito web del servizio"
 
-#: apprise_api/api/templates/details.html:114
-msgid ""
-"\n"
-"                  <strong>Note:</strong> This service is unavailable due to the\n"
-"                  service being disabled by the administrator or the required\n"
-"                  libraries needed to drive it is not installed or functioning\n"
-"                  correctly.\n"
-"                "
-msgstr ""
-"\n"
-"<strong>Nota:</strong> Questo servizio non è disponibile perché il servizio è stato disabilitato dall’amministratore o le librerie necessarie per il suo funzionamento non sono installate o non funzionano correttamente."
+#: apprise_api/api/templates/details.html:135
+msgid "Service Unavailable"
+msgstr "Servizio non disponibile"
 
-#: apprise_api/api/templates/details.html:124
-msgid "Category"
-msgstr "Categoria"
+#: apprise_api/api/templates/details.html:138
+msgid "The administrator has turned this service off on this server."
+msgstr "L’amministratore ha disattivato questo servizio su questo server."
 
-#: apprise_api/api/templates/details.html:129
-msgid "Insecure Schema(s)"
-msgstr "Schema/i insicuro/i"
+#: apprise_api/api/templates/details.html:140
+msgid "This service is missing the necessary dependencies to function on this server."
+msgstr "A questo servizio mancano le dipendenze necessarie per funzionare su questo server."
 
-#: apprise_api/api/templates/details.html:142
-msgid "Secure Schema(s)"
-msgstr "Schema/i sicuro/i"
+#: apprise_api/api/templates/details.html:143
+msgid "Required packages:"
+msgstr "Pacchetti richiesti:"
 
-#: apprise_api/api/templates/details.html:154
-msgid "Apprise URL Formatting"
-msgstr "Apprise URL Formattazione"
-
-#: apprise_api/api/templates/details.html:159
-msgid ""
-"For more details and additional Apprise\n"
-"                    configuration options available to this service:"
-msgstr "Per ulteriori dettagli e opzioni di Apprise configurazione aggiuntive disponibili per questo servizio:"
-
-#: apprise_api/api/templates/details.html:161
-msgid "Click Here"
-msgstr "Clicca Qui"
-
-#: apprise_api/api/templates/details.html:173
-msgid "API Endpoints"
-msgstr "API Endpoint"
-
-#: apprise_api/api/templates/details.html:176
-msgid "Developers who wish to receive this result set in a JSON parseable string for their application can perform the following to achieve this:"
-msgstr "Gli sviluppatori che desiderano ricevere questo insieme di risultati in una stringa JSON analizzabile per la loro applicazione possono eseguire quanto segue per ottenerlo:"
+#: apprise_api/api/templates/details.html:147
+msgid "You can still build its URL online."
+msgstr "Puoi comunque creare il suo URL online."
 
 #: apprise_api/api/templates/details.html:181
 #: apprise_api/api/templates/welcome.html:111
@@ -1872,10 +1837,6 @@ msgstr "Gli sviluppatori che desiderano ricevere questo insieme di risultati in 
 #: apprise_api/api/templates/welcome.html:590
 msgid "Curl Example"
 msgstr "Esempio Curl"
-
-#: apprise_api/api/templates/details.html:184
-msgid "Retrieve JSON Formatted Apprise Details"
-msgstr "Recupera JSON Formattato Apprise Dettagli"
 
 #: apprise_api/api/templates/details.html:191
 #: apprise_api/api/templates/welcome.html:138
@@ -1929,8 +1890,8 @@ msgid "Execute the request"
 msgstr "Esegui la richiesta"
 
 #: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>."
-msgstr "Ulteriori dettagli sul formato JSON possono essere trovati <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"noopener noreferrer\">qui</a>."
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">here</a>."
+msgstr "Ulteriori dettagli sul formato JSON possono essere trovati <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">qui</a>."
 
 #: apprise_api/api/templates/details.html:273
 #: apprise_api/api/templates/welcome.html:811
@@ -1966,13 +1927,13 @@ msgstr "L’API Apprise"
 #: apprise_api/api/templates/welcome.html:12
 msgid ""
 "\n"
-"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
+"      <a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> allows you to send a notification to almost\n"
 "      all of the most popular notification services available to us today such as: <em>Telegram</em>, <em>Discord</em>,\n"
 "      <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, etc.\n"
 "      This API provides a simple gateway to directly access it via an HTTP interface."
 msgstr ""
 "\n"
-"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"noopener noreferrer\">Apprise</a> ti permette di inviare una notifica a quasi tutti i servizi di notifica più popolari disponibili oggi, come: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, ecc. Questo API fornisce un semplice gateway per accedervi direttamente tramite un’interfaccia HTTP."
+"<a target=\"_blank\" href=\"https://github.com/caronc/apprise\" rel=\"nofollow noopener noreferrer\">Apprise</a> ti permette di inviare una notifica a quasi tutti i servizi di notifica più popolari disponibili oggi, come: <em>Telegram</em>, <em>Discord</em>, <em>Slack</em>, <em>Amazon SNS</em>, <em>Gotify</em>, ecc. Questo API fornisce un semplice gateway per accedervi direttamente tramite un’interfaccia HTTP."
 
 #: apprise_api/api/templates/welcome.html:20
 msgid ""
@@ -1992,9 +1953,9 @@ msgstr "Endpoint senza stato"
 
 #: apprise_api/api/templates/welcome.html:35
 msgid ""
-"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> and/or\n"
+"Those who wish to treat this API as nothing but a <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">sidecar</a> and/or\n"
 "    microservice to their project only need to use the following URL."
-msgstr "Coloro che desiderano trattare questo API come nient’altro che un <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"noopener noreferrer\">sidecar</a> e/o microservizio per il proprio progetto devono solo utilizzare il seguente URL."
+msgstr "Coloro che desiderano trattare questo API come nient’altro che un <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">sidecar</a> e/o microservizio per il proprio progetto devono solo utilizzare il seguente URL."
 
 #: apprise_api/api/templates/welcome.html:42
 #: apprise_api/api/templates/welcome.html:285
@@ -2003,9 +1964,9 @@ msgstr "URL"
 
 #: apprise_api/api/templates/welcome.html:52
 msgid ""
-"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"Used to notify one one or more specified Apprise URLs. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "          constructing your URL(s)."
-msgstr "Utilizzato per notificare uno o più URL Apprise specificati. Vedi il <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> se hai bisogno di aiuto per costruire il tuo/i tuoi URL."
+msgstr "Utilizzato per notificare uno o più URL Apprise specificati. Vedi il <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> se hai bisogno di aiuto per costruire il tuo/i tuoi URL."
 
 #: apprise_api/api/templates/welcome.html:58
 #: apprise_api/api/templates/welcome.html:302
@@ -2053,8 +2014,8 @@ msgid "Notifies an email address with attachments"
 msgstr "Notifica un indirizzo email con allegati"
 
 #: apprise_api/api/templates/welcome.html:129
-msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a> server:"
-msgstr "Invia un file allegato basato sul web a un server <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"noopener noreferrer\">Discord</a>:"
+msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> server:"
+msgstr "Invia un file allegato basato sul web a un server <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a>:"
 
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
@@ -2149,9 +2110,9 @@ msgstr "Tutti gli endpoint che si aspettano dati inviati possono riceverli sia i
 #, python-format
 msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
-"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
+"            identified with the id of <em>%(key)s</em>. See the <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> if you need help\n"
 "            constructing your URLs."
-msgstr "Usato per aggiungere una nuova configurazione Apprise o un insieme di URL e associarli alla configurazione identificata con l’id di <em>%(key)s</em>. Vedi il <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"noopener noreferrer\">Apprise URL Builder</a> se hai bisogno di aiuto per costruire i tuoi URL."
+msgstr "Usato per aggiungere una nuova configurazione Apprise o un insieme di URL e associarli alla configurazione identificata con l’id di <em>%(key)s</em>. Vedi il <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a> se hai bisogno di aiuto per costruire i tuoi URL."
 
 #: apprise_api/api/templates/welcome.html:310
 msgid ""
@@ -2473,9 +2434,11 @@ msgstr "La configurazione non può essere rimossa"
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "La configurazione è stata rimossa, ma la sua autenticazione non può essere rimossa"
 
-#: apprise_api/api/views.py:2609
-msgid "Successfully removed configuration"
-msgstr "Configurazione rimossa con successo"
+
+#: apprise_api/api/views.py:4922
+msgid "Successfully saved reminder"
+msgstr "Promemoria salvato con successo"
+
 
 #: apprise_api/api/views.py:2717
 msgid "Content-Type must be application/json"
@@ -2562,6 +2525,152 @@ msgstr "La mappatura del campo del payload non è riuscita"
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "Il campo {} deve essere una stringa"
+
+#: apprise_api/api/views.py:4239
+#, python-brace-format
+msgid "The {} field is invalid"
+msgstr "Il campo {} non è valido"
+
+#: apprise_api/api/views.py:4276
+#, python-brace-format
+msgid "The {} field is too long"
+msgstr "Il campo {} è troppo lungo"
+
+#: apprise_api/api/views.py:4985
+msgid "The reminder is too large to save"
+msgstr "Il promemoria è troppo grande per essere salvato"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:415 apprise_api/api/views.py:4506
+msgid "This reminder would never be sent"
+msgstr "Questo promemoria non verrebbe mai inviato"
+
+#: apprise_api/api/views.py:4493 apprise_api/api/templates/components/config_reminders_script.html:297
+msgid "The end date is before the start"
+msgstr "La data di fine è precedente all’inizio"
+
+#: apprise_api/api/views.py:4587
+msgid "This server does not save URLs with reminders"
+msgstr "Questo server non salva URL con i promemoria"
+
+#: apprise_api/api/views.py:4590
+msgid "A reminder can hold at most {} URLs"
+msgstr "Un promemoria può contenere al massimo {} URL"
+
+#: apprise_api/api/templates/config.html:567
+msgid "Apprise URLs"
+msgstr "URL di Apprise"
+
+#: apprise_api/api/templates/config.html:568
+msgid ""
+"Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
+msgstr "Facoltativamente, indica direttamente gli URL Apprise da notificare. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Fai clic qui</a> per ricevere aiuto nella creazione degli URL con l’Apprise URL Builder."
+
+#: apprise_api/api/templates/config.html:583
+msgid "Also send to untagged services"
+msgstr "Invia anche ai servizi senza tag"
+
+#: apprise_api/api/templates/config.html:3117
+msgid "Apprise URL"
+msgstr "URL di Apprise"
+
+#: apprise_api/api/templates/config.html:3154
+msgid "Remove URL"
+msgstr "Rimuovi URL"
+
+#: apprise_api/api/views.py:4307
+msgid "This URL could not be loaded"
+msgstr "Impossibile caricare questo URL"
+
+#: apprise_api/api/templates/details.html:555
+msgid "This value is not in the form this service expects."
+msgstr "Questo valore non è nella forma prevista da questo servizio."
+
+#: apprise_api/api/templates/details.html:560
+msgid "Mark each entry with its kind: {}."
+msgstr "Contrassegna ogni voce con il suo tipo: {}."
+
+#: apprise_api/api/templates/details.html:561
+msgid "{} for {}"
+msgstr "{} per {}"
+
+#: apprise_api/api/templates/details.html:611
+msgid "{} was read as a {}."
+msgstr "{} è stato letto come {}."
+
+#: apprise_api/api/templates/details.html:770
+msgid "This URL could not be loaded. Check the highlighted fields."
+msgstr "Impossibile caricare questo URL. Controlla i campi evidenziati."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:534
+msgid "The end date has already passed, so this reminder will not be sent."
+msgstr "La data di fine è già passata, quindi questo promemoria non verrà inviato."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:535
+msgid "This time has already passed, so the reminder will not be sent."
+msgstr "Questo orario è già passato, quindi il promemoria non verrà inviato."
+
+#: apprise_api/api/views.py:4501
+msgid "Nothing would be sent before the end date"
+msgstr "Non verrebbe inviato nulla prima della data di fine"
+
+#: apprise_api/api/views.py:4567
+#, python-brace-format
+msgid "A reminder cannot repeat more often than every {} seconds"
+msgstr "Un promemoria non può ripetersi più spesso di ogni {} secondi"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
+msgid "Only an administrator may manage reminders for this configuration"
+msgstr "Solo un amministratore può gestire i promemoria di questa configurazione"
+
+#: apprise_api/api/views.py:5475
+msgid "Reminders are turned off while this configuration is disabled"
+msgstr "I promemoria sono disattivati finché questa configurazione è disabilitata"
+
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:14
+msgid "The scheduler is not running, so reminders are saved but not sent."
+msgstr "Lo scheduler non è in esecuzione, quindi i promemoria vengono salvati ma non inviati."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1434 apprise_api/api/templates/reminder_list.html:113 apprise_api/api/views.py:4768
+msgid "The reminders could not be read"
+msgstr "Impossibile leggere i promemoria"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1168 apprise_api/api/templates/components/reminder_shared_script.html:144 apprise_api/api/views.py:4773
+msgid "The reminders could not be saved"
+msgstr "Impossibile salvare i promemoria"
+
+#: apprise_api/api/views.py:4778
+msgid "The reminder was not found"
+msgstr "Promemoria non trovato"
+
+#: apprise_api/api/views.py:4959
+msgid "This configuration already has the most reminders allowed"
+msgstr "Questa configurazione ha già il numero massimo di promemoria consentiti"
+
+#: apprise_api/api/views.py:4838
+msgid "There is not enough attachment space left for this configuration"
+msgstr "Non c’è abbastanza spazio per gli allegati di questa configurazione"
+
+#: apprise_api/api/views.py:5081
+msgid "Attachments are turned off for this configuration's reminders"
+msgstr "Gli allegati sono disattivati per i promemoria di questa configurazione"
+
+#: apprise_api/api/views.py:4987
+msgid "There is not enough attachment space left on this server"
+msgstr "Non c’è più abbastanza spazio per gli allegati su questo server"
+
+#: apprise_api/api/views.py:5362
+msgid "Only an administrator may change the limits of this configuration"
+msgstr "Solo un amministratore può modificare i limiti di questa configurazione"
+
+#: apprise_api/api/templates/auth.html:918 apprise_api/api/views.py:5388
+msgid "The limits could not be saved"
+msgstr "Impossibile salvare i limiti"
+
+#: apprise_api/api/scheduler.py:425
+#, python-brace-format
+msgid "Reminders for this configuration were paused because it was not used for {} days"
+msgstr "I promemoria di questa configurazione sono stati sospesi perché non è stata usata per {} giorni"
 
 #: apprise_api/api/views.py:3296
 msgid "The format field must be a string or null"
@@ -2730,3 +2839,733 @@ msgstr "Pagina non trovata"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "Errore di sistema"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:8 apprise_api/api/templates/config.html:62
+msgid "Reminders"
+msgstr "Promemoria"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:9
+msgid "All pre-saved notifications set to be sent at a later time are listed here."
+msgstr "Qui sono elencate tutte le notifiche salvate da inviare in un secondo momento."
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:45
+#, python-format
+msgid "No reminders have been added. Use the %(notify_chip)s section to add one."
+msgstr "Non è stato aggiunto alcun promemoria. Usa la sezione %(notify_chip)s per aggiungerne uno."
+
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1212 apprise_api/api/templates/components/config_reminders_tab.html:52
+msgid "Show times in"
+msgstr "Mostra gli orari in"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:73
+msgid "Use my timezone"
+msgstr "Usa il mio fuso orario"
+
+#: apprise_api/api/templates/components/config_reminders.html:161
+msgid "Drift"
+msgstr "Scostamento"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1489
+msgid "All"
+msgstr "Tutti"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1346
+msgid "None (untagged services only)"
+msgstr "Nessuno (solo servizi senza tag)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Finished"
+msgstr "Terminato"
+
+#: apprise_api/api/templates/reminder_list.html:26
+#, python-format
+msgid "No reminders have been added. Open a configuration from the %(list_chip)s and use its Notifications section to add one."
+msgstr "Non è stato aggiunto alcun promemoria. Apri una configurazione dall’%(list_chip)s e usa la sua sezione Notifiche per aggiungerne uno."
+
+#: apprise_api/api/templates/components/config_reminders.html:85
+msgid "Starts (optional)"
+msgstr "Inizio (facoltativo)"
+
+#: apprise_api/api/templates/components/config_reminders.html:190
+msgid "Ends (optional)"
+msgstr "Fine (facoltativo)"
+
+#: apprise_api/api/templates/components/config_reminders.html:94
+msgid "Now"
+msgstr "Adesso"
+
+#: apprise_api/api/templates/components/config_reminders.html:87
+msgid "Date and time"
+msgstr "Data e ora"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:747
+msgid "Quick Select"
+msgstr "Selezione rapida"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:611
+msgid "Today"
+msgstr "Oggi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:626
+msgid "Tomorrow"
+msgstr "Domani"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:627
+msgid "This Weekend"
+msgstr "Questo fine settimana"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:630
+msgid "Later This Week"
+msgstr "Più avanti questa settimana"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:631
+msgid "Next Week"
+msgstr "Settimana prossima"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:634
+msgid "Next Weekend"
+msgstr "Prossimo fine settimana"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:637
+msgid "End of Month"
+msgstr "Fine del mese"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:640
+msgid "In a Month"
+msgstr "Tra un mese"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:890
+msgid "Start Date"
+msgstr "Data di inizio"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:891
+msgid "A Day Later"
+msgstr "Un giorno dopo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:892
+msgid "A Week Later"
+msgstr "Una settimana dopo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:894
+msgid "A Month Later"
+msgstr "Un mese dopo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:895
+msgid "A Year Later"
+msgstr "Un anno dopo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:612
+msgid "Clear"
+msgstr "Cancella"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:749
+msgid "Confirm"
+msgstr "Conferma"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Hour"
+msgstr "Ora"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:751
+msgid "Minute"
+msgstr "Minuto"
+
+#: apprise_api/api/templates/components/config_reminders.html:196
+msgid "No end date"
+msgstr "Nessuna data di fine"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1498
+msgid "No reminders are due in this period."
+msgstr "Nessun promemoria previsto in questo periodo."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374
+msgid "No reminders have been added yet."
+msgstr "Non è stato ancora aggiunto alcun promemoria."
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:42 apprise_api/api/templates/reminder_list.html:22
+msgid "No Reminders Yet"
+msgstr "Ancora nessun promemoria"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:12
+msgid "Attachment Space Full"
+msgstr "Spazio allegati esaurito"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:14
+msgid "Your reminders use all of their attachment space. Remove attachments from them, or ask the administrator for more space, to add new ones. Sending notifications is not affected."
+msgstr "I tuoi promemoria usano tutto il loro spazio per gli allegati. Rimuovi alcuni allegati, o chiedi più spazio all’amministratore, per aggiungerne di nuovi. L’invio delle notifiche non è interessato."
+
+#: apprise_api/api/templates/auth.html:200 apprise_api/api/templates/components/config_reminders_tab.html:29
+msgid "Reminders used"
+msgstr "Promemoria usati"
+
+#: apprise_api/api/templates/auth.html:201 apprise_api/api/templates/components/config_reminders_tab.html:30
+msgid "Attachment space used"
+msgstr "Spazio per allegati usato"
+
+#: apprise_api/api/templates/auth.html:194
+msgid "Reminder Limits"
+msgstr "Limiti dei promemoria"
+
+#: apprise_api/api/templates/auth.html:195
+msgid "How much this Config ID's user may save as reminders."
+msgstr "Quanto l’utente di questo ID Config può salvare come promemoria."
+
+#: apprise_api/api/templates/auth.html:208
+msgid "Most reminders"
+msgstr "Numero massimo di promemoria"
+
+#: apprise_api/api/templates/auth.html:212
+msgid "Attachment space (MB)"
+msgstr "Spazio per allegati (MB)"
+
+#: apprise_api/api/templates/auth.html:218
+msgid "Save Limits"
+msgstr "Salva limiti"
+
+#: apprise_api/api/templates/auth.html:215
+msgid "Leave a field blank to use the server default. An attachment space of 0 turns uploads off."
+msgstr "Lascia un campo vuoto per usare il valore predefinito del server. Uno spazio per allegati di 0 disattiva il caricamento di file."
+
+#: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
+msgid "Reminder"
+msgstr "Promemoria"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:15
+msgid "Once"
+msgstr "Una volta"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+msgid "Every day"
+msgstr "Ogni giorno"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+msgid "Every week"
+msgstr "Ogni settimana"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+msgid "Every month"
+msgstr "Ogni mese"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+msgid "Every year"
+msgstr "Ogni anno"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:16
+msgid "On a holiday"
+msgstr "In un giorno festivo"
+
+#: apprise_api/api/templates/components/config_reminders.html:52
+msgid "Country"
+msgstr "Paese"
+
+#: apprise_api/api/templates/components/config_reminders.html:70
+msgid "Region"
+msgstr "Regione"
+
+#: apprise_api/api/templates/components/config_reminders.html:74
+msgid "Holiday"
+msgstr "Festività"
+
+#: apprise_api/api/templates/components/config_reminders.html:125
+msgid "Previous year"
+msgstr "Anno precedente"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Next year"
+msgstr "Anno successivo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:269
+msgid "All regions"
+msgstr "Tutte le regioni"
+
+#: apprise_api/api/templates/components/config_reminders.html:154 apprise_api/api/templates/components/reminder_shared_script.html:17
+msgid "Custom (crontab)"
+msgstr "Personalizzato (crontab)"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:306
+msgid "Repeat"
+msgstr "Ripeti"
+
+#: apprise_api/api/templates/components/config_reminders.html:150
+msgid "Days"
+msgstr "Giorni"
+
+#: apprise_api/api/templates/components/config_reminders.html:185
+msgid "Crontab entry"
+msgstr "Voce crontab"
+
+#: apprise_api/api/templates/components/config_reminders.html:187
+msgid "Five fields: minute, hour, day of the month, month and day of the week."
+msgstr "Cinque campi: minuto, ora, giorno del mese, mese e giorno della settimana."
+
+#: apprise_api/api/templates/components/config_reminders.html:205
+msgid "Upcoming"
+msgstr "Prossimi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:363
+msgid "No more times after this"
+msgstr "Nessun altro orario dopo questo"
+
+#: apprise_api/api/templates/config.html:624
+msgid "Save Reminder"
+msgstr "Salva promemoria"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:32
+msgid "Skipped: it was too late to send"
+msgstr "Saltato: era troppo tardi per inviarlo"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:34
+msgid "Paused: this configuration was not used for a while"
+msgstr "In pausa: questa configurazione non è stata usata per un po’"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "Non riuscito: questo server non consente più URL nei promemoria"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "Non riuscito: nessuna configurazione trovata"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "Non riuscito: impossibile usare i suoi allegati"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "Non riuscito: un errore ha interrotto l’invio"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "The diagnostics could not be read"
+msgstr "Impossibile leggere la diagnostica"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Diagnostics"
+msgstr "Diagnostica"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "Incolla questo testo in un ticket di assistenza per aiutare a tracciare questo promemoria. Il messaggio è escluso e le password nei suoi URL sono nascoste. «Oscurato» nasconde anche nome, tag e URL."
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:379
+msgid "Copy"
+msgstr "Copia"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:364
+msgid "Redacted"
+msgstr "Oscurato"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:350
+msgid "How to read these diagnostics"
+msgstr "Come leggere questa diagnostica"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
+msgid "Reminder saved."
+msgstr "Promemoria salvato."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1888
+msgid "Clear this result"
+msgstr "Cancella questo risultato"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1364 apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Paused"
+msgstr "In pausa"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:303
+msgid "Active"
+msgstr "Attivo"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:307
+msgid "Next"
+msgstr "Prossimo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Sent"
+msgstr "Inviato"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
+msgid "Failed"
+msgstr "Non riuscito"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:312
+msgid "Last"
+msgstr "Ultimo"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Resume"
+msgstr "Riprendi"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
+msgid "Pause"
+msgstr "Metti in pausa"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Pause Series"
+msgstr "Metti in pausa la serie"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:239
+msgid "Resume Series"
+msgstr "Riprendi la serie"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1373 apprise_api/api/templates/components/reminder_shared_script.html:338
+msgid "Edit"
+msgstr "Modifica"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:210
+msgid "Send Now"
+msgstr "Invia ora"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:258
+msgid "Delete this reminder?"
+msgstr "Eliminare questo promemoria?"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:278
+msgid "Reminder removed."
+msgstr "Promemoria rimosso."
+
+#: apprise_api/api/templates/auth.html:922
+msgid "Limits saved."
+msgstr "Limiti salvati."
+
+#: apprise_api/api/templates/config.html:623
+msgid "Add Reminder"
+msgstr "Aggiungi promemoria"
+
+#: apprise_api/api/templates/config.html:518
+msgid "Editing reminder"
+msgstr "Modifica del promemoria"
+
+#: apprise_api/api/templates/auth.html:626
+msgid "Keep Reminders"
+msgstr "Mantieni i promemoria"
+
+#: apprise_api/api/templates/auth.html:627
+msgid "Hand the reminders this user added to the administrator instead of removing them."
+msgstr "Affida all’amministratore i promemoria aggiunti da questo utente invece di rimuoverli."
+
+#: apprise_api/api/templates/base.html:305 apprise_api/api/templates/reminder_list.html:10
+msgid "Reminder List"
+msgstr "Elenco promemoria"
+
+#: apprise_api/api/templates/reminder_list.html:11
+msgid "Every reminder saved on this server, soonest first."
+msgstr "Tutti i promemoria salvati su questo server, dal più vicino."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1353 apprise_api/api/templates/reminder_list.html:91
+msgid "Series"
+msgstr "Serie"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1374 apprise_api/api/templates/components/reminder_shared_script.html:340
+msgid "Clone"
+msgstr "Clona"
+
+#: apprise_api/api/templates/components/config_reminders.html:126
+msgid "Only this one time changes. Use Clone to start a new repeating reminder from it."
+msgstr "Cambia solo questa volta. Usa Clona per creare un nuovo promemoria ripetuto a partire da essa."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1122
+msgid "Copied into a new reminder. Change what you like, then choose Add Reminder."
+msgstr "Copiato in un nuovo promemoria. Cambia ciò che vuoi, poi scegli Aggiungi promemoria."
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1323
+msgid "Edit this time"
+msgstr "Modifica questa volta"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1324
+msgid "Edit the series"
+msgstr "Modifica la serie"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:266
+msgid "Delete Entry"
+msgstr "Elimina voce"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:267
+msgid "Delete Series"
+msgstr "Elimina serie"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:254
+msgid "Delete Entry removes only this time. Delete Series removes the reminder and every time."
+msgstr "Elimina voce rimuove solo questa volta. Elimina serie rimuove il promemoria e tutte le sue date."
+
+#: apprise_api/api/templates/config.html:519
+msgid "Editing one time of"
+msgstr "Modifica di una volta di"
+
+#: apprise_api/api/templates/components/config_reminders.html:27
+msgid "Send on"
+msgstr "Quando inviare"
+
+#: apprise_api/api/templates/components/config_reminders.html:29
+msgid "A date"
+msgstr "Una data"
+
+#: apprise_api/api/templates/components/config_reminders.html:30
+msgid "A holiday"
+msgstr "Un giorno festivo"
+
+#: apprise_api/api/templates/components/config_reminders.html:122
+msgid "Make recurring"
+msgstr "Rendi ricorrente"
+
+#: apprise_api/api/templates/components/config_reminders.html:132
+msgid "Every"
+msgstr "Ogni"
+
+#: apprise_api/api/templates/components/config_reminders.html:147
+msgid "Seconds"
+msgstr "Secondi"
+
+#: apprise_api/api/templates/components/config_reminders.html:148
+msgid "Minutes"
+msgstr "Minuti"
+
+#: apprise_api/api/templates/components/config_reminders.html:149
+msgid "Hours"
+msgstr "Ore"
+
+#: apprise_api/api/templates/components/config_reminders.html:151
+msgid "Weeks"
+msgstr "Settimane"
+
+#: apprise_api/api/templates/components/config_reminders.html:152
+msgid "Months"
+msgstr "Mesi"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:9
+msgid "Select all"
+msgstr "Seleziona tutto"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:16
+msgid "Select none"
+msgstr "Deseleziona tutto"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:23
+msgid "Invert selection"
+msgstr "Inverti selezione"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1228
+msgid "Choose at least one."
+msgstr "Scegline almeno uno."
+
+#: apprise_api/api/templates/components/config_reminders.html:153
+msgid "Years"
+msgstr "Anni"
+
+#: apprise_api/api/templates/config.html:590
+msgid "Attachments"
+msgstr "Allegati"
+
+#: apprise_api/api/templates/config.html:591
+msgid "Upload files, or add web addresses that are downloaded each time the message is sent."
+msgstr "Carica file o aggiungi indirizzi web che vengono scaricati a ogni invio del messaggio."
+
+#: apprise_api/api/templates/config.html:3404
+msgid "Stored with the reminder"
+msgstr "Salvato con il promemoria"
+
+#: apprise_api/api/templates/config.html:599
+msgid "Add URL"
+msgstr "Aggiungi URL"
+
+#: apprise_api/api/templates/config.html:3209
+msgid "Preview"
+msgstr "Anteprima"
+
+#: apprise_api/api/templates/config.html:3221
+msgid "Remove Attachment"
+msgstr "Rimuovi allegato"
+
+#: apprise_api/api/templates/config.html:3253
+msgid "Loading…"
+msgstr "Caricamento…"
+
+#: apprise_api/api/templates/config.html:3281
+msgid "The attachment could not be downloaded"
+msgstr "Impossibile scaricare l’allegato"
+
+#: apprise_api/api/templates/config.html:3198
+msgid "Local network access is turned off"
+msgstr "L’accesso alla rete locale è disattivato"
+
+#: apprise_api/api/templates/config.html:3199
+msgid "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed."
+msgstr "L’amministratore di questa Apprise API ha disattivato i download dalla rete locale, quindi questo indirizzo non può essere visualizzato in anteprima."
+
+#: apprise_api/api/templates/config.html:3202
+msgid "This address is blocked"
+msgstr "Questo indirizzo è bloccato"
+
+#: apprise_api/api/templates/config.html:3203
+msgid "The attachment rules of this Apprise API do not allow downloads from this address."
+msgstr "Le regole degli allegati di questa Apprise API non consentono download da questo indirizzo."
+
+#: apprise_api/api/templates/config.html:3228
+msgid "The administrator can change this with:"
+msgstr "L’amministratore può cambiarlo con:"
+
+#: apprise_api/api/templates/config.html:3241
+msgid "Learn more"
+msgstr "Scopri di più"
+
+#: apprise_api/api/templates/config.html:3320
+msgid "This file cannot be shown here."
+msgstr "Questo file non può essere mostrato qui."
+
+#: apprise_api/api/templates/config.html:3331
+msgid "Download"
+msgstr "Scarica"
+
+#: apprise_api/api/templates/config.html:3178
+msgid "Attachment URL"
+msgstr "URL dell’allegato"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+msgid "Every second"
+msgstr "Ogni secondo"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:22
+#, python-brace-format
+msgid "Every {} seconds"
+msgstr "Ogni {} secondi"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+msgid "Every minute"
+msgstr "Ogni minuto"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+msgid "Every hour"
+msgstr "Ogni ora"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:23
+#, python-brace-format
+msgid "Every {} minutes"
+msgstr "Ogni {} minuti"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:24
+#, python-brace-format
+msgid "Every {} hours"
+msgstr "Ogni {} ore"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+#, python-brace-format
+msgid "Every {} days"
+msgstr "Ogni {} giorni"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+#, python-brace-format
+msgid "Every {} weeks"
+msgstr "Ogni {} settimane"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+#, python-brace-format
+msgid "Every {} months"
+msgstr "Ogni {} mesi"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+#, python-brace-format
+msgid "Every {} years"
+msgstr "Ogni {} anni"
+
+#: apprise_api/api/templates/resolve.html:37
+#: apprise_api/api/templates/resolve.html:38
+msgid "Copy URL"
+msgstr "Copia URL"
+
+#: apprise_api/api/templates/resolve.html:43
+msgid "Parse"
+msgstr "Analizza"
+
+#: apprise_api/api/templates/resolve.html:352
+#: apprise_api/api/templates/resolve.html:353
+msgid "Remove Value"
+msgstr "Rimuovi valore"
+
+#: apprise_api/api/templates/details.html:13
+msgid "Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts."
+msgstr "Crea un URL di Apprise in tre passaggi: scegli un servizio, compila i suoi dati, poi copia l’URL. Hai già un URL? Incollalo nel passaggio 1 per vederne e modificarne le parti."
+
+#: apprise_api/api/templates/details.html:36
+msgid "Choose a Service"
+msgstr "Scegli un servizio"
+
+#: apprise_api/api/templates/details.html:39
+msgid "Search Services"
+msgstr "Cerca servizi"
+
+#: apprise_api/api/templates/details.html:69
+msgid "No services match your search."
+msgstr "Nessun servizio corrisponde alla ricerca."
+
+#: apprise_api/api/templates/details.html:74
+msgid "Or Paste an Apprise URL"
+msgstr "Oppure incolla un URL di Apprise"
+
+#: apprise_api/api/templates/details.html:96
+msgid "Fill In the Details"
+msgstr "Compila i dati"
+
+#: apprise_api/api/templates/details.html:98
+msgid "Choose a service above, or paste a URL, to see what it needs."
+msgstr "Scegli un servizio qui sopra, oppure incolla un URL, per vedere cosa serve."
+
+#: apprise_api/api/templates/details.html:136
+msgid "Options"
+msgstr "Opzioni"
+
+#: apprise_api/api/templates/details.html:140
+msgid "Advanced"
+msgstr "Avanzate"
+
+#: apprise_api/api/templates/details.html:150
+msgid "Copy Your URL"
+msgstr "Copia il tuo URL"
+
+#: apprise_api/api/templates/details.html:159
+msgid "Fill in the details above to build the URL."
+msgstr "Compila i dati qui sopra per creare l’URL."
+
+#: apprise_api/api/templates/details.html:462
+msgid "Required"
+msgstr "Obbligatorio"
+
+#: apprise_api/api/templates/details.html:513
+msgid "Separate entries with commas"
+msgstr "Separa le voci con virgole"
+
+#: apprise_api/api/templates/details.html:192
+msgid "A configuration login also sends its Config ID in the <code>X-Apprise-Config-ID</code> header."
+msgstr "Un accesso di configurazione invia anche il proprio ID di configurazione nell’intestazione <code>X-Apprise-Config-ID</code>."
+
+#: apprise_api/api/templates/details.html:195
+msgid "List every service and its fields:"
+msgstr "Elenca ogni servizio e i suoi campi:"
+
+#: apprise_api/api/templates/details.html:201
+msgid "Split a URL into its fields:"
+msgstr "Scomponi un URL nei suoi campi:"
+
+#: apprise_api/api/templates/details.html:209
+msgid "Put fields back together into a URL:"
+msgstr "Ricomponi i campi in un URL:"
+
+#: apprise_api/api/templates/welcome.html:773
+msgid "Service and URL Endpoints"
+msgstr "Endpoint dei servizi e degli URL"
+
+#: apprise_api/api/templates/welcome.html:776
+#, python-format
+msgid "Your own programs can look up what each service needs and check Apprise URLs without sending anything. The <a href=\"%(BASE_URL)s/details/\">Available Services</a> page is built on these."
+msgstr "I tuoi programmi possono scoprire di cosa ha bisogno ogni servizio e controllare gli URL di Apprise senza inviare nulla. La pagina <a href=\"%(BASE_URL)s/details/\">Servizi disponibili</a> si basa su di essi."
+
+#: apprise_api/api/templates/welcome.html:795
+msgid "Lists every service this server supports and the fields each of its URLs is built from."
+msgstr "Elenca ogni servizio supportato da questo server e i campi da cui sono costruiti i suoi URL."
+
+#: apprise_api/api/templates/welcome.html:816
+msgid "Takes Apprise URLs apart into their fields, or puts fields back together into a URL. Nothing is contacted; the URLs are only read."
+msgstr "Scompone gli URL di Apprise nei loro campi, o rimette insieme i campi in un URL. Non viene contattato nulla; gli URL vengono solo letti."
+
+#: apprise_api/api/templates/details.html:215
+#, python-format
+msgid "Using this from your own program? See the <a href=\"%(BASE_URL)s/#url-endpoints\">API endpoints</a>."
+msgstr "Lo usi dal tuo programma? Consulta gli <a href=\"%(BASE_URL)s/#url-endpoints\">endpoint dell’API</a>."

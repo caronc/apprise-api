@@ -45,7 +45,7 @@ from ..exceptions import (
     AppriseAPIStorageError,
 )
 from ..urlfilter import AppriseURLFilter
-from ..utils import Attachment, HTTPAttachment, _build_http_attachment, parse_attachments
+from ..utils import Attachment, HTTPAttachment, build_http_attachment, parse_attachments
 from .helpers import LocalFileFixtureMixin
 
 SAMPLE_FILE = join(dirname(dirname(dirname(__file__))), "static", "logo.png")
@@ -1456,7 +1456,7 @@ class LocalFileDisclosureTests(LocalFileFixtureMixin, SimpleTestCase):
             patch.object(utils.ATTACH_URL_FILTER, "is_allowed", return_value=False),
             self.assertRaises(AppriseAPIImproperlyConfigured) as caught,
         ):
-            _build_http_attachment(url, 1, "attachment.001")
+            build_http_attachment(url, 1, "attachment.001")
 
         self.assertNotIn("secret", str(caught.exception))
         self.assertNotIn("forged-log-entry", str(caught.exception))
@@ -1468,7 +1468,7 @@ class LocalFileDisclosureTests(LocalFileFixtureMixin, SimpleTestCase):
             patch.object(utils.A_MGR["http"], "parse_url", return_value=None),
             self.assertRaises(AppriseAPIImproperlyConfigured),
         ):
-            _build_http_attachment("https://example.com/file", 1, "attachment.001")
+            build_http_attachment("https://example.com/file", 1, "attachment.001")
 
     def test_http_storage_exception_uses_api_error(self):
         """A raised HTTP storage error is converted to the API contract."""
@@ -1480,7 +1480,7 @@ class LocalFileDisclosureTests(LocalFileFixtureMixin, SimpleTestCase):
             patch.object(utils, "HTTPAttachment", return_value=attachment),
             self.assertRaises(AppriseAPIStorageError) as caught,
         ):
-            _build_http_attachment("https://example.com/file", 1, "attachment.001")
+            build_http_attachment("https://example.com/file", 1, "attachment.001")
 
         self.assertEqual(caught.exception.errno, errno.EIO)
         self.assertIs(caught.exception.__cause__, storage_error)
@@ -1495,4 +1495,4 @@ class LocalFileDisclosureTests(LocalFileFixtureMixin, SimpleTestCase):
             patch.object(utils, "HTTPAttachment", return_value=attachment),
             self.assertRaises(AppriseAPIImproperlyConfigured),
         ):
-            _build_http_attachment("https://example.com/file", 1, "attachment.001")
+            build_http_attachment("https://example.com/file", 1, "attachment.001")

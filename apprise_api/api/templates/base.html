@@ -131,7 +131,7 @@
             <li class="social-theme-nav">
               <a href="https://github.com/caronc/apprise-api"
                  target="_blank"
-                 rel="noopener noreferrer"
+                 rel="nofollow noopener noreferrer"
                  class="tooltipped"
                  data-position="bottom"
                  data-tooltip="{% trans "GitHub" %}">
@@ -141,7 +141,7 @@
               </a>
               <a href="https://discord.gg/EGg4rhmpC2"
                  target="_blank"
-                 rel="noopener noreferrer"
+                 rel="nofollow noopener noreferrer"
                  class="tooltipped"
                  data-position="bottom"
                  data-tooltip="{% trans "Discord" %}">
@@ -151,7 +151,7 @@
               </a>
               <a href="https://www.reddit.com/r/Apprise/"
                  target="_blank"
-                 rel="noopener noreferrer"
+                 rel="nofollow noopener noreferrer"
                  class="tooltipped"
                  data-position="bottom"
                  data-tooltip="{% trans "Reddit" %}">
@@ -225,11 +225,11 @@
           &nbsp;
           <a href="https://github.com/sponsors/caronc"
              target="_blank"
-             rel="noopener noreferrer">{% trans "GitHub Sponsors" %}</a>
+             rel="nofollow noopener noreferrer">{% trans "GitHub Sponsors" %}</a>
           &nbsp;·&nbsp;
           <a href="https://www.paypal.com/donate/?hosted_button_id=CR6YF7KLQWQ5E"
              target="_blank"
-             rel="noopener noreferrer">{% trans "PayPal" %}</a>
+             rel="nofollow noopener noreferrer">{% trans "PayPal" %}</a>
         </span>
         <button id="support-banner-close"
                 class="support-banner-close"
@@ -295,12 +295,23 @@
                       </span>
                       <span class="side-nav-text">{% trans "Configuration List" %}</span>
                     </a>
+                    {# The administrator's list of every reminder, shown while reminders are on. #}
+                    {% if REMINDERS_ENABLED %}
+                      <a class="side-nav-item"
+                         id="reminder-overview"
+                         href="{% url 'reminder_overview' %}">
+                        <span class="menu-icon">
+                          {% include "icons/alarm.svg" %}
+                        </span>
+                        <span class="side-nav-text">{% trans "Reminder List" %}</span>
+                      </a>
+                    {% endif %}
                   {% endif %}
                   <a class="side-nav-item" href="{% url 'details' %}">
                     <span class="menu-icon">
                       {% include "icons/search.svg" %}
                     </span>
-                    <span class="side-nav-text">{% trans "Available Plugins" %}</span>
+                    <span class="side-nav-text">{% trans "Available Services" %}</span>
                   </a>
                 </nav>
               {% endif %}
@@ -308,7 +319,7 @@
               <nav class="side-nav-group">
                 <a class="side-nav-item"
                    target="_blank"
-                   rel="noopener noreferrer"
+                   rel="nofollow noopener noreferrer"
                    href="https://appriseit.com/services/">
                   <span class="menu-icon">
                     {% include "icons/bell.svg" %}
@@ -317,7 +328,7 @@
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
-                   rel="noopener noreferrer"
+                   rel="nofollow noopener noreferrer"
                    href="https://appriseit.com/getting-started/configuration/">
                   <span class="menu-icon">
                     {% include "icons/book-open.svg" %}
@@ -326,7 +337,7 @@
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
-                   rel="noopener noreferrer"
+                   rel="nofollow noopener noreferrer"
                    href="https://appriseit.com/getting-started/">
                   <span class="menu-icon">
                     {% include "icons/library.svg" %}
@@ -335,7 +346,7 @@
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
-                   rel="noopener noreferrer"
+                   rel="nofollow noopener noreferrer"
                    href="https://appriseit.com/url-builder/">
                   <span class="menu-icon">
                     {% include "icons/tool.svg" %}
@@ -353,7 +364,7 @@
               <nav class="side-nav-group side-nav-group--support">
                 <a class="side-nav-item"
                    target="_blank"
-                   rel="noopener noreferrer"
+                   rel="nofollow noopener noreferrer"
                    href="https://www.paypal.com/donate/?hosted_button_id=CR6YF7KLQWQ5E">
                   <span class="menu-icon menu-icon--coffee">
                     {% include "icons/coffee.svg" %}
@@ -362,7 +373,7 @@
                 </a>
                 <a class="side-nav-item"
                    target="_blank"
-                   rel="noopener noreferrer"
+                   rel="nofollow noopener noreferrer"
                    href="https://github.com/sponsors/caronc">
                   <span class="menu-icon menu-icon--heart">
                     {% include "icons/heart.svg" %}
@@ -494,7 +505,11 @@
             const instance = M.Tooltip.getInstance(element);
             if (instance) {
                 instance.options.html = safeText;
-                instance.tooltipEl.innerHTML = safeText;
+                // Only the text holder inside changes; Materialize fills it on every hover.
+                const content = instance.tooltipEl.querySelector('.tooltip-content');
+                if (content) {
+                    content.innerHTML = safeText;
+                }
             } else {
                 M.Tooltip.init(element);
             }
@@ -512,6 +527,9 @@
         // Materialize Init
         M.AutoInit();
 
+        // Keep browsers from suggesting values in the page's fields.
+        appriseNoAutofillAll(document.body);
+
         // Apply the same treatment to controls added or renamed later.
         const tooltipObserver = new MutationObserver(function(records) {
             records.forEach(function(record) {
@@ -519,8 +537,21 @@
                     window.appriseSetTooltip(record.target, record.target.getAttribute('title'));
                     return;
                 }
+                // A control removed while its tooltip is open, such as a button
+                // redrawn after a click, takes its tooltip with it.
+                record.removedNodes.forEach(function(node) {
+                    if (!(node instanceof Element)) return;
+                    [node].concat(Array.from(node.querySelectorAll('.tooltipped'))).forEach(function(element) {
+                        const instance = M.Tooltip.getInstance(element);
+                        if (instance) {
+                            instance.destroy();
+                        }
+                    });
+                });
                 record.addedNodes.forEach(function(node) {
                     if (!(node instanceof Element)) return;
+                    // Fields added later get the same no-suggestions treatment.
+                    appriseNoAutofillAll(node);
                     if (node.hasAttribute('title')) {
                         window.appriseSetTooltip(node, node.getAttribute('title'));
                     }
@@ -777,6 +808,40 @@
 </script>
 {# Script Block 2 #}
 <script>
+  // Stop browsers and password managers from suggesting or filling in a
+  // field, so it only offers what the page puts there. Login fields keep
+  // their suggestions.
+  const appriseCredentialFields = ['username', 'current-password', 'new-password'];
+  function appriseNoAutofill(field) {
+    // Login fields are left alone.
+    const current = field.getAttribute('autocomplete');
+    if (appriseCredentialFields.includes(current)) {
+      return;
+    }
+    // Ask the browser not to suggest, unless the field already set its own value.
+    if (!current || current === 'on') {
+      field.setAttribute('autocomplete', 'off');
+    }
+    // Ask 1Password, Bitwarden, LastPass and Proton Pass to skip it, and
+    // Dashlane to treat it as an ordinary field.
+    ['data-1p-ignore', 'data-bwignore', 'data-lpignore', 'data-protonpass-ignore'].forEach(function (name) {
+      field.setAttribute(name, 'true');
+    });
+    field.setAttribute('data-form-type', 'other');
+  }
+
+  // Every field a person types into, leaving out passwords, boxes and buttons.
+  const appriseTypedFields = 'input:not([type="hidden"]):not([type="password"]):not([type="checkbox"])'
+    + ':not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]), textarea';
+
+  // Apply appriseNoAutofill() to root, when it is such a field, and to every one inside it.
+  function appriseNoAutofillAll(root) {
+    if (root.matches && root.matches(appriseTypedFields)) {
+      appriseNoAutofill(root);
+    }
+    root.querySelectorAll(appriseTypedFields).forEach(appriseNoAutofill);
+  }
+
   const appriseStatusIconHtml = {
     success: `<span class="apprise-status-mark">{% include 'icons/status-ok.svg' %}</span>`,
     error: `<span class="apprise-status-mark">{% include 'icons/status-error.svg' %}</span>`,
@@ -938,6 +1003,19 @@
     }
   }
 
+  // Ask /resolve to read Apprise URLs, or the fields of them, without
+  // contacting them.
+  // - url: the /resolve address of the Config ID in use.
+  // - entries: URLs or field objects; one answer comes back for each.
+  // - Returns the response, so the caller reads the answers or the error.
+  function appriseResolveUrls(url, entries) {
+    return appriseFetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: JSON.stringify({urls: entries})
+    });
+  }
+
   // Use one accessible show/hide control for all concealed fields.
   function appriseWireValueToggles(root) {
     root.querySelectorAll('[data-value-toggle]').forEach(function(toggle) {
@@ -969,6 +1047,44 @@
   }
   appriseWireValueToggles(document);
 
+  // A small button that shows only an icon. Its label is read by screen
+  // readers and shown as a tooltip.
+  // - icon: the Material icon name, such as 'delete'.
+  // - className: its classes, such as 'btn-flat notify-template-remove'.
+  function appriseIconButton(icon, label, className) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    // The icon is set as text, so its name can never become markup.
+    const mark = document.createElement('i');
+    mark.className = 'material-icons';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = icon;
+    button.appendChild(mark);
+    return button;
+  }
+
+  // Build the eye button that shows or hides one concealed input.
+  // - inputId: the id of the input it controls.
+  // - It starts out "hidden"; appriseWireValueToggles() makes it work.
+  function appriseValueToggleButton(inputId) {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'btn-flat value-visibility-toggle';
+    // Left out of the tab order, so Tab moves from field to field.
+    toggle.setAttribute('tabindex', '-1');
+    toggle.setAttribute('data-value-toggle', '');
+    toggle.setAttribute('aria-controls', inputId);
+    toggle.setAttribute('aria-label', '{% trans "Show Value" %}');
+    toggle.setAttribute('title', '{% trans "Show Value" %}');
+    toggle.dataset.showLabel = '{% trans "Show Value" %}';
+    toggle.dataset.hideLabel = '{% trans "Hide Value" %}';
+    toggle.innerHTML = '<i class="material-icons" aria-hidden="true">visibility_off</i>';
+    return toggle;
+  }
+
   // Config IDs begin concealed and can be revealed without changing the page.
   // The optional root also supports controls added inside dialogs.
   function appriseWireConfigIdToggles(root) {
@@ -994,6 +1110,51 @@
     });
   }
   appriseWireConfigIdToggles(document);
+
+  // A list-wide eye that shows or hides every Config ID in ``list``. It offers
+  // "hide all" while any is shown, and follows each row's own eye. Returns a
+  // function that refreshes it, for lists that are drawn again later.
+  function appriseWireConfigIdToggleAll(button, list) {
+    if (!button || !list) {
+      return function () {};
+    }
+
+    // Each row's own eye button.
+    function rowToggles() {
+      return Array.from(list.querySelectorAll('.config-id-visibility[data-config-id-toggle]'));
+    }
+
+    // Offer "hide all" while any Config ID is shown, else "show all".
+    function sync() {
+      const hideMode = rowToggles().some(function (toggle) {
+        return toggle.getAttribute('aria-pressed') === 'true';
+      });
+      const label = hideMode ? button.dataset.hideLabel : button.dataset.showLabel;
+      button.setAttribute('aria-pressed', hideMode ? 'true' : 'false');
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      button.querySelector('i').textContent = hideMode ? 'visibility' : 'visibility_off';
+    }
+
+    // Clicking it flips every row that is not already the way it asks for.
+    button.addEventListener('click', function () {
+      const show = button.getAttribute('aria-pressed') !== 'true';
+      rowToggles().forEach(function (toggle) {
+        if ((toggle.getAttribute('aria-pressed') === 'true') !== show) {
+          toggle.click();
+        }
+      });
+      sync();
+    });
+
+    // A row's own eye can change which one it offers.
+    list.addEventListener('click', function (event) {
+      if (event.target.closest('.config-id-visibility[data-config-id-toggle]')) {
+        sync();
+      }
+    });
+    return sync;
+  }
 
   // Copy the complete stored ID, never the concealed or shortened display text.
   function appriseWireConfigIdCopy(root) {
@@ -1066,10 +1227,12 @@
   appriseWireConfigIdQr(document);
 
   // Submit a Config ID as form data so it never appears in the address bar.
-  function apprisePostConfigId(configId, nextName) {
+  // - tab: a page tab to open once there, such as '#reminders'.
+  function apprisePostConfigId(configId, nextName, tab) {
     const form = document.createElement('form');
     form.method = 'post';
-    form.action = '{% url "config_current" %}';
+    // The page answers with a redirect, which keeps the tab.
+    form.action = '{% url "config_current" %}' + (tab || '');
     form.hidden = true;
     const field = document.createElement('input');
     field.name = 'key';
@@ -1104,6 +1267,10 @@
       );
       return;
     }
+    // Stay on the open tab, such as #reminders. Anything after it, such as
+    // a reminder's ID in #notify/<id>, belongs to the old Config ID.
+    const openTab = window.location.hash.split('/')[0];
+    const tab = /^#[\w-]+$/.test(openTab) ? openTab : '';
 
     appriseFire({
       title: '{% trans "Open Configuration" %}',
@@ -1115,10 +1282,10 @@
     }).then(function(result) {
       if (result.isConfirmed) {
         if (useCookieAlias) {
-          apprisePostConfigId(configId, nextName);
+          apprisePostConfigId(configId, nextName, tab);
         } else {
           // Cookie-free Basic Auth sessions continue with an explicit keyed URL.
-          window.location.assign(explicitBase + encodeURIComponent(configId));
+          window.location.assign(explicitBase + encodeURIComponent(configId) + tab);
         }
       }
     });
@@ -1520,7 +1687,8 @@
         toast: true,
         position: 'top',
         icon: type,
-        title: message,
+        // Shown as plain text, so a message from the server can never add markup.
+        titleText: message,
         showConfirmButton: false,
         timer: duration || 3500,
         timerProgressBar: true
@@ -1566,17 +1734,59 @@
       relevance: 0
     };
 
-    const URL = {
-      className: 'string',
-      begin: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\//,
-      end: /(?=\s|#|$)/,
-      contains: [TEMPLATE_VARIABLE],
+    // A URL option (?key= or &key=): the name stands out, the value keeps the
+    // URL colour and the ? & = between them are muted.
+    const URL_OPTION = {
+      match: [/[?&]/, /[^=&\s"'$]+/, /=/],
+      scope: {1: 'punctuation', 2: 'attr', 3: 'punctuation'},
       relevance: 0
     };
+
+    // Only colours change, never letter widths, so the coloured copy lines up
+    // with the text being typed over it.
+    // - The service (json://) and the login right after it (user:pass@) each
+    //   get their own colour.
+    // - A URL ends at a space, a quote or the end of the line, so a "#" stays
+    //   part of it, such as a Slack #channel.
+    const URL = {
+      scope: 'string',
+      begin: [/\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, /(?:[^\s\/?#@"'$]+(?::[^\s\/?#@"'$]*)?@)?/],
+      beginScope: {1: 'title', 2: 'subst'},
+      end: /(?=[\s"']|$)/,
+      contains: [TEMPLATE_VARIABLE, URL_OPTION],
+      relevance: 0
+    };
+
+    // A quoted value, such as a YAML URL in quotes. A quote only opens one at
+    // the start of a value, and it never runs past the end of the line, so an
+    // apostrophe (Don't) cannot colour the rest of the file.
+    const QUOTED = ['"', "'"].map(function (quote) {
+      return {
+        scope: 'string',
+        begin: new RegExp('(?<=^|[\\s:=,\\[-])' + quote),
+        end: new RegExp(quote + '|$'),
+        contains: [URL, TEMPLATE_VARIABLE],
+        relevance: 0
+      };
+    });
 
     const COMMENT = {
       className: 'comment',
       begin: /^[ \t]*[;#].*$/,
+      relevance: 0
+    };
+
+    // A comment after a value, such as "tag: ops  # the on-call team".
+    const TRAILING_COMMENT = {
+      className: 'comment',
+      begin: /[ \t]#.*$/,
+      relevance: 0
+    };
+
+    // A YAML key ("urls:", "- tag:"); the colon is muted.
+    const YAML_KEY = {
+      match: [/^[ \t]*(?:-[ \t]+)?/, /[A-Za-z_][\w.-]*/, /:(?=\s|$)/],
+      scope: {2: 'attr', 3: 'punctuation'},
       relevance: 0
     };
 
@@ -1600,7 +1810,10 @@
       contains: [
         COMMENT,
         TAG_DECL,
+        YAML_KEY,
+        ...QUOTED,
         URL,
+        TRAILING_COMMENT,
         TEMPLATE_VARIABLE,
         TAG_NAME
       ]
