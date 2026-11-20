@@ -3493,7 +3493,11 @@ msgstr "सेवा चुनें"
 msgid "Search Services"
 msgstr "सेवाएँ खोजें"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "कोई मेल खाती सेवा नहीं"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "आपकी खोज से कोई सेवा मेल नहीं खाती।"
 

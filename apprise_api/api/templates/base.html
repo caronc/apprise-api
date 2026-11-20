@@ -21,7 +21,7 @@
           href="{% static 'iconfont/material-icons.css' %}?v=3.0.1">
     <!--highlightjs-->
     <link rel="stylesheet"
-          href="{% get_static_prefix %}css/highlight.min.css?v=11.11.1">
+          href="{% get_static_prefix %}css/highlight.min.css?v=11.12.0">
     <!--common-->
     {# Release versions refresh local assets; vendor assets keep their pinned versions. #}
     <link rel="stylesheet"
@@ -32,9 +32,9 @@
       <!--sweetalert2-->
       <script src="{% static 'js/sweetalert2.all.min.js' %}?v=11.26.25"></script>
       <!--highlightjs-->
-      <script src="{% static 'js/highlight.pack.js' %}?v=11.11.1"></script>
+      <script src="{% static 'js/highlight.pack.js' %}?v=11.12.0"></script>
       <!--qrcode generator, used by the Apprise Mobile QR code popup-->
-      <script src="{% static 'js/qrcode.min.js' %}?v=1.5.2"></script>
+      <script src="{% static 'js/qrcode.min.js' %}?v=2.0.4"></script>
       <script src="{% static 'js/apprise-qr.js' %}?v={{ APPRISE_API_VERSION }}"></script>
     {% endblock head_js_optional %}
     <!--theme-->

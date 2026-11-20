@@ -1571,10 +1571,11 @@
       type: document.querySelector('#donotify select[name="type"]').value,
       format: document.querySelector('#donotify select[name="format"]').value || null,
       // The Template Values rows, the same ones Send Notification uses.
+      // Keyed by template name; a name such as "__proto__" must stay an ordinary key.
       template: collectNotifyTemplateValues().reduce(function (values, entry) {
         values[entry.name] = entry.value;
         return values;
-      }, {}),
+      }, Object.create(null)),
       when: reminderWhen(),
       attach: notifyStoredAttachments.map(function (entry) { return {file: entry.file}; }).concat(notifyAttachmentUrls()),
       // Times already deleted from a series stay deleted when it is saved again.

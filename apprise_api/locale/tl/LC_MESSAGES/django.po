@@ -3491,7 +3491,11 @@ msgstr "Pumili ng Serbisyo"
 msgid "Search Services"
 msgstr "Maghanap ng Serbisyo"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "Walang tumutugmang serbisyo"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Walang serbisyong tumutugma sa iyong paghahanap."
 

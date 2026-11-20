@@ -30,10 +30,11 @@ name = "apprise-api"
 dynamic = ["version"]
 authors = [{ name = "Chris Caron", email = "lead2gold@gmail.com" }]
 license = "MIT"
+requires-python = ">=3.12"
 dependencies = [
   "apprise == 2.3.0",
   # Language selection relies on a Django internal; raise after testing a new major
-  "django < 7",
+  "django >= 6.1.3, < 7",
   "gevent",
   "gunicorn[gevent]",
   "requests",

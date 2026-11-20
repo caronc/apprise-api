@@ -1033,7 +1033,8 @@
         // Send only the fields that were filled in. A blank one is left
         // out so the saved default, or the server's own environment, can
         // supply it. The server reports anything it still cannot resolve.
-        const values = {};
+        // Keyed by template name; a name such as "__proto__" must stay an ordinary key.
+        const values = Object.create(null);
         wrapper.querySelectorAll('[data-template-name]').forEach(function (el) {
           const name = el.getAttribute('data-template-name');
           const value = (el.value || '').trim();
@@ -1789,7 +1790,8 @@
   }
 
   function buildEscalationGroups(expressions) {
-    const groups = {};
+    // Keyed by tag name; a tag such as "__proto__" must stay an ordinary key.
+    const groups = Object.create(null);
     const cards = Array.from(
       document.querySelectorAll('#url-list li.card-panel:not(.url-item-disabled)')
     );
@@ -1940,10 +1942,10 @@
   }
 
   function buildNotifyTagOptions(data) {
-    const optionMap = {
-      all: { token: 'all', name: 'all', exact: false, priority: null, hasChildren: false }
-    };
-    const priorityMap = {};
+    // Keyed by tag name; a tag such as "__proto__" must stay an ordinary key.
+    const optionMap = Object.create(null);
+    optionMap.all = { token: 'all', name: 'all', exact: false, priority: null, hasChildren: false };
+    const priorityMap = Object.create(null);
 
     (Array.isArray(data.tags) ? data.tags : []).forEach(function (tag) {
       const name = String(tag).toLowerCase();
@@ -1954,7 +1956,7 @@
         priority: null,
         hasChildren: false
       };
-      priorityMap[name] = priorityMap[name] || {};
+      priorityMap[name] = priorityMap[name] || Object.create(null);
     });
 
     (Array.isArray(data.urls) ? data.urls : []).forEach(function (entry) {
@@ -1965,7 +1967,7 @@
         const name = String(detail.name).toLowerCase();
         const priority = parseInt(detail.priority || 0, 10) || 0;
         const token = `${priority}:${name}`;
-        priorityMap[name] = priorityMap[name] || {};
+        priorityMap[name] = priorityMap[name] || Object.create(null);
         priorityMap[name][priority] = token;
         optionMap[name] = optionMap[name] || {
           token: name,
@@ -2231,11 +2233,11 @@
     const notifyTagOptionMap = notifyTagOptions.reduce(function (result, item) {
       result[item.token] = item;
       return result;
-    }, {});
+    }, Object.create(null));
     const external_data = notifyTagOptions.reduce(function (result, item) {
       result[item.token] = null;
       return result;
-    }, {})
+    }, Object.create(null))
     const chipElement = document.querySelector('.chips');
     M.Chips.init(chipElement, {
       placeholder: '{% trans "Optional Tag(s)" %}',
@@ -2300,6 +2302,30 @@
         update_count();
       }
     });
+    // Materialize builds each suggestion as HTML, so a saved tag could add
+    // markup or run code. The suggestions are drawn here as plain text
+    // instead, matched and ordered the way Materialize does it.
+    const notifyTagAutocomplete = M.Chips.getInstance(chipElement).autocomplete;
+    if (notifyTagAutocomplete) {
+      notifyTagAutocomplete._renderDropdown = function (data, typed) {
+        this._resetAutocomplete();
+        Object.keys(data).filter(function (token) {
+          return token.toLowerCase().indexOf(typed) !== -1;
+        }).sort(function (a, b) {
+          return a.toLowerCase().indexOf(typed) - b.toLowerCase().indexOf(typed);
+        }).slice(0, this.options.limit).forEach(function (token) {
+          const start = token.toLowerCase().indexOf(typed);
+          const item = document.createElement('li');
+          const label = document.createElement('span');
+          const match = document.createElement('span');
+          match.className = 'highlight';
+          match.textContent = token.slice(start, start + typed.length);
+          label.append(token.slice(0, start), match, token.slice(start + typed.length));
+          item.append(label);
+          this.container.append(item);
+        }, this);
+      };
+    }
     const chipInput = chipElement.querySelector('input');
     if (chipInput) {
       ['focus', 'input', 'keyup', 'click'].forEach(function (eventName) {
@@ -3667,7 +3693,8 @@
   // every entry using that name declares the same value; otherwise leave
   // it blank so one entry's value is not sent to another.
   function selectedNotifyTemplateDetails() {
-    const variables = {};
+    // Keyed by template name; a name such as "__proto__" must stay an ordinary key.
+    const variables = Object.create(null);
 
     document.querySelectorAll(
       '#url-list li.card-panel.selected:not(.url-item-disabled)'
@@ -3691,7 +3718,7 @@
       });
     });
 
-    const details = {};
+    const details = Object.create(null);
     Object.keys(variables).sort().forEach(function (normalized) {
       const variable = variables[normalized];
       const agreed = variable.defaults.length === variable.seen

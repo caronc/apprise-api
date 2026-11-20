@@ -561,12 +561,18 @@
     // sent, and how its last send went.
     card.append(header, ...(page.lines ? page.lines(reminder) : []));
     card.append(reminderLine('{% trans "Repeat" %}', reminderSummary(reminder)));
-    card.append(reminderLine('{% trans "Next" %}', paused ? '-' : reminderFormatTime(reminder.next, reminderShowsSeconds(reminder.when, reminder.start))));
+    // The times sit to the left of the buttons, which drop below them when
+    // the card is too narrow for both.
+    const footer = document.createElement('div');
+    const times = document.createElement('div');
+    footer.className = 'reminder-card-footer';
+    times.className = 'reminder-card-times';
+    times.append(reminderLine('{% trans "Next" %}', paused ? '-' : reminderFormatTime(reminder.next, reminderShowsSeconds(reminder.when, reminder.start))));
     if (reminder.last) {
-      card.append(reminderLine('{% trans "Last" %}', reminderFormatTime(reminder.last.at) + ' · ' + reminderLastResult(reminder.last)));
+      times.append(reminderLine('{% trans "Last" %}', reminderFormatTime(reminder.last.at) + ' · ' + reminderLastResult(reminder.last)));
     }
     if ((reminder.attach || []).length) {
-      card.append(reminderLine('{% trans "Attachments" %}', reminderAttachSummary(reminder)));
+      times.append(reminderLine('{% trans "Attachments" %}', reminderAttachSummary(reminder)));
     }
     // Clicking the card, away from its buttons, opens the reminder to change it.
     card.classList.add('is-clickable');
@@ -581,7 +587,8 @@
         page.onEdit(reminder);
       }
     });
-    card.append(reminderActions(reminder, page));
+    footer.append(times, reminderActions(reminder, page));
+    card.append(footer);
     return card;
   }
 

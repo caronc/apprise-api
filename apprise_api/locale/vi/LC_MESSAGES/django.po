@@ -3492,7 +3492,11 @@ msgstr "Chọn dịch vụ"
 msgid "Search Services"
 msgstr "Tìm dịch vụ"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "Không có dịch vụ phù hợp"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Không có dịch vụ nào khớp với tìm kiếm của bạn."
 

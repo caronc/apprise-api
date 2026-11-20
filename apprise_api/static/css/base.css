@@ -5420,7 +5420,10 @@ Authentication Editor
   min-width: 0;
 }
 
-.details-service {
+/* Listed with :focus too, so Materialize's bright teal fill for a focused
+   button never covers the text while a service is clicked. */
+.details-service,
+.details-service:focus {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -5437,10 +5440,12 @@ Authentication Editor
 
 .details-service:hover,
 .details-service:focus-visible {
-  border-color: var(--select-border-hover);
+  border-color: var(--mobile-app-accent);
 }
 
-.details-service[aria-pressed="true"] {
+/* A service being clicked already looks picked. */
+.details-service[aria-pressed="true"],
+.details-service:active {
   border-color: var(--mobile-app-accent);
   background: var(--mobile-app-accent-soft);
 }
@@ -6347,17 +6352,13 @@ Reminders
   border-radius: 8px;
 }
 
+/* Cards sit side by side only when each is wide enough for its times and
+   buttons on one row. */
 #reminders .reminder-list {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 28rem), 1fr));
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-}
-
-@media (min-width: 900px) {
-  #reminders .reminder-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 #reminders .reminder-empty {
@@ -6438,6 +6439,29 @@ Reminders
   gap: 0.25rem;
   margin-top: auto;
   padding-top: 0.25rem;
+}
+
+/* The card's last row: its times on the left, its buttons on the right.
+   It fills the rest of the card, so the times stay under Repeat while the
+   buttons sit at the bottom. */
+#reminders .reminder-card-footer {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+
+#reminders .reminder-card-times {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+/* Buttons that drop below the times stay at the right. */
+#reminders .reminder-card-footer .reminder-card-actions {
+  margin-left: auto;
 }
 
 #reminders .reminder-action {

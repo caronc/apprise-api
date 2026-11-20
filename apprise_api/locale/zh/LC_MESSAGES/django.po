@@ -3491,7 +3491,11 @@ msgstr "选择服务"
 msgid "Search Services"
 msgstr "搜索服务"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "没有匹配的服务"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "没有与搜索匹配的服务。"
 

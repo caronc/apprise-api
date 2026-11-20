@@ -931,6 +931,36 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn("commitLockedNotifyTags", content)
         self.assertNotIn("rawValue.split(/[\\s,]+/)", content)
 
+    def test_tag_suggestions_are_shown_as_plain_text(self):
+        """Saved tags are drawn as text, never as HTML, in the tag suggestions."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("notifyTagAutocomplete._renderDropdown = function (data, typed)", content)
+        self.assertIn("match.textContent = token.slice(start, start + typed.length);", content)
+        self.assertIn("label.append(token.slice(0, start), match, token.slice(start + typed.length));", content)
+
+    def test_tag_maps_keep_prototype_names_as_keys(self):
+        """Maps keyed by tag or template names have no prototype to overwrite."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        for line in (
+            "const groups = Object.create(null);",
+            "const optionMap = Object.create(null);",
+            "const priorityMap = Object.create(null);",
+            "priorityMap[name] = priorityMap[name] || Object.create(null);",
+            "const variables = Object.create(null);",
+            "const details = Object.create(null);",
+            "const values = Object.create(null);",
+            "      return result;\n    }, Object.create(null));\n    const external_data",
+            "      result[item.token] = null;\n      return result;\n    }, Object.create(null))",
+            "        return values;\n      }, Object.create(null)),",
+        ):
+            self.assertIn(line, content)
+
     @override_settings(
         APPRISE_CONFIG_LOCK=True,
         APPRISE_AUTH_REQUIRED=True,

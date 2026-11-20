@@ -3492,7 +3492,11 @@ msgstr "サービスを選択"
 msgid "Search Services"
 msgstr "サービスを検索"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "一致するサービスなし"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "検索に一致するサービスはありません。"
 

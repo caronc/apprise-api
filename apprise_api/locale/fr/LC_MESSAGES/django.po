@@ -3506,7 +3506,11 @@ msgstr "Choisissez un service"
 msgid "Search Services"
 msgstr "Rechercher des services"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "Aucun service correspondant"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Aucun service ne correspond à votre recherche."
 

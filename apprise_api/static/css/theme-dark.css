@@ -1222,16 +1222,19 @@ Buttons & Chips
 }
 
 /* Reminder buttons are small tiles in both themes, like Delete and Resume
-   beside them, which keep their own colours. */
+   beside them, which keep their own colours. The rest share a teal outline,
+   the way Delete has a red one. */
 #reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume) {
-  color: #c1c3c9;
-  background-color: #2f333b;
+  color: #7de6da;
+  background-color: rgba(38, 117, 108, 0.22);
+  border-color: #3f756e;
 }
 
 #reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume):hover,
 #reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume):focus-visible {
-  color: #7de6da;
-  background-color: #3a3f48;
+  color: #d9fbf6;
+  background-color: rgba(50, 151, 139, 0.4);
+  border-color: #5bb4a9;
 }
 
 #reminders .reminder-action i.material-icons {

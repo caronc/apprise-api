@@ -1752,6 +1752,10 @@ class ReminderOverviewTests(ReminderTestCase):
         self.assertRegex(html, r'Open a configuration from the <a href="/cfg/?" class="tab-chip tab-chip-link">')
         # A note rather than a warning
         self.assertIn('class="notify-target-guidance notify-target-guidance--info reminder-empty"', html)
+        # Each card's times share its last row with the buttons
+        self.assertIn("footer.className = 'reminder-card-footer';", html)
+        self.assertIn("times.className = 'reminder-card-times';", html)
+        self.assertIn("footer.append(times, reminderActions(reminder, page));", html)
 
         # A reminder file that cannot be read is left out
         with (
