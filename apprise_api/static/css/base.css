@@ -1,4 +1,206 @@
 /* =========================================
+Materialize Base Sizes
+Materialize 2 draws its parts in the newer Material look. These rules keep
+the sizes and spacing the site was designed with. Colours live in the
+theme files.
+========================================= */
+html {
+  line-height: 1.5;
+}
+
+ul:not(.browser-default) {
+  padding-left: 0;
+  list-style-type: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Columns are spaced by their own padding, not by a grid gap. */
+.row {
+  gap: 0;
+  margin-bottom: 20px;
+}
+
+.row .col {
+  padding: 0 0.75rem;
+}
+
+/* Anything in a row that is not a column, such as a footer, spans it. */
+.row>:not(.col) {
+  grid-column: 1 / -1;
+}
+
+.col .row {
+  margin-right: -0.75rem;
+  margin-left: -0.75rem;
+}
+
+.waves-effect {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.btn,
+.btn-flat {
+  display: inline-block;
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 36px;
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.btn,
+.btn-small {
+  letter-spacing: 0.5px;
+}
+
+.btn-small {
+  height: 32.4px;
+  font-size: 13px;
+  line-height: 32.4px;
+}
+
+.btn i,
+.btn-flat i {
+  font-size: 1.3rem;
+  line-height: inherit;
+}
+
+.btn-small i {
+  font-size: 1.2rem;
+}
+
+.btn {
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover {
+  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.14), 0 1px 7px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -1px rgba(0, 0, 0, 0.2);
+}
+
+table thead {
+  color: inherit;
+}
+
+.card-panel {
+  margin: 0.5rem 0 1rem;
+}
+
+.btn:disabled,
+.btn-flat:disabled {
+  box-shadow: none;
+  cursor: default;
+}
+
+input:not([type]),
+input[type=text],
+input[type=password],
+input[type=email],
+input[type=url],
+input[type=number],
+input[type=search] {
+  font-size: 16px;
+}
+
+/* Fields are underlined, with the label resting in the field until it has
+   focus or a value. A field with no placeholder needs placeholder=" " for
+   its label to rest in it. */
+.input-field input {
+  box-sizing: content-box;
+  width: 100%;
+  height: 3rem;
+  margin: 0 0 8px;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid var(--md-sys-color-on-surface-variant);
+  border-radius: 0;
+  outline: none;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.input-field input:focus:not([readonly]) {
+  padding-top: 0;
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 0 0 var(--md-sys-color-primary);
+}
+
+.input-field>label {
+  top: 0;
+  left: 0;
+  font-size: 1rem;
+  transform: translateY(12px);
+  transform-origin: 0 100%;
+}
+
+.input-field.col>label {
+  left: 0.75rem;
+}
+
+.input-field input:focus:not([readonly])+label,
+.input-field input:not([placeholder=" "])+label,
+.input-field input:not(:placeholder-shown)+label {
+  top: 0;
+  transform: translateY(-14px) scale(0.8);
+  transform-origin: 0 0;
+}
+
+/* Materialize places its menus with CSS anchor positioning, but sets their
+   top edge to a value browsers reject. A menu opens under its field, and a
+   select's menu opens over it. */
+.dropdown-content[popover] {
+  top: anchor(bottom);
+  right: auto;
+  bottom: auto;
+  padding: 0;
+}
+
+.select-dropdown.dropdown-content[popover] {
+  top: anchor(top);
+}
+
+.dropdown-content li {
+  min-height: 50px;
+  line-height: 1.5rem;
+  cursor: pointer;
+}
+
+.dropdown-content li:focus-within,
+.dropdown-content li.active {
+  background-color: transparent;
+}
+
+.dropdown-content li>span {
+  display: block;
+  padding: 14px 16px;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.chip {
+  display: inline-block;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 32px;
+  vertical-align: baseline;
+  white-space: normal;
+}
+
+/* =========================================
 1. Support Banner
 ========================================= */
 .support-banner {
@@ -50,9 +252,10 @@ i.material-icons.support-banner-icon {
   vertical-align: middle;
 }
 
-.material-tooltip {
+.material-tooltip[popover] {
   max-width: min(22rem, calc(100vw - 1rem));
   min-height: 0;
+  margin: 16px 0;
   padding: 0.45rem 0.65rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0.45rem;
@@ -62,6 +265,11 @@ i.material-icons.support-banner-icon {
   font-size: 0.78rem;
   font-weight: 500;
   line-height: 1.35;
+}
+
+.material-tooltip[popover][data-position=left],
+.material-tooltip[popover][data-position=right] {
+  margin: 0 10px;
 }
 
 /* =========================================
@@ -206,6 +414,7 @@ Side Nav (replaces legacy Materialize collection sidebar)
 
 @media (max-width: 1000px) {
   .main-layout {
+    display: block;
     align-items: flex-start;
   }
 
@@ -2040,7 +2249,16 @@ body.swal2-toast-shown .swal2-container {
 4. Config Page, Tabs & Cards
 ========================================= */
 .collapsible-body {
+  box-sizing: content-box;
   padding: 1rem 2rem;
+}
+
+/* Materialize closes a section by shrinking it to no height, so its padding
+   and border go too. */
+.collapsible>li:not(.active)>.collapsible-body {
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom-width: 0;
 }
 
 /* =========================================
@@ -2379,8 +2597,29 @@ pre code em {
 
 /* Base Tab Structure */
 
+.tabs {
+  height: 48px;
+}
+
+.tabs .indicator {
+  height: 2px;
+  border-radius: 0;
+}
+
+.tabs .tab {
+  height: 48px;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+.tabs .tab span {
+  height: auto;
+  line-height: inherit;
+}
+
 .tabs .tab a {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
@@ -2392,6 +2631,7 @@ pre code em {
 }
 
 .tabs .tab a .material-icons {
+  position: static;
   font-size: 1.15rem;
   line-height: 1;
   transform: translateY(-1px);
@@ -2615,8 +2855,14 @@ body .tabs .tab.disabled a:hover i {
   min-height: 3rem;
 }
 
+/* Materialize's busy dots for the tag suggestions, which are never busy. */
+#notify .chips .status-info {
+  display: none;
+}
+
 #notify .chips input {
   min-width: 8rem;
+  line-height: 32px;
   width: auto !important;
 }
 
@@ -2644,8 +2890,12 @@ body .tabs .tab.disabled a:hover i {
 }
 
 #notify .chips .chip.notify-tag-chip .close {
+  display: inline;
+  width: auto;
+  height: auto;
   margin-left: 0.16rem;
   margin-right: -0.1rem;
+  background: none;
   font-size: 1rem;
   line-height: 1;
   opacity: 0.66;
@@ -3043,6 +3293,8 @@ body .tabs .tab.disabled a:hover i {
 
 /* Give Materialize selects the same compact surface across the application. */
 .select-wrapper input.select-dropdown {
+  position: relative;
+  width: 100%;
   height: 2.75rem;
   margin: 0;
   padding: 0 2.35rem 0 0.8rem;
@@ -3088,7 +3340,6 @@ body .tabs .tab.disabled a:hover i {
   border-radius: 0.38rem;
 }
 
-.dropdown-content.select-dropdown li>a,
 .dropdown-content.select-dropdown li>span {
   padding: 0.65rem 0.75rem;
   font-size: 0.95rem;
@@ -3692,10 +3943,17 @@ Authentication Editor
   line-height: 1.35;
 }
 
-.auth-access-warning i.material-icons {
+.auth-access-warning-icon {
+  display: flex;
   flex: 0 0 auto;
-  font-size: 1rem;
-  line-height: 1.1rem;
+  width: 1rem;
+  height: 1.1rem;
+}
+
+.browser-login-submit-icon svg,
+.auth-access-warning-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .swal2-popup .auth-access-table {
@@ -4119,7 +4377,6 @@ Authentication Editor
 }
 
 .input-field.has-errors label,
-.input-field.has-errors label.active,
 .input-field .errorlist {
   color: #c62828;
 }
@@ -4310,11 +4567,12 @@ Authentication Editor
   position: relative;
 }
 
-.browser-login-submit i.material-icons.right {
+.browser-login-submit-icon {
   position: absolute;
   right: 1rem;
-  float: none;
-  margin: 0;
+  display: flex;
+  width: 1.3rem;
+  height: 1.3rem;
 }
 
 .auth-content-panel {
@@ -4802,8 +5060,7 @@ Authentication Editor
   }
 }
 
-#notify .notify-form-section .input-field>label,
-#notify .notify-form-section .input-field>label.active {
+#notify .notify-form-section .input-field>label {
   position: static;
   display: block;
   margin: 0 0 0.2rem 0;
@@ -5420,7 +5677,10 @@ Authentication Editor
   min-width: 0;
 }
 
-.details-service {
+/* Listed with :focus too, so Materialize's bright teal fill for a focused
+   button never covers the text while a service is clicked. */
+.details-service,
+.details-service:focus {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -5437,10 +5697,12 @@ Authentication Editor
 
 .details-service:hover,
 .details-service:focus-visible {
-  border-color: var(--select-border-hover);
+  border-color: var(--mobile-app-accent);
 }
 
-.details-service[aria-pressed="true"] {
+/* A service being clicked already looks picked. */
+.details-service[aria-pressed="true"],
+.details-service:active {
   border-color: var(--mobile-app-accent);
   background: var(--mobile-app-accent-soft);
 }
@@ -5611,7 +5873,7 @@ Authentication Editor
 }
 
 #notify .row,
-#notify .row .input-field {
+#notify .row .input-field:where(:not(.select-wrapper)) {
   margin-top: 0.2em;
   margin-bottom: 0;
   padding-bottom: 0;
@@ -6250,6 +6512,7 @@ Apprise Configuration Editor (Grid Overlay)
 }
 
 .config-format-field {
+  margin-top: 1rem;
   margin-bottom: 0.75rem;
 }
 
@@ -6347,17 +6610,13 @@ Reminders
   border-radius: 8px;
 }
 
+/* Cards sit side by side only when each is wide enough for its times and
+   buttons on one row. */
 #reminders .reminder-list {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 28rem), 1fr));
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-}
-
-@media (min-width: 900px) {
-  #reminders .reminder-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 #reminders .reminder-empty {
@@ -6438,6 +6697,29 @@ Reminders
   gap: 0.25rem;
   margin-top: auto;
   padding-top: 0.25rem;
+}
+
+/* The card's last row: its times on the left, its buttons on the right.
+   It fills the rest of the card, so the times stay under Repeat while the
+   buttons sit at the bottom. */
+#reminders .reminder-card-footer {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+
+#reminders .reminder-card-times {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+/* Buttons that drop below the times stay at the right. */
+#reminders .reminder-card-footer .reminder-card-actions {
+  margin-left: auto;
 }
 
 #reminders .reminder-action {
@@ -7050,19 +7332,6 @@ Reminders
 #reminder-form .reminder-recurring-toggle:has(input:disabled) {
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-/* Fields wrap in rows like words, so a taller one (such as one showing an
-   error) never pushes the next out of line the way floated columns can. */
-#reminder-form.row {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-/* Materialize centres its columns with auto margins, which would push a
-   field alone on its line to the right. */
-#reminder-form.row>.col {
-  margin-left: 0;
 }
 
 /* Starts, the "Make recurring" switch and Ends on one line, wrapping on a phone. */

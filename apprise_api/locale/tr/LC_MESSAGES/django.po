@@ -3492,7 +3492,11 @@ msgstr "Bir Hizmet Seçin"
 msgid "Search Services"
 msgstr "Hizmetlerde Ara"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "Eşleşen hizmet yok"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Aramanızla eşleşen hizmet yok."
 

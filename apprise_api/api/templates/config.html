@@ -1033,7 +1033,8 @@
         // Send only the fields that were filled in. A blank one is left
         // out so the saved default, or the server's own environment, can
         // supply it. The server reports anything it still cannot resolve.
-        const values = {};
+        // Keyed by template name; a name such as "__proto__" must stay an ordinary key.
+        const values = Object.create(null);
         wrapper.querySelectorAll('[data-template-name]').forEach(function (el) {
           const name = el.getAttribute('data-template-name');
           const value = (el.value || '').trim();
@@ -1394,7 +1395,7 @@
         if (M.FormSelect && M.FormSelect.getInstance(sel)) {
           M.FormSelect.getInstance(sel).destroy();
         }
-        M.FormSelect.init(sel);
+        appriseSelect(sel);
       });
     }
 
@@ -1438,9 +1439,6 @@
     if (titleEl) titleEl.value = '';
     if (bodyEl) bodyEl.value = '';
     syncNotifyTemplateRows(true);
-    if (window.M && M.updateTextFields) {
-      M.updateTextFields();
-    }
   }
 
   function initAppriseConfigEditor() {
@@ -1619,11 +1617,22 @@
       };
       configTabsInstance = M.Tabs.getInstance(tabsElem);
       if (configTabsInstance) {
-        // M.AutoInit already set up the tabs without this handler.
+        // The page already set up the tabs without this handler.
         configTabsInstance.options.onShow = onShow;
       } else {
         configTabsInstance = M.Tabs.init(tabsElem, {onShow: onShow});
       }
+    }
+
+    if (!tabsElem.dataset.wheelWired) {
+      // Materialize turns the mouse wheel over the tabs into sideways
+      // scrolling. Every tab always fits, so the page scrolls instead.
+      tabsElem.dataset.wheelWired = '1';
+      tabsElem.parentElement.addEventListener('wheel', function (event) {
+        if (tabsElem.contains(event.target)) {
+          event.stopPropagation();
+        }
+      }, {capture: true, passive: true});
     }
 
     tabsElem.querySelectorAll('li.tab a[href^="#"]').forEach(function (anchor) {
@@ -1755,7 +1764,7 @@
       return [];
     }
     return chipInstance.chipsData.map(function (chip) {
-      return parseNotifyTagExpression(chip.tag);
+      return parseNotifyTagExpression(chip.id);
     }).filter(function (tokens) {
       return tokens.length > 0;
     });
@@ -1789,7 +1798,8 @@
   }
 
   function buildEscalationGroups(expressions) {
-    const groups = {};
+    // Keyed by tag name; a tag such as "__proto__" must stay an ordinary key.
+    const groups = Object.create(null);
     const cards = Array.from(
       document.querySelectorAll('#url-list li.card-panel:not(.url-item-disabled)')
     );
@@ -1914,8 +1924,8 @@
       return;
     }
     Array.from(chipElement.querySelectorAll('.chip')).forEach(function (chip, index) {
-      const tag = chipInstance.chipsData[index] && chipInstance.chipsData[index].tag
-        ? chipInstance.chipsData[index].tag
+      const tag = chipInstance.chipsData[index] && chipInstance.chipsData[index].id
+        ? chipInstance.chipsData[index].id
         : chip.textContent.replace(/\s*close\s*$/i, '').trim();
       const token = parseNotifyTagToken(tag);
       chip.classList.add('notify-tag-chip');
@@ -1932,18 +1942,18 @@
     if (chipElement.parentNode) {
       const chips = Array.from(chipElement.parentNode.querySelectorAll('.chip'));
       const index = chips.indexOf(chipElement);
-      if (index >= 0 && chipInstance.chipsData[index] && chipInstance.chipsData[index].tag) {
-        return chipInstance.chipsData[index].tag;
+      if (index >= 0 && chipInstance.chipsData[index] && chipInstance.chipsData[index].id) {
+        return chipInstance.chipsData[index].id;
       }
     }
     return chipElement.textContent.replace(/\s*close\s*$/i, '').trim();
   }
 
   function buildNotifyTagOptions(data) {
-    const optionMap = {
-      all: { token: 'all', name: 'all', exact: false, priority: null, hasChildren: false }
-    };
-    const priorityMap = {};
+    // Keyed by tag name; a tag such as "__proto__" must stay an ordinary key.
+    const optionMap = Object.create(null);
+    optionMap.all = { token: 'all', name: 'all', exact: false, priority: null, hasChildren: false };
+    const priorityMap = Object.create(null);
 
     (Array.isArray(data.tags) ? data.tags : []).forEach(function (tag) {
       const name = String(tag).toLowerCase();
@@ -1954,7 +1964,7 @@
         priority: null,
         hasChildren: false
       };
-      priorityMap[name] = priorityMap[name] || {};
+      priorityMap[name] = priorityMap[name] || Object.create(null);
     });
 
     (Array.isArray(data.urls) ? data.urls : []).forEach(function (entry) {
@@ -1965,7 +1975,7 @@
         const name = String(detail.name).toLowerCase();
         const priority = parseInt(detail.priority || 0, 10) || 0;
         const token = `${priority}:${name}`;
-        priorityMap[name] = priorityMap[name] || {};
+        priorityMap[name] = priorityMap[name] || Object.create(null);
         priorityMap[name][priority] = token;
         optionMap[name] = optionMap[name] || {
           token: name,
@@ -2027,7 +2037,16 @@
         menu.classList.add('notify-tag-autocomplete');
       });
       document.querySelectorAll('.autocomplete-content li').forEach(function (item) {
-        const token = item.textContent.trim();
+        const token = item.dataset.id;
+        // Materialize wraps each choice in boxes with their own styles; keep
+        // just the text, the same as the site's other menus.
+        const text = item.querySelector('.item-text > div');
+        if (text) {
+          const plain = document.createElement('span');
+          plain.append(...text.childNodes);
+          item.removeAttribute('style');
+          item.replaceChildren(plain);
+        }
         const option = optionMap[token];
         item.classList.remove(
           'notify-tag-option-parent',
@@ -2101,10 +2120,10 @@
         return tag.length > 0;
       }).forEach(function (tag) {
         const exists = instance.chipsData.some(function (chip) {
-          return String(chip.tag).toLowerCase() === tag.toLowerCase();
+          return String(chip.id).toLowerCase() === tag.toLowerCase();
         });
         if (!exists) {
-          instance.addChip({ tag: tag, image: '' });
+          instance.addChip({ id: tag });
         }
       });
       chipInput.value = pending;
@@ -2112,6 +2131,14 @@
 
     chipInput.addEventListener('keyup', function () {
       commitNotifyTags(false);
+    });
+    // Enter adds the typed tag; with the suggestions open, Materialize
+    // would let it send the form instead.
+    chipInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        commitNotifyTags(true);
+      }
     });
     chipInput.addEventListener('blur', function () {
       // Tab, mouse, and touch navigation should not leave a tag unfinished.
@@ -2137,7 +2164,7 @@
       return;
     }
     const chipElement = document.querySelector('.chips');
-    M.Chips.init(chipElement, {placeholder: '{% trans "Optional Tag(s)" %}'});
+    M.Chips.init(chipElement, {allowUserInput: true, placeholder: '{% trans "Optional Tag(s)" %}'});
     chipElement.classList.add('notify-tags-unavailable');
     chipElement.querySelectorAll('input').forEach(function (input) { input.disabled = true; });
     document.querySelectorAll('.config-overview li a[href="#notify"], .config-overview li a[href="#reminders"]')
@@ -2231,24 +2258,43 @@
     const notifyTagOptionMap = notifyTagOptions.reduce(function (result, item) {
       result[item.token] = item;
       return result;
-    }, {});
+    }, Object.create(null));
     const external_data = notifyTagOptions.reduce(function (result, item) {
       result[item.token] = null;
       return result;
-    }, {})
+    }, Object.create(null))
+    const notifyTagSuggestions = notifyTagOptions.map(function (item) {
+      return {id: item.token};
+    });
     const chipElement = document.querySelector('.chips');
     M.Chips.init(chipElement, {
+      allowUserInput: true,
       placeholder: '{% trans "Optional Tag(s)" %}',
       secondaryPlaceholder: '{% trans "Add another?" %}',
       autocompleteOptions: {
-        data: external_data,
+        data: notifyTagSuggestions,
         minLength: 0,
-        onSearch: function () {
+        // Materialize's own search also tells the chips a tag was picked,
+        // which empties the field while typing. This one only lists the
+        // matches, and closes the list when nothing matches so Enter adds
+        // the typed tag.
+        onSearch: function (text, autocomplete) {
+          const typed = text.toLowerCase();
+          autocomplete.selectedValues = [];
+          autocomplete.menuItems = notifyTagSuggestions.filter(function (entry) {
+            return entry.id.indexOf(typed) !== -1;
+          });
+          if (autocomplete.menuItems.length) {
+            autocomplete.open();
+          } else {
+            autocomplete.close();
+            autocomplete.isOpen = false;
+          }
           decorateNotifyAutocompleteOptions(notifyTagOptionMap);
         }
       },
       onChipAdd: function (e, data) {
-        var $this = this;
+        const $this = M.Chips.getInstance(chipElement);
         const chip = notifyChipTag($this, data);
         reviewTagChipsForNotifyTag(chip).forEach(function (e) {
           if (!e.classList.contains('selected')) {
@@ -2268,14 +2314,14 @@
           }
         })
         $this.chipsData.forEach(function (e, index) {
-          if (!(e.tag in external_data) && parseNotifyTagExpression(e.tag).length === 0)
+          if (!(e.id in external_data) && parseNotifyTagExpression(e.id).length === 0)
             $this.deleteChip(index);
         })
         decorateNotifyChips();
         update_count();
       },
       onChipDelete: function (e, data) {
-        var $this = this;
+        const $this = M.Chips.getInstance(chipElement);
         const chip = notifyChipTag($this, data);
         reviewTagChipsForNotifyTag(chip).forEach(function (e) {
           if (!e.classList.contains('selected')) {
@@ -2300,6 +2346,9 @@
         update_count();
       }
     });
+    // Materialize puts the suggestion list ahead of the chips, which throws
+    // off its count of which chip was removed, so it goes at the end.
+    chipElement.append(...chipElement.querySelectorAll(':scope > .autocomplete-content, :scope > .status-info'));
     const chipInput = chipElement.querySelector('input');
     if (chipInput) {
       ['focus', 'input', 'keyup', 'click'].forEach(function (eventName) {
@@ -2316,6 +2365,7 @@
     };
     const chipElement = document.querySelector('.chips');
     M.Chips.init(chipElement, {
+      allowUserInput: true,
       placeholder: '{% trans "Required Tag" %}',
       secondaryPlaceholder: '{% trans "Another Tag" %}',
       onChipAdd: function () {
@@ -2335,7 +2385,7 @@
       var tagRe = new RegExp('\\s*[|,]\\s*');
       params.tag.split(tagRe).forEach(function (tag, index) {
         if (tag.trim().length) {
-          chipInstance.addChip({ tag: tag.trim(), image: '' });
+          chipInstance.addChip({ id: tag.trim() });
         }
       });
       decorateNotifyChips();
@@ -2575,7 +2625,7 @@
           chip.dataset.tagScope = detail.scope || 'exact';
           chip.textContent = `🏷️ ${tag}`;
           const index = chipInstance.chipsData.findIndex(function (e) {
-            return reviewChipMatchesNotifyTag(chip, e.tag);
+            return reviewChipMatchesNotifyTag(chip, e.id);
           })
           if (index >= 0) {
             chip.classList.add('selected');
@@ -2588,10 +2638,10 @@
             chip.addEventListener('click', function (e) {
               e.preventDefault();
               const index = chipInstance.chipsData.findIndex(function (e) {
-                return reviewChipMatchesNotifyTag(chip, e.tag);
+                return reviewChipMatchesNotifyTag(chip, e.id);
               });
               if (index < 0) {
-                chipInstance.addChip({ tag: this.dataset.tagToken, image: '' });
+                chipInstance.addChip({ id: this.dataset.tagToken });
               } else {
                 chipInstance.deleteChip(index);
               }
@@ -3464,7 +3514,7 @@
 
     const chipInstance = M.Chips.getInstance(chipElement);
     const tags = chipInstance ? chipInstance.chipsData.map(function (item) {
-      return item.tag;
+      return item.id;
     }) : [];
     document.querySelector('#id_tag').value = tags.join(',');
     return tags.length;
@@ -3651,7 +3701,7 @@
           if (instance) {
             instance.destroy();
           }
-          M.FormSelect.init(formatSelect);
+          appriseSelect(formatSelect);
         }
       }
     }
@@ -3667,7 +3717,8 @@
   // every entry using that name declares the same value; otherwise leave
   // it blank so one entry's value is not sent to another.
   function selectedNotifyTemplateDetails() {
-    const variables = {};
+    // Keyed by template name; a name such as "__proto__" must stay an ordinary key.
+    const variables = Object.create(null);
 
     document.querySelectorAll(
       '#url-list li.card-panel.selected:not(.url-item-disabled)'
@@ -3691,7 +3742,7 @@
       });
     });
 
-    const details = {};
+    const details = Object.create(null);
     Object.keys(variables).sort().forEach(function (normalized) {
       const variable = variables[normalized];
       const agreed = variable.defaults.length === variable.seen
@@ -3841,6 +3892,12 @@
     element.classList.add("chips")
     element.style.margin = '0'
     refNode.parentNode.insertBefore(element, refNode.nextSibling)
+    // A chip's remove button would otherwise also send the form.
+    element.addEventListener('click', function (event) {
+      if (event.target.closest('.chip .close')) {
+        event.preventDefault();
+      }
+    });
   }
   // Hide tag field since we use the pretty Materialize Chip setup instead
   document.querySelector('#id_tag').style.display = 'none';

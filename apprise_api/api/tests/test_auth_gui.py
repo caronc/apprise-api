@@ -220,7 +220,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("logout-confirm-icon", content)
         self.assertIn("Are you sure you wish to log out?", content)
         self.assertNotIn("Abstract user", content)
-        self.assertIn("M.updateTextFields()", content)
+        self.assertIn("appriseSelect(authAccess);", content)
         # Form fields and confirmation dialogs share the same reveal control.
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 6)
         self.assertEqual(
@@ -556,6 +556,9 @@ class AuthGuiTests(SimpleTestCase):
         """The browser form rejects invalid fields without a Basic challenge."""
         page = self.client.get("/login", headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
+        # An empty field shows its label inside it, as a placeholder would.
+        self.assertEqual(page.content.decode().count('placeholder=" "'), 3)
+        self.assertIn('<span class="browser-login-submit-icon" aria-hidden="true">', page.content.decode())
         self.assertEqual(page.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
         self.assertEqual(page.cookies["key"]["max-age"], 0)
         self.assertNotIn("apprise_support_dismissed", page.cookies)
@@ -930,6 +933,55 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("decorateNotifyAutocompleteOptions", content)
         self.assertNotIn("commitLockedNotifyTags", content)
         self.assertNotIn("rawValue.split(/[\\s,]+/)", content)
+
+    def test_tag_suggestions_are_shown_as_plain_text(self):
+        """Saved tags are drawn as text, never as HTML, in the tag suggestions."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        # Materialize only reads a suggestion as HTML when told to.
+        self.assertNotIn("allowUnsafeHTML", content)
+        self.assertIn("autocomplete.menuItems = notifyTagSuggestions.filter(function (entry) {", content)
+        self.assertIn("plain.append(...text.childNodes);", content)
+
+    def test_tag_field_adds_and_removes_tags(self):
+        """The tag field takes typed tags and removes them without sending the form."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertEqual(content.count("allowUserInput: true,"), 2)
+        self.assertIn("M.Chips.init(chipElement, {allowUserInput: true, placeholder:", content)
+        self.assertIn("const $this = M.Chips.getInstance(chipElement);", content)
+        self.assertIn("chipInstance.addChip({ id: this.dataset.tagToken });", content)
+        self.assertIn("if (event.key === 'Enter') {", content)
+        self.assertIn("if (event.target.closest('.chip .close')) {", content)
+        self.assertIn(
+            "chipElement.append(...chipElement.querySelectorAll("
+            "':scope > .autocomplete-content, :scope > .status-info'));",
+            content,
+        )
+
+    def test_tag_maps_keep_prototype_names_as_keys(self):
+        """Maps keyed by tag or template names have no prototype to overwrite."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        for line in (
+            "const groups = Object.create(null);",
+            "const optionMap = Object.create(null);",
+            "const priorityMap = Object.create(null);",
+            "priorityMap[name] = priorityMap[name] || Object.create(null);",
+            "const variables = Object.create(null);",
+            "const details = Object.create(null);",
+            "const values = Object.create(null);",
+            "      return result;\n    }, Object.create(null));\n    const external_data",
+            "      result[item.token] = null;\n      return result;\n    }, Object.create(null))",
+            "        return values;\n      }, Object.create(null)),",
+        ):
+            self.assertIn(line, content)
 
     @override_settings(
         APPRISE_CONFIG_LOCK=True,

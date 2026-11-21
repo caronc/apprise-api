@@ -70,7 +70,18 @@
           </li>
         {% endfor %}
       </ul>
-      <p id="details-no-match" class="details-no-match" hidden>{% trans "No services match your search." %}</p>
+      <div id="details-no-match"
+           class="notify-target-guidance notify-target-guidance--info details-no-match"
+           aria-live="polite"
+           hidden>
+        <div class="notify-target-guidance-title">
+          <span class="notify-target-guidance-icon" aria-hidden="true">
+            {% include "icons/status-info.svg" %}
+          </span>
+          <span>{% trans "No Matching Services" %}</span>
+        </div>
+        {% trans "No services match your search." %}
+      </div>
       <form id="details-paste"
             class="details-step-field"
             autocomplete="off"

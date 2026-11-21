@@ -147,6 +147,17 @@ class DetailTests(SimpleTestCase):
         # The fields are put together by /resolve for the browser's Config ID
         self.assertContains(response, "/resolve/")
 
+    def test_no_matching_services_note(self):
+        """A search with no results shows the shared info note, hidden at first."""
+        content = self.client.get("/details").content.decode()
+        self.assertRegex(
+            content,
+            r'<div id="details-no-match"\s+class="notify-target-guidance notify-target-guidance--info details-no-match"'
+            r'\s+aria-live="polite"\s+hidden>',
+        )
+        self.assertIn("No Matching Services", content)
+        self.assertIn("No services match your search.", content)
+
     def test_lists_of_several_kinds_say_how_entries_are_read(self):
         """A list told apart by marks (+ phone, @ group) says which means what, and how an unmarked entry was read."""
         content = self.client.get("/details").content.decode()

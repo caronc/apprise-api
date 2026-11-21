@@ -17,8 +17,6 @@
 {% endblock scripts_optional %}
 {# djlint:off #}
 {% block onload %}
-  // Keep labels clear of values retained after an unsuccessful login.
-  M.updateTextFields();
   const loginError = document.querySelector('.browser-login-field.has-errors input');
   const loginUsername = document.querySelector('#id_username');
   const loginInitialField = loginError || loginUsername || document.querySelector('#id_password');
@@ -76,7 +74,9 @@
           <button class="btn waves-effect waves-light browser-login-submit"
                   type="submit">
             {% trans "Log In" %}
-            <i class="material-icons right">login</i>
+            <span class="browser-login-submit-icon" aria-hidden="true">
+              {% include "icons/login.svg" %}
+            </span>
           </button>
         </form>
       </div>

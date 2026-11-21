@@ -18,6 +18,22 @@
  */
 
 /* =========================================
+Materialize Colour Roles
+========================================= */
+:root[theme] {
+  --md-sys-color-background: transparent;
+  --md-sys-color-primary: #26a69a;
+  --md-sys-color-on-background: #c1c3c9;
+  --md-sys-color-on-surface-variant: #9e9e9e;
+  --md-sys-color-outline-variant: rgba(0, 0, 0, 0.12);
+}
+
+.btn-flat:disabled {
+  color: #b3b2b2 !important;
+  background-color: transparent !important;
+}
+
+/* =========================================
 Support Banner
 ========================================= */
 :root {
@@ -471,7 +487,7 @@ Dropdowns & Selects
 }
 
 /* Dropdown list container */
-.dropdown-content {
+.dropdown-content[popover] {
   background-color: #23262f;
   border: 1px solid #34383f;
   border-radius: 0.4rem;
@@ -479,14 +495,12 @@ Dropdowns & Selects
 }
 
 /* Every item — base state */
-.dropdown-content li>a,
 .dropdown-content li>span {
   background-color: #23262f !important;
   color: #c1c3c9 !important;
 }
 
 /* Hover */
-.dropdown-content li>a:hover,
 .dropdown-content li>span:hover,
 .dropdown-content li:hover>span {
   background-color: #34383f !important;
@@ -494,7 +508,6 @@ Dropdowns & Selects
 }
 
 /* Selected / active item */
-.dropdown-content li.active>a,
 .dropdown-content li.selected>span,
 .dropdown-content li.active>span {
   background-color: #0b3b37 !important;
@@ -503,17 +516,12 @@ Dropdowns & Selects
 }
 
 /* Focus label */
-.select-wrapper+label,
 .input-field>label {
   color: #555a62;
 }
 
-.select-wrapper+label {
-  color: #aeb2bd;
-}
-
 .select-wrapper input.select-dropdown:focus+label,
-.input-field>label.active {
+.input-field>:where(input:not(:placeholder-shown), input:not([placeholder=" "]))+label {
   color: #2cb6a6;
 }
 
@@ -822,8 +830,7 @@ input.config-id-input.is-mismatched {
 }
 
 /* Every field label in these cards shares one colour. */
-.auth-editor-card .input-field>label,
-.auth-editor-card .select-wrapper+label {
+.auth-editor-card .input-field>label {
   color: #2cb6a6;
 }
 
@@ -840,7 +847,6 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-access-warning,
-.auth-access-warning i.material-icons,
 .apprise-qr-note--warning,
 .notify-attach-blocked {
   color: #f6b45f;
@@ -877,7 +883,6 @@ input.config-id-input.is-mismatched {
 }
 
 .input-field.has-errors label,
-.input-field.has-errors label.active,
 .input-field .errorlist,
 .review-template-error {
   color: var(--form-error-text);
@@ -1074,13 +1079,11 @@ body textarea {
 }
 
 /* Materialize focus overrides */
-input:not([type]):focus:not([readonly]),
-textarea.materialize-textarea:focus:not([readonly]) {
+input:not([type]):focus:not([readonly]) {
   border-bottom: 1px solid #2cb6a6;
 }
 
-input:not([type]):focus:not([readonly])+label,
-textarea.materialize-textarea:focus:not([readonly])+label {
+input:not([type]):focus:not([readonly])+label {
   color: #2cb6a6;
 }
 
@@ -1222,16 +1225,19 @@ Buttons & Chips
 }
 
 /* Reminder buttons are small tiles in both themes, like Delete and Resume
-   beside them, which keep their own colours. */
+   beside them, which keep their own colours. The rest share a teal outline,
+   the way Delete has a red one. */
 #reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume) {
-  color: #c1c3c9;
-  background-color: #2f333b;
+  color: #7de6da;
+  background-color: rgba(38, 117, 108, 0.22);
+  border-color: #3f756e;
 }
 
 #reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume):hover,
 #reminders .reminder-action:not(.reminder-action-delete):not(.reminder-action-resume):focus-visible {
-  color: #7de6da;
-  background-color: #3a3f48;
+  color: #d9fbf6;
+  background-color: rgba(50, 151, 139, 0.4);
+  border-color: #5bb4a9;
 }
 
 #reminders .reminder-action i.material-icons {
