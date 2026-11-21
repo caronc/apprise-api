@@ -318,6 +318,10 @@ msgstr "Quản lý đăng nhập, quyền, và các công cụ của cấu hình
 msgid "Administrator"
 msgstr "Quản Trị Viên"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Mức truy cập của bạn"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "Cập Nhật Thông Tin Đăng Nhập"
@@ -354,6 +358,11 @@ msgstr "Lưu"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Tạo Thông Tin Đăng Nhập Mới"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Chọn mục cần tạo, rồi nhấn %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "Đặt lại Truy cập hoặc Cấu hình?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "Điều này chỉ sẽ đặt lại quyền truy cập của người dùng hiện đang liên kết với cấu hình này:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Thao tác này sẽ đặt lại quyền truy cập người dùng và xóa vĩnh viễn cấu hình đã lưu của:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "Danh sách Cấu hình"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Dịch vụ có sẵn"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Hiện tất cả"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Liệt kê mọi dịch vụ Apprise, kể cả những dịch vụ máy chủ này không dùng được."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Chỉ liệt kê các dịch vụ máy chủ này dùng được."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3499,6 +3524,34 @@ msgstr "Không có dịch vụ phù hợp"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Không có dịch vụ nào khớp với tìm kiếm của bạn."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Hiện thêm"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Tìm cấu hình"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Không có cấu hình phù hợp"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Không có cấu hình nào khớp với tìm kiếm của bạn."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Tìm lời nhắc"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Không có lời nhắc phù hợp"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Không có lời nhắc nào khớp với tìm kiếm của bạn."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

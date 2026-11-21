@@ -70,6 +70,7 @@ dev = [
   "openapi-spec-validator",
   "tox",
   "mock",
+  "playwright",
   "polib"
 ]
 

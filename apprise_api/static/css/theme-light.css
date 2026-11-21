@@ -46,6 +46,13 @@ Support Banner
   --section-heading-start: #e3f4f1;
   --section-heading-end: #f4f6f9;
   --section-heading-border: #a9cec9;
+  /* Access mode colours: the lock icons and the Configuration Login heading. */
+  --auth-state-admin: #7650a3;
+  --auth-state-public: #16815f;
+  --auth-state-locked: #9a6700;
+  --auth-state-user: #2874ad;
+  --auth-state-disabled: #737780;
+  --auth-state-off: #16815f;
   --section-heading-title: #0f6f66;
   --section-heading-subtitle: #4f5967;
   --section-heading-shadow: rgba(31, 71, 68, 0.12);
@@ -145,11 +152,16 @@ nav ul a:hover {
   background-color: rgba(0, 0, 0, 0.04);
 }
 
-i.material-icons {
+/* The drawn icons (QR code, dice) share the font icons' colours. */
+i.material-icons,
+.config-id-qr.btn-flat svg,
+.config-id-randomize.btn-flat svg {
   color: #555a62;
 }
 
-i.material-icons:hover {
+i.material-icons:hover,
+.config-id-qr.btn-flat:hover svg,
+.config-id-randomize.btn-flat:hover svg {
   color: #23262f;
 }
 
@@ -528,32 +540,27 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-state-indicator.auth-state-admin {
-  color: #7650a3;
+  color: var(--auth-state-admin);
 }
 
 .auth-state-indicator.auth-state-public {
-  color: #16815f;
+  color: var(--auth-state-public);
 }
 
 .auth-state-indicator.auth-state-locked {
-  color: #9a6700;
+  color: var(--auth-state-locked);
 }
 
 .auth-state-indicator.auth-state-user {
-  color: #2874ad;
+  color: var(--auth-state-user);
 }
 
 .auth-state-indicator.auth-state-disabled {
-  color: #737780;
+  color: var(--auth-state-disabled);
 }
 
 .auth-state-indicator.auth-state-off {
-  color: #16815f;
-}
-
-.auth-account.is-master {
-  /* The master account stays red even though top-bar links set their theme color. */
-  color: #a83232 !important;
+  color: var(--auth-state-off);
 }
 
 .logout-confirm-icon {
@@ -731,18 +738,6 @@ input.config-id-input.is-mismatched {
 
 .reset-configuration-toggle__copy small {
   color: #656b75;
-}
-
-.auth-mode-status.is-admin {
-  background-color: #fff1f3;
-  border-color: #c96b78;
-  color: #8b2938;
-}
-
-.auth-mode-status.is-user {
-  background-color: #edf6ff;
-  border-color: #5790c0;
-  color: #245f91;
 }
 
 /* =========================================
@@ -1012,7 +1007,8 @@ Buttons & Chips
 ========================================= */
 .btn,
 .btn-large,
-.btn-small {
+.btn-small,
+.auth-generate-dice {
   color: #0f5f57;
   background-color: #edeef3;
 }
@@ -1249,9 +1245,16 @@ textarea::placeholder {
   background-color: #edeef3;
 }
 
+/* Small icon buttons share one quiet hover, not the solid button hover. */
 #url-list .copy-url-btn:hover,
 #url-list .review-test-btn:hover,
 .config-id-copy.btn-flat:hover,
+.config-auth-link.btn-flat:hover,
+.config-id-visibility.btn-flat:hover,
+.config-id-apply.btn-flat:hover,
+.config-id-revert.btn-flat:hover,
+.config-id-qr.btn-flat:hover,
+.config-id-randomize.btn-flat:hover,
 .snippet-copy-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }

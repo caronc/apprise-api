@@ -317,6 +317,10 @@ msgstr "管理此配置的登录、权限和工具。"
 msgid "Administrator"
 msgstr "管理员"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "你的访问级别"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "更新凭证"
@@ -353,6 +357,11 @@ msgstr "保存"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "生成新凭证"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "选择要生成的内容，然后按 %(dice)s。"
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -549,6 +558,10 @@ msgstr "重置访问或配置？"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "这只会重置当前与此配置相关联的用户访问："
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "这将重置用户访问权限，并永久删除以下配置的已保存内容："
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -755,6 +768,18 @@ msgstr "配置列表"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "可用服务"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "全部显示"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "列出所有 Apprise 服务，包括此服务器无法使用的服务。"
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "仅列出此服务器可以使用的服务。"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3498,6 +3523,34 @@ msgstr "没有匹配的服务"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "没有与搜索匹配的服务。"
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "显示更多"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "搜索配置"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "没有匹配的配置"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "没有与搜索匹配的配置。"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "搜索提醒"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "没有匹配的提醒"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "没有与搜索匹配的提醒。"
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

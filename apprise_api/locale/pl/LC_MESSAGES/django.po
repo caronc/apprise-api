@@ -318,6 +318,10 @@ msgstr "Zarządzaj logowaniem, uprawnieniami i narzędziami tej konfiguracji."
 msgid "Administrator"
 msgstr "Administrator"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Twój poziom dostępu"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "Aktualizuj poświadczenia"
@@ -354,6 +358,11 @@ msgstr "Zapisz"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Wygeneruj nowe dane uwierzytelniające"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Wybierz, co wygenerować, a następnie naciśnij %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "Zresetować dostęp lub konfigurację?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "To spowoduje zresetowanie tylko dostępu użytkownika aktualnie powiązanego z tą konfiguracją:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Spowoduje to zresetowanie dostępu użytkownika i trwałe usunięcie zapisanej konfiguracji dla:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "Lista konfiguracji"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Dostępne usługi"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Pokaż wszystkie"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Wyświetlane są wszystkie usługi Apprise, także te, których ten serwer nie może użyć."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Wyświetlane są tylko usługi, których ten serwer może użyć."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3499,6 +3524,34 @@ msgstr "Brak pasujących usług"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Żadna usługa nie pasuje do wyszukiwania."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Pokaż więcej"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Szukaj konfiguracji"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Brak pasujących konfiguracji"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Żadna konfiguracja nie pasuje do wyszukiwania."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Szukaj przypomnień"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Brak pasujących przypomnień"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Żadne przypomnienie nie pasuje do wyszukiwania."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

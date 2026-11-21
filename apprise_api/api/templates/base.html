@@ -188,7 +188,7 @@
                 <span class="nav-divider auth-divider" aria-hidden="true"></span>
                 <span class="auth-session-nav">
                   {% if AUTH_USERNAME %}
-                    <a class="auth-account {% if AUTH_PERMISSION == 'admin' %}is-master{% endif %}"
+                    <a class="auth-account"
                        href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
                        aria-label="{% trans "Open Authentication Settings" %}">
                       <span class="auth-account-icon" aria-hidden="true">
@@ -653,6 +653,18 @@
                 else if (!active && returnFocus) openButton.focus();
             }
 
+            // Slide the drawer only when it is opened or closed, so resizing
+            // the window never shows it sweeping across the page.
+            let slideTimer = null;
+            function slideOpen(open, returnFocus) {
+                document.body.classList.add('mobile-menu-animate');
+                window.clearTimeout(slideTimer);
+                slideTimer = window.setTimeout(function() {
+                    document.body.classList.remove('mobile-menu-animate');
+                }, 300);
+                setOpen(open, returnFocus);
+            }
+
             function isFormControl(element) {
                 return element instanceof Element && element.matches(
                     'input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]), '
@@ -684,15 +696,15 @@
                 });
             });
 
-            openButton.addEventListener('click', function() { setOpen(true, false); });
-            backdrop.addEventListener('click', function() { setOpen(false, true); });
-            window.appriseCloseMobileMenu = function() { setOpen(false, false); };
+            openButton.addEventListener('click', function() { slideOpen(true, false); });
+            backdrop.addEventListener('click', function() { slideOpen(false, true); });
+            window.appriseCloseMobileMenu = function() { slideOpen(false, false); };
             menu.querySelectorAll('a').forEach(function(link) {
-                link.addEventListener('click', function() { setOpen(false, false); });
+                link.addEventListener('click', function() { slideOpen(false, false); });
             });
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape' && document.body.classList.contains('mobile-menu-open')) {
-                    setOpen(false, true);
+                    slideOpen(false, true);
                 }
             });
             document.addEventListener('focusin', syncTabWithFocus);
@@ -700,6 +712,8 @@
                 window.requestAnimationFrame(syncTabWithFocus);
             });
             mobile.addEventListener('change', function() {
+                window.clearTimeout(slideTimer);
+                document.body.classList.remove('mobile-menu-animate');
                 setOpen(false, false);
                 syncTabWithFocus();
             });
@@ -800,6 +814,62 @@
 </script>
 {# Script Block 2 #}
 <script>
+  // Filter a list as its search box (components/list_search.html) is typed in.
+  // An item stays shown when every typed word is in its text, in any case.
+  // A list with a Show More button (components/list_more.html) shows 100
+  // matches at a time; the search still looks through every item.
+  // - input: the search box
+  // - items: returns the elements to filter, which may change over time
+  // - textOf: returns the text an item is found by
+  // - onFilter: optional, runs after each filter
+  // Returns the filter, so a page can run it again after redrawing its list.
+  function appriseWireListSearch(input, items, textOf, onFilter) {
+    const clear = input.parentElement.querySelector('.list-search-clear');
+    const note = document.getElementById(input.id + '-no-match');
+    const more = document.getElementById(input.id + '-more');
+    const pageSize = 100;
+    let limit = more ? pageSize : Infinity;
+    const filter = function () {
+      const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      let found = 0;
+      items().forEach(function (item) {
+        const text = textOf(item).toLowerCase();
+        const match = words.every(function (word) { return text.includes(word); });
+        item.classList.toggle('list-search-hidden', !match || found >= limit);
+        found += match ? 1 : 0;
+      });
+      note.hidden = found > 0 || !words.length;
+      clear.hidden = !input.value;
+      if (more) {
+        // How many matches are still to be shown.
+        more.hidden = found <= limit;
+        more.querySelector('.list-search-more-count').textContent = '(' + (found - limit) + ')';
+      }
+      if (onFilter) {
+        onFilter();
+      }
+    };
+    // A new search starts again from the first page.
+    const search = function () {
+      limit = more ? pageSize : Infinity;
+      filter();
+    };
+    input.addEventListener('input', search);
+    clear.addEventListener('click', function () {
+      input.value = '';
+      search();
+      input.focus();
+    });
+    if (more) {
+      more.addEventListener('click', function () {
+        limit += pageSize;
+        filter();
+      });
+    }
+    filter();
+    return filter;
+  }
+
   // Build a Materialize select menu. Materialize moves the field's label
   // into the menu, below the field, and deletes it when the menu is rebuilt,
   // so the label is put back where the page placed it.
@@ -1327,7 +1397,7 @@
     };
 
     configIdInput.addEventListener('focus', function() {
-      restoreConcealment = configIdInput.type === 'password';
+      restoreConcealment = !configIdInput.classList.contains('value-is-visible');
       configIdInput.dataset.visibilityExplicit = 'false';
       if (restoreConcealment) {
         appriseSetValueVisibility(configIdInput, configIdVisibility, true, false);
@@ -1583,7 +1653,8 @@
               <span class="config-id-wrapper">
                 <input id="cfggen-config-id"
                        class="config-id-input"
-                       type="password"
+                       type="text"
+                       data-concealed-text="true"
                        value="{{ UNIQUE_CONFIG_ID }}"
                        maxlength="{{ CONFIG_KEY_MAX_LENGTH }}"
                        autocomplete="off"

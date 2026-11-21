@@ -152,7 +152,8 @@ class DetailTests(SimpleTestCase):
         content = self.client.get("/details").content.decode()
         self.assertRegex(
             content,
-            r'<div id="details-no-match"\s+class="notify-target-guidance notify-target-guidance--info details-no-match"'
+            r'<div id="details-search-no-match"\s+'
+            r'class="notify-target-guidance notify-target-guidance--info details-no-match"'
             r'\s+aria-live="polite"\s+hidden>',
         )
         self.assertIn("No Matching Services", content)
@@ -196,6 +197,71 @@ class DetailTests(SimpleTestCase):
         self.assertIn('href="/#url-endpoints"', content)
         self.assertNotIn("curl ", content)
         self.assertNotIn("details-api ", content)
+
+    def test_search_has_a_clear_button(self):
+        """The service search uses the shared search box, with its own clear button."""
+        content = self.client.get("/details").content.decode()
+        self.assertIn('class="btn-flat value-visibility-toggle list-search-clear"', content)
+        self.assertIn("function appriseWireListSearch(input, items, textOf, onFilter)", content)
+        self.assertIn("appriseWireListSearch(\n    detailsSearch,", content)
+
+    def test_listing_and_plugin_count_share_a_row(self):
+        """The listing link and the plugin count are two cards in one row."""
+        content = self.client.get("/details").content.decode()
+        overview = content.split('<div class="details-overview">', 1)[1].split("{# Step 1", 1)[0]
+        self.assertIn("Available Services", overview)
+        self.assertIn("Only the services this server can use are listed.", overview)
+        self.assertIn('<input id="details-show-all"', overview)
+        self.assertIn('class="notify-form-section details-summary"', overview)
+        self.assertRegex(overview, r'<span class="details-summary-count">\d+</span>')
+
+    def test_show_all_switch_reloads_with_every_service(self):
+        """The Show All switch is on with ?all=yes, and reloads the page with or without it."""
+        content = self.client.get("/details").content.decode()
+        self.assertNotRegex(content, r'id="details-show-all"\s+type="checkbox"\s+checked')
+        self.assertIn("url.searchParams.set('all', 'yes');", content)
+        self.assertIn("url.searchParams.delete('all');", content)
+
+        content = self.client.get("/details?all=yes").content.decode()
+        self.assertRegex(content, r'id="details-show-all"\s+type="checkbox"\s+checked')
+        self.assertIn("Every Apprise service is listed, including the ones this server cannot use.", content)
+
+    def test_typed_map_names_stay_plain_data(self):
+        """A typed name such as __proto__ is kept as an ordinary entry, not lost to the object's prototype."""
+        content = self.client.get("/details").content.decode()
+        self.assertIn("const map = Object.create(null);", content)
+        self.assertIn("const fields = Object.create(null);", content)
+
+    def test_keyboard_moves_through_the_steps_in_order(self):
+        """The service list is one Tab stop, and picking a service moves on to its first field."""
+        content = self.client.get("/details").content.decode()
+        # The arrow keys move within the list; Tab leaves it
+        self.assertIn("button.tabIndex = button === stop ? 0 : -1;", content)
+        self.assertIn("ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1", content)
+        # The first field to fill in gets the focus
+        self.assertIn("return !field.readOnly && field.getClientRects().length > 0;", content)
+
+    def test_single_choice_is_shown_without_a_list(self):
+        """A field with one possible value, like most schemas, is shown as text that Tab passes by."""
+        content = self.client.get("/details").content.decode()
+        self.assertIn("if (choices.length === 1) {", content)
+        self.assertIn("input.readOnly = true;\n        input.tabIndex = -1;", content)
+
+    def test_schemas_are_shown_with_their_separator(self):
+        """A schema is shown the way it starts a URL (json://), but sent without the separator."""
+        content = self.client.get("/details").content.decode()
+        self.assertIn("option.textContent = holder.dataset.kind === 'schema' ? choice + '://' : choice;", content)
+        self.assertIn("input.value += '://';", content)
+        self.assertIn("return input.value.replace(/:\\/\\/$/, '');", content)
+
+    def test_copy_button_sits_inside_the_url_box(self):
+        """The copy button is placed inside the URL box, like the reveal button on a secret field."""
+        content = self.client.get("/details").content.decode()
+        self.assertRegex(
+            content,
+            r'<div class="notify-template-value-control concealed-field">\s+<input id="details-url"',
+        )
+        self.assertRegex(content, r'id="details-copy"\s+class="btn-flat value-visibility-toggle"')
 
     def test_fields_are_checked_against_their_patterns(self):
         """The builder marks a field that does not fit its service's pattern, and says so under the URL."""

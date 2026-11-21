@@ -47,6 +47,13 @@ Support Banner
   --section-heading-start: #153532;
   --section-heading-end: #222832;
   --section-heading-border: #35514f;
+  /* Access mode colours: the lock icons and the Configuration Login heading. */
+  --auth-state-admin: #c9a4f4;
+  --auth-state-public: #73dfb4;
+  --auth-state-locked: #f3c969;
+  --auth-state-user: #8bc9f4;
+  --auth-state-disabled: #9da1aa;
+  --auth-state-off: #73dfb4;
   --section-heading-title: #7de6da;
   --section-heading-subtitle: #b8bec8;
   --section-heading-shadow: rgba(0, 0, 0, 0.22);
@@ -191,11 +198,16 @@ nav ul a:hover {
   background-color: rgba(0, 0, 0, 0.15);
 }
 
-i.material-icons {
+/* The drawn icons (QR code, dice) share the font icons' colours. */
+i.material-icons,
+.config-id-qr.btn-flat svg,
+.config-id-randomize.btn-flat svg {
   color: #555a62;
 }
 
-i.material-icons:hover {
+i.material-icons:hover,
+.config-id-qr.btn-flat:hover svg,
+.config-id-randomize.btn-flat:hover svg {
   color: #888c96;
 }
 
@@ -782,32 +794,27 @@ input.config-id-input.is-mismatched {
 }
 
 .auth-state-indicator.auth-state-admin {
-  color: #c9a4f4;
+  color: var(--auth-state-admin);
 }
 
 .auth-state-indicator.auth-state-public {
-  color: #73dfb4;
+  color: var(--auth-state-public);
 }
 
 .auth-state-indicator.auth-state-locked {
-  color: #f3c969;
+  color: var(--auth-state-locked);
 }
 
 .auth-state-indicator.auth-state-user {
-  color: #8bc9f4;
+  color: var(--auth-state-user);
 }
 
 .auth-state-indicator.auth-state-disabled {
-  color: #9da1aa;
+  color: var(--auth-state-disabled);
 }
 
 .auth-state-indicator.auth-state-off {
-  color: #73dfb4;
-}
-
-.auth-account.is-master {
-  /* The master account stays red even though top-bar links set their theme color. */
-  color: #ff8b8b !important;
+  color: var(--auth-state-off);
 }
 
 .logout-confirm-icon {
@@ -834,11 +841,13 @@ input.config-id-input.is-mismatched {
   color: #2cb6a6;
 }
 
-.auth-editor-card .value-visibility-toggle i.material-icons {
+.auth-editor-card .value-visibility-toggle i.material-icons,
+.auth-editor-card .config-id-randomize.btn-flat svg {
   color: #aeb2bd;
 }
 
-.auth-editor-card .value-visibility-toggle:hover i.material-icons {
+.auth-editor-card .value-visibility-toggle:hover i.material-icons,
+.auth-editor-card .config-id-randomize.btn-flat:hover svg {
   color: #edeef3;
 }
 
@@ -999,18 +1008,6 @@ input.config-id-input.is-mismatched {
   color: #aeb2bd;
 }
 
-.auth-mode-status.is-admin {
-  background-color: rgba(105, 35, 46, 0.42);
-  border-color: #a95562;
-  color: #ffc1c8;
-}
-
-.auth-mode-status.is-user {
-  background-color: rgba(27, 66, 105, 0.46);
-  border-color: #477eae;
-  color: #a9d6ff;
-}
-
 /* =========================================
 Tabs
 ========================================= */
@@ -1097,7 +1094,8 @@ Buttons & Chips
 ========================================= */
 .btn,
 .btn-large,
-.btn-small {
+.btn-small,
+.auth-generate-dice {
   color: #edeef3;
   background-color: #34383f;
 }
@@ -1148,9 +1146,16 @@ Buttons & Chips
   color: #ffcdd2 !important;
 }
 
+/* Small icon buttons share one quiet hover, not the solid button hover. */
 #url-list .copy-url-btn:hover,
 #url-list .review-test-btn:hover,
 .config-id-copy.btn-flat:hover,
+.config-auth-link.btn-flat:hover,
+.config-id-visibility.btn-flat:hover,
+.config-id-apply.btn-flat:hover,
+.config-id-revert.btn-flat:hover,
+.config-id-qr.btn-flat:hover,
+.config-id-randomize.btn-flat:hover,
 .snippet-copy-btn:hover {
   background-color: rgba(255, 255, 255, 0.06);
 }

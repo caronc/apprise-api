@@ -1635,6 +1635,21 @@
       }, {capture: true, passive: true});
     }
 
+    if (!tabsElem.dataset.fitWired) {
+      // Show only the tab icons once any label would be cut short. This
+      // depends on the language and the tab counts, so it is measured.
+      tabsElem.dataset.fitWired = '1';
+      const fitLabels = function () {
+        tabsElem.classList.remove('config-tabs-compact');
+        const cut = Array.from(tabsElem.querySelectorAll('.config-tab-label')).some(function (label) {
+          return label.scrollWidth > label.clientWidth;
+        });
+        tabsElem.classList.toggle('config-tabs-compact', cut);
+      };
+      new ResizeObserver(fitLabels).observe(tabsElem);
+      new MutationObserver(fitLabels).observe(tabsElem, {childList: true, characterData: true, subtree: true});
+    }
+
     tabsElem.querySelectorAll('li.tab a[href^="#"]').forEach(function (anchor) {
       if (anchor.dataset.hashWired === '1') {
         return;
@@ -2036,7 +2051,7 @@
       document.querySelectorAll('#notify .autocomplete-content').forEach(function (menu) {
         menu.classList.add('notify-tag-autocomplete');
       });
-      document.querySelectorAll('.autocomplete-content li').forEach(function (item) {
+      document.querySelectorAll('#notify .autocomplete-content li').forEach(function (item) {
         const token = item.dataset.id;
         // Materialize wraps each choice in boxes with their own styles; keep
         // just the text, the same as the site's other menus.
@@ -2140,7 +2155,17 @@
         commitNotifyTags(true);
       }
     });
+    // Pressing a suggestion takes focus from the field before the suggestion
+    // is chosen; the typed text is left for the suggestion to replace.
+    let choosingSuggestion = false;
+    chipElement.addEventListener('pointerdown', function (event) {
+      choosingSuggestion = Boolean(event.target.closest('.autocomplete-content'));
+    });
     chipInput.addEventListener('blur', function () {
+      if (choosingSuggestion) {
+        choosingSuggestion = false;
+        return;
+      }
       // Tab, mouse, and touch navigation should not leave a tag unfinished.
       commitNotifyTags(true);
     });
@@ -2259,10 +2284,6 @@
       result[item.token] = item;
       return result;
     }, Object.create(null));
-    const external_data = notifyTagOptions.reduce(function (result, item) {
-      result[item.token] = null;
-      return result;
-    }, Object.create(null))
     const notifyTagSuggestions = notifyTagOptions.map(function (item) {
       return {id: item.token};
     });
@@ -2314,7 +2335,7 @@
           }
         })
         $this.chipsData.forEach(function (e, index) {
-          if (!(e.id in external_data) && parseNotifyTagExpression(e.id).length === 0)
+          if (!(e.id in notifyTagOptionMap) && parseNotifyTagExpression(e.id).length === 0)
             $this.deleteChip(index);
         })
         decorateNotifyChips();

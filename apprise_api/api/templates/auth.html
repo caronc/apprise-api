@@ -28,16 +28,22 @@
           <h4>{% trans "Configuration Access & Management" %}</h4>
           <p>{% trans "Manage this configuration's login, permissions, and tools." %}</p>
         {% endif %}
+      </div>
+      {# Who is signed in: a small card on the right, the same place other headings show their details. #}
+      <div class="page-section-heading__actions">
         <div id="auth-mode-status"
              class="auth-mode-status{% if shared_user %} is-user{% else %} is-admin{% endif %}">
-          <span class="config-auth-icon" aria-hidden="true">
-            {% include "icons/lock.svg" %}
+          <span class="auth-mode-status__icon" aria-hidden="true">
+            {% include "icons/user.svg" %}
           </span>
-          {% if shared_user %}
-            <span>{% trans "User" %}</span>
-          {% else %}
-            <span>{% trans "Administrator" %}</span>
-          {% endif %}
+          <span class="auth-mode-status__copy">
+            <span class="auth-mode-status__label">{% trans "Your Access Level" %}</span>
+            {% if shared_user %}
+              <strong>{% trans "User" %}</strong>
+            {% else %}
+              <strong>{% trans "Administrator" %}</strong>
+            {% endif %}
+          </span>
         </div>
       </div>
     </div>
@@ -136,6 +142,10 @@
                   <i class="material-icons" aria-hidden="true">chevron_right</i>
                   {% trans "Generate New Credentials" %}
                 </summary>
+                {# The dice in the sentence, and its label, are filled in from the button below it. #}
+                <p class="auth-generate-hint">
+                  {% blocktrans with dice='<span class="auth-generate-dice" role="img"></span>'|safe %}Choose what to generate, then press {{ dice }}.{% endblocktrans %}
+                </p>
                 <div class="auth-generate-row">
                   <div class="auth-randomize-options"
                        role="group"
@@ -151,7 +161,7 @@
                   </div>
                   <button type="button"
                           id="auth-generate"
-                          class="btn-flat btn-small config-id-randomize auth-randomize-button"
+                          class="btn waves-effect waves-light auth-randomize-button"
                           aria-label="{% trans "Randomize the Selected Fields" %}"
                           title="{% trans "Randomize the Selected Fields" %}">
                     <span aria-hidden="true">
@@ -236,9 +246,12 @@
           </div>
         </section>
       {% endif %}
-      {% if reminders_allowed and not shared_user and auth_mode == "assigned" %}
+      {% if reminders_allowed and not shared_user %}
         {# Limits hold back only the configuration's own user; the administrator is never limited. #}
-        <section class="auth-editor-card auth-reminder-limits-card">
+        {# Hidden until the Config ID has an access record (or kept reminders); saving shows it without a reload. #}
+        <section id="auth-reminder-limits"
+                 class="auth-editor-card auth-reminder-limits-card"
+                 {% if not reminder_limits_shown %}hidden{% endif %}>
           <div class="auth-card-heading auth-compact-heading">
             <span class="auth-card-icon auth-reminder-limits-icon" aria-hidden="true">
               {% include "icons/alarm.svg" %}
@@ -295,6 +308,12 @@
   const generateButton = document.querySelector('#auth-generate');
   const generateUser = document.querySelector('#auth-generate-user');
   const generatePassword = document.querySelector('#auth-generate-password');
+  // Draw the dice in the instructions the same as the button they point to,
+  // and give it the button's name for screen readers.
+  document.querySelectorAll('.auth-generate-dice').forEach(function (dice) {
+    dice.setAttribute('aria-label', generateButton.getAttribute('aria-label'));
+    dice.append(generateButton.querySelector('svg').cloneNode(true));
+  });
   const authIsAdmin = {% if shared_user %}false{% else %}true{% endif %};
   let authHasCredentials = {% if auth_has_credentials %}true{% else %}false{% endif %};
   const authConfigId = '{{ key|escapejs }}';
@@ -332,12 +351,14 @@
     }
   };
 
-  function authUpdateIndicators(state) {
+  // Show an access mode on the lock icons, with its tooltip and label.
+  // - scope: optional, only the indicators inside it change
+  function authUpdateIndicators(state, scope) {
     const copy = authStateCopy[state];
     if (!copy) {
       return;
     }
-    document.querySelectorAll('.auth-state-indicator').forEach(function (indicator) {
+    (scope || document).querySelectorAll('.auth-state-indicator').forEach(function (indicator) {
       indicator.classList.remove(
         'auth-state-admin', 'auth-state-public', 'auth-state-locked',
         'auth-state-user', 'auth-state-disabled', 'auth-state-off',
@@ -358,8 +379,14 @@
     });
   }
 
-  if (authIsAdmin && authAccess && window.M && M.FormSelect) {
-    appriseSelect(authAccess);
+  // While the Config ID has a login, the Configuration Login heading shows the
+  // colour of the access mode being chosen, before it is saved.
+  if (authIsAdmin && authAccess) {
+    authAccess.addEventListener('change', function () {
+      if (authHasCredentials) {
+        authUpdateIndicators(authAccess.value, document.querySelector('.auth-credentials-card .auth-card-heading'));
+      }
+    });
   }
 
   if (authAccessHelp) {
@@ -518,6 +545,10 @@
       }
       authSetShared(true);
       authUpdateIndicators(savedState.auth_state);
+      // Present only when the page has the reminder limits card.
+      if (typeof authShowReminderLimits === 'function') {
+        authShowReminderLimits(true);
+      }
       // Use a template literal because the included QR icon spans several lines.
       const savedCredentialButtons = savedPassword
         ? `<button type="button" id="auth-save-copy" class="btn-flat auth-save-copy" aria-label="{% trans "Copy Username, Password, and Config ID to Clipboard" %}" title="{% trans "Copy Username, Password, and Config ID to Clipboard" %}"><i class="material-icons" aria-hidden="true">content_copy</i></button>`
@@ -586,9 +617,9 @@
         title: '{% trans "Reset Access or Configuration?" %}',
         html: `
           <div class="reset-access-dialog">
-            <p>{% trans "This will reset only the user access currently associated with this configuration:" %}</p>
+            <p id="swal-reset-summary"></p>
             <div class="input-field concealed-field auth-credential-field reset-access-config-id">
-              <input id="swal-reset-config-id" type="password" readonly>
+              <input id="swal-reset-config-id" type="text" data-concealed-text="true" spellcheck="false" autocapitalize="none" readonly>
               <label for="swal-reset-config-id">{% trans "Configuration ID" %}:</label>
               <button type="button"
                       class="btn-flat value-visibility-toggle"
@@ -602,11 +633,12 @@
                 <i class="material-icons" aria-hidden="true">visibility_off</i>
               </button>
             </div>
+            {# On by default; turning it off resets only the login and shows the reminder choice. #}
             <button id="swal-reset-configuration"
                     class="reset-configuration-toggle"
                     type="button"
                     role="switch"
-                    aria-checked="false">
+                    aria-checked="true">
               <span class="reset-configuration-toggle__track" aria-hidden="true">
                 <span></span>
               </span>
@@ -620,7 +652,8 @@
                     class="reset-configuration-toggle"
                     type="button"
                     role="switch"
-                    aria-checked="false">
+                    aria-checked="false"
+                    hidden>
               <span class="reset-configuration-toggle__track" aria-hidden="true">
                 <span></span>
               </span>
@@ -634,7 +667,7 @@
         `,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: '{% trans "Reset User Access" %}',
+        confirmButtonText: '{% trans "Reset Access and Configuration" %}',
         cancelButtonText: '{% trans "Cancel" %}',
         focusConfirm: false,
         didOpen: function (popup) {
@@ -644,9 +677,12 @@
           configIdField.value = authConfigId;
           appriseWireValueToggles(popup);
           const keepReminders = popup.querySelector('#swal-keep-reminders');
-          resetConfiguration.addEventListener('click', function () {
-            const selected = resetConfiguration.getAttribute('aria-checked') !== 'true';
-            resetConfiguration.setAttribute('aria-checked', selected ? 'true' : 'false');
+          const summary = popup.querySelector('#swal-reset-summary');
+          // Say what will be reset, to match the switch.
+          const showChoice = function (selected) {
+            summary.textContent = selected
+              ? '{% trans "This will reset the user access and permanently remove the saved configuration of:" %}'
+              : '{% trans "This will reset only the user access currently associated with this configuration:" %}';
             confirmButton.textContent = selected
               ? '{% trans "Reset Access and Configuration" %}'
               : '{% trans "Reset User Access" %}';
@@ -654,6 +690,12 @@
               // Reminders cannot outlive the configuration they send through.
               keepReminders.hidden = selected;
             }
+          };
+          showChoice(true);
+          resetConfiguration.addEventListener('click', function () {
+            const selected = resetConfiguration.getAttribute('aria-checked') !== 'true';
+            resetConfiguration.setAttribute('aria-checked', selected ? 'true' : 'false');
+            showChoice(selected);
           });
           if (keepReminders) {
             keepReminders.addEventListener('click', function () {
@@ -676,8 +718,9 @@
         }
         try {
           const resetConfiguration = Boolean(result.value && result.value.resetConfiguration);
+          const keepReminders = Boolean(result.value && result.value.keepReminders);
           const resetUrl = new URL(authForm.action, window.location.href);
-          if (result.value && result.value.keepReminders) {
+          if (keepReminders) {
             resetUrl.searchParams.set('keep_reminders', 'yes');
           }
           const response = await appriseFetch(
@@ -712,6 +755,12 @@
           }
           authSetShared(false);
           authUpdateIndicators(resetState ? resetState.auth_state : 'admin');
+          // authShowReminderLimits() is only written into the page when the
+          // reminder limits card is; a function is usable before its line.
+          if (typeof authShowReminderLimits === 'function') {
+            // The limits stay while the user's reminders were kept, with their new figures.
+            authShowReminderLimits(!resetConfiguration && keepReminders);
+          }
           appriseFire({
             title: resetConfiguration
               ? '{% trans "Configuration Reset" %}'
@@ -781,7 +830,7 @@
           <div class="reset-access-dialog move-confirmation-dialog">
             <p>{% trans "Confirm that you want to move this configuration:" %}</p>
             <div class="input-field concealed-field auth-credential-field reset-access-config-id">
-              <input id="swal-move-from-config-id" type="password" readonly>
+              <input id="swal-move-from-config-id" type="text" data-concealed-text="true" spellcheck="false" autocapitalize="none" readonly>
               <label for="swal-move-from-config-id">{% trans "From Config ID" %}</label>
               <button type="button"
                       class="btn-flat value-visibility-toggle"
@@ -800,7 +849,7 @@
               <span>{% trans "Move To" %}</span>
             </div>
             <div class="input-field concealed-field auth-credential-field reset-access-config-id">
-              <input id="swal-move-to-config-id" type="password" readonly>
+              <input id="swal-move-to-config-id" type="text" data-concealed-text="true" spellcheck="false" autocapitalize="none" readonly>
               <label for="swal-move-to-config-id">{% trans "To Config ID" %}</label>
               <button type="button"
                       class="btn-flat value-visibility-toggle"
@@ -871,7 +920,7 @@
     });
   }
   {% endif %}
-  {% if reminders_allowed and not shared_user and auth_mode == 'assigned' %}
+  {% if reminders_allowed and not shared_user %}
   // Reminder limits for the configuration's user; the usage figures are
   // filled in the same way the Reminders tab fills them.
   {% include "components/reminder_shared_script.html" %}
@@ -937,7 +986,19 @@
       appriseShowStatusToast('{% trans "The limits could not be saved" %}', false);
     }
   });
-  reminderLimitsLoad();
+
+  // The limits card belongs to the configuration's access record: it shows
+  // once one is saved, and hides on a reset unless the reminders were kept.
+  function authShowReminderLimits(shown) {
+    const card = document.getElementById('auth-reminder-limits');
+    card.hidden = !shown;
+    if (shown) {
+      reminderLimitsLoad();
+    }
+  }
+  if (!document.getElementById('auth-reminder-limits').hidden) {
+    reminderLimitsLoad();
+  }
   {% endif %}
 
 {% endblock jsfooter %}

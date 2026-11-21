@@ -318,6 +318,10 @@ msgstr "Gerencie o login, permissões e ferramentas desta configuração."
 msgid "Administrator"
 msgstr "Administrador"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Seu Nível de Acesso"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "Atualizar Credenciais"
@@ -354,6 +358,11 @@ msgstr "Salvar"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Gerar Novas Credenciais"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Escolha o que gerar e depois pressione %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "Redefinir Acesso ou Configuração?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "Isso irá redefinir apenas o acesso do usuário atualmente associado a esta configuração:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Isso redefinirá o acesso do usuário e removerá permanentemente a configuração salva de:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "Lista de Configurações"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Serviços Disponíveis"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Mostrar Todos"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Todos os serviços do Apprise são listados, incluindo os que este servidor não pode usar."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Apenas os serviços que este servidor pode usar são listados."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3501,6 +3526,34 @@ msgstr "Nenhum serviço correspondente"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Nenhum serviço corresponde à sua pesquisa."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Mostrar Mais"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Pesquisar Configurações"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Nenhuma configuração correspondente"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Nenhuma configuração corresponde à sua pesquisa."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Pesquisar Lembretes"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Nenhum lembrete correspondente"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Nenhum lembrete corresponde à sua pesquisa."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

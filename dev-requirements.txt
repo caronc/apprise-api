@@ -7,4 +7,5 @@ jsbeautifier
 openapi-spec-validator
 tox
 ruff
+playwright
 polib

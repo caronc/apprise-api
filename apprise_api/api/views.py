@@ -2885,6 +2885,7 @@ class AuthView(ReminderLockView):
                 status=ResponseCode.okay,
             )
 
+        can_use_reminders = reminders_allowed(request, key)
         return render(
             request,
             self.template_name,
@@ -2899,7 +2900,13 @@ class AuthView(ReminderLockView):
                 "auth_username": username,
                 "shared_user": shared_user,
                 # The reminder limits show only where reminders can be used.
-                "reminders_allowed": reminders_allowed(request, key),
+                "reminders_allowed": can_use_reminders,
+                # Their card shows once the Config ID has an access record, or
+                # while it still holds reminders kept when its login was reset.
+                # The reminder file is only read when the card is on the page.
+                "reminder_limits_shown": can_use_reminders
+                and not shared_user
+                and (auth_state.configured or bool(ConfigCache.read_reminders(ConfigCache.reminder_path(key)))),
                 # The Apprise URLs rows show for callers who may send to URLs of
                 # their own; reminders follow the same rule.
                 "stateless_allowed": stateless_allowed(request, key),

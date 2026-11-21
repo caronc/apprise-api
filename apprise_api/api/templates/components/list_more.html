@@ -1,0 +1,14 @@
+{% load i18n %}
+
+{# Shows the next page of a list filtered by components/list_search.html, with how many are left. #}
+{# - search_id: the id of that list's search box #}
+<div class="list-search-more-row">
+  <button type="button"
+          id="{{ search_id }}-more"
+          class="btn waves-effect waves-light list-search-more"
+          hidden>
+    <i class="material-icons" aria-hidden="true">expand_more</i>
+    <span>{% trans "Show More" %}</span>
+    <span class="list-search-more-count"></span>
+  </button>
+</div>

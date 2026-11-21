@@ -303,10 +303,17 @@ class MoveConfigForm(forms.Form):
     source = forms.RegexField(
         regex=CONFIG_KEY_PATTERN,
         label=_("From"),
-        # Config IDs are secrets, so both fields begin concealed.
-        widget=forms.PasswordInput(
-            render_value=True,
-            attrs={"placeholder": _("Current Configuration ID"), "autocomplete": "off"},
+        # Config IDs are secrets, so both fields begin concealed. They are text
+        # fields drawn as dots, so password managers do not offer to fill them.
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": _("Current Configuration ID"),
+                "autocomplete": "off",
+                "data-concealed-text": "true",
+                # Kept away from spell checking and automatic capitals.
+                "spellcheck": "false",
+                "autocapitalize": "none",
+            },
         ),
         max_length=CONFIG_KEY_MAX_LENGTH,
         required=True,
@@ -315,9 +322,14 @@ class MoveConfigForm(forms.Form):
     to = forms.RegexField(
         regex=CONFIG_KEY_PATTERN,
         label=_("To"),
-        widget=forms.PasswordInput(
-            render_value=True,
-            attrs={"placeholder": _("New Configuration ID"), "autocomplete": "off"},
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": _("New Configuration ID"),
+                "autocomplete": "off",
+                "data-concealed-text": "true",
+                "spellcheck": "false",
+                "autocapitalize": "none",
+            },
         ),
         max_length=CONFIG_KEY_MAX_LENGTH,
         required=True,

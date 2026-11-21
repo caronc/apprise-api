@@ -31,16 +31,28 @@ on:
 
 jobs:
   tests:
+    name: tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false  # Let every Python version finish, even if one fails
+      matrix:
+        include:
+          # Oldest supported Python, for bare-metal hosts
+          - python-version: "3.12"
+          - python-version: "3.13"
+          # The Python the Docker image runs; lint and Codecov run here only
+          - python-version: "3.14"
+            main: true
 
     steps:
     - name: Acquire sources
       uses: actions/checkout@v7
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v7
       with:
-        python-version-file: ".python-version"
+        python-version: ${{ matrix.python-version }}
 
     - name: Install prerequisites
       run: |
@@ -52,10 +64,12 @@ jobs:
         pip install -r requirements.txt -r dev-requirements.txt
 
     - name: Lint with Ruff
+      if: matrix.main
       run: |
         ruff check apprise_api scripts
 
     - name: Check translation catalog syntax
+      if: matrix.main
       # Only broken files fail here; missing or rough translations are
       # tidied up before a release with `tox -e translations -- --update`.
       run: |
@@ -65,7 +79,16 @@ jobs:
         done
         exit $failed
 
+    - name: Install a browser for the browser tests
+      if: matrix.main
+      run: |
+        python -m playwright install --with-deps chromium
+
     - name: Run tests with coverage
+      # The browser tests must run on the main Python and are skipped on the
+      # others (the runner's own Chrome would otherwise run them there too).
+      env:
+        APPRISE_BROWSER_TESTS: ${{ matrix.main && 'required' || 'skip' }}
       run: |
         coverage run -m pytest apprise_api
 
@@ -75,6 +98,7 @@ jobs:
         coverage report
 
     - name: Upload to Codecov
+      if: matrix.main
       uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

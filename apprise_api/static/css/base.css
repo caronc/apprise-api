@@ -272,6 +272,29 @@ i.material-icons.support-banner-icon {
   margin: 0 10px;
 }
 
+/* A popup fills the window unless told otherwise, so the edge away from the
+   element is let go; without this a tooltip on the left (Logout) opens at the
+   far left of the page. One without room on its side flips to the other. */
+.material-tooltip[popover][data-position=top] {
+  top: auto;
+  position-try-fallbacks: flip-block;
+}
+
+.material-tooltip[popover][data-position=bottom] {
+  bottom: auto;
+  position-try-fallbacks: flip-block;
+}
+
+.material-tooltip[popover][data-position=left] {
+  left: auto;
+  position-try-fallbacks: flip-inline;
+}
+
+.material-tooltip[popover][data-position=right] {
+  right: auto;
+  position-try-fallbacks: flip-inline;
+}
+
 /* =========================================
 2. Main Layout & Navigation
 ========================================= */
@@ -554,8 +577,12 @@ Side Nav (replaces legacy Materialize collection sidebar)
     overflow-y: auto;
     box-sizing: border-box;
     transform: translateX(-105%);
-    transition: transform 0.22s ease;
     box-shadow: 0.6rem 0 1.8rem rgba(0, 0, 0, 0.28);
+  }
+
+  /* Slide only when opened or closed, not when the window is resized. */
+  .mobile-menu-animate .main-layout .side-menu {
+    transition: transform 0.22s ease;
   }
 
   .mobile-menu-open {
@@ -634,7 +661,7 @@ Side Nav (replaces legacy Materialize collection sidebar)
 
   .mobile-menu-tab,
   .mobile-menu-backdrop,
-  .main-layout .side-menu,
+  .mobile-menu-animate .main-layout .side-menu,
   .reset-configuration-toggle,
   .reset-configuration-toggle__track,
   .reset-configuration-toggle__track>span {
@@ -1204,9 +1231,77 @@ textarea {
   margin-top: 0.5rem;
 }
 
-.api-details .details-header p,
-.api-details .details-summary {
+.api-details .details-header p {
   max-width: 70rem;
+}
+
+/* The service listing card takes two thirds of the row, the plugin count one third. */
+.details-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.9rem;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.details-overview .notify-form-section {
+  margin: 0;
+}
+
+.details-overview .notify-section-heading {
+  margin-bottom: 0;
+}
+
+/* The switch is followed by its own label here. */
+.review-selected-filter.details-show-all {
+  width: auto;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.details-summary .notify-section-heading {
+  height: 100%;
+}
+
+.details-summary-count {
+  color: var(--mobile-app-accent);
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  .details-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A search box that filters a list; its clear button stands in for the browser's own. */
+.list-search input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.list-search-clear.btn-flat[hidden],
+.list-search-more[hidden],
+.list-search-hidden {
+  display: none !important;
+}
+
+/* Show More sits centred under its list. */
+.list-search-more-row {
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0 1rem;
+}
+
+.list-search-more.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.list-search-more-count {
+  opacity: 0.75;
 }
 
 .api-details .collapsible {
@@ -2682,24 +2777,23 @@ body .tabs .tab.disabled a:hover i {
   text-overflow: ellipsis;
 }
 
-@media (max-width: 800px) {
-  .tabs.config-overview .tab a {
-    justify-content: center;
-    gap: 0;
-    padding-left: 0.55rem;
-    padding-right: 0.55rem;
-  }
+/* Icons only, once a label no longer fits (set by the config page). */
+.tabs.config-tabs-compact .tab a {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+}
 
-  .tabs.config-overview .tab a i {
-    margin-right: 0 !important;
-    font-size: 1.45rem;
-  }
+.tabs.config-tabs-compact .tab a i {
+  margin-right: 0 !important;
+  font-size: 1.45rem;
+}
 
-  .tabs.config-overview .tab a .card-count,
-  .tabs.config-overview .tab a .reminder-tab-count,
-  .tabs.config-overview .tab a .config-tab-label {
-    display: none !important;
-  }
+.tabs.config-tabs-compact .tab a .card-count,
+.tabs.config-tabs-compact .tab a .reminder-tab-count,
+.tabs.config-tabs-compact .tab a .config-tab-label {
+  display: none !important;
 }
 
 /* URL List Grid */
@@ -3265,7 +3359,8 @@ body .tabs .tab.disabled a:hover i {
   overflow: hidden;
 }
 
-.config-id-label {
+.config-id-label,
+.config-list-header>span {
   font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -3649,6 +3744,14 @@ code.config-id.is-concealed {
   background: var(--config-list-row-hover);
 }
 
+/* The column headings row stays still under the pointer. */
+.collection.config-list-collection .config-list-header,
+.collection.config-list-collection .config-list-header:hover {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  background: var(--config-list-row);
+}
+
 .config-list-collection .config-list-link code.config-id {
   min-height: 2rem;
   padding: 0.35rem 0.55rem;
@@ -3697,19 +3800,24 @@ code.config-id.is-concealed {
 
 @media (max-width: 640px) {
 
-  /* Stack the ID and actions so every control remains available on phones. */
+  /* On phones the actions share the top row with the username and access,
+     and the Config ID gets the full width underneath. */
   .config-list-item {
-    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    grid-template-columns: 2rem minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "auth-status user access"
-      "config-id config-id config-id"
-      "actions actions actions";
+      "auth-status user access actions"
+      "config-id config-id config-id config-id";
     row-gap: 0.5rem;
   }
 
   .config-list-actions {
     margin-left: 0;
-    justify-self: start;
+    justify-self: end;
+  }
+
+  /* The rows are stacked on phones, so the headings no longer line up. */
+  .config-list-collection .config-list-header {
+    display: none;
   }
 }
 
@@ -3728,24 +3836,60 @@ Authentication Editor
   margin: 0.2rem 0 0;
 }
 
+/* The title takes the room left by the access card, which drops below it on
+   a narrow screen. */
 .auth-page-heading .page-section-heading__copy {
-  width: 100%;
+  flex: 1 1 20rem;
 }
 
+/* Who is signed in, as a small card on the right of the page heading. It
+   takes the access mode colours: purple for the administrator, blue for a user. */
 .auth-mode-status {
+  --auth-mode-color: var(--auth-state-admin);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  margin-top: 0.65rem;
-  padding: 0.42rem 0.65rem;
-  border: 1px solid;
-  border-left-width: 3px;
-  border-radius: 0.45rem;
+  gap: 0.6rem;
+  padding: 0.45rem 0.8rem 0.45rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--auth-mode-color) 45%, transparent);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--auth-mode-color) 12%, transparent);
+  color: var(--auth-mode-color);
   box-sizing: border-box;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+}
+
+.auth-mode-status.is-user {
+  --auth-mode-color: var(--auth-state-user);
+}
+
+.auth-mode-status__icon {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+}
+
+.auth-mode-status__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.auth-mode-status__copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.auth-mode-status__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.auth-mode-status__copy strong {
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .auth-mode-status__indicator {
@@ -3757,11 +3901,6 @@ Authentication Editor
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, currentColor 18%, transparent);
 }
 
-.auth-mode-status .config-auth-icon {
-  width: 1rem;
-  height: 1rem;
-}
-
 /* As many columns as fit (three on a wide screen, then two), each card only
    as tall as its own content. */
 .auth-card-grid {
@@ -3769,6 +3908,10 @@ Authentication Editor
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   align-items: start;
   gap: 1.5rem;
+}
+
+.auth-editor-card[hidden] {
+  display: none;
 }
 
 .auth-editor-card {
@@ -3836,6 +3979,45 @@ Authentication Editor
 .auth-compact-heading h5 {
   margin: 0;
   font-size: 1.25rem;
+}
+
+/* Each card opens with the same gradient band as the page headings. */
+.auth-editor-card>.auth-card-heading.auth-compact-heading {
+  margin: -1.25rem -1.25rem 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--auth-tint-border, var(--section-heading-border));
+  border-radius: calc(1.4rem - 1px) calc(1.4rem - 1px) 0 0;
+  background: linear-gradient(118deg,
+      var(--auth-tint-start, var(--section-heading-start)),
+      var(--section-heading-end));
+}
+
+/* Once the Config ID has a login, the Configuration Login heading takes the
+   colour of its access mode (the same as its lock everywhere else). */
+.auth-credentials-card .auth-card-heading:has(.auth-state-public) {
+  --auth-tint: var(--auth-state-public);
+}
+
+.auth-credentials-card .auth-card-heading:has(.auth-state-locked) {
+  --auth-tint: var(--auth-state-locked);
+}
+
+.auth-credentials-card .auth-card-heading:has(.auth-state-user) {
+  --auth-tint: var(--auth-state-user);
+}
+
+.auth-credentials-card .auth-card-heading:has(.auth-state-disabled) {
+  --auth-tint: var(--auth-state-disabled);
+}
+
+.auth-credentials-card .auth-card-heading:has(.auth-state-public, .auth-state-locked, .auth-state-user, .auth-state-disabled) {
+  --auth-tint-start: color-mix(in srgb, var(--auth-tint) 22%, var(--section-heading-end));
+  --auth-tint-border: color-mix(in srgb, var(--auth-tint) 45%, transparent);
+}
+
+.auth-credentials-card .auth-card-heading:has(.auth-state-public, .auth-state-locked, .auth-state-user, .auth-state-disabled) .auth-card-icon {
+  border-color: color-mix(in srgb, var(--auth-tint) 55%, transparent);
+  background-color: color-mix(in srgb, var(--auth-tint) 14%, var(--section-heading-end));
 }
 
 .auth-compact-heading p {
@@ -4008,11 +4190,16 @@ Authentication Editor
   overflow: visible;
 }
 
-.config-id-qr.btn-flat {
+/* Font icons are centred the same way as the drawn icons (QR, dice) beside them. */
+.config-id-qr.btn-flat,
+.config-id-visibility.btn-flat,
+.config-id-copy.btn-flat {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
+
+
 
 .apprise-qr-popup {
   display: flex;
@@ -4211,18 +4398,32 @@ Authentication Editor
   box-sizing: border-box !important;
 }
 
-/* Template values look concealed without becoming password-manager fields. */
-.concealed-field input[data-concealed-text="true"]:not(.value-is-visible) {
+/* Concealed values (templates, Config IDs) are drawn as dots without becoming
+   password fields that browsers and password managers offer to fill. */
+input[data-concealed-text="true"]:not(.value-is-visible) {
   -webkit-text-security: disc;
   text-security: disc;
 }
 
+/* The same height as the small dice button beside it, so their icons line up. */
 .value-visibility-toggle {
   position: absolute;
   right: 0.75rem;
-  top: 0.35rem;
+  top: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 2rem;
+  height: 2rem;
   padding: 0;
+  line-height: 2rem;
+}
+
+.value-visibility-toggle .material-icons,
+.config-id-visibility.btn-flat .material-icons,
+.config-id-copy.btn-flat .material-icons {
+  display: block;
+  line-height: 1;
 }
 
 .value-visibility-toggle:focus {
@@ -4236,11 +4437,18 @@ Authentication Editor
   outline-offset: 1px;
 }
 
-.auth-editor-card .value-visibility-toggle,
-.auth-editor-card .value-visibility-toggle:hover,
-.auth-editor-card .value-visibility-toggle:focus,
-.auth-editor-card .value-visibility-toggle:active {
-  background-color: transparent !important;
+/* The eye (and the dice beside it) sit inside their field, so they have no
+   fill of their own (the light theme gives flat buttons one). Fields that need
+   one to cover text set their own. */
+.value-visibility-toggle.btn-flat,
+.value-visibility-toggle.btn-flat:hover,
+.value-visibility-toggle.btn-flat:focus,
+.value-visibility-toggle.btn-flat:active,
+.move-destination-field .config-id-randomize.btn-flat,
+.move-destination-field .config-id-randomize.btn-flat:hover,
+.move-destination-field .config-id-randomize.btn-flat:focus,
+.move-destination-field .config-id-randomize.btn-flat:active {
+  background-color: transparent;
 }
 
 .move-destination-field input {
@@ -4676,14 +4884,46 @@ Authentication Editor
   line-height: 1;
 }
 
-/* The generate dice looks like every other dice button; it only takes the
-   toggles' height so the row lines up. */
-.auth-randomize-button.btn-flat {
+/* The generate dice is a full button, the height of the toggles beside it. */
+.auth-randomize-button.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: auto;
-  min-width: 2.25rem;
+  min-width: 3rem;
+  padding: 0 0.8rem;
+  /* The same corners and edge width as the toggles beside it. */
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+}
+
+.auth-randomize-button svg {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.auth-generate-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* The dice in the instructions: text sized, with the button's colours and
+   edge, so it reads as the button to press. */
+.auth-generate-dice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  vertical-align: -0.2em;
+}
+
+.auth-generate-dice svg {
+  display: block;
+  width: 1em;
+  height: 1em;
 }
 
 .auth-randomize-options {
@@ -5585,7 +5825,8 @@ Authentication Editor
 
 #notify .notify-template-row input,
 .details-step input:not([type="checkbox"]),
-.details-step select {
+.details-step select,
+.list-search input {
   width: 100%;
   height: 2.75rem;
   margin: 0;
@@ -5600,7 +5841,8 @@ Authentication Editor
 
 #notify .notify-template-row input:focus,
 .details-step input:not([type="checkbox"]):focus,
-.details-step select:focus {
+.details-step select:focus,
+.list-search input:focus {
   border-color: var(--select-border-hover) !important;
   box-shadow: 0 0 0 3px var(--select-focus-ring) !important;
 }
@@ -5626,7 +5868,8 @@ Authentication Editor
 }
 
 #notify .notify-template-value-control input,
-.details-step .notify-template-value-control input {
+.details-step .notify-template-value-control input,
+.list-search .notify-template-value-control input {
   padding-right: 2.8rem !important;
 }
 
@@ -5781,18 +6024,6 @@ Authentication Editor
   border: 1px solid;
 }
 
-.details-icon-button {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0;
-  border: 1px solid var(--select-border);
-  border-radius: 7px;
-}
-
 .details-fields {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
@@ -5852,11 +6083,11 @@ Authentication Editor
 .notify-template-value-control .value-visibility-toggle:hover,
 .notify-template-value-control .value-visibility-toggle:focus,
 .notify-template-value-control .value-visibility-toggle:active {
-  top: 50%;
+  /* Centred without a transform, which a tooltip would not follow. */
+  top: calc(50% - 1rem);
   right: 0.35rem;
   height: 2rem;
   line-height: 2rem;
-  transform: translateY(-50%);
   background-color: var(--select-bg) !important;
 }
 

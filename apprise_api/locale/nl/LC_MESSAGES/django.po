@@ -318,6 +318,10 @@ msgstr "Beheer de login, permissies en tools van deze configuratie."
 msgid "Administrator"
 msgstr "Beheerder"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Uw toegangsniveau"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "Werk referenties bij"
@@ -354,6 +358,11 @@ msgstr "Opslaan"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Genereer nieuwe referenties"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Kies wat u wilt genereren en druk dan op %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "Toegang of Configuratie resetten?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "Dit zal alleen de gebruikers toegang die momenteel aan deze configuratie is gekoppeld resetten:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Dit zet de gebruikerstoegang terug en verwijdert de opgeslagen configuratie definitief van:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "Configuratie lijst"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Beschikbare diensten"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Alles tonen"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Alle Apprise-diensten worden getoond, ook die deze server niet kan gebruiken."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Alleen de diensten die deze server kan gebruiken worden getoond."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3499,6 +3524,34 @@ msgstr "Geen overeenkomende diensten"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Geen diensten komen overeen met uw zoekopdracht."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Meer tonen"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Configuraties zoeken"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Geen overeenkomende configuraties"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Geen configuraties komen overeen met uw zoekopdracht."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Herinneringen zoeken"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Geen overeenkomende herinneringen"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Geen herinneringen komen overeen met uw zoekopdracht."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

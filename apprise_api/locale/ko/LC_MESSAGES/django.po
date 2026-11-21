@@ -318,6 +318,10 @@ msgstr "이 구성의 로그인, 권한 및 도구를 관리합니다."
 msgid "Administrator"
 msgstr "관리자"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "내 접근 수준"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "자격 증명 업데이트"
@@ -354,6 +358,11 @@ msgstr "저장"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "새 자격 증명 생성"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "생성할 항목을 선택한 다음 %(dice)s 버튼을 누르세요."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "액세스 또는 구성을 재설정하시겠습니까?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "이 작업은 현재 이 구성과 연결된 사용자 접근만 재설정합니다:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "사용자 접근을 재설정하고 다음의 저장된 구성을 영구적으로 삭제합니다:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "구성 목록"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "사용 가능한 서비스"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "모두 표시"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "이 서버에서 사용할 수 없는 서비스를 포함해 모든 Apprise 서비스를 표시합니다."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "이 서버에서 사용할 수 있는 서비스만 표시합니다."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3499,6 +3524,34 @@ msgstr "일치하는 서비스 없음"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "검색과 일치하는 서비스가 없습니다."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "더 보기"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "구성 검색"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "일치하는 구성 없음"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "검색과 일치하는 구성이 없습니다."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "리마인더 검색"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "일치하는 리마인더 없음"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "검색과 일치하는 리마인더가 없습니다."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

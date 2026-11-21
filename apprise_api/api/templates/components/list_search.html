@@ -1,0 +1,35 @@
+{% load i18n %}
+
+{# A search box that filters a list on the page, with a clear button inside it. #}
+{# appriseWireListSearch() in base.html does the filtering. #}
+{# - search_id: the id of the search box #}
+{# - search_label: the label above it #}
+{# - no_match_title, no_match_text: the note shown when nothing matches #}
+<div class="details-step-field list-search">
+  <label for="{{ search_id }}">{{ search_label }}</label>
+  <div class="notify-template-value-control concealed-field">
+    <input id="{{ search_id }}"
+           type="search"
+           spellcheck="false"
+           autocomplete="off">
+    <button type="button"
+            class="btn-flat value-visibility-toggle list-search-clear"
+            aria-label="{% trans "Clear" %}"
+            title="{% trans "Clear" %}"
+            hidden>
+      <i class="material-icons" aria-hidden="true">close</i>
+    </button>
+  </div>
+</div>
+<div id="{{ search_id }}-no-match"
+     class="notify-target-guidance notify-target-guidance--info details-no-match"
+     aria-live="polite"
+     hidden>
+  <div class="notify-target-guidance-title">
+    <span class="notify-target-guidance-icon" aria-hidden="true">
+      {% include "icons/status-info.svg" %}
+    </span>
+    <span>{{ no_match_title }}</span>
+  </div>
+  {{ no_match_text }}
+</div>

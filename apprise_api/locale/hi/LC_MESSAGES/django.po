@@ -318,6 +318,10 @@ msgstr "इस कॉन्फ़िग्रेशन के लॉगिन, �
 msgid "Administrator"
 msgstr "प्रशासक"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "आपका पहुँच स्तर"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "क्रेडेंशियल अपडेट करें"
@@ -354,6 +358,11 @@ msgstr "सेव करें"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "नया क्रेडेंशियल्स उत्पन्न करें"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "चुनें कि क्या बनाना है, फिर %(dice)s दबाएँ।"
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "एक्सेस या कॉन्फ़िगरेशन रीस
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "यह केवल उस उपयोगकर्ता एक्सेस को रीसेट करेगा जो वर्तमान में इस कॉन्फ़िगरेशन से जुड़ा हुआ है:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "यह उपयोगकर्ता पहुँच को रीसेट करेगा और इसका सहेजा गया कॉन्फ़िगरेशन स्थायी रूप से हटा देगा:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "कॉन्फ़िगरेशन सूची"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "उपलब्ध सेवाएँ"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "सभी दिखाएँ"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Apprise की सभी सेवाएँ दिखाई गई हैं, जिनमें वे भी शामिल हैं जिन्हें यह सर्वर उपयोग नहीं कर सकता।"
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "केवल वे सेवाएँ दिखाई गई हैं जिन्हें यह सर्वर उपयोग कर सकता है।"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3500,6 +3525,34 @@ msgstr "कोई मेल खाती सेवा नहीं"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "आपकी खोज से कोई सेवा मेल नहीं खाती।"
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "और दिखाएँ"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "कॉन्फ़िगरेशन खोजें"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "कोई मेल खाता कॉन्फ़िगरेशन नहीं"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "आपकी खोज से कोई कॉन्फ़िगरेशन मेल नहीं खाता।"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "रिमाइंडर खोजें"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "कोई मेल खाता रिमाइंडर नहीं"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "आपकी खोज से कोई रिमाइंडर मेल नहीं खाता।"
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

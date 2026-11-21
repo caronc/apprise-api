@@ -138,9 +138,13 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("auth-card-grid is-admin", content)
         self.assertIn("auth-credentials-card", content)
         self.assertIn("auth-lock-card-icon", content)
+        # Once a login exists, the heading follows the access mode being chosen
+        self.assertIn("function authUpdateIndicators(state, scope) {", content)
+        self.assertIn("authUpdateIndicators(authAccess.value, document.querySelector('.auth-credentials-card", content)
         self.assertIn("Configuration Login", content)
         self.assertIn("Set the login and permissions for this Config ID.", content)
-        self.assertEqual(content.count('class="auth-content-panel"'), 2)
+        # Login, Move, and the Reminder Limits card that waits hidden until a login is saved
+        self.assertEqual(content.count('class="auth-content-panel"'), 3)
         self.assertIn('id="mobile-menu-open"', content)
         self.assertIn('class="mobile-menu-tab"', content)
         self.assertIn('id="site-side-menu"', content)
@@ -150,6 +154,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("function hasOpenSelectDropdown()", content)
         self.assertIn("const selectDropdownObserver = new MutationObserver", content)
         self.assertIn("window.appriseCloseMobileMenu = function()", content)
+        self.assertIn("document.body.classList.add('mobile-menu-animate');", content)
         self.assertIn("!isToast && typeof window.appriseCloseMobileMenu", content)
         self.assertIn("config-auth-status is-unassigned", content)
         self.assertLess(content.index("config-auth-status"), content.index("config-id-label"))
@@ -173,9 +178,17 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Generate New Credentials", content)
         # Starts closed so the randomize button is not clicked by accident
         self.assertIn('<details class="auth-generate">', content)
+        # The dice is a full button, and the instructions show it as the one to press
+        self.assertRegex(content, r'id="auth-generate"\s+class="btn waves-effect waves-light auth-randomize-button"')
+        self.assertIn('Choose what to generate, then press <span class="auth-generate-dice" role="img"', content)
+        self.assertIn("dice.append(generateButton.querySelector('svg').cloneNode(true));", content)
         self.assertIn('class="btn waves-effect waves-light auth-remove-button"', content)
         self.assertIn('id="auth-mode-status"', content)
         self.assertIn('class="auth-mode-status is-admin"', content)
+        # Shown as a card on the right of the heading, with a title and a user icon
+        self.assertLess(content.index("page-section-heading__actions"), content.index('id="auth-mode-status"'))
+        self.assertIn("Your Access Level", content)
+        self.assertIn('class="auth-mode-status__icon"', content)
         self.assertIn("auth-state-admin", content)
         self.assertIn("Administrator", content)
         self.assertIn("no configuration login is assigned", content)
@@ -204,7 +217,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn('name="password_confirm"', content)
         self.assertNotIn('value="master"', content)
         self.assertIn("Open Authentication Settings", content)
-        self.assertIn("auth-account is-master", content)
+        self.assertNotIn("is-master", content)
         self.assertIn('id="cfg-gen"', content)
         self.assertIn("auth-divider", content)
         self.assertIn("abstract-user-cutout", content)
@@ -220,7 +233,9 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("logout-confirm-icon", content)
         self.assertIn("Are you sure you wish to log out?", content)
         self.assertNotIn("Abstract user", content)
-        self.assertIn("appriseSelect(authAccess);", content)
+        # The page-wide select setup in base.html builds this menu too.
+        self.assertNotIn("appriseSelect(authAccess);", content)
+        self.assertIn("document.querySelectorAll('select:not(.browser-default)').forEach(appriseSelect);", content)
         # Form fields and confirmation dialogs share the same reveal control.
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 6)
         self.assertEqual(
@@ -240,8 +255,18 @@ class AuthGuiTests(SimpleTestCase):
             "toggle.querySelector('i').textContent = show ? 'visibility' : 'visibility_off';",
             content,
         )
-        self.assertIn('type="password" name="from"', content)
-        self.assertIn('type="password" name="to"', content)
+        # Config IDs are text fields drawn as dots, so password managers leave them alone
+        self.assertIn('type="text" name="from"', content)
+        self.assertIn('type="text" name="to"', content)
+        self.assertNotRegex(content, r'id="(page-config-id|swal-reset-config-id)"[^>]*type="password"')
+        self.assertRegex(
+            content, r'<input id="page-config-id"\s+class="config-id-input"\s+type="text"\s+data-concealed-text="true"'
+        )
+        self.assertIn(
+            '<input id="swal-reset-config-id" type="text" data-concealed-text="true" spellcheck="false"'
+            ' autocapitalize="none" readonly>',
+            content,
+        )
         self.assertEqual(content.count('data-show-label="Show Config ID"'), 5)
         self.assertIn("Move Configuration?", content)
         self.assertIn("Confirm that you want to move this configuration:", content)
@@ -299,7 +324,7 @@ class AuthGuiTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        self.assertIn("auth-account is-master", content)
+        self.assertNotIn("is-master", content)
         self.assertIn('auth-account-name">master</span>', content)
         self.assertIn("Save Configuration", content)
         self.assertNotIn("Global administrator credentials are required to save", content)
@@ -370,7 +395,7 @@ class AuthGuiTests(SimpleTestCase):
         content = response.content.decode()
         self.assertIn('value="alice"', content)
         self.assertIn('class="auth-mode-status is-user">', content)
-        self.assertIn(">User</span>", content)
+        self.assertIn("<strong>User</strong>", content)
         self.assertIn("auth-card-grid is-user", content)
         self.assertIn("auth-credentials-card", content)
         self.assertNotIn('id="auth-generate"', content)
@@ -398,7 +423,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn('id="auth-remove"', content)
         self.assertNotIn("secret", content)
         self.assertIn("Open Authentication Settings", content)
-        self.assertNotIn("auth-account is-master", content)
+        self.assertNotIn("is-master", content)
         self.assertNotIn('id="cfg-gen"', content)
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
@@ -789,7 +814,7 @@ class AuthGuiTests(SimpleTestCase):
 
         page = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
-        self.assertIn("auth-account is-master", page.content.decode())
+        self.assertIn('auth-account-name">master</span>', page.content.decode())
 
         response = self.client.post("/logout", headers=_BROWSER)
 
@@ -900,6 +925,16 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn('class="auth-editor-card auth-move-card"', content)
         self.assertNotIn("Save Configuration", content)
 
+    def test_config_tabs_switch_to_icons_when_labels_do_not_fit(self):
+        """The config page measures its tab labels and hides them once one is cut short."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("label.scrollWidth > label.clientWidth", content)
+        self.assertIn("tabsElem.classList.toggle('config-tabs-compact', cut);", content)
+        self.assertIn("new ResizeObserver(fitLabels).observe(tabsElem);", content)
+
     @override_settings(
         APPRISE_CONFIG_LOCK=True,
         APPRISE_AUTH_REQUIRED=True,
@@ -977,8 +1012,7 @@ class AuthGuiTests(SimpleTestCase):
             "const variables = Object.create(null);",
             "const details = Object.create(null);",
             "const values = Object.create(null);",
-            "      return result;\n    }, Object.create(null));\n    const external_data",
-            "      result[item.token] = null;\n      return result;\n    }, Object.create(null))",
+            "      result[item.token] = item;\n      return result;\n    }, Object.create(null));",
             "        return values;\n      }, Object.create(null)),",
         ):
             self.assertIn(line, content)
@@ -1211,7 +1245,7 @@ class AuthGuiTests(SimpleTestCase):
         page = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
         page_content = page.content.decode()
-        self.assertNotIn("auth-account is-master", page_content)
+        self.assertNotIn("is-master", page_content)
         self.assertNotIn('id="cfg-list"', page_content)
         self.assertNotIn('id="cfg-gen"', page_content)
         self.assertIn('id="config-id-select-form"', page_content)

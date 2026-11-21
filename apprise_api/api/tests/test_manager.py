@@ -26,6 +26,7 @@ from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
+import re
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -528,6 +529,57 @@ class ManagerPageTests(SimpleTestCase):
         assert "title=" not in auth_link
         assert 'class="config-list-access"\n' in open_item
         assert 'title="Manage authentication for this Configuration ID"' in open_item
+
+    @override_settings(
+        APPRISE_ADMIN=True,
+        APPRISE_STATEFUL_MODE="simple",
+        APPRISE_USER="master",
+        APPRISE_AUTH_REQUIRED=True,
+        APPRISE_BASIC_AUTH_TOKEN=base64.b64encode(b"master:pass").decode(),
+    )
+    def test_manage_cfg_list_has_headings_and_a_search(self):
+        """The list has column headings, and a search that finds a row by username or Config ID."""
+        self.client.post("/login", {"username": "master", "password": "pass"}, headers={"accept": "text/html"})
+        mod = resolve("/cfg/").func.__module__
+        with (
+            patch(f"{mod}.ConfigCache.keys", return_value=["shared"]),
+            patch(f"{mod}.ConfigCache.get_auth_record", return_value=ConfigAuthRecord("user", "alice", "digest")),
+        ):
+            content = self.client.get("/cfg/", headers={"accept": "text/html"}).content.decode()
+
+        assert re.search(r'class="collection-item config-list-item config-list-header"\s+aria-hidden="true"', content)
+        header = content.split("config-list-header", 1)[1].split("</li>", 1)[0]
+        for heading in ("Username", "Access", "Config ID"):
+            assert heading in header
+        # The search sits above the list, with its clear button and no-match note
+        assert content.index('id="config-list-search"') < content.index("config-list-collection")
+        assert "list-search-clear" in content
+        assert 'id="config-list-search-no-match"' in content
+        assert "No configurations match your search." in content
+        assert 'data-search-user="alice"' in content
+        assert "row.dataset.searchUser + ' ' + row.querySelector('.config-id').dataset.configIdValue" in content
+        # Long lists show 100 rows at a time, with a Show More button after them
+        assert 'id="config-list-search-more"' in content
+        assert content.index("config-list-collection") < content.index('id="config-list-search-more"')
+        assert "const pageSize = 100;" in content
+        assert "item.classList.toggle('list-search-hidden', !match || found >= limit);" in content
+        # Deleting or moving a row runs the search again
+        assert content.count("configListFilter();") == 2
+        # Deleting the last row still reloads, even with the headings row there
+        assert "const configListRows = '.config-list-item:not(.config-list-header)';" in content
+        assert "!list.querySelector(configListRows)" in content
+        # The search is set up before the handlers that run it again
+        assert content.index("const configListFilter") < content.index("configListFilter();")
+
+    def test_manage_cfg_list_without_entries_has_no_search(self):
+        """An empty list shows no search box."""
+        with override_settings(APPRISE_ADMIN=True, APPRISE_STATEFUL_MODE="simple"):
+            mod = resolve("/cfg/").func.__module__
+            with patch(f"{mod}.ConfigCache.keys", return_value=[]):
+                content = self.client.get("/cfg/", headers={"accept": "text/html"}).content.decode()
+
+        assert "There is no configuration defined." in content
+        assert 'id="config-list-search"' not in content
 
     def test_manage_cfg_list_json_when_requested(self):
         """

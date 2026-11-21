@@ -318,6 +318,10 @@ msgstr "Управляйте входом в систему, разрешени�
 msgid "Administrator"
 msgstr "Администратор"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Ваш уровень доступа"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "Обновить учетные данные"
@@ -354,6 +358,11 @@ msgstr "Сохранить"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Сгенерировать новые учетные данные"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Выберите, что создать, затем нажмите %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "Сбросить доступ или конфигурацию?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "Это сбросит только доступ пользователя, в настоящее время связанный с этой конфигурацией:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Это сбросит доступ пользователя и навсегда удалит сохранённую конфигурацию для:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "Список конфигураций"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Доступные службы"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Показать все"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Показаны все службы Apprise, включая те, которые этот сервер не может использовать."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Показаны только службы, которые этот сервер может использовать."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3499,6 +3524,34 @@ msgstr "Нет подходящих служб"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Ни одна служба не соответствует запросу."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Показать ещё"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Поиск конфигураций"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Нет подходящих конфигураций"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Ни одна конфигурация не соответствует запросу."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Поиск напоминаний"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Нет подходящих напоминаний"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Ни одно напоминание не соответствует запросу."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

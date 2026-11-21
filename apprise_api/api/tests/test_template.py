@@ -104,6 +104,36 @@ class TemplateTests(SimpleTestCase):
         base = (css_path / "base.css").read_text(encoding="utf-8")
         assert "word-break: break-all !important;" in base
 
+    def test_small_icon_buttons_share_colour_and_alignment(self):
+        """Drawn icons (QR, dice) take the font icons' colours, and every icon sits centred in its button."""
+        css_path = Path(settings.BASE_DIR) / "static" / "css"
+        for theme in ("theme-light.css", "theme-dark.css"):
+            content = (css_path / theme).read_text(encoding="utf-8")
+            assert "i.material-icons,\n.config-id-qr.btn-flat svg,\n.config-id-randomize.btn-flat svg {" in content
+            # The access mode colours are shared by the locks and the login heading
+            for state in ("admin", "public", "locked", "user", "disabled", "off"):
+                assert f"--auth-state-{state}: #" in content
+                assert f"color: var(--auth-state-{state});" in content
+
+        base = (css_path / "base.css").read_text(encoding="utf-8")
+        start = base.index("\n.value-visibility-toggle {")
+        rule = base[start : base.index("}", start)]
+        assert "height: 2rem;" in rule
+        assert ".value-visibility-toggle .material-icons,\n.config-id-visibility.btn-flat .material-icons," in base
+        assert ".auth-credentials-card .auth-card-heading:has(.auth-state-user) {" in base
+        # Small icon buttons share the quiet hover rather than the solid button hover
+        for theme in ("theme-light.css", "theme-dark.css"):
+            content = (css_path / theme).read_text(encoding="utf-8")
+            assert ".config-id-randomize.btn-flat:hover,\n.snippet-copy-btn:hover {" in content
+        # A tooltip lets go of the window edge away from its element, and flips when out of room
+        for side, edge in (("top", "top"), ("bottom", "bottom"), ("left", "left"), ("right", "right")):
+            start = base.rindex(f".material-tooltip[popover][data-position={side}] {{")
+            rule = base[start : base.index("}", start)]
+            assert f"{edge}: auto;" in rule
+            assert "position-try-fallbacks:" in rule
+        # The eye has no fill of its own, in either theme
+        assert ".value-visibility-toggle.btn-flat,\n.value-visibility-toggle.btn-flat:hover," in base
+
     def test_editor_can_be_resized(self):
         """The configuration editor can be dragged taller and wider, never smaller than it starts."""
         css = (Path(settings.BASE_DIR) / "static" / "css" / "base.css").read_text(encoding="utf-8")

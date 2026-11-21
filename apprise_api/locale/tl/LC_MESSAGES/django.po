@@ -317,6 +317,10 @@ msgstr "Pamahalaan ang login, mga pahintulot, at mga tool ng konfigurasyong ito.
 msgid "Administrator"
 msgstr "Administrator"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Antas ng Iyong Access"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "I-update ang Mga Kredensyal"
@@ -353,6 +357,11 @@ msgstr "I-save"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Gumawa ng Bagong Mga Credential"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Piliin ang bubuuin, pagkatapos ay pindutin ang %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -549,6 +558,10 @@ msgstr "I-reset ba ang Access o Configuration?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "Ito ay magre-reset lamang sa user access na kasalukuyang naka-ugnay sa configuration na ito:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Ire-reset nito ang access ng user at permanenteng aalisin ang naka-save na configuration ng:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -755,6 +768,18 @@ msgstr "Listahan ng Configuration"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Mga Available na Serbisyo"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Ipakita Lahat"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Nakalista ang lahat ng serbisyo ng Apprise, kasama ang mga hindi magagamit ng server na ito."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Ang mga serbisyong magagamit lang ng server na ito ang nakalista."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3498,6 +3523,34 @@ msgstr "Walang tumutugmang serbisyo"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Walang serbisyong tumutugma sa iyong paghahanap."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Ipakita ang Higit Pa"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Maghanap ng Configuration"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Walang tumutugmang configuration"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Walang configuration na tumutugma sa iyong paghahanap."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Maghanap ng Paalala"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Walang tumutugmang paalala"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Walang paalalang tumutugma sa iyong paghahanap."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

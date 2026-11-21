@@ -318,6 +318,10 @@ msgstr "إدارة تسجيل الدخول والصلاحيات والأدوات
 msgid "Administrator"
 msgstr "المسؤول"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "مستوى وصولك"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "تحديث بيانات الاعتماد"
@@ -354,6 +358,11 @@ msgstr "حفظ"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "إنشاء بيانات اعتماد جديدة"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "اختر ما تريد إنشاءه، ثم اضغط %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "إعادة تعيين الوصول أو التكوين؟"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "سيؤدي هذا إلى إعادة ضبط وصول المستخدم المرتبط حاليًا بهذا الإعداد:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "سيؤدي هذا إلى إعادة تعيين وصول المستخدم وإزالة التكوين المحفوظ نهائيًا لـ:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "قائمة التكوينات"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "الخدمات المتاحة"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "عرض الكل"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "تُعرض كل خدمات Apprise، بما فيها تلك التي لا يستطيع هذا الخادم استخدامها."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "تُعرض فقط الخدمات التي يستطيع هذا الخادم استخدامها."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3499,6 +3524,34 @@ msgstr "لا توجد خدمات مطابقة"
 #: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "لا توجد خدمات تطابق بحثك."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "عرض المزيد"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "ابحث في التكوينات"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "لا توجد تكوينات مطابقة"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "لا توجد تكوينات تطابق بحثك."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "ابحث في التذكيرات"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "لا توجد تذكيرات مطابقة"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "لا توجد تذكيرات تطابق بحثك."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"
