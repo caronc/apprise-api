@@ -964,7 +964,7 @@ class TemplateTests(SimpleTestCase):
         assert ".review-template-field label {" in css
         assert "background: var(--mobile-app-accent-soft);" in css
         assert "#notify .notify-form-section .row>.input-field.col" in css
-        assert "#notify .notify-form-section .input-field>label.active" in css
+        assert "#notify .notify-form-section .input-field>label {" in css
         assert "color: var(--mobile-app-accent);" in css
         assert "grid-row: 1;" in css
         assert "transform: translateY(-50%);" in css

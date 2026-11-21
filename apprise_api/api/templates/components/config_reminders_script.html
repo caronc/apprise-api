@@ -687,7 +687,7 @@
     if (instance) {
       instance.destroy();
     }
-    M.FormSelect.init(select);
+    appriseSelect(select);
   }
 
   // Show what a combobox holds: its label, and the value saved with it.
@@ -1389,8 +1389,7 @@
     if (state.send === 'holiday') {
       reminderHolidaySetup(state.holiday);
     }
-    // Let Materialize move the labels, then show only the fields in use.
-    M.updateTextFields();
+    // Show only the fields in use.
     reminderSyncFields();
   }
 
@@ -1476,14 +1475,14 @@
       const select = document.querySelector('#donotify select[name="' + entry[0] + '"]');
       if (select && entry[1] && Array.from(select.options).some(function (option) { return option.value === entry[1]; })) {
         select.value = entry[1];
-        M.FormSelect.init(select);
+        appriseSelect(select);
       }
     });
     // Each tag, split on commas, becomes a chip.
     const chips = M.Chips.getInstance(document.querySelector('#notify .chips'));
     reminderTags(reminder).forEach(function (tag) {
       if (chips) {
-        chips.addChip({tag: tag});
+        chips.addChip({id: tag});
       }
     });
     // Its own Apprise URLs fill the URL rows; an empty tag ("") means the
@@ -1502,7 +1501,6 @@
     updateNotifyTemplateControls();
     // Show the form with the Reminder section open, and keep the address
     // pointing at this reminder so a reload opens it again.
-    M.updateTextFields();
     reminderShowNotify();
     setConfigTabHash('#notify/' + reminder.id);
     reminderPrepare();

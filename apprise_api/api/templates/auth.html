@@ -96,7 +96,9 @@
                   {{ form_auth.access.errors }}
                   {% if auth_access_downgraded %}
                     <span class="auth-access-warning" role="status">
-                      <i class="material-icons" aria-hidden="true">warning_amber</i>
+                      <span class="auth-access-warning-icon" aria-hidden="true">
+                        {% include "icons/status-warning.svg" %}
+                      </span>
                       {% blocktrans with saved=auth_selected_access %}Saved {{ saved }} access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed.{% endblocktrans %}
                     </span>
                   {% endif %}
@@ -357,7 +359,7 @@
   }
 
   if (authIsAdmin && authAccess && window.M && M.FormSelect) {
-    M.FormSelect.init(authAccess);
+    appriseSelect(authAccess);
   }
 
   if (authAccessHelp) {
@@ -445,8 +447,6 @@
         authPassword.value = randomText(24);
         authPassword.dispatchEvent(new Event('change'));
       }
-      // Move Materialize labels after generated values are inserted.
-      M.updateTextFields();
       (optionSelected(generatePassword) ? authPassword : authUsername).focus();
     });
   }
@@ -643,7 +643,6 @@
           const confirmButton = Swal.getConfirmButton();
           configIdField.value = authConfigId;
           appriseWireValueToggles(popup);
-          M.updateTextFields();
           const keepReminders = popup.querySelector('#swal-keep-reminders');
           resetConfiguration.addEventListener('click', function () {
             const selected = resetConfiguration.getAttribute('aria-checked') !== 'true';
@@ -711,7 +710,6 @@
           if (authPasswordConfirm) {
             authPasswordConfirm.value = '';
           }
-          M.updateTextFields();
           authSetShared(false);
           authUpdateIndicators(resetState ? resetState.auth_state : 'admin');
           appriseFire({
@@ -761,7 +759,6 @@
       moveToConfigId.value = appriseRandomConfigId();
       moveToConfigId.closest('.input-field').classList.remove('has-errors');
       moveClearError();
-      M.updateTextFields();
       moveToConfigId.focus();
     });
 
@@ -828,7 +825,6 @@
           popup.querySelector('#swal-move-from-config-id').value = movedFrom;
           popup.querySelector('#swal-move-to-config-id').value = destination;
           appriseWireValueToggles(popup);
-          M.updateTextFields();
         }
       });
       if (!confirmation.isConfirmed) {
@@ -852,7 +848,6 @@
         }
 
         moveToConfigId.value = '';
-        M.updateTextFields();
         appriseFire({
           title: '{% trans "Move Configuration" %}',
           text: '{% trans "Configuration moved successfully." %}',
@@ -906,7 +901,6 @@
       input.value = custom.includes(field[1]) ? shown : '';
       reminderLimitsShown[field[1]] = input.value;
     });
-    M.updateTextFields();
   }
 
   document.getElementById('reminder-limits-form').addEventListener('submit', async function (event) {

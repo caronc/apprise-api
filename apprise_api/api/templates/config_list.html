@@ -199,9 +199,6 @@
           const fromField = popup.querySelector('#swal-move-from');
           fromField.value = oldKey;
           appriseWireValueToggles(popup);
-          if (window.M && M.updateTextFields) {
-            M.updateTextFields();
-          }
           // Submit the custom dialog fields when Enter is pressed.
           popup.querySelectorAll('#swal-move-from, #swal-move-to').forEach(function (field) {
             field.addEventListener('keydown', function (event) {

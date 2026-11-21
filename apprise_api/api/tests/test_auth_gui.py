@@ -220,7 +220,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("logout-confirm-icon", content)
         self.assertIn("Are you sure you wish to log out?", content)
         self.assertNotIn("Abstract user", content)
-        self.assertIn("M.updateTextFields()", content)
+        self.assertIn("appriseSelect(authAccess);", content)
         # Form fields and confirmation dialogs share the same reveal control.
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 6)
         self.assertEqual(
@@ -556,6 +556,9 @@ class AuthGuiTests(SimpleTestCase):
         """The browser form rejects invalid fields without a Basic challenge."""
         page = self.client.get("/login", headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
+        # An empty field shows its label inside it, as a placeholder would.
+        self.assertEqual(page.content.decode().count('placeholder=" "'), 3)
+        self.assertIn('<span class="browser-login-submit-icon" aria-hidden="true">', page.content.decode())
         self.assertEqual(page.cookies[Authentication.WEB_COOKIE]["max-age"], 0)
         self.assertEqual(page.cookies["key"]["max-age"], 0)
         self.assertNotIn("apprise_support_dismissed", page.cookies)
@@ -937,9 +940,28 @@ class AuthGuiTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        self.assertIn("notifyTagAutocomplete._renderDropdown = function (data, typed)", content)
-        self.assertIn("match.textContent = token.slice(start, start + typed.length);", content)
-        self.assertIn("label.append(token.slice(0, start), match, token.slice(start + typed.length));", content)
+        # Materialize only reads a suggestion as HTML when told to.
+        self.assertNotIn("allowUnsafeHTML", content)
+        self.assertIn("autocomplete.menuItems = notifyTagSuggestions.filter(function (entry) {", content)
+        self.assertIn("plain.append(...text.childNodes);", content)
+
+    def test_tag_field_adds_and_removes_tags(self):
+        """The tag field takes typed tags and removes them without sending the form."""
+        response = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertEqual(content.count("allowUserInput: true,"), 2)
+        self.assertIn("M.Chips.init(chipElement, {allowUserInput: true, placeholder:", content)
+        self.assertIn("const $this = M.Chips.getInstance(chipElement);", content)
+        self.assertIn("chipInstance.addChip({ id: this.dataset.tagToken });", content)
+        self.assertIn("if (event.key === 'Enter') {", content)
+        self.assertIn("if (event.target.closest('.chip .close')) {", content)
+        self.assertIn(
+            "chipElement.append(...chipElement.querySelectorAll("
+            "':scope > .autocomplete-content, :scope > .status-info'));",
+            content,
+        )
 
     def test_tag_maps_keep_prototype_names_as_keys(self):
         """Maps keyed by tag or template names have no prototype to overwrite."""

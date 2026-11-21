@@ -84,12 +84,12 @@ class BrowserLoginForm(forms.Form):
         label=_("Username"),
         required=False,
         max_length=AUTH_USERNAME_MAX_LEN,
-        widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True}),
+        widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True, "placeholder": " "}),
     )
     password = forms.CharField(
         label=_("Password"),
         max_length=AUTH_PASSWORD_MAX_LEN,
-        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password", "placeholder": " "}),
     )
     next = forms.CharField(required=False, max_length=2048, widget=forms.HiddenInput())
     key = forms.RegexField(
@@ -99,7 +99,7 @@ class BrowserLoginForm(forms.Form):
         max_length=CONFIG_KEY_MAX_LENGTH,
         widget=forms.PasswordInput(
             render_value=True,
-            attrs={"autocomplete": "off"},
+            attrs={"autocomplete": "off", "placeholder": " "},
         ),
     )
 
