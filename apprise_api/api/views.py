@@ -133,6 +133,7 @@ from .utils import (
     healthcheck,
     is_html_response,
     is_json_response,
+    new_asset,
     normalize_template_values,
     notify_asset_kwargs,
     parse_attachments,
@@ -165,7 +166,7 @@ def _apprise_asset(request: HttpRequest, **kwargs: Any) -> apprise.AppriseAsset:
     # The asset validates the code as it is created and stores it in Apprise's
     # own spelling, so a de-DE request becomes de_DE here. An asset language
     # cannot be changed afterwards, which is why it is passed in here.
-    return apprise.AppriseAsset(language=_request_language(request), **kwargs)
+    return new_asset(language=_request_language(request), **kwargs)
 
 
 def _apprise_object(request, asset=None):
@@ -4396,7 +4397,7 @@ def _reminder_targets_missing(request, key: str, event: dict) -> HttpResponse | 
 
     # Loaded the way the scheduler loads it, with the same allowed services.
     apply_global_filters()
-    a_obj = config_apprise(config, config_format, apprise.AppriseAsset(plugin_paths=settings.APPRISE_PLUGIN_PATHS))
+    a_obj = config_apprise(config, config_format, new_asset(plugin_paths=settings.APPRISE_PLUGIN_PATHS))
     # No tag picks the untagged services, the same as a send.
     tag = parse_tag_expression(event["tag"]) if event.get("tag") else None
     # One matching service is enough.
@@ -4609,7 +4610,7 @@ class ResolveView(View):
 
         # Read the way a send reads them, with the same allowed services.
         apply_global_filters()
-        asset = apprise.AppriseAsset(plugin_paths=settings.APPRISE_PLUGIN_PATHS)
+        asset = new_asset(plugin_paths=settings.APPRISE_PLUGIN_PATHS)
         resolved = []
         for entry in entries:
             # Fields are put together into a URL first, then loaded the same
@@ -5154,7 +5155,7 @@ def _clean_reminder_urls(
 
     # Checked against the server's allowed and denied services, as when sent.
     apply_global_filters()
-    a_obj = apprise.Apprise(asset=apprise.AppriseAsset(plugin_paths=settings.APPRISE_PLUGIN_PATHS))
+    a_obj = apprise.Apprise(asset=new_asset(plugin_paths=settings.APPRISE_PLUGIN_PATHS))
     if not all(a_obj.add(url) for url in new):
         raise _invalid_reminder_field("urls")
 

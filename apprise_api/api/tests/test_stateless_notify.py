@@ -187,6 +187,24 @@ class StatelessNotifyTests(SimpleTestCase):
         assert response.status_code == 400
         assert mock_notify.call_count == 0
 
+    @override_settings(APPRISE_ASSET={"app_id": "Operations", "body_format": "html"})
+    @mock.patch.object(apprise.Apprise, "notify", autospec=True)
+    def test_notify_applies_asset_overrides(self, mock_notify):
+        """APPRISE_ASSET_* options win over what the request asks for."""
+        mock_notify.return_value = notify_result(True)
+
+        response = self.client.post(
+            "/notify",
+            data=json.dumps({"urls": "json://localhost", "body": "test", "format": "markdown"}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        # The first argument is the Apprise object the view built.
+        asset = mock_notify.call_args.args[0].asset
+        assert asset.app_id == "Operations"
+        assert asset.body_format == "html"
+
     @mock.patch("apprise.Apprise.notify")
     def test_notify(self, mock_notify):
         """

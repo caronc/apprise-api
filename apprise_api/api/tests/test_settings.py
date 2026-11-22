@@ -24,16 +24,20 @@
 
 import base64
 import importlib.util
+import json
 import logging
 import os
 import tempfile
 from unittest import mock
 
+import apprise
 from core.settings.env import env_bool, env_choice, env_int, env_optional_bool
 from core.utils import parse_bool, parse_log_level
 from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
+
+from ..utils import new_asset
 
 # Path to the settings module under test, resolved relative to this file:
 #   apprise_api/api/tests/ -> ../../ -> apprise_api/ -> core/settings/__init__.py
@@ -690,3 +694,108 @@ class BasicAuthSettingsTests(SimpleTestCase):
             }
         )
         self.assertEqual(mod.APPRISE_BASIC_AUTH_TOKEN, base64.b64encode(b":secret").decode())
+
+
+class AssetSettingsTests(SimpleTestCase):
+    """Read AppriseAsset options from APPRISE_ASSET_<NAME> variables."""
+
+    def test_no_variables_sets_nothing(self):
+        """Without any variables, Apprise keeps its own defaults."""
+        # The bare prefix names no option, so it is skipped.
+        self.assertEqual(_load_settings({"APPRISE_ASSET_": "x"}).APPRISE_ASSET, {})
+
+    def test_values_are_converted(self):
+        """Each value takes the type its asset option expects."""
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            mod = _load_settings(
+                {
+                    "APPRISE_ASSET_APP_ID": "Operations",
+                    "APPRISE_ASSET_Async_Mode": "no",
+                    "APPRISE_ASSET_SECURE_LOGGING": "no",
+                    "APPRISE_ASSET_DEFAULT_SERVICE_RETRY": "3",
+                    "APPRISE_ASSET_DEFAULT_SERVICE_WAIT": "1.5",
+                    "APPRISE_ASSET_SERVICE_TIMEOUT": "30",
+                    "APPRISE_ASSET_PAYLOAD_MAX_SIZE": "1024",
+                    "APPRISE_ASSET_STORAGE_MODE": "flush",
+                    "APPRISE_ASSET_BODY_FORMAT": "markdown",
+                    "APPRISE_ASSET_INTERPRET_EMOJIS": "no",
+                    "APPRISE_ASSET_ENCODING": "latin-1",
+                    "APPRISE_ASSET_IMAGE_PATH_MASK": "False",
+                    "APPRISE_ASSET_PLUGIN_PATHS": f"{a},{b}",
+                }
+            )
+
+        self.assertEqual(
+            mod.APPRISE_ASSET,
+            {
+                "app_id": "Operations",
+                "async_mode": False,
+                "secure_logging": False,
+                "default_service_retry": 3,
+                "default_service_wait": 1.5,
+                "service_timeout": 30.0,
+                "payload_max_size": 1024,
+                "storage_mode": "flush",
+                "body_format": "markdown",
+                "interpret_emojis": False,
+                "encoding": "latin-1",
+                "image_path_mask": False,
+                "plugin_paths": [a, b],
+            },
+        )
+
+    def test_invalid_option_stops_startup(self):
+        """A name or value the asset refuses names the variable at startup."""
+        for name, value in (
+            ("APPRISE_ASSET_NOT_AN_OPTION", "x"),
+            ("APPRISE_ASSET_SELF", "x"),
+            ("APPRISE_ASSET_PAYLOAD_MAX_SIZE", "big"),
+            ("APPRISE_ASSET_PAYLOAD_MAX_SIZE", "-1"),
+            ("APPRISE_ASSET_DEFAULT_SERVICE_WAIT", "soon"),
+            ("APPRISE_ASSET_STORAGE_MODE", "sometimes"),
+            ("APPRISE_ASSET_THEME", "../other"),
+            ("APPRISE_ASSET_SECURE_LOGGING", "garbage"),
+            ("APPRISE_ASSET_HTML_NOTIFY_MAP", "garbage"),
+            ("APPRISE_ASSET_HTML_NOTIFY_MAP", "[]"),
+            ("APPRISE_ASSET_DEFAULT_IMAGE_SIZE", "garbage"),
+            ("APPRISE_ASSET_INTERPRET_EMOJIS", "garbage"),
+            ("APPRISE_ASSET_BODY_FORMAT", "garbage"),
+            ("APPRISE_ASSET_ENCODING", "not-a-codec"),
+            # Functions and read-only values of the asset cannot be replaced.
+            ("APPRISE_ASSET_COLOR", "x"),
+            ("APPRISE_ASSET_IMAGE_PATH", "x"),
+            ("APPRISE_ASSET_TZINFO", "x"),
+            # Internal options carry per-request values like the recursion count.
+            ("APPRISE_ASSET__RECURSION", "0"),
+            ("APPRISE_ASSET__UID", "x"),
+        ):
+            with self.subTest(name=name, value=value), self.assertRaisesRegex(ImproperlyConfigured, name):
+                _load_settings({name: value})
+
+    def test_clashing_options_stop_startup(self):
+        """Options that only fail together are still caught at startup."""
+        # The salt is encoded with the unknown encoding as the asset is built.
+        with self.assertRaisesRegex(ImproperlyConfigured, "unknown encoding"):
+            _load_settings({"APPRISE_ASSET_ENCODING": "not-a-codec", "APPRISE_ASSET_STORAGE_SALT": "x"})
+
+    def test_maps_and_choices_are_usable(self):
+        """JSON maps and listed choices build an asset Apprise can use."""
+        mod = _load_settings(
+            {
+                "APPRISE_ASSET_HTML_NOTIFY_MAP": json.dumps({"info": "#000000"}),
+                "APPRISE_ASSET_DEFAULT_IMAGE_SIZE": "72x72",
+            }
+        )
+        asset = apprise.AppriseAsset(**mod.APPRISE_ASSET)
+
+        self.assertEqual(asset.color(apprise.NotifyType.INFO), "#000000")
+        self.assertIs(asset.default_image_size, apprise.NotifyImageSize.XY_72)
+
+    def test_overrides_win(self):
+        """Options from the variables replace the ones the code passes in."""
+        with self.settings(APPRISE_ASSET={"app_id": "Operations", "language": "fr"}):
+            asset = new_asset(app_id="Other", language="en", app_desc="Kept")
+
+        self.assertEqual(asset.app_id, "Operations")
+        self.assertEqual(asset.language, "fr")
+        self.assertEqual(asset.app_desc, "Kept")
