@@ -6753,6 +6753,10 @@ Apprise Configuration Editor (Grid Overlay)
 }
 
 .config-format-field label[for="id_format"] {
+  position: static;
+  display: block;
+  margin: 0 0 0.2rem 0;
+  transform: none;
   font-size: 0.9rem;
 }
 
@@ -6786,7 +6790,7 @@ Config Page Toolbar (URL Builder)
 @media (max-width: 600px) {
   .config-toolbar {
     flex-wrap: nowrap;
-    align-items: center;
+    align-items: flex-end;
   }
 
   .config-format-field {

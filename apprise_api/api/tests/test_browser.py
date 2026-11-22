@@ -298,6 +298,18 @@ class PageBrowserTests(BrowserTestCase):
         self.page.locator("#notify .select-wrapper input.select-dropdown").first.click()
         self.page.locator("#notify .select-wrapper .dropdown-content").first.wait_for()
 
+    def test_configuration_format_label_sits_above_its_menu(self):
+        """The Format label on the Configuration tab is shown above its menu, not on top of it."""
+        self.open(f"/cfg/{KEY}#config")
+        gap = self.page.evaluate(
+            """() => {
+              const label = document.querySelector('#addconfig label[for="id_format"]');
+              const menu = label.parentElement.querySelector('.select-wrapper');
+              return menu.getBoundingClientRect().top - label.getBoundingClientRect().bottom;
+            }"""
+        )
+        self.assertGreaterEqual(gap, 0)
+
     def test_reset_dialog_starts_with_removing_the_configuration(self):
         """Reset Access removes the configuration unless switched off, which then offers to keep reminders."""
         self.open(f"/auth/{KEY}")
