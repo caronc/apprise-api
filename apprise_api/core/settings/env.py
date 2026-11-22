@@ -27,8 +27,15 @@ Values are not cached so tests and commands can replace the environment before
 loading the settings module.
 """
 
+import codecs
+from collections.abc import Sequence
+from enum import Enum
+import json
 import os
+from typing import Any, get_args, get_origin, get_type_hints
 
+import apprise
+from apprise.utils.parse import parse_bool as apprise_parse_bool
 from core.utils import parse_bool
 from django.core.exceptions import ImproperlyConfigured
 
@@ -87,3 +94,105 @@ def env_choice(name, default, choices, *, first_character=False):
 
     expected = ", ".join(normalized_choices)
     raise ImproperlyConfigured(f"{name} must be one of: {expected}.")
+
+
+# Every variable starting with this sets one AppriseAsset option.
+ASSET_PREFIX = "APPRISE_ASSET_"
+
+# Options Apprise gives no type hint for, whose default of None does not
+# show what they hold.
+ASSET_HINTS = {
+    "interpret_emojis": bool | None,
+    "body_format": apprise.NotifyFormat | None,
+}
+
+
+def _asset_value(key: str, raw: str, hints: dict[str, Any]) -> Any:
+    """Convert an environment string into the type an asset option expects.
+
+    - Types come from the ``AppriseAsset()`` type hints, or else from the
+      option's default value.
+    - Booleans must be a word Apprise knows, such as yes or no.
+    - Lists are split on commas, and dictionaries are read as JSON.
+    - Raises ValueError when the text does not fit the type.
+    """
+    if key == "encoding":
+        # Apprise only uses it once it encodes something, so an unknown
+        # name would otherwise fail on the first notification.
+        codecs.lookup(raw)
+
+    hint = hints.get(key)
+    types = (get_args(hint) or (hint,)) if hint else (type(getattr(apprise.AppriseAsset, key, None)),)
+    if str in types:
+        # An option that takes text or False, such as image_path_mask, is
+        # turned off with no or false.
+        return False if bool in types and raw.strip().lower() in ("no", "false") else raw
+
+    if bool in types:
+        # Unknown words are refused rather than read as False, which could
+        # quietly turn off an option such as secure_logging.
+        value = apprise_parse_bool(raw, None)
+        if value is None:
+            raise ValueError(f"{raw!r} is not a yes or no value")
+
+        return value
+
+    if float in types:
+        return float(raw)
+
+    if int in types:
+        return int(raw)
+
+    if any(get_origin(t) is Sequence for t in types):
+        return raw.split(",")
+
+    for kind in types:
+        if isinstance(kind, type) and issubclass(kind, Enum):
+            # Only one of the listed choices is accepted.
+            return kind(raw)
+
+        if kind is dict:
+            value = json.loads(raw)
+            if not isinstance(value, dict):
+                raise ValueError("expects a JSON object")
+
+            return value
+
+    return raw
+
+
+def env_asset() -> dict[str, Any]:
+    """Read every ``APPRISE_ASSET_<NAME>`` variable as an ``AppriseAsset`` option.
+
+    - ``<NAME>`` is lowercased, so ``APPRISE_ASSET_APP_ID`` sets ``app_id``.
+    - Names starting with ``_`` are internal to Apprise and refused.
+    - A name or value the asset refuses stops startup.
+    """
+    hints = get_type_hints(apprise.AppriseAsset.__init__) | ASSET_HINTS
+    options = {}
+    for name, raw in os.environ.items():
+        if not name.startswith(ASSET_PREFIX) or name == ASSET_PREFIX:
+            continue
+
+        key = name[len(ASSET_PREFIX) :].lower()
+        if key.startswith("_"):
+            # These carry per-request values, such as the recursion count
+            # that stops notification loops.
+            raise ImproperlyConfigured(f"{name} is not a valid Apprise asset setting: {key} is internal.")
+
+        if callable(getattr(apprise.AppriseAsset, key, None)):
+            # Apprise would replace one of its own functions with the text.
+            raise ImproperlyConfigured(f"{name} is not a valid Apprise asset setting: {key} is a function.")
+
+        try:
+            options[key] = _asset_value(key, raw, hints)
+            # Build with every option read so far, so a mistake, or two
+            # options that clash, is reported at startup.
+            apprise.AppriseAsset(**options)
+
+        except (AttributeError, LookupError, TypeError, ValueError) as e:
+            # AttributeError covers a read-only option such as tzinfo, and
+            # LookupError an unknown encoding.
+            raise ImproperlyConfigured(f"{name} is not a valid Apprise asset setting: {e}") from None
+
+    return options

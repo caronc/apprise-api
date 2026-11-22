@@ -3111,6 +3111,14 @@ def service_turned_off(schemas: list[str]) -> bool:
     return False
 
 
+def new_asset(**kwargs: Any) -> apprise.AppriseAsset:
+    """Return an ``AppriseAsset`` built from ``kwargs``.
+
+    - Options set with ``APPRISE_ASSET_<NAME>`` are applied last and win.
+    """
+    return apprise.AppriseAsset(**(kwargs | settings.APPRISE_ASSET))
+
+
 def notify_asset_kwargs(body_format: str | None = None, persistent: bool = True) -> dict[str, Any]:
     """Return the ``AppriseAsset`` settings every notification is sent with.
 

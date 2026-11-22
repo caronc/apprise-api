@@ -630,6 +630,17 @@ def test_send_uses_the_reminders_own_urls(store):
     assert hosts({"urls": ["json://one.example"]}) == ["one.example"]
 
 
+def test_send_applies_asset_overrides(store):
+    """APPRISE_ASSET_* options win over what the reminder asks for."""
+    reminder_file = _save(store, "key", [{"id": "a"}])
+    assert store.put("key", "json://plain.example", apprise.ConfigFormat.TEXT.value)
+    with override_settings(APPRISE_ASSET={"app_id": "Operations", "body_format": "html"}):
+        a_obj, _ = prepare_send(reminder_file, {"id": "a", "body": "Hi", "format": "markdown"})
+
+    assert a_obj.asset.app_id == "Operations"
+    assert a_obj.asset.body_format == "html"
+
+
 def test_send_leaves_out_urls_once_turned_off(store):
     """A reminder's own URLs are not sent to once the server stops allowing them."""
     reminder_file = _save(store, "key", [{"id": "a"}])

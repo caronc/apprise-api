@@ -30,7 +30,7 @@ import stat
 import tempfile
 
 import apprise
-from core.settings.env import env_bool, env_choice, env_int, env_optional_bool
+from core.settings.env import env_asset, env_bool, env_choice, env_int, env_optional_bool
 from core.themes import SiteTheme
 from core.utils import parse_log_level
 from core.version import __version__
@@ -649,6 +649,10 @@ APPRISE_ADMIN = env_bool("APPRISE_ADMIN", default=True)
 
 # Allow Interpret Emojis override
 APPRISE_INTERPRET_EMOJIS = env_optional_bool("APPRISE_INTERPRET_EMOJIS")
+
+# AppriseAsset options from APPRISE_ASSET_<NAME> variables. They are applied
+# last, so they win over any other setting that sets the same option.
+APPRISE_ASSET = env_asset()
 
 # Allow HTTP Redirects override
 # By default Apprise follows HTTP 3xx redirects, matching the behaviour of

@@ -66,6 +66,7 @@ from .utils import (
     ConfigCache,
     apply_global_filters,
     config_apprise,
+    new_asset,
     notify_asset_kwargs,
     parse_attachments,
 )
@@ -224,7 +225,7 @@ def prepare_send(
         return _failed(outcome, "attach")
 
     # Build the same Apprise object /notify would, from the stored configuration.
-    asset = apprise.AppriseAsset(
+    asset = new_asset(
         language=settings.LANGUAGE_CODE,
         **notify_asset_kwargs(event.get("format") or None),
     )
