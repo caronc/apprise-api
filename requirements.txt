@@ -14,7 +14,7 @@ apprise == 2.3.0
 
 ## Apprise API Minimum Requirements
 # Language selection relies on a Django internal; raise after testing a new major
-django < 7
+django >= 6.1.3, < 7
 gevent
 ## newer gunicorn releases no longer pull it in as a base dependency
 gunicorn[gevent]

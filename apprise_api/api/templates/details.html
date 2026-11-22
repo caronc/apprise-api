@@ -14,19 +14,44 @@
           </p>
         </div>
       </div>
-      <p>
-        {% url 'details' as href %}
-        {% if show_all %}
-          {% blocktrans %}To see a simplified listing that only identifies the Apprise services
-          enabled click <a href="{{ href }}">here</a>.{% endblocktrans %}
-        {% else %}
-          {% blocktrans %}To see a listing that identifies all of Apprise services available to this
-          version (enabled or not) click <a href="{{ href }}?all=yes">here</a>.{% endblocktrans %}
-        {% endif %}
-      </p>
-      <div class="details-summary">
-        <b>{% blocktrans %}Total plugin(s) supported{% endblocktrans %}:</b>
-        {{ details.schemas|length }}
+      {# Two cards in a row: which services are listed, and how many there are. #}
+      <div class="details-overview">
+        <div class="notify-form-section">
+          <div class="notify-section-heading">
+            <div class="notify-section-title">
+              <i class="material-icons" aria-hidden="true">apps</i>
+              <div>
+                <h6>{% trans "Available Services" %}</h6>
+                <p>
+                  {% if show_all %}
+                    {% trans "Every Apprise service is listed, including the ones this server cannot use." %}
+                  {% else %}
+                    {% trans "Only the services this server can use are listed." %}
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+            {# The same switch as the Review tab's filter; it reloads the page with or without ?all=yes. #}
+            <label class="review-selected-filter details-show-all">
+              <input id="details-show-all"
+                     type="checkbox"
+                     {% if show_all %}checked{% endif %}>
+              <span class="review-selected-filter-track" aria-hidden="true">
+                <span class="review-selected-filter-knob"></span>
+              </span>
+              <span>{% trans "Show All" %}</span>
+            </label>
+          </div>
+        </div>
+        <div class="notify-form-section details-summary">
+          <div class="notify-section-heading">
+            <div class="notify-section-title">
+              <i class="material-icons" aria-hidden="true">extension</i>
+              <h6>{% blocktrans %}Total plugin(s) supported{% endblocktrans %}</h6>
+            </div>
+            <span class="details-summary-count">{{ details.schemas|length }}</span>
+          </div>
+        </div>
       </div>
     </div>
     {# Step 1: find a service, or start from a URL that already exists. #}
@@ -35,13 +60,11 @@
         <span class="details-step-number" aria-hidden="true">1</span>
         {% trans "Choose a Service" %}
       </h5>
-      <div class="details-step-field">
-        <label for="details-search">{% trans "Search Services" %}</label>
-        <input id="details-search"
-               type="search"
-               spellcheck="false"
-               autocomplete="off">
-      </div>
+      {% trans "Search Services" as search_label %}
+      {% trans "No Matching Services" as no_match_title %}
+      {% trans "No services match your search." as no_match_text %}
+      {% include "components/list_search.html" with search_id="details-search" %}
+
       <ul id="details-services" class="details-services">
         {% for entry in details.schemas %}
           <li>
@@ -70,7 +93,6 @@
           </li>
         {% endfor %}
       </ul>
-      <p id="details-no-match" class="details-no-match" hidden>{% trans "No services match your search." %}</p>
       <form id="details-paste"
             class="details-step-field"
             autocomplete="off"
@@ -182,7 +204,8 @@
       </h5>
       <div class="details-step-field">
         <label for="details-url">{% trans "Apprise URL" %}</label>
-        <div class="details-url-row">
+        {# The copy button sits inside the box, like the reveal button on a secret field. #}
+        <div class="notify-template-value-control concealed-field">
           <input id="details-url"
                  type="text"
                  readonly
@@ -190,7 +213,7 @@
                  placeholder="{% trans "Fill in the details above to build the URL." %}">
           <button type="button"
                   id="details-copy"
-                  class="btn-flat details-icon-button"
+                  class="btn-flat value-visibility-toggle"
                   aria-label="{% trans "Copy URL" %}"
                   title="{% trans "Copy URL" %}"
                   disabled>
@@ -219,6 +242,17 @@
   const detailsShared = new Set(JSON.parse(document.getElementById('details-shared-args').textContent));
   // Fields are put together into a URL by the server, for this Config ID.
   const detailsResolveUrl = '{% if COOKIE_CONFIG_URLS %}{% url "resolve_current" %}{% else %}{% url "resolve" DEFAULT_CONFIG_ID %}{% endif %}';
+
+  // Show every service, or only the ones this server can use.
+  document.querySelector('#details-show-all').addEventListener('change', function (event) {
+    const url = new URL(window.location.href);
+    if (event.target.checked) {
+      url.searchParams.set('all', 'yes');
+    } else {
+      url.searchParams.delete('all');
+    }
+    window.location.href = url.toString();
+  });
 
   const detailsSearch = document.querySelector('#details-search');
   const detailsServices = document.querySelectorAll('.details-service');
@@ -269,22 +303,51 @@
   }
 
   // Step 1: show only the services whose name or schema holds the search.
-  detailsSearch.addEventListener('input', function () {
-    const words = detailsSearch.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    let shown = 0;
-    detailsServices.forEach(function (button) {
-      const match = words.every(function (word) { return button.dataset.search.includes(word); });
-      button.parentElement.hidden = !match;
-      shown += match ? 1 : 0;
+  appriseWireListSearch(
+    detailsSearch,
+    function () { return document.querySelectorAll('#details-services > li'); },
+    function (item) { return item.firstElementChild.dataset.search; },
+    function () { detailsRoveServices(null); }
+  );
+
+  // The service list is a single Tab stop, so Tab moves on to the next
+  // field. The arrow keys, Home and End move between the services shown.
+  function detailsRoveServices(stop) {
+    const shown = Array.from(detailsServices).filter(function (button) {
+      return !button.parentElement.classList.contains('list-search-hidden');
     });
-    document.querySelector('#details-no-match').hidden = shown > 0;
+    stop = stop || shown.find(function (button) { return button.getAttribute('aria-pressed') === 'true'; }) || shown[0];
+    detailsServices.forEach(function (button) { button.tabIndex = button === stop ? 0 : -1; });
+    return shown;
+  }
+
+  document.querySelector('#details-services').addEventListener('keydown', function (event) {
+    const moves = {ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1, Home: -Infinity, End: Infinity};
+    if (!(event.key in moves) || !event.target.classList.contains('details-service')) {
+      return;
+    }
+    event.preventDefault();
+    const shown = detailsRoveServices(event.target);
+    const at = shown.indexOf(event.target) + moves[event.key];
+    const next = shown[Math.min(Math.max(at, 0), shown.length - 1)];
+    detailsRoveServices(next);
+    next.focus();
   });
 
   detailsServices.forEach(function (button) {
     button.addEventListener('click', function () {
       detailsChoose(Number(button.dataset.index), null);
+      detailsRoveServices(button);
+      // Carry on with the first field there is to fill in. A field that is
+      // not drawn (hidden, or inside a closed section) has no boxes on screen.
+      const first = Array.from(document.querySelectorAll('#details-service input, #details-service select'))
+        .find(function (field) { return !field.readOnly && field.getClientRects().length > 0; });
+      if (first) {
+        first.focus();
+      }
     });
   });
+  detailsRoveServices(null);
 
   // A service's tokens that have a field of their own; a list token stands
   // in for the tokens it groups, and aliases are only other names.
@@ -465,19 +528,31 @@
       // A fixed set of choices is a list to pick from.
       holder.dataset.kind = name === 'schema' ? 'schema' : 'choice';
       holder.dataset.default = meta.default === undefined || meta.default === null ? '' : String(meta.default);
-      input = document.createElement('select');
-      input.className = 'browser-default';
       const choices = meta.values.map(String);
       if (given && !choices.includes(String(value))) {
         choices.unshift(String(value));
       }
-      choices.forEach(function (choice) {
-        const option = document.createElement('option');
-        option.value = choice;
-        option.textContent = choice;
-        input.appendChild(option);
-      });
+      if (choices.length === 1) {
+        // Only one choice: show it as text, and let Tab pass it by.
+        input = document.createElement('input');
+        input.type = 'text';
+        input.readOnly = true;
+        input.tabIndex = -1;
+      } else {
+        input = document.createElement('select');
+        input.className = 'browser-default';
+        choices.forEach(function (choice) {
+          const option = document.createElement('option');
+          option.value = choice;
+          // A schema reads the way it starts a URL, such as json://.
+          option.textContent = holder.dataset.kind === 'schema' ? choice + '://' : choice;
+          input.appendChild(option);
+        });
+      }
       input.value = given ? String(value) : (holder.dataset.default || choices[0]);
+      if (input.readOnly && holder.dataset.kind === 'schema') {
+        input.value += '://';
+      }
       holder.appendChild(input);
     } else {
       input = document.createElement('input');
@@ -744,7 +819,8 @@
   function detailsValue(holder) {
     const kind = holder.dataset.kind;
     if (kind === 'map') {
-      const map = {};
+      // Names are typed by the user, so a name like __proto__ stays plain data.
+      const map = Object.create(null);
       holder.querySelectorAll('.notify-template-row').forEach(function (row) {
         const inputs = row.querySelectorAll('input');
         if (inputs[0].value.trim()) {
@@ -762,7 +838,7 @@
       return input.value === holder.dataset.default ? undefined : input.value;
     }
     if (kind === 'schema') {
-      return input.value;
+      return input.value.replace(/:\/\/$/, '');
     }
     if (kind === 'list') {
       const list = input.value.split(',').map(function (entry) { return entry.trim(); })
@@ -783,7 +859,7 @@
 
   // Every field that holds something, the way the server reads them.
   function detailsCollect() {
-    const fields = {};
+    const fields = Object.create(null);
     document.querySelectorAll('#details-service [data-field]').forEach(function (holder) {
       const value = detailsValue(holder);
       if (value !== undefined) {

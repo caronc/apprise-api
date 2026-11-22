@@ -318,6 +318,10 @@ msgstr "Urus login, kebenaran, dan alat konfigurasi ini."
 msgid "Administrator"
 msgstr "Pentadbir"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Tahap Akses Anda"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "Kemas Kini Kredensial"
@@ -354,6 +358,11 @@ msgstr "Simpan"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Hasilkan Sijil Baru"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Pilih perkara yang hendak dijana, kemudian tekan %(dice)s."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "Tetapkan Semula Akses atau Konfigurasi?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "Ini hanya akan menetapkan semula akses pengguna yang sedang dikaitkan dengan konfigurasi ini:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Ini akan menetapkan semula akses pengguna dan membuang konfigurasi tersimpan secara kekal bagi:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "Senarai Konfigurasi"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Perkhidmatan Tersedia"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Tunjukkan Semua"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Semua perkhidmatan Apprise disenaraikan, termasuk yang tidak boleh digunakan oleh pelayan ini."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Hanya perkhidmatan yang boleh digunakan oleh pelayan ini disenaraikan."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3492,9 +3517,41 @@ msgstr "Pilih Perkhidmatan"
 msgid "Search Services"
 msgstr "Cari Perkhidmatan"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "Tiada perkhidmatan sepadan"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Tiada perkhidmatan sepadan dengan carian anda."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Tunjukkan Lagi"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Cari Konfigurasi"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Tiada konfigurasi sepadan"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Tiada konfigurasi sepadan dengan carian anda."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Cari Peringatan"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Tiada peringatan sepadan"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Tiada peringatan sepadan dengan carian anda."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

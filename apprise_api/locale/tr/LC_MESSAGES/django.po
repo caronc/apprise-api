@@ -318,6 +318,10 @@ msgstr "Bu konfigürasyonun girişini, izinlerini ve araçlarını yönetin."
 msgid "Administrator"
 msgstr "Yönetici"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "Erişim Düzeyiniz"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "Kimlik Bilgilerini Güncelle"
@@ -354,6 +358,11 @@ msgstr "Kaydet"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "Yeni Kimlik Bilgileri Oluştur"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "Neyin oluşturulacağını seçin, ardından %(dice)s düğmesine basın."
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "Erişimi veya Konfigürasyonu Sıfırla?"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "Bu yalnızca şu anda bu yapılandırmayla ilişkili kullanıcı erişimini sıfırlayacaktır:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "Bu işlem kullanıcı erişimini sıfırlar ve şunun kayıtlı yapılandırmasını kalıcı olarak kaldırır:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "Konfigürasyon Listesi"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "Mevcut Hizmetler"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "Tümünü Göster"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "Bu sunucunun kullanamadıkları dahil tüm Apprise hizmetleri listelenir."
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "Yalnızca bu sunucunun kullanabildiği hizmetler listelenir."
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3492,9 +3517,41 @@ msgstr "Bir Hizmet Seçin"
 msgid "Search Services"
 msgstr "Hizmetlerde Ara"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "Eşleşen hizmet yok"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "Aramanızla eşleşen hizmet yok."
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "Daha Fazla Göster"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "Konfigürasyonlarda Ara"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "Eşleşen konfigürasyon yok"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "Aramanızla eşleşen konfigürasyon yok."
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "Hatırlatıcılarda Ara"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "Eşleşen hatırlatıcı yok"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "Aramanızla eşleşen hatırlatıcı yok."
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

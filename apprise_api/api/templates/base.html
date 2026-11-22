@@ -2,8 +2,10 @@
 {% load i18n %}
 
 <!DOCTYPE html>
+{# Materialize reads "theme" so its own parts follow the site theme, not the system one. #}
 <html lang="{{ LANGUAGE_CODE }}"
-      dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
+      dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}"
+      theme="{{ request.theme|safe }}">
   <head>
     <meta charset="utf-8">
     <!--Let browser know website is optimized for mobile-->
@@ -15,26 +17,26 @@
           href="{% static 'favicon.ico' %}" />
     <!--materialize-->
     <link rel="stylesheet"
-          href="{% get_static_prefix %}css/materialize.min.css?v=1.0.0" />
+          href="{% get_static_prefix %}css/materialize.min.css?v=2.4.0" />
     <!--material-design-icons-->
     <link rel="stylesheet"
           href="{% static 'iconfont/material-icons.css' %}?v=3.0.1">
     <!--highlightjs-->
     <link rel="stylesheet"
-          href="{% get_static_prefix %}css/highlight.min.css?v=11.11.1">
+          href="{% get_static_prefix %}css/highlight.min.css?v=11.12.0">
     <!--common-->
     {# Release versions refresh local assets; vendor assets keep their pinned versions. #}
     <link rel="stylesheet"
           href="{% static 'css/base.css' %}?v={{ APPRISE_API_VERSION }}" />
     <!--materialize-->
-    <script src="{% static 'js/materialize.min.js' %}?v=1.0.0"></script>
+    <script src="{% static 'js/materialize.min.js' %}?v=2.4.0"></script>
     {% block head_js_optional %}
       <!--sweetalert2-->
       <script src="{% static 'js/sweetalert2.all.min.js' %}?v=11.26.25"></script>
       <!--highlightjs-->
-      <script src="{% static 'js/highlight.pack.js' %}?v=11.11.1"></script>
+      <script src="{% static 'js/highlight.pack.js' %}?v=11.12.0"></script>
       <!--qrcode generator, used by the Apprise Mobile QR code popup-->
-      <script src="{% static 'js/qrcode.min.js' %}?v=1.5.2"></script>
+      <script src="{% static 'js/qrcode.min.js' %}?v=2.0.4"></script>
       <script src="{% static 'js/apprise-qr.js' %}?v={{ APPRISE_API_VERSION }}"></script>
     {% endblock head_js_optional %}
     <!--theme-->
@@ -186,7 +188,7 @@
                 <span class="nav-divider auth-divider" aria-hidden="true"></span>
                 <span class="auth-session-nav">
                   {% if AUTH_USERNAME %}
-                    <a class="auth-account {% if AUTH_PERMISSION == 'admin' %}is-master{% endif %}"
+                    <a class="auth-account"
                        href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
                        aria-label="{% trans "Open Authentication Settings" %}">
                       <span class="auth-account-icon" aria-hidden="true">
@@ -487,30 +489,16 @@
     {# djlint:off #}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        function escapedTooltipText(text) {
-            const holder = document.createElement('span');
-            holder.textContent = text;
-            return holder.innerHTML;
-        }
-
+        // Materialize shows the tooltip as plain text and reads it again on
+        // every hover, so changing data-tooltip is enough to update it.
         function prepareTooltip(element, text, initialize) {
             if (!element || !text) return;
-            const safeText = escapedTooltipText(text);
             element.removeAttribute('title');
             element.classList.add('tooltipped');
             element.dataset.position = element.dataset.position || 'bottom';
-            element.dataset.tooltip = safeText;
+            element.dataset.tooltip = text;
 
-            if (!initialize) return;
-            const instance = M.Tooltip.getInstance(element);
-            if (instance) {
-                instance.options.html = safeText;
-                // Only the text holder inside changes; Materialize fills it on every hover.
-                const content = instance.tooltipEl.querySelector('.tooltip-content');
-                if (content) {
-                    content.innerHTML = safeText;
-                }
-            } else {
+            if (initialize && !M.Tooltip.getInstance(element)) {
                 M.Tooltip.init(element);
             }
         }
@@ -525,7 +513,10 @@
         });
 
         // Materialize Init
-        M.AutoInit();
+        M.Tabs.init(document.querySelectorAll('.tabs'));
+        M.Collapsible.init(document.querySelectorAll('.collapsible'));
+        M.Tooltip.init(document.querySelectorAll('.tooltipped'));
+        document.querySelectorAll('select:not(.browser-default)').forEach(appriseSelect);
 
         // Keep browsers from suggesting values in the page's fields.
         appriseNoAutofillAll(document.body);
@@ -662,6 +653,18 @@
                 else if (!active && returnFocus) openButton.focus();
             }
 
+            // Slide the drawer only when it is opened or closed, so resizing
+            // the window never shows it sweeping across the page.
+            let slideTimer = null;
+            function slideOpen(open, returnFocus) {
+                document.body.classList.add('mobile-menu-animate');
+                window.clearTimeout(slideTimer);
+                slideTimer = window.setTimeout(function() {
+                    document.body.classList.remove('mobile-menu-animate');
+                }, 300);
+                setOpen(open, returnFocus);
+            }
+
             function isFormControl(element) {
                 return element instanceof Element && element.matches(
                     'input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]), '
@@ -693,15 +696,15 @@
                 });
             });
 
-            openButton.addEventListener('click', function() { setOpen(true, false); });
-            backdrop.addEventListener('click', function() { setOpen(false, true); });
-            window.appriseCloseMobileMenu = function() { setOpen(false, false); };
+            openButton.addEventListener('click', function() { slideOpen(true, false); });
+            backdrop.addEventListener('click', function() { slideOpen(false, true); });
+            window.appriseCloseMobileMenu = function() { slideOpen(false, false); };
             menu.querySelectorAll('a').forEach(function(link) {
-                link.addEventListener('click', function() { setOpen(false, false); });
+                link.addEventListener('click', function() { slideOpen(false, false); });
             });
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape' && document.body.classList.contains('mobile-menu-open')) {
-                    setOpen(false, true);
+                    slideOpen(false, true);
                 }
             });
             document.addEventListener('focusin', syncTabWithFocus);
@@ -709,6 +712,8 @@
                 window.requestAnimationFrame(syncTabWithFocus);
             });
             mobile.addEventListener('change', function() {
+                window.clearTimeout(slideTimer);
+                document.body.classList.remove('mobile-menu-animate');
                 setOpen(false, false);
                 syncTabWithFocus();
             });
@@ -730,6 +735,7 @@
 
                 // Swap stylesheet in-place — no reload
                 sheet.href = staticPrefix + 'css/theme-' + next + '.css?v={{ APPRISE_API_VERSION }}';
+                document.documentElement.setAttribute('theme', next);
 
                 // Update toggle state so a second click reverses correctly
                 toggle.dataset.theme = next;
@@ -808,6 +814,78 @@
 </script>
 {# Script Block 2 #}
 <script>
+  // Filter a list as its search box (components/list_search.html) is typed in.
+  // An item stays shown when every typed word is in its text, in any case.
+  // A list with a Show More button (components/list_more.html) shows 100
+  // matches at a time; the search still looks through every item.
+  // - input: the search box
+  // - items: returns the elements to filter, which may change over time
+  // - textOf: returns the text an item is found by
+  // - onFilter: optional, runs after each filter
+  // Returns the filter, so a page can run it again after redrawing its list.
+  function appriseWireListSearch(input, items, textOf, onFilter) {
+    const clear = input.parentElement.querySelector('.list-search-clear');
+    const note = document.getElementById(input.id + '-no-match');
+    const more = document.getElementById(input.id + '-more');
+    const pageSize = 100;
+    let limit = more ? pageSize : Infinity;
+    const filter = function () {
+      const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      let found = 0;
+      items().forEach(function (item) {
+        const text = textOf(item).toLowerCase();
+        const match = words.every(function (word) { return text.includes(word); });
+        item.classList.toggle('list-search-hidden', !match || found >= limit);
+        found += match ? 1 : 0;
+      });
+      note.hidden = found > 0 || !words.length;
+      clear.hidden = !input.value;
+      if (more) {
+        // How many matches are still to be shown.
+        more.hidden = found <= limit;
+        more.querySelector('.list-search-more-count').textContent = '(' + (found - limit) + ')';
+      }
+      if (onFilter) {
+        onFilter();
+      }
+    };
+    // A new search starts again from the first page.
+    const search = function () {
+      limit = more ? pageSize : Infinity;
+      filter();
+    };
+    input.addEventListener('input', search);
+    clear.addEventListener('click', function () {
+      input.value = '';
+      search();
+      input.focus();
+    });
+    if (more) {
+      more.addEventListener('click', function () {
+        limit += pageSize;
+        filter();
+      });
+    }
+    filter();
+    return filter;
+  }
+
+  // Build a Materialize select menu. Materialize moves the field's label
+  // into the menu, below the field, and deletes it when the menu is rebuilt,
+  // so the label is put back where the page placed it.
+  function appriseSelect(select) {
+    const label = select.id ? document.querySelector('label[for="' + select.id + '"]') : null;
+    const spot = document.createComment('');
+    if (label) {
+      label.after(spot);
+    }
+    const instance = M.FormSelect.init(select);
+    if (label) {
+      spot.replaceWith(label);
+    }
+    return instance;
+  }
+
   // Stop browsers and password managers from suggesting or filling in a
   // field, so it only offers what the page puts there. Login fields keep
   // their suggestions.
@@ -1319,7 +1397,7 @@
     };
 
     configIdInput.addEventListener('focus', function() {
-      restoreConcealment = configIdInput.type === 'password';
+      restoreConcealment = !configIdInput.classList.contains('value-is-visible');
       configIdInput.dataset.visibilityExplicit = 'false';
       if (restoreConcealment) {
         appriseSetValueVisibility(configIdInput, configIdVisibility, true, false);
@@ -1575,7 +1653,8 @@
               <span class="config-id-wrapper">
                 <input id="cfggen-config-id"
                        class="config-id-input"
-                       type="password"
+                       type="text"
+                       data-concealed-text="true"
                        value="{{ UNIQUE_CONFIG_ID }}"
                        maxlength="{{ CONFIG_KEY_MAX_LENGTH }}"
                        autocomplete="off"
@@ -1695,15 +1774,17 @@
       });
       return;
     }
-    if (window.M && M.toast) {
-      const safeMessage = document.createElement('span');
-      safeMessage.textContent = message;
-      M.toast({
-        html: '<span class="apprise-toast-fallback-icon" aria-hidden="true">'
-          + appriseStatusIconHtml[type] + '</span>' + safeMessage.outerHTML,
+    if (window.M && M.Toast) {
+      const icon = document.createElement('span');
+      const text = document.createElement('span');
+      icon.className = 'apprise-toast-fallback-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = appriseStatusIconHtml[type];
+      text.textContent = message;
+      new M.Toast({
         classes: 'apprise-toast-fallback apprise-toast--' + type,
         displayLength: duration || 3500
-      });
+      }).el.append(icon, text);
     }
   }
 

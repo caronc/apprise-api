@@ -22,10 +22,25 @@
     {% endif %}
   </div>
   {% if keys %}
+    {% trans "Search Configurations" as search_label %}
+    {% trans "No Matching Configurations" as no_match_title %}
+    {% trans "No configurations match your search." as no_match_text %}
+    {% include "components/list_search.html" with search_id="config-list-search" %}
+
     {# Each row groups authentication state, the Config ID, and its actions. #}
     <ul class="collection config-list-collection z-depth-1">
+      {# Column headings, lined up with the rows below. #}
+      <li class="collection-item config-list-item config-list-header"
+          aria-hidden="true">
+        <span class="config-list-user">{% trans "Username" %}</span>
+        {% if AUTH_ENABLED %}
+          <span class="config-list-access">{% trans "Access" %}</span>
+        {% endif %}
+        <span class="config-list-link">{% trans "Config ID" %}</span>
+      </li>
       {% for entry in keys %}
-        <li class="collection-item config-list-item">
+        <li class="collection-item config-list-item"
+            data-search-user="{{ entry.user|default:'' }}">
           <a class="config-list-auth-link" href="{% url 'auth' entry.key %}">
             {% if AUTH_ENABLED %}
               {% include "components/config_auth_status.html" with auth_indicator=entry.auth_indicator %}
@@ -96,6 +111,8 @@
         </li>
       {% endfor %}
     </ul>
+    {% include "components/list_more.html" with search_id="config-list-search" %}
+
   {% else %}
     <p>{% blocktrans %}There is no configuration defined.{% endblocktrans %}</p>
   {% endif %}
@@ -111,6 +128,24 @@
     Swal.showValidationMessage('');
     Swal.getValidationMessage().textContent = message;
   }
+
+  // Every configuration row, leaving out the column headings.
+  const configListRows = '.config-list-item:not(.config-list-header)';
+
+  // The search finds a row by its username or its Config ID. Deleting or
+  // moving a row runs it again, so the page and its counts stay right.
+  // There is no search box (and no filter) while the list is empty.
+  const configListSearch = document.querySelector('#config-list-search');
+  const configListFilter = configListSearch && appriseWireListSearch(
+      configListSearch,
+      function () { return document.querySelectorAll(configListRows); },
+      function (row) { return row.dataset.searchUser + ' ' + row.querySelector('.config-id').dataset.configIdValue; },
+      // The headings are hidden too when no row is left to show.
+      function () {
+        const list = document.querySelector('.config-list-collection');
+        list.classList.toggle('list-search-hidden', !list.querySelector(configListRows + ':not(.list-search-hidden)'));
+      }
+    );
 
   document.querySelectorAll('.config-list-delete').forEach(function (button) {
     button.addEventListener('click', function () {
@@ -140,8 +175,11 @@
           appriseShowStatusToast('{% trans "Configuration deleted." %}', true);
           const list = row.parentElement;
           row.remove();
+          if (configListFilter) {
+            configListFilter();
+          }
           // Reload after the last deletion to show the server's empty state.
-          if (list && !list.querySelector('.config-list-item')) {
+          if (list && !list.querySelector(configListRows)) {
             window.location.reload();
           }
         } catch (error) {
@@ -161,7 +199,7 @@
         title: '{% trans "Move Configuration ID" %}',
         html: `
           <div class="input-field concealed-field auth-credential-field">
-            <input id="swal-move-from" type="password" readonly>
+            <input id="swal-move-from" type="text" data-concealed-text="true" spellcheck="false" autocapitalize="none" readonly>
             <label for="swal-move-from">{% trans "Current Configuration ID" %}</label>
             <button type="button"
                     class="btn-flat value-visibility-toggle"
@@ -176,7 +214,7 @@
             </button>
           </div>
           <div class="input-field concealed-field auth-credential-field">
-            <input id="swal-move-to" type="password">
+            <input id="swal-move-to" type="text" data-concealed-text="true" spellcheck="false" autocapitalize="none">
             <label for="swal-move-to">{% trans "New Configuration ID" %}</label>
             <button type="button"
                     class="btn-flat value-visibility-toggle"
@@ -199,9 +237,6 @@
           const fromField = popup.querySelector('#swal-move-from');
           fromField.value = oldKey;
           appriseWireValueToggles(popup);
-          if (window.M && M.updateTextFields) {
-            M.updateTextFields();
-          }
           // Submit the custom dialog fields when Enter is pressed.
           popup.querySelectorAll('#swal-move-from, #swal-move-to').forEach(function (field) {
             field.addEventListener('keydown', function (event) {
@@ -272,6 +307,9 @@
         }
         if (copyButton) {
           copyButton.dataset.configIdCopy = newKey;
+        }
+        if (configListFilter) {
+          configListFilter();
         }
         button.dataset.configId = newKey;
         const deleteButton = row.querySelector('.config-list-delete');

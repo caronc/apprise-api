@@ -318,6 +318,10 @@ msgstr "この構成のログイン、権限、およびツールを管理しま
 msgid "Administrator"
 msgstr "管理者"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "あなたのアクセスレベル"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "資格情報を更新"
@@ -354,6 +358,11 @@ msgstr "保存"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "新しい認証情報を生成"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "生成する項目を選び、%(dice)s を押してください。"
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "アクセスまたは設定をリセットしますか？"
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "これは、現在この構成に関連付けられているユーザーアクセスのみをリセットします:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "これは、ユーザーアクセスをリセットし、次の保存された構成を完全に削除します:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "設定一覧"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "利用可能なサービス"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "すべて表示"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "このサーバーで使用できないものも含め、すべての Apprise サービスを表示しています。"
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "このサーバーで使用できるサービスのみを表示しています。"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3492,9 +3517,41 @@ msgstr "サービスを選択"
 msgid "Search Services"
 msgstr "サービスを検索"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "一致するサービスなし"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "検索に一致するサービスはありません。"
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "さらに表示"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "設定を検索"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "一致する設定なし"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "検索に一致する設定はありません。"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "リマインダーを検索"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "一致するリマインダーなし"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "検索に一致するリマインダーはありません。"
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"

@@ -25,6 +25,13 @@
         </button>
       </div>
     </div>
+    {# Finds a reminder by its title; hidden while there are none. #}
+    <div id="reminder-list-filter" {% if not reminders %}hidden{% endif %}>
+      {% trans "Search Reminders" as search_label %}
+      {% trans "No Matching Reminders" as no_match_title %}
+      {% trans "No reminders match your search." as no_match_text %}
+      {% include "components/list_search.html" with search_id="reminder-list-search" %}
+    </div>
     {# Shown while no Config ID has a reminder. #}
     <div id="reminder-empty"
          class="notify-target-guidance notify-target-guidance--info reminder-empty"
@@ -42,6 +49,7 @@
     </div>
     {# One card per reminder, drawn by the script below. #}
     <div id="reminder-list" class="reminder-list" aria-live="polite"></div>
+    {% include "components/list_more.html" with search_id="reminder-list-search" %}
   </div>
   {# The reminders as JSON, so the script can draw them without asking the server again. #}
   {{ reminders|json_script:"reminder-overview-data" }}
@@ -118,6 +126,13 @@
   const reminderToggleAll = reminderElement('reminder-list-toggle-all');
   const reminderToggleAllSync = appriseWireConfigIdToggleAll(reminderToggleAll, reminderElement('reminder-list'));
 
+  // The search finds a reminder by its title.
+  const reminderListFilter = appriseWireListSearch(
+    reminderElement('reminder-list-search'),
+    function () { return reminderElement('reminder-list').querySelectorAll('.reminder-card'); },
+    function (card) { return card.dataset.searchText; }
+  );
+
   // Draw every card again, and show the empty notice when there are none.
   function reminderOverviewRender() {
     const list = reminderElement('reminder-list');
@@ -126,8 +141,10 @@
     list.querySelectorAll('.reminder-card').forEach(function (card) { card.remove(); });
     document.getElementById('reminder-empty').hidden = reminderItems.length > 0;
     reminderToggleAll.hidden = reminderItems.length === 0;
+    reminderElement('reminder-list-filter').hidden = reminderItems.length === 0;
     reminderItems.forEach(function (reminder, index) {
       const card = reminderCard(reminder, reminderPageFor(reminder, index));
+      card.dataset.searchText = reminder.name || '';
       appriseWireConfigIdToggles(card);
       list.append(card);
       // The eye finds its Config ID on the page, so it is clicked once the card is there.
@@ -136,6 +153,7 @@
       }
     });
     reminderToggleAllSync();
+    reminderListFilter();
   }
 
   // Fetch the list again after a change, then redraw it.

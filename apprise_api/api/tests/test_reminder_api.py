@@ -1752,6 +1752,16 @@ class ReminderOverviewTests(ReminderTestCase):
         self.assertRegex(html, r'Open a configuration from the <a href="/cfg/?" class="tab-chip tab-chip-link">')
         # A note rather than a warning
         self.assertIn('class="notify-target-guidance notify-target-guidance--info reminder-empty"', html)
+        # Each card's times share its last row with the buttons
+        self.assertIn("footer.className = 'reminder-card-footer';", html)
+        self.assertIn("times.className = 'reminder-card-times';", html)
+        self.assertIn("footer.append(times, reminderActions(reminder, page));", html)
+        # A search finds a reminder by its title, and is hidden while there are none
+        self.assertIn('id="reminder-list-search"', html)
+        self.assertIn("No reminders match your search.", html)
+        self.assertIn("card.dataset.searchText = reminder.name || '';", html)
+        self.assertIn('id="reminder-list-search-more"', html)
+        self.assertIn("reminderElement('reminder-list-filter').hidden = reminderItems.length === 0;", html)
 
         # A reminder file that cannot be read is left out
         with (
@@ -3252,10 +3262,18 @@ class ReminderPageTests(ReminderTestCase):
         path = f"/auth/{self.key}"
         headers = {"Accept": "text/html"}
         self.sign_in("master", "pass")
-        self.assertNotIn('id="reminder-limits-form"', self.client.get(path, headers=headers).content.decode())
+        # Without a login the card waits, hidden, and saving one shows it without a reload
+        html = self.client.get(path, headers=headers).content.decode()
+        card = r'<section id="auth-reminder-limits"\s+class="auth-editor-card auth-reminder-limits-card"'
+        self.assertRegex(html, card + r"\s+hidden>")
+        # A save always leaves an access record, the same rule the page uses on load
+        self.assertIn("authShowReminderLimits(true);", html)
+        # A reset hides it again, unless the user's reminders were kept
+        self.assertIn("authShowReminderLimits(!resetConfiguration && keepReminders);", html)
 
         self.assertTrue(ConfigCache.set_auth(self.key, "alice", "secret", access="user"))
         html = self.client.get(path, headers=headers).content.decode()
+        self.assertRegex(html, card + r"\s*>")
         self.assertIn('id="reminder-limits-form"', html)
         self.assertIn(f"/reminder/{self.key}/limits", html)
         # The usage figures are filled the same way as on the Reminders tab
@@ -3271,6 +3289,16 @@ class ReminderPageTests(ReminderTestCase):
         # The user does not see them
         self.sign_in("alice", "secret", self.key)
         self.assertNotIn('id="reminder-limits-form"', self.client.get(path, headers=headers).content.decode())
+
+    @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
+    def test_limits_stay_while_kept_reminders_remain(self):
+        """Reminders kept after a login is reset keep the limits card shown, after a reload too."""
+        self.sign_in("master", "pass")
+        self.assertEqual(self.add(headers=_MASTER).status_code, 200)
+        html = self.client.get(f"/auth/{self.key}", headers={"Accept": "text/html"}).content.decode()
+        self.assertRegex(
+            html, r'<section id="auth-reminder-limits"\s+class="auth-editor-card auth-reminder-limits-card"\s*>'
+        )
 
     @override_settings(APPRISE_AUTH_REQUIRED=True, APPRISE_BASIC_AUTH_TOKEN=_MASTER_TOKEN, APPRISE_USER="master")
     def test_seconds_are_offered_only_when_allowed(self):
@@ -3299,7 +3327,13 @@ class ReminderPageTests(ReminderTestCase):
         self.sign_in("master", "pass")
         path = f"/auth/{self.key}"
         headers = {"Accept": "text/html"}
-        self.assertIn('id="swal-keep-reminders"', self.client.get(path, headers=headers).content.decode())
+        content = self.client.get(path, headers=headers).content.decode()
+        self.assertIn('id="swal-keep-reminders"', content)
+        # Removing the configuration is on at first; turning it off offers to keep the reminders
+        self.assertRegex(content, r'id="swal-reset-configuration"[^>]*aria-checked="true"')
+        self.assertRegex(content, r'id="swal-keep-reminders"[^>]*aria-checked="false"\s+hidden>')
+        self.assertIn("confirmButtonText: 'Reset Access and Configuration',", content)
+        self.assertIn("showChoice(true);", content)
         with override_settings(APPRISE_REMINDER_ENABLED=False):
             self.assertNotIn('id="swal-keep-reminders"', self.client.get(path, headers=headers).content.decode())
 

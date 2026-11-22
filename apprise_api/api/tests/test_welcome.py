@@ -34,6 +34,23 @@ class WelcomePageTests(SimpleTestCase):
         assert response.status_code == 200
         self.assertContains(response, "document.querySelectorAll('.api-welcome pre')")
 
+    def test_page_uses_materialize_2(self):
+        """Every page loads Materialize 2 and sets up only the parts it uses."""
+        self.client.cookies["t"] = "dark"
+        response = self.client.get("/")
+
+        self.assertContains(response, 'theme="dark">')
+        self.assertContains(response, "css/materialize.min.css?v=2.4.0")
+        self.assertContains(response, "js/materialize.min.js?v=2.4.0")
+        self.assertNotContains(response, "M.AutoInit()")
+        self.assertContains(response, "M.Tooltip.init(document.querySelectorAll('.tooltipped'));")
+        self.assertContains(response, ".forEach(appriseSelect);")
+        self.assertContains(response, "spot.replaceWith(label);")
+        self.assertContains(response, "document.documentElement.setAttribute('theme', next);")
+        self.assertContains(response, "new M.Toast({")
+        # Materialize shows tooltips as plain text, so the text is not escaped first.
+        self.assertContains(response, "element.dataset.tooltip = text;")
+
     def test_page_meta_tags(self):
         """The meta tags render without missing template variable logs."""
         # A real browser always sends a Host header, but the test client does not.

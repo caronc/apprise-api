@@ -489,6 +489,7 @@ class ConfigAccessViewTests(SimpleTestCase):
         self.assertIn('id="auth-access-help"', editor_content)
         self.assertIn('class="auth-access-table"', editor_content)
         self.assertIn("Saved user access is currently enforced as locked", editor_content)
+        self.assertIn('<span class="auth-access-warning-icon" aria-hidden="true">', editor_content)
 
         preserved_user = self.client.post(
             "/auth/access_user",

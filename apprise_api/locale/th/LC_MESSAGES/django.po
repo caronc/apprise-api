@@ -318,6 +318,10 @@ msgstr "จัดการการเข้าสู่ระบบ สิท�
 msgid "Administrator"
 msgstr "ผู้ดูแลระบบ"
 
+#: apprise_api/api/templates/auth.html
+msgid "Your Access Level"
+msgstr "ระดับการเข้าถึงของคุณ"
+
 #: apprise_api/api/templates/auth.html:53
 msgid "Update Credentials"
 msgstr "อัปเดตข้อมูลประจำตัว"
@@ -354,6 +358,11 @@ msgstr "บันทึก"
 #: apprise_api/api/templates/auth.html:152
 msgid "Generate New Credentials"
 msgstr "สร้างข้อมูลรับรองใหม่"
+
+#: apprise_api/api/templates/auth.html
+#, python-format
+msgid "Choose what to generate, then press %(dice)s."
+msgstr "เลือกสิ่งที่จะสร้าง แล้วกด %(dice)s"
 
 #: apprise_api/api/templates/auth.html:155
 msgid "Fields to Randomize"
@@ -550,6 +559,10 @@ msgstr "รีเซ็ตการเข้าถึงหรือการก
 #: apprise_api/api/templates/auth.html:549
 msgid "This will reset only the user access currently associated with this configuration:"
 msgstr "นี่จะรีเซ็ตเฉพาะการเข้าถึงผู้ใช้ที่เชื่อมโยงกับการตั้งค่านี้เท่านั้น:"
+
+#: apprise_api/api/templates/auth.html
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "การดำเนินการนี้จะรีเซ็ตการเข้าถึงของผู้ใช้และลบการกำหนดค่าที่บันทึกไว้อย่างถาวรของ:"
 
 #: apprise_api/api/templates/auth.html:552
 msgid "Configuration ID"
@@ -756,6 +769,18 @@ msgstr "รายการการกำหนดค่า"
 #: apprise_api/api/templates/base.html:303
 msgid "Available Services"
 msgstr "บริการที่มีอยู่"
+
+#: apprise_api/api/templates/details.html
+msgid "Show All"
+msgstr "แสดงทั้งหมด"
+
+#: apprise_api/api/templates/details.html
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "แสดงบริการ Apprise ทั้งหมด รวมถึงบริการที่เซิร์ฟเวอร์นี้ใช้ไม่ได้"
+
+#: apprise_api/api/templates/details.html
+msgid "Only the services this server can use are listed."
+msgstr "แสดงเฉพาะบริการที่เซิร์ฟเวอร์นี้ใช้ได้"
 
 #: apprise_api/api/templates/base.html:307
 msgid "Docs & Tools"
@@ -3492,9 +3517,41 @@ msgstr "เลือกบริการ"
 msgid "Search Services"
 msgstr "ค้นหาบริการ"
 
-#: apprise_api/api/templates/details.html:69
+#: apprise_api/api/templates/details.html:81
+msgid "No Matching Services"
+msgstr "ไม่มีบริการที่ตรงกัน"
+
+#: apprise_api/api/templates/details.html:83
 msgid "No services match your search."
 msgstr "ไม่มีบริการที่ตรงกับการค้นหา"
+
+#: apprise_api/api/templates/components/list_more.html
+msgid "Show More"
+msgstr "แสดงเพิ่มเติม"
+
+#: apprise_api/api/templates/config_list.html
+msgid "Search Configurations"
+msgstr "ค้นหาการกำหนดค่า"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No Matching Configurations"
+msgstr "ไม่มีการกำหนดค่าที่ตรงกัน"
+
+#: apprise_api/api/templates/config_list.html
+msgid "No configurations match your search."
+msgstr "ไม่มีการกำหนดค่าที่ตรงกับการค้นหา"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "Search Reminders"
+msgstr "ค้นหาการเตือนความจำ"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No Matching Reminders"
+msgstr "ไม่มีการเตือนความจำที่ตรงกัน"
+
+#: apprise_api/api/templates/reminder_list.html
+msgid "No reminders match your search."
+msgstr "ไม่มีการเตือนความจำที่ตรงกับการค้นหา"
 
 #: apprise_api/api/templates/details.html:74
 msgid "Or Paste an Apprise URL"
