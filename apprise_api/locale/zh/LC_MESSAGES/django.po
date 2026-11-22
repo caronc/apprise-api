@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Apprise API\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-12 03:57+0000\n"
+"POT-Creation-Date: 2026-11-22 06:08+0000\n"
 "PO-Revision-Date: 2026-09-24\n"
 "Last-Translator: Apprise API Contributors\n"
 "Language-Team: zh\n"
@@ -56,44 +56,47 @@ msgstr "HTML"
 msgid "AS-IS"
 msgstr "保持原样"
 
-#: apprise_api/api/forms.py:73 apprise_api/api/templates/auth.html:37
-#: apprise_api/api/templates/auth.html:283
-#: apprise_api/api/templates/auth.html:332
+#: apprise_api/api/forms.py:73 apprise_api/api/templates/auth.html:42
+#: apprise_api/api/templates/auth.html:341
+#: apprise_api/api/templates/auth.html:401
 #: apprise_api/api/templates/components/config_auth_status.html:8
 msgid "User"
 msgstr "用户"
 
-#: apprise_api/api/forms.py:74 apprise_api/api/templates/auth.html:279
-#: apprise_api/api/templates/auth.html:333
+#: apprise_api/api/forms.py:74 apprise_api/api/templates/auth.html:337
+#: apprise_api/api/templates/auth.html:402
 #: apprise_api/api/templates/components/config_auth_status.html:8
 msgid "Locked"
 msgstr "已锁定"
 
-#: apprise_api/api/forms.py:75 apprise_api/api/templates/auth.html:275
-#: apprise_api/api/templates/auth.html:334
+#: apprise_api/api/forms.py:75 apprise_api/api/templates/auth.html:333
+#: apprise_api/api/templates/auth.html:403
 #: apprise_api/api/templates/components/config_auth_status.html:8
 msgid "Public"
 msgstr "公开"
 
-#: apprise_api/api/forms.py:76 apprise_api/api/templates/auth.html:287
-#: apprise_api/api/templates/auth.html:335
+#: apprise_api/api/forms.py:76 apprise_api/api/templates/auth.html:345
+#: apprise_api/api/templates/auth.html:404
 #: apprise_api/api/templates/components/config_auth_status.html:8
 msgid "Disabled"
 msgstr "已禁用"
 
 #: apprise_api/api/forms.py:84 apprise_api/api/forms.py:134
-#: apprise_api/api/templates/auth.html:159
+#: apprise_api/api/templates/auth.html:156
+#: apprise_api/api/templates/config_list.html:35
 msgid "Username"
 msgstr "用户名"
 
 #: apprise_api/api/forms.py:90 apprise_api/api/forms.py:149
-#: apprise_api/api/templates/auth.html:163
+#: apprise_api/api/templates/auth.html:160
 msgid "Password"
 msgstr "密码"
 
-#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1407
+#: apprise_api/api/forms.py:97 apprise_api/api/templates/base.html:1673
 #: apprise_api/api/templates/components/config_id_selector.html:14
-#: apprise_api/api/templates/components/config_id_selector.html:27
+#: apprise_api/api/templates/components/config_id_selector.html:28
+#: apprise_api/api/templates/config_list.html:39
+#: apprise_api/api/templates/reminder_list.html:84
 msgid "Config ID"
 msgstr "配置 ID"
 
@@ -101,7 +104,7 @@ msgstr "配置 ID"
 msgid "Username cannot contain ':'"
 msgstr "用户名不能包含 ':'"
 
-#: apprise_api/api/forms.py:127
+#: apprise_api/api/forms.py:127 apprise_api/api/templates/config_list.html:37
 msgid "Access"
 msgstr "访问"
 
@@ -121,7 +124,7 @@ msgstr "新密码"
 msgid "Confirm New Password"
 msgstr "确认新密码"
 
-#: apprise_api/api/forms.py:219 apprise_api/api/views.py:2786
+#: apprise_api/api/forms.py:219 apprise_api/api/views.py:3016
 msgid "The username cannot be changed by a configuration user"
 msgstr "配置用户无法更改用户名"
 
@@ -145,7 +148,8 @@ msgstr "此访问模式需要密码"
 msgid "Set a password when changing the username"
 msgstr "更改用户名时请设置密码"
 
-#: apprise_api/api/forms.py:263 apprise_api/api/forms.py:448
+#: apprise_api/api/forms.py:263 apprise_api/api/forms.py:464
+#: apprise_api/api/templates/components/config_reminders_script.html:1823
 msgid "URLs"
 msgstr "URLs"
 
@@ -154,9 +158,9 @@ msgid "Format"
 msgstr "格式化"
 
 #: apprise_api/api/forms.py:283 apprise_api/api/templates/config.html:7
-#: apprise_api/api/templates/config.html:38
-#: apprise_api/api/templates/config.html:46
-#: apprise_api/api/templates/config.html:318
+#: apprise_api/api/templates/config.html:34
+#: apprise_api/api/templates/config.html:41
+#: apprise_api/api/templates/config.html:321
 msgid "Configuration"
 msgstr "配置"
 
@@ -164,136 +168,144 @@ msgstr "配置"
 msgid "From"
 msgstr "从"
 
-#: apprise_api/api/forms.py:309 apprise_api/api/templates/config_list.html:158
+#: apprise_api/api/forms.py:310 apprise_api/api/templates/config_list.html:203
 msgid "Current Configuration ID"
 msgstr "当前配置 ID"
 
-#: apprise_api/api/forms.py:317
+#: apprise_api/api/forms.py:324
 msgid "To"
 msgstr "到"
 
-#: apprise_api/api/forms.py:320 apprise_api/api/templates/config_list.html:173
+#: apprise_api/api/forms.py:327 apprise_api/api/templates/config_list.html:218
 msgid "New Configuration ID"
 msgstr "新配置 ID"
 
-#: apprise_api/api/forms.py:342
+#: apprise_api/api/forms.py:354
 msgid "The configuration ID cannot be changed by a restricted user"
 msgstr "限制用户无法更改配置 ID"
 
-#: apprise_api/api/forms.py:344
+#: apprise_api/api/forms.py:356
 msgid "The destination configuration ID must differ from the source"
 msgstr "目标配置 ID 必须不同于源"
 
-#: apprise_api/api/forms.py:355
+#: apprise_api/api/forms.py:367
 msgid "Process As"
 msgstr "处理方式"
 
-#: apprise_api/api/forms.py:363
+#: apprise_api/api/forms.py:375
 msgid "Type"
 msgstr "类型"
 
-#: apprise_api/api/forms.py:370
+#: apprise_api/api/forms.py:382
 msgid "Title"
 msgstr "标题"
 
-#: apprise_api/api/forms.py:372
+#: apprise_api/api/forms.py:387
 msgid "Optional Title"
 msgstr "可选标题"
 
-#: apprise_api/api/forms.py:378
+#: apprise_api/api/forms.py:394
 msgid "Body"
 msgstr "正文"
 
-#: apprise_api/api/forms.py:379
+#: apprise_api/api/forms.py:395
 msgid "Define your message body here..."
 msgstr "在此定义您的消息正文..."
 
-#: apprise_api/api/forms.py:386
+#: apprise_api/api/forms.py:402
 msgid "Attachment"
 msgstr "附件"
 
-#: apprise_api/api/forms.py:391 apprise_api/api/forms.py:400
-#: apprise_api/api/templates/components/config_reminders_script.html:1346
+#: apprise_api/api/forms.py:407 apprise_api/api/forms.py:416
+#: apprise_api/api/templates/components/config_reminders_script.html:1819
 msgid "Tags"
 msgstr "标签"
 
-#: apprise_api/api/forms.py:392
+#: apprise_api/api/forms.py:408
 msgid "Optional_Tag1, Optional_Tag2, ..."
 msgstr "可选标签1、可选标签2、..."
 
-#: apprise_api/api/forms.py:414
+#: apprise_api/api/forms.py:430
 msgid "One or more template values are invalid"
 msgstr "一个或多个模板值无效"
 
-#: apprise_api/api/responses.py:90
+#: apprise_api/api/responses.py:90 apprise_api/api/views.py:5764
 msgid "JSON Payload provided is too large"
 msgstr "JSON 提供的负载太大"
 
-#: apprise_api/api/responses.py:103
+#: apprise_api/api/responses.py:103 apprise_api/api/views.py:5769
 msgid "Invalid JSON Payload provided"
 msgstr "无效 JSON 提供的负载"
 
-#: apprise_api/api/responses.py:118
+#: apprise_api/api/responses.py:118 apprise_api/api/views.py:5775
 msgid "The JSON payload must be an object"
 msgstr "JSON 负载必须是一个对象"
 
+#: apprise_api/api/scheduler.py:838
+#, python-brace-format
+msgid "Reminders for this configuration were paused because it was not used for {} days"
+msgstr "由于此配置已 {} 天未被使用，其提醒已暂停"
+
 #: apprise_api/api/templates/auth.html:5
-#: apprise_api/api/templates/auth.html:558
-#: apprise_api/api/templates/auth.html:559
-#: apprise_api/api/templates/auth.html:560
-#: apprise_api/api/templates/auth.html:722
-#: apprise_api/api/templates/auth.html:723
-#: apprise_api/api/templates/auth.html:724
-#: apprise_api/api/templates/auth.html:741
-#: apprise_api/api/templates/auth.html:742
-#: apprise_api/api/templates/auth.html:743
-#: apprise_api/api/templates/base.html:1423
-#: apprise_api/api/templates/base.html:1424
-#: apprise_api/api/templates/base.html:1425
-#: apprise_api/api/templates/components/config_id_selector.html:33
+#: apprise_api/api/templates/auth.html:629
+#: apprise_api/api/templates/auth.html:630
+#: apprise_api/api/templates/auth.html:631
+#: apprise_api/api/templates/auth.html:840
+#: apprise_api/api/templates/auth.html:841
+#: apprise_api/api/templates/auth.html:842
+#: apprise_api/api/templates/auth.html:859
+#: apprise_api/api/templates/auth.html:860
+#: apprise_api/api/templates/auth.html:861
+#: apprise_api/api/templates/base.html:1690
+#: apprise_api/api/templates/base.html:1691
+#: apprise_api/api/templates/base.html:1692
 #: apprise_api/api/templates/components/config_id_selector.html:34
 #: apprise_api/api/templates/components/config_id_selector.html:35
-#: apprise_api/api/templates/config.html:3474
-#: apprise_api/api/templates/config.html:3475
-#: apprise_api/api/templates/config.html:3490
-#: apprise_api/api/templates/config_list.html:61
-#: apprise_api/api/templates/config_list.html:62
-#: apprise_api/api/templates/config_list.html:63
-#: apprise_api/api/templates/config_list.html:164
-#: apprise_api/api/templates/config_list.html:165
-#: apprise_api/api/templates/config_list.html:166
-#: apprise_api/api/templates/config_list.html:179
-#: apprise_api/api/templates/config_list.html:180
-#: apprise_api/api/templates/config_list.html:181
-#: apprise_api/api/templates/login.html:67
+#: apprise_api/api/templates/components/config_id_selector.html:36
+#: apprise_api/api/templates/config.html:4037
+#: apprise_api/api/templates/config.html:4038
+#: apprise_api/api/templates/config.html:4053
+#: apprise_api/api/templates/config_list.html:76
+#: apprise_api/api/templates/config_list.html:77
+#: apprise_api/api/templates/config_list.html:78
+#: apprise_api/api/templates/config_list.html:209
+#: apprise_api/api/templates/config_list.html:210
+#: apprise_api/api/templates/config_list.html:211
+#: apprise_api/api/templates/config_list.html:224
+#: apprise_api/api/templates/config_list.html:225
+#: apprise_api/api/templates/config_list.html:226
+#: apprise_api/api/templates/login.html:66
+#: apprise_api/api/templates/reminder_list.html:81
+#: apprise_api/api/templates/reminder_list.html:91
 msgid "Show Config ID"
 msgstr "显示配置 ID"
 
 #: apprise_api/api/templates/auth.html:6
-#: apprise_api/api/templates/auth.html:561
-#: apprise_api/api/templates/auth.html:725
-#: apprise_api/api/templates/auth.html:744
-#: apprise_api/api/templates/base.html:1426
-#: apprise_api/api/templates/components/config_id_selector.html:36
-#: apprise_api/api/templates/config.html:3490
-#: apprise_api/api/templates/config_list.html:64
-#: apprise_api/api/templates/config_list.html:167
-#: apprise_api/api/templates/config_list.html:182
-#: apprise_api/api/templates/login.html:68
+#: apprise_api/api/templates/auth.html:632
+#: apprise_api/api/templates/auth.html:843
+#: apprise_api/api/templates/auth.html:862
+#: apprise_api/api/templates/base.html:1693
+#: apprise_api/api/templates/components/config_id_selector.html:37
+#: apprise_api/api/templates/config.html:4053
+#: apprise_api/api/templates/config_list.html:79
+#: apprise_api/api/templates/config_list.html:212
+#: apprise_api/api/templates/config_list.html:227
+#: apprise_api/api/templates/login.html:67
+#: apprise_api/api/templates/reminder_list.html:92
 msgid "Hide Config ID"
 msgstr "隐藏配置 ID"
 
 #: apprise_api/api/templates/auth.html:8
-#: apprise_api/api/templates/auth.html:487
-#: apprise_api/api/templates/base.html:288
+#: apprise_api/api/templates/auth.html:558
+#: apprise_api/api/templates/base.html:302
 msgid "Authentication"
 msgstr "身份验证"
 
 #: apprise_api/api/templates/auth.html:8
 #: apprise_api/api/templates/auth_disabled.html:6
-#: apprise_api/api/templates/base.html:46
+#: apprise_api/api/templates/base.html:60
 #: apprise_api/api/templates/components/legal_footer.html:7
-#: apprise_api/api/templates/login.html:7
+#: apprise_api/api/templates/login.html:8
 msgid "Apprise API"
 msgstr "Apprise API"
 
@@ -313,345 +325,401 @@ msgstr "配置访问与管理"
 msgid "Manage this configuration's login, permissions, and tools."
 msgstr "管理此配置的登录、权限和工具。"
 
-#: apprise_api/api/templates/auth.html:39
-msgid "Administrator"
-msgstr "管理员"
-
-#: apprise_api/api/templates/auth.html
+#: apprise_api/api/templates/auth.html:40
 msgid "Your Access Level"
 msgstr "你的访问级别"
 
-#: apprise_api/api/templates/auth.html:53
+#: apprise_api/api/templates/auth.html:44
+msgid "Administrator"
+msgstr "管理员"
+
+#: apprise_api/api/templates/auth.html:59
 msgid "Update Credentials"
 msgstr "更新凭证"
 
-#: apprise_api/api/templates/auth.html:55
+#: apprise_api/api/templates/auth.html:61
 msgid "Configuration Login"
 msgstr "配置登录"
 
-#: apprise_api/api/templates/auth.html:60
+#: apprise_api/api/templates/auth.html:66
 msgid "Update the login for this Config ID."
 msgstr "更新此配置 ID 的登录信息。"
 
-#: apprise_api/api/templates/auth.html:62
+#: apprise_api/api/templates/auth.html:68
 msgid "Set the login and permissions for this Config ID."
 msgstr "设置此配置 ID 的登录和权限。"
 
-#: apprise_api/api/templates/auth.html:91
-#: apprise_api/api/templates/auth.html:92
+#: apprise_api/api/templates/auth.html:97
+#: apprise_api/api/templates/auth.html:98
 msgid "Explain Configuration Access Modes"
 msgstr "解释配置访问模式"
 
-#: apprise_api/api/templates/auth.html:100
+#: apprise_api/api/templates/auth.html:108
 #, python-format
 msgid "Saved %(saved)s access is currently enforced as locked by the global configuration lock. It will return if the global lock is removed."
 msgstr "已保存 %(saved)s 的访问当前由全局配置锁定执行。如果移除全局锁，它将恢复。"
 
-#: apprise_api/api/templates/auth.html:132
-#: apprise_api/api/templates/config.html:2953
-#: apprise_api/api/templates/config.html:2960
-#: apprise_api/api/templates/config.html:2967
-msgid "Save"
-msgstr "保存"
-
-#: apprise_api/api/templates/auth.html:152
+#: apprise_api/api/templates/auth.html:143
 msgid "Generate New Credentials"
 msgstr "生成新凭证"
 
-#: apprise_api/api/templates/auth.html
+#: apprise_api/api/templates/auth.html:147
 #, python-format
 msgid "Choose what to generate, then press %(dice)s."
 msgstr "选择要生成的内容，然后按 %(dice)s。"
 
-#: apprise_api/api/templates/auth.html:155
+#: apprise_api/api/templates/auth.html:152
 msgid "Fields to Randomize"
 msgstr "需要随机化的字段"
 
-#: apprise_api/api/templates/auth.html:168
+#: apprise_api/api/templates/auth.html:165
+#: apprise_api/api/templates/auth.html:166
 msgid "Randomize the Selected Fields"
 msgstr "随机化选定的字段"
 
-#: apprise_api/api/templates/auth.html:181
+#: apprise_api/api/templates/auth.html:176
+#: apprise_api/api/templates/config.html:2875
+#: apprise_api/api/templates/config.html:2882
+#: apprise_api/api/templates/config.html:2889
+msgid "Save"
+msgstr "保存"
+
+#: apprise_api/api/templates/auth.html:189
 msgid "Reset Access"
 msgstr "重置访问"
 
-#: apprise_api/api/templates/auth.html:193
-#: apprise_api/api/templates/auth.html:785
+#: apprise_api/api/templates/auth.html:202
+#: apprise_api/api/templates/auth.html:901
 msgid "Move Configuration"
 msgstr "移动配置"
 
-#: apprise_api/api/templates/auth.html:194
+#: apprise_api/api/templates/auth.html:203
 msgid "Transfer this configuration to a different Config ID."
 msgstr "将此配置转移到不同的配置ID。"
 
-#: apprise_api/api/templates/auth.html:222
-#: apprise_api/api/templates/auth.html:223
+#: apprise_api/api/templates/auth.html:231
+#: apprise_api/api/templates/auth.html:232
 msgid "Randomize Destination Config ID"
 msgstr "随机化目标配置ID"
 
-#: apprise_api/api/templates/auth.html:232
-#: apprise_api/api/templates/auth.html:752
-#: apprise_api/api/templates/config_list.html:188
+#: apprise_api/api/templates/auth.html:241
+#: apprise_api/api/templates/auth.html:870
+#: apprise_api/api/templates/config_list.html:233
 msgid "Move"
 msgstr "移动"
 
-#: apprise_api/api/templates/auth.html:271
+#: apprise_api/api/templates/auth.html:260
+msgid "Reminder Limits"
+msgstr "提醒限制"
+
+#: apprise_api/api/templates/auth.html:261
+msgid "How much this Config ID's user may save as reminders."
+msgstr "此配置 ID 的用户可以保存为提醒的量。"
+
+#: apprise_api/api/templates/auth.html:266
+#: apprise_api/api/templates/components/config_reminders_tab.html:21
+msgid "Reminders used"
+msgstr "已用提醒"
+
+#: apprise_api/api/templates/auth.html:267
+#: apprise_api/api/templates/components/config_reminders_tab.html:22
+msgid "Attachment space used"
+msgstr "已用附件空间"
+
+#: apprise_api/api/templates/auth.html:273
+msgid "Most reminders"
+msgstr "提醒数量上限"
+
+#: apprise_api/api/templates/auth.html:277
+msgid "Attachment space (MB)"
+msgstr "附件空间 (MB)"
+
+#: apprise_api/api/templates/auth.html:281
+msgid "Leave a field blank to use the server default. An attachment space of 0 turns uploads off."
+msgstr "留空表示使用服务器默认值。附件空间设为 0 会关闭上传。"
+
+#: apprise_api/api/templates/auth.html:285
+msgid "Save Limits"
+msgstr "保存限制"
+
+#: apprise_api/api/templates/auth.html:329
 #: apprise_api/api/templates/components/config_auth_status.html:8
 msgid "Admin Only"
 msgstr "仅限管理员"
 
-#: apprise_api/api/templates/auth.html:272
+#: apprise_api/api/templates/auth.html:330
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "Admin only: no configuration login is assigned."
 msgstr "仅管理员：未分配任何配置登录。"
 
-#: apprise_api/api/templates/auth.html:276
+#: apprise_api/api/templates/auth.html:334
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "Public: tagged notifications do not require a login."
 msgstr "公开：标记通知不需要登录。"
 
-#: apprise_api/api/templates/auth.html:280
+#: apprise_api/api/templates/auth.html:338
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "Locked: configuration content is restricted."
 msgstr "已锁定：配置内容受限。"
 
-#: apprise_api/api/templates/auth.html:284
+#: apprise_api/api/templates/auth.html:342
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "User: the configuration has its own login."
 msgstr "用户：配置拥有自己的登录。"
 
-#: apprise_api/api/templates/auth.html:288
+#: apprise_api/api/templates/auth.html:346
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "Disabled: only an administrator may use this configuration."
 msgstr "已禁用：仅管理员可以使用此配置。"
 
-#: apprise_api/api/templates/auth.html:291
+#: apprise_api/api/templates/auth.html:349
 #: apprise_api/api/templates/components/config_auth_status.html:8
 msgid "No Authorization"
 msgstr "无授权"
 
-#: apprise_api/api/templates/auth.html:292
+#: apprise_api/api/templates/auth.html:350
 #: apprise_api/api/templates/components/config_auth_status.html:7
 msgid "No authorization is required."
 msgstr "不需要授权。"
 
-#: apprise_api/api/templates/auth.html:329
+#: apprise_api/api/templates/auth.html:395
 msgid "Configuration Access Modes"
 msgstr "配置访问模式"
 
-#: apprise_api/api/templates/auth.html:331
+#: apprise_api/api/templates/auth.html:399
 msgid "Mode"
 msgstr "模式"
 
-#: apprise_api/api/templates/auth.html:331
+#: apprise_api/api/templates/auth.html:399
 #: apprise_api/api/templates/welcome.html:43
 #: apprise_api/api/templates/welcome.html:59
-#: apprise_api/api/templates/welcome.html:286
-#: apprise_api/api/templates/welcome.html:303
-#: apprise_api/api/templates/welcome.html:537
+#: apprise_api/api/templates/welcome.html:290
+#: apprise_api/api/templates/welcome.html:307
+#: apprise_api/api/templates/welcome.html:546
+#: apprise_api/api/templates/welcome.html:799
 msgid "Description"
 msgstr "描述"
 
-#: apprise_api/api/templates/auth.html:370
+#: apprise_api/api/templates/auth.html:401
 msgid "Uses its own login to send notifications and to view and edit the configuration."
 msgstr "使用自己的登录发送通知，并查看和编辑配置。"
 
-#: apprise_api/api/templates/auth.html:370
+#: apprise_api/api/templates/auth.html:401
 msgid "Its user also manages the reminders."
 msgstr "其用户也管理提醒。"
 
-#: apprise_api/api/templates/auth.html:371
+#: apprise_api/api/templates/auth.html:402
 msgid "Uses its own login to send tagged notifications and change its password. The configuration stays hidden."
 msgstr "使用自己的登录发送带标签的通知并更改密码。配置保持隐藏。"
 
-#: apprise_api/api/templates/auth.html:371
-#: apprise_api/api/templates/auth.html:372
+#: apprise_api/api/templates/auth.html:402
+#: apprise_api/api/templates/auth.html:403
 msgid "Only an administrator manages reminders, and they still run."
 msgstr "只有管理员管理提醒，提醒仍会发送。"
 
-#: apprise_api/api/templates/auth.html:372
+#: apprise_api/api/templates/auth.html:403
 msgid "Anyone may send tagged notifications without a login. The configuration and stateless notifications stay protected."
 msgstr "任何人无需登录即可发送带标签的通知。配置和无状态通知仍受保护。"
 
-#: apprise_api/api/templates/auth.html:373
+#: apprise_api/api/templates/auth.html:404
 msgid "Only an administrator may use it. The configuration and login are kept."
 msgstr "只有管理员可以使用。配置和登录会保留。"
 
-#: apprise_api/api/templates/auth.html:373
+#: apprise_api/api/templates/auth.html:404
 msgid "Its reminders are kept, but none run or can be changed."
 msgstr "其提醒会保留，但不会运行，也无法更改。"
 
-#: apprise_api/api/templates/auth.html:337
-#: apprise_api/api/templates/components/mobile_app_dialog.html:18
+#: apprise_api/api/templates/auth.html:406
+#: apprise_api/api/templates/components/mobile_app_dialog.html:21
+#: apprise_api/api/templates/components/reminder_shared_script.html:447
 msgid "Close"
 msgstr "关闭"
 
-#: apprise_api/api/templates/auth.html:435
+#: apprise_api/api/templates/auth.html:502
 msgid "The passwords do not match."
 msgstr "密码不匹配。"
 
-#: apprise_api/api/templates/auth.html:462
-#: apprise_api/api/templates/auth.html:534
+#: apprise_api/api/templates/auth.html:529
+#: apprise_api/api/templates/auth.html:605
 msgid "Authentication could not be saved."
 msgstr "无法保存认证信息。"
 
-#: apprise_api/api/templates/auth.html:483
+#: apprise_api/api/templates/auth.html:554
 msgid "Copy Username, Password, and Config ID to Clipboard"
 msgstr "将用户名、密码和配置 ID 复制到剪贴板"
 
-#: apprise_api/api/templates/auth.html:484
-#: apprise_api/api/templates/components/config_id_selector.html:67
+#: apprise_api/api/templates/auth.html:555
 #: apprise_api/api/templates/components/config_id_selector.html:68
-#: apprise_api/api/templates/config_list.html:77
-#: apprise_api/api/templates/config_list.html:78
+#: apprise_api/api/templates/components/config_id_selector.html:69
+#: apprise_api/api/templates/config_list.html:92
+#: apprise_api/api/templates/config_list.html:93
 msgid "Show Apprise Mobile Quick Config"
 msgstr "显示 Apprise Mobile 快速配置"
 
-#: apprise_api/api/templates/auth.html:489
+#: apprise_api/api/templates/auth.html:560
 msgid "Configuration access saved."
 msgstr "配置访问已保存。"
 
-#: apprise_api/api/templates/auth.html:500
+#: apprise_api/api/templates/auth.html:571
 msgid "Username, password, and Config ID copied to clipboard"
 msgstr "用户名、密码和配置 ID 已复制到剪贴板"
 
-#: apprise_api/api/templates/auth.html:514
-#: apprise_api/api/templates/base.html:1037
+#: apprise_api/api/templates/auth.html:585
+#: apprise_api/api/templates/base.html:1297
 msgid "Scan with Apprise Mobile"
 msgstr "使用 Apprise Mobile 扫描"
 
-#: apprise_api/api/templates/auth.html:517
+#: apprise_api/api/templates/auth.html:588
 msgid "This QR code contains the new password. Save it or share it securely now; the password cannot be shown again."
 msgstr "此二维码包含新密码。请立即保存或安全地分享；密码无法再次显示。"
 
-#: apprise_api/api/templates/auth.html:521
-#: apprise_api/api/templates/base.html:1048
+#: apprise_api/api/templates/auth.html:592
+#: apprise_api/api/templates/base.html:1308
 #: apprise_api/api/tests/test_localization.py:441
 msgid "Show Complete URL"
 msgstr "显示完整 URL"
 
-#: apprise_api/api/templates/auth.html:522
-#: apprise_api/api/templates/base.html:1049
+#: apprise_api/api/templates/auth.html:593
+#: apprise_api/api/templates/base.html:1309
 msgid "Hide Complete URL"
 msgstr "隐藏完整 URL"
 
-#: apprise_api/api/templates/auth.html:523
-#: apprise_api/api/templates/base.html:1050
-#: apprise_api/api/templates/config.html:2596
+#: apprise_api/api/templates/auth.html:594
+#: apprise_api/api/templates/base.html:1310
+#: apprise_api/api/templates/config.html:2510
 msgid "Copy URL to Clipboard"
 msgstr "将 URL 复制到剪贴板"
 
-#: apprise_api/api/templates/auth.html:524
-#: apprise_api/api/templates/base.html:1051
+#: apprise_api/api/templates/auth.html:595
+#: apprise_api/api/templates/base.html:1311
 msgid "Apprise Mobile URL copied to clipboard"
 msgstr "Apprise Mobile URL 已复制到剪贴板"
 
-#: apprise_api/api/templates/auth.html:525
-#: apprise_api/api/templates/base.html:1052
+#: apprise_api/api/templates/auth.html:596
+#: apprise_api/api/templates/base.html:1312
 msgid "This URL is too long to encode as a QR code. Use the copy button above instead."
 msgstr "此 URL 太长，无法编码为二维码。请改用上方的复制按钮。"
 
-#: apprise_api/api/templates/auth.html:546
+#: apprise_api/api/templates/auth.html:617
 msgid "Reset Access or Configuration?"
 msgstr "重置访问或配置？"
 
-#: apprise_api/api/templates/auth.html:549
-msgid "This will reset only the user access currently associated with this configuration:"
-msgstr "这只会重置当前与此配置相关联的用户访问："
-
-#: apprise_api/api/templates/auth.html
-msgid "This will reset the user access and permanently remove the saved configuration of:"
-msgstr "这将重置用户访问权限，并永久删除以下配置的已保存内容："
-
-#: apprise_api/api/templates/auth.html:552
+#: apprise_api/api/templates/auth.html:623
 msgid "Configuration ID"
 msgstr "配置 ID"
 
-#: apprise_api/api/templates/auth.html:574
+#: apprise_api/api/templates/auth.html:646
 msgid "Reset Configuration Too"
 msgstr "重置配置也"
 
-#: apprise_api/api/templates/auth.html:575
+#: apprise_api/api/templates/auth.html:647
 msgid "Also permanently remove its saved notification configuration."
 msgstr "永久删除其已保存的通知配置。"
 
-#: apprise_api/api/templates/auth.html:582
-#: apprise_api/api/templates/auth.html:597
-msgid "Reset User Access"
-msgstr "重置用户访问"
+#: apprise_api/api/templates/auth.html:661
+msgid "Keep Reminders"
+msgstr "保留提醒"
 
-#: apprise_api/api/templates/auth.html:583
-#: apprise_api/api/templates/auth.html:753
-#: apprise_api/api/templates/base.html:1114
-#: apprise_api/api/templates/config_list.html:118
-#: apprise_api/api/templates/config_list.html:189
-msgid "Cancel"
-msgstr "取消"
+#: apprise_api/api/templates/auth.html:662
+msgid "Hand the reminders this user added to the administrator instead of removing them."
+msgstr "将此用户添加的提醒转交给管理员，而不是删除。"
 
-#: apprise_api/api/templates/auth.html:596
+#: apprise_api/api/templates/auth.html:670
+#: apprise_api/api/templates/auth.html:687
 msgid "Reset Access and Configuration"
 msgstr "重置访问和配置"
 
-#: apprise_api/api/templates/auth.html:623
+#: apprise_api/api/templates/auth.html:671
+#: apprise_api/api/templates/auth.html:871
+#: apprise_api/api/templates/base.html:1380
+#: apprise_api/api/templates/components/reminder_shared_script.html:523
+#: apprise_api/api/templates/config.html:529
+#: apprise_api/api/templates/config_list.html:160
+#: apprise_api/api/templates/config_list.html:234
+msgid "Cancel"
+msgstr "取消"
+
+#: apprise_api/api/templates/auth.html:684
+msgid "This will reset the user access and permanently remove the saved configuration of:"
+msgstr "这将重置用户访问权限，并永久删除以下配置的已保存内容："
+
+#: apprise_api/api/templates/auth.html:685
+msgid "This will reset only the user access currently associated with this configuration:"
+msgstr "这只会重置当前与此配置相关联的用户访问："
+
+#: apprise_api/api/templates/auth.html:688
+msgid "Reset User Access"
+msgstr "重置用户访问"
+
+#: apprise_api/api/templates/auth.html:737
 msgid "The access and configuration could not be reset."
 msgstr "无法重置访问和配置。"
 
-#: apprise_api/api/templates/auth.html:624
-#: apprise_api/api/templates/auth.html:656
+#: apprise_api/api/templates/auth.html:738
+#: apprise_api/api/templates/auth.html:775
 msgid "Configuration access could not be reset."
 msgstr "无法重置配置访问。"
 
-#: apprise_api/api/templates/auth.html:647
+#: apprise_api/api/templates/auth.html:766
 msgid "Configuration Reset"
 msgstr "配置重置"
 
-#: apprise_api/api/templates/auth.html:648
+#: apprise_api/api/templates/auth.html:767
 msgid "Authentication Reset"
 msgstr "身份验证重置"
 
-#: apprise_api/api/templates/auth.html:650
+#: apprise_api/api/templates/auth.html:769
 msgid "The user access and saved configuration were removed."
 msgstr "用户访问权限和已保存的配置已被移除。"
 
-#: apprise_api/api/templates/auth.html:651
+#: apprise_api/api/templates/auth.html:770
 msgid "The user access was removed. The saved configuration was kept."
 msgstr "用户访问权限已被移除。已保存的配置被保留。"
 
-#: apprise_api/api/templates/auth.html:703
-#: apprise_api/api/templates/config_list.html:213
+#: apprise_api/api/templates/auth.html:821
+#: apprise_api/api/templates/config_list.html:255
 msgid "A destination configuration ID is required."
 msgstr "需要一个目标配置ID。"
 
-#: apprise_api/api/templates/auth.html:710
+#: apprise_api/api/templates/auth.html:828
 msgid "Move Configuration?"
 msgstr "移动配置？"
 
-#: apprise_api/api/templates/auth.html:713
+#: apprise_api/api/templates/auth.html:831
 msgid "Confirm that you want to move this configuration:"
 msgstr "请确认您要移动此配置："
 
-#: apprise_api/api/templates/auth.html:716
+#: apprise_api/api/templates/auth.html:834
 msgid "From Config ID"
 msgstr "从配置 ID"
 
-#: apprise_api/api/templates/auth.html:731
+#: apprise_api/api/templates/auth.html:849
 msgid "Move To"
 msgstr "移动到"
 
-#: apprise_api/api/templates/auth.html:735
+#: apprise_api/api/templates/auth.html:853
 msgid "To Config ID"
 msgstr "到配置 ID"
 
-#: apprise_api/api/templates/auth.html:776
-#: apprise_api/api/templates/auth.html:798
-#: apprise_api/api/templates/config_list.html:226
-#: apprise_api/api/templates/config_list.html:232
+#: apprise_api/api/templates/auth.html:893
+#: apprise_api/api/templates/auth.html:914
+#: apprise_api/api/templates/config_list.html:268
+#: apprise_api/api/templates/config_list.html:274
 msgid "The configuration could not be moved."
 msgstr "配置无法移动。"
 
-#: apprise_api/api/templates/auth.html:786
+#: apprise_api/api/templates/auth.html:902
 msgid "Configuration moved successfully."
 msgstr "配置移动成功。"
+
+#: apprise_api/api/templates/auth.html:979
+#: apprise_api/api/templates/auth.html:986 apprise_api/api/views.py:7237
+msgid "The limits could not be saved"
+msgstr "无法保存限制"
+
+#: apprise_api/api/templates/auth.html:983
+msgid "Limits saved."
+msgstr "限制已保存。"
 
 #: apprise_api/api/templates/auth_disabled.html:6
 #: apprise_api/api/templates/auth_disabled.html:15
@@ -662,340 +730,342 @@ msgstr "不需要认证"
 msgid "No authentication is required for this hosted version of Apprise."
 msgstr "对于此托管版本的 Apprise 不需要认证。"
 
-#: apprise_api/api/templates/base.html:53
+#: apprise_api/api/templates/base.html:67
 msgid "Administrator Credentials"
 msgstr "管理员凭据"
 
-#: apprise_api/api/templates/base.html:54
+#: apprise_api/api/templates/base.html:68
 msgid "This configuration has no assigned user. As a result, the QR code will use the administrator account."
 msgstr "此配置未分配用户。因此，二维码将使用管理员账户。"
 
-#: apprise_api/api/templates/base.html:78
+#: apprise_api/api/templates/base.html:92
 msgid "APPRISE LIBRARY"
 msgstr "APPRISE LIBRARY"
 
-#: apprise_api/api/templates/base.html:86
-#: apprise_api/api/templates/base.html:90
-#: apprise_api/api/templates/base.html:91
+#: apprise_api/api/templates/base.html:100
+#: apprise_api/api/templates/base.html:104
+#: apprise_api/api/templates/base.html:105
 #: apprise_api/api/tests/test_localization.py:376
 msgid "Language"
 msgstr "语言"
 
-#: apprise_api/api/templates/base.html:102
+#: apprise_api/api/templates/base.html:116
 msgid "Apply"
 msgstr "应用"
 
-#: apprise_api/api/templates/base.html:108
+#: apprise_api/api/templates/base.html:122
 msgid "API HEALTH"
 msgstr "API HEALTH"
 
-#: apprise_api/api/templates/base.html:137
+#: apprise_api/api/templates/base.html:151
 msgid "GitHub"
 msgstr "GitHub"
 
-#: apprise_api/api/templates/base.html:147
+#: apprise_api/api/templates/base.html:161
 msgid "Discord"
 msgstr "Discord"
 
-#: apprise_api/api/templates/base.html:157
+#: apprise_api/api/templates/base.html:171
 msgid "Reddit"
 msgstr "Reddit"
 
-#: apprise_api/api/templates/base.html:166
+#: apprise_api/api/templates/base.html:180
 msgid "Open Apprise Mobile app information"
 msgstr "打开 Apprise Mobile 应用信息"
 
-#: apprise_api/api/templates/base.html:168
+#: apprise_api/api/templates/base.html:182
 msgid "Apprise Mobile"
 msgstr "Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:179
+#: apprise_api/api/templates/base.html:193
 msgid "Toggle light / dark theme"
 msgstr "切换浅色/深色主题"
 
-#: apprise_api/api/templates/base.html:191
+#: apprise_api/api/templates/base.html:205
 msgid "Open Authentication Settings"
 msgstr "打开身份验证设置"
 
-#: apprise_api/api/templates/base.html:201
-#: apprise_api/api/templates/base.html:203
+#: apprise_api/api/templates/base.html:215
+#: apprise_api/api/templates/base.html:217
 msgid "Logout"
 msgstr "注销"
 
-#: apprise_api/api/templates/base.html:224
+#: apprise_api/api/templates/base.html:238
 msgid "If Apprise has been useful to you, please consider supporting its development."
 msgstr "如果 Apprise 对你有帮助，请考虑支持其开发。"
 
-#: apprise_api/api/templates/base.html:228
+#: apprise_api/api/templates/base.html:242
 msgid "GitHub Sponsors"
 msgstr "GitHub 赞助商"
 
-#: apprise_api/api/templates/base.html:232
+#: apprise_api/api/templates/base.html:246
 msgid "PayPal"
 msgstr "PayPal"
 
-#: apprise_api/api/templates/base.html:236
+#: apprise_api/api/templates/base.html:250
 msgid "Dismiss"
 msgstr "关闭"
 
-#: apprise_api/api/templates/base.html:246
-#: apprise_api/api/templates/base.html:247
+#: apprise_api/api/templates/base.html:260
+#: apprise_api/api/templates/base.html:261
 msgid "Open Navigation Menu"
 msgstr "打开导航菜单"
 
-#: apprise_api/api/templates/base.html:261
+#: apprise_api/api/templates/base.html:275
 msgid "Navigation"
 msgstr "导航"
 
-#: apprise_api/api/templates/base.html:264
+#: apprise_api/api/templates/base.html:278
 msgid "Site Controls"
 msgstr "网站控制"
 
-#: apprise_api/api/templates/base.html:271
+#: apprise_api/api/templates/base.html:285
 msgid "Configuration Manager"
 msgstr "配置管理器"
 
-#: apprise_api/api/templates/base.html:278
-#: apprise_api/api/templates/base.html:1402
+#: apprise_api/api/templates/base.html:292
+#: apprise_api/api/templates/base.html:1668
 msgid "New Configuration"
 msgstr "新建配置"
 
-#: apprise_api/api/templates/base.html:296
+#: apprise_api/api/templates/base.html:310
 #: apprise_api/api/templates/config_list.html:8
+#: apprise_api/api/templates/reminder_list.html:47
 msgid "Configuration List"
 msgstr "配置列表"
 
-#: apprise_api/api/templates/base.html:303
+#: apprise_api/api/templates/base.html:320
+#: apprise_api/api/templates/reminder_list.html:10
+msgid "Reminder List"
+msgstr "提醒列表"
+
+#: apprise_api/api/templates/base.html:328
+#: apprise_api/api/templates/details.html:24
 msgid "Available Services"
 msgstr "可用服务"
 
-#: apprise_api/api/templates/details.html
-msgid "Show All"
-msgstr "全部显示"
-
-#: apprise_api/api/templates/details.html
-msgid "Every Apprise service is listed, including the ones this server cannot use."
-msgstr "列出所有 Apprise 服务，包括此服务器无法使用的服务。"
-
-#: apprise_api/api/templates/details.html
-msgid "Only the services this server can use are listed."
-msgstr "仅列出此服务器可以使用的服务。"
-
-#: apprise_api/api/templates/base.html:307
+#: apprise_api/api/templates/base.html:332
 msgid "Docs & Tools"
 msgstr "文档和工具"
 
-#: apprise_api/api/templates/base.html:316
+#: apprise_api/api/templates/base.html:341
 msgid "Notification Services"
 msgstr "通知服务"
 
-#: apprise_api/api/templates/base.html:325
+#: apprise_api/api/templates/base.html:350
 msgid "Configuration Help"
 msgstr "配置帮助"
 
-#: apprise_api/api/templates/base.html:334
+#: apprise_api/api/templates/base.html:359
 msgid "Documentation"
 msgstr "文档"
 
-#: apprise_api/api/templates/base.html:343
+#: apprise_api/api/templates/base.html:368
 #: apprise_api/api/templates/config.html:8
-#: apprise_api/api/templates/config.html:368
-#: apprise_api/api/templates/config.html:370
-#: apprise_api/api/templates/details.html:69
-#: apprise_api/api/templates/details.html:79
-#: apprise_api/api/templates/details.html:89
+#: apprise_api/api/templates/config.html:371
+#: apprise_api/api/templates/config.html:373
+#: apprise_api/api/templates/details.html:169
 msgid "Apprise URL Builder"
 msgstr "Apprise URL 构建器"
 
-#: apprise_api/api/templates/base.html:349
-#: apprise_api/api/templates/components/mobile_app_dialog.html:12
-#: apprise_api/api/templates/login.html:89
+#: apprise_api/api/templates/base.html:374
+#: apprise_api/api/templates/components/mobile_app_dialog.html:15
+#: apprise_api/api/templates/login.html:88
 msgid "Get Apprise Mobile"
 msgstr "获取 Apprise Mobile"
 
-#: apprise_api/api/templates/base.html:352
+#: apprise_api/api/templates/base.html:377
 msgid "Support Development"
 msgstr "支持开发"
 
-#: apprise_api/api/templates/base.html:361
+#: apprise_api/api/templates/base.html:386
 msgid "Buy Developer A Coffee"
 msgstr "请开发者喝咖啡"
 
-#: apprise_api/api/templates/base.html:370
+#: apprise_api/api/templates/base.html:395
 msgid "Sponsor Apprise Development"
 msgstr "赞助 Apprise 开发"
 
-#: apprise_api/api/templates/base.html:381
+#: apprise_api/api/templates/base.html:406
 msgid "Apprise Health Check Failed"
 msgstr "Apprise 健康检查失败"
 
-#: apprise_api/api/templates/base.html:382
+#: apprise_api/api/templates/base.html:407
 msgid "The following issues have been detected with your Apprise instance:"
 msgstr "已检测到您的 Apprise 实例存在以下问题："
 
-#: apprise_api/api/templates/base.html:389
+#: apprise_api/api/templates/base.html:414
 msgid "Notification Delivery Disabled"
 msgstr "通知投递已禁用"
 
-#: apprise_api/api/templates/base.html:392
+#: apprise_api/api/templates/base.html:417
 msgid "Both stateless notifications and persistent storage are disabled. An administrator must enable at least one mode before this server can deliver notifications."
 msgstr "无状态通知和持久存储均被禁用。管理员必须启用至少一种模式，然后此服务器才能发送通知。"
 
-#: apprise_api/api/templates/base.html:400
+#: apprise_api/api/templates/base.html:425
 msgid "Configuration Write Failure"
 msgstr "配置写入失败"
 
-#: apprise_api/api/templates/base.html:402
+#: apprise_api/api/templates/base.html:427
 msgid "Apprise can not write new configuration information to the directory:"
 msgstr "Apprise 无法将新配置信息写入目录："
 
-#: apprise_api/api/templates/base.html:404
-#: apprise_api/api/templates/base.html:428
+#: apprise_api/api/templates/base.html:429
+#: apprise_api/api/templates/base.html:453
 msgid "Path copied to clipboard"
 msgstr "路径已复制到剪贴板"
 
-#: apprise_api/api/templates/base.html:409
-#: apprise_api/api/templates/base.html:433
+#: apprise_api/api/templates/base.html:434
+#: apprise_api/api/templates/base.html:458
 msgid "<em>Note:</em> If this is the expected behavior, pre-set the environment variable shown below and reload your Apprise instance."
 msgstr "<em>注意:</em> 如果这是预期的行为，请预先设置以下显示的环境变量并重新加载您的Apprise实例。"
 
-#: apprise_api/api/templates/base.html:412
-#: apprise_api/api/templates/base.html:436
+#: apprise_api/api/templates/base.html:437
+#: apprise_api/api/templates/base.html:461
 msgid "Environment variable copied to clipboard"
 msgstr "环境变量已复制到剪贴板"
 
-#: apprise_api/api/templates/base.html:422
+#: apprise_api/api/templates/base.html:447
 msgid "Attachment Temporary Storage Write Failure"
 msgstr "附件临时存储写入失败"
 
-#: apprise_api/api/templates/base.html:425
+#: apprise_api/api/templates/base.html:450
 msgid "Apprise can not circulate attachments (if provided) due to not having write access to the directory:"
 msgstr "Apprise 无法传递附件（如果提供）因为没有对目录的写入权限:"
 
-#: apprise_api/api/templates/base.html:443
+#: apprise_api/api/templates/base.html:468
+#: apprise_api/api/templates/config.html:3399
 msgid "More Details"
 msgstr "更多详情"
 
-#: apprise_api/api/templates/base.html:446
+#: apprise_api/api/templates/base.html:471
 msgid "Under most circumstances, the issue(s) identified here are usually related to permission issues. Make sure you set the correct <code>PUID</code> and <code>GUID</code> to reflect the permissions you wish Apprise to utilize when it is reading and writing its files. In addition to this, you may need to make sure the permissions are set correctly on the directories you mapped them too."
 msgstr "在大多数情况下，此处识别的问题通常与权限问题有关。请确保您设置了正确的 <code>PUID</code> 和 <code>GUID</code>，以反映您希望 Apprise 在读取和写入其文件时使用的权限。除此之外，您可能还需要确保映射到的目录权限设置正确。"
 
-#: apprise_api/api/templates/base.html:449
+#: apprise_api/api/templates/base.html:474
 msgid "The issue(s) identified here can also be associated with SELinux. You may wish to rule out SELinux by temporarily disabling it with:"
 msgstr "此处识别的问题也可能与 SELinux 相关。您可能希望通过暂时禁用它来排除 SELinux："
 
-#: apprise_api/api/templates/base.html:452
-#: apprise_api/api/templates/base.html:458
-#: apprise_api/api/templates/config.html:3395
+#: apprise_api/api/templates/base.html:477
+#: apprise_api/api/templates/base.html:483
+#: apprise_api/api/templates/config.html:3958
 msgid "Command copied to clipboard"
 msgstr "命令已复制到剪贴板"
 
-#: apprise_api/api/templates/base.html:456
+#: apprise_api/api/templates/base.html:481
 msgid "You can always re-enable it with:"
 msgstr "您始终可以通过以下方式重新启用它："
 
-#: apprise_api/api/templates/base.html:723
+#: apprise_api/api/templates/base.html:781
 msgid "Log Out?"
 msgstr "注销？"
 
-#: apprise_api/api/templates/base.html:724
+#: apprise_api/api/templates/base.html:782
 msgid "Are you sure you wish to log out?"
 msgstr "您确定要注销吗？"
 
-#: apprise_api/api/templates/base.html:726
-#: apprise_api/api/templates/base.html:1444
+#: apprise_api/api/templates/base.html:784
+#: apprise_api/api/templates/base.html:1711
 msgid "Yes"
 msgstr "是"
 
-#: apprise_api/api/templates/base.html:727
-#: apprise_api/api/templates/base.html:1445
+#: apprise_api/api/templates/base.html:785
+#: apprise_api/api/templates/base.html:1712
 msgid "No"
 msgstr "否"
 
-#: apprise_api/api/templates/base.html:876
+#: apprise_api/api/templates/base.html:1040
 msgid "Abort Current Task?"
 msgstr "中止当前任务？"
 
-#: apprise_api/api/templates/base.html:877
+#: apprise_api/api/templates/base.html:1041
 msgid "Are you sure you wish to abort the current task?"
 msgstr "您确定要中止当前任务吗？"
 
-#: apprise_api/api/templates/base.html:880
+#: apprise_api/api/templates/base.html:1044
 msgid "Abort Task"
 msgstr "中止任务"
 
-#: apprise_api/api/templates/base.html:881
+#: apprise_api/api/templates/base.html:1045
 msgid "Keep Running"
 msgstr "继续运行"
 
-#: apprise_api/api/templates/base.html:987
-#: apprise_api/api/templates/config.html:3461
-#: apprise_api/api/templates/config.html:3484
-#: apprise_api/api/templates/config_list.html:53
+#: apprise_api/api/templates/base.html:1179
+#: apprise_api/api/templates/base.html:1180
+#: apprise_api/api/templates/base.html:1181
+msgid "Show Value"
+msgstr "显示数值"
+
+#: apprise_api/api/templates/base.html:1182
+msgid "Hide Value"
+msgstr "隐藏数值"
+
+#: apprise_api/api/templates/base.html:1202
+#: apprise_api/api/templates/config.html:4024
+#: apprise_api/api/templates/config.html:4047
+#: apprise_api/api/templates/config_list.html:68
+#: apprise_api/api/templates/reminder_list.html:88
 msgid "Config ID hidden"
 msgstr "配置ID已隐藏"
 
-#: apprise_api/api/templates/base.html:1004
+#: apprise_api/api/templates/base.html:1264
 msgid "Config ID copied to clipboard"
 msgstr "配置ID已复制到剪贴板"
 
-#: apprise_api/api/templates/base.html:1029
-#: apprise_api/api/templates/base.html:1057
+#: apprise_api/api/templates/base.html:1289
+#: apprise_api/api/templates/base.html:1317
 msgid "The Apprise Mobile QR code could not be generated."
 msgstr "无法生成Apprise Mobile二维码。"
 
-#: apprise_api/api/templates/base.html:1056
+#: apprise_api/api/templates/base.html:1316
 msgid "Apprise Mobile Quick Config"
 msgstr "Apprise Mobile 快速配置"
 
-#: apprise_api/api/templates/base.html:1102
-#: apprise_api/api/templates/base.html:1466
+#: apprise_api/api/templates/base.html:1364
+#: apprise_api/api/templates/base.html:1733
 msgid "Enter a valid Config ID before continuing."
 msgstr "在继续之前请输入有效的配置ID。"
 
-#: apprise_api/api/templates/base.html:1109
+#: apprise_api/api/templates/base.html:1375
 msgid "Open Configuration"
 msgstr "打开配置"
 
-#: apprise_api/api/templates/base.html:1110
+#: apprise_api/api/templates/base.html:1376
 msgid "This opens a different Config ID. Any unsaved changes on this page will be lost."
 msgstr "这将打开不同的配置ID。此页面上未保存的更改将会丢失。"
 
-#: apprise_api/api/templates/base.html:1113
+#: apprise_api/api/templates/base.html:1379
 msgid "Continue"
 msgstr "继续"
 
-#: apprise_api/api/templates/base.html:1340
-#: apprise_api/api/templates/base.html:1360
+#: apprise_api/api/templates/base.html:1606
+#: apprise_api/api/templates/base.html:1626
 msgid "Unable to reach the Apprise API status endpoint."
 msgstr "无法访问Apprise API 状态端点。"
 
-#: apprise_api/api/templates/base.html:1346
+#: apprise_api/api/templates/base.html:1612
 msgid "Notification delivery is disabled. Enable stateless notifications or persistent storage to resume service."
 msgstr "通知发送已禁用。启用无状态通知或持久存储以恢复服务。"
 
-#: apprise_api/api/templates/base.html:1405
+#: apprise_api/api/templates/base.html:1671
 msgid "Choose a new Config ID. You can edit it or generate another before continuing."
 msgstr "选择新的配置ID。您可以在继续之前编辑它或生成另一个。"
 
-#: apprise_api/api/templates/base.html:1417
+#: apprise_api/api/templates/base.html:1684
 msgid "New Config ID"
 msgstr "新配置ID"
 
-#: apprise_api/api/templates/base.html:1433
-#: apprise_api/api/templates/base.html:1434
+#: apprise_api/api/templates/base.html:1700
+#: apprise_api/api/templates/base.html:1701
 msgid "Generate Another Config ID"
 msgstr "生成另一个配置ID"
 
-#: apprise_api/api/templates/base.html:1439
+#: apprise_api/api/templates/base.html:1706
 msgid "Do you wish to open this configuration?"
 msgstr "您希望打开此配置吗？"
 
-#: apprise_api/api/templates/base.html:1509
-#: apprise_api/api/templates/details.html:235
-#: apprise_api/api/templates/details.html:283
-#: apprise_api/api/templates/welcome.html:776
-#: apprise_api/api/templates/welcome.html:819
+#: apprise_api/api/templates/base.html:1776
+#: apprise_api/api/templates/welcome.html:1051
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
@@ -1026,8 +1096,8 @@ msgstr "它以切换配置或恢复"
 
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:27
 #: apprise_api/api/templates/components/config_id_mismatch_notice.html:28
-#: apprise_api/api/templates/components/config_id_selector.html:49
 #: apprise_api/api/templates/components/config_id_selector.html:50
+#: apprise_api/api/templates/components/config_id_selector.html:51
 msgid "Revert Config ID"
 msgstr "恢复配置ID"
 
@@ -1035,15 +1105,382 @@ msgstr "恢复配置ID"
 msgid "the change."
 msgstr "更改。"
 
-#: apprise_api/api/templates/components/config_id_selector.html:41
 #: apprise_api/api/templates/components/config_id_selector.html:42
+#: apprise_api/api/templates/components/config_id_selector.html:43
 msgid "Open Config ID"
 msgstr "打开配置ID"
 
-#: apprise_api/api/templates/components/config_id_selector.html:58
-#: apprise_api/api/templates/config_list.html:70
+#: apprise_api/api/templates/components/config_id_selector.html:59
+#: apprise_api/api/templates/config_list.html:85
 msgid "Copy Config ID to Clipboard"
 msgstr "将配置ID复制到剪贴板"
+
+#: apprise_api/api/templates/components/config_reminders.html:15
+#: apprise_api/api/templates/components/config_reminders_script.html:2342
+#: apprise_api/api/views.py:5353
+msgid "Reminder"
+msgstr "提醒"
+
+#: apprise_api/api/templates/components/config_reminders.html:30
+#: apprise_api/api/templates/config.html:1186
+#: apprise_api/api/templates/details.html:753
+msgid "Name"
+msgstr "名称"
+
+#: apprise_api/api/templates/components/config_reminders.html:38
+msgid "Send on"
+msgstr "发送时间"
+
+#: apprise_api/api/templates/components/config_reminders.html:40
+msgid "A date"
+msgstr "日期"
+
+#: apprise_api/api/templates/components/config_reminders.html:41
+msgid "A holiday"
+msgstr "节假日"
+
+#: apprise_api/api/templates/components/config_reminders.html:46
+#: apprise_api/api/templates/config.html:343
+msgid "Timezone"
+msgstr "时区"
+
+#: apprise_api/api/templates/components/config_reminders.html:66
+msgid "Country"
+msgstr "国家"
+
+#: apprise_api/api/templates/components/config_reminders.html:84
+msgid "Region"
+msgstr "地区"
+
+#: apprise_api/api/templates/components/config_reminders.html:91
+msgid "Holiday"
+msgstr "节假日"
+
+#: apprise_api/api/templates/components/config_reminders.html:105
+#: apprise_api/api/templates/components/config_reminders.html:106
+msgid "Date and time"
+msgstr "日期和时间"
+
+#: apprise_api/api/templates/components/config_reminders.html:106
+msgid "Starts (optional)"
+msgstr "开始（可选）"
+
+#: apprise_api/api/templates/components/config_reminders.html:113
+msgid "Now"
+msgstr "现在"
+
+#: apprise_api/api/templates/components/config_reminders.html:125
+#: apprise_api/api/templates/components/config_reminders.html:126
+msgid "Previous year"
+msgstr "上一年"
+
+#: apprise_api/api/templates/components/config_reminders.html:133
+#: apprise_api/api/templates/components/config_reminders.html:134
+msgid "Next year"
+msgstr "下一年"
+
+#: apprise_api/api/templates/components/config_reminders.html:150
+msgid "Make recurring"
+msgstr "设为重复"
+
+#: apprise_api/api/templates/components/config_reminders.html:154
+msgid "Ends (optional)"
+msgstr "结束（可选）"
+
+#: apprise_api/api/templates/components/config_reminders.html:160
+msgid "No end date"
+msgstr "无结束日期"
+
+#: apprise_api/api/templates/components/config_reminders.html:171
+msgid "Only this one time changes. Use Clone to start a new repeating reminder from it."
+msgstr "只更改这一次。使用克隆可从此开始一个新的重复提醒。"
+
+#: apprise_api/api/templates/components/config_reminders.html:178
+#: apprise_api/api/templates/components/config_reminders.html:187
+msgid "Every"
+msgstr "每"
+
+#: apprise_api/api/templates/components/config_reminders.html:193
+#: apprise_api/api/templates/components/config_reminders.html:222
+#: apprise_api/api/templates/components/config_reminders_script.html:1046
+msgid "Seconds"
+msgstr "秒"
+
+#: apprise_api/api/templates/components/config_reminders.html:194
+#: apprise_api/api/templates/components/config_reminders.html:223
+msgid "Minutes"
+msgstr "分钟"
+
+#: apprise_api/api/templates/components/config_reminders.html:195
+#: apprise_api/api/templates/components/config_reminders.html:224
+msgid "Hours"
+msgstr "小时"
+
+#: apprise_api/api/templates/components/config_reminders.html:196
+#: apprise_api/api/templates/components/config_reminders.html:225
+#: apprise_api/api/templates/components/config_reminders.html:236
+msgid "Days"
+msgstr "星期"
+
+#: apprise_api/api/templates/components/config_reminders.html:197
+#: apprise_api/api/templates/components/config_reminders.html:226
+msgid "Weeks"
+msgstr "周"
+
+#: apprise_api/api/templates/components/config_reminders.html:198
+#: apprise_api/api/templates/components/config_reminders.html:244
+msgid "Months"
+msgstr "月"
+
+#: apprise_api/api/templates/components/config_reminders.html:199
+msgid "Years"
+msgstr "年"
+
+#: apprise_api/api/templates/components/config_reminders.html:200
+#: apprise_api/api/templates/components/reminder_shared_script.html:20
+msgid "Custom (crontab)"
+msgstr "自定义 (crontab)"
+
+#: apprise_api/api/templates/components/config_reminders.html:208
+#: apprise_api/api/templates/components/config_reminders.html:217
+msgid "Drift"
+msgstr "偏移"
+
+#: apprise_api/api/templates/components/config_reminders.html:252
+msgid "Crontab entry"
+msgstr "crontab 条目"
+
+#: apprise_api/api/templates/components/config_reminders.html:254
+msgid "Five fields: minute, hour, day of the month, month and day of the week."
+msgstr "五个字段：分钟、小时、日、月和星期。"
+
+#: apprise_api/api/templates/components/config_reminders.html:258
+msgid "Upcoming"
+msgstr "即将发送"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:333
+#: apprise_api/api/views.py:5075
+msgid "The end date is before the start"
+msgstr "结束日期早于开始"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:401
+msgid "All regions"
+msgstr "所有地区"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:573
+msgid "No more times after this"
+msgstr "此后不再有时间"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:644
+#: apprise_api/api/views.py:5488
+msgid "This reminder would never be sent"
+msgstr "此提醒永远不会被发送"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:648
+msgid "The end date has already passed, so this reminder will not be sent."
+msgstr "结束日期已过，因此不会发送此提醒。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:649
+msgid "This time has already passed, so the reminder will not be sent."
+msgstr "此时间已过，因此不会发送提醒。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:857
+#: apprise_api/api/templates/components/config_reminders_script.html:872
+msgid "Today"
+msgstr "今天"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:858
+#: apprise_api/api/templates/components/config_reminders_script.html:1043
+#: apprise_api/api/templates/components/list_search.html:17
+#: apprise_api/api/templates/components/list_search.html:18
+msgid "Clear"
+msgstr "清除"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:873
+msgid "Tomorrow"
+msgstr "明天"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:874
+msgid "This Weekend"
+msgstr "本周末"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:877
+msgid "Later This Week"
+msgstr "本周晚些时候"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:878
+msgid "Next Week"
+msgstr "下周"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:881
+msgid "Next Weekend"
+msgstr "下周末"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:884
+#: apprise_api/api/templates/components/config_reminders_script.html:901
+msgid "End of Month"
+msgstr "月底"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:887
+msgid "In a Month"
+msgstr "一个月后"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:898
+msgid "Start Date"
+msgstr "开始日期"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:899
+msgid "A Day Later"
+msgstr "一天后"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:900
+msgid "A Week Later"
+msgstr "一周后"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:904
+msgid "A Month Later"
+msgstr "一个月后"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:905
+msgid "A Year Later"
+msgstr "一年后"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1042
+msgid "Quick Select"
+msgstr "快速选择"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1044
+msgid "Confirm"
+msgstr "确认"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1046
+msgid "Hour"
+msgstr "小时"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1046
+msgid "Minute"
+msgstr "分钟"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1297
+msgid "Choose at least one."
+msgstr "请至少选择一项。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1540
+msgid "Copied into a new reminder. Change what you like, then choose Add Reminder."
+msgstr "已复制为新的提醒。修改所需内容后，选择添加提醒。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1612
+#: apprise_api/api/templates/components/config_reminders_script.html:1628
+#: apprise_api/api/templates/components/reminder_shared_script.html:221
+#: apprise_api/api/templates/components/reminder_shared_script.html:228
+#: apprise_api/api/views.py:6083
+msgid "The reminders could not be saved"
+msgstr "无法保存提醒"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1623
+#: apprise_api/api/templates/components/config_reminders_script.html:1858
+#: apprise_api/api/templates/components/reminder_shared_script.html:352
+#: apprise_api/api/templates/components/reminder_shared_script.html:528
+msgid "Reminder saved."
+msgstr "提醒已保存。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1663
+msgid "No reminders have been added yet."
+msgstr "尚未添加任何提醒。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1793
+msgid "Edit this time"
+msgstr "编辑本次"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1794
+msgid "Edit the series"
+msgstr "编辑整个系列"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1819
+msgid "None (untagged services only)"
+msgstr "无（仅限没有标签的服务）"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1832
+#: apprise_api/api/templates/reminder_list.html:118
+msgid "Series"
+msgstr "系列"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1841
+#: apprise_api/api/templates/components/reminder_shared_script.html:558
+msgid "Paused"
+msgstr "已暂停"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1857
+msgid "Clear this result"
+msgstr "清除此结果"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1870
+#: apprise_api/api/templates/components/reminder_shared_script.html:605
+msgid "Edit"
+msgstr "编辑"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1873
+#: apprise_api/api/templates/components/reminder_shared_script.html:607
+msgid "Clone"
+msgstr "克隆"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:1878
+#: apprise_api/api/templates/components/reminder_shared_script.html:522
+#: apprise_api/api/templates/components/reminder_shared_script.html:613
+#: apprise_api/api/templates/config.html:2908
+#: apprise_api/api/templates/config.html:2915
+#: apprise_api/api/templates/config_list.html:159
+msgid "Delete"
+msgstr "删除"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:2058
+#: apprise_api/api/templates/components/config_reminders_script.html:2118
+msgid "No reminders are due in this period."
+msgstr "此期间没有到期的提醒。"
+
+#: apprise_api/api/templates/components/config_reminders_script.html:2109
+msgid "All"
+msgstr "全部"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:8
+#: apprise_api/api/templates/components/mobile_app_dialog.html:66
+#: apprise_api/api/templates/config.html:63
+#: apprise_api/api/templates/config.html:64
+msgid "Reminders"
+msgstr "提醒"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:9
+msgid "All pre-saved notifications set to be sent at a later time are listed here."
+msgstr "所有已保存并计划稍后发送的通知都列在这里。"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:15
+msgid "The scheduler is not running, so reminders are saved but not sent."
+msgstr "调度程序未运行，因此提醒会被保存但不会发送。"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:35
+#: apprise_api/api/templates/reminder_list.html:44
+msgid "No Reminders Yet"
+msgstr "还没有提醒"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:37
+#, python-format
+msgid "No reminders have been added. Use the %(notify_chip)s section to add one."
+msgstr "尚未添加任何提醒。请使用 %(notify_chip)s 部分添加。"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:41
+msgid "Show times in"
+msgstr "显示时间的时区"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:62
+#: apprise_api/api/templates/components/config_reminders_tab.html:63
+msgid "Use my timezone"
+msgstr "使用我的时区"
+
+#: apprise_api/api/templates/components/config_reminders_tab.html:77
+#: apprise_api/api/templates/config.html:686
+#: apprise_api/api/templates/config.html:688
+msgid "Add Reminder"
+msgstr "添加提醒"
 
 #: apprise_api/api/templates/components/legal_footer.html:11
 #, python-format
@@ -1055,61 +1492,140 @@ msgstr ""
 "\n"
 "根据%(license)s许可证授权。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:11
+#: apprise_api/api/templates/components/list_more.html:11
+msgid "Show More"
+msgstr "显示更多"
+
+#: apprise_api/api/templates/components/mobile_app_dialog.html:14
 msgid "Android / iOS App"
 msgstr "Android / iOS 应用"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:27
+#: apprise_api/api/templates/components/mobile_app_dialog.html:31
 msgid "Apprise Mobile connects your Android or iOS device to this server. Send a message, a photo you just took, or any file to one destination, a group, or everything you have configured."
 msgstr "使您的Android / iOS设备连接到此服务器。发送消息、刚拍的照片或任何文件到一个目的地、一个群组，或您配置的所有内容。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:30
+#: apprise_api/api/templates/components/mobile_app_dialog.html:35
 msgid "Send notifications and attachments from your phone."
 msgstr "从手机发送通知和附件。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:31
+#: apprise_api/api/templates/components/mobile_app_dialog.html:36
 msgid "Scan the Apprise Mobile Quick Setup QR code to add this server and load a configuration."
 msgstr "扫描Apprise Mobile快速设置二维码以添加此服务器并加载配置。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:32
+#: apprise_api/api/templates/components/mobile_app_dialog.html:37
 msgid "Review your remote configurations and follow every delivery report."
 msgstr "审查您的远程配置并跟踪每个交付报告。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:38
+#: apprise_api/api/templates/components/mobile_app_dialog.html:45
 msgid "Learn More"
 msgstr "了解更多信息。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:41
+#: apprise_api/api/templates/components/mobile_app_dialog.html:50
 msgid "Preview the App"
 msgstr "预览应用。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:45
+#: apprise_api/api/templates/components/mobile_app_dialog.html:54
 msgid "Apprise Mobile dashboard"
 msgstr "Apprise Mobile仪表板。"
+
+#: apprise_api/api/templates/components/mobile_app_dialog.html:58
+msgid "Dashboard"
+msgstr "仪表盘"
 
 #: apprise_api/api/templates/components/mobile_app_dialog.html:62
 msgid "Apprise Mobile reminders"
 msgstr "Apprise Mobile 提醒"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:49
-msgid "Dashboard"
-msgstr "仪表盘"
-
-#: apprise_api/api/templates/components/mobile_app_dialog.html:53
+#: apprise_api/api/templates/components/mobile_app_dialog.html:70
 msgid "Apprise Mobile URL Builder"
 msgstr "Apprise Mobile URL构建器。"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:57
+#: apprise_api/api/templates/components/mobile_app_dialog.html:74
 msgid "URL Builder"
 msgstr "URL 构建器"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:61
+#: apprise_api/api/templates/components/mobile_app_dialog.html:78
 msgid "Apprise Mobile delivery report"
 msgstr "Apprise Mobile 交付报告"
 
-#: apprise_api/api/templates/components/mobile_app_dialog.html:65
+#: apprise_api/api/templates/components/mobile_app_dialog.html:82
 msgid "Delivery Report"
 msgstr "发送报告"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:10
+#: apprise_api/api/templates/config.html:1087
+#: apprise_api/api/templates/config.html:2597
+#: apprise_api/api/templates/config.html:2616
+#: apprise_api/api/templates/config.html:3791
+#: apprise_api/api/templates/config.html:3813
+msgid "Notification"
+msgstr "通知"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:11
+#: apprise_api/api/templates/config.html:1088
+msgid "Delivery Response"
+msgstr "发送响应"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:12
+msgid "Sending notification(s)…"
+msgstr "正在发送通知…"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:13
+msgid "Successfully sent the notification(s)."
+msgstr "已成功发送通知。"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:14
+msgid "One or more of the notification(s) were not sent."
+msgstr "一条或多条通知未发送。"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:15
+msgid "Failed to send the notification(s)."
+msgstr "发送通知失败。"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:51
+msgid "The server could not start a live notification stream."
+msgstr "服务器无法启动实时通知流。"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:54
+msgid "This browser cannot display the live notification stream."
+msgstr "此浏览器无法显示实时通知流。"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:96
+msgid "The live notification stream ended unexpectedly."
+msgstr "实时通知流意外结束。"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:114
+msgid "Copy Logs"
+msgstr "复制日志"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:119
+msgid "Waiting for log activity…"
+msgstr "等待日志活动…"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:156
+msgid "Notification service"
+msgstr "通知服务"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:173
+msgid "Service"
+msgstr "服务"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:178
+msgid "BEGIN APPRISE NOTIFICATION LOG"
+msgstr "BEGIN APPRISE NOTIFICATION LOG"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:180
+msgid "END APPRISE NOTIFICATION LOG"
+msgstr "END APPRISE NOTIFICATION LOG"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:204
+#, python-brace-format
+msgid "Events: {}"
+msgstr "事件：{}"
+
+#: apprise_api/api/templates/components/notify_stream_script.html:212
+msgid "Notification logs copied to clipboard"
+msgstr "通知日志已复制到剪贴板"
 
 #: apprise_api/api/templates/components/qr_password_note.html:4
 msgid "Saved passwords are not included. Apprise Mobile will ask for one when required."
@@ -1119,61 +1635,272 @@ msgstr "已保存的密码不包括在内。Apprise Mobile将在需要时要求�
 msgid "Why?"
 msgstr "为什么？"
 
+#: apprise_api/api/templates/components/reminder_pick_actions.html:9
+#: apprise_api/api/templates/components/reminder_pick_actions.html:10
+msgid "Select all"
+msgstr "全选"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:16
+#: apprise_api/api/templates/components/reminder_pick_actions.html:17
+msgid "Select none"
+msgstr "全不选"
+
+#: apprise_api/api/templates/components/reminder_pick_actions.html:23
+#: apprise_api/api/templates/components/reminder_pick_actions.html:24
+msgid "Invert selection"
+msgstr "反选"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:18
+msgid "Once"
+msgstr "一次"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:19
+msgid "On a holiday"
+msgstr "在节假日"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+msgid "Every second"
+msgstr "每秒"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:25
+#, python-brace-format
+msgid "Every {} seconds"
+msgstr "每 {} 秒"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+msgid "Every minute"
+msgstr "每分钟"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:26
+#, python-brace-format
+msgid "Every {} minutes"
+msgstr "每 {} 分钟"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+msgid "Every hour"
+msgstr "每小时"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:27
+#, python-brace-format
+msgid "Every {} hours"
+msgstr "每 {} 小时"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+msgid "Every day"
+msgstr "每天"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:28
+#, python-brace-format
+msgid "Every {} days"
+msgstr "每 {} 天"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:29
+msgid "Every week"
+msgstr "每周"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:29
+#, python-brace-format
+msgid "Every {} weeks"
+msgstr "每 {} 周"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:30
+msgid "Every month"
+msgstr "每月"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:30
+#, python-brace-format
+msgid "Every {} months"
+msgstr "每 {} 个月"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:31
+msgid "Every year"
+msgstr "每年"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:31
+#, python-brace-format
+msgid "Every {} years"
+msgstr "每 {} 年"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:42
+msgid "Skipped: it was too late to send"
+msgstr "已跳过：发送已太迟"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:43
+msgid "Paused: this configuration was not used for a while"
+msgstr "已暂停：此配置已有一段时间未被使用"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:44
+msgid "Failed: this server no longer allows URLs in reminders"
+msgstr "失败：此服务器不再允许在提醒中使用 URL"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:45
+msgid "Failed: no configuration was found"
+msgstr "失败：未找到配置"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:46
+msgid "Failed: its attachments could not be used"
+msgstr "失败：无法使用其附件"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:47
+msgid "Failed: an error stopped the send"
+msgstr "失败：发生错误，发送已停止"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:204
+#: apprise_api/api/templates/components/reminder_shared_script.html:211
+#: apprise_api/api/views.py:6078
+msgid "The reminders could not be read"
+msgstr "无法读取提醒"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:334
+msgid "Sent"
+msgstr "已发送"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:334
+msgid "Failed"
+msgstr "失败"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:341
+msgid "Resume"
+msgstr "恢复"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:341
+msgid "Pause"
+msgstr "暂停"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:343
+msgid "Resume Series"
+msgstr "恢复系列"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:343
+msgid "Pause Series"
+msgstr "暂停系列"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:361
+msgid "Send Now"
+msgstr "立即发送"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:380
+#: apprise_api/api/templates/components/reminder_shared_script.html:388
+msgid "The diagnostics could not be read"
+msgstr "无法读取诊断信息"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:393
+msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
+msgstr "将此内容粘贴到支持工单中，以帮助追踪此提醒。其中不包含消息，URL 中的密码已隐藏。“已脱敏”还会隐藏其名称、标签和 URL。"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:400
+msgid "How to read these diagnostics"
+msgstr "如何阅读这些诊断信息"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:407
+msgid "Redacted"
+msgstr "已脱敏"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:430
+#: apprise_api/api/templates/components/reminder_shared_script.html:457
+msgid "Diagnostics"
+msgstr "诊断"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:446
+msgid "Copy"
+msgstr "复制"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:507
+msgid "Delete Entry removes only this time. Delete Series removes the reminder and every time."
+msgstr "“删除此项”只删除这一次。“删除系列”删除该提醒及其所有时间。"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:513
+msgid "Delete this reminder?"
+msgstr "删除此提醒？"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:521
+msgid "Delete Entry"
+msgstr "删除此项"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:522
+msgid "Delete Series"
+msgstr "删除系列"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:533
+msgid "Reminder removed."
+msgstr "提醒已删除。"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:558
+msgid "Finished"
+msgstr "已完成"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:558
+msgid "Active"
+msgstr "已启用"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:563
+msgid "Repeat"
+msgstr "重复"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:570
+msgid "Next"
+msgstr "下次"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:572
+msgid "Last"
+msgstr "上次"
+
+#: apprise_api/api/templates/components/reminder_shared_script.html:575
+#: apprise_api/api/templates/config.html:649
+msgid "Attachments"
+msgstr "附件"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:12
+msgid "Attachment Space Full"
+msgstr "附件空间已满"
+
+#: apprise_api/api/templates/components/reminder_space_full.html:14
+msgid "Your reminders use all of their attachment space. Remove attachments from them, or ask the administrator for more space, to add new ones. Sending notifications is not affected."
+msgstr "你的提醒已用完全部附件空间。若要添加新附件，请从提醒中移除一些附件，或请管理员增加空间。发送通知不受影响。"
+
 #: apprise_api/api/templates/config.html:9
-#: apprise_api/api/templates/config.html:50
-#: apprise_api/api/templates/config.html:58
+#: apprise_api/api/templates/config.html:44
+#: apprise_api/api/templates/config.html:51
 msgid "Review"
 msgstr "查看"
 
 #: apprise_api/api/templates/config.html:10
-#: apprise_api/api/templates/config.html:62
-#: apprise_api/api/templates/config.html:63
-#: apprise_api/api/templates/config.html:64
-#: apprise_api/api/templates/config.html:481
+#: apprise_api/api/templates/config.html:54
+#: apprise_api/api/templates/config.html:55
+#: apprise_api/api/templates/config.html:484
 msgid "Notifications"
 msgstr "通知"
 
-#: apprise_api/api/templates/config.html:31
-#: apprise_api/api/templates/config.html:32
-#: apprise_api/api/templates/config.html:33
+#: apprise_api/api/templates/config.html:29
+#: apprise_api/api/templates/config.html:30
 msgid "Overview"
 msgstr "概述"
 
-#: apprise_api/api/templates/config.html:39
-#: apprise_api/api/templates/config.html:51
-msgid "Configuration is unlocked"
-msgstr "配置已解锁"
-
-#: apprise_api/api/templates/config.html:39
-#: apprise_api/api/templates/config.html:51
-msgid "Configuration is locked by the administrator"
-msgstr "配置已被管理员锁定"
-
-#: apprise_api/api/templates/config.html:76
+#: apprise_api/api/templates/config.html:77
 msgid "Getting Started"
 msgstr "入门"
 
-#: apprise_api/api/templates/config.html:81
+#: apprise_api/api/templates/config.html:82
 msgid "Verify your Apprise API Status:"
 msgstr "验证您的 Apprise API 状态："
 
-#: apprise_api/api/templates/config.html:103
+#: apprise_api/api/templates/config.html:104
 msgid "The following is your Apprise Configuration ID:"
 msgstr "以下是您的 Apprise 配置 ID："
 
-#: apprise_api/api/templates/config.html:105
+#: apprise_api/api/templates/config.html:106
 msgid "Apprise configuration ID copied to clipboard"
 msgstr "Apprise 配置 ID 已复制到剪贴板"
 
-#: apprise_api/api/templates/config.html:109
+#: apprise_api/api/templates/config.html:110
 msgid "For some examples on how to build a development environment around this:"
 msgstr "有关如何围绕此构建开发环境的一些示例："
 
-#: apprise_api/api/templates/config.html:109
+#: apprise_api/api/templates/config.html:110
 msgid "click here"
 msgstr "点击这里"
 
-#: apprise_api/api/templates/config.html:113
+#: apprise_api/api/templates/config.html:114
 msgid ""
 "\n"
 "              In the future you can return to this configuration screen at any time by placing the following into your browser:\n"
@@ -1182,11 +1909,11 @@ msgstr ""
 "\n"
 "在将来，您可以随时通过将以下内容放入您的浏览器来返回此配置屏幕："
 
-#: apprise_api/api/templates/config.html:117
+#: apprise_api/api/templates/config.html:118
 msgid "Apprise Configuration URL copied to clipboard"
 msgstr "Apprise 配置 URL 已复制到剪贴板"
 
-#: apprise_api/api/templates/config.html:124
+#: apprise_api/api/templates/config.html:125
 #, python-format
 msgid ""
 "\n"
@@ -1196,7 +1923,7 @@ msgstr ""
 "\n"
 "使用 %(config_chip)s 部分来准备并保存您的 Apprise 配置。"
 
-#: apprise_api/api/templates/config.html:129
+#: apprise_api/api/templates/config.html:130
 #, python-format
 msgid ""
 "\n"
@@ -1207,7 +1934,7 @@ msgstr ""
 "\n"
 "<i class=\"material-icons\">lightbulb_outline</i> 如果您在组装 URL 时遇到问题，可以随时参考 %(builder_chip)s。"
 
-#: apprise_api/api/templates/config.html:136
+#: apprise_api/api/templates/config.html:137
 #, python-format
 msgid ""
 "\n"
@@ -1217,7 +1944,7 @@ msgstr ""
 "\n"
 "使用 %(review_chip)s 部分来查看从您定义的配置中解析/检测到的内容。"
 
-#: apprise_api/api/templates/config.html:142
+#: apprise_api/api/templates/config.html:143
 #, python-format
 msgid ""
 "\n"
@@ -1227,7 +1954,7 @@ msgstr ""
 "\n"
 "使用 %(notify_chip)s 部分来测试您保存的配置。"
 
-#: apprise_api/api/templates/config.html:147
+#: apprise_api/api/templates/config.html:148
 #, python-format
 msgid ""
 "\n"
@@ -1238,40 +1965,40 @@ msgstr ""
 "\n"
 "<i class=\"material-icons\">lightbulb_outline</i>：在%(notify_chip)s标签中提供的数字还会显示在使用此部分时将发送多少通知（基于提供的标签/配置）。"
 
-#: apprise_api/api/templates/config.html:160
+#: apprise_api/api/templates/config.html:161
 msgid "Apprise Mobile Quick Setup"
 msgstr "Apprise Mobile 快速设置"
 
-#: apprise_api/api/templates/config.html:162
+#: apprise_api/api/templates/config.html:163
 #, python-format
 msgid "Reveal and scan this code to easily load this configuration into your %(mobile_app_link)s."
 msgstr "显示并扫描此代码即可轻松将此配置加载到您的%(mobile_app_link)s中。"
 
-#: apprise_api/api/templates/config.html:171
 #: apprise_api/api/templates/config.html:172
-#: apprise_api/api/templates/config.html:640
+#: apprise_api/api/templates/config.html:173
+#: apprise_api/api/templates/config.html:773
 msgid "Reveal QR Code"
 msgstr "显示二维码"
 
-#: apprise_api/api/templates/config.html:181
+#: apprise_api/api/templates/config.html:182
 msgid "Click here to reveal QR Code"
 msgstr "点击此处显示二维码"
 
-#: apprise_api/api/templates/config.html:186
-#: apprise_api/api/templates/config.html:615
+#: apprise_api/api/templates/config.html:187
+#: apprise_api/api/templates/config.html:748
 msgid "The QR code could not be loaded."
 msgstr "二维码无法加载。"
 
-#: apprise_api/api/templates/config.html:204
+#: apprise_api/api/templates/config.html:205
 #, python-format
 msgid "Need the app? Get %(mobile_app_link)s for Android or iOS."
 msgstr "需要应用？获取%(mobile_app_link)s用于Android / iOS。"
 
-#: apprise_api/api/templates/config.html:212
+#: apprise_api/api/templates/config.html:213
 msgid "Apprise Configuration is Locked"
 msgstr "Apprise 配置已锁定"
 
-#: apprise_api/api/templates/config.html:215
+#: apprise_api/api/templates/config.html:216
 msgid ""
 "At this time, the administrator of this server has locked down all configuration. This means\n"
 "          That pre-created configuration is securely hidden for the purpose of notification transmission only.\n"
@@ -1280,29 +2007,29 @@ msgid ""
 "          "
 msgstr "此时，服务器的管理员已锁定所有配置。这意味着预先创建的配置已被安全隐藏，仅用于通知传输。无法设置新配置，也无法修改或查看现有配置。"
 
-#: apprise_api/api/templates/config.html:226
+#: apprise_api/api/templates/config.html:227
 msgid "Working Remotely With Your Configuration"
 msgstr "使用您的配置进行远程工作"
 
-#: apprise_api/api/templates/config.html:228
+#: apprise_api/api/templates/config.html:229
 msgid "Using The Apprise CLI"
 msgstr "使用 Apprise CLI"
 
-#: apprise_api/api/templates/config.html:230
+#: apprise_api/api/templates/config.html:231
 msgid "The following command would cause apprise to directly notify all of your services:"
 msgstr "以下命令将导致 apprise 直接通知您所有的服务："
 
-#: apprise_api/api/templates/config.html:237
+#: apprise_api/api/templates/config.html:238
 msgid "Send one or more attachments like this:"
 msgstr "像这样发送一个或多个附件："
 
-#: apprise_api/api/templates/config.html:248
+#: apprise_api/api/templates/config.html:249
 msgid ""
 "The following command would cause apprise to retrieve the configuration loaded and\n"
 "          send a test notification to all of your added services:"
 msgstr "以下命令将导致 apprise 检索已加载的配置并向您添加的所有服务发送测试通知："
 
-#: apprise_api/api/templates/config.html:256
+#: apprise_api/api/templates/config.html:257
 msgid "You may also create an <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise configuration file</a> that contains this line somewhere in it:"
 msgstr "您也可以创建一个 <a href=\"https://appriseit.com/cli/usage/#default-configuration-locations\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Apprise 配置文件</a>，其中某处包含以下行："
 
@@ -1310,123 +2037,119 @@ msgstr "您也可以创建一个 <a href=\"https://appriseit.com/cli/usage/#defa
 msgid "Apprise configuration 'include' entry copied to clipboard"
 msgstr "Apprise 配置 'include' 条目已复制到剪贴板"
 
-#: apprise_api/api/templates/config.html:262
+#: apprise_api/api/templates/config.html:265
 msgid "By leveraging the <em>include</em> directive, it will automatically be referenced for future calls to the <code>apprise</code> tool. All future calls using Apprise now simplify to:"
 msgstr "通过利用 <em>include</em> 指令，它将自动在将来对 <code>apprise</code> 工具的调用中被引用。 所有使用 Apprise 的未来调用现在简化为："
 
-#: apprise_api/api/templates/config.html:268
+#: apprise_api/api/templates/config.html:271
 msgid "Using CURL"
 msgstr "使用 CURL"
 
-#: apprise_api/api/templates/config.html:270
+#: apprise_api/api/templates/config.html:273
 msgid "The following command would cause the Apprise API to notify all of your services:"
 msgstr "以下命令将使 Apprise API 通知您所有的服务："
 
-#: apprise_api/api/templates/config.html:280
+#: apprise_api/api/templates/config.html:283
 msgid "When sending attachments, <code>curl</code> requires all local files be prefixed with <code>@</code>. You can an add attachment like this:"
 msgstr "发送附件时，<code>curl</code>要求所有本地文件都必须以<code>@</code>为前缀。你可以这样添加附件："
 
-#: apprise_api/api/templates/config.html:290
+#: apprise_api/api/templates/config.html:293
 msgid "When sending more than one attachment, you must uniquely assign each attachment to a new ID.  The example below leverages <code>attach1</code> and <code>attach2</code>:"
 msgstr "当发送多个附件时，必须为每个附件唯一分配一个新的ID。下面的示例使用了<code>attach1</code>和<code>attach2</code>:"
 
-#: apprise_api/api/templates/config.html:301
+#: apprise_api/api/templates/config.html:304
 msgid "Sends a notification to our endpoints with an attachment and no body specified:"
 msgstr "向我们的端点发送一个有附件但未指定正文的通知："
 
-#: apprise_api/api/templates/config.html:319
+#: apprise_api/api/templates/config.html:322
 msgid "Define your configuration below:"
 msgstr "在下面定义你的配置："
 
-#: apprise_api/api/templates/config.html:323
+#: apprise_api/api/templates/config.html:326
 msgid "Configuration file times"
 msgstr "配置文件时间"
 
-#: apprise_api/api/templates/config.html:326
+#: apprise_api/api/templates/config.html:329
 msgid "Created"
 msgstr "创建时间"
 
-#: apprise_api/api/templates/config.html:333
+#: apprise_api/api/templates/config.html:336
 msgid "Modified"
 msgstr "修改时间"
 
-#: apprise_api/api/templates/config.html:340
-msgid "Timezone"
-msgstr "时区"
-
-#: apprise_api/api/templates/config.html:385
+#: apprise_api/api/templates/config.html:388
 msgid "Save Configuration"
 msgstr "保存配置"
 
-#: apprise_api/api/templates/config.html:395
-#: apprise_api/api/templates/config.html:470
+#: apprise_api/api/templates/config.html:398
+#: apprise_api/api/templates/config.html:473
 msgid "Your Configuration Is Locked"
 msgstr "你的配置已锁定"
 
-#: apprise_api/api/templates/config.html:396
-#: apprise_api/api/templates/config.html:471
+#: apprise_api/api/templates/config.html:399
+#: apprise_api/api/templates/config.html:474
 msgid "Access to your configuration has been disabled by your administrator."
 msgstr "您的管理员已禁用您访问配置的权限。"
 
-#: apprise_api/api/templates/config.html:410
+#: apprise_api/api/templates/config.html:413
 #, python-format
 msgid "Once you have successfully loaded <i>at least one Apprise URL</i> on the %(config_chip)s section, your loaded entries will display here."
 msgstr "一旦您在 %(config_chip)s 部分成功加载了至少一个 <i>Apprise URL</i>，您的已加载条目将显示在此处。"
 
-#: apprise_api/api/templates/config.html:418
+#: apprise_api/api/templates/config.html:421
 msgid "Loaded Configuration"
 msgstr "已加载的配置"
 
-#: apprise_api/api/templates/config.html:421
 #: apprise_api/api/templates/config.html:424
+#: apprise_api/api/templates/config.html:427
 msgid "Show only selected notification services"
 msgstr "仅显示已选择的通知服务"
 
-#: apprise_api/api/templates/config.html:431
+#: apprise_api/api/templates/config.html:434
 msgid "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> notification(s) selected for sending</span>"
 msgstr "<span class=\"loaded-config-heading-status-text\"><span class=\"card-count\" data-count-format=\"plain\">0</span> 个通知已选择发送</span>"
 
-#: apprise_api/api/templates/config.html:443
+#: apprise_api/api/templates/config.html:446
 msgid "Unsaved Configuration Changes"
 msgstr "未保存的配置更改"
 
-#: apprise_api/api/templates/config.html:445
+#: apprise_api/api/templates/config.html:448
 #, python-format
 msgid "The entries below were parsed from the configuration that was last saved, so they may not reflect your recent edits. Save them in the %(config_chip)s section to see the result here."
 msgstr "下面的条目是从上次保存的配置解析的，因此可能无法反映您的最近编辑。将它们保存在 %(config_chip)s 部分以在此处查看结果。"
 
-#: apprise_api/api/templates/config.html:449
+#: apprise_api/api/templates/config.html:452
 msgid "Review the parsed destinations below before sending."
 msgstr "在发送前请查看下面解析的目的地。"
 
-#: apprise_api/api/templates/config.html:451
+#: apprise_api/api/templates/config.html:454
 #, python-format
 msgid "Select a tag (🏷️) on any entry to include it in %(notify_chip)s."
 msgstr "在任何条目上选择一个标签（🏷️）以将其包含在 %(notify_chip)s 中。"
 
-#: apprise_api/api/templates/config.html:454
+#: apprise_api/api/templates/config.html:457
 #, python-format
 msgid "Use %(send_icon)s to run a quick test and inspect the full debug output for that entry."
 msgstr "使用 %(send_icon)s 运行快速测试并检查该条目的完整调试输出。"
 
-#: apprise_api/api/templates/config.html:457
+#: apprise_api/api/templates/config.html:460
 #, python-format
 msgid "Need more destinations? Add or update them in %(config_chip)s."
 msgstr "需要更多目的地吗？在 %(config_chip)s 中添加或更新它们。"
 
-#: apprise_api/api/templates/config.html:482
+#: apprise_api/api/templates/config.html:485
 msgid "You can send a notification using the loaded configuration:"
 msgstr "您可以使用加载的配置发送通知："
 
-#: apprise_api/api/templates/config.html:492
+#: apprise_api/api/templates/config.html:495
 msgid "No Notification Targets Selected"
 msgstr "未选择通知目标"
 
-#: apprise_api/api/templates/config.html:495
+#: apprise_api/api/templates/config.html:498
 msgid "Choose at least one tag. The saved destinations stay hidden while configuration locking is enabled."
 msgstr "至少选择一个标签。在启用配置锁定时，已保存的目的地会保持隐藏。"
 
-#: apprise_api/api/templates/config.html:497
+#: apprise_api/api/templates/config.html:500
 #, python-format
 msgid ""
 "\n"
@@ -1436,371 +2159,402 @@ msgstr ""
 "\n"
 "从 <strong class=\"notify-target-keyword\">Tags 下拉菜单 </strong> 中选择一个或多个标签，从 %(review_chip)s 部分选择目标条目，或在 %(config_chip)s 部分添加更多条目。"
 
-#: apprise_api/api/templates/config.html:508
+#: apprise_api/api/templates/config.html:521
+#: apprise_api/api/templates/config.html:522
+msgid "Editing reminder"
+msgstr "正在编辑提醒"
+
+#: apprise_api/api/templates/config.html:522
+msgid "Editing one time of"
+msgstr "正在编辑其中一次"
+
+#: apprise_api/api/templates/config.html:539
 msgid "Delivery Options"
 msgstr "交付选项"
 
-#: apprise_api/api/templates/config.html:538
-#: apprise_api/api/templates/config.html:1201
+#: apprise_api/api/templates/config.html:570
+msgid "Apprise URLs"
+msgstr "Apprise URL"
+
+#: apprise_api/api/templates/config.html:572
+msgid "Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
+msgstr "可选：直接指定要通知的 Apprise URL。<a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">点击此处</a>，借助 Apprise URL Builder 构建您的 URL。"
+
+#: apprise_api/api/templates/config.html:580
+#: apprise_api/api/templates/config.html:659
+msgid "Add URL"
+msgstr "添加 URL"
+
+#: apprise_api/api/templates/config.html:594
+msgid "Also send to untagged services"
+msgstr "同时发送到没有标签的服务"
+
+#: apprise_api/api/templates/config.html:605
+#: apprise_api/api/templates/config.html:1005
 msgid "Template Values"
 msgstr "模板值"
 
-#: apprise_api/api/templates/config.html:539
+#: apprise_api/api/templates/config.html:606
 msgid "Rows with a value are sent; blank values use the server fallback (if defined)."
 msgstr "有值的行会发送；空白值使用服务器回退（如果已定义）。"
 
-#: apprise_api/api/templates/config.html:545
+#: apprise_api/api/templates/config.html:613
+#: apprise_api/api/templates/details.html:801
 msgid "Add Value"
 msgstr "添加值"
 
-#: apprise_api/api/templates/config.html:553
+#: apprise_api/api/templates/config.html:625
 msgid "Message"
 msgstr "消息"
 
-#: apprise_api/api/templates/config.html:571
+#: apprise_api/api/templates/config.html:650
+msgid "Upload files, or add web addresses that are downloaded each time the message is sent."
+msgstr "上传文件，或添加每次发送消息时都会下载的网址。"
+
+#: apprise_api/api/templates/config.html:678
 msgid "Clear Form"
 msgstr "清空表单"
 
-#: apprise_api/api/templates/config.html:575
+#: apprise_api/api/templates/config.html:687
+msgid "Save Reminder"
+msgstr "保存提醒"
+
+#: apprise_api/api/templates/config.html:693
 msgid "Send Notification"
 msgstr "发送通知"
 
-#: apprise_api/api/templates/config.html:586
-#: apprise_api/api/templates/welcome.html:268
-#: apprise_api/api/templates/welcome.html:765
+#: apprise_api/api/templates/config.html:707
+#: apprise_api/api/templates/welcome.html:272
+#: apprise_api/api/templates/welcome.html:778
 msgid "Persistent Store Endpoints"
 msgstr "持久存储端点"
 
-#: apprise_api/api/templates/config.html:588
-#: apprise_api/api/templates/welcome.html:767
+#: apprise_api/api/templates/config.html:709
+#: apprise_api/api/templates/welcome.html:780
 msgid "The administrator of this system has disabled persistent storage."
 msgstr "系统管理员已禁用持久存储。"
 
-#: apprise_api/api/templates/config.html:640
+#: apprise_api/api/templates/config.html:773
 msgid "Hide QR Code"
 msgstr "隐藏二维码"
 
-#: apprise_api/api/templates/config.html:669
+#: apprise_api/api/templates/config.html:802
 msgid "Escalation group"
 msgstr "升级组"
 
-#: apprise_api/api/templates/config.html:677
+#: apprise_api/api/templates/config.html:810
 msgid "Maximum number of retries attempted if the service fails before giving up"
 msgstr "如果服务失败，放弃前尝试的最大重试次数"
 
-#: apprise_api/api/templates/config.html:688
+#: apprise_api/api/templates/config.html:821
 msgid "Unknown Plugin"
 msgstr "未知插件"
 
-#: apprise_api/api/templates/config.html:732
-#: apprise_api/api/templates/config.html:2530
-#: apprise_api/api/templates/config.html:2535
+#: apprise_api/api/templates/config.html:865
+#: apprise_api/api/templates/config.html:2444
+#: apprise_api/api/templates/config.html:2449
 msgid "Template Variable"
 msgstr "模板变量"
 
-#: apprise_api/api/templates/config.html:788
-msgid "The server could not start a live notification stream."
-msgstr "服务器无法启动实时通知流。"
-
-#: apprise_api/api/templates/config.html:791
-msgid "This browser cannot display the live notification stream."
-msgstr "此浏览器无法显示实时通知流。"
-
-#: apprise_api/api/templates/config.html:831
-msgid "The live notification stream ended unexpectedly."
-msgstr "实时通知流意外结束。"
-
-#: apprise_api/api/templates/config.html:843
-msgid "Copy Logs"
-msgstr "复制日志"
-
-#: apprise_api/api/templates/config.html:848
-msgid "Waiting for log activity…"
-msgstr "等待日志活动…"
-
-#: apprise_api/api/templates/config.html:884
-msgid "Notification service"
-msgstr "通知服务"
-
-#: apprise_api/api/templates/config.html:901
-msgid "Service"
-msgstr "服务"
-
-#: apprise_api/api/templates/config.html:906
-msgid "BEGIN APPRISE NOTIFICATION LOG"
-msgstr "BEGIN APPRISE NOTIFICATION LOG"
-
-#: apprise_api/api/templates/config.html:908
-msgid "END APPRISE NOTIFICATION LOG"
-msgstr "END APPRISE NOTIFICATION LOG"
-
-#: apprise_api/api/templates/components/notify_stream_script.html:193
-msgid "Events: {}"
-msgstr "事件：{}"
-
-#: apprise_api/api/templates/config.html:940
-msgid "Notification logs copied to clipboard"
-msgstr "通知日志已复制到剪贴板"
-
-#: apprise_api/api/templates/config.html:1108
+#: apprise_api/api/templates/config.html:925
 msgid "Provide the required template values before sending."
 msgstr "在发送前提供所需的模板值。"
 
-#: apprise_api/api/templates/config.html:1114
+#: apprise_api/api/templates/config.html:931
 msgid "Provide the values needed by the selected notification entries."
 msgstr "提供所选通知条目所需的值。"
 
-#: apprise_api/api/templates/config.html:1142
+#: apprise_api/api/templates/config.html:959
 msgid "default used if blank"
 msgstr "如果为空则使用默认值"
 
-#: apprise_api/api/templates/config.html:1156
-#: apprise_api/api/templates/config.html:1157
-#: apprise_api/api/templates/config.html:1158
-#: apprise_api/api/templates/config.html:1423
-#: apprise_api/api/templates/config.html:1424
-#: apprise_api/api/templates/config.html:1425
-msgid "Show Value"
-msgstr "显示数值"
-
-#: apprise_api/api/templates/config.html:1159
-#: apprise_api/api/templates/config.html:1426
-msgid "Hide Value"
-msgstr "隐藏数值"
-
-#: apprise_api/api/templates/config.html:1169
+#: apprise_api/api/templates/config.html:973
 msgid "A value is required."
 msgstr "需要提供一个值。"
 
-#: apprise_api/api/templates/config.html:1204
+#: apprise_api/api/templates/config.html:1008
 msgid "Send"
 msgstr "发送"
 
-#: apprise_api/api/templates/config.html:1251
-#: apprise_api/api/templates/config.html:1290
-#: apprise_api/api/templates/config.html:2687
-#: apprise_api/api/templates/config.html:3273
-#: apprise_api/api/templates/config.html:3288
-#: apprise_api/api/templates/config.html:3336
-msgid "Notification"
-msgstr "通知"
-
-#: apprise_api/api/templates/config.html:1267
+#: apprise_api/api/templates/config.html:1058
 msgid "Apprise API Test"
 msgstr "Apprise API 测试"
 
-#: apprise_api/api/templates/config.html:1268
+#: apprise_api/api/templates/config.html:1059
 msgid "Message Body"
 msgstr "消息正文"
 
-#: apprise_api/api/templates/config.html:1291
-#: apprise_api/api/templates/config.html:3337
-msgid "Delivery Response"
-msgstr "发送响应"
-
-#: apprise_api/api/templates/config.html:1292
+#: apprise_api/api/templates/config.html:1089
 msgid "Sending test notification…"
 msgstr "正在发送测试通知…"
 
-#: apprise_api/api/templates/config.html:1293
+#: apprise_api/api/templates/config.html:1090
 msgid "Test notification sent."
 msgstr "测试通知已发送。"
 
-#: apprise_api/api/templates/config.html:1294
+#: apprise_api/api/templates/config.html:1091
 msgid "One or more test notifications were not sent."
 msgstr "一个或多个测试通知未发送。"
 
-#: apprise_api/api/templates/config.html:1295
+#: apprise_api/api/templates/config.html:1092
+#: apprise_api/api/templates/config.html:2617
 msgid "Failed to send test notification."
 msgstr "测试通知发送失败。"
 
-#: apprise_api/api/templates/config.html:1332
+#: apprise_api/api/templates/config.html:1129
 msgid "No template values are currently defined."
 msgstr "当前未定义任何模板值。"
 
-#: apprise_api/api/templates/config.html:1389
-msgid "Name"
-msgstr "名称"
-
-#: apprise_api/api/templates/config.html:1405
+#: apprise_api/api/templates/config.html:1205
+#: apprise_api/api/templates/details.html:753
 msgid "Value"
 msgstr "值"
 
-#: apprise_api/api/templates/config.html:1436
-#: apprise_api/api/templates/config.html:1437
+#: apprise_api/api/templates/config.html:1224
+#: apprise_api/api/templates/config.html:1225
 msgid "Remove Template Value"
 msgstr "删除模板值"
 
-#: apprise_api/api/templates/config.html:2246
-msgid "URL copied to clipboard"
-msgstr "URL 已复制到剪贴板"
-
-#: apprise_api/api/templates/config.html:2364
-msgid "💣 An error occurred retrieving the list of loaded Apprise URL(s)"
-msgstr "💣 检索已加载的 Apprise URL 列表时发生错误"
-
-#: apprise_api/api/templates/config.html:2398
+#: apprise_api/api/templates/config.html:2192
+#: apprise_api/api/templates/config.html:2293
 msgid "Optional Tag(s)"
 msgstr "可选标签"
 
-#: apprise_api/api/templates/config.html:2399
+#: apprise_api/api/templates/config.html:2253
+msgid "💣 An error occurred retrieving the list of loaded Apprise URL(s)"
+msgstr "💣 检索已加载的 Apprise URL 列表时发生错误"
+
+#: apprise_api/api/templates/config.html:2294
 msgid "Add another?"
 msgstr "添加另一个？"
 
-#: apprise_api/api/templates/config.html:2476
+#: apprise_api/api/templates/config.html:2390
 msgid "Required Tag"
 msgstr "必填标签"
 
-#: apprise_api/api/templates/config.html:2477
+#: apprise_api/api/templates/config.html:2391
 msgid "Another Tag"
 msgstr "另一个标签"
 
-#: apprise_api/api/templates/config.html:2516
+#: apprise_api/api/templates/config.html:2430
 msgid "This Apprise API instance has disabled support for"
 msgstr "此 Apprise API 实例已禁用对"
 
-#: apprise_api/api/templates/config.html:2550
+#: apprise_api/api/templates/config.html:2464
 msgid "Optional Service"
 msgstr "可选服务的支持"
 
-#: apprise_api/api/templates/config.html:2551
+#: apprise_api/api/templates/config.html:2465
 msgid "Optional Service: failures are ignored when determining notification success"
 msgstr "可选服务：在确定通知是否成功时忽略失败"
 
-#: apprise_api/api/templates/config.html:2674
+#: apprise_api/api/templates/config.html:2518
+#: apprise_api/api/templates/config.html:3971
+#: apprise_api/api/templates/details.html:964
+msgid "URL copied to clipboard"
+msgstr "URL 已复制到剪贴板"
+
+#: apprise_api/api/templates/config.html:2583
 msgid "Send Test Notification"
 msgstr "发送测试通知"
 
-#: apprise_api/api/templates/config.html:2688
+#: apprise_api/api/templates/config.html:2598
 msgid "This notification service is disabled in this Apprise API instance."
 msgstr "此通知服务在此 Apprise API 实例中已禁用。"
 
-#: apprise_api/api/templates/config.html:2754
+#: apprise_api/api/templates/config.html:2674
 msgid "no-tag"
 msgstr "无标签"
 
-#: apprise_api/api/templates/config.html:2852
+#: apprise_api/api/templates/config.html:2773
 msgid "There are no Apprise URL(s) loaded."
 msgstr "没有加载 Apprise URL。"
 
-#: apprise_api/api/templates/config.html:2954
+#: apprise_api/api/templates/config.html:2876
 msgid "Successfully saved the configuration."
 msgstr "配置已成功保存。"
 
-#: apprise_api/api/templates/config.html:2961
+#: apprise_api/api/templates/config.html:2883
 msgid "There was an issue writing the configuration to disk. Check your file permissions and try again."
 msgstr "将配置写入磁盘时出现问题。请检查您的文件权限并重试。"
 
-#: apprise_api/api/templates/config.html:2968
+#: apprise_api/api/templates/config.html:2890
 msgid "Failed to save the specified URL(s). Check your syntax and try again."
 msgstr "无法保存指定的 URL。请检查语法，然后重试。"
 
-#: apprise_api/api/templates/config.html:2986
-#: apprise_api/api/templates/config.html:2993
-#: apprise_api/api/templates/config_list.html:117
-msgid "Delete"
-msgstr "删除"
-
-#: apprise_api/api/templates/config.html:2987
+#: apprise_api/api/templates/config.html:2909
 msgid "Successfully removed configuration."
 msgstr "配置已成功移除。"
 
-#: apprise_api/api/templates/config.html:2994
+#: apprise_api/api/templates/config.html:2916
 msgid "There was an issue removing the configuration."
 msgstr "移除配置时出现问题。"
 
-#: apprise_api/api/templates/config.html:3116
-msgid "Browse"
-msgstr "浏览"
+#: apprise_api/api/templates/config.html:3000 apprise_api/api/views.py:3800
+#: apprise_api/api/views.py:5974
+msgid "Bad Attachment"
+msgstr "附件错误"
 
-#: apprise_api/api/templates/config.html:3274
-msgid "Choose at least one tag before sending."
-msgstr "发送前至少选择一个标签。"
+#: apprise_api/api/templates/config.html:3023
+msgid "Attachment URL"
+msgstr "附件 URL"
 
-#: apprise_api/api/templates/config.html:3274
-msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
-msgstr "未选择通知目标。发送前请添加配置端点或选择一个或多个匹配的标签。"
+#: apprise_api/api/templates/config.html:3062
+#: apprise_api/api/templates/config.html:3358
+msgid "Preview"
+msgstr "预览"
 
-#: apprise_api/api/templates/config.html:3289
+#: apprise_api/api/templates/config.html:3070
+msgid "Remove Attachment"
+msgstr "移除附件"
+
+#: apprise_api/api/templates/config.html:3195
+#: apprise_api/api/templates/details.html:206
+msgid "Apprise URL"
+msgstr "Apprise URL"
+
+#: apprise_api/api/templates/config.html:3229
+msgid "Remove URL"
+msgstr "删除 URL"
+
+#: apprise_api/api/templates/config.html:3286
+msgid "Local network access is turned off"
+msgstr "本地网络访问已关闭"
+
+#: apprise_api/api/templates/config.html:3287
+msgid "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed."
+msgstr "此 Apprise API 的管理员已关闭从本地网络下载，因此无法预览此地址。"
+
+#: apprise_api/api/templates/config.html:3290
+msgid "This address is blocked"
+msgstr "此地址已被阻止"
+
+#: apprise_api/api/templates/config.html:3291
+msgid "The attachment rules of this Apprise API do not allow downloads from this address."
+msgstr "此 Apprise API 的附件规则不允许从此地址下载。"
+
+#: apprise_api/api/templates/config.html:3316
+msgid "The administrator can change this with:"
+msgstr "管理员可以通过以下设置更改："
+
+#: apprise_api/api/templates/config.html:3329
+msgid "Learn more"
+msgstr "了解更多"
+
+#: apprise_api/api/templates/config.html:3353
+msgid "Loading…"
+msgstr "正在加载…"
+
+#: apprise_api/api/templates/config.html:3387
+#: apprise_api/api/templates/config.html:3468
+msgid "The attachment could not be downloaded"
+msgstr "无法下载附件"
+
+#: apprise_api/api/templates/config.html:3451
+msgid "This file cannot be shown here."
+msgstr "此文件无法在此显示。"
+
+#: apprise_api/api/templates/config.html:3464
+msgid "Download"
+msgstr "下载"
+
+#: apprise_api/api/templates/config.html:3478
 msgid "Please provide at least a message body or one attachment before sending."
 msgstr "发送前请至少提供一条消息正文或一个附件。"
 
-#: apprise_api/api/templates/config.html:3338
-msgid "Sending notification(s)…"
-msgstr "正在发送通知…"
+#: apprise_api/api/templates/config.html:3550
+msgid "Stored with the reminder"
+msgstr "已随提醒保存"
 
-#: apprise_api/api/templates/config.html:3339
-msgid "Successfully sent the notification(s)."
-msgstr "已成功发送通知。"
+#: apprise_api/api/templates/config.html:3613
+msgid "Browse"
+msgstr "浏览"
 
-#: apprise_api/api/templates/config.html:3340
-msgid "One or more of the notification(s) were not sent."
-msgstr "一条或多条通知未发送。"
+#: apprise_api/api/templates/config.html:3792
+msgid "Choose at least one tag before sending."
+msgstr "发送前至少选择一个标签。"
 
-#: apprise_api/api/templates/config.html:3341
-msgid "Failed to send the notification(s)."
-msgstr "发送通知失败。"
+#: apprise_api/api/templates/config.html:3792 apprise_api/api/views.py:4410
+msgid "No notification targets are selected. Add configuration endpoints or choose one or more matching tags before sending."
+msgstr "未选择通知目标。发送前请添加配置端点或选择一个或多个匹配的标签。"
 
-#: apprise_api/api/templates/config.html:3400
+#: apprise_api/api/templates/config.html:3963
 msgid "Copy command to Clipboard"
 msgstr "复制命令到剪贴板"
 
-#: apprise_api/api/templates/config.html:3427
+#: apprise_api/api/templates/config.html:3990
+#: apprise_api/api/templates/welcome.html:1067
 msgid "Replace **** with your password before using this example."
 msgstr "使用此示例前请将 **** 替换为您的密码。"
 
 #: apprise_api/api/templates/config_list.html:15
 #: apprise_api/api/templates/config_list.html:16
 #: apprise_api/api/templates/config_list.html:17
+#: apprise_api/api/templates/reminder_list.html:19
+#: apprise_api/api/templates/reminder_list.html:20
+#: apprise_api/api/templates/reminder_list.html:21
 msgid "Show All Config IDs"
 msgstr "显示所有配置 ID"
 
 #: apprise_api/api/templates/config_list.html:18
+#: apprise_api/api/templates/reminder_list.html:22
 msgid "Hide All Config IDs"
 msgstr "隐藏所有配置 ID"
 
-#: apprise_api/api/templates/config_list.html:37
+#: apprise_api/api/templates/config_list.html:25
+msgid "Search Configurations"
+msgstr "搜索配置"
+
+#: apprise_api/api/templates/config_list.html:26
+msgid "No Matching Configurations"
+msgstr "没有匹配的配置"
+
+#: apprise_api/api/templates/config_list.html:27
+msgid "No configurations match your search."
+msgstr "没有与搜索匹配的配置。"
+
+#: apprise_api/api/templates/config_list.html:52
 msgid "No Username"
 msgstr "无用户名"
 
-#: apprise_api/api/templates/config_list.html:46
+#: apprise_api/api/templates/config_list.html:61
 msgid "Manage authentication for this Configuration ID"
 msgstr "管理此配置 ID 的身份验证"
 
-#: apprise_api/api/templates/config_list.html:86
+#: apprise_api/api/templates/config_list.html:101
 msgid "Move this Configuration ID"
 msgstr "移动此配置 ID"
 
-#: apprise_api/api/templates/config_list.html:92
+#: apprise_api/api/templates/config_list.html:107
 msgid "Delete this Configuration ID"
 msgstr "删除此配置 ID"
 
-#: apprise_api/api/templates/config_list.html:100
+#: apprise_api/api/templates/config_list.html:117
 msgid "There is no configuration defined."
 msgstr "没有定义配置。"
 
-#: apprise_api/api/templates/config_list.html:113
+#: apprise_api/api/templates/config_list.html:155
 msgid "Delete Configuration ID?"
 msgstr "删除配置 ID?"
 
-#: apprise_api/api/templates/config_list.html:114
+#: apprise_api/api/templates/config_list.html:156
 msgid "This permanently removes this configuration and any login assigned to it."
 msgstr "这将永久删除此配置及分配给它的任何登录。"
 
-#: apprise_api/api/templates/config_list.html:130
-#: apprise_api/api/templates/config_list.html:141
+#: apprise_api/api/templates/config_list.html:172
+#: apprise_api/api/templates/config_list.html:186
 msgid "The configuration could not be removed."
 msgstr "无法删除配置。"
 
-#: apprise_api/api/templates/config_list.html:133
+#: apprise_api/api/templates/config_list.html:175
 msgid "Configuration deleted."
 msgstr "配置已删除。"
 
-#: apprise_api/api/templates/config_list.html:154
+#: apprise_api/api/templates/config_list.html:199
 msgid "Move Configuration ID"
 msgstr "移动配置 ID"
 
-#: apprise_api/api/templates/config_list.html:241
+#: apprise_api/api/templates/config_list.html:283
 msgid "Configuration moved."
 msgstr "配置已移动。"
 
@@ -1808,141 +2562,194 @@ msgstr "配置已移动。"
 msgid "Apprise Details"
 msgstr "Apprise 详情"
 
-#: apprise_api/api/templates/details.html:22
-#, python-format
-msgid ""
-"To see a simplified listing that only identifies the Apprise services\n"
-"          enabled click <a href=\"%(href)s\">here</a>."
-msgstr "若要查看仅标识已启用 Apprise 服务的简化列表，请点击 <a href=\"%(href)s\">此处</a>。"
+#: apprise_api/api/templates/details.html:13
+msgid "Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts."
+msgstr "分三步创建 Apprise URL：选择服务，填写详细信息，然后复制 URL。已有 URL？将其粘贴到第 1 步即可查看并修改各个部分。"
 
-#: apprise_api/api/templates/details.html:25
-#, python-format
-msgid ""
-"To see a listing that identifies all of Apprise services available to this\n"
-"          version (enabled or not) click <a href=\"%(href)s?all=yes\">here</a>."
-msgstr "要查看列出了该版本可用的所有 Apprise 服务（无论是否启用）的列表，请点击 <a href=\"%(href)s?all=yes\">这里</a>。"
+#: apprise_api/api/templates/details.html:27
+msgid "Every Apprise service is listed, including the ones this server cannot use."
+msgstr "列出所有 Apprise 服务，包括此服务器无法使用的服务。"
 
-#: apprise_api/api/templates/details.html:30
+#: apprise_api/api/templates/details.html:29
+msgid "Only the services this server can use are listed."
+msgstr "仅列出此服务器可以使用的服务。"
+
+#: apprise_api/api/templates/details.html:42
+msgid "Show All"
+msgstr "全部显示"
+
+#: apprise_api/api/templates/details.html:50
 msgid "Total plugin(s) supported"
 msgstr "支持的插件总数"
 
-#: apprise_api/api/templates/details.html:99
+#: apprise_api/api/templates/details.html:61
+msgid "Choose a Service"
+msgstr "选择服务"
+
+#: apprise_api/api/templates/details.html:63
+msgid "Search Services"
+msgstr "搜索服务"
+
+#: apprise_api/api/templates/details.html:64
+msgid "No Matching Services"
+msgstr "没有匹配的服务"
+
+#: apprise_api/api/templates/details.html:65
+msgid "No services match your search."
+msgstr "没有与搜索匹配的服务。"
+
+#: apprise_api/api/templates/details.html:100
+msgid "Or Paste an Apprise URL"
+msgstr "或粘贴 Apprise URL"
+
+#: apprise_api/api/templates/details.html:110
+msgid "Parse"
+msgstr "解析"
+
+#: apprise_api/api/templates/details.html:122
+msgid "Fill In the Details"
+msgstr "填写详细信息"
+
+#: apprise_api/api/templates/details.html:124
+msgid "Choose a service above, or paste a URL, to see what it needs."
+msgstr "在上方选择服务或粘贴 URL，即可查看所需内容。"
+
+#: apprise_api/api/templates/details.html:138
 msgid "Setup Guide"
 msgstr "安装指南"
 
-#: apprise_api/api/templates/details.html:108
+#: apprise_api/api/templates/details.html:147
 msgid "Service Website"
 msgstr "服务官网"
 
-#: apprise_api/api/templates/details.html:135
+#: apprise_api/api/templates/details.html:159
 msgid "Service Unavailable"
 msgstr "服务不可用"
 
-#: apprise_api/api/templates/details.html:138
-msgid "The administrator has turned this service off on this server."
-msgstr "管理员已在此服务器上关闭此服务。"
-
-#: apprise_api/api/templates/details.html:140
-msgid "This service is missing the necessary dependencies to function on this server."
-msgstr "此服务缺少在此服务器上运行所需的依赖项。"
-
-#: apprise_api/api/templates/details.html:143
-msgid "Required packages:"
-msgstr "所需软件包："
-
-#: apprise_api/api/templates/details.html:147
+#: apprise_api/api/templates/details.html:164
 msgid "You can still build its URL online."
 msgstr "仍可在线生成其 URL。"
 
-#: apprise_api/api/templates/details.html:181
-#: apprise_api/api/templates/welcome.html:111
-#: apprise_api/api/templates/welcome.html:359
-#: apprise_api/api/templates/welcome.html:448
-#: apprise_api/api/templates/welcome.html:590
-msgid "Curl Example"
-msgstr "Curl 示例"
+#: apprise_api/api/templates/details.html:172
+msgid "The administrator has turned this service off on this server."
+msgstr "管理员已在此服务器上关闭此服务。"
 
-#: apprise_api/api/templates/details.html:191
-#: apprise_api/api/templates/welcome.html:138
-#: apprise_api/api/templates/welcome.html:378
-#: apprise_api/api/templates/welcome.html:457
-#: apprise_api/api/templates/welcome.html:618
-msgid "Python Example"
-msgstr "Python 示例"
+#: apprise_api/api/templates/details.html:174
+msgid "This service is missing the necessary dependencies to function on this server."
+msgstr "此服务缺少在此服务器上运行所需的依赖项。"
 
-#: apprise_api/api/templates/details.html:196
-#: apprise_api/api/templates/details.html:212
-#: apprise_api/api/templates/welcome.html:182
-#: apprise_api/api/templates/welcome.html:217
-#: apprise_api/api/templates/welcome.html:700
-msgid "The URL"
-msgstr "该 URL"
+#: apprise_api/api/templates/details.html:178
+msgid "Required packages:"
+msgstr "所需软件包："
 
-#: apprise_api/api/templates/details.html:207
-#: apprise_api/api/templates/welcome.html:176
-#: apprise_api/api/templates/welcome.html:398
-#: apprise_api/api/templates/welcome.html:473
-#: apprise_api/api/templates/welcome.html:659
-msgid "PHP Example"
-msgstr "PHP 示例"
+#: apprise_api/api/templates/details.html:186
+msgid "Options"
+msgstr "选项"
 
-#: apprise_api/api/templates/details.html:215
-#: apprise_api/api/templates/welcome.html:185
-#: apprise_api/api/templates/welcome.html:220
-#: apprise_api/api/templates/welcome.html:406
-#: apprise_api/api/templates/welcome.html:481
-#: apprise_api/api/templates/welcome.html:668
-#: apprise_api/api/templates/welcome.html:703
-msgid "Initiate cURL."
-msgstr "启动 cURL。"
+#: apprise_api/api/templates/details.html:190
+msgid "Advanced"
+msgstr "高级"
 
+#: apprise_api/api/templates/details.html:203
+msgid "Copy Your URL"
+msgstr "复制 URL"
+
+#: apprise_api/api/templates/details.html:213
+msgid "Fill in the details above to build the URL."
+msgstr "填写上方的详细信息以创建 URL。"
+
+#: apprise_api/api/templates/details.html:217
 #: apprise_api/api/templates/details.html:218
-#: apprise_api/api/templates/welcome.html:204
-#: apprise_api/api/templates/welcome.html:423
-#: apprise_api/api/templates/welcome.html:687
-msgid "Set the content type to application/json"
-msgstr "将内容类型设置为 application/json"
+msgid "Copy URL"
+msgstr "复制 URL"
 
-#: apprise_api/api/templates/details.html:221
-#: apprise_api/api/templates/welcome.html:207
-#: apprise_api/api/templates/welcome.html:246
-#: apprise_api/api/templates/welcome.html:426
-#: apprise_api/api/templates/welcome.html:487
-#: apprise_api/api/templates/welcome.html:690
-#: apprise_api/api/templates/welcome.html:729
-msgid "Execute the request"
-msgstr "执行请求"
+#: apprise_api/api/templates/details.html:231
+#, python-format
+msgid "Using this from your own program? See the <a href=\"%(BASE_URL)s/#url-endpoints\">API endpoints</a>."
+msgstr "要在你自己的程序中使用？请参阅 <a href=\"%(BASE_URL)s/#url-endpoints\">API 端点</a>。"
 
-#: apprise_api/api/templates/details.html:227
-msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">here</a>."
-msgstr "有关 JSON 格式的更多详细信息请参见 <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">这里</a>。"
+#: apprise_api/api/templates/details.html:289
+#: apprise_api/api/templates/details.html:294 apprise_api/api/views.py:4629
+msgid "This URL could not be loaded"
+msgstr "无法加载此 URL"
 
-#: apprise_api/api/templates/details.html:273
-#: apprise_api/api/templates/welcome.html:811
-msgid "Copy to clipboard"
-msgstr "复制到剪贴板"
+#: apprise_api/api/templates/details.html:490
+msgid "Required"
+msgstr "必填"
 
-#: apprise_api/api/templates/login.html:7
-#: apprise_api/api/templates/login.html:47
-#: apprise_api/api/templates/login.html:77
+#: apprise_api/api/templates/details.html:580
+msgid "Separate entries with commas"
+msgstr "用逗号分隔各项"
+
+#: apprise_api/api/templates/details.html:623
+msgid "This value is not in the form this service expects."
+msgstr "此值不是该服务所需的格式。"
+
+#: apprise_api/api/templates/details.html:637
+#, python-brace-format
+msgid "Mark each entry with its kind: {}."
+msgstr "用前缀标明每个条目的类型：{}。"
+
+#: apprise_api/api/templates/details.html:638
+#, python-brace-format
+msgid "{} for {}"
+msgstr "{} 表示 {}"
+
+#: apprise_api/api/templates/details.html:688
+#, python-brace-format
+msgid "{} was read as a {}."
+msgstr "{} 被识别为 {}。"
+
+#: apprise_api/api/templates/details.html:769
+msgid "Remove Value"
+msgstr "删除值"
+
+#: apprise_api/api/templates/details.html:902
+msgid "This URL could not be loaded. Check the highlighted fields."
+msgstr "无法加载此 URL。请检查突出显示的字段。"
+
+#: apprise_api/api/templates/login.html:8
+#: apprise_api/api/templates/login.html:46
+#: apprise_api/api/templates/login.html:76
 msgid "Log In"
 msgstr "登录"
 
-#: apprise_api/api/templates/login.html:39
+#: apprise_api/api/templates/login.html:38
 msgid "Successfully logged out."
 msgstr "已成功注销。"
 
-#: apprise_api/api/templates/login.html:48
+#: apprise_api/api/templates/login.html:47
 msgid "Provide the login credentials required to access the Apprise API."
 msgstr "提供访问 Apprise API 所需的登录凭据。"
 
-#: apprise_api/api/templates/login.html:73
+#: apprise_api/api/templates/login.html:72
 msgid "A Configuration ID is required for non-administrative accounts. Global administrators can leave it blank."
 msgstr "非管理账户需要配置 ID。全局管理员可以留空。"
 
-#: apprise_api/api/templates/login.html:90
+#: apprise_api/api/templates/login.html:89
 msgid "Manage this server from your Android or iOS device."
 msgstr "从您的 Android / iOS 设备管理此服务器。"
+
+#: apprise_api/api/templates/reminder_list.html:11
+msgid "Every reminder saved on this server, soonest first."
+msgstr "此服务器上保存的所有提醒，最近的在前。"
+
+#: apprise_api/api/templates/reminder_list.html:30
+msgid "Search Reminders"
+msgstr "搜索提醒"
+
+#: apprise_api/api/templates/reminder_list.html:31
+msgid "No Matching Reminders"
+msgstr "没有匹配的提醒"
+
+#: apprise_api/api/templates/reminder_list.html:32
+msgid "No reminders match your search."
+msgstr "没有与搜索匹配的提醒。"
+
+#: apprise_api/api/templates/reminder_list.html:48
+#, python-format
+msgid "No reminders have been added. Open a configuration from the %(list_chip)s and use its Notifications section to add one."
+msgstr "尚未添加任何提醒。请从 %(list_chip)s 打开一个配置，并在其通知部分添加。"
 
 #: apprise_api/api/templates/welcome.html:9
 msgid "The Apprise API"
@@ -1982,7 +2789,8 @@ msgid ""
 msgstr "那些希望将此 API 仅作为项目的 <a href=\"https://docs.microsoft.com/en-us/azure/architecture/patterns/sidecar\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">附加服务 </a> 和/或微服务使用的人，只需使用以下 URL。"
 
 #: apprise_api/api/templates/welcome.html:42
-#: apprise_api/api/templates/welcome.html:285
+#: apprise_api/api/templates/welcome.html:289
+#: apprise_api/api/templates/welcome.html:798
 msgid "URL"
 msgstr "URL"
 
@@ -1993,8 +2801,8 @@ msgid ""
 msgstr "用于通知一个或多个指定的 Apprise URL。如果您需要有关构建 URL 的帮助，请参阅 <a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">Apprise URL Builder</a>。"
 
 #: apprise_api/api/templates/welcome.html:58
-#: apprise_api/api/templates/welcome.html:302
-#: apprise_api/api/templates/welcome.html:536
+#: apprise_api/api/templates/welcome.html:306
+#: apprise_api/api/templates/welcome.html:545
 msgid "Parameter"
 msgstr "参数"
 
@@ -2005,7 +2813,7 @@ msgid ""
 msgstr "用于定义一个或多个 Apprise URL。使用逗号和/或空格分隔各个 URL。"
 
 #: apprise_api/api/templates/welcome.html:72
-#: apprise_api/api/templates/welcome.html:543
+#: apprise_api/api/templates/welcome.html:552
 msgid "Defines the message body. This field is required!"
 msgstr "定义消息正文。此字段为必填项！"
 
@@ -2028,12 +2836,21 @@ msgid ""
 "                          specified."
 msgstr "如果未指定类型，则默认为此选项。"
 
+#: apprise_api/api/templates/welcome.html:111
+#: apprise_api/api/templates/welcome.html:363
+#: apprise_api/api/templates/welcome.html:456
+#: apprise_api/api/templates/welcome.html:599
+#: apprise_api/api/templates/welcome.html:812
+#: apprise_api/api/templates/welcome.html:873
+msgid "Curl Example"
+msgstr "Curl 示例"
+
 #: apprise_api/api/templates/welcome.html:115
 msgid "Notifies an email address"
 msgstr "通知一个电子邮件地址"
 
 #: apprise_api/api/templates/welcome.html:120
-#: apprise_api/api/templates/welcome.html:159
+#: apprise_api/api/templates/welcome.html:163
 msgid "Notifies an email address with attachments"
 msgstr "通知一个带附件的电子邮件地址"
 
@@ -2041,88 +2858,158 @@ msgstr "通知一个带附件的电子邮件地址"
 msgid "Send an web based file attachment to a <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> server:"
 msgstr "发送基于网络的文件附件到 <a href=\"https://appriseit.com/services/discord/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Discord</a> 服务器："
 
+#: apprise_api/api/templates/welcome.html:138
+#: apprise_api/api/templates/welcome.html:382
+#: apprise_api/api/templates/welcome.html:465
+#: apprise_api/api/templates/welcome.html:627
+#: apprise_api/api/templates/welcome.html:823
+#: apprise_api/api/templates/welcome.html:893
+msgid "Python Example"
+msgstr "Python 示例"
+
 #: apprise_api/api/templates/welcome.html:150
 msgid "The Request"
 msgstr "请求"
 
-#: apprise_api/api/templates/welcome.html:188
-#: apprise_api/api/templates/welcome.html:409
-#: apprise_api/api/templates/welcome.html:671
+#: apprise_api/api/templates/welcome.html:180
+#: apprise_api/api/templates/welcome.html:406
+#: apprise_api/api/templates/welcome.html:482
+#: apprise_api/api/templates/welcome.html:672
+#: apprise_api/api/templates/welcome.html:838
+#: apprise_api/api/templates/welcome.html:941
+msgid "PHP Example"
+msgstr "PHP 示例"
+
+#: apprise_api/api/templates/welcome.html:186
+#: apprise_api/api/templates/welcome.html:221
+#: apprise_api/api/templates/welcome.html:713
+#: apprise_api/api/templates/welcome.html:844
+#: apprise_api/api/templates/welcome.html:948
+#: apprise_api/api/templates/welcome.html:982
+msgid "The URL"
+msgstr "该 URL"
+
+#: apprise_api/api/templates/welcome.html:189
+#: apprise_api/api/templates/welcome.html:224
+#: apprise_api/api/templates/welcome.html:414
+#: apprise_api/api/templates/welcome.html:490
+#: apprise_api/api/templates/welcome.html:681
+#: apprise_api/api/templates/welcome.html:716
+#: apprise_api/api/templates/welcome.html:847
+#: apprise_api/api/templates/welcome.html:951
+#: apprise_api/api/templates/welcome.html:985
+msgid "Initiate cURL."
+msgstr "启动 cURL。"
+
+#: apprise_api/api/templates/welcome.html:192
+#: apprise_api/api/templates/welcome.html:417
+#: apprise_api/api/templates/welcome.html:684
+#: apprise_api/api/templates/welcome.html:954
+#: apprise_api/api/templates/welcome.html:988
 msgid "The JSON data."
 msgstr "JSON 数据。"
 
-#: apprise_api/api/templates/welcome.html:195
-#: apprise_api/api/templates/welcome.html:414
-#: apprise_api/api/templates/welcome.html:678
+#: apprise_api/api/templates/welcome.html:199
+#: apprise_api/api/templates/welcome.html:422
+#: apprise_api/api/templates/welcome.html:691
+#: apprise_api/api/templates/welcome.html:959
+#: apprise_api/api/templates/welcome.html:996
 msgid "Encode the array into JSON."
 msgstr "将数组编码为 JSON。"
 
-#: apprise_api/api/templates/welcome.html:198
-#: apprise_api/api/templates/welcome.html:240
-#: apprise_api/api/templates/welcome.html:417
-#: apprise_api/api/templates/welcome.html:484
-#: apprise_api/api/templates/welcome.html:681
-#: apprise_api/api/templates/welcome.html:723
+#: apprise_api/api/templates/welcome.html:202
+#: apprise_api/api/templates/welcome.html:244
+#: apprise_api/api/templates/welcome.html:425
+#: apprise_api/api/templates/welcome.html:493
+#: apprise_api/api/templates/welcome.html:694
+#: apprise_api/api/templates/welcome.html:736
+#: apprise_api/api/templates/welcome.html:962
+#: apprise_api/api/templates/welcome.html:999
 msgid "Tell cURL that we want to send a POST request."
 msgstr "告诉 cURL 我们想要发送一个 POST 请求。"
 
-#: apprise_api/api/templates/welcome.html:201
-#: apprise_api/api/templates/welcome.html:420
-#: apprise_api/api/templates/welcome.html:684
+#: apprise_api/api/templates/welcome.html:205
+#: apprise_api/api/templates/welcome.html:428
+#: apprise_api/api/templates/welcome.html:697
+#: apprise_api/api/templates/welcome.html:965
+#: apprise_api/api/templates/welcome.html:1002
 msgid "Attach our encoded JSON string to the POST fields."
 msgstr "将我们编码的 JSON 字符串附加到 POST 字段。"
 
-#: apprise_api/api/templates/welcome.html:210
-#: apprise_api/api/templates/welcome.html:249
-#: apprise_api/api/templates/welcome.html:429
-#: apprise_api/api/templates/welcome.html:490
-#: apprise_api/api/templates/welcome.html:693
-#: apprise_api/api/templates/welcome.html:732
+#: apprise_api/api/templates/welcome.html:208
+#: apprise_api/api/templates/welcome.html:431
+#: apprise_api/api/templates/welcome.html:700
+#: apprise_api/api/templates/welcome.html:968
+#: apprise_api/api/templates/welcome.html:1005
+msgid "Set the content type to application/json"
+msgstr "将内容类型设置为 application/json"
+
+#: apprise_api/api/templates/welcome.html:211
+#: apprise_api/api/templates/welcome.html:250
+#: apprise_api/api/templates/welcome.html:434
+#: apprise_api/api/templates/welcome.html:496
+#: apprise_api/api/templates/welcome.html:703
+#: apprise_api/api/templates/welcome.html:742
+#: apprise_api/api/templates/welcome.html:852
+#: apprise_api/api/templates/welcome.html:971
+#: apprise_api/api/templates/welcome.html:1008
+msgid "Execute the request"
+msgstr "执行请求"
+
+#: apprise_api/api/templates/welcome.html:214
+#: apprise_api/api/templates/welcome.html:253
+#: apprise_api/api/templates/welcome.html:437
+#: apprise_api/api/templates/welcome.html:499
+#: apprise_api/api/templates/welcome.html:706
+#: apprise_api/api/templates/welcome.html:745
+#: apprise_api/api/templates/welcome.html:855
+#: apprise_api/api/templates/welcome.html:974
+#: apprise_api/api/templates/welcome.html:1011
 msgid "Close our handler"
 msgstr "关闭我们的处理程序"
 
-#: apprise_api/api/templates/welcome.html:216
-#: apprise_api/api/templates/welcome.html:699
+#: apprise_api/api/templates/welcome.html:220
+#: apprise_api/api/templates/welcome.html:712
 msgid "Sending an attachment using PHP"
 msgstr "使用 PHP 发送附件"
 
-#: apprise_api/api/templates/welcome.html:223
-#: apprise_api/api/templates/welcome.html:706
+#: apprise_api/api/templates/welcome.html:227
+#: apprise_api/api/templates/welcome.html:719
 msgid "Prepare our file attachment"
 msgstr "准备我们的文件附件"
 
-#: apprise_api/api/templates/welcome.html:226
-#: apprise_api/api/templates/welcome.html:709
+#: apprise_api/api/templates/welcome.html:230
+#: apprise_api/api/templates/welcome.html:722
 msgid "Acquire our filename"
 msgstr "获取我们的文件名"
 
-#: apprise_api/api/templates/welcome.html:229
-#: apprise_api/api/templates/welcome.html:712
+#: apprise_api/api/templates/welcome.html:233
+#: apprise_api/api/templates/welcome.html:725
 msgid "Get the attachment MIME type (in this case it is 'image/jpg')"
 msgstr "获取附件 MIME 类型（此处为 'image/jpg'）"
 
-#: apprise_api/api/templates/welcome.html:232
-#: apprise_api/api/templates/welcome.html:715
+#: apprise_api/api/templates/welcome.html:236
+#: apprise_api/api/templates/welcome.html:728
 msgid "The multipart data."
 msgstr "多部分数据。"
 
-#: apprise_api/api/templates/welcome.html:243
-#: apprise_api/api/templates/welcome.html:726
+#: apprise_api/api/templates/welcome.html:247
+#: apprise_api/api/templates/welcome.html:739
 msgid "Attach the data to the POST fields."
 msgstr "将数据附加到 POST 字段。"
 
-#: apprise_api/api/templates/welcome.html:263
+#: apprise_api/api/templates/welcome.html:267
 msgid "The administrator of this system has disabled stateless URL support."
 msgstr "系统管理员已禁用无状态 URL 支持。"
 
-#: apprise_api/api/templates/welcome.html:271
+#: apprise_api/api/templates/welcome.html:275
 msgid ""
 "Those wishing to use the persistent store may do so. This section is a set it and forget it type\n"
 "      deal. Set your configuration once and just trigger notifications later on demand with light-weight API\n"
 "      calls."
 msgstr "希望使用持久存储的人可以这样做。本节是一次设置即可忘记类型的操作。只需设置一次配置，然后以后按需通过轻量级的 API 调用触发通知。"
 
-#: apprise_api/api/templates/welcome.html:276
+#: apprise_api/api/templates/welcome.html:280
 msgid ""
 "All endpoints that expect posted data can be received in either JSON or in it's standard\n"
 "      encoding.\n"
@@ -2130,7 +3017,7 @@ msgid ""
 "      interpreted properly."
 msgstr "所有期望接收已发布数据的端点都可以以 JSON 或其标准编码的形式接收。你必须传递 <code>Content-Type</code> 为 <code>application/json</code>，以便能够正确解析。"
 
-#: apprise_api/api/templates/welcome.html:295
+#: apprise_api/api/templates/welcome.html:299
 #, python-format
 msgid ""
 "Used to add a new Apprise configuration or a set of URLs and associates them with configuration\n"
@@ -2138,19 +3025,19 @@ msgid ""
 "            constructing your URLs."
 msgstr "用于添加新的Apprise配置或一组URL，并将它们与由<em>、%(key)s、</em>标识的配置相关联。 如果您需要构建您的URL，请参阅<a target=\"_blank\" href=\"https://appriseit.com/url-builder/\" rel=\"nofollow noopener noreferrer\">、Apprise、URL构建器</a>。"
 
-#: apprise_api/api/templates/welcome.html:310
+#: apprise_api/api/templates/welcome.html:314
 msgid ""
 "Used to define one or more Apprise URL(s). Use a comma and/or space to separate\n"
 "                      one URL from the next."
 msgstr "用于定义一个或多个Apprise URL。使用逗号和/或空格将一个URL与下一个分开。"
 
-#: apprise_api/api/templates/welcome.html:317
+#: apprise_api/api/templates/welcome.html:321
 msgid ""
 "Provide the contents of either a YAML or TEXT based Apprise\n"
 "                      configuration."
 msgstr "提供基于YAML或TEXT的Apprise配置的内容。"
 
-#: apprise_api/api/templates/welcome.html:324
+#: apprise_api/api/templates/welcome.html:328
 msgid ""
 "This field is only required if you've specified the config option. It's purpose\n"
 "                      is\n"
@@ -2158,603 +3045,573 @@ msgid ""
 "                      options are:"
 msgstr "只有在您指定了配置选项时，此字段才是必填的。它的目的是告诉服务器您正在传递的支持的 (Apprise) 配置类型。有效选项有："
 
-#: apprise_api/api/templates/welcome.html:338
+#: apprise_api/api/templates/welcome.html:342
 msgid ""
 "You must specify either the <code>urls</code> parameter or the\n"
 "                          <code>config</code>."
 msgstr "。您必须指定 <code>urls</code> 参数或 <code>config</code> 参数之一。"
 
-#: apprise_api/api/templates/welcome.html:342
+#: apprise_api/api/templates/welcome.html:346
 msgid ""
 "The <code>urls</code> takes priority over the <code>config</code> if both\n"
 "                          were\n"
 "                          specified."
 msgstr "如果两者都指定了，<code>urls</code> 优先于 <code>config</code>。"
 
-#: apprise_api/api/templates/welcome.html:347
+#: apprise_api/api/templates/welcome.html:351
 msgid ""
 "The <code>format</code> parameter is only required if the\n"
 "                          <code>config</code>\n"
 "                          parameter was also specified."
 msgstr "仅当同时指定了 <code>config</code> 参数时，<code>format</code> 参数才是必填的。"
 
-#: apprise_api/api/templates/welcome.html:363
+#: apprise_api/api/templates/welcome.html:367
 #, python-format
 msgid "Load a single URL and assign it to: <em>%(key)s</em>"
 msgstr "加载单个 URL 并将其分配给：<em>%(key)s</em>"
 
-#: apprise_api/api/templates/welcome.html:369
+#: apprise_api/api/templates/welcome.html:373
 #, python-format
 msgid "Load a simple TEXT config entry sent to: <em>%(key)s</em>"
 msgstr "加载发送到：<em>%(key)s</em> 的简单 TEXT 配置条目"
 
-#: apprise_api/api/templates/welcome.html:387
-#: apprise_api/api/templates/welcome.html:403
-#: apprise_api/api/templates/welcome.html:478
-#: apprise_api/api/templates/welcome.html:647
-#: apprise_api/api/templates/welcome.html:665
+#: apprise_api/api/templates/welcome.html:391
+#: apprise_api/api/templates/welcome.html:411
+#: apprise_api/api/templates/welcome.html:487
+#: apprise_api/api/templates/welcome.html:656
+#: apprise_api/api/templates/welcome.html:678
 #, python-format
 msgid "The URL if the key was <em>%(key)s</em>"
 msgstr "如果密钥是 <em>%(key)s</em>，则 URL"
 
-#: apprise_api/api/templates/welcome.html:443
+#: apprise_api/api/templates/welcome.html:451
 #, python-format
 msgid ""
 "There are no arguments required. If configuration id of <em>%(key)s</em> exists and has data associated with\n"
 "              it, it will be removed."
 msgstr "无需任何参数。如果 <em>%(key)s</em> 的配置 ID 存在并且有相关数据，它将被移除。"
 
-#: apprise_api/api/templates/welcome.html:451
+#: apprise_api/api/templates/welcome.html:459
 #, python-format
 msgid "Remove previously loaded configuration associated with the id of <em>%(key)s</em>"
 msgstr "删除之前加载的与 <em>%(key)s</em> ID 相关的配置"
 
-#: apprise_api/api/templates/welcome.html:462
+#: apprise_api/api/templates/welcome.html:469
 #, python-format
 msgid "The request if the key was <em>%(key)s</em>"
 msgstr "如果键是 <em>%(key)s</em>，则请求"
 
-#: apprise_api/api/templates/welcome.html:503
+#: apprise_api/api/templates/welcome.html:512
 #, python-format
 msgid ""
 "This feature can be used by Apprise itself. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
 msgstr "此功能可以由 Apprise 本身使用。它提供了一种远程获取与通过 <em>%(key)s</em> 标识的配置相关的配置的方法。"
 
-#: apprise_api/api/templates/welcome.html:507
-#: apprise_api/api/templates/welcome.html:521
+#: apprise_api/api/templates/welcome.html:516
+#: apprise_api/api/templates/welcome.html:530
 msgid "Use Apprise to retrieve your configuration:"
 msgstr "使用 Apprise 来检索您的配置："
 
-#: apprise_api/api/templates/welcome.html:517
+#: apprise_api/api/templates/welcome.html:526
 #, python-format
 msgid ""
 "This is an alias of <code>%(BASE_URL)s/get/<em>%(key)s</em></code> defined above. It provides a means of remotely fetching it's\n"
 "            the configuration associated with the configuration identified through the id of <em>%(key)s</em>."
 msgstr "这是上述定义的 <code>%(BASE_URL)s/get/<em>%(key)s</em></code> 的别名。它提供了一种远程获取与通过 <em>%(key)s</em> 标识的配置相关的配置的方法。"
 
-#: apprise_api/api/templates/welcome.html:531
+#: apprise_api/api/templates/welcome.html:540
 #, python-format
 msgid "Notifies the URLs associated with configuration identified by the id of <em>%(key)s</em>."
 msgstr "通知与由 <em>%(key)s</em> 标识的配置相关联的 URL。"
 
-#: apprise_api/api/templates/welcome.html:548
+#: apprise_api/api/templates/welcome.html:557
 msgid ""
 "The title to include in the notification. This is an optional\n"
 "                      field."
 msgstr "在通知中包含的标题。这是一个可选字段。"
 
-#: apprise_api/api/templates/welcome.html:555
+#: apprise_api/api/templates/welcome.html:564
 msgid ""
 "This optional field defines the notification type. The possible options\n"
 "                      are:"
 msgstr "这个可选字段定义通知类型。可能的选项有："
 
-#: apprise_api/api/templates/welcome.html:560
+#: apprise_api/api/templates/welcome.html:569
 msgid ""
 "this is the default option if a type\n"
 "                            isn't\n"
 "                            specified."
 msgstr "如果未指定类型，这是默认选项。"
 
-#: apprise_api/api/templates/welcome.html:581
+#: apprise_api/api/templates/welcome.html:590
 msgid ""
 "Apply tagging logic to the further filter your URLs. This is an optional\n"
 "                      field."
 msgstr "对 URL 应用标记逻辑以进一步筛选。这是一个可选字段。"
 
-#: apprise_api/api/templates/welcome.html:594
+#: apprise_api/api/templates/welcome.html:603
 msgid "Notifies all URLs assigned to the configuration"
 msgstr "通知分配给该配置的所有 URL。"
 
-#: apprise_api/api/templates/welcome.html:602
+#: apprise_api/api/templates/welcome.html:611
 msgid "Sends a notification to our endpoints with an attachment"
 msgstr "发送带有附件的通知到我们的端点。"
 
-#: apprise_api/api/templates/welcome.html:609
+#: apprise_api/api/templates/welcome.html:618
 msgid "Notifies all URLs assigned the <em>devops</em> tag"
 msgstr "通知所有分配了 <em>devops</em> 标签的 URL。"
 
-#: apprise_api/api/templates/welcome.html:621
+#: apprise_api/api/templates/welcome.html:630
 msgid "Ideally you should leverage the Apprise Library; it will make your life much easier:"
 msgstr "理想情况下，你应该利用 Apprise 库；它会让你的工作轻松很多："
 
-#: apprise_api/api/templates/welcome.html:625
+#: apprise_api/api/templates/welcome.html:634
 msgid "Create an Apprise instance"
 msgstr "创建一个 Apprise 实例"
 
-#: apprise_api/api/templates/welcome.html:628
+#: apprise_api/api/templates/welcome.html:637
 msgid "Add our URL"
 msgstr "添加我们的 URL"
 
-#: apprise_api/api/templates/welcome.html:631
+#: apprise_api/api/templates/welcome.html:640
 msgid "Send our notification:"
 msgstr "发送我们的通知："
 
-#: apprise_api/api/templates/welcome.html:634
+#: apprise_api/api/templates/welcome.html:643
 msgid "Sending an attachment is just as easy:"
 msgstr "发送附件同样简单："
 
-#: apprise_api/api/templates/welcome.html:637
+#: apprise_api/api/templates/welcome.html:646
 msgid "The legacy (but more compatible and lightweight) way of doing things:"
 msgstr "传统（但更兼容且轻量）的方法："
 
-#: apprise_api/api/templates/welcome.html:748
+#: apprise_api/api/templates/welcome.html:761
 msgid "Endpoint Notes"
 msgstr "端点说明"
 
-#: apprise_api/api/templates/welcome.html:751
+#: apprise_api/api/templates/welcome.html:764
 #, python-format
 msgid "The Configuration ID (<em>%(key)s</em>) you plan to associate your configuration with:"
 msgstr "你计划将配置关联的配置 ID（<em>%(key)s</em>）："
 
-#: apprise_api/api/templates/welcome.html:755
+#: apprise_api/api/templates/welcome.html:768
 msgid ""
 "Cannot have spaces or special characters. A dash (<code>-</code>) and underscore\n"
 "              (<code>_</code>) are the only exceptions to this rule."
 msgstr "不能包含空格或特殊字符。唯一的例外是破折号（<code>-</code>）和下划线（<code>_</code>）。"
 
-#: apprise_api/api/templates/welcome.html:758
+#: apprise_api/api/templates/welcome.html:771
 msgid "Must start with at least two alphanumeric characters."
 msgstr "必须以至少两个字母数字字符开头。"
 
-#: apprise_api/api/templates/welcome.html:759
+#: apprise_api/api/templates/welcome.html:772
 msgid "Cannot exceed 64 characters in total length."
 msgstr "总长度不能超过64个字符。"
 
-#: apprise_api/api/templatetags/mobile_stores.py:49
+#: apprise_api/api/templates/welcome.html:786
+msgid "Service and URL Endpoints"
+msgstr "服务和 URL 端点"
+
+#: apprise_api/api/templates/welcome.html:789
+#, python-format
+msgid "Your own programs can look up what each service needs and check Apprise URLs without sending anything. The <a href=\"%(BASE_URL)s/details/\">Available Services</a> page is built on these."
+msgstr "你自己的程序可以在不发送任何内容的情况下查询每个服务需要什么并检查 Apprise URL。<a href=\"%(BASE_URL)s/details/\">可用服务</a>页面就是基于这些端点构建的。"
+
+#: apprise_api/api/templates/welcome.html:791
+msgid "A configuration login also sends its Config ID in the <code>X-Apprise-Config-ID</code> header."
+msgstr "配置登录还会在 <code>X-Apprise-Config-ID</code> 标头中发送其 Config ID。"
+
+#: apprise_api/api/templates/welcome.html:808
+msgid "Lists every service this server supports and the fields each of its URLs is built from."
+msgstr "列出此服务器支持的每个服务，以及构成其 URL 的字段。"
+
+#: apprise_api/api/templates/welcome.html:815
+#: apprise_api/api/templates/welcome.html:829
+#: apprise_api/api/templates/welcome.html:842
+msgid "List every service and its fields:"
+msgstr "列出每个服务及其字段："
+
+#: apprise_api/api/templates/welcome.html:868
+msgid "Takes Apprise URLs apart into their fields, or puts fields back together into a URL. Nothing is contacted; the URLs are only read."
+msgstr "将 Apprise URL 拆分为字段，或将字段重新组合成 URL。不会联系任何服务；只读取 URL。"
+
+#: apprise_api/api/templates/welcome.html:869
+msgid "More details on the JSON format can be found <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">here</a>."
+msgstr "有关 JSON 格式的更多详细信息请参见 <a href=\"https://appriseit.com/library/inspection/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">这里</a>。"
+
+#: apprise_api/api/templates/welcome.html:877
+#: apprise_api/api/templates/welcome.html:900
+#: apprise_api/api/templates/welcome.html:946
+msgid "Split a URL into its fields:"
+msgstr "将 URL 拆分为字段："
+
+#: apprise_api/api/templates/welcome.html:883
+#: apprise_api/api/templates/welcome.html:919
+#: apprise_api/api/templates/welcome.html:980
+msgid "Put fields back together into a URL:"
+msgstr "将字段重新组合为 URL："
+
+#: apprise_api/api/templates/welcome.html:1042
+msgid "Copy to clipboard"
+msgstr "复制到剪贴板"
+
+#: apprise_api/api/templatetags/mobile_stores.py:77
 msgid "App Store"
 msgstr "App Store"
 
-#: apprise_api/api/templatetags/mobile_stores.py:50
+#: apprise_api/api/templatetags/mobile_stores.py:78
 msgid "Get It on Google Play"
 msgstr "在Google Play获取。"
 
-#: apprise_api/api/views.py:1187
+#: apprise_api/api/views.py:1244
 msgid "This configuration has been disabled by an administrator"
 msgstr "此配置已被管理员禁用"
 
-#: apprise_api/api/views.py:1198 apprise_api/core/middleware/auth.py:73
-#: apprise_api/core/middleware/auth.py:189 apprise_api/error/views.py:43
+#: apprise_api/api/views.py:1255 apprise_api/core/middleware/auth.py:114
+#: apprise_api/core/middleware/auth.py:230 apprise_api/error/views.py:43
 msgid "Access Denied"
 msgstr "拒绝访问"
 
-#: apprise_api/api/views.py:1214
+#: apprise_api/api/views.py:1271
 msgid "Authentication mode is disabled (set APPRISE_AUTH_REQUIRED to enable it)"
 msgstr "身份验证模式已禁用（设置APPRISE_AUTH_REQUIRED以启用）"
 
-#: apprise_api/api/views.py:1223
+#: apprise_api/api/views.py:1280
 msgid "Persistent configuration storage is disabled"
 msgstr "持久化配置存储已禁用"
 
-#: apprise_api/api/views.py:1232
+#: apprise_api/api/views.py:1289
 msgid "A configuration ID is required (URL path or X-Apprise-Config-ID header)"
 msgstr "需要配置ID（URL路径或X-Apprise-Config-ID头）"
 
-#: apprise_api/api/views.py:1245
+#: apprise_api/api/views.py:1302
 msgid "The X-Apprise-Config-ID header provided is invalid"
 msgstr "提供的X-Apprise-Config-ID头无效"
 
-#: apprise_api/api/views.py:1315 apprise_api/api/views.py:1925
-#: apprise_api/api/views.py:2031 apprise_api/api/views.py:2379
-#: apprise_api/api/views.py:2549 apprise_api/api/views.py:3816
-#: apprise_api/api/views.py:3965
+#: apprise_api/api/views.py:1372 apprise_api/api/views.py:2032
+#: apprise_api/api/views.py:2220 apprise_api/api/views.py:2568
+#: apprise_api/api/views.py:2738 apprise_api/api/views.py:4083
+#: apprise_api/api/views.py:4221 apprise_api/api/views.py:4520
+#: apprise_api/api/views.py:6514
 msgid "The site has been configured to deny this request"
 msgstr "该站点已配置为拒绝此请求"
 
-#: apprise_api/api/views.py:1349 apprise_api/api/views.py:3732
+#: apprise_api/api/views.py:1406 apprise_api/api/views.py:4000
+#: apprise_api/api/views.py:4374 apprise_api/api/views.py:6163
 msgid "An error occurred accessing configuration"
 msgstr "访问配置时发生错误"
 
-#: apprise_api/api/views.py:1511
+#: apprise_api/api/views.py:1570
 msgid "The login form is only available to the web interface"
 msgstr "登录表单仅适用于网页界面"
 
-#: apprise_api/api/views.py:1569
+#: apprise_api/api/views.py:1628
 msgid "The username, password, or Config ID was not accepted."
 msgstr "用户名、密码或配置 ID 未被接受。"
 
-#: apprise_api/api/views.py:2060 apprise_api/api/views.py:3310
+#: apprise_api/api/views.py:2249 apprise_api/api/views.py:3597
+#: apprise_api/api/views.py:5131
 msgid "The urls field must be a string or list of strings"
 msgstr "URLs 字段必须是字符串或字符串列表"
 
-#: apprise_api/api/views.py:2068
+#: apprise_api/api/views.py:2257
 msgid "The config field must be a string"
 msgstr "配置字段必须是字符串"
 
-#: apprise_api/api/views.py:2076
+#: apprise_api/api/views.py:2265
 msgid "The format field must be a string"
 msgstr "格式字段必须是字符串"
 
-#: apprise_api/api/views.py:2089
+#: apprise_api/api/views.py:2278
 msgid "Invalid payload structure provided"
 msgstr "提供的有效负载结构无效"
 
-#: apprise_api/api/views.py:2117
+#: apprise_api/api/views.py:2306
 msgid "No valid URLs defined"
 msgstr "未定义有效的 URL"
 
-#: apprise_api/api/views.py:2142
+#: apprise_api/api/views.py:2331
 msgid "The configuration could not be saved"
 msgstr "配置无法保存"
 
-#: apprise_api/api/views.py:2166
+#: apprise_api/api/views.py:2355
 msgid "The configuration payload is too large"
 msgstr "配置负载过大"
 
-#: apprise_api/api/views.py:2190
+#: apprise_api/api/views.py:2379
 msgid "Invalid configuration format specified"
 msgstr "指定的配置格式无效"
 
-#: apprise_api/api/views.py:2222
+#: apprise_api/api/views.py:2411
 msgid "The configuration format could not be auto-detected"
 msgstr "配置格式无法自动检测"
 
-#: apprise_api/api/views.py:2255
+#: apprise_api/api/views.py:2444
 msgid "The configuration could not be parsed"
 msgstr "无法解析配置"
 
-#: apprise_api/api/views.py:2274
+#: apprise_api/api/views.py:2463
 msgid "An error occurred saving configuration"
 msgstr "保存配置时发生错误"
 
-#: apprise_api/api/views.py:2291
+#: apprise_api/api/views.py:2480
 msgid "No configuration provided"
 msgstr "未提供配置"
 
-#: apprise_api/api/views.py:2320
+#: apprise_api/api/views.py:2509
 msgid "Successfully saved configuration"
 msgstr "成功保存配置"
 
-#: apprise_api/api/views.py:2417
+#: apprise_api/api/views.py:2606
 msgid "The configuration store is not currently writable"
 msgstr "当前配置存储不可写"
 
-#: apprise_api/api/views.py:2431
+#: apprise_api/api/views.py:2620
 msgid "A valid destination (to), different from the source, is required"
 msgstr "需要一个有效的目标（to），且不同于源"
 
-#: apprise_api/api/views.py:2458
+#: apprise_api/api/views.py:2647
 msgid "There was no configuration to move"
 msgstr "没有要移动的配置"
 
-#: apprise_api/api/views.py:2469
+#: apprise_api/api/views.py:2658
 msgid "A configuration already exists at the destination"
 msgstr "目标位置已有配置"
 
-#: apprise_api/api/views.py:2480
+#: apprise_api/api/views.py:2669
 msgid "The configuration could not be moved"
 msgstr "配置无法移动"
 
-#: apprise_api/api/views.py:2490
+#: apprise_api/api/views.py:2679
 msgid "Successfully moved configuration"
 msgstr "成功移动配置"
 
-#: apprise_api/api/views.py:2566
+#: apprise_api/api/views.py:2756
 msgid "The configuration could not be removed"
 msgstr "配置无法删除"
 
-#: apprise_api/api/views.py:2589
+#: apprise_api/api/views.py:2779
 msgid "The configuration was removed, but its authentication could not be removed"
 msgstr "配置已删除，但其认证信息无法删除"
 
-
-#: apprise_api/api/views.py:4922
-msgid "Successfully saved reminder"
-msgstr "成功保存提醒"
-
-
-#: apprise_api/api/views.py:2717
+#: apprise_api/api/views.py:2947 apprise_api/api/views.py:4355
 msgid "Content-Type must be application/json"
 msgstr "Content-Type 必须为 application/json"
 
-#: apprise_api/api/views.py:2755
+#: apprise_api/api/views.py:2985
 msgid "Only an administrator may set configuration access"
 msgstr "只有管理员可以设置配置访问权限"
 
-#: apprise_api/api/views.py:2777
+#: apprise_api/api/views.py:3007
 msgid "Valid username and password fields are required"
 msgstr "需要有效的用户名和密码字段"
 
-#: apprise_api/api/views.py:2824
+#: apprise_api/api/views.py:3054
 msgid "The current password was not accepted"
 msgstr "当前密码未被接受"
 
-#: apprise_api/api/views.py:2832
+#: apprise_api/api/views.py:3062
 msgid "The new password must differ from the current password"
 msgstr "新密码必须不同于当前密码"
 
-#: apprise_api/api/views.py:2850
+#: apprise_api/api/views.py:3080
 msgid "The authentication could not be saved"
 msgstr "无法保存身份验证"
 
-#: apprise_api/api/views.py:2860
+#: apprise_api/api/views.py:3090
 msgid "Successfully set authentication"
 msgstr "身份验证设置成功"
 
-#: apprise_api/api/views.py:2903
+#: apprise_api/api/views.py:3133
 msgid "Global administrator credentials are required to remove authentication"
 msgstr "删除身份验证需要全局管理员凭据"
 
-#: apprise_api/api/views.py:2916
+#: apprise_api/api/views.py:3154 apprise_api/api/views.py:3197
 msgid "The authentication could not be removed"
 msgstr "无法删除身份验证"
 
-#: apprise_api/api/views.py:2926
+#: apprise_api/api/views.py:3208
 msgid "Successfully removed authentication"
 msgstr "身份验证已成功删除"
 
-#: apprise_api/api/views.py:3077
+#: apprise_api/api/views.py:3359
 msgid "The server is temporarily unable to start a new live notification stream"
 msgstr "服务器暂时无法启动新的实时通知流"
 
-#: apprise_api/api/views.py:3102
+#: apprise_api/api/views.py:3384
 msgid "An error occurred delivering the notification"
 msgstr "发送通知时发生错误"
 
-#: apprise_api/api/views.py:3111
+#: apprise_api/api/views.py:3393 apprise_api/api/views.py:6930
 msgid "One or more notification could not be sent"
 msgstr "一个或多个通知无法发送"
 
-#: apprise_api/api/views.py:3167
+#: apprise_api/api/views.py:3450
 msgid "The selected notification entry is invalid"
 msgstr "所选通知条目无效"
 
-#: apprise_api/api/views.py:3181
+#: apprise_api/api/views.py:3464
 msgid "The selected notification entry is no longer available"
 msgstr "所选的通知条目不再可用"
 
-#: apprise_api/api/views.py:3214
+#: apprise_api/api/views.py:3501
 msgid "The message body provided is too large"
 msgstr "提供的消息正文过大"
 
-#: apprise_api/api/views.py:3231
+#: apprise_api/api/views.py:3518
 msgid "The message body could not be read"
 msgstr "无法读取消息正文"
 
-#: apprise_api/api/views.py:3249
+#: apprise_api/api/views.py:3536
 msgid "The message body could not be decoded"
 msgstr "无法解码消息正文"
 
-#: apprise_api/api/views.py:3269
+#: apprise_api/api/views.py:3556
 #, python-brace-format
 msgid "Payload field mapping failed using KEY: {}"
 msgstr "使用 KEY 进行有效负载字段映射失败：{}"
 
-#: apprise_api/api/views.py:3271
+#: apprise_api/api/views.py:3558
 msgid "Payload field mapping failed"
 msgstr "有效负载字段映射失败"
 
-#: apprise_api/api/views.py:3284
+#: apprise_api/api/views.py:3571 apprise_api/api/views.py:5340
 #, python-brace-format
 msgid "The {} field must be a string"
 msgstr "{} 字段必须是字符串"
 
-#: apprise_api/api/views.py:4239
+#: apprise_api/api/views.py:3583
+msgid "The format field must be a string or null"
+msgstr "格式字段必须是字符串或空值"
+
+#: apprise_api/api/views.py:3634
+msgid "Bad FORM Payload provided"
+msgstr "提供了错误的 FORM 有效负载"
+
+#: apprise_api/api/views.py:3654 apprise_api/api/views.py:5405
+msgid "The template field must be an object of name/value pairs"
+msgstr "模板字段必须是名称/值对对象"
+
+#: apprise_api/api/views.py:3712
+msgid "The X-Apprise-Template header is invalid"
+msgstr "X-Apprise-Template 请求头无效"
+
+#: apprise_api/api/views.py:3742 apprise_api/api/views.py:3761
+msgid "A specific tag other than 'all' is required for this configuration"
+msgstr "此配置需要除 'all' 之外的特定标签"
+
+#: apprise_api/api/views.py:3754 apprise_api/api/views.py:5380
+#: apprise_api/api/views.py:5392
+msgid "Unsupported characters found in tag definition"
+msgstr "在标签定义中发现不支持的字符"
+
+#: apprise_api/api/views.py:3832 apprise_api/api/views.py:5369
+msgid "An invalid body input format was specified"
+msgstr "指定了无效的正文输入格式"
+
+#: apprise_api/api/views.py:3855
+msgid "The recursion limit has been reached"
+msgstr "已达到递归限制"
+
+#: apprise_api/api/views.py:3867
+msgid "An invalid recursion value was specified"
+msgstr "指定了无效的递归值"
+
+#: apprise_api/api/views.py:3882
+msgid "An error occurred preparing the notification"
+msgstr "准备通知时发生错误"
+
+#: apprise_api/api/views.py:3954 apprise_api/api/views.py:4138
+#: apprise_api/api/views.py:5346 apprise_api/api/views.py:6436
+msgid "Payload lacks minimum requirements"
+msgstr "负载缺少最低要求"
+
+#: apprise_api/api/views.py:3989 apprise_api/api/views.py:4269
+#: apprise_api/api/views.py:4372
+msgid "There was no configuration found"
+msgstr "未找到配置"
+
+#: apprise_api/api/views.py:4178
+msgid "There was no valid URLs provided to notify"
+msgstr "没有提供有效的通知 URL"
+
+#: apprise_api/api/views.py:4437
+msgid "This configuration does not permit stateless notifications"
+msgstr "此配置不允许无状态通知"
+
+#: apprise_api/api/views.py:4601 apprise_api/api/views.py:4848
+#: apprise_api/api/views.py:6319 apprise_api/api/views.py:6325
+#: apprise_api/api/views.py:6993 apprise_api/api/views.py:7003
+#: apprise_api/api/views.py:7048 apprise_api/api/views.py:7088
+#: apprise_api/api/views.py:7117 apprise_api/api/views.py:7220
 #, python-brace-format
 msgid "The {} field is invalid"
 msgstr "{} 字段无效"
 
-#: apprise_api/api/views.py:4276
+#: apprise_api/api/views.py:4608 apprise_api/api/views.py:4858
+#: apprise_api/api/views.py:5397
 #, python-brace-format
 msgid "The {} field is too long"
 msgstr "{} 字段过长"
 
-#: apprise_api/api/views.py:4985
-msgid "The reminder is too large to save"
-msgstr "提醒过大，无法保存"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:415 apprise_api/api/views.py:4506
-msgid "This reminder would never be sent"
-msgstr "此提醒永远不会被发送"
-
-#: apprise_api/api/views.py:4493 apprise_api/api/templates/components/config_reminders_script.html:297
-msgid "The end date is before the start"
-msgstr "结束日期早于开始"
-
-#: apprise_api/api/views.py:4587
-msgid "This server does not save URLs with reminders"
-msgstr "此服务器不随提醒保存 URL"
-
-#: apprise_api/api/views.py:4590
+#: apprise_api/api/views.py:5154
+#, python-brace-format
 msgid "A reminder can hold at most {} URLs"
 msgstr "一个提醒最多可包含 {} 个 URL"
 
-#: apprise_api/api/templates/config.html:567
-msgid "Apprise URLs"
-msgstr "Apprise URL"
-
-#: apprise_api/api/templates/config.html:568
-msgid ""
-"Optionally specify Apprise URLs directly to notify. <a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Click here</a> to get help constructing your URLs from the Apprise URL Builder."
-msgstr "可选：直接指定要通知的 Apprise URL。<a href=\"https://appriseit.com/url-builder/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">点击此处</a>，借助 Apprise URL Builder 构建您的 URL。"
-
-#: apprise_api/api/templates/config.html:583
-msgid "Also send to untagged services"
-msgstr "同时发送到没有标签的服务"
-
-#: apprise_api/api/templates/config.html:3117
-msgid "Apprise URL"
-msgstr "Apprise URL"
-
-#: apprise_api/api/templates/config.html:3154
-msgid "Remove URL"
-msgstr "删除 URL"
-
-#: apprise_api/api/views.py:4307
-msgid "This URL could not be loaded"
-msgstr "无法加载此 URL"
-
-#: apprise_api/api/templates/details.html:555
-msgid "This value is not in the form this service expects."
-msgstr "此值不是该服务所需的格式。"
-
-#: apprise_api/api/templates/details.html:560
-msgid "Mark each entry with its kind: {}."
-msgstr "用前缀标明每个条目的类型：{}。"
-
-#: apprise_api/api/templates/details.html:561
-msgid "{} for {}"
-msgstr "{} 表示 {}"
-
-#: apprise_api/api/templates/details.html:611
-msgid "{} was read as a {}."
-msgstr "{} 被识别为 {}。"
-
-#: apprise_api/api/templates/details.html:770
-msgid "This URL could not be loaded. Check the highlighted fields."
-msgstr "无法加载此 URL。请检查突出显示的字段。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:534
-msgid "The end date has already passed, so this reminder will not be sent."
-msgstr "结束日期已过，因此不会发送此提醒。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:535
-msgid "This time has already passed, so the reminder will not be sent."
-msgstr "此时间已过，因此不会发送提醒。"
-
-#: apprise_api/api/views.py:4501
+#: apprise_api/api/views.py:5483
 msgid "Nothing would be sent before the end date"
 msgstr "结束日期之前不会发送任何内容"
 
-#: apprise_api/api/views.py:4567
+#: apprise_api/api/views.py:5564
 #, python-brace-format
 msgid "A reminder cannot repeat more often than every {} seconds"
 msgstr "提醒的重复间隔不能少于 {} 秒"
 
-#: apprise_api/api/templates/components/config_reminders_tab.html:22 apprise_api/api/views.py:4601
+#: apprise_api/api/views.py:5593
 msgid "Only an administrator may manage reminders for this configuration"
 msgstr "只有管理员可以管理此配置的提醒"
 
-#: apprise_api/api/views.py:5475
+#: apprise_api/api/views.py:5596
 msgid "Reminders are turned off while this configuration is disabled"
 msgstr "此配置被禁用期间，提醒处于关闭状态"
 
+#: apprise_api/api/views.py:5687
+msgid "This server does not save URLs with reminders"
+msgstr "此服务器不随提醒保存 URL"
 
-#: apprise_api/api/templates/components/config_reminders_tab.html:14
-msgid "The scheduler is not running, so reminders are saved but not sent."
-msgstr "调度程序未运行，因此提醒会被保存但不会发送。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1434 apprise_api/api/templates/reminder_list.html:113 apprise_api/api/views.py:4768
-msgid "The reminders could not be read"
-msgstr "无法读取提醒"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1168 apprise_api/api/templates/components/reminder_shared_script.html:144 apprise_api/api/views.py:4773
-msgid "The reminders could not be saved"
-msgstr "无法保存提醒"
-
-#: apprise_api/api/views.py:4778
-msgid "The reminder was not found"
-msgstr "未找到该提醒"
-
-#: apprise_api/api/views.py:4959
-msgid "This configuration already has the most reminders allowed"
-msgstr "此配置的提醒数量已达上限"
-
-#: apprise_api/api/views.py:4838
-msgid "There is not enough attachment space left for this configuration"
-msgstr "此配置剩余的附件空间不足"
-
-#: apprise_api/api/views.py:5081
-msgid "Attachments are turned off for this configuration's reminders"
-msgstr "此配置的提醒已关闭附件"
-
-#: apprise_api/api/views.py:4987
+#: apprise_api/api/views.py:5949
 msgid "There is not enough attachment space left on this server"
 msgstr "此服务器上的附件空间不足"
 
-#: apprise_api/api/views.py:5362
+#: apprise_api/api/views.py:6006
+msgid "The reminder is too large to save"
+msgstr "提醒过大，无法保存"
+
+#: apprise_api/api/views.py:6020
+msgid "This configuration already has the most reminders allowed"
+msgstr "此配置的提醒数量已达上限"
+
+#: apprise_api/api/views.py:6031
+msgid "Attachments are turned off for this configuration's reminders"
+msgstr "此配置的提醒已关闭附件"
+
+#: apprise_api/api/views.py:6088
+msgid "The reminder was not found"
+msgstr "未找到该提醒"
+
+#: apprise_api/api/views.py:6170
+msgid "There is not enough attachment space left for this configuration"
+msgstr "此配置剩余的附件空间不足"
+
+#: apprise_api/api/views.py:6283
+msgid "Successfully saved reminder"
+msgstr "成功保存提醒"
+
+#: apprise_api/api/views.py:7207
 msgid "Only an administrator may change the limits of this configuration"
 msgstr "只有管理员可以更改此配置的限制"
-
-#: apprise_api/api/templates/auth.html:918 apprise_api/api/views.py:5388
-msgid "The limits could not be saved"
-msgstr "无法保存限制"
-
-#: apprise_api/api/scheduler.py:425
-#, python-brace-format
-msgid "Reminders for this configuration were paused because it was not used for {} days"
-msgstr "由于此配置已 {} 天未被使用，其提醒已暂停"
-
-#: apprise_api/api/views.py:3296
-msgid "The format field must be a string or null"
-msgstr "格式字段必须是字符串或空值"
-
-#: apprise_api/api/views.py:3347
-msgid "Bad FORM Payload provided"
-msgstr "提供了错误的 FORM 有效负载"
-
-#: apprise_api/api/views.py:3367
-msgid "The template field must be an object of name/value pairs"
-msgstr "模板字段必须是名称/值对对象"
-
-#: apprise_api/api/views.py:3425
-msgid "The X-Apprise-Template header is invalid"
-msgstr "X-Apprise-Template 请求头无效"
-
-#: apprise_api/api/views.py:3455 apprise_api/api/views.py:3474
-msgid "A specific tag other than 'all' is required for this configuration"
-msgstr "此配置需要除 'all' 之外的特定标签"
-
-#: apprise_api/api/views.py:3467
-msgid "Unsupported characters found in tag definition"
-msgstr "在标签定义中发现不支持的字符"
-
-#: apprise_api/api/views.py:3513
-msgid "Bad Attachment"
-msgstr "附件错误"
-
-#: apprise_api/api/views.py:3545
-msgid "An invalid body input format was specified"
-msgstr "指定了无效的正文输入格式"
-
-#: apprise_api/api/views.py:3582
-msgid "The recursion limit has been reached"
-msgstr "已达到递归限制"
-
-#: apprise_api/api/views.py:3594
-msgid "An invalid recursion value was specified"
-msgstr "指定了无效的递归值"
-
-#: apprise_api/api/views.py:3614
-msgid "An error occurred preparing the notification"
-msgstr "准备通知时发生错误"
-
-#: apprise_api/api/views.py:3686 apprise_api/api/views.py:3882
-msgid "Payload lacks minimum requirements"
-msgstr "负载缺少最低要求"
-
-#: apprise_api/api/views.py:3721 apprise_api/api/views.py:4013
-msgid "There was no configuration found"
-msgstr "未找到配置"
-
-#: apprise_api/api/views.py:3842
-msgid "This configuration does not permit stateless notifications"
-msgstr "此配置不允许无状态通知"
-
-#: apprise_api/api/views.py:3922
-msgid "There was no valid URLs provided to notify"
-msgstr "没有提供有效的通知 URL"
 
 #: apprise_api/core/middleware/csrf.py:78
 msgid "Cross-site request rejected"
@@ -2863,765 +3720,3 @@ msgstr "页面未找到"
 #: apprise_api/error/views.py:233
 msgid "System error"
 msgstr "系统错误"
-
-#: apprise_api/api/templates/components/config_reminders_tab.html:8 apprise_api/api/templates/config.html:62
-msgid "Reminders"
-msgstr "提醒"
-
-#: apprise_api/api/templates/components/config_reminders_tab.html:9
-msgid "All pre-saved notifications set to be sent at a later time are listed here."
-msgstr "所有已保存并计划稍后发送的通知都列在这里。"
-
-#: apprise_api/api/templates/components/config_reminders_tab.html:45
-#, python-format
-msgid "No reminders have been added. Use the %(notify_chip)s section to add one."
-msgstr "尚未添加任何提醒。请使用 %(notify_chip)s 部分添加。"
-
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1212 apprise_api/api/templates/components/config_reminders_tab.html:52
-msgid "Show times in"
-msgstr "显示时间的时区"
-
-#: apprise_api/api/templates/components/config_reminders_tab.html:73
-msgid "Use my timezone"
-msgstr "使用我的时区"
-
-#: apprise_api/api/templates/components/config_reminders.html:161
-msgid "Drift"
-msgstr "偏移"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1489
-msgid "All"
-msgstr "全部"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1346
-msgid "None (untagged services only)"
-msgstr "无（仅限没有标签的服务）"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:303
-msgid "Finished"
-msgstr "已完成"
-
-#: apprise_api/api/templates/reminder_list.html:26
-#, python-format
-msgid "No reminders have been added. Open a configuration from the %(list_chip)s and use its Notifications section to add one."
-msgstr "尚未添加任何提醒。请从 %(list_chip)s 打开一个配置，并在其通知部分添加。"
-
-#: apprise_api/api/templates/components/config_reminders.html:85
-msgid "Starts (optional)"
-msgstr "开始（可选）"
-
-#: apprise_api/api/templates/components/config_reminders.html:190
-msgid "Ends (optional)"
-msgstr "结束（可选）"
-
-#: apprise_api/api/templates/components/config_reminders.html:94
-msgid "Now"
-msgstr "现在"
-
-#: apprise_api/api/templates/components/config_reminders.html:87
-msgid "Date and time"
-msgstr "日期和时间"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:747
-msgid "Quick Select"
-msgstr "快速选择"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:611
-msgid "Today"
-msgstr "今天"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:626
-msgid "Tomorrow"
-msgstr "明天"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:627
-msgid "This Weekend"
-msgstr "本周末"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:630
-msgid "Later This Week"
-msgstr "本周晚些时候"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:631
-msgid "Next Week"
-msgstr "下周"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:634
-msgid "Next Weekend"
-msgstr "下周末"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:637
-msgid "End of Month"
-msgstr "月底"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:640
-msgid "In a Month"
-msgstr "一个月后"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:890
-msgid "Start Date"
-msgstr "开始日期"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:891
-msgid "A Day Later"
-msgstr "一天后"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:892
-msgid "A Week Later"
-msgstr "一周后"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:894
-msgid "A Month Later"
-msgstr "一个月后"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:895
-msgid "A Year Later"
-msgstr "一年后"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:612
-msgid "Clear"
-msgstr "清除"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:749
-msgid "Confirm"
-msgstr "确认"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:751
-msgid "Hour"
-msgstr "小时"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:751
-msgid "Minute"
-msgstr "分钟"
-
-#: apprise_api/api/templates/components/config_reminders.html:196
-msgid "No end date"
-msgstr "无结束日期"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1498
-msgid "No reminders are due in this period."
-msgstr "此期间没有到期的提醒。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1374
-msgid "No reminders have been added yet."
-msgstr "尚未添加任何提醒。"
-
-#: apprise_api/api/templates/components/config_reminders_tab.html:42 apprise_api/api/templates/reminder_list.html:22
-msgid "No Reminders Yet"
-msgstr "还没有提醒"
-
-#: apprise_api/api/templates/components/reminder_space_full.html:12
-msgid "Attachment Space Full"
-msgstr "附件空间已满"
-
-#: apprise_api/api/templates/components/reminder_space_full.html:14
-msgid "Your reminders use all of their attachment space. Remove attachments from them, or ask the administrator for more space, to add new ones. Sending notifications is not affected."
-msgstr "你的提醒已用完全部附件空间。若要添加新附件，请从提醒中移除一些附件，或请管理员增加空间。发送通知不受影响。"
-
-#: apprise_api/api/templates/auth.html:200 apprise_api/api/templates/components/config_reminders_tab.html:29
-msgid "Reminders used"
-msgstr "已用提醒"
-
-#: apprise_api/api/templates/auth.html:201 apprise_api/api/templates/components/config_reminders_tab.html:30
-msgid "Attachment space used"
-msgstr "已用附件空间"
-
-#: apprise_api/api/templates/auth.html:194
-msgid "Reminder Limits"
-msgstr "提醒限制"
-
-#: apprise_api/api/templates/auth.html:195
-msgid "How much this Config ID's user may save as reminders."
-msgstr "此配置 ID 的用户可以保存为提醒的量。"
-
-#: apprise_api/api/templates/auth.html:208
-msgid "Most reminders"
-msgstr "提醒数量上限"
-
-#: apprise_api/api/templates/auth.html:212
-msgid "Attachment space (MB)"
-msgstr "附件空间 (MB)"
-
-#: apprise_api/api/templates/auth.html:218
-msgid "Save Limits"
-msgstr "保存限制"
-
-#: apprise_api/api/templates/auth.html:215
-msgid "Leave a field blank to use the server default. An attachment space of 0 turns uploads off."
-msgstr "留空表示使用服务器默认值。附件空间设为 0 会关闭上传。"
-
-#: apprise_api/api/templates/components/config_reminders.html:13 apprise_api/api/templates/components/config_reminders_script.html:1672
-msgid "Reminder"
-msgstr "提醒"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:15
-msgid "Once"
-msgstr "一次"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:25
-msgid "Every day"
-msgstr "每天"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:26
-msgid "Every week"
-msgstr "每周"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:27
-msgid "Every month"
-msgstr "每月"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:28
-msgid "Every year"
-msgstr "每年"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:16
-msgid "On a holiday"
-msgstr "在节假日"
-
-#: apprise_api/api/templates/components/config_reminders.html:52
-msgid "Country"
-msgstr "国家"
-
-#: apprise_api/api/templates/components/config_reminders.html:70
-msgid "Region"
-msgstr "地区"
-
-#: apprise_api/api/templates/components/config_reminders.html:74
-msgid "Holiday"
-msgstr "节假日"
-
-#: apprise_api/api/templates/components/config_reminders.html:125
-msgid "Previous year"
-msgstr "上一年"
-
-#: apprise_api/api/templates/components/config_reminders.html:132
-msgid "Next year"
-msgstr "下一年"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:269
-msgid "All regions"
-msgstr "所有地区"
-
-#: apprise_api/api/templates/components/config_reminders.html:154 apprise_api/api/templates/components/reminder_shared_script.html:17
-msgid "Custom (crontab)"
-msgstr "自定义 (crontab)"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:306
-msgid "Repeat"
-msgstr "重复"
-
-#: apprise_api/api/templates/components/config_reminders.html:150
-msgid "Days"
-msgstr "星期"
-
-#: apprise_api/api/templates/components/config_reminders.html:185
-msgid "Crontab entry"
-msgstr "crontab 条目"
-
-#: apprise_api/api/templates/components/config_reminders.html:187
-msgid "Five fields: minute, hour, day of the month, month and day of the week."
-msgstr "五个字段：分钟、小时、日、月和星期。"
-
-#: apprise_api/api/templates/components/config_reminders.html:205
-msgid "Upcoming"
-msgstr "即将发送"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:363
-msgid "No more times after this"
-msgstr "此后不再有时间"
-
-#: apprise_api/api/templates/config.html:624
-msgid "Save Reminder"
-msgstr "保存提醒"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:32
-msgid "Skipped: it was too late to send"
-msgstr "已跳过：发送已太迟"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:34
-msgid "Paused: this configuration was not used for a while"
-msgstr "已暂停：此配置已有一段时间未被使用"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:44
-msgid "Failed: this server no longer allows URLs in reminders"
-msgstr "失败：此服务器不再允许在提醒中使用 URL"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:45
-msgid "Failed: no configuration was found"
-msgstr "失败：未找到配置"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:46
-msgid "Failed: its attachments could not be used"
-msgstr "失败：无法使用其附件"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:47
-msgid "Failed: an error stopped the send"
-msgstr "失败：发生错误，发送已停止"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:332
-msgid "The diagnostics could not be read"
-msgstr "无法读取诊断信息"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:350
-msgid "Diagnostics"
-msgstr "诊断"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:350
-msgid "Paste this into a support ticket to help trace this reminder. Its message is left out, and passwords in its URLs are hidden. Redacted also hides its name, tags and URLs."
-msgstr "将此内容粘贴到支持工单中，以帮助追踪此提醒。其中不包含消息，URL 中的密码已隐藏。“已脱敏”还会隐藏其名称、标签和 URL。"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:379
-msgid "Copy"
-msgstr "复制"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:364
-msgid "Redacted"
-msgstr "已脱敏"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:350
-msgid "How to read these diagnostics"
-msgstr "如何阅读这些诊断信息"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1175 apprise_api/api/templates/components/reminder_shared_script.html:273
-msgid "Reminder saved."
-msgstr "提醒已保存。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1888
-msgid "Clear this result"
-msgstr "清除此结果"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1364 apprise_api/api/templates/components/reminder_shared_script.html:303
-msgid "Paused"
-msgstr "已暂停"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:303
-msgid "Active"
-msgstr "已启用"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:307
-msgid "Next"
-msgstr "下次"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
-msgid "Sent"
-msgstr "已发送"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1363 apprise_api/api/templates/components/reminder_shared_script.html:311
-msgid "Failed"
-msgstr "失败"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:312
-msgid "Last"
-msgstr "上次"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
-msgid "Resume"
-msgstr "恢复"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1387 apprise_api/api/templates/components/reminder_shared_script.html:332
-msgid "Pause"
-msgstr "暂停"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:239
-msgid "Pause Series"
-msgstr "暂停系列"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:239
-msgid "Resume Series"
-msgstr "恢复系列"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1373 apprise_api/api/templates/components/reminder_shared_script.html:338
-msgid "Edit"
-msgstr "编辑"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:210
-msgid "Send Now"
-msgstr "立即发送"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:258
-msgid "Delete this reminder?"
-msgstr "删除此提醒？"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:278
-msgid "Reminder removed."
-msgstr "提醒已删除。"
-
-#: apprise_api/api/templates/auth.html:922
-msgid "Limits saved."
-msgstr "限制已保存。"
-
-#: apprise_api/api/templates/config.html:623
-msgid "Add Reminder"
-msgstr "添加提醒"
-
-#: apprise_api/api/templates/config.html:518
-msgid "Editing reminder"
-msgstr "正在编辑提醒"
-
-#: apprise_api/api/templates/auth.html:626
-msgid "Keep Reminders"
-msgstr "保留提醒"
-
-#: apprise_api/api/templates/auth.html:627
-msgid "Hand the reminders this user added to the administrator instead of removing them."
-msgstr "将此用户添加的提醒转交给管理员，而不是删除。"
-
-#: apprise_api/api/templates/base.html:305 apprise_api/api/templates/reminder_list.html:10
-msgid "Reminder List"
-msgstr "提醒列表"
-
-#: apprise_api/api/templates/reminder_list.html:11
-msgid "Every reminder saved on this server, soonest first."
-msgstr "此服务器上保存的所有提醒，最近的在前。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1353 apprise_api/api/templates/reminder_list.html:91
-msgid "Series"
-msgstr "系列"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1374 apprise_api/api/templates/components/reminder_shared_script.html:340
-msgid "Clone"
-msgstr "克隆"
-
-#: apprise_api/api/templates/components/config_reminders.html:126
-msgid "Only this one time changes. Use Clone to start a new repeating reminder from it."
-msgstr "只更改这一次。使用克隆可从此开始一个新的重复提醒。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1122
-msgid "Copied into a new reminder. Change what you like, then choose Add Reminder."
-msgstr "已复制为新的提醒。修改所需内容后，选择添加提醒。"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1323
-msgid "Edit this time"
-msgstr "编辑本次"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1324
-msgid "Edit the series"
-msgstr "编辑整个系列"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:266
-msgid "Delete Entry"
-msgstr "删除此项"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:267
-msgid "Delete Series"
-msgstr "删除系列"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:254
-msgid "Delete Entry removes only this time. Delete Series removes the reminder and every time."
-msgstr "“删除此项”只删除这一次。“删除系列”删除该提醒及其所有时间。"
-
-#: apprise_api/api/templates/config.html:519
-msgid "Editing one time of"
-msgstr "正在编辑其中一次"
-
-#: apprise_api/api/templates/components/config_reminders.html:27
-msgid "Send on"
-msgstr "发送时间"
-
-#: apprise_api/api/templates/components/config_reminders.html:29
-msgid "A date"
-msgstr "日期"
-
-#: apprise_api/api/templates/components/config_reminders.html:30
-msgid "A holiday"
-msgstr "节假日"
-
-#: apprise_api/api/templates/components/config_reminders.html:122
-msgid "Make recurring"
-msgstr "设为重复"
-
-#: apprise_api/api/templates/components/config_reminders.html:132
-msgid "Every"
-msgstr "每"
-
-#: apprise_api/api/templates/components/config_reminders.html:147
-msgid "Seconds"
-msgstr "秒"
-
-#: apprise_api/api/templates/components/config_reminders.html:148
-msgid "Minutes"
-msgstr "分钟"
-
-#: apprise_api/api/templates/components/config_reminders.html:149
-msgid "Hours"
-msgstr "小时"
-
-#: apprise_api/api/templates/components/config_reminders.html:151
-msgid "Weeks"
-msgstr "周"
-
-#: apprise_api/api/templates/components/config_reminders.html:152
-msgid "Months"
-msgstr "月"
-
-#: apprise_api/api/templates/components/reminder_pick_actions.html:9
-msgid "Select all"
-msgstr "全选"
-
-#: apprise_api/api/templates/components/reminder_pick_actions.html:16
-msgid "Select none"
-msgstr "全不选"
-
-#: apprise_api/api/templates/components/reminder_pick_actions.html:23
-msgid "Invert selection"
-msgstr "反选"
-
-#: apprise_api/api/templates/components/config_reminders_script.html:1228
-msgid "Choose at least one."
-msgstr "请至少选择一项。"
-
-#: apprise_api/api/templates/components/config_reminders.html:153
-msgid "Years"
-msgstr "年"
-
-#: apprise_api/api/templates/config.html:590
-msgid "Attachments"
-msgstr "附件"
-
-#: apprise_api/api/templates/config.html:591
-msgid "Upload files, or add web addresses that are downloaded each time the message is sent."
-msgstr "上传文件，或添加每次发送消息时都会下载的网址。"
-
-#: apprise_api/api/templates/config.html:3404
-msgid "Stored with the reminder"
-msgstr "已随提醒保存"
-
-#: apprise_api/api/templates/config.html:599
-msgid "Add URL"
-msgstr "添加 URL"
-
-#: apprise_api/api/templates/config.html:3209
-msgid "Preview"
-msgstr "预览"
-
-#: apprise_api/api/templates/config.html:3221
-msgid "Remove Attachment"
-msgstr "移除附件"
-
-#: apprise_api/api/templates/config.html:3253
-msgid "Loading…"
-msgstr "正在加载…"
-
-#: apprise_api/api/templates/config.html:3281
-msgid "The attachment could not be downloaded"
-msgstr "无法下载附件"
-
-#: apprise_api/api/templates/config.html:3198
-msgid "Local network access is turned off"
-msgstr "本地网络访问已关闭"
-
-#: apprise_api/api/templates/config.html:3199
-msgid "The administrator of this Apprise API has turned off downloads from the local network, so this address cannot be previewed."
-msgstr "此 Apprise API 的管理员已关闭从本地网络下载，因此无法预览此地址。"
-
-#: apprise_api/api/templates/config.html:3202
-msgid "This address is blocked"
-msgstr "此地址已被阻止"
-
-#: apprise_api/api/templates/config.html:3203
-msgid "The attachment rules of this Apprise API do not allow downloads from this address."
-msgstr "此 Apprise API 的附件规则不允许从此地址下载。"
-
-#: apprise_api/api/templates/config.html:3228
-msgid "The administrator can change this with:"
-msgstr "管理员可以通过以下设置更改："
-
-#: apprise_api/api/templates/config.html:3241
-msgid "Learn more"
-msgstr "了解更多"
-
-#: apprise_api/api/templates/config.html:3320
-msgid "This file cannot be shown here."
-msgstr "此文件无法在此显示。"
-
-#: apprise_api/api/templates/config.html:3331
-msgid "Download"
-msgstr "下载"
-
-#: apprise_api/api/templates/config.html:3178
-msgid "Attachment URL"
-msgstr "附件 URL"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:22
-msgid "Every second"
-msgstr "每秒"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:22
-#, python-brace-format
-msgid "Every {} seconds"
-msgstr "每 {} 秒"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:23
-msgid "Every minute"
-msgstr "每分钟"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:24
-msgid "Every hour"
-msgstr "每小时"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:23
-#, python-brace-format
-msgid "Every {} minutes"
-msgstr "每 {} 分钟"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:24
-#, python-brace-format
-msgid "Every {} hours"
-msgstr "每 {} 小时"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:25
-#, python-brace-format
-msgid "Every {} days"
-msgstr "每 {} 天"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:26
-#, python-brace-format
-msgid "Every {} weeks"
-msgstr "每 {} 周"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:27
-#, python-brace-format
-msgid "Every {} months"
-msgstr "每 {} 个月"
-
-#: apprise_api/api/templates/components/reminder_shared_script.html:28
-#, python-brace-format
-msgid "Every {} years"
-msgstr "每 {} 年"
-
-#: apprise_api/api/templates/resolve.html:37
-#: apprise_api/api/templates/resolve.html:38
-msgid "Copy URL"
-msgstr "复制 URL"
-
-#: apprise_api/api/templates/resolve.html:43
-msgid "Parse"
-msgstr "解析"
-
-#: apprise_api/api/templates/resolve.html:352
-#: apprise_api/api/templates/resolve.html:353
-msgid "Remove Value"
-msgstr "删除值"
-
-#: apprise_api/api/templates/details.html:13
-msgid "Build an Apprise URL in three steps: choose a service, fill in its details, then copy the URL. Already have a URL? Paste it in step 1 to see and change its parts."
-msgstr "分三步创建 Apprise URL：选择服务，填写详细信息，然后复制 URL。已有 URL？将其粘贴到第 1 步即可查看并修改各个部分。"
-
-#: apprise_api/api/templates/details.html:36
-msgid "Choose a Service"
-msgstr "选择服务"
-
-#: apprise_api/api/templates/details.html:39
-msgid "Search Services"
-msgstr "搜索服务"
-
-#: apprise_api/api/templates/details.html:81
-msgid "No Matching Services"
-msgstr "没有匹配的服务"
-
-#: apprise_api/api/templates/details.html:83
-msgid "No services match your search."
-msgstr "没有与搜索匹配的服务。"
-
-#: apprise_api/api/templates/components/list_more.html
-msgid "Show More"
-msgstr "显示更多"
-
-#: apprise_api/api/templates/config_list.html
-msgid "Search Configurations"
-msgstr "搜索配置"
-
-#: apprise_api/api/templates/config_list.html
-msgid "No Matching Configurations"
-msgstr "没有匹配的配置"
-
-#: apprise_api/api/templates/config_list.html
-msgid "No configurations match your search."
-msgstr "没有与搜索匹配的配置。"
-
-#: apprise_api/api/templates/reminder_list.html
-msgid "Search Reminders"
-msgstr "搜索提醒"
-
-#: apprise_api/api/templates/reminder_list.html
-msgid "No Matching Reminders"
-msgstr "没有匹配的提醒"
-
-#: apprise_api/api/templates/reminder_list.html
-msgid "No reminders match your search."
-msgstr "没有与搜索匹配的提醒。"
-
-#: apprise_api/api/templates/details.html:74
-msgid "Or Paste an Apprise URL"
-msgstr "或粘贴 Apprise URL"
-
-#: apprise_api/api/templates/details.html:96
-msgid "Fill In the Details"
-msgstr "填写详细信息"
-
-#: apprise_api/api/templates/details.html:98
-msgid "Choose a service above, or paste a URL, to see what it needs."
-msgstr "在上方选择服务或粘贴 URL，即可查看所需内容。"
-
-#: apprise_api/api/templates/details.html:136
-msgid "Options"
-msgstr "选项"
-
-#: apprise_api/api/templates/details.html:140
-msgid "Advanced"
-msgstr "高级"
-
-#: apprise_api/api/templates/details.html:150
-msgid "Copy Your URL"
-msgstr "复制 URL"
-
-#: apprise_api/api/templates/details.html:159
-msgid "Fill in the details above to build the URL."
-msgstr "填写上方的详细信息以创建 URL。"
-
-#: apprise_api/api/templates/details.html:462
-msgid "Required"
-msgstr "必填"
-
-#: apprise_api/api/templates/details.html:513
-msgid "Separate entries with commas"
-msgstr "用逗号分隔各项"
-
-#: apprise_api/api/templates/details.html:192
-msgid "A configuration login also sends its Config ID in the <code>X-Apprise-Config-ID</code> header."
-msgstr "配置登录还会在 <code>X-Apprise-Config-ID</code> 标头中发送其 Config ID。"
-
-#: apprise_api/api/templates/details.html:195
-msgid "List every service and its fields:"
-msgstr "列出每个服务及其字段："
-
-#: apprise_api/api/templates/details.html:201
-msgid "Split a URL into its fields:"
-msgstr "将 URL 拆分为字段："
-
-#: apprise_api/api/templates/details.html:209
-msgid "Put fields back together into a URL:"
-msgstr "将字段重新组合为 URL："
-
-#: apprise_api/api/templates/welcome.html:773
-msgid "Service and URL Endpoints"
-msgstr "服务和 URL 端点"
-
-#: apprise_api/api/templates/welcome.html:776
-#, python-format
-msgid "Your own programs can look up what each service needs and check Apprise URLs without sending anything. The <a href=\"%(BASE_URL)s/details/\">Available Services</a> page is built on these."
-msgstr "你自己的程序可以在不发送任何内容的情况下查询每个服务需要什么并检查 Apprise URL。<a href=\"%(BASE_URL)s/details/\">可用服务</a>页面就是基于这些端点构建的。"
-
-#: apprise_api/api/templates/welcome.html:795
-msgid "Lists every service this server supports and the fields each of its URLs is built from."
-msgstr "列出此服务器支持的每个服务，以及构成其 URL 的字段。"
-
-#: apprise_api/api/templates/welcome.html:816
-msgid "Takes Apprise URLs apart into their fields, or puts fields back together into a URL. Nothing is contacted; the URLs are only read."
-msgstr "将 Apprise URL 拆分为字段，或将字段重新组合成 URL。不会联系任何服务；只读取 URL。"
-
-#: apprise_api/api/templates/details.html:215
-#, python-format
-msgid "Using this from your own program? See the <a href=\"%(BASE_URL)s/#url-endpoints\">API endpoints</a>."
-msgstr "要在你自己的程序中使用？请参阅 <a href=\"%(BASE_URL)s/#url-endpoints\">API 端点</a>。"
