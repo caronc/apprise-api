@@ -30,9 +30,12 @@ class SiteTheme:
 
     LIGHT = "light"
     DARK = "dark"
+    # Follow the light or dark setting of the visitor's system
+    AUTO = "auto"
 
 
 SITE_THEMES = (
     SiteTheme.LIGHT,
     SiteTheme.DARK,
+    SiteTheme.AUTO,
 )

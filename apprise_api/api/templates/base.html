@@ -40,9 +40,21 @@
       <script src="{% static 'js/apprise-qr.js' %}?v={{ APPRISE_API_VERSION }}"></script>
     {% endblock head_js_optional %}
     <!--theme-->
-    <link id="theme-stylesheet"
-          rel="stylesheet"
-          href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.css?v={{ APPRISE_API_VERSION }}">
+    {% if request.theme == "auto" %}
+      {# The browser picks the stylesheet matching the system setting and swaps it live. #}
+      <link id="theme-stylesheet"
+            rel="stylesheet"
+            media="(prefers-color-scheme: light)"
+            href="{% get_static_prefix %}css/theme-light.css?v={{ APPRISE_API_VERSION }}">
+      <link id="theme-stylesheet-dark"
+            rel="stylesheet"
+            media="(prefers-color-scheme: dark)"
+            href="{% get_static_prefix %}css/theme-dark.css?v={{ APPRISE_API_VERSION }}">
+    {% else %}
+      <link id="theme-stylesheet"
+            rel="stylesheet"
+            href="{% get_static_prefix %}css/theme-{{ request.theme|safe }}.css?v={{ APPRISE_API_VERSION }}">
+    {% endif %}
     <title>
       {% block title %}
         {% trans "Apprise API" %}
@@ -730,8 +742,17 @@
 
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
-                const current = toggle.dataset.theme;
+                let current = toggle.dataset.theme;
+                if (current === 'auto') {
+                    // Start from the theme the system setting is showing.
+                    current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
                 const next    = current === 'dark' ? 'light' : 'dark';
+
+                // A click picks a fixed theme, so stop following the system setting.
+                const autoDark = document.querySelector('#theme-stylesheet-dark');
+                if (autoDark) autoDark.remove();
+                sheet.removeAttribute('media');
 
                 // Swap stylesheet in-place — no reload
                 sheet.href = staticPrefix + 'css/theme-' + next + '.css?v={{ APPRISE_API_VERSION }}';
