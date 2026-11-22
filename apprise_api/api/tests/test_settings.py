@@ -306,7 +306,7 @@ class ChoiceSettingsTests(SimpleTestCase):
     def test_mode_defaults_and_first_character_forms(self):
         """Short forms and harmless spelling mistakes become canonical modes."""
         defaults = _load_settings()
-        self.assertEqual(defaults.APPRISE_DEFAULT_THEME, "light")
+        self.assertEqual(defaults.APPRISE_DEFAULT_THEME, "auto")
         self.assertEqual(defaults.APPRISE_STORAGE_MODE, "auto")
         self.assertEqual(defaults.APPRISE_STATEFUL_MODE, "hash")
 
@@ -320,6 +320,9 @@ class ChoiceSettingsTests(SimpleTestCase):
         self.assertEqual(configured.APPRISE_DEFAULT_THEME, "dark")
         self.assertEqual(configured.APPRISE_STORAGE_MODE, "flush")
         self.assertEqual(configured.APPRISE_STATEFUL_MODE, "simple")
+
+        for value in ("auto", "a", "Atuo"):
+            self.assertEqual(_load_settings({"APPRISE_DEFAULT_THEME": value}).APPRISE_DEFAULT_THEME, "auto")
 
     def test_invalid_modes_fail_with_a_clear_configuration_error(self):
         """Unknown first letters never silently select an operating mode."""

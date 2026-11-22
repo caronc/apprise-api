@@ -31,7 +31,7 @@ from django.conf import settings
 class AutoThemeMiddleware:
     """
     Using the `theme=` variable, allow one to fix the language to either
-    'dark' or 'light'
+    'dark' or 'light', or to 'auto' to follow the system setting
 
     """
 

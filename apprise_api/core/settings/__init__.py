@@ -244,13 +244,14 @@ FORCE_SCRIPT_NAME = BASE_URL or None
 # Static files relative path (CSS, JavaScript, Images)
 STATIC_URL = f"{BASE_URL}/s/"
 
-# Default theme can be either 'light' or 'dark'. Values are not case
-# sensitive, and the first letter is enough because each option starts with a
-# different letter. For example, 'd', 'dark', and 'dakr' all select dark mode.
+# Default theme can be 'auto' (the default, follows the visitor's system
+# setting), 'light' or 'dark'. Values are not case sensitive, and the first
+# letter is enough because each option starts with a different letter. For
+# example, 'd', 'dark', and 'dakr' all select dark mode.
 APPRISE_DEFAULT_THEME = env_choice(
     "APPRISE_DEFAULT_THEME",
-    SiteTheme.LIGHT,
-    (SiteTheme.LIGHT, SiteTheme.DARK),
+    SiteTheme.AUTO,
+    (SiteTheme.LIGHT, SiteTheme.DARK, SiteTheme.AUTO),
     first_character=True,
 )
 
