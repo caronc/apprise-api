@@ -363,3 +363,23 @@ class ResolveTests(SimpleTestCase):
             valid, refused = loads(self.resolve(["json://localhost", "nope://x"]).content)["urls"]
         self.assertNotIn("missing", valid)
         self.assertNotIn("missing", refused)
+
+    def test_missing_is_read_from_the_fields_of_each_url(self):
+        """
+        missing holds what Apprise names, read from:
+        - the fields a loaded URL is made of
+        - the fields sent in place of a URL
+        - what a URL that did not load still holds
+        """
+        sent = {"schema": "nope", "host": "x"}
+        with patch("api.views._missing_fields", return_value=["targets"]) as missing:
+            valid, fields, refused = loads(self.resolve(["json://localhost", sent, "nope://x"]).content)["urls"]
+        self.assertTrue(valid["valid"])
+        self.assertFalse(fields["valid"])
+        self.assertFalse(refused["valid"])
+        for entry in (valid, fields, refused):
+            self.assertEqual(entry["missing"], ["targets"])
+        loaded, from_fields, unloaded = (c.args[0] for c in missing.call_args_list)
+        self.assertEqual(loaded, valid["fields"])
+        self.assertEqual(from_fields, sent)
+        self.assertEqual(unloaded, {})
