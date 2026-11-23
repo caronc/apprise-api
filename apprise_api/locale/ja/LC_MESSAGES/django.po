@@ -2686,6 +2686,11 @@ msgstr "項目はカンマで区切ります"
 msgid "This value is not in the form this service expects."
 msgstr "この値は、このサービスが求める形式ではありません。"
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "まだ必要な項目: {}。"
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

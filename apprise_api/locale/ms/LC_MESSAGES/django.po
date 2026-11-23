@@ -2686,6 +2686,11 @@ msgstr "Pisahkan entri dengan koma"
 msgid "This value is not in the form this service expects."
 msgstr "Nilai ini tidak dalam bentuk yang dijangka oleh perkhidmatan ini."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Masih diperlukan: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

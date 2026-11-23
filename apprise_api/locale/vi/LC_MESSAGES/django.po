@@ -2686,6 +2686,11 @@ msgstr "Phân tách các mục bằng dấu phẩy"
 msgid "This value is not in the form this service expects."
 msgstr "Giá trị này không đúng dạng mà dịch vụ này yêu cầu."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Vẫn cần: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

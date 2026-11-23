@@ -2686,6 +2686,11 @@ msgstr "Separe las entradas con comas"
 msgid "This value is not in the form this service expects."
 msgstr "Este valor no tiene la forma que espera este servicio."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Aún se necesita: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

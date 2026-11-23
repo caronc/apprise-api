@@ -147,6 +147,11 @@ from .utils import (
     url_scheme,
 )
 
+# Names the required fields a URL still leaves empty (Apprise newer than
+# 2.3.0). With an older Apprise, /resolve leaves its "missing" key out
+# rather than claim nothing is missing.
+_missing_fields = getattr(apprise.fields, "missing_fields", None)
+
 # Get an instance of a logger
 logger = logging.getLogger("django")
 
@@ -4635,6 +4640,10 @@ class ResolveView(View):
                 if fields:
                     refused["fields"] = fields
                     refused["privacy_fields"] = parse_fields(entry, privacy=True)
+                if _missing_fields is not None:
+                    # The required fields still empty: from the fields that were
+                    # sent, or from what the URL holds
+                    refused["missing"] = _missing_fields(entry if isinstance(entry, dict) else fields)
                 resolved.append(refused)
                 continue
 
@@ -4655,6 +4664,10 @@ class ResolveView(View):
                     "valid": True,
                 }
             )
+            if _missing_fields is not None:
+                # A URL can load and still have nobody to notify (schema://host
+                # with no target)
+                resolved[-1]["missing"] = _missing_fields(fields)
 
         return JsonResponse({"urls": resolved}, encoder=JSONEncoder, safe=False, status=ResponseCode.okay)
 

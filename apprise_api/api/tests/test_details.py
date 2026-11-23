@@ -177,6 +177,15 @@ class DetailTests(SimpleTestCase):
         self.assertIn("{} was read as a {}.", content)
         self.assertIn("detailsShowReading();", content)
 
+    def test_fields_still_needed_are_named_under_the_url(self):
+        """The fields /resolve says are missing are named under the URL, or the required ones on an older server."""
+        content = self.client.get("/details").content.decode()
+        self.assertIn('<span id="details-url-missing" class="details-field-hint" hidden></span>', content)
+        self.assertIn("Still needed: {}.", content)
+        self.assertIn("detailsShowMissing(Array.isArray(answer.missing) ? answer.missing : empty);", content)
+        # A pasted URL names what it lacks too
+        self.assertIn("detailsShowMissing(Array.isArray(answer.missing) ? answer.missing : []);", content)
+
     def test_service_website_hidden_without_one(self):
         """A service with no website or setup guide shows no button for it."""
         content = self.client.get("/details").content.decode()

@@ -2918,6 +2918,17 @@ components:
               error:
                 type: string
                 description: Why it cannot be loaded; only when `valid` is false.
+              missing:
+                type: array
+                items:
+                  type: string
+                description: >
+                  The required fields that are still empty, named the way
+                  /details names them (such as `targets`). Empty when nothing
+                  required is missing. A URL can load and still miss one
+                  (`schema://host` with no one to send to), so any entry here
+                  means the URL alone can't notify anyone. Left out when the
+                  server's Apprise is too old to tell.
 
     ReminderWhen:
       type: object

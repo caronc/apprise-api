@@ -224,6 +224,7 @@
               class="notify-attach-error"
               role="alert"
               hidden></span>
+        <span id="details-url-missing" class="details-field-hint" hidden></span>
       </div>
     </section>
     {# The API behind this page is described on the home page. #}
@@ -645,6 +646,18 @@
     return holder;
   }
 
+  // Name the required fields the URL still lacks, by their labels.
+  function detailsShowMissing(names) {
+    const note = document.getElementById('details-url-missing');
+    const details = detailsChosen ? detailsChosen.details : {tokens: {}, args: {}};
+    const labels = names.map(function (name) {
+      const meta = details.tokens[name] || details.args[name] || {};
+      return meta.name || name;
+    });
+    note.textContent = labels.length ? detailsFormat('{% trans "Still needed: {}." %}', labels.join(', ')) : '';
+    note.hidden = !labels.length;
+  }
+
   // Fill each {} in a translated text with the next value, in order; a value
   // that holds {} itself is never filled in again.
   function detailsFormat(text) {
@@ -877,22 +890,34 @@
     const fields = detailsCollect();
     const checked = detailsCheckAll();
     const asked = ++detailsAsked;
-    // A service with fields to fill in has no URL until one of them is, and
-    // none while a part it needs is still empty.
+    // A service with fields to fill in has no URL until one of them is.
     const needed = detailsTokens(detailsChosen.details.tokens).some(function (name) { return name !== 'schema'; });
-    const missing = Array.prototype.some.call(
-      document.querySelectorAll('#details-fields [data-required]'),
-      function (holder) { return detailsValue(holder) === undefined; });
-    if (missing || (needed && Object.keys(fields).length < 2)) {
+    if (needed && Object.keys(fields).length < 2) {
       detailsFull = '';
       detailsHidden = '';
       detailsShowError('details-url-error', null);
+      detailsShowMissing([]);
       detailsShowUrl();
       return;
     }
 
     const answer = await detailsAsk(fields);
     if (asked !== detailsAsked) {
+      return;
+    }
+    // The server names what is still needed, even for a URL that loads; an
+    // older one does not, and the fields marked required are named instead.
+    const empty = Array.prototype.filter.call(
+      document.querySelectorAll('#details-fields [data-required]'),
+      function (holder) { return detailsValue(holder) === undefined; }
+    ).map(function (holder) { return holder.dataset.field; });
+    detailsShowMissing(Array.isArray(answer.missing) ? answer.missing : empty);
+    if (empty.length) {
+      // No URL while a part it needs is still empty, and no error either
+      detailsFull = '';
+      detailsHidden = '';
+      detailsShowError('details-url-error', null);
+      detailsShowUrl();
       return;
     }
     detailsFull = answer.valid ? answer.url : '';
@@ -933,6 +958,7 @@
     detailsFull = answer.valid ? answer.url : '';
     detailsHidden = answer.valid ? answer.privacy_url : '';
     detailsChoose(index, answer.fields || {schema: schema});
+    detailsShowMissing(Array.isArray(answer.missing) ? answer.missing : []);
     if (!answer.valid) {
       detailsBuild();
     }

@@ -2685,6 +2685,11 @@ msgstr "Paghiwalayin ang mga entry gamit ang kuwit"
 msgid "This value is not in the form this service expects."
 msgstr "Wala sa anyong inaasahan ng serbisyong ito ang value na ito."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Kailangan pa: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

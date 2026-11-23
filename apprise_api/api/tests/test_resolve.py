@@ -23,6 +23,7 @@
 
 import base64
 from json import dumps, loads
+from unittest import skipUnless
 from unittest.mock import patch
 
 import apprise
@@ -36,6 +37,12 @@ _MASTER_TOKEN = base64.b64encode(b"master:pass").decode()
 _MASTER = {"authorization": "Basic " + _MASTER_TOKEN}
 _USER = {"authorization": "Basic " + base64.b64encode(b"alice:secret").decode()}
 _LOGINS = {"APPRISE_AUTH_REQUIRED": True, "APPRISE_BASIC_AUTH_TOKEN": _MASTER_TOKEN, "APPRISE_USER": "master"}
+
+# Apprise newer than 2.3.0 reads a ?to= list as more list entries only (never
+# as a sign that the first part is a host), and builds a URL from fields with
+# the plugin's own url(); the tests marked with _NEEDS need it
+_NEW_FIELDS = apprise.Apprise.instantiate("ntfy://a?to=b").mode == "cloud"
+_NEEDS = "needs an Apprise newer than 2.3.0"
 
 
 class ResolveTests(SimpleTestCase):
@@ -267,3 +274,92 @@ class ResolveTests(SimpleTestCase):
         # A browser that opened a page earlier remembers its Config ID
         self.client.get("/")
         self.assertEqual(self.resolve(["json://a"], path="/resolve/@/").status_code, 200)
+
+    def test_option_names_are_read_without_case(self):
+        """?METHOD= is read as method; +, - and : names and every value keep their case."""
+        entry = loads(self.resolve(["json://localhost/?METHOD=PUT&+X-Token=AbC&-Page=Two&:Key=Val"]).content)["urls"][0]
+        self.assertTrue(entry["valid"])
+        fields = entry["fields"]
+        self.assertEqual(fields["method"], "PUT")
+        self.assertEqual(fields["headers"], {"X-Token": "AbC"})
+        self.assertEqual(fields["params"], {"Page": "Two"})
+        self.assertEqual(fields["payload"], {"Key": "Val"})
+
+    def fields_of(self, url):
+        """Return the fields /resolve gives for one URL."""
+        entry = loads(self.resolve([url]).content)["urls"][0]
+        self.assertTrue(entry["valid"], url)
+        return entry["fields"]
+
+    @skipUnless(_NEW_FIELDS, _NEEDS)
+    def test_topics_in_the_query_are_added_to_the_path(self):
+        """A list in the query adds to the one in the path; it never turns the first part into a host."""
+        fields = self.fields_of("ntfys://topic1?to=topic2,topic3")
+        self.assertNotIn("host", fields)
+        self.assertEqual(sorted(fields["targets"]), ["topic1", "topic2", "topic3"])
+        self.assertEqual(fields["mode"], "cloud")
+
+    @skipUnless(_NEW_FIELDS, _NEEDS)
+    def test_a_topic_in_the_path_makes_a_server(self):
+        """A topic in the path makes the first part a host; the query adds more topics."""
+        fields = self.fields_of("ntfy://myserver/alerts?to=more")
+        self.assertEqual(fields["host"], "myserver")
+        self.assertEqual(sorted(fields["targets"]), ["alerts", "more"])
+
+    @skipUnless(_NEW_FIELDS, _NEEDS)
+    def test_fields_sent_back_give_the_url_the_service_writes(self):
+        """Sending a URL's fields back gives the same URL the service writes for it."""
+        for url in (
+            "ntfys://topic1?to=topic2,topic3",
+            "kodi://user:pass@localhost:8080",
+            "json://[2001:db8::1]:8080/hook/",
+            "slack://T1JJ3T3L2/A1BRTD4JD/TIiajkdnlazkcOXrIdevi7FQ/#chan",
+        ):
+            first = loads(self.resolve([url]).content)["urls"][0]
+            again = loads(self.resolve([first["fields"]]).content)["urls"][0]
+            self.assertTrue(again["valid"], url)
+            self.assertEqual(again["url"], first["url"], url)
+
+    @skipUnless(_NEW_FIELDS, _NEEDS)
+    def test_an_alias_is_merged_into_what_it_stands_for(self):
+        """Fields giving a list and its alias (targets and to) keep every entry."""
+        entry = loads(
+            self.resolve(
+                [{"schema": "tgram", "bot_token": "123456789:abcdefg_hijklmnop", "targets": ["1"], "to": "2"}]
+            ).content
+        )["urls"][0]
+        self.assertTrue(entry["valid"])
+        self.assertEqual(sorted(entry["fields"]["targets"]), ["1", "2"])
+
+    @skipUnless(_NEW_FIELDS, _NEEDS)
+    def test_fields_that_do_not_load_are_refused_as_before(self):
+        """Fields missing a required value come back invalid, in the same shape as before."""
+        entry = loads(self.resolve([{"schema": "slack", "targets": ["#chan"]}]).content)["urls"][0]
+        self.assertFalse(entry["valid"])
+        # The same keys as before, plus what is missing
+        self.assertEqual(set(entry), {"url", "privacy_url", "service", "valid", "error", "missing"})
+
+    @skipUnless(hasattr(apprise.fields, "missing_fields"), "needs an Apprise that names missing fields")
+    def test_missing_names_the_required_fields_still_empty(self):
+        """missing is empty when a URL can notify, and names what it still needs otherwise."""
+        complete, no_device, fields, nothing = loads(
+            self.resolve(
+                ["json://localhost", "bark://localhost", {"schema": "slack", "targets": ["#chan"]}, "mailto://"]
+            ).content
+        )["urls"]
+        self.assertEqual(complete["missing"], [])
+        # A URL that loads can still have nobody to notify
+        self.assertTrue(no_device["valid"])
+        self.assertEqual(no_device["missing"], ["targets"])
+        # Fields and URLs that don't load both say what they lack
+        self.assertFalse(fields["valid"])
+        self.assertEqual(fields["missing"], ["access_token"])
+        self.assertFalse(nothing["valid"])
+        self.assertEqual(nothing["missing"], ["host"])
+
+    def test_missing_is_left_out_when_apprise_cannot_tell(self):
+        """With an Apprise too old to name missing fields, the key is left out, never claimed empty."""
+        with patch("api.views._missing_fields", None):
+            valid, refused = loads(self.resolve(["json://localhost", "nope://x"]).content)["urls"]
+        self.assertNotIn("missing", valid)
+        self.assertNotIn("missing", refused)

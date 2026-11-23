@@ -2686,6 +2686,11 @@ msgstr "คั่นแต่ละรายการด้วยเครื่
 msgid "This value is not in the form this service expects."
 msgstr "ค่านี้ไม่อยู่ในรูปแบบที่บริการนี้ต้องการ"
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "ยังต้องระบุ: {}"
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

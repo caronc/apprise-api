@@ -2686,6 +2686,11 @@ msgstr "Scheid items met komma’s"
 msgid "This value is not in the form this service expects."
 msgstr "Deze waarde heeft niet de vorm die deze dienst verwacht."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Nog nodig: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

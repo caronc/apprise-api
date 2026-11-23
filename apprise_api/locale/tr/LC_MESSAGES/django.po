@@ -2686,6 +2686,11 @@ msgstr "Girdileri virgülle ayırın"
 msgid "This value is not in the form this service expects."
 msgstr "Bu değer, bu hizmetin beklediği biçimde değil."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Hâlâ gerekli: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

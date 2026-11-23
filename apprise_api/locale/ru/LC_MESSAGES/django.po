@@ -2686,6 +2686,11 @@ msgstr "Разделяйте записи запятыми"
 msgid "This value is not in the form this service expects."
 msgstr "Это значение не в том виде, который ожидает эта служба."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Ещё требуется: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

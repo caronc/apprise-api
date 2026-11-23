@@ -2686,6 +2686,11 @@ msgstr "Separe as entradas com vírgulas"
 msgid "This value is not in the form this service expects."
 msgstr "Este valor não está no formato que este serviço espera."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Ainda é necessário: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

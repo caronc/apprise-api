@@ -2686,6 +2686,11 @@ msgstr "항목은 쉼표로 구분하세요"
 msgid "This value is not in the form this service expects."
 msgstr "이 값은 이 서비스가 요구하는 형식이 아닙니다."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "아직 필요한 항목: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

@@ -2685,6 +2685,11 @@ msgstr "用逗号分隔各项"
 msgid "This value is not in the form this service expects."
 msgstr "此值不是该服务所需的格式。"
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "仍需填写：{}。"
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

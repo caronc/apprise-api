@@ -2686,6 +2686,11 @@ msgstr "Oddziel wpisy przecinkami"
 msgid "This value is not in the form this service expects."
 msgstr "Ta wartość nie ma postaci oczekiwanej przez tę usługę."
 
+#: apprise_api/api/templates/details.html:657
+#, python-brace-format
+msgid "Still needed: {}."
+msgstr "Nadal wymagane: {}."
+
 #: apprise_api/api/templates/details.html:637
 #, python-brace-format
 msgid "Mark each entry with its kind: {}."

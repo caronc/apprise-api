@@ -1,8 +1,14 @@
-# Apprise API
+![Apprise API Logo](https://raw.githubusercontent.com/caronc/apprise-api/master/apprise-api-logo.png)
+
+<hr/>
+
+**ap·prise** / *verb*<br/>
+To inform or tell (someone). To make one aware of something.
+<hr/>
 
 Take advantage of [Apprise](https://github.com/caronc/apprise) through your network with a user-friendly API.
 
-- Send notifications to more than 150+ services.
+- Send notifications to more than 180+ services.
 - An incredibly lightweight gateway to Apprise.
 - A production-ready micro-service at your disposal.
 - A Simple Website to verify and test your configuration with.
@@ -20,7 +26,7 @@ Apprise API was designed to easily fit into existing (and new) ecosystems that a
 [![CodeCov Status](https://codecov.io/github/caronc/apprise-api/branch/master/graph/badge.svg)](https://codecov.io/github/caronc/apprise-api)
 [![Docker Pulls](https://img.shields.io/docker/pulls/caronc/apprise.svg?style=flat-square)](https://hub.docker.com/r/caronc/apprise)
 
-Visit the [Official Documentation](https://appriseit.com/getting-started/) site for more information on the Apprise API.
+Visit the [Official Documentation](https://appriseit.com/api/) site for more information on the Apprise API.
 
 ## How It Works
 
@@ -399,7 +405,7 @@ curl -X POST \
 
 ### Persistent (Stateful) Storage Solution
 
-You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://appriseit.com/guides/) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
+You can pre-save all of your Apprise configuration and/or set of Apprise URLs and associate them with a `{KEY}` of your choosing. Once set, the configuration persists for retrieval by the `apprise` [CLI tool](https://appriseit.com/cli/) or any other custom integration you've set up. The built in website with comes with a user interface that you can use to leverage these API calls as well. Those who wish to build their own application around this can use the following API end points:
 
 Stateful endpoints also accept `X-Apprise-Config-ID`. This keeps the Config ID out of the URL. On `/status` it selects that ID's login. On `/notify`, a request without `urls` selects the saved configuration; explicit `urls` make it stateless and use the ID only for authentication. The `/cfg` listing does not accept it.
 
@@ -415,7 +421,7 @@ The `/cfg` list requires `APPRISE_STATEFUL_MODE=simple` and is available by defa
 | `/cfg/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is an alias of `/get/{KEY}` (identified next).
 | `/get/{KEY}` |  POST  | Returns the Apprise Configuration from the persistent store.  This can be directly used with the *Apprise CLI* and/or the *AppriseConfig()* object ([see here for details](https://appriseit.com/getting-started/configuration/)). Under `APPRISE_CONFIG_LOCK`, this requires an authenticated administrator. This is also provided via `/cfg/{KEY}` as an alias.
 | `/notify/{KEY}` |  POST  | Sends notification(s) through a saved configuration. `disabled` configurations are available only to the administrator.<br/>*Payload Parameters*<br/>📌 **body**: Your message body.<br/>📌 **title**: An optional title.<br/>📌 **type**: `info`, `success`, `warning`, or `failure`; defaults to `info`.<br/>📌 **tag**: Optionally select destinations by tag. It is required for `locked` and `public` access, where `all` is rejected.<br/>📌 **format**: Optionally use `text`, `markdown`, or `html`.<br/>📌 Add `?stream=yes` (or `Accept: text/event-stream`) for live progress — see [Live Progress Streaming](#live-progress-streaming).<br/>📌 **template**: Values for a configuration written with `${NAME}` markers. Send a JSON object (`"template": {"api_key": "..."}`) or one form field per name (`template[api_key]=...`).
-| `/resolve/{KEY}` |  POST  | Checks Apprise URLs (`{"urls": ...}`) without contacting them. Returns each URL in full, with its secrets hidden, and split into the fields `/details` lists. Send fields in place of a URL to put it back together.
+| `/resolve/{KEY}` |  POST  | Checks Apprise URLs (`{"urls": ...}`) without contacting them. Returns each URL in full, with its secrets hidden, and split into the fields `/details` lists, along with any required field still `missing`. Send fields in place of a URL to put it back together.
 | `/attach/{KEY}` |  POST  | Downloads an attachment web address (`{"url": ...}`) the way a send would and returns the file, or a `424` with `logs` saying why it failed. The same attachment rules as `/notify` apply, and local network addresses are refused unless `APPRISE_ATTACH_PREVIEW_INTERNAL` is set. A refused address also returns `reason`, the `setting` to change and a `help` link.
 | `/json/urls/{KEY}` |  GET  | Returns the URLs and tags associated with the key. Each URL lists its template names. With `privacy=0`, each name carries its configuration default (or `null`). With `privacy=1`, URL secrets are hidden and every name is `null`. Under `APPRISE_CONFIG_LOCK`, an authenticated administrator is required and every name is `null`.
 | `/status/{KEY}` |  GET  | Returns `/status`, protected by the key's credentials. Its `config_lock` value includes the key's access mode and is relative to the authenticated caller (false for a global administrator that can bypass the lock).
@@ -1497,7 +1503,7 @@ docker compose -f docker-compose.swagger.yml up -d
 # Want To Learn More?
 
 If you're interested in reading more about this and other methods on how to customize your own notifications, please check out the following links:
-* 🌎 [Apprise API/Web Interface](https://github.com/caronc/apprise-api/)
+* 🌎 [Apprise API/Web Interface](https://appriseit.com/api/)
 * 🛠️ [Development API](https://appriseit.com/library/)
 * ⚙️ [Configuration File Help](https://appriseit.com/getting-started/configuration/)
 * ⚡ [Create Your Own Custom Notifications](https://appriseit.com/library/extending/decorator/)
