@@ -186,6 +186,19 @@ class DetailTests(SimpleTestCase):
         # A pasted URL names what it lacks too
         self.assertIn("detailsShowMissing(Array.isArray(answer.missing) ? answer.missing : []);", content)
 
+    def test_parse_is_ready_again_after_the_page_changes(self):
+        """
+        Parse turns back on for the same pasted URL once:
+        - another service is chosen
+        - a field is changed
+        - the paste box is cleared
+        """
+        content = self.client.get("/details").content.decode()
+        self.assertIn("detailsParsed = '';\n    detailsParse.disabled = !detailsPasteInput.value.trim();", content)
+        self.assertIn("detailsParseAgain();\n      detailsChoose(Number(button.dataset.index), null);", content)
+        self.assertIn("function detailsSchedule() {\n    detailsParseAgain();", content)
+        self.assertIn("if (!pasted) {\n      detailsParsed = '';\n    }", content)
+
     def test_service_website_hidden_without_one(self):
         """A service with no website or setup guide shows no button for it."""
         content = self.client.get("/details").content.decode()

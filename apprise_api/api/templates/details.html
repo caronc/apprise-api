@@ -335,8 +335,16 @@
     next.focus();
   });
 
+  // Choosing a service or changing a field leaves the parsed URL behind,
+  // so Parse can read the pasted URL again.
+  function detailsParseAgain() {
+    detailsParsed = '';
+    detailsParse.disabled = !detailsPasteInput.value.trim();
+  }
+
   detailsServices.forEach(function (button) {
     button.addEventListener('click', function () {
+      detailsParseAgain();
       detailsChoose(Number(button.dataset.index), null);
       detailsRoveServices(button);
       // Carry on with the first field there is to fill in. A field that is
@@ -866,6 +874,7 @@
 
   // A field changed: put the URL together again once typing pauses.
   function detailsSchedule() {
+    detailsParseAgain();
     clearTimeout(detailsTimer);
     detailsTimer = setTimeout(detailsBuild, 400);
   }
@@ -965,9 +974,13 @@
     document.querySelector('#details-step-2').scrollIntoView({behavior: 'smooth', block: 'start'});
   }
 
-  // Parse waits for a pasted URL that has not been read yet.
+  // Parse waits for a pasted URL that has not been read yet. Clearing the
+  // box lets the same URL be pasted and read again.
   detailsPasteInput.addEventListener('input', function () {
     const pasted = detailsPasteInput.value.trim();
+    if (!pasted) {
+      detailsParsed = '';
+    }
     detailsParse.disabled = !pasted || pasted === detailsParsed;
     detailsShowError('details-paste-error', null);
     detailsShowUrl();
