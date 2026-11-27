@@ -133,6 +133,54 @@ class ReminderCrudTests(ReminderTestCase):
         moved = loads(self.send("patch", path, {"when": {"tz": "Etc/UTC", "cron": "0 0 10"}}).content)["reminder"]
         self.assertIsNone(moved["last"])
 
+    def test_a_chosen_id_is_added_only_once(self):
+        """Adding again with the same chosen ID answers with the first reminder."""
+        chosen = "0123456789abcdef0123456789abcdef"
+        first = self.add({**_DAILY, "id": chosen})
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(first["X-Apprise-Reminder-ID"], chosen)
+        added = loads(first.content)["reminder"]
+        self.assertEqual(added["id"], chosen)
+
+        # A try after the answer was lost, even with other text, changes nothing
+        again = self.add({**_DAILY, "id": chosen, "name": "Changed"})
+        self.assertEqual(again.status_code, 200)
+        self.assertEqual(loads(again.content)["reminder"], added)
+        self.assertEqual(self.stored(), [added])
+
+        # Plain text callers get the short message and the same ID
+        again = self.add({**_DAILY, "id": chosen}, headers={"Accept": "text/plain"})
+        self.assertEqual(again["X-Apprise-Reminder-ID"], chosen)
+        self.assertEqual(len(self.stored()), 1)
+
+        # Another ID is another reminder
+        self.assertEqual(self.add({**_DAILY, "id": "f" * 32}).status_code, 200)
+        self.assertEqual(len(self.stored()), 2)
+
+    def test_a_chosen_id_must_look_like_a_reminder_id(self):
+        """A chosen ID that is not 32 lowercase hex characters is refused."""
+        for chosen in ("", "ABCDEF0123456789ABCDEF0123456789", "1234", "g" * 32, 7, ["a" * 32]):
+            response = self.add({**_DAILY, "id": chosen})
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(loads(response.content)["field"], "id")
+        self.assertEqual(self.stored(), [])
+
+    def test_a_chosen_id_added_meanwhile_is_not_added_twice(self):
+        """Two tries at once: the one that gets the lock second answers with the first."""
+        chosen = "a" * 32
+        existing = {**loads(self.add({**_DAILY, "id": chosen}).content)["reminder"]}
+        with ConfigCache.reminder_guard():
+            ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), [])
+
+        # The first read finds nothing; the one under the lock finds the other try's reminder
+        real = ConfigCache.read_reminders
+        reads = iter([real, lambda path: [existing]])
+        with patch("api.views.ConfigCache.read_reminders", side_effect=lambda path: next(reads)(path)):
+            response = self.add({**_DAILY, "id": chosen})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(loads(response.content)["reminder"]["id"], chosen)
+        self.assertEqual(self.stored(), [])
+
     def test_last_result_can_be_cleared(self):
         """Sending last as null forgets how the last send went; any other value is refused."""
         rid = loads(self.add().content)["reminder"]["id"]

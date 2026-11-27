@@ -272,6 +272,11 @@
   // Each answer is numbered, so a slow one never replaces a newer one.
   let detailsAsked = 0;
   let detailsTimer = null;
+  // The fields changed since the URL was made, so it is not shown or copied.
+  let detailsWaiting = false;
+  // The Parse still waiting for its answer, and whether it stopped the
+  // fields' URL from being made.
+  let detailsReading = {asked: 0, unfinished: false};
   let detailsFieldId = 0;
 
   // Show or clear a message under a field.
@@ -282,24 +287,28 @@
   }
 
   // Send one URL, or the fields of one, to be checked and written out.
+  // "failed" means the request itself failed, so nothing was read.
   async function detailsAsk(entry) {
     try {
       const response = await appriseResolveUrls(detailsResolveUrl, [entry]);
       if (!response.ok) {
         const failure = await appriseResponseFailure(
           response, '{% trans "This URL could not be loaded" %}');
-        return {valid: false, error: failure.message};
+        return {valid: false, failed: true, error: failure.message};
       }
       return (await response.json()).urls[0];
     } catch (e) {
-      return {valid: false, error: '{% trans "This URL could not be loaded" %}'};
+      return {valid: false, failed: true, error: '{% trans "This URL could not be loaded" %}'};
     }
   }
 
   // The URL box shows the hidden URL, and the full one while it is selected.
+  // It stays empty while the fields' URL is still being made.
   function detailsShowUrl() {
-    detailsUrl.value = document.activeElement === detailsUrl ? detailsFull : (detailsHidden || detailsFull);
-    detailsCopy.disabled = !detailsFull;
+    const full = detailsWaiting ? '' : detailsFull;
+    const hidden = detailsWaiting ? '' : detailsHidden;
+    detailsUrl.value = document.activeElement === detailsUrl ? full : (hidden || full);
+    detailsCopy.disabled = !full;
     detailsShowReading();
   }
 
@@ -872,9 +881,14 @@
     return kind === 'number' ? Number(input.value) : input.value;
   }
 
-  // A field changed: put the URL together again once typing pauses.
+  // A field changed: put the URL together again once typing pauses. Until
+  // then, the URL shown is out of date, and an answer still on its way (a
+  // parsed URL too) would undo the change, so it is dropped.
   function detailsSchedule() {
     detailsParseAgain();
+    detailsAsked++;
+    detailsWaiting = true;
+    detailsShowUrl();
     clearTimeout(detailsTimer);
     detailsTimer = setTimeout(detailsBuild, 400);
   }
@@ -893,15 +907,20 @@
 
   // Step 3: ask the server for the URL the fields make.
   async function detailsBuild() {
+    // Any answer still on its way, or a build still waiting, is out of date.
+    clearTimeout(detailsTimer);
+    const asked = ++detailsAsked;
     if (detailsChosen.enabled === false) {
       return;
     }
+    detailsWaiting = true;
+    detailsShowUrl();
     const fields = detailsCollect();
     const checked = detailsCheckAll();
-    const asked = ++detailsAsked;
     // A service with fields to fill in has no URL until one of them is.
     const needed = detailsTokens(detailsChosen.details.tokens).some(function (name) { return name !== 'schema'; });
     if (needed && Object.keys(fields).length < 2) {
+      detailsWaiting = false;
       detailsFull = '';
       detailsHidden = '';
       detailsShowError('details-url-error', null);
@@ -914,6 +933,7 @@
     if (asked !== detailsAsked) {
       return;
     }
+    detailsWaiting = false;
     // The server names what is still needed, even for a URL that loads; an
     // older one does not, and the fields marked required are named instead.
     const empty = Array.prototype.filter.call(
@@ -940,23 +960,33 @@
   // Step 1, the other way in: read a URL and show its fields.
   async function detailsParseUrl() {
     const pasted = detailsPasteInput.value.trim();
+    // A field change still waiting to be sent would replace this answer.
+    clearTimeout(detailsTimer);
     const asked = ++detailsAsked;
+    detailsReading = {asked: asked, unfinished: detailsWaiting};
     detailsParsed = pasted;
     detailsParse.disabled = true;
     const answer = await detailsAsk(pasted);
     if (asked !== detailsAsked) {
       return;
     }
+    detailsReading.asked = 0;
 
     // The service comes from what the server read, or else from the schema
-    // as typed (mailto://, MAILTO or mailtos: all pick E-Mail).
+    // as typed (mailto://, MAILTO or mailtos: all pick E-Mail). A request
+    // that failed read nothing, so the form is left as it was.
     const typed = (pasted.match(/^\s*([a-z0-9][a-z0-9+.-]*)\s*(?::|$)/i) || [])[1] || '';
     const schema = ((answer.fields && answer.fields.schema) || typed).toLowerCase();
-    const index = detailsData.schemas.findIndex(function (service) {
+    const index = answer.failed ? -1 : detailsData.schemas.findIndex(function (service) {
       return (service.protocols || []).concat(service.secure_protocols || []).includes(schema);
     });
     if (index < 0) {
       detailsShowError('details-paste-error', answer.error);
+      // A request that failed can be tried again.
+      if (answer.failed) {
+        detailsParseAgain();
+      }
+      detailsParseStopped();
       return;
     }
 
@@ -964,6 +994,7 @@
     // shows the URL once whatever is still needed is filled in.
     detailsShowError('details-paste-error', null);
     detailsShowError('details-url-error', null);
+    detailsWaiting = false;
     detailsFull = answer.valid ? answer.url : '';
     detailsHidden = answer.valid ? answer.privacy_url : '';
     detailsChoose(index, answer.fields || {schema: schema});
@@ -974,10 +1005,24 @@
     document.querySelector('#details-step-2').scrollIntoView({behavior: 'smooth', block: 'start'});
   }
 
+  // The fields stay as they were, so make their URL again if Parse
+  // stopped that from happening.
+  function detailsParseStopped() {
+    if (detailsReading.unfinished && detailsChosen) {
+      detailsBuild();
+    }
+  }
+
   // Parse waits for a pasted URL that has not been read yet. Clearing the
   // box lets the same URL be pasted and read again.
   detailsPasteInput.addEventListener('input', function () {
     const pasted = detailsPasteInput.value.trim();
+    // Changing the URL being read drops its answer.
+    if (detailsReading.asked === detailsAsked && pasted !== detailsParsed) {
+      detailsAsked++;
+      detailsParsed = '';
+      detailsParseStopped();
+    }
     if (!pasted) {
       detailsParsed = '';
     }

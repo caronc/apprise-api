@@ -4774,6 +4774,9 @@ class AttachPreviewView(View):
         return response
 
 
+# A reminder ID, as the server makes them (the same shape the URLs accept).
+REMINDER_ID_RE = re.compile(r"[0-9a-f]{32}")
+
 # Fields a caller may set on a reminder. The server keeps the rest.
 REMINDER_FIELDS = (
     "name",
@@ -6284,6 +6287,11 @@ def _log_reminder_saved(request, key: str, event: dict, action: str) -> None:
         )
 
 
+def _added_before(events: list[dict], chosen: str | None) -> dict | None:
+    """Return the saved reminder whose ID a caller chose, or ``None``."""
+    return next((event for event in events if event.get("id") == chosen), None) if chosen else None
+
+
 def _reminder_saved(request, key: str, event: dict) -> HttpResponse:
     """Answer a saved reminder the way /add answers a saved configuration.
 
@@ -6363,8 +6371,17 @@ class ReminderListView(ReminderLockView):
         if invalid is not None:
             return invalid
 
+        # A caller may choose the new reminder's ID, so trying again after
+        # losing the answer finds the one already added instead of adding it
+        # twice.
+        chosen = content.get("id")
+        if chosen is not None and (not isinstance(chosen, str) or not REMINDER_ID_RE.fullmatch(chosen)):
+            return error_response(
+                request, _("The {} field is invalid").format("id"), ResponseCode.bad_request, field="id"
+            )
+
         # Build the new reminder:
-        # - ``id``: a random ID that never changes.
+        # - ``id``: the caller's, or a random one; it never changes.
         # - ``owner``: who added it, "user" or "admin".
         # - ``runs``/``last``: how often it has been sent, and the last result.
         # - ``next``: when it is next due (a UNIX timestamp).
@@ -6381,13 +6398,18 @@ class ReminderListView(ReminderLockView):
         # The saved IDs and hidden forms of their URLs, brought up to date when old.
         events = _refresh_url_views(reminder_file, events)
 
+        # Already added by an earlier try: answer with it, unchanged.
+        added = _added_before(events, chosen)
+        if added is not None:
+            return _reminder_saved(request, key, added)
+
         # Like its files, a new reminder may keep by ID URLs this
         # configuration's reminders already hold: a copy, or one standing in
         # for a time of a series.
         known = _known_urls(events)
         try:
             event = {
-                "id": uuid4().hex,
+                "id": chosen or uuid4().hex,
                 # Removing the configuration's user also removes what they added.
                 "owner": "user" if request.apprise_auth_permission == Authentication.ROLE_USER else "admin",
                 **_clean_reminder(
@@ -6468,6 +6490,12 @@ class ReminderListView(ReminderLockView):
         # saves at once cannot undo each other.
         with _reminder_lock():
             events = ConfigCache.read_reminders(reminder_file)
+            # Another try of the same request may have added it while this waited.
+            added = _added_before(events or [], chosen)
+            if added is not None:
+                _drop_refused_uploads(uploads)
+                return _reminder_saved(request, key, added)
+
             refused = (
                 _reminders_unreadable(request)
                 if events is None

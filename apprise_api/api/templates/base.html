@@ -229,6 +229,25 @@
               {% endif %}
             </li>
           </ul>
+          {# On a phone, the header shows only the logo and this button. #}
+          {% block mobile_menu_controls %}
+            <button id="mobile-menu-open"
+                    class="mobile-menu-toggle"
+                    type="button"
+                    aria-controls="site-side-menu"
+                    aria-expanded="false"
+                    aria-label="{% trans "Open Navigation Menu" %}"
+                    data-close-label="{% trans "Close" %}">
+              {# The same X as the close button on dialogs and popups. #}
+              <svg class="mobile-menu-icon-open" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16"></path>
+              </svg>
+              <svg class="mobile-menu-icon-close" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          {% endblock mobile_menu_controls %}
         </div>
       </div>
       <!-- Support Banner -->
@@ -251,29 +270,12 @@
           <i class="material-icons">close</i>
         </button>
       </div>
-      {% block mobile_menu_controls %}
-        <button id="mobile-menu-open"
-                class="mobile-menu-tab"
-                type="button"
-                aria-controls="site-side-menu"
-                aria-expanded="false"
-                aria-label="{% trans "Open Navigation Menu" %}"
-                title="{% trans "Open Navigation Menu" %}">
-          <i class="material-icons" aria-hidden="true">menu</i>
-        </button>
-        <div id="mobile-menu-backdrop"
-             class="mobile-menu-backdrop"
-             aria-hidden="true"></div>
-      {% endblock mobile_menu_controls %}
       <!-- Page Layout here -->
       <div class="row main-layout">
         {% block layout %}
           {% block sidebar %}
             <!-- Side menu -->
             <div id="site-side-menu" class="col s12 m3 l3 side-menu">
-              <div class="mobile-menu-drawer-heading">
-                <strong>{% trans "Navigation" %}</strong>
-              </div>
               {% if STATEFUL_MODE != "disabled" %}
                 <div class="side-nav-label">{% trans "Site Controls" %}</div>
                 <nav class="side-nav-group">
@@ -397,6 +399,9 @@
               </nav>
               {% block menu %}
               {% endblock menu %}
+              {# The header's controls, apart from the API health, are moved here on a phone. #}
+              <ul class="mobile-menu-footer">
+              </ul>
             </div>
           {% endblock sidebar %}
           {% block main_page %}
@@ -646,91 +651,66 @@
             });
         })();
 
-        // Phones use the existing navigation as a compact off-canvas drawer.
+        // On a phone, the menu button in the header opens the side menu over
+        // the page, with the header's controls at the bottom of it.
         (function() {
             const menu = document.querySelector('#site-side-menu');
-            const openButton = document.querySelector('#mobile-menu-open');
-            const backdrop = document.querySelector('#mobile-menu-backdrop');
+            const toggle = document.querySelector('#mobile-menu-open');
+            const actions = document.querySelector('.nav-actions');
             const mobile = window.matchMedia('(max-width: 600px)');
-            if (!menu || !openButton || !backdrop) return;
+            if (!menu || !toggle || !actions) return;
+
+            const header = toggle.closest('.nav');
+            const footer = menu.querySelector('.mobile-menu-footer');
+            const order = Array.from(actions.children);
+            const openLabel = toggle.getAttribute('aria-label');
+            // While the menu is open, only the header and the menu can be reached.
+            const behind = document.querySelectorAll('#support-banner, .main-layout > :not(#site-side-menu)');
+
+            // The menu starts right below the header.
+            function placeMenu() {
+                menu.style.setProperty('--mobile-menu-top', header.getBoundingClientRect().bottom + 'px');
+            }
 
             function setOpen(open, returnFocus) {
                 const active = mobile.matches && open;
+                if (active) placeMenu();
                 document.body.classList.toggle('mobile-menu-open', active);
-                openButton.setAttribute('aria-expanded', active ? 'true' : 'false');
-                menu.toggleAttribute('inert', mobile.matches && !active);
-                menu.setAttribute('aria-hidden', mobile.matches && !active ? 'true' : 'false');
-                const firstLink = menu.querySelector('a');
-                if (active && firstLink) firstLink.focus();
-                else if (!active && returnFocus) openButton.focus();
+                toggle.setAttribute('aria-expanded', active ? 'true' : 'false');
+                toggle.setAttribute('aria-label', active ? toggle.dataset.closeLabel : openLabel);
+                behind.forEach(function(element) { element.inert = active; });
+                if (!active && returnFocus) toggle.focus();
             }
 
-            // Slide the drawer only when it is opened or closed, so resizing
-            // the window never shows it sweeping across the page.
-            let slideTimer = null;
-            function slideOpen(open, returnFocus) {
-                document.body.classList.add('mobile-menu-animate');
-                window.clearTimeout(slideTimer);
-                slideTimer = window.setTimeout(function() {
-                    document.body.classList.remove('mobile-menu-animate');
-                }, 300);
-                setOpen(open, returnFocus);
-            }
-
-            function isFormControl(element) {
-                return element instanceof Element && element.matches(
-                    'input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]), '
-                    + 'textarea, select, [contenteditable]:not([contenteditable="false"])'
-                );
-            }
-
-            function hasOpenSelectDropdown() {
-                return Array.from(
-                    document.querySelectorAll('.dropdown-content.select-dropdown')
-                ).some(function(dropdown) {
-                    return window.getComputedStyle(dropdown).display !== 'none';
+            // On a phone, the header keeps the API health and the rest of its
+            // controls live in the menu. A wider screen puts them all back.
+            function placeActions() {
+                order.forEach(function(item) {
+                    if (!mobile.matches) actions.appendChild(item);
+                    else if (!item.classList.contains('auth-health-nav')) footer.appendChild(item);
                 });
             }
 
-            function syncTabWithFocus() {
-                document.body.classList.toggle(
-                    'mobile-menu-field-focus',
-                    mobile.matches
-                    && (isFormControl(document.activeElement) || hasOpenSelectDropdown())
-                );
-            }
-
-            const selectDropdownObserver = new MutationObserver(syncTabWithFocus);
-            document.querySelectorAll('.dropdown-content.select-dropdown').forEach(function(dropdown) {
-                selectDropdownObserver.observe(dropdown, {
-                    attributes: true,
-                    attributeFilter: ['class', 'style']
-                });
+            toggle.addEventListener('click', function() {
+                setOpen(!document.body.classList.contains('mobile-menu-open'), false);
             });
-
-            openButton.addEventListener('click', function() { slideOpen(true, false); });
-            backdrop.addEventListener('click', function() { slideOpen(false, true); });
-            window.appriseCloseMobileMenu = function() { slideOpen(false, false); };
-            menu.querySelectorAll('a').forEach(function(link) {
-                link.addEventListener('click', function() { slideOpen(false, false); });
+            window.appriseCloseMobileMenu = function() { setOpen(false, false); };
+            menu.querySelectorAll('.side-nav-item').forEach(function(link) {
+                link.addEventListener('click', function() { setOpen(false, false); });
             });
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape' && document.body.classList.contains('mobile-menu-open')) {
-                    slideOpen(false, true);
+                    setOpen(false, true);
                 }
             });
-            document.addEventListener('focusin', syncTabWithFocus);
-            document.addEventListener('focusout', function() {
-                window.requestAnimationFrame(syncTabWithFocus);
+            window.addEventListener('resize', function() {
+                if (document.body.classList.contains('mobile-menu-open')) placeMenu();
             });
             mobile.addEventListener('change', function() {
-                window.clearTimeout(slideTimer);
-                document.body.classList.remove('mobile-menu-animate');
                 setOpen(false, false);
-                syncTabWithFocus();
+                placeActions();
             });
-            setOpen(false, false);
-            syncTabWithFocus();
+            placeActions();
         })();
 
         // No-refresh theme toggle
@@ -992,7 +972,7 @@
 
     const settings = Object.assign({
       showCloseButton: !isToast,
-      closeButtonHtml: '&times;',
+      closeButtonHtml: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>',
       reverseButtons: !isToast
     }, requested, {customClass: customClass});
     if (usesStatusIcon) {

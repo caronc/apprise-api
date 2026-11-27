@@ -198,6 +198,8 @@ class DetailTests(SimpleTestCase):
         self.assertIn("detailsParseAgain();\n      detailsChoose(Number(button.dataset.index), null);", content)
         self.assertIn("function detailsSchedule() {\n    detailsParseAgain();", content)
         self.assertIn("if (!pasted) {\n      detailsParsed = '';\n    }", content)
+        # A field change still waiting to be sent never replaces a parsed URL
+        self.assertIn("clearTimeout(detailsTimer);\n    const asked = ++detailsAsked;", content)
 
     def test_service_website_hidden_without_one(self):
         """A service with no website or setup guide shows no button for it."""

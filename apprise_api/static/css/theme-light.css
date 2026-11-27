@@ -914,7 +914,8 @@ Side Nav
   --menu-icon-heart: #c0392b;
 }
 
-.side-nav-group {
+.side-nav-group,
+.mobile-menu-footer .auth-session-nav {
   background-color: #f6f7fa;
   border: 1px solid #d8d9df;
 }
@@ -947,29 +948,13 @@ Side Nav
   color: #a83232 !important;
 }
 
-.mobile-menu-tab {
-  color: #0f5f57;
-  background-color: #f6f7fa;
-  border-color: #9fd5ce;
-}
-
-.mobile-menu-tab:hover,
-.mobile-menu-tab:focus,
-.mobile-menu-tab:active,
-.mobile-menu-tab:focus-visible {
-  color: #0f5f57;
-  background-color: #f6f7fa;
-}
-
 @media (max-width: 600px) {
   .main-layout .side-menu {
     color: #34383f;
-    background-color: #ffffff;
-    border-right: 1px solid #cfd2d9;
+    background-color: #f6f7fa;
   }
 
-  .mobile-menu-drawer-heading {
-    color: #0f5f57;
+  .mobile-menu-footer {
     border-color: #d8d9df;
   }
 }

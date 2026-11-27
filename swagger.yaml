@@ -1226,7 +1226,10 @@ paths:
         the payload leaves out come from the X-Apprise-* headers, then from
         `?title=`, `?type=`, `?format=` and `?tag=`. JSON callers get the saved
         reminder back; others get a short message. Either way the
-        `X-Apprise-Reminder-ID` header names it.
+        `X-Apprise-Reminder-ID` header names it. An optional `id` chooses the
+        new reminder's ID: adding again with an `id` already saved answers with
+        that reminder unchanged, so a retry after a lost answer never adds it
+        twice.
       tags:
         - Reminders
       security:
@@ -1243,7 +1246,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReminderInput'
+              allOf:
+                - $ref: '#/components/schemas/ReminderInput'
+                - $ref: '#/components/schemas/ReminderNewId'
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ReminderUpload'
@@ -3187,13 +3192,23 @@ components:
         - type: object
           required: [when]
 
+    ReminderNewId:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9a-f]{32}$'
+          description: >
+            The new reminder's ID, chosen by the caller. Adding again with an
+            ID already saved answers with that reminder unchanged.
+
     ReminderUpload:
       type: object
       required: [reminder]
       properties:
         reminder:
           type: string
-          description: The ReminderInput fields as a JSON string.
+          description: The ReminderInput fields as a JSON string (with `id` too when adding).
         attach:
           type: array
           items:

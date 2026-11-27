@@ -145,16 +145,28 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Set the login and permissions for this Config ID.", content)
         # Login, Move, and the Reminder Limits card that waits hidden until a login is saved
         self.assertEqual(content.count('class="auth-content-panel"'), 3)
+        # On a phone, one header button opens the menu and turns into its close button
         self.assertIn('id="mobile-menu-open"', content)
-        self.assertIn('class="mobile-menu-tab"', content)
+        self.assertIn('class="mobile-menu-toggle"', content)
+        self.assertIn('data-close-label="Close"', content)
         self.assertIn('id="site-side-menu"', content)
         self.assertNotIn('id="mobile-menu-close"', content)
-        self.assertIn("mobile-menu-field-focus", content)
-        self.assertIn("document.addEventListener('focusin', syncTabWithFocus)", content)
-        self.assertIn("function hasOpenSelectDropdown()", content)
-        self.assertIn("const selectDropdownObserver = new MutationObserver", content)
+        self.assertNotIn("mobile-menu-tab", content)
+        self.assertNotIn("mobile-menu-backdrop", content)
+        self.assertIn('<svg class="mobile-menu-icon-open"', content)
+        self.assertIn('<svg class="mobile-menu-icon-close"', content)
+        # The API health stays in the header; the other controls sit at the bottom of the menu
+        self.assertIn('<ul class="mobile-menu-footer">', content)
+        self.assertIn("else if (!item.classList.contains('auth-health-nav')) footer.appendChild(item);", content)
+        # A wider screen puts every control back in the header, in the same order
+        self.assertIn("if (!mobile.matches) actions.appendChild(item);", content)
+        # Popups close with the same X as the menu
+        self.assertIn(
+            """closeButtonHtml: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path>""", content
+        )
+        # The page behind the open menu can't be reached with Tab
+        self.assertIn("behind.forEach(function(element) { element.inert = active; });", content)
         self.assertIn("window.appriseCloseMobileMenu = function()", content)
-        self.assertIn("document.body.classList.add('mobile-menu-animate');", content)
         self.assertIn("!isToast && typeof window.appriseCloseMobileMenu", content)
         self.assertIn("config-auth-status is-unassigned", content)
         self.assertLess(content.index("config-auth-status"), content.index("config-id-label"))
@@ -594,8 +606,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("browser-login-card", content)
         self.assertIn("browser-login-icon", content)
         self.assertNotIn('id="mobile-menu-open"', content)
-        self.assertNotIn('class="mobile-menu-tab"', content)
-        self.assertNotIn('id="mobile-menu-backdrop"', content)
+        self.assertNotIn('class="mobile-menu-toggle"', content)
         self.assertNotIn('id="site-side-menu"', content)
         self.assertIn('class="page-footer-legal"', content)
         self.assertIn("Licensed under the MIT License.", content)
