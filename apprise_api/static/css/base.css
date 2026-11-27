@@ -419,20 +419,8 @@ Side Nav (replaces legacy Materialize collection sidebar)
   color: var(--menu-icon-heart, currentColor);
 }
 
-.mobile-menu-tab,
-.mobile-menu-drawer-heading {
+.mobile-menu-toggle {
   display: none;
-}
-
-.mobile-menu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1100;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  background: rgba(0, 0, 0, 0.56);
-  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 @media (max-width: 1000px) {
@@ -517,110 +505,144 @@ Side Nav (replaces legacy Materialize collection sidebar)
 }
 
 @media (max-width: 600px) {
-  .mobile-menu-tab {
-    position: fixed;
-    top: 38vh;
-    left: -1px;
-    z-index: 1099;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.2rem;
-    height: 12.6rem;
-    padding: 0;
-    border: 1px solid;
-    border-left: 0;
-    border-radius: 0 0.65rem 0.65rem 0;
-    font: inherit;
-    cursor: pointer;
-    opacity: 0.88;
-    -webkit-tap-highlight-color: transparent;
-    box-shadow: 0.25rem 0 0.8rem rgba(0, 0, 0, 0.2);
-    transition: opacity 0.15s ease, transform 0.15s ease;
+
+  /* The header stays at the top, so the menu button is always in reach.
+     It shows the logo, the API health and the menu button; its other
+     controls move into the menu. */
+  body:has(#site-side-menu) .nav {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
 
-  .mobile-menu-tab:hover,
-  .mobile-menu-tab:focus,
-  .mobile-menu-tab:active,
-  .mobile-menu-tab:focus-visible {
-    opacity: 0.88;
-    transform: none;
-  }
-
-  .mobile-menu-tab i {
-    font-size: 1.2rem;
-  }
-
-  .mobile-menu-drawer-heading {
+  body:has(#site-side-menu) .nav>.col {
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid;
-    font-size: 1.05rem;
+    justify-content: space-between;
+    direction: ltr;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
   }
 
+  body:has(#site-side-menu) .nav .nav-actions {
+    margin: 0 0.75rem 0 auto;
+    padding: 0;
+  }
+
+  body:has(#site-side-menu) .nav .nav-actions>li:not(.auth-health-nav) {
+    display: none;
+  }
+
+  body:has(#site-side-menu) .nav li.auth-health-nav,
+  body:has(#site-side-menu) .nav .api-status-nav {
+    margin-top: 0;
+  }
+
+  /* The menu button looks like the close button on dialogs and popups. */
+  body:has(#site-side-menu) .mobile-menu-toggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid var(--dialog-close-border);
+    border-radius: 50%;
+    color: var(--dialog-close-icon);
+    background: var(--dialog-close-bg);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  /* Materialize colours a button once it has focus; the menu button keeps
+     its own look and only changes on hover or keyboard focus. */
+  body:has(#site-side-menu) .mobile-menu-toggle:focus {
+    color: var(--dialog-close-icon);
+    background: var(--dialog-close-bg);
+  }
+
+  body:has(#site-side-menu) .mobile-menu-toggle:hover,
+  body:has(#site-side-menu) .mobile-menu-toggle:focus-visible {
+    border-color: var(--dialog-close-hover-border);
+    color: var(--dialog-close-hover-icon);
+    background: var(--dialog-close-hover-bg);
+  }
+
+  .mobile-menu-toggle:focus-visible {
+    outline: 2px solid var(--mobile-app-accent);
+    outline-offset: 2px;
+  }
+
+  /* Each icon sits in its own box, so only the one that applies is shown. */
+  .mobile-menu-toggle>span,
+  .mobile-menu-toggle svg {
+    display: block;
+  }
+
+  .mobile-menu-toggle svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+  }
+
+  .mobile-menu-toggle[aria-expanded="true"] .mobile-menu-icon-open,
+  .mobile-menu-toggle[aria-expanded="false"] .mobile-menu-icon-close {
+    display: none;
+  }
+
+  /* The menu covers the page below the header. It is drawn hidden, so
+     opening it never shows it being built. */
   .main-layout .side-menu {
     position: fixed;
-    top: 0;
-    right: auto !important;
+    top: var(--mobile-menu-top, 4rem);
+    right: 0;
     bottom: 0;
-    left: 0 !important;
-    z-index: 1101;
-    display: block !important;
-    width: min(20rem, 88vw) !important;
-    max-width: min(20rem, 88vw) !important;
-    height: 100dvh;
+    left: 0;
+    z-index: 999;
+    display: none !important;
+    width: auto !important;
+    max-width: none !important;
     margin: 0;
-    padding: 1rem;
+    padding: 1rem 1rem 1.5rem;
     overflow-x: hidden;
     overflow-y: auto;
+    overscroll-behavior: contain;
     box-sizing: border-box;
-    transform: translateX(-105%);
-    box-shadow: 0.6rem 0 1.8rem rgba(0, 0, 0, 0.28);
-  }
-
-  /* Slide only when opened or closed, not when the window is resized. */
-  .mobile-menu-animate .main-layout .side-menu {
-    transition: transform 0.22s ease;
   }
 
   .mobile-menu-open {
     overflow: hidden;
   }
 
+  /* The controls sit at the bottom of the screen. When the links are
+     too long to fit, the controls follow them and the menu scrolls. */
   .mobile-menu-open .main-layout .side-menu {
-    transform: translateX(0);
+    display: flex !important;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0;
   }
 
-  .mobile-menu-open .mobile-menu-tab {
-    opacity: 0;
-    pointer-events: none;
+  .main-layout .side-menu>* {
+    flex: 0 0 auto;
   }
 
-  .mobile-menu-field-focus .mobile-menu-tab {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(-100%);
-  }
-
-  body.swal2-shown:not(.swal2-toast-shown) .mobile-menu-tab,
-  body:has(.apprise-dialog[open]) .mobile-menu-tab {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateX(-100%);
-  }
-
-  .mobile-menu-open .mobile-menu-backdrop {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+  .main-layout .side-nav-group+.side-nav-label {
+    margin-top: 0;
   }
 
   .main-layout .side-nav-label,
   .main-layout .side-nav-item .side-nav-text {
     display: block !important;
+  }
+
+  .main-layout .side-nav-label {
+    margin-top: 0.4rem;
   }
 
   .main-layout .side-nav-group {
@@ -655,13 +677,100 @@ Side Nav (replaces legacy Materialize collection sidebar)
     width: 1.25rem;
     height: 1.25rem;
   }
+
+  /* The header's controls sit below the menu's links, in rows:
+     - who is signed in, with the logout button
+     - the site links, then the theme and the language on the right
+       (and the logout button, when there is no name to show)
+     - the Apprise library version */
+  .mobile-menu-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 0.35rem;
+    margin: auto 0 0;
+    padding: 1rem 0.25rem 0;
+    border-top: 1px solid;
+    direction: ltr;
+  }
+
+  ul.mobile-menu-footer>li {
+    display: contents;
+  }
+
+  /* The menu already lists Get Apprise Mobile, so the header's icon for it
+     is left out there. */
+  .mobile-menu-footer .nav-divider,
+  .mobile-menu-footer [data-mobile-app-open] {
+    display: none;
+  }
+
+  .mobile-menu-footer a {
+    color: inherit;
+  }
+
+  .mobile-menu-footer .auth-session-nav {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.5rem 0.5rem 0.8rem;
+    border-radius: 0.55rem;
+    box-sizing: border-box;
+  }
+
+  .mobile-menu-footer .auth-session-nav:not(:has(.auth-account)) {
+    display: contents;
+  }
+
+  .mobile-menu-footer .auth-account {
+    flex: 1 1 auto;
+    gap: 0.65rem;
+    min-width: 0;
+    font-weight: 500;
+  }
+
+  .mobile-menu-footer .auth-account-name {
+    display: block;
+    max-width: none;
+  }
+
+  .mobile-menu-footer .auth-logout-link {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .mobile-menu-footer li.social-theme-nav>a {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .mobile-menu-footer li.social-theme-nav>#theme-toggle {
+    margin-left: auto;
+  }
+
+  .mobile-menu-footer .apprise-lib-ver {
+    display: inline-flex;
+    flex: 1 1 100%;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    opacity: 0.8;
+  }
+
+  .mobile-menu-footer .apprise-lib-label {
+    display: inline;
+  }
+
+  .mobile-menu-footer li.social-theme-nav .topbar-icon,
+  .mobile-menu-footer li.social-theme-nav .topbar-icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
 
-  .mobile-menu-tab,
-  .mobile-menu-backdrop,
-  .mobile-menu-animate .main-layout .side-menu,
   .reset-configuration-toggle,
   .reset-configuration-toggle__track,
   .reset-configuration-toggle__track>span {
@@ -1696,7 +1805,8 @@ body.swal2-toast-shown .swal2-container {
   z-index: 2;
 }
 
-.apprise-dialog-close svg {
+.apprise-dialog-close svg,
+.swal2-popup .swal2-close svg {
   display: block;
   width: 1.1rem;
   height: 1.1rem;

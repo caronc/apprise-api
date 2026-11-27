@@ -145,16 +145,29 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("Set the login and permissions for this Config ID.", content)
         # Login, Move, and the Reminder Limits card that waits hidden until a login is saved
         self.assertEqual(content.count('class="auth-content-panel"'), 3)
+        # On a phone, one header button opens the menu and turns into its close button
         self.assertIn('id="mobile-menu-open"', content)
-        self.assertIn('class="mobile-menu-tab"', content)
+        self.assertIn('class="mobile-menu-toggle"', content)
+        self.assertIn('data-close-label="Close"', content)
         self.assertIn('id="site-side-menu"', content)
         self.assertNotIn('id="mobile-menu-close"', content)
-        self.assertIn("mobile-menu-field-focus", content)
-        self.assertIn("document.addEventListener('focusin', syncTabWithFocus)", content)
-        self.assertIn("function hasOpenSelectDropdown()", content)
-        self.assertIn("const selectDropdownObserver = new MutationObserver", content)
+        self.assertNotIn("mobile-menu-tab", content)
+        self.assertNotIn("mobile-menu-backdrop", content)
+        self.assertIn('<span class="mobile-menu-icon-open" aria-hidden="true">', content)
+        self.assertIn('<span class="mobile-menu-icon-close" aria-hidden="true">', content)
+        # The API health stays in the header; the other controls sit at the bottom of the menu
+        self.assertIn('<ul class="mobile-menu-footer" role="none">', content)
+        self.assertIn("if (!item.classList.contains('auth-health-nav')) footer.appendChild(item);", content)
+        # A wider screen puts every control back in the header, in the same order
+        self.assertIn("items.forEach(function(item) { actions.appendChild(item); });", content)
+        self.assertIn("home.parent.insertBefore(home.node, home.next);", content)
+        # Popups, dialogs and the menu all close with the same X
+        self.assertIn('<template id="close-icon-template">', content)
+        self.assertIn("closeButtonHtml: document.querySelector('#close-icon-template').innerHTML.trim(),", content)
+        self.assertNotIn('<path d="M18 6 6 18"></path>', content)
+        # The page behind the open menu can't be reached with Tab
+        self.assertIn("behind.forEach(function(element) { element.inert = active; });", content)
         self.assertIn("window.appriseCloseMobileMenu = function()", content)
-        self.assertIn("document.body.classList.add('mobile-menu-animate');", content)
         self.assertIn("!isToast && typeof window.appriseCloseMobileMenu", content)
         self.assertIn("config-auth-status is-unassigned", content)
         self.assertLess(content.index("config-auth-status"), content.index("config-id-label"))
@@ -444,6 +457,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("username: authUsername ? authUsername.value : ''", content)
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 8)
         self.assertNotIn("auth-account", content)
+        self.assertIn('class="auth-session-nav">', content)
         self.assertIn("auth-logout-link", content)
 
     @override_settings(
@@ -594,8 +608,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("browser-login-card", content)
         self.assertIn("browser-login-icon", content)
         self.assertNotIn('id="mobile-menu-open"', content)
-        self.assertNotIn('class="mobile-menu-tab"', content)
-        self.assertNotIn('id="mobile-menu-backdrop"', content)
+        self.assertNotIn('class="mobile-menu-toggle"', content)
         self.assertNotIn('id="site-side-menu"', content)
         self.assertIn('class="page-footer-legal"', content)
         self.assertIn("Licensed under the MIT License.", content)
@@ -815,6 +828,8 @@ class AuthGuiTests(SimpleTestCase):
         page = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
         self.assertIn('auth-account-name">master</span>', page.content.decode())
+        # The phone menu puts a named session first
+        self.assertIn('class="auth-session-nav" data-named>', page.content.decode())
 
         response = self.client.post("/logout", headers=_BROWSER)
 

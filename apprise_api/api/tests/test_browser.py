@@ -36,17 +36,21 @@ import sys
 import unittest
 from unittest import mock
 
+from apprise.manager_plugins import NotificationManager
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import override_settings
 from django.urls import resolve
 
 try:
-    from playwright.sync_api import Error as PlaywrightError, sync_playwright
+    from playwright.sync_api import Error as PlaywrightError, expect, sync_playwright
 except ImportError:  # pragma: no cover
     sync_playwright = None
 
 KEY = "browser_tag_field"
+
+# The plugins Apprise knows, shared by every test and the server.
+N_MGR = NotificationManager()
 
 # Tag names that would run script, or upset a plain object, if shown as markup.
 HOSTILE_TAGS = [
@@ -74,6 +78,21 @@ MARKUP_FOUND = """() => {
 SHOWN_ROWS_IS_ONE = (
     "document.querySelectorAll('.config-list-item:not(.config-list-header):not(.list-search-hidden)').length === 1"
 )
+
+# The requests that read a URL, or the fields of one.
+RESOLVE = re.compile(r"/resolve")
+
+# Counts each answer the page has read, in window.answersRead.
+ANSWERS_READ = """(() => {
+  const read = Response.prototype.json;
+  window.answersRead = 0;
+  Response.prototype.json = function () {
+    return read.call(this).then(function (value) {
+      window.answersRead++;
+      return value;
+    });
+  };
+})()"""
 
 # The tags chosen so far, as the tag field holds them.
 CHOSEN_TAGS = "() => M.Chips.getInstance(document.querySelector('#notify .chips')).chipsData.map(c => c.id)"
@@ -345,6 +364,281 @@ class PageBrowserTests(BrowserTestCase):
         self.assertNotEqual(focused, "schema")
         self.assertTrue(self.page.locator("[data-field=schema] input").evaluate("i => i.readOnly"))
 
+    def test_details_parse_is_ready_again_after_the_page_changes(self):
+        """
+        Parse reads the same pasted URL again once:
+        - the paste box is cleared and filled again
+        - another service is chosen
+        - a field is changed
+        """
+        parse = self.page.locator("#details-parse")
+        host = self.page.locator("[data-field=host] input")
+        self.open("/details")
+        self.page.fill("#details-paste-url", "json://example.com")
+        with self.page.expect_response(RESOLVE):
+            parse.click()
+        expect(host).to_have_value("example.com")
+        expect(parse).to_be_disabled()
+
+        self.page.fill("#details-paste-url", "")
+        expect(parse).to_be_disabled()
+        self.page.fill("#details-paste-url", "json://example.com")
+        expect(parse).to_be_enabled()
+        with self.page.expect_response(RESOLVE):
+            parse.click()
+        expect(parse).to_be_disabled()
+
+        self.page.fill("#details-search", "africas")
+        self.page.locator(".details-service:visible").first.click()
+        expect(parse).to_be_enabled()
+        with self.page.expect_response(RESOLVE):
+            parse.click()
+        expect(host).to_have_value("example.com")
+        expect(parse).to_be_disabled()
+
+        host.fill("other.example")
+        expect(parse).to_be_enabled()
+
+    def test_details_parse_and_field_changes_never_undo_each_other(self):
+        """
+        With a slow server, the newest of a parse and a field change wins:
+        - Parse pressed after a field change reads the pasted URL
+        - a field change made while Parse waits is kept
+        - a pasted URL no service reads still sends the changed fields
+        - a request that fails keeps the form, and Parse can try again
+        - a failed Parse leaves a URL that was already made
+        - changing the pasted URL while it is read drops its answer
+        - a failed Parse finishes making a URL it interrupted
+        - the URL is neither shown nor copied while a field change waits
+        """
+        parse = self.page.locator("#details-parse")
+        host = self.page.locator("[data-field=host] input")
+        copy = self.page.locator("#details-copy")
+        url = self.page.locator("#details-url")
+        held = self.hold_answers()
+        self.page.clock.install()
+        self.open("/details")
+        self.page.fill("#details-paste-url", "json://example.com")
+        parse.click()
+        self.release(held)
+        expect(host).to_have_value("example.com")
+
+        # Time only moves when the test says so
+        self.page.clock.pause_at(self.page.evaluate("Date.now()") + 1000)
+
+        host.fill("other.example")
+        expect(copy).to_be_disabled()
+        url.focus()
+        expect(url).to_have_value("")
+        parse.click()
+        self.page.clock.run_for(1000)
+        self.release(held)
+        expect(host).to_have_value("example.com")
+        expect(parse).to_be_disabled()
+        expect(copy).to_be_enabled()
+        self.page.fill("#details-paste-url", "json://typed.example")
+        self.page.fill("#details-paste-url", "json://example.com")
+        self.page.wait_for_timeout(100)
+        self.assertEqual(held, [])
+        expect(copy).to_be_enabled()
+
+        host.fill("other.example")
+        parse.click()
+        host.fill("mine.example")
+        self.release(held)
+        self.page.clock.run_for(1000)
+        self.release(held)
+        expect(url).to_have_value(re.compile("mine.example"))
+        expect(host).to_have_value("mine.example")
+        expect(parse).to_be_enabled()
+        expect(copy).to_be_enabled()
+
+        host.fill("edited.example")
+        self.page.fill("#details-paste-url", "nosuchservice://example.com")
+        parse.click()
+        self.release(held)
+        expect(self.page.locator("#details-paste-error")).to_be_visible()
+        self.release(held)
+        expect(url).to_have_value(re.compile("edited.example"))
+        expect(copy).to_be_enabled()
+
+        self.page.fill("#details-paste-url", "json://example.com")
+        host.fill("kept.example")
+        parse.click()
+        self.asked(held)
+        held.pop(0).abort()
+        expect(self.page.locator("#details-paste-error")).to_be_visible()
+        expect(host).to_have_value("kept.example")
+        expect(parse).to_be_enabled()
+        self.release(held)
+        expect(url).to_have_value(re.compile("kept.example"))
+
+        self.page.fill("#details-paste-url", "json://other.example")
+        parse.click()
+        self.asked(held)
+        held.pop(0).abort()
+        expect(self.page.locator("#details-paste-error")).to_be_visible()
+        expect(url).to_have_value(re.compile("kept.example"))
+        expect(copy).to_be_enabled()
+        self.page.wait_for_timeout(100)
+        self.assertEqual(held, [])
+
+        parse.click()
+        self.asked(held)
+        self.page.fill("#details-paste-url", "")
+        self.release(held)
+        expect(host).to_have_value("kept.example")
+        expect(self.page.locator("#details-paste-error")).to_be_hidden()
+        expect(parse).to_be_disabled()
+
+        host.fill("last.example")
+        self.page.fill("#details-paste-url", "json://other.example")
+        parse.click()
+        self.asked(held)
+        self.page.fill("#details-paste-url", "json://another.example")
+        self.asked(held, count=2)
+        self.release(held)
+        expect(host).to_have_value("last.example")
+        expect(url).to_have_value(re.compile("last.example"))
+        expect(parse).to_be_enabled()
+
+        # A URL the server reads but can't load has its fields' URL made
+        # again; a failed Parse pressed meanwhile starts that over.
+        self.page.fill("#details-paste-url", "json://example.com?method=BAD")
+        parse.click()
+        self.release(held)
+        self.asked(held)
+        self.page.fill("#details-paste-url", "json://other.example")
+        parse.click()
+        self.asked(held, count=2)
+        held.pop(1).abort()
+        expect(self.page.locator("#details-paste-error")).to_be_visible()
+        self.asked(held, count=2)
+        self.release(held)
+
+    def test_details_service_chosen_while_parse_waits_stays_chosen(self):
+        """A service the server can't use, chosen while Parse waits, is not replaced by the parsed URL."""
+        held = self.hold_answers()
+        # Turned off for this test only
+        form_off = mock.patch.object(N_MGR["form"], "enabled", False)
+        form_off.start()
+        self.addCleanup(form_off.stop)
+        self.open("/details?all=yes")
+        self.page.fill("#details-paste-url", "json://example.com")
+        self.page.click("#details-parse")
+        self.asked(held)
+        self.page.fill("#details-search", "form")
+        chosen = self.page.locator(".details-service:visible:has(.is-disabled)").first
+        chosen.click()
+        self.release(held)
+        expect(chosen).to_have_attribute("aria-pressed", "true")
+        expect(self.page.locator("#details-disabled")).to_be_visible()
+
+    def hold_answers(self):
+        """Hold each request that reads a URL until release(); call it before the page opens."""
+        held = []
+        self.page.add_init_script(ANSWERS_READ)
+        self.page.route(RESOLVE, lambda route: held.append(route))
+        return held
+
+    def asked(self, held, count=1):
+        """Wait for the page to ask the server something, or this many things."""
+        for _ in range(250):
+            if len(held) >= count:
+                return
+            self.page.wait_for_timeout(20)
+        self.fail("The page never asked the server")
+
+    def release(self, held):
+        """Let every held request through, and wait until the page has read each answer."""
+        self.asked(held)
+        read = self.page.evaluate("window.answersRead") + len(held)
+        while held:
+            held.pop(0).continue_()
+        for _ in range(250):
+            if self.page.evaluate("window.answersRead") >= read:
+                return
+            self.page.wait_for_timeout(20)
+        self.fail("The page never read the server's answer")
+
+    def test_phone_menu_keeps_the_header_tooltips(self):
+        """
+        The header's controls move into the phone menu and back:
+        - their tooltips still show in the menu and after the move back
+        - the menu lists Get Apprise Mobile only once
+        """
+        theme = self.page.locator("#theme-toggle")
+        tooltip = self.page.locator(".material-tooltip", has_text="Toggle light / dark theme")
+        self.page.set_viewport_size({"width": 390, "height": 844})
+        self.open("/")
+        self.page.click("#mobile-menu-open")
+        expect(self.page.locator(".mobile-menu-footer #theme-toggle")).to_be_visible()
+        expect(self.page.locator(".mobile-menu-footer [data-mobile-app-open]")).to_be_hidden()
+        expect(self.page.locator(".side-nav-item[data-mobile-app-open]")).to_be_visible()
+        theme.hover()
+        expect(tooltip).to_be_visible()
+
+        self.page.keyboard.press("Escape")
+        self.page.set_viewport_size({"width": 1280, "height": 800})
+        expect(self.page.locator(".nav-actions #theme-toggle")).to_be_visible()
+        self.page.mouse.move(0, 0)
+        expect(tooltip).to_be_hidden()
+        theme.hover()
+        expect(tooltip).to_be_visible()
+
+    def test_phone_menu_tab_order_follows_what_is_shown(self):
+        """
+        In the phone menu, Tab moves through the header's controls in the order
+        they are shown, and a wider screen puts the header back as it was.
+        """
+        controls = "e => Array.from(e.querySelectorAll('a, button, select')).filter(c => c.getClientRects().length)"
+        names = controls + ".map(c => c.id || c.className || c.name)"
+        self.open("/")
+        header = self.page.locator(".nav-actions").evaluate(names)
+
+        self.page.set_viewport_size({"width": 390, "height": 844})
+        self.page.click("#mobile-menu-open")
+        footer = self.page.locator(".mobile-menu-footer")
+        # Top to bottom, then left to right, as each control is drawn
+        shown = footer.evaluate(
+            controls
+            + ".map(c => [c, c.getBoundingClientRect()])"
+            + ".sort((a, b) => Math.round(a[1].top + a[1].height / 2) - Math.round(b[1].top + b[1].height / 2)"
+            + " || a[1].left - b[1].left)"
+            + ".map(([c]) => c.id || c.className || c.name)"
+        )
+        self.assertGreater(len(shown), 3)
+        footer.evaluate(controls + "[0].focus()")
+        tabbed = []
+        for _ in shown:
+            tabbed.append(
+                self.page.evaluate(
+                    "() => document.activeElement.id || document.activeElement.className || document.activeElement.name"
+                )
+            )
+            self.page.keyboard.press("Tab")
+        self.assertEqual(tabbed, shown)
+
+        self.page.keyboard.press("Escape")
+        self.page.set_viewport_size({"width": 1280, "height": 800})
+        expect(self.page.locator(".nav-actions #theme-toggle")).to_be_visible()
+        self.assertEqual(self.page.locator(".nav-actions").evaluate(names), header)
+
+    def test_phone_header_keeps_its_controls_without_javascript(self):
+        """Without JavaScript the phone menu cannot open, so the header keeps its controls."""
+        context = self.browser.new_context(
+            java_script_enabled=False,
+            storage_state=self.context.storage_state(),
+            viewport={"width": 390, "height": 844},
+        )
+        self.addCleanup(context.close)
+        page = context.new_page()
+        page.goto(f"{self.live_server_url}/")
+        expect(page.locator("#site-side-menu")).to_be_attached()
+        expect(page.locator(".nav-actions #theme-toggle")).to_be_visible()
+        expect(page.locator(".language-selector-submit")).to_be_visible()
+        expect(page.locator("#mobile-menu-open")).to_be_hidden()
+
     def test_configuration_list_search(self):
         """The configuration list search finds a row by its Config ID or username, and clears."""
         rows = ".config-list-item:not(.config-list-header):visible"
@@ -570,7 +864,7 @@ class SettingsBrowserTests(BrowserTestCase):
             self.assertEqual(self.errors, [], href)
 
     def open_the_menu(self):
-        """Open and close the side menu, which is a drawer at phone width."""
+        """Open and close the side menu with its button, shown at phone width."""
         opener = self.page.locator("#mobile-menu-open")
         if opener.is_visible():
             opener.click()

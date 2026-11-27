@@ -214,8 +214,18 @@ class ManagerPageTests(SimpleTestCase):
         assert "link.setAttribute('aria-label', text)" in content
         assert "link.setAttribute('title', text)" not in content
         stylesheet = Path(settings.BASE_DIR, "static", "css", "base.css").read_text(encoding="utf-8")
-        assert "body.swal2-shown:not(.swal2-toast-shown) .mobile-menu-tab" in stylesheet
-        assert "body:has(.apprise-dialog[open]) .mobile-menu-tab" in stylesheet
+        # Pages without a side menu (login, errors) keep the full header on a phone
+        assert "body:has(#site-side-menu) .nav .nav-actions>li:not(.auth-health-nav) {" in stylesheet
+        assert "body:has(#site-side-menu) .mobile-menu-toggle {" in stylesheet
+        # The menu button and the popups share one close button look
+        assert "border: 1px solid var(--dialog-close-border);" in stylesheet
+        assert ".apprise-dialog-close svg,\n.swal2-popup .swal2-close svg {" in stylesheet
+        # Without a name to show, the logout button joins the menu's row of icons
+        assert ".mobile-menu-footer .auth-session-nav:not(:has(.auth-account)) {\n    display: contents;" in stylesheet
+        # The menu is drawn hidden and only shown once opened
+        assert ".mobile-menu-open .main-layout .side-menu {\n    display: flex !important;" in stylesheet
+        # The controls sit at the bottom of the screen when the links leave room
+        assert "gap: 0.75rem 0.35rem;\n    margin: auto 0 0;" in stylesheet
         assert ".select-wrapper input.select-dropdown" in stylesheet
         assert "border-radius: 0.55rem !important;" in stylesheet
         assert ".dropdown-content.select-dropdown li" in stylesheet
