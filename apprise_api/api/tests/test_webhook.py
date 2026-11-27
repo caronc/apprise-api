@@ -185,7 +185,9 @@ class WebhookTests(SimpleTestCase):
             assert "Content-Type" in details[1]["headers"]
             assert details[1]["headers"]["User-Agent"] == f"Apprise-API/{settings.APP_VERSION}"
             assert details[1]["headers"]["Content-Type"] == "application/json"
-            assert details[1]["auth"] == ("user", None)
+            # A user without a password: newer Apprise sends an empty password,
+            # older releases send None.
+            assert details[1]["auth"] in (("user", ""), ("user", None))
             assert details[1]["verify"] is False
             assert details[1]["params"] == {"key": "value"}
             assert details[1]["timeout"] == (2.0, 1.0)
