@@ -153,17 +153,18 @@ class AuthGuiTests(SimpleTestCase):
         self.assertNotIn('id="mobile-menu-close"', content)
         self.assertNotIn("mobile-menu-tab", content)
         self.assertNotIn("mobile-menu-backdrop", content)
-        self.assertIn('<svg class="mobile-menu-icon-open"', content)
-        self.assertIn('<svg class="mobile-menu-icon-close"', content)
+        self.assertIn('<span class="mobile-menu-icon-open" aria-hidden="true">', content)
+        self.assertIn('<span class="mobile-menu-icon-close" aria-hidden="true">', content)
         # The API health stays in the header; the other controls sit at the bottom of the menu
-        self.assertIn('<ul class="mobile-menu-footer">', content)
-        self.assertIn("else if (!item.classList.contains('auth-health-nav')) footer.appendChild(item);", content)
+        self.assertIn('<ul class="mobile-menu-footer" role="none">', content)
+        self.assertIn("if (!item.classList.contains('auth-health-nav')) footer.appendChild(item);", content)
         # A wider screen puts every control back in the header, in the same order
-        self.assertIn("if (!mobile.matches) actions.appendChild(item);", content)
-        # Popups close with the same X as the menu
-        self.assertIn(
-            """closeButtonHtml: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path>""", content
-        )
+        self.assertIn("items.forEach(function(item) { actions.appendChild(item); });", content)
+        self.assertIn("home.parent.insertBefore(home.node, home.next);", content)
+        # Popups, dialogs and the menu all close with the same X
+        self.assertIn('<template id="close-icon-template">', content)
+        self.assertIn("closeButtonHtml: document.querySelector('#close-icon-template').innerHTML.trim(),", content)
+        self.assertNotIn('<path d="M18 6 6 18"></path>', content)
         # The page behind the open menu can't be reached with Tab
         self.assertIn("behind.forEach(function(element) { element.inert = active; });", content)
         self.assertIn("window.appriseCloseMobileMenu = function()", content)
@@ -456,6 +457,7 @@ class AuthGuiTests(SimpleTestCase):
         self.assertIn("username: authUsername ? authUsername.value : ''", content)
         self.assertEqual(content.count('class="btn-flat value-visibility-toggle"'), 8)
         self.assertNotIn("auth-account", content)
+        self.assertIn('class="auth-session-nav">', content)
         self.assertIn("auth-logout-link", content)
 
     @override_settings(
@@ -826,6 +828,8 @@ class AuthGuiTests(SimpleTestCase):
         page = self.client.get("/cfg/{}".format(self.key), headers=_BROWSER)
         self.assertEqual(page.status_code, 200)
         self.assertIn('auth-account-name">master</span>', page.content.decode())
+        # The phone menu puts a named session first
+        self.assertIn('class="auth-session-nav" data-named>', page.content.decode())
 
         response = self.client.post("/logout", headers=_BROWSER)
 

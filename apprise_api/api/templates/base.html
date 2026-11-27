@@ -28,6 +28,20 @@
     {# Release versions refresh local assets; vendor assets keep their pinned versions. #}
     <link rel="stylesheet"
           href="{% static 'css/base.css' %}?v={{ APPRISE_API_VERSION }}" />
+    {# Without JavaScript the phone menu cannot open, so the header keeps its controls. #}
+    <noscript>
+      <style>
+        @media (max-width: 600px) {
+          body:has(#site-side-menu) .nav .nav-actions>li:not(.auth-health-nav) {
+            display: flex;
+          }
+
+          body:has(#site-side-menu) .mobile-menu-toggle {
+            display: none;
+          }
+        }
+      </style>
+    </noscript>
     <!--materialize-->
     <script src="{% static 'js/materialize.min.js' %}?v=2.4.0"></script>
     {% block head_js_optional %}
@@ -198,7 +212,8 @@
               {% if AUTH_ENABLED and AUTH_PERMISSION != "disabled" %}
                 {# Keep session controls together after the theme toggle. #}
                 <span class="nav-divider auth-divider" aria-hidden="true"></span>
-                <span class="auth-session-nav">
+                {# data-named marks the controls that show who is signed in. #}
+                <span class="auth-session-nav"{% if AUTH_USERNAME %} data-named{% endif %}>
                   {% if AUTH_USERNAME %}
                     <a class="auth-account"
                        href="{% if COOKIE_CONFIG_URLS %}{% url 'auth_current' %}{% else %}{% url 'auth' DEFAULT_CONFIG_ID %}{% endif %}"
@@ -238,18 +253,23 @@
                     aria-expanded="false"
                     aria-label="{% trans "Open Navigation Menu" %}"
                     data-close-label="{% trans "Close" %}">
+              <span class="mobile-menu-icon-open" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16M4 12h16M4 17h16"></path>
+                </svg>
+              </span>
               {# The same X as the close button on dialogs and popups. #}
-              <svg class="mobile-menu-icon-open" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 7h16M4 12h16M4 17h16"></path>
-              </svg>
-              <svg class="mobile-menu-icon-close" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18 6 6 18"></path>
-                <path d="m6 6 12 12"></path>
-              </svg>
+              <span class="mobile-menu-icon-close" aria-hidden="true">
+                {% include "icons/close.svg" %}
+              </span>
             </button>
           {% endblock mobile_menu_controls %}
         </div>
       </div>
+      {# The X every dialog and popup closes with, copied in by appriseFire(). #}
+      <template id="close-icon-template">
+        {% include "icons/close.svg" %}
+      </template>
       <!-- Support Banner -->
       <div id="support-banner" class="support-banner" style="display:none">
         <span>
@@ -400,7 +420,8 @@
               {% block menu %}
               {% endblock menu %}
               {# The header's controls, apart from the API health, are moved here on a phone. #}
-              <ul class="mobile-menu-footer">
+              {# They are read as plain controls, not as a list. #}
+              <ul class="mobile-menu-footer" role="none">
               </ul>
             </div>
           {% endblock sidebar %}
@@ -546,12 +567,14 @@
                     return;
                 }
                 // A control removed while its tooltip is open, such as a button
-                // redrawn after a click, takes its tooltip with it.
+                // redrawn after a click, takes its tooltip with it. A control
+                // that was only moved (the header's controls on a phone) is
+                // still on the page and keeps its tooltip.
                 record.removedNodes.forEach(function(node) {
                     if (!(node instanceof Element)) return;
                     [node].concat(Array.from(node.querySelectorAll('.tooltipped'))).forEach(function(element) {
                         const instance = M.Tooltip.getInstance(element);
-                        if (instance) {
+                        if (instance && !element.isConnected) {
                             instance.destroy();
                         }
                     });
@@ -662,7 +685,13 @@
 
             const header = toggle.closest('.nav');
             const footer = menu.querySelector('.mobile-menu-footer');
-            const order = Array.from(actions.children);
+            const items = Array.from(actions.children);
+            const language = actions.querySelector('.library-language-nav');
+            // The signed-in controls and the library version leave their own
+            // list items on a phone, so where they sit in the header is kept.
+            const homes = Array.from(actions.querySelectorAll('.auth-session-nav, .apprise-lib-ver')).map(function(node) {
+                return {node: node, parent: node.parentNode, next: node.nextSibling};
+            });
             const openLabel = toggle.getAttribute('aria-label');
             // While the menu is open, only the header and the menu can be reached.
             const behind = document.querySelectorAll('#support-banner, .main-layout > :not(#site-side-menu)');
@@ -683,11 +712,28 @@
             }
 
             // On a phone, the header keeps the API health and the rest of its
-            // controls live in the menu. A wider screen puts them all back.
+            // controls live in the menu. They are put in the order they are
+            // shown, so Tab and screen readers follow the same path:
+            // - who is signed in, with the logout button
+            // - the site links, the theme and the language (then the logout
+            //   button, when there is no name to show)
+            // - the Apprise library version
+            // A wider screen puts them all back where they were.
             function placeActions() {
-                order.forEach(function(item) {
-                    if (!mobile.matches) actions.appendChild(item);
-                    else if (!item.classList.contains('auth-health-nav')) footer.appendChild(item);
+                if (!mobile.matches) {
+                    items.forEach(function(item) { actions.appendChild(item); });
+                    homes.forEach(function(home) { home.parent.insertBefore(home.node, home.next); });
+                    return;
+                }
+
+                items.forEach(function(item) {
+                    if (!item.classList.contains('auth-health-nav')) footer.appendChild(item);
+                });
+                if (language) footer.appendChild(language);
+                homes.forEach(function(home) {
+                    // A name to show puts the signed-in controls on the first row.
+                    if (home.node.hasAttribute('data-named')) footer.prepend(home.node);
+                    else footer.appendChild(home.node);
                 });
             }
 
@@ -972,7 +1018,7 @@
 
     const settings = Object.assign({
       showCloseButton: !isToast,
-      closeButtonHtml: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>',
+      closeButtonHtml: document.querySelector('#close-icon-template').innerHTML.trim(),
       reverseButtons: !isToast
     }, requested, {customClass: customClass});
     if (usesStatusIcon) {

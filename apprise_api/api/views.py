@@ -4774,7 +4774,7 @@ class AttachPreviewView(View):
         return response
 
 
-# A reminder ID, as the server makes them (the same shape the URLs accept).
+# A reminder ID, as the server makes them. The URLs accept the same shape.
 REMINDER_ID_RE = re.compile(r"[0-9a-f]{32}")
 
 # Fields a caller may set on a reminder. The server keeps the rest.
@@ -6287,11 +6287,6 @@ def _log_reminder_saved(request, key: str, event: dict, action: str) -> None:
         )
 
 
-def _added_before(events: list[dict], chosen: str | None) -> dict | None:
-    """Return the saved reminder whose ID a caller chose, or ``None``."""
-    return next((event for event in events if event.get("id") == chosen), None) if chosen else None
-
-
 def _reminder_saved(request, key: str, event: dict) -> HttpResponse:
     """Answer a saved reminder the way /add answers a saved configuration.
 
@@ -6398,8 +6393,9 @@ class ReminderListView(ReminderLockView):
         # The saved IDs and hidden forms of their URLs, brought up to date when old.
         events = _refresh_url_views(reminder_file, events)
 
-        # Already added by an earlier try: answer with it, unchanged.
-        added = _added_before(events, chosen)
+        # Already added by an earlier try: answer with it, unchanged. Without
+        # a chosen ID there is nothing to look for.
+        added = find_reminder(events, chosen) if chosen else None
         if added is not None:
             return _reminder_saved(request, key, added)
 
@@ -6490,17 +6486,22 @@ class ReminderListView(ReminderLockView):
         # saves at once cannot undo each other.
         with _reminder_lock():
             events = ConfigCache.read_reminders(reminder_file)
+            refused = (
+                _reminders_unreadable(request)
+                if events is None
+                # The login or configuration may have gone while this waited.
+                # This refuses a retry too.
+                else _reminder_user_gone(request, key)
+            )
+
             # Another try of the same request may have added it while this waited.
-            added = _added_before(events or [], chosen)
+            added = find_reminder(events, chosen) if refused is None and chosen else None
             if added is not None:
                 _drop_refused_uploads(uploads)
                 return _reminder_saved(request, key, added)
 
             refused = (
-                _reminders_unreadable(request)
-                if events is None
-                # The login or configuration may have gone while this waited.
-                else _reminder_user_gone(request, key)
+                refused
                 or (None if alone else _saved_config_missing(request, key))
                 or _reminder_room(request, limits, events, event, None)
                 # The series' next time is worked out from the time now, read

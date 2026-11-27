@@ -1042,6 +1042,17 @@ def test_send_result_is_dropped_when_the_reminder_goes_while_it_is_found(store):
     assert "last" not in store.read_reminders(other)[0]
 
 
+def test_send_result_skips_another_reminder_with_the_same_id(store):
+    """A reminder elsewhere that shares the ID, but was added at another time, is left alone."""
+    _save(store, "old", [])
+    other = _save(store, "new", [{"id": "a", "created": 2}])
+    scheduler = Scheduler(workers=1, grace=60)
+    with patch.object(scheduler_module, "deliver", return_value=True):
+        scheduler.send(store.reminder_path("old"), {"id": "a", "created": 1})
+
+    assert "last" not in store.read_reminders(other)[0]
+
+
 def test_a_config_id_moved_mid_send_still_sends_and_records(store):
     """A reminder claimed just before its Config ID moves still goes out, and its result is kept."""
     now = int(time.time())

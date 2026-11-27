@@ -27,7 +27,8 @@ from . import views
 from .utils import CONFIG_KEY_REGEX
 
 _KEY = r"(?P<key>{})".format(CONFIG_KEY_REGEX)
-_REMINDER_ID = r"(?P<rid>[0-9a-f]{32})"
+# The same reminder ID shape a new reminder may choose.
+_REMINDER_ID = r"(?P<rid>{})".format(views.REMINDER_ID_RE.pattern)
 # Passed to the views of '@' routes, which use the current configuration.
 _CURRENT = {"key": "@"}
 

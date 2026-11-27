@@ -911,7 +911,10 @@ class Scheduler:
         # Read fresh under the lock; the file may have changed while sending.
         events = ConfigCache.read_reminders(reminder_file) or []
         saved = find_reminder(events, event.get("id"))
-        if saved is None:
+        # Whoever adds a reminder may choose its ID, so another Config ID (or
+        # a reminder added again in its place) can hold the same one. The
+        # time it was added tells them apart.
+        if saved is None or saved.get("created") != event.get("created"):
             return False
 
         # When it went out, whether every service took it, and why not when known.

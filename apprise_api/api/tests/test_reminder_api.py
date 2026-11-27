@@ -2006,6 +2006,33 @@ class ReminderAccessTests(ReminderTestCase):
         with patch("api.views.ConfigCache.get_auth_record", side_effect=views.AuthStorageError("damaged")):
             self.assertEqual(views._reminder_user_gone(request, self.key).status_code, 403)
 
+    def test_a_retry_after_the_login_is_removed_is_refused(self):
+        """A retry that finds its reminder only once it holds the lock is refused if the login went meanwhile."""
+        self.login("user")
+        chosen = "c" * 32
+        # One the administrator added, which the user may see
+        self.assertEqual(self.add({**_DAILY, "id": chosen}, headers=_MASTER).status_code, 200)
+        (first,) = self.stored()
+        with ConfigCache.reminder_guard():
+            ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), [])
+
+        views = runtime_views
+        real_guard = views.ConfigCache.reminder_guard
+
+        @contextmanager
+        def removed_meanwhile():
+            # The login is removed, and the first try saved, while the retry waited for the lock
+            views.ConfigCache.clear_auth(self.key)
+            with real_guard():
+                ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), [first])
+                yield
+
+        with patch("api.views.ConfigCache.reminder_guard", removed_meanwhile):
+            response = self.add({**_DAILY, "id": chosen}, headers=_USER)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.stored(), [first])
+
     def test_a_login_change_waits_for_a_reminder_change_in_progress(self):
         """Removing a login or changing its access waits until a user's save or delete is done."""
         views = runtime_views
@@ -2245,6 +2272,38 @@ class ReminderAttachmentTests(ReminderTestCase):
             content_type=f"multipart/form-data; boundary={BOUNDARY}",
             headers={"Accept": "application/json", **(headers or {})},
         )
+
+    def test_a_chosen_id_added_meanwhile_keeps_its_files(self):
+        """
+        A retry that finds the first try saved once it holds the lock:
+        - answers with the first try's reminder
+        - keeps the files that reminder uses
+        - removes the files only the retry stored
+        """
+        chosen = "b" * 32
+        path = f"/reminder/{self.key}/"
+        self.assertEqual(self.upload("post", path, {**_DAILY, "id": chosen}, "kept.txt").status_code, 200)
+        (first,) = self.stored()
+        with ConfigCache.reminder_guard():
+            ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), [])
+
+        real_guard = runtime_views.ConfigCache.reminder_guard
+
+        @contextmanager
+        def first_try_saved():
+            # The first try saved its reminder while this one waited for the lock
+            with real_guard():
+                ConfigCache.write_reminders(ConfigCache.reminder_path(self.key), [first])
+                yield
+
+        with patch("api.views.ConfigCache.reminder_guard", first_try_saved):
+            response = self.upload("post", path, {**_DAILY, "id": chosen}, "kept.txt", "extra.txt")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(loads(response.content)["reminder"]["attach"], first["attach"])
+        self.assertEqual(self.stored(), [first])
+        self.assertTrue(ConfigCache.reminder_file_stored(hashlib.sha256(b"kept.txt").hexdigest()))
+        self.assertFalse(ConfigCache.reminder_file_stored(hashlib.sha256(b"extra.txt").hexdigest()))
 
     def test_uploads_are_stored_and_kept(self):
         """Uploaded files are stored once, kept by reference, and replaced on request."""

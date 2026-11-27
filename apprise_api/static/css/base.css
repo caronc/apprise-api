@@ -555,6 +555,8 @@ Side Nav (replaces legacy Materialize collection sidebar)
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   }
 
+  /* Materialize colours a button once it has focus; the menu button keeps
+     its own look and only changes on hover or keyboard focus. */
   body:has(#site-side-menu) .mobile-menu-toggle:focus {
     color: var(--dialog-close-icon);
     background: var(--dialog-close-bg);
@@ -572,8 +574,13 @@ Side Nav (replaces legacy Materialize collection sidebar)
     outline-offset: 2px;
   }
 
+  /* Each icon sits in its own box, so only the one that applies is shown. */
+  .mobile-menu-toggle>span,
   .mobile-menu-toggle svg {
     display: block;
+  }
+
+  .mobile-menu-toggle svg {
     width: 1.2rem;
     height: 1.2rem;
     fill: none;
@@ -691,7 +698,10 @@ Side Nav (replaces legacy Materialize collection sidebar)
     display: contents;
   }
 
-  .mobile-menu-footer .nav-divider {
+  /* The menu already lists Get Apprise Mobile, so the header's icon for it
+     is left out there. */
+  .mobile-menu-footer .nav-divider,
+  .mobile-menu-footer [data-mobile-app-open] {
     display: none;
   }
 
@@ -700,7 +710,6 @@ Side Nav (replaces legacy Materialize collection sidebar)
   }
 
   .mobile-menu-footer .auth-session-nav {
-    order: 1;
     flex: 1 1 100%;
     justify-content: space-between;
     gap: 0.75rem;
@@ -711,10 +720,6 @@ Side Nav (replaces legacy Materialize collection sidebar)
 
   .mobile-menu-footer .auth-session-nav:not(:has(.auth-account)) {
     display: contents;
-  }
-
-  .mobile-menu-footer .auth-session-nav:not(:has(.auth-account)) .auth-logout-form {
-    order: 5;
   }
 
   .mobile-menu-footer .auth-account {
@@ -735,22 +740,15 @@ Side Nav (replaces legacy Materialize collection sidebar)
   }
 
   .mobile-menu-footer li.social-theme-nav>a {
-    order: 2;
     width: 2.25rem;
     height: 2.25rem;
   }
 
   .mobile-menu-footer li.social-theme-nav>#theme-toggle {
-    order: 3;
     margin-left: auto;
   }
 
-  .mobile-menu-footer .language-selector-form {
-    order: 4;
-  }
-
   .mobile-menu-footer .apprise-lib-ver {
-    order: 6;
     display: inline-flex;
     flex: 1 1 100%;
     align-items: center;

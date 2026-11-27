@@ -561,6 +561,84 @@ class PageBrowserTests(BrowserTestCase):
             self.page.wait_for_timeout(20)
         self.fail("The page never read the server's answer")
 
+    def test_phone_menu_keeps_the_header_tooltips(self):
+        """
+        The header's controls move into the phone menu and back:
+        - their tooltips still show in the menu and after the move back
+        - the menu lists Get Apprise Mobile only once
+        """
+        theme = self.page.locator("#theme-toggle")
+        tooltip = self.page.locator(".material-tooltip", has_text="Toggle light / dark theme")
+        self.page.set_viewport_size({"width": 390, "height": 844})
+        self.open("/")
+        self.page.click("#mobile-menu-open")
+        expect(self.page.locator(".mobile-menu-footer #theme-toggle")).to_be_visible()
+        expect(self.page.locator(".mobile-menu-footer [data-mobile-app-open]")).to_be_hidden()
+        expect(self.page.locator(".side-nav-item[data-mobile-app-open]")).to_be_visible()
+        theme.hover()
+        expect(tooltip).to_be_visible()
+
+        self.page.keyboard.press("Escape")
+        self.page.set_viewport_size({"width": 1280, "height": 800})
+        expect(self.page.locator(".nav-actions #theme-toggle")).to_be_visible()
+        self.page.mouse.move(0, 0)
+        expect(tooltip).to_be_hidden()
+        theme.hover()
+        expect(tooltip).to_be_visible()
+
+    def test_phone_menu_tab_order_follows_what_is_shown(self):
+        """
+        In the phone menu, Tab moves through the header's controls in the order
+        they are shown, and a wider screen puts the header back as it was.
+        """
+        controls = "e => Array.from(e.querySelectorAll('a, button, select')).filter(c => c.getClientRects().length)"
+        names = controls + ".map(c => c.id || c.className || c.name)"
+        self.open("/")
+        header = self.page.locator(".nav-actions").evaluate(names)
+
+        self.page.set_viewport_size({"width": 390, "height": 844})
+        self.page.click("#mobile-menu-open")
+        footer = self.page.locator(".mobile-menu-footer")
+        # Top to bottom, then left to right, as each control is drawn
+        shown = footer.evaluate(
+            controls
+            + ".map(c => [c, c.getBoundingClientRect()])"
+            + ".sort((a, b) => Math.round(a[1].top + a[1].height / 2) - Math.round(b[1].top + b[1].height / 2)"
+            + " || a[1].left - b[1].left)"
+            + ".map(([c]) => c.id || c.className || c.name)"
+        )
+        self.assertGreater(len(shown), 3)
+        footer.evaluate(controls + "[0].focus()")
+        tabbed = []
+        for _ in shown:
+            tabbed.append(
+                self.page.evaluate(
+                    "() => document.activeElement.id || document.activeElement.className || document.activeElement.name"
+                )
+            )
+            self.page.keyboard.press("Tab")
+        self.assertEqual(tabbed, shown)
+
+        self.page.keyboard.press("Escape")
+        self.page.set_viewport_size({"width": 1280, "height": 800})
+        expect(self.page.locator(".nav-actions #theme-toggle")).to_be_visible()
+        self.assertEqual(self.page.locator(".nav-actions").evaluate(names), header)
+
+    def test_phone_header_keeps_its_controls_without_javascript(self):
+        """Without JavaScript the phone menu cannot open, so the header keeps its controls."""
+        context = self.browser.new_context(
+            java_script_enabled=False,
+            storage_state=self.context.storage_state(),
+            viewport={"width": 390, "height": 844},
+        )
+        self.addCleanup(context.close)
+        page = context.new_page()
+        page.goto(f"{self.live_server_url}/")
+        expect(page.locator("#site-side-menu")).to_be_attached()
+        expect(page.locator(".nav-actions #theme-toggle")).to_be_visible()
+        expect(page.locator(".language-selector-submit")).to_be_visible()
+        expect(page.locator("#mobile-menu-open")).to_be_hidden()
+
     def test_configuration_list_search(self):
         """The configuration list search finds a row by its Config ID or username, and clears."""
         rows = ".config-list-item:not(.config-list-header):visible"
